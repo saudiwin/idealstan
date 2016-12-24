@@ -1,0 +1,12 @@
+Package: idealstan
+Type: Package
+Title: What the package does (short line)
+Version: 1.0
+Date: 2016-12-24
+Author: Who wrote it
+Maintainer: Who to complain to <yourfault@somewhere.net>
+Description: More about what it does (maybe more than one line)
+License: What license is it under?
+Depends: R (>= 3.0.2), Rcpp (>= 0.12.7), methods (>= 3.3.1)
+Imports: rstan (>= 2.13.2), rstantools (>= 1.1.0)
+LinkingTo: StanHeaders (>= 2.13.1), rstan (>= 2.13.2), BH (>= 1.62.0.1), Rcpp (>= 0.12.7), RcppEigen (>= 0.3.2.9.0)
