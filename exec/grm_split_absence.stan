@@ -7,7 +7,7 @@ data {
   int<lower=1> num_bills;
   int ll[N];
   int bb[N];
-  int gov_num;
+  int restrict;
     vector[num_legis] particip;
   
 }
@@ -30,8 +30,8 @@ transformed data {
 
 parameters {
   vector[num_legis] L_free;
-  vector[num_bills-gov_num] sigma;
-  vector<upper=0>[gov_num] sigma_gov;
+  vector[num_bills-restrict] sigma;
+  vector<upper=0>[restrict] sigma_gov;
   vector [num_bills] B_abs;
   vector [num_bills] sigma_abs_open;
   ordered[m-1] steps_votes[N];

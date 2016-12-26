@@ -16,7 +16,7 @@ make_idealdata <- function(vote_data=NULL,legis_data=NULL,bill_data=NULL,
     votes <- c(votes,abs_vote)
     
     # Register all possible votes as integers, then before running the model we can change them if need be.
-    cleaned <- vote_data %>% map(~factor(.x,levels=votes)) %>% map(~as.integer(.x)) %>% as.matrix
+    cleaned <- vote_data %>% as_data_frame %>% mutate_all(funs(factor(.,levels=votes))) %>% mutate_all(funs(as.integer(.))) %>% as.matrix
   } else if(class(vote_data)=='rollcall') {
     
   } else {
@@ -38,8 +38,10 @@ estimate_ideal <- function(idealdata=NULL,use_subset=FALSE,sample_it=FALSE,sampl
   
   if(modeltype=='ratingscale_absence_inflate') {
     to_use <- stanmodels$ordinal_split_absence
+    to_use_vb <- stanmodels$ordinal_split_absence_nofix
   } else if(modeltype=='grm_absence_inflate') {
     to_use <- stanmodels$grm_split_absence
+    to_use_vb <- stanmodels$grm_split_absence_nofix
   }
   
   num_legis <- nrow(idealdata@vote_matrix)
@@ -62,13 +64,13 @@ estimate_ideal <- function(idealdata=NULL,use_subset=FALSE,sample_it=FALSE,sampl
   
   this_data <- list(N=length(Y),
                     Y=Y,
-                    num_legis=legisnum,
-                    num_bills=billnum,
+                    num_legis=num_legis,
+                    num_bills=num_bills,
                     ll=legispoints,
                     bb=billpoints,
                     particip=avg_particip)
   
-  object <- id_model(object=object,fixtype=fixtype,to_use=to_use,this_data=this_data)
+  object <- id_model(object=idealdata,fixtype=fixtype,to_use=to_use_vb,this_data=this_data)
   
   
   
