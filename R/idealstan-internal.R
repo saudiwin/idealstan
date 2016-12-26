@@ -127,21 +127,6 @@ c(403L, 10L, -25182749L, -1011638655L, -1866196752L, -1436149874L,
 )
 
 
-setClass('idealdata',
-         slots=list(vote_matrix='matrix',
-                    legis_data='data.frame',
-                    vote_labels='character',
-                    vote_count='integer',
-                    abs_vote=ANY))
 
-setClass('idealstan',
-         slots=list(vote_data='idealdata',
-                    to_fix='list',
-                    model_type='character',
-                    model_code='character',
-                    test_model_code='character'),
-         prototype=list(model_type='absence_inflated_rating_scale',
-                        model_code='ordinal_split_absence.stan',
-                        test_model_code='ordinal_split_absence_nofix.stan'))
 
 

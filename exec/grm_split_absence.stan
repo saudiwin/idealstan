@@ -7,7 +7,6 @@ data {
   int<lower=1> num_bills;
   int ll[N];
   int bb[N];
-  int opp_num;
   int gov_num;
     vector[num_legis] particip;
   

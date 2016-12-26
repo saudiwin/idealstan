@@ -1,106 +1,123 @@
-#' @import rstan
-#' @import dplyr
-#' @importFrom tidyr gather spread
-#' @import bayesplot
-#' @import rstantools
-#' @import Rcpp
-#' @import methods
-#' @useDynLib idealstan, .registration = TRUE
-#' @export
-make_idealdata <- function(vote_data=NULL,legis_data=NULL,bill_data=NULL,
-                            votes=NULL,abs_vote=NA) {
+setClass('idealdata',
+         slots=list(vote_matrix='matrix',
+                    legis_data='data.frame',
+                    vote_labels='character',
+                    vote_count='integer',
+                    abs_vote='ANY',
+                    restrict_count='integer'))
 
-  if(class(vote_data)=='matrix') {
+setClass('idealstan',
+         slots=list(vote_data='idealdata',
+                    to_fix='list',
+                    model_type='character',
+                    model_code='character',
+                    test_model_code='character',
+                    stan_samples='stanfit'))
 
-    votes <- c(votes,abs_vote)
+setGeneric('subset_ideal',signature='object',
+           function(object,...) standardGeneric('subset_ideal'))
 
-    # Register all possible votes as integers, then before running the model we can change them if need be.
-    cleaned <- vote_data %>% map(~factor(.x,levels=votes)) %>% map(~as.integer(.x)) %>% as.matrix
-  } else if(class(vote_data)=='rollcall') {
+setMethod('subset_ideal',signature(object='idealdata'),
+          function(object,use_subset=FALSE,sample_it=FALSE,subset_party=NULL,subset_legis=NULL,sample_size=20) {
+            x <- object@vote_matrix
+            parliament <- object@legis_data
+            
+            if(use_subset==TRUE) {
+                if(!all(bloc %in% parliament$bloc)) stop('The specified parliament bloc must be in the list of blocs in the legislature data.')
+                x <- x[parliament$bloc %in% subset_party,]
+              } 
+              if(subset_legis==TRUE) {
+                if(!all(subset_legis %in% parliament$legis.names[parliament$bloc %in% subset_party])) {
+                  stop('The legislators to subset must be members of the subsetted bloc as well.')
+                }
+                x <- x[parliament$legis.names %in% subset_legis,]
+              }
+            
+            if(sample_it==TRUE) {
+              x <- x[sample(1:nrow(x),sample_size),]
+            }
+        object@vote_matrix <- x
+        return(object)
+        })
 
-  } else {
-    stop('Please provide either a matrix or a rollcall object as the vote_data argument.')
-  }
-  new('idealdata',
-      vote_matrix=cleaned,
-      legis_data=legis_data,
-      vote_labels=votes,
-      vote_count=length(votes),
-      abs_vote=abs_vote)
-}
+setGeneric('clean_bills',signature='object',
+           function(object,...) standardGeneric('clean_bills'))
 
-estimate_ideal <- function() {
+setMethod('clean_bills',signature(object='idealdata'),
+          function(object) {
+          x <- object@vote_matrix
+            
+          if(grepl('absence_inflate|ordinal',x@model_type)) {
+            select_cols <- apply(x,2, {
+              if(length(table(x))<(vote_count-1)) {
+                FALSE
+              } else {
+                TRUE
+                orig <- bind_cols(orig,y)
+              }
+            })
+            x <- x[,select_cols]
+          } else {
+            select_cols <- apply(x,2, {
+              if(length(table(x))<(vote_count)) {
+                FALSE
+              } else {
+                TRUE
+                orig <- bind_cols(orig,y)
+              }
+            })
+            x <- x[,select_cols]
+          }
+          object@vote_matrix <- x
+          return(object)
+          })
 
+setGeneric('sample_model',signature='object',
+           function(object,...) standardGeneric('sample_model'))
 
+setMethod('sample_model',signature(object='idealstan'),
+          function(object,nchains=4,niters=2000,warmup=floor(niters/2),ncores=NULL,to_use=to_use,this_data=this_data,...) {
+            
+            this_data$restrict <- object@restrict_count
+            
+            if(is.null(ncores)) {
+              ncores <- 1
+            }
+            
+            out_model <- sampling(to_use,data=this_data,chains=nchains,iter=niters,cores=ncores,
+                                  warmup=warmup,...)
+            
+            outobj <- new('idealstan',
+                vote_data=object,
+                model_type=modeltype,
+                model_code=to_use,
+                stan_samples=out_model)
+            
+            return(outobj)
+          })
 
+setGeneric('id_model',
+           signature='object',
+           function(object,...) standardGeneric('id_model'))
 
-  if(use_subset==TRUE) {
-    # Subset the datasets by party if one was given
-    to_subset <- lapply(member_data,function(x){
-      x <- x %>% filter(parliament_bloc %in% subset_party)  %>% select(legis_names)
-    })
-    to_subset %<>% bind_rows(to_subset) %>% distinct
-
-    cleaned <- lapply(cleaned,function(x) {
-      x %<>% filter(legis.names %in% to_subset$legis_names)
-    })
-  }
-
-  if(sample_it==TRUE) {
-    cleaned <- lapply(cleaned,function(x) {
-      if(nrow(x)>sample_amt) {
-        x <-    x %>% sample_n(sample_amt)
-      }
-      all_bills <-  grep('Bill',names(x),value=TRUE)
-      bills_sample <- sample(all_bills,100)
-      bills_sample <- match(bills_sample,names(x))
-      x %<>% select(id,legis.names,bloc,type,bills_sample)
-      return(x)
-    })
-
-
-  }
-
-  # Should be at least two types of votes per bill for ordinal & binary, three types for ordinal with more than
-  # 3 categories
-  if(use_nas==FALSE) {
-    cleaned <- cleaned %>% lapply(function(y) {
-      orig <- y %>% select(-matches("Bill"))
-      y <- y %>% select(matches("Bill"))
-      y <- y %>%  select_if(function(x) {
-        if(length(table(x))<2) {
-          FALSE
-        } else {
-          TRUE
-        }
-      })
-      orig <- bind_cols(orig,y)
-    })
-  } else if(use_nas==TRUE) {
-    cleaned <- cleaned %>% lapply(function(y) {
-      orig <- y %>% select(-matches("Bill"))
-      y <- y %>% select(matches("Bill"))
-      y <- y %>%  select_if(function(x) {
-        if(length(table(x))<3) {
-          FALSE
-        } else {
-          TRUE
-        }
-      })
-      orig <- bind_cols(orig,y)
-    })
-  }
-
-  # Order dataset by legislator names
-
-  cleaned <- lapply(cleaned,function(x){
-    # y <-  x %>%  filter(legis.names==refleg)
-    # z <- x %>% filter(legis.names!=refleg)
-    x <- arrange(x,legis.names)
-  })
-
-
-  return(cleaned)
-
-}
-
+setMethod('id_model',signature(object='idealdata'),
+          function(object,fixtype='vb',to_use=NULL,this_data=NULL) {
+            
+            x <- object@vote_matrix
+           post_modes <- vb(object=to_use,data =this_data,
+                             algorithm='meanfield')
+            
+            lookat_params <- rstan::extract(post_modes,permuted=FALSE)
+            lookat_params <- lookat_params[,1,]
+            sigmas_est <- lookat_params[,grepl('sigma\\[',colnames(lookat_params))]
+            sigmas_est <- sigmas_est %>% as_data_frame %>% gather(param_name,value) %>% group_by(param_name) %>% 
+              summarize(avg=mean(value),high=quantile(value,0.95),low=quantile(value,0.05))
+            
+            sigmas <- arrange(sigmas_est,avg)
+            keep_cols <- as.numeric(stringr::str_extract(sigmas$param_name,'[0-9]+')[1:60])
+            x <- cbind(x[,-keep_cols],x[,keep_cols])
+            object@vote_matrix <- x
+            object@restrict_count <- length(keep_cols)
+            return(object)
+          })
+ 
