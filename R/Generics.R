@@ -1,12 +1,19 @@
-
+#' @import rstan
+#' @import dplyr
+#' @importFrom tidyr gather spread
+#' @import bayesplot
+#' @import rstantools
+#' @import Rcpp
+#' @import methods
+#' @useDynLib idealstan, .registration = TRUE
 #' @export
 make_idealdata <- function(vote_data=NULL,legis_data=NULL,bill_data=NULL,
                             votes=NULL,abs_vote=NA) {
 
   if(class(vote_data)=='matrix') {
-    if(!is.null(abs_vote)) {
-      votes <- c(votes,abs_vote)
-    }
+
+    votes <- c(votes,abs_vote)
+
     # Register all possible votes as integers, then before running the model we can change them if need be.
     cleaned <- vote_data %>% map(~factor(.x,levels=votes)) %>% map(~as.integer(.x)) %>% as.matrix
   } else if(class(vote_data)=='rollcall') {
@@ -22,7 +29,7 @@ make_idealdata <- function(vote_data=NULL,legis_data=NULL,bill_data=NULL,
       abs_vote=abs_vote)
 }
 
-.make_idealstan <- function() {
+estimate_ideal <- function() {
 
 
 

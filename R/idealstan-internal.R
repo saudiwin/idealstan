@@ -126,6 +126,14 @@ c(403L, 10L, -25182749L, -1011638655L, -1866196752L, -1436149874L,
 195626277L, -924994001L, -54758424L, -978942778L, 1919340052L
 )
 
+
+setClass('idealdata',
+         slots=list(vote_matrix='matrix',
+                    legis_data='data.frame',
+                    vote_labels='character',
+                    vote_count='integer',
+                    abs_vote=ANY))
+
 setClass('idealstan',
          slots=list(vote_data='idealdata',
                     to_fix='list',
@@ -136,10 +144,4 @@ setClass('idealstan',
                         model_code='ordinal_split_absence.stan',
                         test_model_code='ordinal_split_absence_nofix.stan'))
 
-#' @import purrr
-setClass('idealdata',
-         slots=list(vote_matrix='matrix',
-                    legis_data='data.frame',
-                    vote_labels='character',
-                    vote_count='integer',
-                    abs_vote='character'))
+

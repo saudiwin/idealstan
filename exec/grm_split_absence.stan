@@ -55,7 +55,8 @@ model {
   sigma_abs_open ~normal(0,5);
   avg_particip ~ normal(0,5);
 	
-  steps_votes ~ normal(0,5);
+  	for(l in 1:num_bills)
+    steps_votes[l] ~ normal(0,5);
   B_abs ~ normal(0,5);
 
   //model
