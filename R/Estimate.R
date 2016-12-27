@@ -70,12 +70,14 @@ estimate_ideal <- function(idealdata=NULL,use_subset=FALSE,sample_it=FALSE,sampl
                     bb=billpoints,
                     particip=avg_particip)
   
-  object <- id_model(object=idealdata,fixtype=fixtype,to_use=to_use_vb,this_data=this_data)
+  idealdata <- id_model(object=idealdata,fixtype=fixtype,to_use=to_use_vb,this_data=this_data)
   
   
   
   outobj <- sample_model(object=idealdata,nchains=nchains,niters=niters,warmup=warmup,ncores=NULL,to_use=to_use,
                          this_data=this_data,...)
+  
+  outobj@model_type <- modeltype
   
   return(outobj)
   

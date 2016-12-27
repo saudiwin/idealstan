@@ -1,8 +1,8 @@
 Package: idealstan
 Type: Package
 Title: Bayesian Ideal Point Models with Stan
-Version: 1.0
-Date: 2016-12-24
+Version: 0.1
+Date: 2016-12-26
 Author: Robert Kubinec
 Maintainer: Robert Kubinec <rmk7xy@virginia.edu>
 Description: This package (still in development) offers standard and
@@ -10,15 +10,16 @@ Description: This package (still in development) offers standard and
     other kind of binary or ordinal item-response theory data).
 License: What license is it under?
 Depends:
-    R (>= 3.0.2),
-    Rcpp (>= 0.12.7),
+    R (>= 3.1),
+    Rcpp (>= 0.12.7)
+Imports:
+    rstan (>= 2.13.2),
+    rstantools (>= 1.1.0),
     methods (>= 3.3.1),
     dplyr,
     magrittr,
-    tidyr
-Imports:
-    rstan (>= 2.13.2),
-    rstantools (>= 1.1.0)
+    tidyr,
+    stringr
 LinkingTo: StanHeaders (>= 2.13.1), rstan (>= 2.13.2), BH (>= 1.62.0.1), Rcpp
     (>= 0.12.7), RcppEigen (>= 0.3.2.9.0)
 RoxygenNote: 5.0.1

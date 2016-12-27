@@ -75,7 +75,7 @@ setMethod('clean_bills',signature(object='idealdata'),
 setGeneric('sample_model',signature='object',
            function(object,...) standardGeneric('sample_model'))
 
-setMethod('sample_model',signature(object='idealstan'),
+setMethod('sample_model',signature(object='idealdata'),
           function(object,nchains=4,niters=2000,warmup=floor(niters/2),ncores=NULL,to_use=to_use,this_data=this_data,...) {
             
             this_data$restrict <- object@restrict_count
@@ -89,8 +89,7 @@ setMethod('sample_model',signature(object='idealstan'),
             
             outobj <- new('idealstan',
                 vote_data=object,
-                model_type=modeltype,
-                model_code=to_use,
+                model_code=to_use@model_code,
                 stan_samples=out_model)
             
             return(outobj)
