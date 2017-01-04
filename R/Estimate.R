@@ -32,9 +32,16 @@ make_idealdata <- function(vote_data=NULL,legis_data=NULL,bill_data=NULL,
 
 #' Estimate an idealstan model using an idealdata object.
 #' @export
-estimate_ideal <- function(idealdata=NULL,use_subset=FALSE,sample_it=FALSE,sample_size=NULL,
-                           nchains=4,niters=2000,
+estimate_ideal <- function(idealdata=NULL,use_subset=FALSE,sample_it=FALSE,
+                           subset_party=NULL,subset_legis=NULL,sample_size=20,
+                           nchains=4,niters=2000,use_vb=FALSE,nfix=10,
                            fixtype='vb',warmup=floor(niters/2),ncores=NULL,modeltype='ratingscale_absence_inflate',...) {
+  
+  
+  if(use_subset==TRUE || sample_it==TRUE) {
+    idealdata <- subset_ideal(idealdata,use_subset=use_subset,sample_it=sample_it,subset_party=subset_party,
+                              subset_legis=subset_legis,sample_size=sample_size)
+  }
   
   if(modeltype=='ratingscale_absence_inflate') {
     to_use <- stanmodels$ordinal_split_absence
@@ -70,12 +77,13 @@ estimate_ideal <- function(idealdata=NULL,use_subset=FALSE,sample_it=FALSE,sampl
                     bb=billpoints,
                     particip=avg_particip)
   
-  idealdata <- id_model(object=idealdata,fixtype=fixtype,to_use=to_use_vb,this_data=this_data)
+  idealdata <- id_model(object=idealdata,fixtype=fixtype,to_use=to_use_vb,this_data=this_data,
+                        nfix=nfix)
   
   
   
-  outobj <- sample_model(object=idealdata,nchains=nchains,niters=niters,warmup=warmup,ncores=NULL,to_use=to_use,
-                         this_data=this_data,...)
+  outobj <- sample_model(object=idealdata,nchains=nchains,niters=niters,warmup=warmup,ncores=ncores,to_use=to_use,
+                         this_data=this_data,use_vb=use_vb,...)
   
   outobj@model_type <- modeltype
   

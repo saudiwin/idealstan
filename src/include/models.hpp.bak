@@ -1955,26 +1955,32 @@ public:
                 current_statement_begin__ = 55;
                 lp_accum__.add(normal_log<propto__>(avg_particip, 0, 5));
                 current_statement_begin__ = 57;
-                lp_accum__.add(normal_log<propto__>(B_yes, 0, 5));
-                current_statement_begin__ = 58;
-                lp_accum__.add(normal_log<propto__>(B_abs, 0, 5));
+                for (int i = 1; i <= (m - 2); ++i) {
+
+                    current_statement_begin__ = 58;
+                    lp_accum__.add(normal_log<propto__>((get_base1(steps_votes,(i + 1),"steps_votes",1) - get_base1(steps_votes,i,"steps_votes",1)), 0, 5));
+                }
                 current_statement_begin__ = 61;
+                lp_accum__.add(normal_log<propto__>(B_yes, 0, 5));
+                current_statement_begin__ = 62;
+                lp_accum__.add(normal_log<propto__>(B_abs, 0, 5));
+                current_statement_begin__ = 65;
                 for (int n = 1; n <= N; ++n) {
 
-                    current_statement_begin__ = 62;
+                    current_statement_begin__ = 66;
                     stan::math::assign(get_base1_lhs(pi1,n,"pi1",1), ((get_base1(sigma_adj,get_base1(bb,n,"bb",1),"sigma_adj",1) * get_base1(L_open,get_base1(ll,n,"ll",1),"L_open",1)) - get_base1(B_yes,get_base1(bb,n,"bb",1),"B_yes",1)));
-                    current_statement_begin__ = 63;
+                    current_statement_begin__ = 67;
                     stan::math::assign(get_base1_lhs(pi2,n,"pi2",1), (((get_base1(sigma_abs_open,get_base1(bb,n,"bb",1),"sigma_abs_open",1) * get_base1(L_open,get_base1(ll,n,"ll",1),"L_open",1)) - get_base1(B_abs,get_base1(bb,n,"bb",1),"B_abs",1)) + (avg_particip * get_base1(particip,get_base1(ll,n,"ll",1),"particip",1))));
-                    current_statement_begin__ = 64;
+                    current_statement_begin__ = 68;
                     if (as_bool(logical_eq(get_base1(absence,n,"absence",1),1))) {
 
-                        current_statement_begin__ = 65;
+                        current_statement_begin__ = 69;
                         lp_accum__.add(bernoulli_logit_log<propto__>(1, get_base1(pi2,n,"pi2",1)));
                     } else {
 
-                        current_statement_begin__ = 67;
+                        current_statement_begin__ = 71;
                         lp_accum__.add(bernoulli_logit_log<propto__>(0, get_base1(pi2,n,"pi2",1)));
-                        current_statement_begin__ = 68;
+                        current_statement_begin__ = 72;
                         lp_accum__.add(ordered_logistic_log<propto__>(get_base1(Y,n,"Y",1), get_base1(pi1,n,"pi1",1), steps_votes));
                     }
                 }
@@ -3525,26 +3531,32 @@ public:
                 current_statement_begin__ = 51;
                 lp_accum__.add(normal_log<propto__>(avg_particip, 0, 5));
                 current_statement_begin__ = 53;
-                lp_accum__.add(normal_log<propto__>(B_yes, 0, 5));
-                current_statement_begin__ = 54;
-                lp_accum__.add(normal_log<propto__>(B_abs, 0, 5));
+                for (int i = 1; i <= (m - 2); ++i) {
+
+                    current_statement_begin__ = 54;
+                    lp_accum__.add(normal_log<propto__>((get_base1(steps_votes,(i + 1),"steps_votes",1) - get_base1(steps_votes,i,"steps_votes",1)), 0, 5));
+                }
                 current_statement_begin__ = 57;
+                lp_accum__.add(normal_log<propto__>(B_yes, 0, 5));
+                current_statement_begin__ = 58;
+                lp_accum__.add(normal_log<propto__>(B_abs, 0, 5));
+                current_statement_begin__ = 61;
                 for (int n = 1; n <= N; ++n) {
 
-                    current_statement_begin__ = 58;
+                    current_statement_begin__ = 62;
                     stan::math::assign(get_base1_lhs(pi1,n,"pi1",1), ((get_base1(sigma,get_base1(bb,n,"bb",1),"sigma",1) * get_base1(L_open,get_base1(ll,n,"ll",1),"L_open",1)) - get_base1(B_yes,get_base1(bb,n,"bb",1),"B_yes",1)));
-                    current_statement_begin__ = 59;
+                    current_statement_begin__ = 63;
                     stan::math::assign(get_base1_lhs(pi2,n,"pi2",1), (((get_base1(sigma_abs_open,get_base1(bb,n,"bb",1),"sigma_abs_open",1) * get_base1(L_open,get_base1(ll,n,"ll",1),"L_open",1)) - get_base1(B_abs,get_base1(bb,n,"bb",1),"B_abs",1)) + (avg_particip * get_base1(particip,get_base1(ll,n,"ll",1),"particip",1))));
-                    current_statement_begin__ = 60;
+                    current_statement_begin__ = 64;
                     if (as_bool(logical_eq(get_base1(absence,n,"absence",1),1))) {
 
-                        current_statement_begin__ = 61;
+                        current_statement_begin__ = 65;
                         lp_accum__.add(bernoulli_logit_log<propto__>(1, get_base1(pi2,n,"pi2",1)));
                     } else {
 
-                        current_statement_begin__ = 63;
+                        current_statement_begin__ = 67;
                         lp_accum__.add(bernoulli_logit_log<propto__>(0, get_base1(pi2,n,"pi2",1)));
-                        current_statement_begin__ = 64;
+                        current_statement_begin__ = 68;
                         lp_accum__.add(ordered_logistic_log<propto__>(get_base1(Y,n,"Y",1), get_base1(pi1,n,"pi1",1), steps_votes));
                     }
                 }

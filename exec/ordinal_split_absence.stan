@@ -53,6 +53,10 @@ model {
   L_free ~ normal(0,1);
   sigma_abs_open ~normal(0,5);
   avg_particip ~ normal(0,5);
+  
+  for(i in 1:(m-2)) {
+    steps_votes[i+1] - steps_votes[i] ~ normal(0,5); 
+  }
 	
   B_yes ~ normal(0,5);
   B_abs ~ normal(0,5);

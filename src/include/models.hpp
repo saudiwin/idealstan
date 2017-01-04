@@ -1894,6 +1894,10 @@ public:
                 lp_accum__.add(normal_log<propto__>(L_free, 0, 1));
                 lp_accum__.add(normal_log<propto__>(sigma_abs_open, 0, 5));
                 lp_accum__.add(normal_log<propto__>(avg_particip, 0, 5));
+                for (int i = 1; i <= (m - 2); ++i) {
+
+                    lp_accum__.add(normal_log<propto__>((get_base1(steps_votes,(i + 1),"steps_votes",1) - get_base1(steps_votes,i,"steps_votes",1)), 0, 5));
+                }
                 lp_accum__.add(normal_log<propto__>(B_yes, 0, 5));
                 lp_accum__.add(normal_log<propto__>(B_abs, 0, 5));
                 for (int n = 1; n <= N; ++n) {
@@ -3418,6 +3422,10 @@ public:
                 lp_accum__.add(normal_log<propto__>(L_free, 0, 1));
                 lp_accum__.add(normal_log<propto__>(sigma_abs_open, 0, 5));
                 lp_accum__.add(normal_log<propto__>(avg_particip, 0, 5));
+                for (int i = 1; i <= (m - 2); ++i) {
+
+                    lp_accum__.add(normal_log<propto__>((get_base1(steps_votes,(i + 1),"steps_votes",1) - get_base1(steps_votes,i,"steps_votes",1)), 0, 5));
+                }
                 lp_accum__.add(normal_log<propto__>(B_yes, 0, 5));
                 lp_accum__.add(normal_log<propto__>(B_abs, 0, 5));
                 for (int n = 1; n <= N; ++n) {
