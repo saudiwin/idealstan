@@ -4,7 +4,8 @@ setClass('idealdata',
                     vote_labels='character',
                     vote_count='integer',
                     abs_vote='ANY',
-                    restrict_count='integer'))
+                    restrict_count='integer',
+                    param_fix='character'))
 
 setClass('idealstan',
          slots=list(vote_data='idealdata',
@@ -101,9 +102,10 @@ setGeneric('id_model',
            signature='object',
            function(object,...) standardGeneric('id_model'))
 
+#' @export
 setMethod('id_model',signature(object='idealdata'),
           function(object,fixtype='vb',to_use=NULL,this_data=NULL,nfix=10) {
-            
+
             x <- object@vote_matrix
            post_modes <- rstan::vb(object=to_use,data =this_data,
                              algorithm='meanfield')
@@ -112,16 +114,29 @@ setMethod('id_model',signature(object='idealdata'),
             lookat_params <- lookat_params[,1,]
             sigmas_est <- lookat_params[,grepl('sigma\\[',colnames(lookat_params))]
             sigmas_est <- sigmas_est %>% as_data_frame %>% gather(param_name,value) %>% group_by(param_name) %>% 
-              summarize(avg=mean(value),high=quantile(value,0.95),low=quantile(value,0.05))
+              summarize(avg=mean(value),high=quantile(value,0.95),low=quantile(value,0.05),sd=sd(value),interval=high-low)
             
             sigmas <- arrange(sigmas_est,avg)
-            keep_cols <- as.numeric(stringr::str_extract(sigmas$param_name,'[0-9]+')[1:nfix])
+            sigmas_est_abs <- lookat_params[,grepl('sigma_abs',colnames(lookat_params))]
+            sigmas_est_abs <- sigmas_est_abs %>% as_data_frame %>% gather(param_name,value) %>% group_by(param_name) %>% 
+              summarize(avg=mean(value),high=quantile(value,0.95),low=quantile(value,0.05),sd=sd(value),interval=high-low)
+            
+            sigmas_abs <- arrange(sigmas_est_abs,avg)
+            if((mean(sigmas$avg[1:nfix])<mean(sigmas_abs$avg[1:nfix])) & (mean(sigmas$interval[1:nfix])<mean(sigmas_abs$interval[1:nfix]))) {
+              keep_cols <- as.numeric(stringr::str_extract(sigmas$param_name,'[0-9]+')[1:nfix])
+              param_fix <- 'sigmas'
+            } else {
+              keep_cols <- as.numeric(stringr::str_extract(sigmas_abs$param_name,'[0-9]+')[1:nfix])
+              param_fix <- 'sigmas_abs'
+            }
             x <- cbind(x[,-keep_cols],x[,keep_cols])
             object@vote_matrix <- x
             object@restrict_count <- length(keep_cols)
+            object@param_fix <- param_fix
             return(object)
           })
 
+#' @export
 setMethod('summary',signature(object='idealstan'),
           function(object) {
             

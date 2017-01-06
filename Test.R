@@ -18,30 +18,39 @@ all_vals <- table(to_use)
 idealdata <- make_idealdata(vote_data=to_use,legis_data=newdata$legis.data,votes=as.character(names(all_vals[1:3])),
                            abs_vote = '4')
 
-estimated2 <- estimate_ideal(idealdata=thisdata,use_subset = FALSE,sample_it=TRUE,ncores = 4,
-                            use_vb = TRUE)
+estimated_full <- estimate_ideal(idealdata=idealdata,use_subset = FALSE,sample_it=TRUE,ncores = 4,
+                            use_vb = FALSE)
 
-num_legis <- nrow(idealdata@vote_matrix)
-num_bills <- ncol(idealdata@vote_matrix)
-legispoints <- rep(1:num_legis,times=num_bills)
-billpoints <- rep(1:num_bills,each=num_legis)
-avg_particip <- apply(idealdata@vote_matrix,1,function(x) {
-  count_abs <- sum(x==idealdata@vote_count)
-  particip_rate <- 1 - (count_abs/length(x))
-  return(particip_rate)
-}) 
-avg_particip <- scale(avg_particip)[,1]
-Y <- c(idealdata@vote_matrix)
+estimated_vb <- estimate_ideal(idealdata=idealdata,use_subset = FALSE,sample_it=FALSE,ncores = 4,
+                            use_vb = TRUE,)
 
+params1 <- rstan::summary(estimated@stan_samples)[[1]]
+params2 <- rstan::summary(estimated2@stan_samples)[[1]]
 
-this_data <- list(N=length(Y),
-                  Y=Y,
-                  num_legis=num_legis,
-                  num_bills=num_bills,
-                  ll=legispoints,
-                  bb=billpoints,
-                  particip=avg_particip)
+sigmas1 <- params1[grepl(x=row.names(params1),pattern='sigma\\['),]
+sigmas2 <- params2[grepl(x=row.names(params2),pattern='sigma\\['),]
 
-post_modes <- vb(object=stan_model(file='exec/ordinal_split_absence_nofix.stan'),data =this_data,
-                 algorithm='meanfield')
-lookat <- summary(post_modes)[[1]]
+# Now try a binary inflated model by excluding the abstention category (2)
+
+ideal_data_binary <- make_idealdata(vote_data=to_use,legis_data=newdata$legis.data,votes=as.character(names(all_vals[1:3])),
+                                    abs_vote = '4',exclude_level='2')
+
+estimated_binary <- estimate_ideal(idealdata=ideal_data_binary,use_subset = FALSE,sample_it=FALSE,ncores = 4,
+                                   use_vb = FALSE,nfix=50)
+
+estimated_binary_vb <- estimate_ideal(idealdata=ideal_data_binary,use_subset = FALSE,sample_it=FALSE,ncores = 4,
+                                   use_vb = TRUE,nfix=50)
+
+params1 <- rstan::summary(estimated_binary@stan_samples)[[1]]
+params2 <- rstan::summary(estimated_binary_vb@stan_samples)[[1]]
+
+sigmas1 <- params1[grepl(x=row.names(params1),pattern='sigma_gov\\['),]
+sigmas2 <- params2[grepl(x=row.names(params2),pattern='sigma_gov\\['),]
+
+lookat_params <- rstan::extract(estimated_binary_vb@stan_samples,permuted=FALSE)
+lookat_params <- lookat_params[,1,]
+sigmas_est <- lookat_params[,grepl('sigma\\[',colnames(lookat_params))]
+sigmas_est <- sigmas_est %>% as_data_frame %>% gather(param_name,value) %>% group_by(param_name) %>% 
+  summarize(avg=mean(value),high=quantile(value,0.95),low=quantile(value,0.05))
+
+sigmas <- arrange(sigmas_est,avg)
