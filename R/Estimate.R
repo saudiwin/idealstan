@@ -43,16 +43,8 @@ estimate_ideal <- function(idealdata=NULL,use_subset=FALSE,sample_it=FALSE,
                               subset_legis=subset_legis,sample_size=sample_size)
   }
   
-  if(modeltype=='ratingscale_absence_inflate') {
-    to_use <- stanmodels$ordinal_split_absence
-    to_use_vb <- stanmodels$ordinal_split_absence_nofix
-  } else if(modeltype=='grm_absence_inflate') {
-    to_use <- stanmodels$grm_split_absence
-    to_use_vb <- stanmodels$grm_split_absence_nofix
-  } else if(modeltype=='binary_absence_inflate') {
-    to_use <- stanmodels$binary_split_absence
-    to_use_vb <- stanmodels$binary_split_absence_nofix
-  }
+
+    to_use <- stanmodels[[modeltype]]
   
   num_legis <- nrow(idealdata@vote_matrix)
   num_bills <- ncol(idealdata@vote_matrix)
@@ -87,9 +79,8 @@ estimate_ideal <- function(idealdata=NULL,use_subset=FALSE,sample_it=FALSE,
                     bb=billpoints,
                     particip=avg_particip)
   
-  idealdata <- id_model(object=idealdata,fixtype=fixtype,to_use=to_use_vb,this_data=this_data,
+  idealdata <- id_model(object=idealdata,fixtype=fixtype,modeltype=modeltype,this_data=this_data,
                         nfix=nfix)
-  
   if(idealdata@param_fix=='sigma_abs') {
     to_use <- stanmodels[[paste0(modeltype,'_fix_sigma_abs')]]
   }

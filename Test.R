@@ -4,6 +4,7 @@
 require(pscl)
 require(dplyr)
 require(idealstan)
+require(tidyr)
 
 newdata <- readKH(file=url('http://amypond.sscnet.ucla.edu/rollcall/static/S114.ord'))
 
@@ -36,21 +37,23 @@ ideal_data_binary <- make_idealdata(vote_data=to_use,legis_data=newdata$legis.da
                                     abs_vote = '4',exclude_level='2')
 
 estimated_binary <- estimate_ideal(idealdata=ideal_data_binary,use_subset = FALSE,sample_it=FALSE,ncores = 4,
-                                   use_vb = FALSE,nfix=50)
+                                   use_vb = FALSE,nfix=20)
 
 estimated_binary_vb <- estimate_ideal(idealdata=ideal_data_binary,use_subset = FALSE,sample_it=FALSE,ncores = 4,
-                                   use_vb = TRUE,nfix=50)
+                                   use_vb = TRUE,nfix=1)
 
-params1 <- rstan::summary(estimated_binary@stan_samples)[[1]]
-params2 <- rstan::summary(estimated_binary_vb@stan_samples)[[1]]
-
-sigmas1 <- params1[grepl(x=row.names(params1),pattern='sigma_gov\\['),]
-sigmas2 <- params2[grepl(x=row.names(params2),pattern='sigma_gov\\['),]
-
-lookat_params <- rstan::extract(estimated_binary_vb@stan_samples,permuted=FALSE)
+lookat_params <- rstan::extract(estimated_binary@stan_samples,permuted=FALSE)
 lookat_params <- lookat_params[,1,]
-sigmas_est <- lookat_params[,grepl('sigma\\[',colnames(lookat_params))]
+sigmas_est <- lookat_params[,grepl('sigma_abs_open\\[',colnames(lookat_params))]
 sigmas_est <- sigmas_est %>% as_data_frame %>% gather(param_name,value) %>% group_by(param_name) %>% 
   summarize(avg=mean(value),high=quantile(value,0.95),low=quantile(value,0.05))
 
 sigmas <- arrange(sigmas_est,avg)
+
+lookat_params <- rstan::extract(estimated_binary_vb@stan_samples,permuted=FALSE)
+lookat_params <- lookat_params[,1,]
+sigmas_est <- lookat_params[,grepl('sigma_abs_open\\[',colnames(lookat_params))]
+sigmas_est <- sigmas_est %>% as_data_frame %>% gather(param_name,value) %>% group_by(param_name) %>% 
+  summarize(avg=mean(value),high=quantile(value,0.95),low=quantile(value,0.05))
+
+sigmas_vb <- arrange(sigmas_est,avg)

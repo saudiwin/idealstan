@@ -43,7 +43,6 @@ parameters {
 
 transformed parameters {
 vector[num_bills] sigma_abs_adj;
-vector[num_legis] L_open;
 sigma_abs_adj = append_row(sigma_abs_open,sigma_abs_restrict);
 }
 

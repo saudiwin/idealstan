@@ -104,9 +104,11 @@ setGeneric('id_model',
 
 #' @export
 setMethod('id_model',signature(object='idealdata'),
-          function(object,fixtype='vb',to_use=NULL,this_data=NULL,nfix=10) {
+          function(object,fixtype='vb',modeltype=NULL,this_data=NULL,nfix=10) {
 
             x <- object@vote_matrix
+            
+            to_use <- stanmodels[[paste0(modeltype,'_nofix')]]
            post_modes <- rstan::vb(object=to_use,data =this_data,
                              algorithm='meanfield')
             
@@ -124,12 +126,75 @@ setMethod('id_model',signature(object='idealdata'),
             sigmas_abs <- arrange(sigmas_est_abs,avg)
             if((mean(sigmas$avg[1:nfix])<mean(sigmas_abs$avg[1:nfix])) & (mean(sigmas$interval[1:nfix])<mean(sigmas_abs$interval[1:nfix]))) {
               keep_cols <- as.numeric(stringr::str_extract(sigmas$param_name,'[0-9]+')[1:nfix])
-              param_fix <- 'sigmas'
+              param_fix <- 'sigma'
+              to_use <- stanmodels[[modeltype]]
             } else {
               keep_cols <- as.numeric(stringr::str_extract(sigmas_abs$param_name,'[0-9]+')[1:nfix])
-              param_fix <- 'sigmas_abs'
+              param_fix <- 'sigma_abs'
+              to_use <- stanmodels[[paste0(modeltype,'_fix_sigma_abs')]]
             }
             x <- cbind(x[,-keep_cols],x[,keep_cols])
+            
+            #Rerun to see if restriction works
+            
+            this_data$restrict <- nfix
+            
+            post_modes_2 <- rstan::vb(object=to_use,data =this_data,
+                                    algorithm='meanfield')
+            
+            lookat_params_2 <- rstan::extract(post_modes_2,permuted=FALSE)
+            lookat_params_2 <- lookat_params_2[,1,]
+            
+            # If the second round did better than the first, use the second round for identification
+            
+            if(param_fix=='sigma') {
+              sigmas_est_2 <- lookat_params_2[,grepl('sigma_adj',colnames(lookat_params_2))]
+              sigmas_est_2 <- sigmas_est_2 %>% as_data_frame %>% gather(param_name,value) %>% group_by(param_name) %>% 
+                summarize(avg=mean(value),high=quantile(value,0.95),low=quantile(value,0.05),sd=sd(value),interval=high-low)
+              
+              sigmas_2 <- arrange(sigmas_est_2,avg)
+              
+              sigmas_est_fix <- lookat_params_2[,grepl('sigma_restrict',colnames(lookat_params_2))]
+              if(is.matrix(sigmas_est_fix)==TRUE) {
+              sigmas_est_fix <- sigmas_est_fix %>% as_data_frame %>% gather(param_name,value) %>% group_by(param_name) %>% 
+                summarize(avg=mean(value),high=quantile(value,0.95),low=quantile(value,0.05),sd=sd(value),interval=high-low)
+              } else {
+                sigmas_est_fix <- data_frame(avg=mean(sigmas_est_fix),high=quantile(sigmas_est_fix,0.95),
+                                                 low=quantile(sigmas_est_fix,.05),sd=sd(sigmas_est_fix),interval=high-low,
+                                                 param_name='sigma_restrict')
+              }
+              sigmas_fix <- arrange(sigmas_est_fix,avg)
+              
+              if(mean(sigmas_2$avg[1:(nfix*2)])>mean(sigmas_fix$avg)) {
+                keep_cols <- as.numeric(stringr::str_extract(sigmas_2$param_name,'[0-9]+')[1:nfix])
+                x <- cbind(x[,-keep_cols],x[,keep_cols])
+              }
+            } else if(param_fix=='sigma_abs') {
+              sigmas_est_abs_2 <- lookat_params_2[,grepl('sigma_abs_adj',colnames(lookat_params_2))]
+              sigmas_est_abs_2 <- sigmas_est_abs_2 %>% as_data_frame %>% gather(param_name,value) %>% group_by(param_name) %>% 
+                summarize(avg=mean(value),high=quantile(value,0.95),low=quantile(value,0.05),sd=sd(value),interval=high-low)
+              
+              sigmas_abs_2 <- arrange(sigmas_est_abs_2,avg)
+              
+              sigmas_abs_est_fix <- lookat_params_2[,grepl('sigma_abs_restrict',colnames(lookat_params_2))]
+              if(is.matrix(sigmas_abs_est_fix)==TRUE) {
+              sigmas_abs_est_fix <- sigmas_abs_est_fix %>% as_data_frame %>% gather(param_name,value) %>% group_by(param_name) %>% 
+                summarize(avg=mean(value),high=quantile(value,0.95),low=quantile(value,0.05),sd=sd(value),interval=high-low)
+              } else {
+                sigmas_abs_est_fix <- data_frame(avg=mean(sigmas_abs_est_fix),high=quantile(sigmas_abs_est_fix,0.95),
+                                                 low=quantile(sigmas_abs_est_fix,.05),sd=sd(sigmas_abs_est_fix),interval=high-low,
+                                                 param_name='sigma_abs_restrict')
+              }
+              
+              sigmas_abs_fix <- arrange(sigmas_abs_est_fix,avg)
+              
+              if(mean(abs(sigmas_abs_2$avg[1:(nfix*2)]))>mean(abs(sigmas_abs_fix$avg))) {
+                keep_cols <- as.numeric(stringr::str_extract(sigmas_abs_2$param_name,'[0-9]+')[1:nfix])
+                x <- cbind(x[,-keep_cols],x[,keep_cols])
+                }
+              
+            }
+            
             object@vote_matrix <- x
             object@restrict_count <- length(keep_cols)
             object@param_fix <- param_fix
