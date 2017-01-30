@@ -37,7 +37,7 @@ ideal_data_binary <- make_idealdata(vote_data=to_use,legis_data=newdata$legis.da
                                     abs_vote = '4',exclude_level='2')
 
 estimated_binary <- estimate_ideal(idealdata=ideal_data_binary,use_subset = FALSE,sample_it=FALSE,ncores = 4,
-                                   use_vb = FALSE,nfix=20)
+                                   use_vb = FALSE,nfix=c(1,1),fixparams = c('person','bill'))
 
 estimated_binary_vb <- estimate_ideal(idealdata=ideal_data_binary,use_subset = FALSE,sample_it=FALSE,ncores = 4,
                                    use_vb = TRUE,nfix=1)

@@ -34,7 +34,7 @@ make_idealdata <- function(vote_data=NULL,legis_data=NULL,bill_data=NULL,
 #' @export
 estimate_ideal <- function(idealdata=NULL,use_subset=FALSE,sample_it=FALSE,
                            subset_party=NULL,subset_legis=NULL,sample_size=20,
-                           nchains=4,niters=2000,use_vb=FALSE,nfix=10,
+                           nchains=4,niters=2000,use_vb=FALSE,nfix=10,fixparams='bill',
                            fixtype='vb',warmup=floor(niters/2),ncores=NULL,modeltype='binary_absence_inflate',...) {
   
   
@@ -80,12 +80,11 @@ estimate_ideal <- function(idealdata=NULL,use_subset=FALSE,sample_it=FALSE,
                     particip=avg_particip)
   
   idealdata <- id_model(object=idealdata,fixtype=fixtype,modeltype=modeltype,this_data=this_data,
-                        nfix=nfix)
-  if(idealdata@param_fix=='sigma_abs') {
-    to_use <- stanmodels[[paste0(modeltype,'_fix_sigma_abs')]]
-  }
+                        nfix=nfix,fixparams=fixparams)
   
-  outobj <- sample_model(object=idealdata,nchains=nchains,niters=niters,warmup=warmup,ncores=ncores,to_use=to_use,
+  this_data <- c(this_data,idealdata@restrict_data)
+  
+  outobj <- sample_model(object=idealdata,nchains=nchains,niters=niters,warmup=warmup,ncores=ncores,
                          this_data=this_data,use_vb=use_vb,...)
   
   outobj@model_type <- modeltype
