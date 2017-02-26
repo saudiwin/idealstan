@@ -19,11 +19,11 @@ all_vals <- table(to_use)
 idealdata <- make_idealdata(vote_data=to_use,legis_data=newdata$legis.data,votes=as.character(names(all_vals[1:3])),
                            abs_vote = '4')
 
-estimated_full <- estimate_ideal(idealdata=idealdata,use_subset = FALSE,sample_it=TRUE,ncores = 4,
+estimated_full <- estimate_ideal(idealdata=idealdata,use_subset = FALSE,sample_it=TRUE,ncores = 2,
                             use_vb = FALSE)
 
-estimated_vb <- estimate_ideal(idealdata=idealdata,use_subset = FALSE,sample_it=FALSE,ncores = 4,
-                            use_vb = TRUE,)
+estimated_vb <- estimate_ideal(idealdata=idealdata,use_subset = FALSE,sample_it=FALSE,ncores = 2,
+                            use_vb = TRUE)
 
 params1 <- rstan::summary(estimated@stan_samples)[[1]]
 params2 <- rstan::summary(estimated2@stan_samples)[[1]]
@@ -36,10 +36,10 @@ sigmas2 <- params2[grepl(x=row.names(params2),pattern='sigma\\['),]
 ideal_data_binary <- make_idealdata(vote_data=to_use,legis_data=newdata$legis.data,votes=as.character(names(all_vals[1:3])),
                                     abs_vote = '4',exclude_level='2')
 
-estimated_binary <- estimate_ideal(idealdata=ideal_data_binary,use_subset = FALSE,sample_it=FALSE,ncores = 4,
-                                   use_vb = FALSE,nfix=20)
+estimated_binary <- estimate_ideal(idealdata=ideal_data_binary,use_subset = FALSE,sample_it=TRUE,ncores = 2,
+                                   use_vb = FALSE,nfix=5)
 
-estimated_binary_vb <- estimate_ideal(idealdata=ideal_data_binary,use_subset = FALSE,sample_it=FALSE,ncores = 4,
+estimated_binary_vb <- estimate_ideal(idealdata=ideal_data_binary,use_subset = FALSE,sample_it=TRUE,ncores = 2,
                                    use_vb = TRUE,nfix=1)
 
 lookat_params <- rstan::extract(estimated_binary@stan_samples,permuted=FALSE)
