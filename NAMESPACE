@@ -3,6 +3,7 @@
 export(estimate_ideal)
 export(make_idealdata)
 exportMethods(id_model)
+exportMethods(plot_model)
 exportMethods(summary)
 import(Rcpp)
 import(bayesplot)

@@ -1,5 +1,17 @@
 #' Function that works with id_model to re-arrange bills or legislators to fix/constrain for identification
 id_params <- function(lookat_params=NULL,fixparams=NULL,nfix=NULL,x=NULL) {
+  
+  fixparams <- sort(fixparams,decreasing=TRUE)
+  
+  #Create row.names for the vote matrix to preserve order
+  
+  if(is.null(row.names(x))) {
+    row.names(x) <- as.character(1:nrow(x))
+  } 
+  if(is.null(colnames(x))) {
+    colnames(x) <- as.character(1:ncol(x))
+  }
+  
   # Use different identifications depending on whether we want to do bills, legislators or both
   if(('person' %in% fixparams) && ('bill' %in% fixparams)) {
     

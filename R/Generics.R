@@ -116,7 +116,8 @@ setMethod('id_model',signature(object='idealdata'),
             lookat_params <- rstan::extract(post_modes,permuted=FALSE)
             lookat_params <- lookat_params[,1,]
             
-            all_fixed <- id_params(lookat_params=lookat_params,fixparams=fixparams,nfix=nfix,x=x)
+            all_fixed <- id_params(lookat_params=lookat_params,fixparams=fixparams,
+                                   nfix=nfix,x=x)
             
             #Rerun to see if restriction works
             # Note: Rerunning doesn't seem to help so I'm dropping that idea
@@ -179,7 +180,7 @@ setMethod('id_model',signature(object='idealdata'),
             #   
             # }
             
-            object@vote_matrix <- x
+            object@vote_matrix <- all_fixed$matrix
             object@restrict_data <- all_fixed$restrict
             object@restrict_count <- nfix
             object@param_fix <- all_fixed$param_fix
@@ -207,5 +208,21 @@ setMethod('summary',signature(object='idealstan'),
               select(parameters,posterior_mean,posterior_median,posterior_sd,Prob.025,
                      Prob.25,Prob.75,Prob.975)
             return(this_summary)
+          })
+
+
+setGeneric('plot_model',
+           signature='object',
+           function(object,...) standardGeneric('plot_model'))
+
+#' The base plotting function. Default plot shows legislator ideal points with bills as equiprobability lines 
+#' (also called trace contour plots and cutting lines).
+#' @export
+setMethod(plot_model, signature(object='idealstan'),
+          function(object,plot_type='legislators',...) {
+            if(plot_type=='legislators') {
+              legis_plot(object,...)
+            }
+
           })
  
