@@ -88,7 +88,7 @@ setMethod('sample_model',signature(object='idealdata'),
             out_model <- sampling(object@stanmodel,data=this_data,chains=nchains,iter=niters,cores=ncores,
                                   warmup=warmup,...)
             } else {
-            out_model <- vb(to_use,data=this_data,...)
+            out_model <- vb(object@stanmodel,data=this_data,...)
             }
             outobj <- new('idealstan',
                 vote_data=object,
