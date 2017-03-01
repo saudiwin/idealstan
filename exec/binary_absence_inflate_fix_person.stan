@@ -32,7 +32,7 @@ transformed data {
 }
 
 parameters {
-  vector[num_legis] L_free;
+  vector[num_legis-restrict] L_free;
   vector<upper=0>[restrict] L_restrict;
   vector[num_bills] B_yes;
   vector[num_bills] sigma_full;

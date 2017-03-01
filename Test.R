@@ -5,6 +5,7 @@ require(pscl)
 require(dplyr)
 require(idealstan)
 require(tidyr)
+require(ggplot2)
 
 newdata <- readKH(file=url('http://amypond.sscnet.ucla.edu/rollcall/static/S114.ord'))
 
@@ -33,7 +34,7 @@ ideal_data_binary <- make_idealdata(vote_data=to_use,legis_data=newdata$legis.da
                                     abs_vote = '4',exclude_level='2')
 
 estimated_binary <- estimate_ideal(idealdata=ideal_data_binary,use_subset = FALSE,sample_it=FALSE,ncores = 4,
-                                   use_vb = FALSE,nfix=c(1,5),fixparams ='person')
+                                   use_vb = FALSE,nfix=c(1,1),fixparams ='person')
 
 # estimated_binary_vb <- estimate_ideal(idealdata=ideal_data_binary,use_subset = FALSE,sample_it=FALSE,ncores = 4,
 #                                    use_vb = TRUE,nfix=1)

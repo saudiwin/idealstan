@@ -1,3 +1,4 @@
+#' @import ggplot2
 legis_plot <- function(object,...) {
   
   person_params <- rstan::extract(object@stan_samples,pars='L_full')[[1]] %>% 

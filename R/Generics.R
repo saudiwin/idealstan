@@ -7,7 +7,8 @@ setClass('idealdata',
                     restrict_count='numeric',
                     restrict_data='list',
                     stanmodel='stanmodel',
-                    param_fix='character'))
+                    param_fix='character',
+                    restrict_vals='numeric'))
 
 setClass('idealstan',
          slots=list(vote_data='idealdata',
@@ -183,6 +184,7 @@ setMethod('id_model',signature(object='idealdata'),
             object@vote_matrix <- all_fixed$matrix
             object@restrict_data <- all_fixed$restrict
             object@restrict_count <- nfix
+            object@restrict_vals <- all_fixed$restrict_vals
             object@param_fix <- all_fixed$param_fix
             object@stanmodel <- stanmodels[[paste0(modeltype,'_fix_',paste0(all_fixed$param_fix,collapse='_'))]]
             return(object)
