@@ -8,7 +8,10 @@ setClass('idealdata',
                     restrict_data='list',
                     stanmodel='stanmodel',
                     param_fix='character',
-                    restrict_vals='numeric'))
+                    restrict_vals='numeric',
+                    subset_party='character',
+                    subset_legis='character',
+                    to_sample='numeric'))
 
 setClass('idealstan',
          slots=list(vote_data='idealdata',
@@ -24,24 +27,32 @@ setGeneric('subset_ideal',signature='object',
 setMethod('subset_ideal',signature(object='idealdata'),
           function(object,use_subset=FALSE,sample_it=FALSE,subset_party=NULL,subset_legis=NULL,sample_size=20) {
             
+            
+            # Functions for subsetting data and sampling
+            
             x <- object@vote_matrix
             parliament <- object@legis_data
             
             if(use_subset==TRUE & !is.null(subset_party)) {
-              if(!all(bloc %in% parliament$bloc)) stop('The specified parliament bloc must be in the list of blocs in the legislature data.')
-              x <- x[parliament$bloc %in% subset_party,]
+              if(!all(subset_party %in% parliament$party)) stop('The specified parliament bloc/party must be in the list of blocs/parties in the legislature data.')
+              x <- x[parliament$party %in% subset_party,]
+
+              object@subset_party <- subset_party
             } 
             if(use_subset==TRUE & !is.null(subset_legis)) {
               if(!all(subset_legis %in% parliament$legis.names[parliament$bloc %in% subset_party])) {
                 stop('The legislators to subset must be members of the subsetted bloc as well.')
               }
               x <- x[parliament$legis.names %in% subset_legis,]
+              object@subset_legis <- subset_legis
             }
             
             if(sample_it==TRUE) {
-              x <- x[sample(1:nrow(x),sample_size),]
+              object@to_sample <- sample(1:nrow(x),sample_size)
+              x <- x[object@to_sample,]
             }
         object@vote_matrix <- x
+
         return(object)
         })
 

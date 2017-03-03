@@ -22,6 +22,9 @@ make_idealdata <- function(vote_data=NULL,legis_data=NULL,bill_data=NULL,
   } else {
     stop('Please provide either a matrix or a rollcall object as the vote_data argument.')
   }
+  
+  legis_data$legis.names <- row.names(vote_data)
+  row.names(cleaned) <- as.character(1:nrow(cleaned))
   new('idealdata',
       vote_matrix=cleaned,
       legis_data=legis_data,

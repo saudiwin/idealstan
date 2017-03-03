@@ -17,6 +17,10 @@ to_use <- apply(to_use,2,function(x) {
 
 all_vals <- table(to_use)
 
+#Save row names (Congresspeople)
+
+rownames(to_use) <- rownames(newdata$votes)
+
 idealdata <- make_idealdata(vote_data=to_use,legis_data=newdata$legis.data,votes=as.character(names(all_vals[1:3])),
                            abs_vote = '4')
 
@@ -34,7 +38,7 @@ ideal_data_binary <- make_idealdata(vote_data=to_use,legis_data=newdata$legis.da
                                     abs_vote = '4',exclude_level='2')
 
 estimated_binary <- estimate_ideal(idealdata=ideal_data_binary,use_subset = FALSE,sample_it=FALSE,ncores = 4,
-                                   use_vb = FALSE,nfix=c(1,1),fixparams ='person')
+                                   use_vb = FALSE,nfix=c(1,1),fixparams =c('person','bill'))
 
 # estimated_binary_vb <- estimate_ideal(idealdata=ideal_data_binary,use_subset = FALSE,sample_it=FALSE,ncores = 4,
 #                                    use_vb = TRUE,nfix=1)
