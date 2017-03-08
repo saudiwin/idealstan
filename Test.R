@@ -6,6 +6,7 @@ require(dplyr)
 require(idealstan)
 require(tidyr)
 require(ggplot2)
+require(bayesplot)
 
 newdata <- readKH(file=url('http://amypond.sscnet.ucla.edu/rollcall/static/S114.ord'))
 
@@ -37,24 +38,19 @@ estimated_vb <- estimate_ideal(idealdata=idealdata,use_subset = FALSE,sample_it=
 ideal_data_binary <- make_idealdata(vote_data=to_use,legis_data=newdata$legis.data,votes=as.character(names(all_vals[1:3])),
                                     abs_vote = '4',exclude_level='2')
 
-estimated_binary <- estimate_ideal(idealdata=ideal_data_binary,use_subset = FALSE,sample_it=FALSE,ncores = 4,
-                                   use_vb = FALSE,nfix=c(1,1),fixparams =c('person','bill'))
+estimated_binary <- estimate_ideal(idealdata=ideal_data_binary,use_subset = FALSE,ncores = 4,
+                                   use_vb = FALSE,nfix=c(2,2),restrict_params ='person',sample_it=FALSE,sample_size=30)
 
-# estimated_binary_vb <- estimate_ideal(idealdata=ideal_data_binary,use_subset = FALSE,sample_it=FALSE,ncores = 4,
-#                                    use_vb = TRUE,nfix=1)
+all_out <- rstan::extract(estimated_binary@stan_samples,permuted=FALSE)
 
-lookat_params <- rstan::extract(estimated_binary@stan_samples,permuted=FALSE)
-lookat_params <- lookat_params[,1,]
-sigmas_est <- lookat_params[,grepl('sigma_abs_open\\[',colnames(lookat_params))]
-sigmas_est <- sigmas_est %>% as_data_frame %>% gather(param_name,value) %>% group_by(param_name) %>% 
-  summarize(avg=mean(value),high=quantile(value,0.95),low=quantile(value,0.05))
+if(estimated_binary@use_vb==FALSE) {
+  all_out <- as.array(all_out)
+  mcmc_violin(all_out,pars='sigma_abs_open[1]') + theme_minimal()
+  mcmc_violin(all_out,regex_pars='L_restrict_high') + theme_minimal()
+  mcmc_violin(all_out,regex_pars='L_restrict_low') + theme_minimal()
+} else {
+  mcmc_dens(all_out,pars='sigma_abs_open[1]')
+  mcmc_dens(all_out,regex_pars='sigma_abs_restrict')
+}
 
-sigmas <- arrange(sigmas_est,avg)
 
-# lookat_params <- rstan::extract(estimated_binary_vb@stan_samples,permuted=FALSE)
-# lookat_params <- lookat_params[,1,]
-# sigmas_est <- lookat_params[,grepl('sigma_abs_open\\[',colnames(lookat_params))]
-# sigmas_est <- sigmas_est %>% as_data_frame %>% gather(param_name,value) %>% group_by(param_name) %>% 
-#   summarize(avg=mean(value),high=quantile(value,0.95),low=quantile(value,0.05))
-# 
-# sigmas_vb <- arrange(sigmas_est,avg)

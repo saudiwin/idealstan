@@ -1,6 +1,7 @@
 #' @import ggplot2
-legis_plot <- function(object,labels='legis',...) {
-  browser()
+#' @export
+legis_plot <- function(object,labels='legis',return_data=FALSE,...) {
+
   legis_data <- object@vote_data@legis_data
   
   # Apply any filters from the data processing stage so that the labels match
@@ -16,10 +17,11 @@ legis_plot <- function(object,labels='legis',...) {
   }
   
   # Reorder rows to match those rows that were switched for identification purposes
-  
-  reordered <- which(!(1:nrow(object@vote_data@vote_matrix) %in% as.numeric(row.names(object@vote_data@vote_matrix))))
-  legis_data <- bind_rows(filter(legis_data,!(row_number()==reordered)),
-                          filter(legis_data,row_number()==reordered))
+  if(is.numeric(object@vote_data@restrict_legis)) {
+  reordered <- object@vote_data@restrict_legis
+  legis_data <- bind_rows(filter(legis_data,!(row_number() %in% reordered)),
+                          slice(legis_data,reordered))
+  }
   
   person_params <- rstan::extract(object@stan_samples,pars='L_full')[[1]] %>% 
     as_data_frame %>% gather(key = legis,value=ideal_pts) %>% mutate(legis=stringr::str_extract(pattern = '[0-9]+',
@@ -32,9 +34,25 @@ legis_plot <- function(object,labels='legis',...) {
   person_params <- mutate(person_params,legis.names=legis_data$legis.names,
                           party=legis_data$party)
   
-  person_params %>% ggplot(aes(y=reorder(legis.names,median_pt),x=median_pt,color=party)) + 
-    geom_point() + 
+  outplot <- person_params %>% ggplot(aes(y=reorder(legis.names,median_pt),x=median_pt,color=party)) + 
+    geom_point() + geom_text(aes(label=reorder(legis.names,median_pt)),check_overlap=TRUE,hjust='left') +
     geom_errorbarh(aes(xmin=low_pt,xmax=high_pt)) + theme_minimal() + ylab("") + xlab("") +
     theme(axis.text.y=element_blank(),panel.grid.major.y = element_blank())
+  
+  if(return_data==TRUE) {
+    
+    return(list(outplot=outplot,plot_data=person_params))
+    
+  } else (
+    return(outplot)
+  )
+  
+}
+
+#' Function to compare two fitted idealstan models by plotting ideal points. Assumes that underlying data
+#' is the same for both models.
+#'  @export
+compare_models <- function(model1=NULL,model2=NULL) {
+  
   
 }
