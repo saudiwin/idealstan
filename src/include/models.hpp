@@ -7,7 +7,7 @@
 
 #include <stan/model/model_header.hpp>
 
-namespace model_binary_absence_inflate_fix_bill_sigma_namespace {
+namespace model_binary_2pl_constrain_bill_sigma_namespace {
 
 using std::istream;
 using std::string;
@@ -24,7 +24,7 @@ typedef Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> matrix_d;
 
 static int current_statement_begin__;
 
-class model_binary_absence_inflate_fix_bill_sigma : public prob_grad {
+class model_binary_2pl_constrain_bill_sigma : public prob_grad {
 private:
     int N;
     vector<int> Y;
@@ -34,10 +34,9 @@ private:
     vector<int> bb;
     int restrict;
     vector_d particip;
-    vector<int> absence;
     vector<int> Y_new;
 public:
-    model_binary_absence_inflate_fix_bill_sigma(stan::io::var_context& context__,
+    model_binary_2pl_constrain_bill_sigma(stan::io::var_context& context__,
         std::ostream* pstream__ = 0)
         : prob_grad(0) {
         typedef boost::ecuyer1988 rng_t;
@@ -46,7 +45,7 @@ public:
     }
 
     template <class RNG>
-    model_binary_absence_inflate_fix_bill_sigma(stan::io::var_context& context__,
+    model_binary_2pl_constrain_bill_sigma(stan::io::var_context& context__,
         RNG& base_rng__,
         std::ostream* pstream__ = 0)
         : prob_grad(0) {
@@ -59,7 +58,1671 @@ public:
                    std::ostream* pstream__) {
         current_statement_begin__ = -1;
 
-        static const char* function__ = "model_binary_absence_inflate_fix_bill_sigma_namespace::model_binary_absence_inflate_fix_bill_sigma";
+        static const char* function__ = "model_binary_2pl_constrain_bill_sigma_namespace::model_binary_2pl_constrain_bill_sigma";
+        (void) function__; // dummy call to supress warning
+        size_t pos__;
+        (void) pos__; // dummy call to supress warning
+        std::vector<int> vals_i__;
+        std::vector<double> vals_r__;
+        double DUMMY_VAR__(std::numeric_limits<double>::quiet_NaN());
+        (void) DUMMY_VAR__;  // suppress unused var warning
+
+        // initialize member variables
+        context__.validate_dims("data initialization", "N", "int", context__.to_vec());
+        N = int(0);
+        vals_i__ = context__.vals_i("N");
+        pos__ = 0;
+        N = vals_i__[pos__++];
+        context__.validate_dims("data initialization", "Y", "int", context__.to_vec(N));
+        validate_non_negative_index("Y", "N", N);
+        Y = std::vector<int>(N,int(0));
+        vals_i__ = context__.vals_i("Y");
+        pos__ = 0;
+        size_t Y_limit_0__ = N;
+        for (size_t i_0__ = 0; i_0__ < Y_limit_0__; ++i_0__) {
+            Y[i_0__] = vals_i__[pos__++];
+        }
+        context__.validate_dims("data initialization", "num_legis", "int", context__.to_vec());
+        num_legis = int(0);
+        vals_i__ = context__.vals_i("num_legis");
+        pos__ = 0;
+        num_legis = vals_i__[pos__++];
+        context__.validate_dims("data initialization", "num_bills", "int", context__.to_vec());
+        num_bills = int(0);
+        vals_i__ = context__.vals_i("num_bills");
+        pos__ = 0;
+        num_bills = vals_i__[pos__++];
+        context__.validate_dims("data initialization", "ll", "int", context__.to_vec(N));
+        validate_non_negative_index("ll", "N", N);
+        ll = std::vector<int>(N,int(0));
+        vals_i__ = context__.vals_i("ll");
+        pos__ = 0;
+        size_t ll_limit_0__ = N;
+        for (size_t i_0__ = 0; i_0__ < ll_limit_0__; ++i_0__) {
+            ll[i_0__] = vals_i__[pos__++];
+        }
+        context__.validate_dims("data initialization", "bb", "int", context__.to_vec(N));
+        validate_non_negative_index("bb", "N", N);
+        bb = std::vector<int>(N,int(0));
+        vals_i__ = context__.vals_i("bb");
+        pos__ = 0;
+        size_t bb_limit_0__ = N;
+        for (size_t i_0__ = 0; i_0__ < bb_limit_0__; ++i_0__) {
+            bb[i_0__] = vals_i__[pos__++];
+        }
+        context__.validate_dims("data initialization", "restrict", "int", context__.to_vec());
+        restrict = int(0);
+        vals_i__ = context__.vals_i("restrict");
+        pos__ = 0;
+        restrict = vals_i__[pos__++];
+        validate_non_negative_index("particip", "num_legis", num_legis);
+        particip = vector_d(static_cast<Eigen::VectorXd::Index>(num_legis));
+        context__.validate_dims("data initialization", "particip", "vector_d", context__.to_vec(num_legis));
+        vals_r__ = context__.vals_r("particip");
+        pos__ = 0;
+        size_t particip_i_vec_lim__ = num_legis;
+        for (size_t i_vec__ = 0; i_vec__ < particip_i_vec_lim__; ++i_vec__) {
+            particip[i_vec__] = vals_r__[pos__++];
+        }
+
+        // validate, data variables
+        check_greater_or_equal(function__,"num_legis",num_legis,1);
+        check_greater_or_equal(function__,"num_bills",num_bills,1);
+        // initialize data variables
+        validate_non_negative_index("Y_new", "N", N);
+        Y_new = std::vector<int>(N,int(0));
+        stan::math::fill(Y_new, std::numeric_limits<int>::min());
+
+        try {
+            if (as_bool(logical_gt(max(Y),1))) {
+
+                for (int n = 1; n <= N; ++n) {
+                    stan::math::assign(get_base1_lhs(Y_new,n,"Y_new",1), (get_base1(Y,n,"Y",1) - min(Y)));
+                }
+            } else {
+
+                stan::math::assign(Y_new, Y);
+            }
+        } catch (const std::exception& e) {
+            stan::lang::rethrow_located(e,current_statement_begin__);
+            // Next line prevents compiler griping about no return
+            throw std::runtime_error("*** IF YOU SEE THIS, PLEASE REPORT A BUG ***");
+        }
+
+        // validate transformed data
+
+        // set parameter ranges
+        num_params_r__ = 0U;
+        param_ranges_i__.clear();
+        num_params_r__ += num_legis;
+        num_params_r__ += num_bills;
+        num_params_r__ += (num_bills - restrict);
+        num_params_r__ += restrict;
+    }
+
+    ~model_binary_2pl_constrain_bill_sigma() { }
+
+
+    void transform_inits(const stan::io::var_context& context__,
+                         std::vector<int>& params_i__,
+                         std::vector<double>& params_r__,
+                         std::ostream* pstream__) const {
+        stan::io::writer<double> writer__(params_r__,params_i__);
+        size_t pos__;
+        (void) pos__; // dummy call to supress warning
+        std::vector<double> vals_r__;
+        std::vector<int> vals_i__;
+
+        if (!(context__.contains_r("L_full")))
+            throw std::runtime_error("variable L_full missing");
+        vals_r__ = context__.vals_r("L_full");
+        pos__ = 0U;
+        context__.validate_dims("initialization", "L_full", "vector_d", context__.to_vec(num_legis));
+        // generate_declaration L_full
+        vector_d L_full(static_cast<Eigen::VectorXd::Index>(num_legis));
+        for (int j1__ = 0U; j1__ < num_legis; ++j1__)
+            L_full(j1__) = vals_r__[pos__++];
+        try {
+            writer__.vector_unconstrain(L_full);
+        } catch (const std::exception& e) { 
+            throw std::runtime_error(std::string("Error transforming variable L_full: ") + e.what());
+        }
+
+        if (!(context__.contains_r("B_yes")))
+            throw std::runtime_error("variable B_yes missing");
+        vals_r__ = context__.vals_r("B_yes");
+        pos__ = 0U;
+        context__.validate_dims("initialization", "B_yes", "vector_d", context__.to_vec(num_bills));
+        // generate_declaration B_yes
+        vector_d B_yes(static_cast<Eigen::VectorXd::Index>(num_bills));
+        for (int j1__ = 0U; j1__ < num_bills; ++j1__)
+            B_yes(j1__) = vals_r__[pos__++];
+        try {
+            writer__.vector_unconstrain(B_yes);
+        } catch (const std::exception& e) { 
+            throw std::runtime_error(std::string("Error transforming variable B_yes: ") + e.what());
+        }
+
+        if (!(context__.contains_r("sigma_free")))
+            throw std::runtime_error("variable sigma_free missing");
+        vals_r__ = context__.vals_r("sigma_free");
+        pos__ = 0U;
+        context__.validate_dims("initialization", "sigma_free", "vector_d", context__.to_vec((num_bills - restrict)));
+        // generate_declaration sigma_free
+        vector_d sigma_free(static_cast<Eigen::VectorXd::Index>((num_bills - restrict)));
+        for (int j1__ = 0U; j1__ < (num_bills - restrict); ++j1__)
+            sigma_free(j1__) = vals_r__[pos__++];
+        try {
+            writer__.vector_unconstrain(sigma_free);
+        } catch (const std::exception& e) { 
+            throw std::runtime_error(std::string("Error transforming variable sigma_free: ") + e.what());
+        }
+
+        if (!(context__.contains_r("sigma_restrict")))
+            throw std::runtime_error("variable sigma_restrict missing");
+        vals_r__ = context__.vals_r("sigma_restrict");
+        pos__ = 0U;
+        context__.validate_dims("initialization", "sigma_restrict", "vector_d", context__.to_vec(restrict));
+        // generate_declaration sigma_restrict
+        vector_d sigma_restrict(static_cast<Eigen::VectorXd::Index>(restrict));
+        for (int j1__ = 0U; j1__ < restrict; ++j1__)
+            sigma_restrict(j1__) = vals_r__[pos__++];
+        try {
+            writer__.vector_ub_unconstrain(0,sigma_restrict);
+        } catch (const std::exception& e) { 
+            throw std::runtime_error(std::string("Error transforming variable sigma_restrict: ") + e.what());
+        }
+
+        params_r__ = writer__.data_r();
+        params_i__ = writer__.data_i();
+    }
+
+    void transform_inits(const stan::io::var_context& context,
+                         Eigen::Matrix<double,Eigen::Dynamic,1>& params_r,
+                         std::ostream* pstream__) const {
+      std::vector<double> params_r_vec;
+      std::vector<int> params_i_vec;
+      transform_inits(context, params_i_vec, params_r_vec, pstream__);
+      params_r.resize(params_r_vec.size());
+      for (int i = 0; i < params_r.size(); ++i)
+        params_r(i) = params_r_vec[i];
+    }
+
+
+    template <bool propto__, bool jacobian__, typename T__>
+    T__ log_prob(vector<T__>& params_r__,
+                 vector<int>& params_i__,
+                 std::ostream* pstream__ = 0) const {
+
+        T__ DUMMY_VAR__(std::numeric_limits<double>::quiet_NaN());
+        (void) DUMMY_VAR__;  // suppress unused var warning
+
+        T__ lp__(0.0);
+        stan::math::accumulator<T__> lp_accum__;
+
+        // model parameters
+        stan::io::reader<T__> in__(params_r__,params_i__);
+
+        Eigen::Matrix<T__,Eigen::Dynamic,1>  L_full;
+        (void) L_full;  // dummy to suppress unused var warning
+        if (jacobian__)
+            L_full = in__.vector_constrain(num_legis,lp__);
+        else
+            L_full = in__.vector_constrain(num_legis);
+
+        Eigen::Matrix<T__,Eigen::Dynamic,1>  B_yes;
+        (void) B_yes;  // dummy to suppress unused var warning
+        if (jacobian__)
+            B_yes = in__.vector_constrain(num_bills,lp__);
+        else
+            B_yes = in__.vector_constrain(num_bills);
+
+        Eigen::Matrix<T__,Eigen::Dynamic,1>  sigma_free;
+        (void) sigma_free;  // dummy to suppress unused var warning
+        if (jacobian__)
+            sigma_free = in__.vector_constrain((num_bills - restrict),lp__);
+        else
+            sigma_free = in__.vector_constrain((num_bills - restrict));
+
+        Eigen::Matrix<T__,Eigen::Dynamic,1>  sigma_restrict;
+        (void) sigma_restrict;  // dummy to suppress unused var warning
+        if (jacobian__)
+            sigma_restrict = in__.vector_ub_constrain(0,restrict,lp__);
+        else
+            sigma_restrict = in__.vector_ub_constrain(0,restrict);
+
+
+        // transformed parameters
+        Eigen::Matrix<T__,Eigen::Dynamic,1>  sigma_full(static_cast<Eigen::VectorXd::Index>(num_bills));
+        (void) sigma_full;  // dummy to suppress unused var warning
+        stan::math::initialize(sigma_full, DUMMY_VAR__);
+        stan::math::fill(sigma_full,DUMMY_VAR__);
+
+
+        try {
+            stan::math::assign(sigma_full, append_row(sigma_free,sigma_restrict));
+        } catch (const std::exception& e) {
+            stan::lang::rethrow_located(e,current_statement_begin__);
+            // Next line prevents compiler griping about no return
+            throw std::runtime_error("*** IF YOU SEE THIS, PLEASE REPORT A BUG ***");
+        }
+
+        // validate transformed parameters
+        for (int i0__ = 0; i0__ < num_bills; ++i0__) {
+            if (stan::math::is_uninitialized(sigma_full(i0__))) {
+                std::stringstream msg__;
+                msg__ << "Undefined transformed parameter: sigma_full" << '[' << i0__ << ']';
+                throw std::runtime_error(msg__.str());
+            }
+        }
+
+        const char* function__ = "validate transformed params";
+        (void) function__;  // dummy to suppress unused var warning
+
+        // model body
+        try {
+            {
+                Eigen::Matrix<T__,Eigen::Dynamic,1>  pi1(static_cast<Eigen::VectorXd::Index>(N));
+                (void) pi1;  // dummy to suppress unused var warning
+                stan::math::initialize(pi1, DUMMY_VAR__);
+                stan::math::fill(pi1,DUMMY_VAR__);
+                Eigen::Matrix<T__,Eigen::Dynamic,1>  pi2(static_cast<Eigen::VectorXd::Index>(N));
+                (void) pi2;  // dummy to suppress unused var warning
+                stan::math::initialize(pi2, DUMMY_VAR__);
+                stan::math::fill(pi2,DUMMY_VAR__);
+
+
+                lp_accum__.add(normal_log<propto__>(sigma_free, 0, 5));
+                lp_accum__.add(normal_log<propto__>(sigma_restrict, 0, 5));
+                lp_accum__.add(normal_log<propto__>(L_full, 0, 1));
+                lp_accum__.add(normal_log<propto__>(B_yes, 0, 5));
+                for (int n = 1; n <= N; ++n) {
+
+                    stan::math::assign(get_base1_lhs(pi1,n,"pi1",1), ((get_base1(sigma_full,get_base1(bb,n,"bb",1),"sigma_full",1) * get_base1(L_full,get_base1(ll,n,"ll",1),"L_full",1)) - get_base1(B_yes,get_base1(bb,n,"bb",1),"B_yes",1)));
+                }
+                lp_accum__.add(bernoulli_logit_log<propto__>(Y_new, pi1));
+            }
+        } catch (const std::exception& e) {
+            stan::lang::rethrow_located(e,current_statement_begin__);
+            // Next line prevents compiler griping about no return
+            throw std::runtime_error("*** IF YOU SEE THIS, PLEASE REPORT A BUG ***");
+        }
+
+        lp_accum__.add(lp__);
+        return lp_accum__.sum();
+
+    } // log_prob()
+
+    template <bool propto, bool jacobian, typename T_>
+    T_ log_prob(Eigen::Matrix<T_,Eigen::Dynamic,1>& params_r,
+               std::ostream* pstream = 0) const {
+      std::vector<T_> vec_params_r;
+      vec_params_r.reserve(params_r.size());
+      for (int i = 0; i < params_r.size(); ++i)
+        vec_params_r.push_back(params_r(i));
+      std::vector<int> vec_params_i;
+      return log_prob<propto,jacobian,T_>(vec_params_r, vec_params_i, pstream);
+    }
+
+
+    void get_param_names(std::vector<std::string>& names__) const {
+        names__.resize(0);
+        names__.push_back("L_full");
+        names__.push_back("B_yes");
+        names__.push_back("sigma_free");
+        names__.push_back("sigma_restrict");
+        names__.push_back("sigma_full");
+    }
+
+
+    void get_dims(std::vector<std::vector<size_t> >& dimss__) const {
+        dimss__.resize(0);
+        std::vector<size_t> dims__;
+        dims__.resize(0);
+        dims__.push_back(num_legis);
+        dimss__.push_back(dims__);
+        dims__.resize(0);
+        dims__.push_back(num_bills);
+        dimss__.push_back(dims__);
+        dims__.resize(0);
+        dims__.push_back((num_bills - restrict));
+        dimss__.push_back(dims__);
+        dims__.resize(0);
+        dims__.push_back(restrict);
+        dimss__.push_back(dims__);
+        dims__.resize(0);
+        dims__.push_back(num_bills);
+        dimss__.push_back(dims__);
+    }
+
+    template <typename RNG>
+    void write_array(RNG& base_rng__,
+                     std::vector<double>& params_r__,
+                     std::vector<int>& params_i__,
+                     std::vector<double>& vars__,
+                     bool include_tparams__ = true,
+                     bool include_gqs__ = true,
+                     std::ostream* pstream__ = 0) const {
+        vars__.resize(0);
+        stan::io::reader<double> in__(params_r__,params_i__);
+        static const char* function__ = "model_binary_2pl_constrain_bill_sigma_namespace::write_array";
+        (void) function__; // dummy call to supress warning
+        // read-transform, write parameters
+        vector_d L_full = in__.vector_constrain(num_legis);
+        vector_d B_yes = in__.vector_constrain(num_bills);
+        vector_d sigma_free = in__.vector_constrain((num_bills - restrict));
+        vector_d sigma_restrict = in__.vector_ub_constrain(0,restrict);
+        for (int k_0__ = 0; k_0__ < num_legis; ++k_0__) {
+            vars__.push_back(L_full[k_0__]);
+        }
+        for (int k_0__ = 0; k_0__ < num_bills; ++k_0__) {
+            vars__.push_back(B_yes[k_0__]);
+        }
+        for (int k_0__ = 0; k_0__ < (num_bills - restrict); ++k_0__) {
+            vars__.push_back(sigma_free[k_0__]);
+        }
+        for (int k_0__ = 0; k_0__ < restrict; ++k_0__) {
+            vars__.push_back(sigma_restrict[k_0__]);
+        }
+
+        if (!include_tparams__) return;
+        // declare and define transformed parameters
+        double lp__ = 0.0;
+        (void) lp__; // dummy call to supress warning
+        stan::math::accumulator<double> lp_accum__;
+
+        double DUMMY_VAR__(std::numeric_limits<double>::quiet_NaN());
+        (void) DUMMY_VAR__;  // suppress unused var warning
+
+        vector_d sigma_full(static_cast<Eigen::VectorXd::Index>(num_bills));
+        (void) sigma_full;  // dummy to suppress unused var warning
+        stan::math::initialize(sigma_full, std::numeric_limits<double>::quiet_NaN());
+        stan::math::fill(sigma_full,DUMMY_VAR__);
+
+
+        try {
+            stan::math::assign(sigma_full, append_row(sigma_free,sigma_restrict));
+        } catch (const std::exception& e) {
+            stan::lang::rethrow_located(e,current_statement_begin__);
+            // Next line prevents compiler griping about no return
+            throw std::runtime_error("*** IF YOU SEE THIS, PLEASE REPORT A BUG ***");
+        }
+
+        // validate transformed parameters
+
+        // write transformed parameters
+        for (int k_0__ = 0; k_0__ < num_bills; ++k_0__) {
+            vars__.push_back(sigma_full[k_0__]);
+        }
+
+        if (!include_gqs__) return;
+        // declare and define generated quantities
+
+
+        try {
+        } catch (const std::exception& e) {
+            stan::lang::rethrow_located(e,current_statement_begin__);
+            // Next line prevents compiler griping about no return
+            throw std::runtime_error("*** IF YOU SEE THIS, PLEASE REPORT A BUG ***");
+        }
+
+        // validate generated quantities
+
+        // write generated quantities
+    }
+
+    template <typename RNG>
+    void write_array(RNG& base_rng,
+                     Eigen::Matrix<double,Eigen::Dynamic,1>& params_r,
+                     Eigen::Matrix<double,Eigen::Dynamic,1>& vars,
+                     bool include_tparams = true,
+                     bool include_gqs = true,
+                     std::ostream* pstream = 0) const {
+      std::vector<double> params_r_vec(params_r.size());
+      for (int i = 0; i < params_r.size(); ++i)
+        params_r_vec[i] = params_r(i);
+      std::vector<double> vars_vec;
+      std::vector<int> params_i_vec;
+      write_array(base_rng,params_r_vec,params_i_vec,vars_vec,include_tparams,include_gqs,pstream);
+      vars.resize(vars_vec.size());
+      for (int i = 0; i < vars.size(); ++i)
+        vars(i) = vars_vec[i];
+    }
+
+    static std::string model_name() {
+        return "model_binary_2pl_constrain_bill_sigma";
+    }
+
+
+    void constrained_param_names(std::vector<std::string>& param_names__,
+                                 bool include_tparams__ = true,
+                                 bool include_gqs__ = true) const {
+        std::stringstream param_name_stream__;
+        for (int k_0__ = 1; k_0__ <= num_legis; ++k_0__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "L_full" << '.' << k_0__;
+            param_names__.push_back(param_name_stream__.str());
+        }
+        for (int k_0__ = 1; k_0__ <= num_bills; ++k_0__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "B_yes" << '.' << k_0__;
+            param_names__.push_back(param_name_stream__.str());
+        }
+        for (int k_0__ = 1; k_0__ <= (num_bills - restrict); ++k_0__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "sigma_free" << '.' << k_0__;
+            param_names__.push_back(param_name_stream__.str());
+        }
+        for (int k_0__ = 1; k_0__ <= restrict; ++k_0__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "sigma_restrict" << '.' << k_0__;
+            param_names__.push_back(param_name_stream__.str());
+        }
+
+        if (!include_gqs__ && !include_tparams__) return;
+        for (int k_0__ = 1; k_0__ <= num_bills; ++k_0__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "sigma_full" << '.' << k_0__;
+            param_names__.push_back(param_name_stream__.str());
+        }
+
+        if (!include_gqs__) return;
+    }
+
+
+    void unconstrained_param_names(std::vector<std::string>& param_names__,
+                                   bool include_tparams__ = true,
+                                   bool include_gqs__ = true) const {
+        std::stringstream param_name_stream__;
+        for (int k_0__ = 1; k_0__ <= num_legis; ++k_0__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "L_full" << '.' << k_0__;
+            param_names__.push_back(param_name_stream__.str());
+        }
+        for (int k_0__ = 1; k_0__ <= num_bills; ++k_0__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "B_yes" << '.' << k_0__;
+            param_names__.push_back(param_name_stream__.str());
+        }
+        for (int k_0__ = 1; k_0__ <= (num_bills - restrict); ++k_0__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "sigma_free" << '.' << k_0__;
+            param_names__.push_back(param_name_stream__.str());
+        }
+        for (int k_0__ = 1; k_0__ <= restrict; ++k_0__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "sigma_restrict" << '.' << k_0__;
+            param_names__.push_back(param_name_stream__.str());
+        }
+
+        if (!include_gqs__ && !include_tparams__) return;
+        for (int k_0__ = 1; k_0__ <= num_bills; ++k_0__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "sigma_full" << '.' << k_0__;
+            param_names__.push_back(param_name_stream__.str());
+        }
+
+        if (!include_gqs__) return;
+    }
+
+}; // model
+
+} // namespace
+
+
+
+
+// Code generated by Stan version 2.13
+
+#include <stan/model/model_header.hpp>
+
+namespace model_binary_2pl_constrain_person_namespace {
+
+using std::istream;
+using std::string;
+using std::stringstream;
+using std::vector;
+using stan::io::dump;
+using stan::math::lgamma;
+using stan::model::prob_grad;
+using namespace stan::math;
+
+typedef Eigen::Matrix<double,Eigen::Dynamic,1> vector_d;
+typedef Eigen::Matrix<double,1,Eigen::Dynamic> row_vector_d;
+typedef Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> matrix_d;
+
+static int current_statement_begin__;
+
+class model_binary_2pl_constrain_person : public prob_grad {
+private:
+    int N;
+    vector<int> Y;
+    int num_legis;
+    int num_bills;
+    vector<int> ll;
+    vector<int> bb;
+    int restrict;
+    vector_d particip;
+    vector<int> Y_new;
+public:
+    model_binary_2pl_constrain_person(stan::io::var_context& context__,
+        std::ostream* pstream__ = 0)
+        : prob_grad(0) {
+        typedef boost::ecuyer1988 rng_t;
+        rng_t base_rng(0);  // 0 seed default
+        ctor_body(context__, base_rng, pstream__);
+    }
+
+    template <class RNG>
+    model_binary_2pl_constrain_person(stan::io::var_context& context__,
+        RNG& base_rng__,
+        std::ostream* pstream__ = 0)
+        : prob_grad(0) {
+        ctor_body(context__, base_rng__, pstream__);
+    }
+
+    template <class RNG>
+    void ctor_body(stan::io::var_context& context__,
+                   RNG& base_rng__,
+                   std::ostream* pstream__) {
+        current_statement_begin__ = -1;
+
+        static const char* function__ = "model_binary_2pl_constrain_person_namespace::model_binary_2pl_constrain_person";
+        (void) function__; // dummy call to supress warning
+        size_t pos__;
+        (void) pos__; // dummy call to supress warning
+        std::vector<int> vals_i__;
+        std::vector<double> vals_r__;
+        double DUMMY_VAR__(std::numeric_limits<double>::quiet_NaN());
+        (void) DUMMY_VAR__;  // suppress unused var warning
+
+        // initialize member variables
+        context__.validate_dims("data initialization", "N", "int", context__.to_vec());
+        N = int(0);
+        vals_i__ = context__.vals_i("N");
+        pos__ = 0;
+        N = vals_i__[pos__++];
+        context__.validate_dims("data initialization", "Y", "int", context__.to_vec(N));
+        validate_non_negative_index("Y", "N", N);
+        Y = std::vector<int>(N,int(0));
+        vals_i__ = context__.vals_i("Y");
+        pos__ = 0;
+        size_t Y_limit_0__ = N;
+        for (size_t i_0__ = 0; i_0__ < Y_limit_0__; ++i_0__) {
+            Y[i_0__] = vals_i__[pos__++];
+        }
+        context__.validate_dims("data initialization", "num_legis", "int", context__.to_vec());
+        num_legis = int(0);
+        vals_i__ = context__.vals_i("num_legis");
+        pos__ = 0;
+        num_legis = vals_i__[pos__++];
+        context__.validate_dims("data initialization", "num_bills", "int", context__.to_vec());
+        num_bills = int(0);
+        vals_i__ = context__.vals_i("num_bills");
+        pos__ = 0;
+        num_bills = vals_i__[pos__++];
+        context__.validate_dims("data initialization", "ll", "int", context__.to_vec(N));
+        validate_non_negative_index("ll", "N", N);
+        ll = std::vector<int>(N,int(0));
+        vals_i__ = context__.vals_i("ll");
+        pos__ = 0;
+        size_t ll_limit_0__ = N;
+        for (size_t i_0__ = 0; i_0__ < ll_limit_0__; ++i_0__) {
+            ll[i_0__] = vals_i__[pos__++];
+        }
+        context__.validate_dims("data initialization", "bb", "int", context__.to_vec(N));
+        validate_non_negative_index("bb", "N", N);
+        bb = std::vector<int>(N,int(0));
+        vals_i__ = context__.vals_i("bb");
+        pos__ = 0;
+        size_t bb_limit_0__ = N;
+        for (size_t i_0__ = 0; i_0__ < bb_limit_0__; ++i_0__) {
+            bb[i_0__] = vals_i__[pos__++];
+        }
+        context__.validate_dims("data initialization", "restrict", "int", context__.to_vec());
+        restrict = int(0);
+        vals_i__ = context__.vals_i("restrict");
+        pos__ = 0;
+        restrict = vals_i__[pos__++];
+        validate_non_negative_index("particip", "num_legis", num_legis);
+        particip = vector_d(static_cast<Eigen::VectorXd::Index>(num_legis));
+        context__.validate_dims("data initialization", "particip", "vector_d", context__.to_vec(num_legis));
+        vals_r__ = context__.vals_r("particip");
+        pos__ = 0;
+        size_t particip_i_vec_lim__ = num_legis;
+        for (size_t i_vec__ = 0; i_vec__ < particip_i_vec_lim__; ++i_vec__) {
+            particip[i_vec__] = vals_r__[pos__++];
+        }
+
+        // validate, data variables
+        check_greater_or_equal(function__,"num_legis",num_legis,1);
+        check_greater_or_equal(function__,"num_bills",num_bills,1);
+        // initialize data variables
+        validate_non_negative_index("Y_new", "N", N);
+        Y_new = std::vector<int>(N,int(0));
+        stan::math::fill(Y_new, std::numeric_limits<int>::min());
+
+        try {
+            if (as_bool(logical_gt(max(Y),1))) {
+
+                for (int n = 1; n <= N; ++n) {
+                    stan::math::assign(get_base1_lhs(Y_new,n,"Y_new",1), (get_base1(Y,n,"Y",1) - min(Y)));
+                }
+            } else {
+
+                stan::math::assign(Y_new, Y);
+            }
+        } catch (const std::exception& e) {
+            stan::lang::rethrow_located(e,current_statement_begin__);
+            // Next line prevents compiler griping about no return
+            throw std::runtime_error("*** IF YOU SEE THIS, PLEASE REPORT A BUG ***");
+        }
+
+        // validate transformed data
+
+        // set parameter ranges
+        num_params_r__ = 0U;
+        param_ranges_i__.clear();
+        num_params_r__ += (num_legis - (restrict * 2));
+        num_params_r__ += restrict;
+        num_params_r__ += restrict;
+        num_params_r__ += num_bills;
+        num_params_r__ += num_bills;
+    }
+
+    ~model_binary_2pl_constrain_person() { }
+
+
+    void transform_inits(const stan::io::var_context& context__,
+                         std::vector<int>& params_i__,
+                         std::vector<double>& params_r__,
+                         std::ostream* pstream__) const {
+        stan::io::writer<double> writer__(params_r__,params_i__);
+        size_t pos__;
+        (void) pos__; // dummy call to supress warning
+        std::vector<double> vals_r__;
+        std::vector<int> vals_i__;
+
+        if (!(context__.contains_r("L_free")))
+            throw std::runtime_error("variable L_free missing");
+        vals_r__ = context__.vals_r("L_free");
+        pos__ = 0U;
+        context__.validate_dims("initialization", "L_free", "vector_d", context__.to_vec((num_legis - (restrict * 2))));
+        // generate_declaration L_free
+        vector_d L_free(static_cast<Eigen::VectorXd::Index>((num_legis - (restrict * 2))));
+        for (int j1__ = 0U; j1__ < (num_legis - (restrict * 2)); ++j1__)
+            L_free(j1__) = vals_r__[pos__++];
+        try {
+            writer__.vector_unconstrain(L_free);
+        } catch (const std::exception& e) { 
+            throw std::runtime_error(std::string("Error transforming variable L_free: ") + e.what());
+        }
+
+        if (!(context__.contains_r("L_restrict_high")))
+            throw std::runtime_error("variable L_restrict_high missing");
+        vals_r__ = context__.vals_r("L_restrict_high");
+        pos__ = 0U;
+        context__.validate_dims("initialization", "L_restrict_high", "vector_d", context__.to_vec(restrict));
+        // generate_declaration L_restrict_high
+        vector_d L_restrict_high(static_cast<Eigen::VectorXd::Index>(restrict));
+        for (int j1__ = 0U; j1__ < restrict; ++j1__)
+            L_restrict_high(j1__) = vals_r__[pos__++];
+        try {
+            writer__.vector_lb_unconstrain(0,L_restrict_high);
+        } catch (const std::exception& e) { 
+            throw std::runtime_error(std::string("Error transforming variable L_restrict_high: ") + e.what());
+        }
+
+        if (!(context__.contains_r("L_restrict_low")))
+            throw std::runtime_error("variable L_restrict_low missing");
+        vals_r__ = context__.vals_r("L_restrict_low");
+        pos__ = 0U;
+        context__.validate_dims("initialization", "L_restrict_low", "vector_d", context__.to_vec(restrict));
+        // generate_declaration L_restrict_low
+        vector_d L_restrict_low(static_cast<Eigen::VectorXd::Index>(restrict));
+        for (int j1__ = 0U; j1__ < restrict; ++j1__)
+            L_restrict_low(j1__) = vals_r__[pos__++];
+        try {
+            writer__.vector_ub_unconstrain(0,L_restrict_low);
+        } catch (const std::exception& e) { 
+            throw std::runtime_error(std::string("Error transforming variable L_restrict_low: ") + e.what());
+        }
+
+        if (!(context__.contains_r("B_yes")))
+            throw std::runtime_error("variable B_yes missing");
+        vals_r__ = context__.vals_r("B_yes");
+        pos__ = 0U;
+        context__.validate_dims("initialization", "B_yes", "vector_d", context__.to_vec(num_bills));
+        // generate_declaration B_yes
+        vector_d B_yes(static_cast<Eigen::VectorXd::Index>(num_bills));
+        for (int j1__ = 0U; j1__ < num_bills; ++j1__)
+            B_yes(j1__) = vals_r__[pos__++];
+        try {
+            writer__.vector_unconstrain(B_yes);
+        } catch (const std::exception& e) { 
+            throw std::runtime_error(std::string("Error transforming variable B_yes: ") + e.what());
+        }
+
+        if (!(context__.contains_r("sigma_full")))
+            throw std::runtime_error("variable sigma_full missing");
+        vals_r__ = context__.vals_r("sigma_full");
+        pos__ = 0U;
+        context__.validate_dims("initialization", "sigma_full", "vector_d", context__.to_vec(num_bills));
+        // generate_declaration sigma_full
+        vector_d sigma_full(static_cast<Eigen::VectorXd::Index>(num_bills));
+        for (int j1__ = 0U; j1__ < num_bills; ++j1__)
+            sigma_full(j1__) = vals_r__[pos__++];
+        try {
+            writer__.vector_unconstrain(sigma_full);
+        } catch (const std::exception& e) { 
+            throw std::runtime_error(std::string("Error transforming variable sigma_full: ") + e.what());
+        }
+
+        params_r__ = writer__.data_r();
+        params_i__ = writer__.data_i();
+    }
+
+    void transform_inits(const stan::io::var_context& context,
+                         Eigen::Matrix<double,Eigen::Dynamic,1>& params_r,
+                         std::ostream* pstream__) const {
+      std::vector<double> params_r_vec;
+      std::vector<int> params_i_vec;
+      transform_inits(context, params_i_vec, params_r_vec, pstream__);
+      params_r.resize(params_r_vec.size());
+      for (int i = 0; i < params_r.size(); ++i)
+        params_r(i) = params_r_vec[i];
+    }
+
+
+    template <bool propto__, bool jacobian__, typename T__>
+    T__ log_prob(vector<T__>& params_r__,
+                 vector<int>& params_i__,
+                 std::ostream* pstream__ = 0) const {
+
+        T__ DUMMY_VAR__(std::numeric_limits<double>::quiet_NaN());
+        (void) DUMMY_VAR__;  // suppress unused var warning
+
+        T__ lp__(0.0);
+        stan::math::accumulator<T__> lp_accum__;
+
+        // model parameters
+        stan::io::reader<T__> in__(params_r__,params_i__);
+
+        Eigen::Matrix<T__,Eigen::Dynamic,1>  L_free;
+        (void) L_free;  // dummy to suppress unused var warning
+        if (jacobian__)
+            L_free = in__.vector_constrain((num_legis - (restrict * 2)),lp__);
+        else
+            L_free = in__.vector_constrain((num_legis - (restrict * 2)));
+
+        Eigen::Matrix<T__,Eigen::Dynamic,1>  L_restrict_high;
+        (void) L_restrict_high;  // dummy to suppress unused var warning
+        if (jacobian__)
+            L_restrict_high = in__.vector_lb_constrain(0,restrict,lp__);
+        else
+            L_restrict_high = in__.vector_lb_constrain(0,restrict);
+
+        Eigen::Matrix<T__,Eigen::Dynamic,1>  L_restrict_low;
+        (void) L_restrict_low;  // dummy to suppress unused var warning
+        if (jacobian__)
+            L_restrict_low = in__.vector_ub_constrain(0,restrict,lp__);
+        else
+            L_restrict_low = in__.vector_ub_constrain(0,restrict);
+
+        Eigen::Matrix<T__,Eigen::Dynamic,1>  B_yes;
+        (void) B_yes;  // dummy to suppress unused var warning
+        if (jacobian__)
+            B_yes = in__.vector_constrain(num_bills,lp__);
+        else
+            B_yes = in__.vector_constrain(num_bills);
+
+        Eigen::Matrix<T__,Eigen::Dynamic,1>  sigma_full;
+        (void) sigma_full;  // dummy to suppress unused var warning
+        if (jacobian__)
+            sigma_full = in__.vector_constrain(num_bills,lp__);
+        else
+            sigma_full = in__.vector_constrain(num_bills);
+
+
+        // transformed parameters
+        Eigen::Matrix<T__,Eigen::Dynamic,1>  L_full(static_cast<Eigen::VectorXd::Index>(num_legis));
+        (void) L_full;  // dummy to suppress unused var warning
+        stan::math::initialize(L_full, DUMMY_VAR__);
+        stan::math::fill(L_full,DUMMY_VAR__);
+
+
+        try {
+            stan::math::assign(L_full, append_row(L_free,append_row(L_restrict_high,L_restrict_low)));
+        } catch (const std::exception& e) {
+            stan::lang::rethrow_located(e,current_statement_begin__);
+            // Next line prevents compiler griping about no return
+            throw std::runtime_error("*** IF YOU SEE THIS, PLEASE REPORT A BUG ***");
+        }
+
+        // validate transformed parameters
+        for (int i0__ = 0; i0__ < num_legis; ++i0__) {
+            if (stan::math::is_uninitialized(L_full(i0__))) {
+                std::stringstream msg__;
+                msg__ << "Undefined transformed parameter: L_full" << '[' << i0__ << ']';
+                throw std::runtime_error(msg__.str());
+            }
+        }
+
+        const char* function__ = "validate transformed params";
+        (void) function__;  // dummy to suppress unused var warning
+
+        // model body
+        try {
+            {
+                Eigen::Matrix<T__,Eigen::Dynamic,1>  pi1(static_cast<Eigen::VectorXd::Index>(N));
+                (void) pi1;  // dummy to suppress unused var warning
+                stan::math::initialize(pi1, DUMMY_VAR__);
+                stan::math::fill(pi1,DUMMY_VAR__);
+                Eigen::Matrix<T__,Eigen::Dynamic,1>  pi2(static_cast<Eigen::VectorXd::Index>(N));
+                (void) pi2;  // dummy to suppress unused var warning
+                stan::math::initialize(pi2, DUMMY_VAR__);
+                stan::math::fill(pi2,DUMMY_VAR__);
+
+
+                lp_accum__.add(normal_log<propto__>(sigma_full, 0, 5));
+                lp_accum__.add(normal_log<propto__>(L_free, 0, 1));
+                lp_accum__.add(normal_log<propto__>(L_restrict_high, 0, 1));
+                lp_accum__.add(normal_log<propto__>(L_restrict_low, 0, 1));
+                lp_accum__.add(normal_log<propto__>(B_yes, 0, 5));
+                for (int n = 1; n <= N; ++n) {
+
+                    stan::math::assign(get_base1_lhs(pi1,n,"pi1",1), ((get_base1(sigma_full,get_base1(bb,n,"bb",1),"sigma_full",1) * get_base1(L_full,get_base1(ll,n,"ll",1),"L_full",1)) - get_base1(B_yes,get_base1(bb,n,"bb",1),"B_yes",1)));
+                }
+                lp_accum__.add(bernoulli_logit_log<propto__>(Y_new, pi1));
+            }
+        } catch (const std::exception& e) {
+            stan::lang::rethrow_located(e,current_statement_begin__);
+            // Next line prevents compiler griping about no return
+            throw std::runtime_error("*** IF YOU SEE THIS, PLEASE REPORT A BUG ***");
+        }
+
+        lp_accum__.add(lp__);
+        return lp_accum__.sum();
+
+    } // log_prob()
+
+    template <bool propto, bool jacobian, typename T_>
+    T_ log_prob(Eigen::Matrix<T_,Eigen::Dynamic,1>& params_r,
+               std::ostream* pstream = 0) const {
+      std::vector<T_> vec_params_r;
+      vec_params_r.reserve(params_r.size());
+      for (int i = 0; i < params_r.size(); ++i)
+        vec_params_r.push_back(params_r(i));
+      std::vector<int> vec_params_i;
+      return log_prob<propto,jacobian,T_>(vec_params_r, vec_params_i, pstream);
+    }
+
+
+    void get_param_names(std::vector<std::string>& names__) const {
+        names__.resize(0);
+        names__.push_back("L_free");
+        names__.push_back("L_restrict_high");
+        names__.push_back("L_restrict_low");
+        names__.push_back("B_yes");
+        names__.push_back("sigma_full");
+        names__.push_back("L_full");
+    }
+
+
+    void get_dims(std::vector<std::vector<size_t> >& dimss__) const {
+        dimss__.resize(0);
+        std::vector<size_t> dims__;
+        dims__.resize(0);
+        dims__.push_back((num_legis - (restrict * 2)));
+        dimss__.push_back(dims__);
+        dims__.resize(0);
+        dims__.push_back(restrict);
+        dimss__.push_back(dims__);
+        dims__.resize(0);
+        dims__.push_back(restrict);
+        dimss__.push_back(dims__);
+        dims__.resize(0);
+        dims__.push_back(num_bills);
+        dimss__.push_back(dims__);
+        dims__.resize(0);
+        dims__.push_back(num_bills);
+        dimss__.push_back(dims__);
+        dims__.resize(0);
+        dims__.push_back(num_legis);
+        dimss__.push_back(dims__);
+    }
+
+    template <typename RNG>
+    void write_array(RNG& base_rng__,
+                     std::vector<double>& params_r__,
+                     std::vector<int>& params_i__,
+                     std::vector<double>& vars__,
+                     bool include_tparams__ = true,
+                     bool include_gqs__ = true,
+                     std::ostream* pstream__ = 0) const {
+        vars__.resize(0);
+        stan::io::reader<double> in__(params_r__,params_i__);
+        static const char* function__ = "model_binary_2pl_constrain_person_namespace::write_array";
+        (void) function__; // dummy call to supress warning
+        // read-transform, write parameters
+        vector_d L_free = in__.vector_constrain((num_legis - (restrict * 2)));
+        vector_d L_restrict_high = in__.vector_lb_constrain(0,restrict);
+        vector_d L_restrict_low = in__.vector_ub_constrain(0,restrict);
+        vector_d B_yes = in__.vector_constrain(num_bills);
+        vector_d sigma_full = in__.vector_constrain(num_bills);
+        for (int k_0__ = 0; k_0__ < (num_legis - (restrict * 2)); ++k_0__) {
+            vars__.push_back(L_free[k_0__]);
+        }
+        for (int k_0__ = 0; k_0__ < restrict; ++k_0__) {
+            vars__.push_back(L_restrict_high[k_0__]);
+        }
+        for (int k_0__ = 0; k_0__ < restrict; ++k_0__) {
+            vars__.push_back(L_restrict_low[k_0__]);
+        }
+        for (int k_0__ = 0; k_0__ < num_bills; ++k_0__) {
+            vars__.push_back(B_yes[k_0__]);
+        }
+        for (int k_0__ = 0; k_0__ < num_bills; ++k_0__) {
+            vars__.push_back(sigma_full[k_0__]);
+        }
+
+        if (!include_tparams__) return;
+        // declare and define transformed parameters
+        double lp__ = 0.0;
+        (void) lp__; // dummy call to supress warning
+        stan::math::accumulator<double> lp_accum__;
+
+        double DUMMY_VAR__(std::numeric_limits<double>::quiet_NaN());
+        (void) DUMMY_VAR__;  // suppress unused var warning
+
+        vector_d L_full(static_cast<Eigen::VectorXd::Index>(num_legis));
+        (void) L_full;  // dummy to suppress unused var warning
+        stan::math::initialize(L_full, std::numeric_limits<double>::quiet_NaN());
+        stan::math::fill(L_full,DUMMY_VAR__);
+
+
+        try {
+            stan::math::assign(L_full, append_row(L_free,append_row(L_restrict_high,L_restrict_low)));
+        } catch (const std::exception& e) {
+            stan::lang::rethrow_located(e,current_statement_begin__);
+            // Next line prevents compiler griping about no return
+            throw std::runtime_error("*** IF YOU SEE THIS, PLEASE REPORT A BUG ***");
+        }
+
+        // validate transformed parameters
+
+        // write transformed parameters
+        for (int k_0__ = 0; k_0__ < num_legis; ++k_0__) {
+            vars__.push_back(L_full[k_0__]);
+        }
+
+        if (!include_gqs__) return;
+        // declare and define generated quantities
+
+
+        try {
+        } catch (const std::exception& e) {
+            stan::lang::rethrow_located(e,current_statement_begin__);
+            // Next line prevents compiler griping about no return
+            throw std::runtime_error("*** IF YOU SEE THIS, PLEASE REPORT A BUG ***");
+        }
+
+        // validate generated quantities
+
+        // write generated quantities
+    }
+
+    template <typename RNG>
+    void write_array(RNG& base_rng,
+                     Eigen::Matrix<double,Eigen::Dynamic,1>& params_r,
+                     Eigen::Matrix<double,Eigen::Dynamic,1>& vars,
+                     bool include_tparams = true,
+                     bool include_gqs = true,
+                     std::ostream* pstream = 0) const {
+      std::vector<double> params_r_vec(params_r.size());
+      for (int i = 0; i < params_r.size(); ++i)
+        params_r_vec[i] = params_r(i);
+      std::vector<double> vars_vec;
+      std::vector<int> params_i_vec;
+      write_array(base_rng,params_r_vec,params_i_vec,vars_vec,include_tparams,include_gqs,pstream);
+      vars.resize(vars_vec.size());
+      for (int i = 0; i < vars.size(); ++i)
+        vars(i) = vars_vec[i];
+    }
+
+    static std::string model_name() {
+        return "model_binary_2pl_constrain_person";
+    }
+
+
+    void constrained_param_names(std::vector<std::string>& param_names__,
+                                 bool include_tparams__ = true,
+                                 bool include_gqs__ = true) const {
+        std::stringstream param_name_stream__;
+        for (int k_0__ = 1; k_0__ <= (num_legis - (restrict * 2)); ++k_0__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "L_free" << '.' << k_0__;
+            param_names__.push_back(param_name_stream__.str());
+        }
+        for (int k_0__ = 1; k_0__ <= restrict; ++k_0__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "L_restrict_high" << '.' << k_0__;
+            param_names__.push_back(param_name_stream__.str());
+        }
+        for (int k_0__ = 1; k_0__ <= restrict; ++k_0__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "L_restrict_low" << '.' << k_0__;
+            param_names__.push_back(param_name_stream__.str());
+        }
+        for (int k_0__ = 1; k_0__ <= num_bills; ++k_0__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "B_yes" << '.' << k_0__;
+            param_names__.push_back(param_name_stream__.str());
+        }
+        for (int k_0__ = 1; k_0__ <= num_bills; ++k_0__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "sigma_full" << '.' << k_0__;
+            param_names__.push_back(param_name_stream__.str());
+        }
+
+        if (!include_gqs__ && !include_tparams__) return;
+        for (int k_0__ = 1; k_0__ <= num_legis; ++k_0__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "L_full" << '.' << k_0__;
+            param_names__.push_back(param_name_stream__.str());
+        }
+
+        if (!include_gqs__) return;
+    }
+
+
+    void unconstrained_param_names(std::vector<std::string>& param_names__,
+                                   bool include_tparams__ = true,
+                                   bool include_gqs__ = true) const {
+        std::stringstream param_name_stream__;
+        for (int k_0__ = 1; k_0__ <= (num_legis - (restrict * 2)); ++k_0__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "L_free" << '.' << k_0__;
+            param_names__.push_back(param_name_stream__.str());
+        }
+        for (int k_0__ = 1; k_0__ <= restrict; ++k_0__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "L_restrict_high" << '.' << k_0__;
+            param_names__.push_back(param_name_stream__.str());
+        }
+        for (int k_0__ = 1; k_0__ <= restrict; ++k_0__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "L_restrict_low" << '.' << k_0__;
+            param_names__.push_back(param_name_stream__.str());
+        }
+        for (int k_0__ = 1; k_0__ <= num_bills; ++k_0__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "B_yes" << '.' << k_0__;
+            param_names__.push_back(param_name_stream__.str());
+        }
+        for (int k_0__ = 1; k_0__ <= num_bills; ++k_0__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "sigma_full" << '.' << k_0__;
+            param_names__.push_back(param_name_stream__.str());
+        }
+
+        if (!include_gqs__ && !include_tparams__) return;
+        for (int k_0__ = 1; k_0__ <= num_legis; ++k_0__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "L_full" << '.' << k_0__;
+            param_names__.push_back(param_name_stream__.str());
+        }
+
+        if (!include_gqs__) return;
+    }
+
+}; // model
+
+} // namespace
+
+
+
+
+// Code generated by Stan version 2.13
+
+#include <stan/model/model_header.hpp>
+
+namespace model_binary_2pl_nofix_namespace {
+
+using std::istream;
+using std::string;
+using std::stringstream;
+using std::vector;
+using stan::io::dump;
+using stan::math::lgamma;
+using stan::model::prob_grad;
+using namespace stan::math;
+
+typedef Eigen::Matrix<double,Eigen::Dynamic,1> vector_d;
+typedef Eigen::Matrix<double,1,Eigen::Dynamic> row_vector_d;
+typedef Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> matrix_d;
+
+static int current_statement_begin__;
+
+class model_binary_2pl_nofix : public prob_grad {
+private:
+    int N;
+    vector<int> Y;
+    int num_legis;
+    int num_bills;
+    vector<int> ll;
+    vector<int> bb;
+    vector_d particip;
+    vector<int> Y_new;
+public:
+    model_binary_2pl_nofix(stan::io::var_context& context__,
+        std::ostream* pstream__ = 0)
+        : prob_grad(0) {
+        typedef boost::ecuyer1988 rng_t;
+        rng_t base_rng(0);  // 0 seed default
+        ctor_body(context__, base_rng, pstream__);
+    }
+
+    template <class RNG>
+    model_binary_2pl_nofix(stan::io::var_context& context__,
+        RNG& base_rng__,
+        std::ostream* pstream__ = 0)
+        : prob_grad(0) {
+        ctor_body(context__, base_rng__, pstream__);
+    }
+
+    template <class RNG>
+    void ctor_body(stan::io::var_context& context__,
+                   RNG& base_rng__,
+                   std::ostream* pstream__) {
+        current_statement_begin__ = -1;
+
+        static const char* function__ = "model_binary_2pl_nofix_namespace::model_binary_2pl_nofix";
+        (void) function__; // dummy call to supress warning
+        size_t pos__;
+        (void) pos__; // dummy call to supress warning
+        std::vector<int> vals_i__;
+        std::vector<double> vals_r__;
+        double DUMMY_VAR__(std::numeric_limits<double>::quiet_NaN());
+        (void) DUMMY_VAR__;  // suppress unused var warning
+
+        // initialize member variables
+        context__.validate_dims("data initialization", "N", "int", context__.to_vec());
+        N = int(0);
+        vals_i__ = context__.vals_i("N");
+        pos__ = 0;
+        N = vals_i__[pos__++];
+        context__.validate_dims("data initialization", "Y", "int", context__.to_vec(N));
+        validate_non_negative_index("Y", "N", N);
+        Y = std::vector<int>(N,int(0));
+        vals_i__ = context__.vals_i("Y");
+        pos__ = 0;
+        size_t Y_limit_0__ = N;
+        for (size_t i_0__ = 0; i_0__ < Y_limit_0__; ++i_0__) {
+            Y[i_0__] = vals_i__[pos__++];
+        }
+        context__.validate_dims("data initialization", "num_legis", "int", context__.to_vec());
+        num_legis = int(0);
+        vals_i__ = context__.vals_i("num_legis");
+        pos__ = 0;
+        num_legis = vals_i__[pos__++];
+        context__.validate_dims("data initialization", "num_bills", "int", context__.to_vec());
+        num_bills = int(0);
+        vals_i__ = context__.vals_i("num_bills");
+        pos__ = 0;
+        num_bills = vals_i__[pos__++];
+        context__.validate_dims("data initialization", "ll", "int", context__.to_vec(N));
+        validate_non_negative_index("ll", "N", N);
+        ll = std::vector<int>(N,int(0));
+        vals_i__ = context__.vals_i("ll");
+        pos__ = 0;
+        size_t ll_limit_0__ = N;
+        for (size_t i_0__ = 0; i_0__ < ll_limit_0__; ++i_0__) {
+            ll[i_0__] = vals_i__[pos__++];
+        }
+        context__.validate_dims("data initialization", "bb", "int", context__.to_vec(N));
+        validate_non_negative_index("bb", "N", N);
+        bb = std::vector<int>(N,int(0));
+        vals_i__ = context__.vals_i("bb");
+        pos__ = 0;
+        size_t bb_limit_0__ = N;
+        for (size_t i_0__ = 0; i_0__ < bb_limit_0__; ++i_0__) {
+            bb[i_0__] = vals_i__[pos__++];
+        }
+        validate_non_negative_index("particip", "num_legis", num_legis);
+        particip = vector_d(static_cast<Eigen::VectorXd::Index>(num_legis));
+        context__.validate_dims("data initialization", "particip", "vector_d", context__.to_vec(num_legis));
+        vals_r__ = context__.vals_r("particip");
+        pos__ = 0;
+        size_t particip_i_vec_lim__ = num_legis;
+        for (size_t i_vec__ = 0; i_vec__ < particip_i_vec_lim__; ++i_vec__) {
+            particip[i_vec__] = vals_r__[pos__++];
+        }
+
+        // validate, data variables
+        check_greater_or_equal(function__,"num_legis",num_legis,1);
+        check_greater_or_equal(function__,"num_bills",num_bills,1);
+        // initialize data variables
+        validate_non_negative_index("Y_new", "N", N);
+        Y_new = std::vector<int>(N,int(0));
+        stan::math::fill(Y_new, std::numeric_limits<int>::min());
+
+        try {
+            if (as_bool(logical_gt(max(Y),1))) {
+
+                for (int n = 1; n <= N; ++n) {
+                    stan::math::assign(get_base1_lhs(Y_new,n,"Y_new",1), (get_base1(Y,n,"Y",1) - min(Y)));
+                }
+            } else {
+
+                stan::math::assign(Y_new, Y);
+            }
+        } catch (const std::exception& e) {
+            stan::lang::rethrow_located(e,current_statement_begin__);
+            // Next line prevents compiler griping about no return
+            throw std::runtime_error("*** IF YOU SEE THIS, PLEASE REPORT A BUG ***");
+        }
+
+        // validate transformed data
+
+        // set parameter ranges
+        num_params_r__ = 0U;
+        param_ranges_i__.clear();
+        num_params_r__ += num_legis;
+        num_params_r__ += num_bills;
+        num_params_r__ += num_bills;
+    }
+
+    ~model_binary_2pl_nofix() { }
+
+
+    void transform_inits(const stan::io::var_context& context__,
+                         std::vector<int>& params_i__,
+                         std::vector<double>& params_r__,
+                         std::ostream* pstream__) const {
+        stan::io::writer<double> writer__(params_r__,params_i__);
+        size_t pos__;
+        (void) pos__; // dummy call to supress warning
+        std::vector<double> vals_r__;
+        std::vector<int> vals_i__;
+
+        if (!(context__.contains_r("L_free")))
+            throw std::runtime_error("variable L_free missing");
+        vals_r__ = context__.vals_r("L_free");
+        pos__ = 0U;
+        context__.validate_dims("initialization", "L_free", "vector_d", context__.to_vec(num_legis));
+        // generate_declaration L_free
+        vector_d L_free(static_cast<Eigen::VectorXd::Index>(num_legis));
+        for (int j1__ = 0U; j1__ < num_legis; ++j1__)
+            L_free(j1__) = vals_r__[pos__++];
+        try {
+            writer__.vector_unconstrain(L_free);
+        } catch (const std::exception& e) { 
+            throw std::runtime_error(std::string("Error transforming variable L_free: ") + e.what());
+        }
+
+        if (!(context__.contains_r("B_yes")))
+            throw std::runtime_error("variable B_yes missing");
+        vals_r__ = context__.vals_r("B_yes");
+        pos__ = 0U;
+        context__.validate_dims("initialization", "B_yes", "vector_d", context__.to_vec(num_bills));
+        // generate_declaration B_yes
+        vector_d B_yes(static_cast<Eigen::VectorXd::Index>(num_bills));
+        for (int j1__ = 0U; j1__ < num_bills; ++j1__)
+            B_yes(j1__) = vals_r__[pos__++];
+        try {
+            writer__.vector_unconstrain(B_yes);
+        } catch (const std::exception& e) { 
+            throw std::runtime_error(std::string("Error transforming variable B_yes: ") + e.what());
+        }
+
+        if (!(context__.contains_r("sigma")))
+            throw std::runtime_error("variable sigma missing");
+        vals_r__ = context__.vals_r("sigma");
+        pos__ = 0U;
+        context__.validate_dims("initialization", "sigma", "vector_d", context__.to_vec(num_bills));
+        // generate_declaration sigma
+        vector_d sigma(static_cast<Eigen::VectorXd::Index>(num_bills));
+        for (int j1__ = 0U; j1__ < num_bills; ++j1__)
+            sigma(j1__) = vals_r__[pos__++];
+        try {
+            writer__.vector_unconstrain(sigma);
+        } catch (const std::exception& e) { 
+            throw std::runtime_error(std::string("Error transforming variable sigma: ") + e.what());
+        }
+
+        params_r__ = writer__.data_r();
+        params_i__ = writer__.data_i();
+    }
+
+    void transform_inits(const stan::io::var_context& context,
+                         Eigen::Matrix<double,Eigen::Dynamic,1>& params_r,
+                         std::ostream* pstream__) const {
+      std::vector<double> params_r_vec;
+      std::vector<int> params_i_vec;
+      transform_inits(context, params_i_vec, params_r_vec, pstream__);
+      params_r.resize(params_r_vec.size());
+      for (int i = 0; i < params_r.size(); ++i)
+        params_r(i) = params_r_vec[i];
+    }
+
+
+    template <bool propto__, bool jacobian__, typename T__>
+    T__ log_prob(vector<T__>& params_r__,
+                 vector<int>& params_i__,
+                 std::ostream* pstream__ = 0) const {
+
+        T__ DUMMY_VAR__(std::numeric_limits<double>::quiet_NaN());
+        (void) DUMMY_VAR__;  // suppress unused var warning
+
+        T__ lp__(0.0);
+        stan::math::accumulator<T__> lp_accum__;
+
+        // model parameters
+        stan::io::reader<T__> in__(params_r__,params_i__);
+
+        Eigen::Matrix<T__,Eigen::Dynamic,1>  L_free;
+        (void) L_free;  // dummy to suppress unused var warning
+        if (jacobian__)
+            L_free = in__.vector_constrain(num_legis,lp__);
+        else
+            L_free = in__.vector_constrain(num_legis);
+
+        Eigen::Matrix<T__,Eigen::Dynamic,1>  B_yes;
+        (void) B_yes;  // dummy to suppress unused var warning
+        if (jacobian__)
+            B_yes = in__.vector_constrain(num_bills,lp__);
+        else
+            B_yes = in__.vector_constrain(num_bills);
+
+        Eigen::Matrix<T__,Eigen::Dynamic,1>  sigma;
+        (void) sigma;  // dummy to suppress unused var warning
+        if (jacobian__)
+            sigma = in__.vector_constrain(num_bills,lp__);
+        else
+            sigma = in__.vector_constrain(num_bills);
+
+
+        // transformed parameters
+
+
+        try {
+        } catch (const std::exception& e) {
+            stan::lang::rethrow_located(e,current_statement_begin__);
+            // Next line prevents compiler griping about no return
+            throw std::runtime_error("*** IF YOU SEE THIS, PLEASE REPORT A BUG ***");
+        }
+
+        // validate transformed parameters
+
+        const char* function__ = "validate transformed params";
+        (void) function__;  // dummy to suppress unused var warning
+
+        // model body
+        try {
+            {
+                Eigen::Matrix<T__,Eigen::Dynamic,1>  pi1(static_cast<Eigen::VectorXd::Index>(N));
+                (void) pi1;  // dummy to suppress unused var warning
+                stan::math::initialize(pi1, DUMMY_VAR__);
+                stan::math::fill(pi1,DUMMY_VAR__);
+
+
+                lp_accum__.add(normal_log<propto__>(sigma, 0, 5));
+                lp_accum__.add(normal_log<propto__>(L_free, 0, 1));
+                lp_accum__.add(normal_log<propto__>(B_yes, 0, 5));
+                for (int n = 1; n <= N; ++n) {
+
+                    stan::math::assign(get_base1_lhs(pi1,n,"pi1",1), ((get_base1(sigma,get_base1(bb,n,"bb",1),"sigma",1) * get_base1(L_free,get_base1(ll,n,"ll",1),"L_free",1)) - get_base1(B_yes,get_base1(bb,n,"bb",1),"B_yes",1)));
+                }
+                lp_accum__.add(bernoulli_logit_log<propto__>(Y_new, pi1));
+            }
+        } catch (const std::exception& e) {
+            stan::lang::rethrow_located(e,current_statement_begin__);
+            // Next line prevents compiler griping about no return
+            throw std::runtime_error("*** IF YOU SEE THIS, PLEASE REPORT A BUG ***");
+        }
+
+        lp_accum__.add(lp__);
+        return lp_accum__.sum();
+
+    } // log_prob()
+
+    template <bool propto, bool jacobian, typename T_>
+    T_ log_prob(Eigen::Matrix<T_,Eigen::Dynamic,1>& params_r,
+               std::ostream* pstream = 0) const {
+      std::vector<T_> vec_params_r;
+      vec_params_r.reserve(params_r.size());
+      for (int i = 0; i < params_r.size(); ++i)
+        vec_params_r.push_back(params_r(i));
+      std::vector<int> vec_params_i;
+      return log_prob<propto,jacobian,T_>(vec_params_r, vec_params_i, pstream);
+    }
+
+
+    void get_param_names(std::vector<std::string>& names__) const {
+        names__.resize(0);
+        names__.push_back("L_free");
+        names__.push_back("B_yes");
+        names__.push_back("sigma");
+    }
+
+
+    void get_dims(std::vector<std::vector<size_t> >& dimss__) const {
+        dimss__.resize(0);
+        std::vector<size_t> dims__;
+        dims__.resize(0);
+        dims__.push_back(num_legis);
+        dimss__.push_back(dims__);
+        dims__.resize(0);
+        dims__.push_back(num_bills);
+        dimss__.push_back(dims__);
+        dims__.resize(0);
+        dims__.push_back(num_bills);
+        dimss__.push_back(dims__);
+    }
+
+    template <typename RNG>
+    void write_array(RNG& base_rng__,
+                     std::vector<double>& params_r__,
+                     std::vector<int>& params_i__,
+                     std::vector<double>& vars__,
+                     bool include_tparams__ = true,
+                     bool include_gqs__ = true,
+                     std::ostream* pstream__ = 0) const {
+        vars__.resize(0);
+        stan::io::reader<double> in__(params_r__,params_i__);
+        static const char* function__ = "model_binary_2pl_nofix_namespace::write_array";
+        (void) function__; // dummy call to supress warning
+        // read-transform, write parameters
+        vector_d L_free = in__.vector_constrain(num_legis);
+        vector_d B_yes = in__.vector_constrain(num_bills);
+        vector_d sigma = in__.vector_constrain(num_bills);
+        for (int k_0__ = 0; k_0__ < num_legis; ++k_0__) {
+            vars__.push_back(L_free[k_0__]);
+        }
+        for (int k_0__ = 0; k_0__ < num_bills; ++k_0__) {
+            vars__.push_back(B_yes[k_0__]);
+        }
+        for (int k_0__ = 0; k_0__ < num_bills; ++k_0__) {
+            vars__.push_back(sigma[k_0__]);
+        }
+
+        if (!include_tparams__) return;
+        // declare and define transformed parameters
+        double lp__ = 0.0;
+        (void) lp__; // dummy call to supress warning
+        stan::math::accumulator<double> lp_accum__;
+
+        double DUMMY_VAR__(std::numeric_limits<double>::quiet_NaN());
+        (void) DUMMY_VAR__;  // suppress unused var warning
+
+
+
+        try {
+        } catch (const std::exception& e) {
+            stan::lang::rethrow_located(e,current_statement_begin__);
+            // Next line prevents compiler griping about no return
+            throw std::runtime_error("*** IF YOU SEE THIS, PLEASE REPORT A BUG ***");
+        }
+
+        // validate transformed parameters
+
+        // write transformed parameters
+
+        if (!include_gqs__) return;
+        // declare and define generated quantities
+
+
+        try {
+        } catch (const std::exception& e) {
+            stan::lang::rethrow_located(e,current_statement_begin__);
+            // Next line prevents compiler griping about no return
+            throw std::runtime_error("*** IF YOU SEE THIS, PLEASE REPORT A BUG ***");
+        }
+
+        // validate generated quantities
+
+        // write generated quantities
+    }
+
+    template <typename RNG>
+    void write_array(RNG& base_rng,
+                     Eigen::Matrix<double,Eigen::Dynamic,1>& params_r,
+                     Eigen::Matrix<double,Eigen::Dynamic,1>& vars,
+                     bool include_tparams = true,
+                     bool include_gqs = true,
+                     std::ostream* pstream = 0) const {
+      std::vector<double> params_r_vec(params_r.size());
+      for (int i = 0; i < params_r.size(); ++i)
+        params_r_vec[i] = params_r(i);
+      std::vector<double> vars_vec;
+      std::vector<int> params_i_vec;
+      write_array(base_rng,params_r_vec,params_i_vec,vars_vec,include_tparams,include_gqs,pstream);
+      vars.resize(vars_vec.size());
+      for (int i = 0; i < vars.size(); ++i)
+        vars(i) = vars_vec[i];
+    }
+
+    static std::string model_name() {
+        return "model_binary_2pl_nofix";
+    }
+
+
+    void constrained_param_names(std::vector<std::string>& param_names__,
+                                 bool include_tparams__ = true,
+                                 bool include_gqs__ = true) const {
+        std::stringstream param_name_stream__;
+        for (int k_0__ = 1; k_0__ <= num_legis; ++k_0__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "L_free" << '.' << k_0__;
+            param_names__.push_back(param_name_stream__.str());
+        }
+        for (int k_0__ = 1; k_0__ <= num_bills; ++k_0__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "B_yes" << '.' << k_0__;
+            param_names__.push_back(param_name_stream__.str());
+        }
+        for (int k_0__ = 1; k_0__ <= num_bills; ++k_0__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "sigma" << '.' << k_0__;
+            param_names__.push_back(param_name_stream__.str());
+        }
+
+        if (!include_gqs__ && !include_tparams__) return;
+
+        if (!include_gqs__) return;
+    }
+
+
+    void unconstrained_param_names(std::vector<std::string>& param_names__,
+                                   bool include_tparams__ = true,
+                                   bool include_gqs__ = true) const {
+        std::stringstream param_name_stream__;
+        for (int k_0__ = 1; k_0__ <= num_legis; ++k_0__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "L_free" << '.' << k_0__;
+            param_names__.push_back(param_name_stream__.str());
+        }
+        for (int k_0__ = 1; k_0__ <= num_bills; ++k_0__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "B_yes" << '.' << k_0__;
+            param_names__.push_back(param_name_stream__.str());
+        }
+        for (int k_0__ = 1; k_0__ <= num_bills; ++k_0__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "sigma" << '.' << k_0__;
+            param_names__.push_back(param_name_stream__.str());
+        }
+
+        if (!include_gqs__ && !include_tparams__) return;
+
+        if (!include_gqs__) return;
+    }
+
+}; // model
+
+} // namespace
+
+
+
+
+// Code generated by Stan version 2.13
+
+#include <stan/model/model_header.hpp>
+
+namespace model_binary_absence_inflate_constrain_bill_sigma_namespace {
+
+using std::istream;
+using std::string;
+using std::stringstream;
+using std::vector;
+using stan::io::dump;
+using stan::math::lgamma;
+using stan::model::prob_grad;
+using namespace stan::math;
+
+typedef Eigen::Matrix<double,Eigen::Dynamic,1> vector_d;
+typedef Eigen::Matrix<double,1,Eigen::Dynamic> row_vector_d;
+typedef Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> matrix_d;
+
+static int current_statement_begin__;
+
+class model_binary_absence_inflate_constrain_bill_sigma : public prob_grad {
+private:
+    int N;
+    vector<int> Y;
+    int num_legis;
+    int num_bills;
+    vector<int> ll;
+    vector<int> bb;
+    int restrict;
+    vector_d particip;
+    vector<int> absence;
+    vector<int> Y_new;
+public:
+    model_binary_absence_inflate_constrain_bill_sigma(stan::io::var_context& context__,
+        std::ostream* pstream__ = 0)
+        : prob_grad(0) {
+        typedef boost::ecuyer1988 rng_t;
+        rng_t base_rng(0);  // 0 seed default
+        ctor_body(context__, base_rng, pstream__);
+    }
+
+    template <class RNG>
+    model_binary_absence_inflate_constrain_bill_sigma(stan::io::var_context& context__,
+        RNG& base_rng__,
+        std::ostream* pstream__ = 0)
+        : prob_grad(0) {
+        ctor_body(context__, base_rng__, pstream__);
+    }
+
+    template <class RNG>
+    void ctor_body(stan::io::var_context& context__,
+                   RNG& base_rng__,
+                   std::ostream* pstream__) {
+        current_statement_begin__ = -1;
+
+        static const char* function__ = "model_binary_absence_inflate_constrain_bill_sigma_namespace::model_binary_absence_inflate_constrain_bill_sigma";
         (void) function__; // dummy call to supress warning
         size_t pos__;
         (void) pos__; // dummy call to supress warning
@@ -177,7 +1840,7 @@ public:
         ++num_params_r__;
     }
 
-    ~model_binary_absence_inflate_fix_bill_sigma() { }
+    ~model_binary_absence_inflate_constrain_bill_sigma() { }
 
 
     void transform_inits(const stan::io::var_context& context__,
@@ -509,7 +2172,7 @@ public:
                      std::ostream* pstream__ = 0) const {
         vars__.resize(0);
         stan::io::reader<double> in__(params_r__,params_i__);
-        static const char* function__ = "model_binary_absence_inflate_fix_bill_sigma_namespace::write_array";
+        static const char* function__ = "model_binary_absence_inflate_constrain_bill_sigma_namespace::write_array";
         (void) function__; // dummy call to supress warning
         // read-transform, write parameters
         vector_d L_full = in__.vector_constrain(num_legis);
@@ -604,7 +2267,7 @@ public:
     }
 
     static std::string model_name() {
-        return "model_binary_absence_inflate_fix_bill_sigma";
+        return "model_binary_absence_inflate_constrain_bill_sigma";
     }
 
 
@@ -716,7 +2379,7 @@ public:
 
 #include <stan/model/model_header.hpp>
 
-namespace model_binary_absence_inflate_fix_bill_sigma_abs_namespace {
+namespace model_binary_absence_inflate_constrain_bill_sigma_abs_namespace {
 
 using std::istream;
 using std::string;
@@ -733,7 +2396,7 @@ typedef Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> matrix_d;
 
 static int current_statement_begin__;
 
-class model_binary_absence_inflate_fix_bill_sigma_abs : public prob_grad {
+class model_binary_absence_inflate_constrain_bill_sigma_abs : public prob_grad {
 private:
     int N;
     vector<int> Y;
@@ -746,7 +2409,7 @@ private:
     vector<int> absence;
     vector<int> Y_new;
 public:
-    model_binary_absence_inflate_fix_bill_sigma_abs(stan::io::var_context& context__,
+    model_binary_absence_inflate_constrain_bill_sigma_abs(stan::io::var_context& context__,
         std::ostream* pstream__ = 0)
         : prob_grad(0) {
         typedef boost::ecuyer1988 rng_t;
@@ -755,7 +2418,7 @@ public:
     }
 
     template <class RNG>
-    model_binary_absence_inflate_fix_bill_sigma_abs(stan::io::var_context& context__,
+    model_binary_absence_inflate_constrain_bill_sigma_abs(stan::io::var_context& context__,
         RNG& base_rng__,
         std::ostream* pstream__ = 0)
         : prob_grad(0) {
@@ -768,7 +2431,7 @@ public:
                    std::ostream* pstream__) {
         current_statement_begin__ = -1;
 
-        static const char* function__ = "model_binary_absence_inflate_fix_bill_sigma_abs_namespace::model_binary_absence_inflate_fix_bill_sigma_abs";
+        static const char* function__ = "model_binary_absence_inflate_constrain_bill_sigma_abs_namespace::model_binary_absence_inflate_constrain_bill_sigma_abs";
         (void) function__; // dummy call to supress warning
         size_t pos__;
         (void) pos__; // dummy call to supress warning
@@ -886,7 +2549,7 @@ public:
         ++num_params_r__;
     }
 
-    ~model_binary_absence_inflate_fix_bill_sigma_abs() { }
+    ~model_binary_absence_inflate_constrain_bill_sigma_abs() { }
 
 
     void transform_inits(const stan::io::var_context& context__,
@@ -1218,7 +2881,7 @@ public:
                      std::ostream* pstream__ = 0) const {
         vars__.resize(0);
         stan::io::reader<double> in__(params_r__,params_i__);
-        static const char* function__ = "model_binary_absence_inflate_fix_bill_sigma_abs_namespace::write_array";
+        static const char* function__ = "model_binary_absence_inflate_constrain_bill_sigma_abs_namespace::write_array";
         (void) function__; // dummy call to supress warning
         // read-transform, write parameters
         vector_d L_full = in__.vector_constrain(num_legis);
@@ -1313,7 +2976,7 @@ public:
     }
 
     static std::string model_name() {
-        return "model_binary_absence_inflate_fix_bill_sigma_abs";
+        return "model_binary_absence_inflate_constrain_bill_sigma_abs";
     }
 
 
@@ -1425,7 +3088,7 @@ public:
 
 #include <stan/model/model_header.hpp>
 
-namespace model_binary_absence_inflate_fix_person_namespace {
+namespace model_binary_absence_inflate_constrain_person_namespace {
 
 using std::istream;
 using std::string;
@@ -1442,7 +3105,7 @@ typedef Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> matrix_d;
 
 static int current_statement_begin__;
 
-class model_binary_absence_inflate_fix_person : public prob_grad {
+class model_binary_absence_inflate_constrain_person : public prob_grad {
 private:
     int N;
     vector<int> Y;
@@ -1455,7 +3118,7 @@ private:
     vector<int> absence;
     vector<int> Y_new;
 public:
-    model_binary_absence_inflate_fix_person(stan::io::var_context& context__,
+    model_binary_absence_inflate_constrain_person(stan::io::var_context& context__,
         std::ostream* pstream__ = 0)
         : prob_grad(0) {
         typedef boost::ecuyer1988 rng_t;
@@ -1464,7 +3127,7 @@ public:
     }
 
     template <class RNG>
-    model_binary_absence_inflate_fix_person(stan::io::var_context& context__,
+    model_binary_absence_inflate_constrain_person(stan::io::var_context& context__,
         RNG& base_rng__,
         std::ostream* pstream__ = 0)
         : prob_grad(0) {
@@ -1477,7 +3140,7 @@ public:
                    std::ostream* pstream__) {
         current_statement_begin__ = -1;
 
-        static const char* function__ = "model_binary_absence_inflate_fix_person_namespace::model_binary_absence_inflate_fix_person";
+        static const char* function__ = "model_binary_absence_inflate_constrain_person_namespace::model_binary_absence_inflate_constrain_person";
         (void) function__; // dummy call to supress warning
         size_t pos__;
         (void) pos__; // dummy call to supress warning
@@ -1586,7 +3249,8 @@ public:
         // set parameter ranges
         num_params_r__ = 0U;
         param_ranges_i__.clear();
-        num_params_r__ += num_legis;
+        num_params_r__ += (num_legis - (restrict * 2));
+        num_params_r__ += restrict;
         num_params_r__ += restrict;
         num_params_r__ += num_bills;
         num_params_r__ += num_bills;
@@ -1595,7 +3259,7 @@ public:
         ++num_params_r__;
     }
 
-    ~model_binary_absence_inflate_fix_person() { }
+    ~model_binary_absence_inflate_constrain_person() { }
 
 
     void transform_inits(const stan::io::var_context& context__,
@@ -1612,10 +3276,10 @@ public:
             throw std::runtime_error("variable L_free missing");
         vals_r__ = context__.vals_r("L_free");
         pos__ = 0U;
-        context__.validate_dims("initialization", "L_free", "vector_d", context__.to_vec(num_legis));
+        context__.validate_dims("initialization", "L_free", "vector_d", context__.to_vec((num_legis - (restrict * 2))));
         // generate_declaration L_free
-        vector_d L_free(static_cast<Eigen::VectorXd::Index>(num_legis));
-        for (int j1__ = 0U; j1__ < num_legis; ++j1__)
+        vector_d L_free(static_cast<Eigen::VectorXd::Index>((num_legis - (restrict * 2))));
+        for (int j1__ = 0U; j1__ < (num_legis - (restrict * 2)); ++j1__)
             L_free(j1__) = vals_r__[pos__++];
         try {
             writer__.vector_unconstrain(L_free);
@@ -1623,19 +3287,34 @@ public:
             throw std::runtime_error(std::string("Error transforming variable L_free: ") + e.what());
         }
 
-        if (!(context__.contains_r("L_restrict")))
-            throw std::runtime_error("variable L_restrict missing");
-        vals_r__ = context__.vals_r("L_restrict");
+        if (!(context__.contains_r("L_restrict_high")))
+            throw std::runtime_error("variable L_restrict_high missing");
+        vals_r__ = context__.vals_r("L_restrict_high");
         pos__ = 0U;
-        context__.validate_dims("initialization", "L_restrict", "vector_d", context__.to_vec(restrict));
-        // generate_declaration L_restrict
-        vector_d L_restrict(static_cast<Eigen::VectorXd::Index>(restrict));
+        context__.validate_dims("initialization", "L_restrict_high", "vector_d", context__.to_vec(restrict));
+        // generate_declaration L_restrict_high
+        vector_d L_restrict_high(static_cast<Eigen::VectorXd::Index>(restrict));
         for (int j1__ = 0U; j1__ < restrict; ++j1__)
-            L_restrict(j1__) = vals_r__[pos__++];
+            L_restrict_high(j1__) = vals_r__[pos__++];
         try {
-            writer__.vector_ub_unconstrain(0,L_restrict);
+            writer__.vector_lb_unconstrain(0,L_restrict_high);
         } catch (const std::exception& e) { 
-            throw std::runtime_error(std::string("Error transforming variable L_restrict: ") + e.what());
+            throw std::runtime_error(std::string("Error transforming variable L_restrict_high: ") + e.what());
+        }
+
+        if (!(context__.contains_r("L_restrict_low")))
+            throw std::runtime_error("variable L_restrict_low missing");
+        vals_r__ = context__.vals_r("L_restrict_low");
+        pos__ = 0U;
+        context__.validate_dims("initialization", "L_restrict_low", "vector_d", context__.to_vec(restrict));
+        // generate_declaration L_restrict_low
+        vector_d L_restrict_low(static_cast<Eigen::VectorXd::Index>(restrict));
+        for (int j1__ = 0U; j1__ < restrict; ++j1__)
+            L_restrict_low(j1__) = vals_r__[pos__++];
+        try {
+            writer__.vector_ub_unconstrain(0,L_restrict_low);
+        } catch (const std::exception& e) { 
+            throw std::runtime_error(std::string("Error transforming variable L_restrict_low: ") + e.what());
         }
 
         if (!(context__.contains_r("B_yes")))
@@ -1745,16 +3424,23 @@ public:
         Eigen::Matrix<T__,Eigen::Dynamic,1>  L_free;
         (void) L_free;  // dummy to suppress unused var warning
         if (jacobian__)
-            L_free = in__.vector_constrain(num_legis,lp__);
+            L_free = in__.vector_constrain((num_legis - (restrict * 2)),lp__);
         else
-            L_free = in__.vector_constrain(num_legis);
+            L_free = in__.vector_constrain((num_legis - (restrict * 2)));
 
-        Eigen::Matrix<T__,Eigen::Dynamic,1>  L_restrict;
-        (void) L_restrict;  // dummy to suppress unused var warning
+        Eigen::Matrix<T__,Eigen::Dynamic,1>  L_restrict_high;
+        (void) L_restrict_high;  // dummy to suppress unused var warning
         if (jacobian__)
-            L_restrict = in__.vector_ub_constrain(0,restrict,lp__);
+            L_restrict_high = in__.vector_lb_constrain(0,restrict,lp__);
         else
-            L_restrict = in__.vector_ub_constrain(0,restrict);
+            L_restrict_high = in__.vector_lb_constrain(0,restrict);
+
+        Eigen::Matrix<T__,Eigen::Dynamic,1>  L_restrict_low;
+        (void) L_restrict_low;  // dummy to suppress unused var warning
+        if (jacobian__)
+            L_restrict_low = in__.vector_ub_constrain(0,restrict,lp__);
+        else
+            L_restrict_low = in__.vector_ub_constrain(0,restrict);
 
         Eigen::Matrix<T__,Eigen::Dynamic,1>  B_yes;
         (void) B_yes;  // dummy to suppress unused var warning
@@ -1800,7 +3486,7 @@ public:
 
 
         try {
-            stan::math::assign(L_full, append_row(L_free,L_restrict));
+            stan::math::assign(L_full, append_row(L_free,append_row(L_restrict_high,L_restrict_low)));
         } catch (const std::exception& e) {
             stan::lang::rethrow_located(e,current_statement_begin__);
             // Next line prevents compiler griping about no return
@@ -1834,7 +3520,8 @@ public:
 
                 lp_accum__.add(normal_log<propto__>(sigma_full, 0, 5));
                 lp_accum__.add(normal_log<propto__>(L_free, 0, 1));
-                lp_accum__.add(normal_log<propto__>(L_restrict, 0, 1));
+                lp_accum__.add(normal_log<propto__>(L_restrict_high, 0, 1));
+                lp_accum__.add(normal_log<propto__>(L_restrict_low, 0, 1));
                 lp_accum__.add(normal_log<propto__>(sigma_abs_open, 0, 5));
                 lp_accum__.add(normal_log<propto__>(avg_particip, 0, 5));
                 lp_accum__.add(normal_log<propto__>(B_yes, 0, 5));
@@ -1845,10 +3532,10 @@ public:
                     stan::math::assign(get_base1_lhs(pi2,n,"pi2",1), (((get_base1(sigma_abs_open,get_base1(bb,n,"bb",1),"sigma_abs_open",1) * get_base1(L_full,get_base1(ll,n,"ll",1),"L_full",1)) - get_base1(B_abs,get_base1(bb,n,"bb",1),"B_abs",1)) + (avg_particip * get_base1(particip,get_base1(ll,n,"ll",1),"particip",1))));
                     if (as_bool(logical_eq(get_base1(absence,n,"absence",1),1))) {
 
-                        lp_accum__.add(bernoulli_logit_log<propto__>(1, get_base1(pi2,n,"pi2",1)));
+                        lp_accum__.add(bernoulli_logit_log<propto__>(0, get_base1(pi2,n,"pi2",1)));
                     } else {
 
-                        lp_accum__.add(bernoulli_logit_log<propto__>(0, get_base1(pi2,n,"pi2",1)));
+                        lp_accum__.add(bernoulli_logit_log<propto__>(1, get_base1(pi2,n,"pi2",1)));
                         lp_accum__.add(bernoulli_logit_log<propto__>(get_base1(Y_new,n,"Y_new",1), get_base1(pi1,n,"pi1",1)));
                     }
                 }
@@ -1879,7 +3566,8 @@ public:
     void get_param_names(std::vector<std::string>& names__) const {
         names__.resize(0);
         names__.push_back("L_free");
-        names__.push_back("L_restrict");
+        names__.push_back("L_restrict_high");
+        names__.push_back("L_restrict_low");
         names__.push_back("B_yes");
         names__.push_back("sigma_full");
         names__.push_back("B_abs");
@@ -1893,7 +3581,10 @@ public:
         dimss__.resize(0);
         std::vector<size_t> dims__;
         dims__.resize(0);
-        dims__.push_back(num_legis);
+        dims__.push_back((num_legis - (restrict * 2)));
+        dimss__.push_back(dims__);
+        dims__.resize(0);
+        dims__.push_back(restrict);
         dimss__.push_back(dims__);
         dims__.resize(0);
         dims__.push_back(restrict);
@@ -1927,21 +3618,25 @@ public:
                      std::ostream* pstream__ = 0) const {
         vars__.resize(0);
         stan::io::reader<double> in__(params_r__,params_i__);
-        static const char* function__ = "model_binary_absence_inflate_fix_person_namespace::write_array";
+        static const char* function__ = "model_binary_absence_inflate_constrain_person_namespace::write_array";
         (void) function__; // dummy call to supress warning
         // read-transform, write parameters
-        vector_d L_free = in__.vector_constrain(num_legis);
-        vector_d L_restrict = in__.vector_ub_constrain(0,restrict);
+        vector_d L_free = in__.vector_constrain((num_legis - (restrict * 2)));
+        vector_d L_restrict_high = in__.vector_lb_constrain(0,restrict);
+        vector_d L_restrict_low = in__.vector_ub_constrain(0,restrict);
         vector_d B_yes = in__.vector_constrain(num_bills);
         vector_d sigma_full = in__.vector_constrain(num_bills);
         vector_d B_abs = in__.vector_constrain(num_bills);
         vector_d sigma_abs_open = in__.vector_constrain(num_bills);
         double avg_particip = in__.scalar_constrain();
-        for (int k_0__ = 0; k_0__ < num_legis; ++k_0__) {
+        for (int k_0__ = 0; k_0__ < (num_legis - (restrict * 2)); ++k_0__) {
             vars__.push_back(L_free[k_0__]);
         }
         for (int k_0__ = 0; k_0__ < restrict; ++k_0__) {
-            vars__.push_back(L_restrict[k_0__]);
+            vars__.push_back(L_restrict_high[k_0__]);
+        }
+        for (int k_0__ = 0; k_0__ < restrict; ++k_0__) {
+            vars__.push_back(L_restrict_low[k_0__]);
         }
         for (int k_0__ = 0; k_0__ < num_bills; ++k_0__) {
             vars__.push_back(B_yes[k_0__]);
@@ -1973,7 +3668,7 @@ public:
 
 
         try {
-            stan::math::assign(L_full, append_row(L_free,L_restrict));
+            stan::math::assign(L_full, append_row(L_free,append_row(L_restrict_high,L_restrict_low)));
         } catch (const std::exception& e) {
             stan::lang::rethrow_located(e,current_statement_begin__);
             // Next line prevents compiler griping about no return
@@ -2022,7 +3717,7 @@ public:
     }
 
     static std::string model_name() {
-        return "model_binary_absence_inflate_fix_person";
+        return "model_binary_absence_inflate_constrain_person";
     }
 
 
@@ -2030,14 +3725,19 @@ public:
                                  bool include_tparams__ = true,
                                  bool include_gqs__ = true) const {
         std::stringstream param_name_stream__;
-        for (int k_0__ = 1; k_0__ <= num_legis; ++k_0__) {
+        for (int k_0__ = 1; k_0__ <= (num_legis - (restrict * 2)); ++k_0__) {
             param_name_stream__.str(std::string());
             param_name_stream__ << "L_free" << '.' << k_0__;
             param_names__.push_back(param_name_stream__.str());
         }
         for (int k_0__ = 1; k_0__ <= restrict; ++k_0__) {
             param_name_stream__.str(std::string());
-            param_name_stream__ << "L_restrict" << '.' << k_0__;
+            param_name_stream__ << "L_restrict_high" << '.' << k_0__;
+            param_names__.push_back(param_name_stream__.str());
+        }
+        for (int k_0__ = 1; k_0__ <= restrict; ++k_0__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "L_restrict_low" << '.' << k_0__;
             param_names__.push_back(param_name_stream__.str());
         }
         for (int k_0__ = 1; k_0__ <= num_bills; ++k_0__) {
@@ -2079,14 +3779,19 @@ public:
                                    bool include_tparams__ = true,
                                    bool include_gqs__ = true) const {
         std::stringstream param_name_stream__;
-        for (int k_0__ = 1; k_0__ <= num_legis; ++k_0__) {
+        for (int k_0__ = 1; k_0__ <= (num_legis - (restrict * 2)); ++k_0__) {
             param_name_stream__.str(std::string());
             param_name_stream__ << "L_free" << '.' << k_0__;
             param_names__.push_back(param_name_stream__.str());
         }
         for (int k_0__ = 1; k_0__ <= restrict; ++k_0__) {
             param_name_stream__.str(std::string());
-            param_name_stream__ << "L_restrict" << '.' << k_0__;
+            param_name_stream__ << "L_restrict_high" << '.' << k_0__;
+            param_names__.push_back(param_name_stream__.str());
+        }
+        for (int k_0__ = 1; k_0__ <= restrict; ++k_0__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "L_restrict_low" << '.' << k_0__;
             param_names__.push_back(param_name_stream__.str());
         }
         for (int k_0__ = 1; k_0__ <= num_bills; ++k_0__) {
@@ -2134,7 +3839,7 @@ public:
 
 #include <stan/model/model_header.hpp>
 
-namespace model_binary_absence_inflate_fix_person_bill_sigma_namespace {
+namespace model_binary_absence_inflate_constrain_person_bill_sigma_namespace {
 
 using std::istream;
 using std::string;
@@ -2151,7 +3856,7 @@ typedef Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> matrix_d;
 
 static int current_statement_begin__;
 
-class model_binary_absence_inflate_fix_person_bill_sigma : public prob_grad {
+class model_binary_absence_inflate_constrain_person_bill_sigma : public prob_grad {
 private:
     int N;
     vector<int> Y;
@@ -2165,7 +3870,7 @@ private:
     vector<int> absence;
     vector<int> Y_new;
 public:
-    model_binary_absence_inflate_fix_person_bill_sigma(stan::io::var_context& context__,
+    model_binary_absence_inflate_constrain_person_bill_sigma(stan::io::var_context& context__,
         std::ostream* pstream__ = 0)
         : prob_grad(0) {
         typedef boost::ecuyer1988 rng_t;
@@ -2174,7 +3879,7 @@ public:
     }
 
     template <class RNG>
-    model_binary_absence_inflate_fix_person_bill_sigma(stan::io::var_context& context__,
+    model_binary_absence_inflate_constrain_person_bill_sigma(stan::io::var_context& context__,
         RNG& base_rng__,
         std::ostream* pstream__ = 0)
         : prob_grad(0) {
@@ -2187,7 +3892,7 @@ public:
                    std::ostream* pstream__) {
         current_statement_begin__ = -1;
 
-        static const char* function__ = "model_binary_absence_inflate_fix_person_bill_sigma_namespace::model_binary_absence_inflate_fix_person_bill_sigma";
+        static const char* function__ = "model_binary_absence_inflate_constrain_person_bill_sigma_namespace::model_binary_absence_inflate_constrain_person_bill_sigma";
         (void) function__; // dummy call to supress warning
         size_t pos__;
         (void) pos__; // dummy call to supress warning
@@ -2311,7 +4016,7 @@ public:
         ++num_params_r__;
     }
 
-    ~model_binary_absence_inflate_fix_person_bill_sigma() { }
+    ~model_binary_absence_inflate_constrain_person_bill_sigma() { }
 
 
     void transform_inits(const stan::io::var_context& context__,
@@ -2686,7 +4391,7 @@ public:
                      std::ostream* pstream__ = 0) const {
         vars__.resize(0);
         stan::io::reader<double> in__(params_r__,params_i__);
-        static const char* function__ = "model_binary_absence_inflate_fix_person_bill_sigma_namespace::write_array";
+        static const char* function__ = "model_binary_absence_inflate_constrain_person_bill_sigma_namespace::write_array";
         (void) function__; // dummy call to supress warning
         // read-transform, write parameters
         vector_d L_free = in__.vector_constrain((num_legis - restrict_l));
@@ -2793,7 +4498,7 @@ public:
     }
 
     static std::string model_name() {
-        return "model_binary_absence_inflate_fix_person_bill_sigma";
+        return "model_binary_absence_inflate_constrain_person_bill_sigma";
     }
 
 
@@ -2925,7 +4630,7 @@ public:
 
 #include <stan/model/model_header.hpp>
 
-namespace model_binary_absence_inflate_fix_person_bill_sigma_abs_namespace {
+namespace model_binary_absence_inflate_constrain_person_bill_sigma_abs_namespace {
 
 using std::istream;
 using std::string;
@@ -2942,7 +4647,7 @@ typedef Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> matrix_d;
 
 static int current_statement_begin__;
 
-class model_binary_absence_inflate_fix_person_bill_sigma_abs : public prob_grad {
+class model_binary_absence_inflate_constrain_person_bill_sigma_abs : public prob_grad {
 private:
     int N;
     vector<int> Y;
@@ -2956,7 +4661,7 @@ private:
     vector<int> absence;
     vector<int> Y_new;
 public:
-    model_binary_absence_inflate_fix_person_bill_sigma_abs(stan::io::var_context& context__,
+    model_binary_absence_inflate_constrain_person_bill_sigma_abs(stan::io::var_context& context__,
         std::ostream* pstream__ = 0)
         : prob_grad(0) {
         typedef boost::ecuyer1988 rng_t;
@@ -2965,7 +4670,7 @@ public:
     }
 
     template <class RNG>
-    model_binary_absence_inflate_fix_person_bill_sigma_abs(stan::io::var_context& context__,
+    model_binary_absence_inflate_constrain_person_bill_sigma_abs(stan::io::var_context& context__,
         RNG& base_rng__,
         std::ostream* pstream__ = 0)
         : prob_grad(0) {
@@ -2978,7 +4683,7 @@ public:
                    std::ostream* pstream__) {
         current_statement_begin__ = -1;
 
-        static const char* function__ = "model_binary_absence_inflate_fix_person_bill_sigma_abs_namespace::model_binary_absence_inflate_fix_person_bill_sigma_abs";
+        static const char* function__ = "model_binary_absence_inflate_constrain_person_bill_sigma_abs_namespace::model_binary_absence_inflate_constrain_person_bill_sigma_abs";
         (void) function__; // dummy call to supress warning
         size_t pos__;
         (void) pos__; // dummy call to supress warning
@@ -3102,7 +4807,7 @@ public:
         ++num_params_r__;
     }
 
-    ~model_binary_absence_inflate_fix_person_bill_sigma_abs() { }
+    ~model_binary_absence_inflate_constrain_person_bill_sigma_abs() { }
 
 
     void transform_inits(const stan::io::var_context& context__,
@@ -3477,7 +5182,7 @@ public:
                      std::ostream* pstream__ = 0) const {
         vars__.resize(0);
         stan::io::reader<double> in__(params_r__,params_i__);
-        static const char* function__ = "model_binary_absence_inflate_fix_person_bill_sigma_abs_namespace::write_array";
+        static const char* function__ = "model_binary_absence_inflate_constrain_person_bill_sigma_abs_namespace::write_array";
         (void) function__; // dummy call to supress warning
         // read-transform, write parameters
         vector_d L_free = in__.vector_constrain((num_legis - restrict_l));
@@ -3584,7 +5289,7 @@ public:
     }
 
     static std::string model_name() {
-        return "model_binary_absence_inflate_fix_person_bill_sigma_abs";
+        return "model_binary_absence_inflate_constrain_person_bill_sigma_abs";
     }
 
 
@@ -3716,7 +5421,7 @@ public:
 
 #include <stan/model/model_header.hpp>
 
-namespace model_binary_absence_inflate_fix_sigma_abs_namespace {
+namespace model_binary_absence_inflate_constrain_sigma_abs_namespace {
 
 using std::istream;
 using std::string;
@@ -3733,7 +5438,7 @@ typedef Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> matrix_d;
 
 static int current_statement_begin__;
 
-class model_binary_absence_inflate_fix_sigma_abs : public prob_grad {
+class model_binary_absence_inflate_constrain_sigma_abs : public prob_grad {
 private:
     int N;
     vector<int> Y;
@@ -3746,7 +5451,7 @@ private:
     vector<int> absence;
     vector<int> Y_new;
 public:
-    model_binary_absence_inflate_fix_sigma_abs(stan::io::var_context& context__,
+    model_binary_absence_inflate_constrain_sigma_abs(stan::io::var_context& context__,
         std::ostream* pstream__ = 0)
         : prob_grad(0) {
         typedef boost::ecuyer1988 rng_t;
@@ -3755,7 +5460,7 @@ public:
     }
 
     template <class RNG>
-    model_binary_absence_inflate_fix_sigma_abs(stan::io::var_context& context__,
+    model_binary_absence_inflate_constrain_sigma_abs(stan::io::var_context& context__,
         RNG& base_rng__,
         std::ostream* pstream__ = 0)
         : prob_grad(0) {
@@ -3768,7 +5473,7 @@ public:
                    std::ostream* pstream__) {
         current_statement_begin__ = -1;
 
-        static const char* function__ = "model_binary_absence_inflate_fix_sigma_abs_namespace::model_binary_absence_inflate_fix_sigma_abs";
+        static const char* function__ = "model_binary_absence_inflate_constrain_sigma_abs_namespace::model_binary_absence_inflate_constrain_sigma_abs";
         (void) function__; // dummy call to supress warning
         size_t pos__;
         (void) pos__; // dummy call to supress warning
@@ -3886,7 +5591,7 @@ public:
         ++num_params_r__;
     }
 
-    ~model_binary_absence_inflate_fix_sigma_abs() { }
+    ~model_binary_absence_inflate_constrain_sigma_abs() { }
 
 
     void transform_inits(const stan::io::var_context& context__,
@@ -4218,7 +5923,7 @@ public:
                      std::ostream* pstream__ = 0) const {
         vars__.resize(0);
         stan::io::reader<double> in__(params_r__,params_i__);
-        static const char* function__ = "model_binary_absence_inflate_fix_sigma_abs_namespace::write_array";
+        static const char* function__ = "model_binary_absence_inflate_constrain_sigma_abs_namespace::write_array";
         (void) function__; // dummy call to supress warning
         // read-transform, write parameters
         vector_d L_free = in__.vector_constrain(num_legis);
@@ -4313,7 +6018,7 @@ public:
     }
 
     static std::string model_name() {
-        return "model_binary_absence_inflate_fix_sigma_abs";
+        return "model_binary_absence_inflate_constrain_sigma_abs";
     }
 
 
@@ -5052,7 +6757,7 @@ public:
 
 #include <stan/model/model_header.hpp>
 
-namespace model_grm_absence_inflate_namespace {
+namespace model_binary_absence_inflate_pin_person_namespace {
 
 using std::istream;
 using std::string;
@@ -5069,7 +6774,684 @@ typedef Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> matrix_d;
 
 static int current_statement_begin__;
 
-class model_grm_absence_inflate : public prob_grad {
+class model_binary_absence_inflate_pin_person : public prob_grad {
+private:
+    int N;
+    vector<int> Y;
+    int num_legis;
+    int num_bills;
+    vector<int> ll;
+    vector<int> bb;
+    int restrict;
+    vector_d particip;
+    vector<int> absence;
+    vector<int> Y_new;
+    vector_d L_restrict_high;
+    vector_d L_restrict_low;
+public:
+    model_binary_absence_inflate_pin_person(stan::io::var_context& context__,
+        std::ostream* pstream__ = 0)
+        : prob_grad(0) {
+        typedef boost::ecuyer1988 rng_t;
+        rng_t base_rng(0);  // 0 seed default
+        ctor_body(context__, base_rng, pstream__);
+    }
+
+    template <class RNG>
+    model_binary_absence_inflate_pin_person(stan::io::var_context& context__,
+        RNG& base_rng__,
+        std::ostream* pstream__ = 0)
+        : prob_grad(0) {
+        ctor_body(context__, base_rng__, pstream__);
+    }
+
+    template <class RNG>
+    void ctor_body(stan::io::var_context& context__,
+                   RNG& base_rng__,
+                   std::ostream* pstream__) {
+        current_statement_begin__ = -1;
+
+        static const char* function__ = "model_binary_absence_inflate_pin_person_namespace::model_binary_absence_inflate_pin_person";
+        (void) function__; // dummy call to supress warning
+        size_t pos__;
+        (void) pos__; // dummy call to supress warning
+        std::vector<int> vals_i__;
+        std::vector<double> vals_r__;
+        double DUMMY_VAR__(std::numeric_limits<double>::quiet_NaN());
+        (void) DUMMY_VAR__;  // suppress unused var warning
+
+        // initialize member variables
+        context__.validate_dims("data initialization", "N", "int", context__.to_vec());
+        N = int(0);
+        vals_i__ = context__.vals_i("N");
+        pos__ = 0;
+        N = vals_i__[pos__++];
+        context__.validate_dims("data initialization", "Y", "int", context__.to_vec(N));
+        validate_non_negative_index("Y", "N", N);
+        Y = std::vector<int>(N,int(0));
+        vals_i__ = context__.vals_i("Y");
+        pos__ = 0;
+        size_t Y_limit_0__ = N;
+        for (size_t i_0__ = 0; i_0__ < Y_limit_0__; ++i_0__) {
+            Y[i_0__] = vals_i__[pos__++];
+        }
+        context__.validate_dims("data initialization", "num_legis", "int", context__.to_vec());
+        num_legis = int(0);
+        vals_i__ = context__.vals_i("num_legis");
+        pos__ = 0;
+        num_legis = vals_i__[pos__++];
+        context__.validate_dims("data initialization", "num_bills", "int", context__.to_vec());
+        num_bills = int(0);
+        vals_i__ = context__.vals_i("num_bills");
+        pos__ = 0;
+        num_bills = vals_i__[pos__++];
+        context__.validate_dims("data initialization", "ll", "int", context__.to_vec(N));
+        validate_non_negative_index("ll", "N", N);
+        ll = std::vector<int>(N,int(0));
+        vals_i__ = context__.vals_i("ll");
+        pos__ = 0;
+        size_t ll_limit_0__ = N;
+        for (size_t i_0__ = 0; i_0__ < ll_limit_0__; ++i_0__) {
+            ll[i_0__] = vals_i__[pos__++];
+        }
+        context__.validate_dims("data initialization", "bb", "int", context__.to_vec(N));
+        validate_non_negative_index("bb", "N", N);
+        bb = std::vector<int>(N,int(0));
+        vals_i__ = context__.vals_i("bb");
+        pos__ = 0;
+        size_t bb_limit_0__ = N;
+        for (size_t i_0__ = 0; i_0__ < bb_limit_0__; ++i_0__) {
+            bb[i_0__] = vals_i__[pos__++];
+        }
+        context__.validate_dims("data initialization", "restrict", "int", context__.to_vec());
+        restrict = int(0);
+        vals_i__ = context__.vals_i("restrict");
+        pos__ = 0;
+        restrict = vals_i__[pos__++];
+        validate_non_negative_index("particip", "num_legis", num_legis);
+        particip = vector_d(static_cast<Eigen::VectorXd::Index>(num_legis));
+        context__.validate_dims("data initialization", "particip", "vector_d", context__.to_vec(num_legis));
+        vals_r__ = context__.vals_r("particip");
+        pos__ = 0;
+        size_t particip_i_vec_lim__ = num_legis;
+        for (size_t i_vec__ = 0; i_vec__ < particip_i_vec_lim__; ++i_vec__) {
+            particip[i_vec__] = vals_r__[pos__++];
+        }
+
+        // validate, data variables
+        check_greater_or_equal(function__,"num_legis",num_legis,1);
+        check_greater_or_equal(function__,"num_bills",num_bills,1);
+        // initialize data variables
+        validate_non_negative_index("absence", "N", N);
+        absence = std::vector<int>(N,int(0));
+        stan::math::fill(absence, std::numeric_limits<int>::min());
+        validate_non_negative_index("Y_new", "N", N);
+        Y_new = std::vector<int>(N,int(0));
+        stan::math::fill(Y_new, std::numeric_limits<int>::min());
+        validate_non_negative_index("L_restrict_high", "1", 1);
+        L_restrict_high = vector_d(static_cast<Eigen::VectorXd::Index>(1));
+        stan::math::fill(L_restrict_high,DUMMY_VAR__);
+        validate_non_negative_index("L_restrict_low", "1", 1);
+        L_restrict_low = vector_d(static_cast<Eigen::VectorXd::Index>(1));
+        stan::math::fill(L_restrict_low,DUMMY_VAR__);
+
+        try {
+            if (as_bool(logical_gt(max(Y),1))) {
+
+                for (int n = 1; n <= N; ++n) {
+                    stan::math::assign(get_base1_lhs(Y_new,n,"Y_new",1), (get_base1(Y,n,"Y",1) - min(Y)));
+                }
+            } else {
+
+                stan::math::assign(Y_new, Y);
+            }
+            for (int n = 1; n <= N; ++n) {
+
+                if (as_bool(logical_gt(get_base1(Y,n,"Y",1),1))) {
+
+                    stan::math::assign(get_base1_lhs(absence,n,"absence",1), 1);
+                } else {
+
+                    stan::math::assign(get_base1_lhs(absence,n,"absence",1), 0);
+                }
+            }
+            stan::math::assign(get_base1_lhs(L_restrict_high,1,"L_restrict_high",1), 1);
+            stan::math::assign(get_base1_lhs(L_restrict_low,1,"L_restrict_low",1), -(1));
+        } catch (const std::exception& e) {
+            stan::lang::rethrow_located(e,current_statement_begin__);
+            // Next line prevents compiler griping about no return
+            throw std::runtime_error("*** IF YOU SEE THIS, PLEASE REPORT A BUG ***");
+        }
+
+        // validate transformed data
+
+        // set parameter ranges
+        num_params_r__ = 0U;
+        param_ranges_i__.clear();
+        num_params_r__ += (num_legis - (restrict * 2));
+        num_params_r__ += num_bills;
+        num_params_r__ += num_bills;
+        num_params_r__ += num_bills;
+        num_params_r__ += num_bills;
+        ++num_params_r__;
+    }
+
+    ~model_binary_absence_inflate_pin_person() { }
+
+
+    void transform_inits(const stan::io::var_context& context__,
+                         std::vector<int>& params_i__,
+                         std::vector<double>& params_r__,
+                         std::ostream* pstream__) const {
+        stan::io::writer<double> writer__(params_r__,params_i__);
+        size_t pos__;
+        (void) pos__; // dummy call to supress warning
+        std::vector<double> vals_r__;
+        std::vector<int> vals_i__;
+
+        if (!(context__.contains_r("L_free")))
+            throw std::runtime_error("variable L_free missing");
+        vals_r__ = context__.vals_r("L_free");
+        pos__ = 0U;
+        context__.validate_dims("initialization", "L_free", "vector_d", context__.to_vec((num_legis - (restrict * 2))));
+        // generate_declaration L_free
+        vector_d L_free(static_cast<Eigen::VectorXd::Index>((num_legis - (restrict * 2))));
+        for (int j1__ = 0U; j1__ < (num_legis - (restrict * 2)); ++j1__)
+            L_free(j1__) = vals_r__[pos__++];
+        try {
+            writer__.vector_unconstrain(L_free);
+        } catch (const std::exception& e) { 
+            throw std::runtime_error(std::string("Error transforming variable L_free: ") + e.what());
+        }
+
+        if (!(context__.contains_r("B_yes")))
+            throw std::runtime_error("variable B_yes missing");
+        vals_r__ = context__.vals_r("B_yes");
+        pos__ = 0U;
+        context__.validate_dims("initialization", "B_yes", "vector_d", context__.to_vec(num_bills));
+        // generate_declaration B_yes
+        vector_d B_yes(static_cast<Eigen::VectorXd::Index>(num_bills));
+        for (int j1__ = 0U; j1__ < num_bills; ++j1__)
+            B_yes(j1__) = vals_r__[pos__++];
+        try {
+            writer__.vector_unconstrain(B_yes);
+        } catch (const std::exception& e) { 
+            throw std::runtime_error(std::string("Error transforming variable B_yes: ") + e.what());
+        }
+
+        if (!(context__.contains_r("sigma_full")))
+            throw std::runtime_error("variable sigma_full missing");
+        vals_r__ = context__.vals_r("sigma_full");
+        pos__ = 0U;
+        context__.validate_dims("initialization", "sigma_full", "vector_d", context__.to_vec(num_bills));
+        // generate_declaration sigma_full
+        vector_d sigma_full(static_cast<Eigen::VectorXd::Index>(num_bills));
+        for (int j1__ = 0U; j1__ < num_bills; ++j1__)
+            sigma_full(j1__) = vals_r__[pos__++];
+        try {
+            writer__.vector_unconstrain(sigma_full);
+        } catch (const std::exception& e) { 
+            throw std::runtime_error(std::string("Error transforming variable sigma_full: ") + e.what());
+        }
+
+        if (!(context__.contains_r("B_abs")))
+            throw std::runtime_error("variable B_abs missing");
+        vals_r__ = context__.vals_r("B_abs");
+        pos__ = 0U;
+        context__.validate_dims("initialization", "B_abs", "vector_d", context__.to_vec(num_bills));
+        // generate_declaration B_abs
+        vector_d B_abs(static_cast<Eigen::VectorXd::Index>(num_bills));
+        for (int j1__ = 0U; j1__ < num_bills; ++j1__)
+            B_abs(j1__) = vals_r__[pos__++];
+        try {
+            writer__.vector_unconstrain(B_abs);
+        } catch (const std::exception& e) { 
+            throw std::runtime_error(std::string("Error transforming variable B_abs: ") + e.what());
+        }
+
+        if (!(context__.contains_r("sigma_abs_open")))
+            throw std::runtime_error("variable sigma_abs_open missing");
+        vals_r__ = context__.vals_r("sigma_abs_open");
+        pos__ = 0U;
+        context__.validate_dims("initialization", "sigma_abs_open", "vector_d", context__.to_vec(num_bills));
+        // generate_declaration sigma_abs_open
+        vector_d sigma_abs_open(static_cast<Eigen::VectorXd::Index>(num_bills));
+        for (int j1__ = 0U; j1__ < num_bills; ++j1__)
+            sigma_abs_open(j1__) = vals_r__[pos__++];
+        try {
+            writer__.vector_unconstrain(sigma_abs_open);
+        } catch (const std::exception& e) { 
+            throw std::runtime_error(std::string("Error transforming variable sigma_abs_open: ") + e.what());
+        }
+
+        if (!(context__.contains_r("avg_particip")))
+            throw std::runtime_error("variable avg_particip missing");
+        vals_r__ = context__.vals_r("avg_particip");
+        pos__ = 0U;
+        context__.validate_dims("initialization", "avg_particip", "double", context__.to_vec());
+        // generate_declaration avg_particip
+        double avg_particip(0);
+        avg_particip = vals_r__[pos__++];
+        try {
+            writer__.scalar_unconstrain(avg_particip);
+        } catch (const std::exception& e) { 
+            throw std::runtime_error(std::string("Error transforming variable avg_particip: ") + e.what());
+        }
+
+        params_r__ = writer__.data_r();
+        params_i__ = writer__.data_i();
+    }
+
+    void transform_inits(const stan::io::var_context& context,
+                         Eigen::Matrix<double,Eigen::Dynamic,1>& params_r,
+                         std::ostream* pstream__) const {
+      std::vector<double> params_r_vec;
+      std::vector<int> params_i_vec;
+      transform_inits(context, params_i_vec, params_r_vec, pstream__);
+      params_r.resize(params_r_vec.size());
+      for (int i = 0; i < params_r.size(); ++i)
+        params_r(i) = params_r_vec[i];
+    }
+
+
+    template <bool propto__, bool jacobian__, typename T__>
+    T__ log_prob(vector<T__>& params_r__,
+                 vector<int>& params_i__,
+                 std::ostream* pstream__ = 0) const {
+
+        T__ DUMMY_VAR__(std::numeric_limits<double>::quiet_NaN());
+        (void) DUMMY_VAR__;  // suppress unused var warning
+
+        T__ lp__(0.0);
+        stan::math::accumulator<T__> lp_accum__;
+
+        // model parameters
+        stan::io::reader<T__> in__(params_r__,params_i__);
+
+        Eigen::Matrix<T__,Eigen::Dynamic,1>  L_free;
+        (void) L_free;  // dummy to suppress unused var warning
+        if (jacobian__)
+            L_free = in__.vector_constrain((num_legis - (restrict * 2)),lp__);
+        else
+            L_free = in__.vector_constrain((num_legis - (restrict * 2)));
+
+        Eigen::Matrix<T__,Eigen::Dynamic,1>  B_yes;
+        (void) B_yes;  // dummy to suppress unused var warning
+        if (jacobian__)
+            B_yes = in__.vector_constrain(num_bills,lp__);
+        else
+            B_yes = in__.vector_constrain(num_bills);
+
+        Eigen::Matrix<T__,Eigen::Dynamic,1>  sigma_full;
+        (void) sigma_full;  // dummy to suppress unused var warning
+        if (jacobian__)
+            sigma_full = in__.vector_constrain(num_bills,lp__);
+        else
+            sigma_full = in__.vector_constrain(num_bills);
+
+        Eigen::Matrix<T__,Eigen::Dynamic,1>  B_abs;
+        (void) B_abs;  // dummy to suppress unused var warning
+        if (jacobian__)
+            B_abs = in__.vector_constrain(num_bills,lp__);
+        else
+            B_abs = in__.vector_constrain(num_bills);
+
+        Eigen::Matrix<T__,Eigen::Dynamic,1>  sigma_abs_open;
+        (void) sigma_abs_open;  // dummy to suppress unused var warning
+        if (jacobian__)
+            sigma_abs_open = in__.vector_constrain(num_bills,lp__);
+        else
+            sigma_abs_open = in__.vector_constrain(num_bills);
+
+        T__ avg_particip;
+        (void) avg_particip;  // dummy to suppress unused var warning
+        if (jacobian__)
+            avg_particip = in__.scalar_constrain(lp__);
+        else
+            avg_particip = in__.scalar_constrain();
+
+
+        // transformed parameters
+        Eigen::Matrix<T__,Eigen::Dynamic,1>  L_full(static_cast<Eigen::VectorXd::Index>(num_legis));
+        (void) L_full;  // dummy to suppress unused var warning
+        stan::math::initialize(L_full, DUMMY_VAR__);
+        stan::math::fill(L_full,DUMMY_VAR__);
+
+
+        try {
+            stan::math::assign(L_full, append_row(L_free,append_row(L_restrict_high,L_restrict_low)));
+        } catch (const std::exception& e) {
+            stan::lang::rethrow_located(e,current_statement_begin__);
+            // Next line prevents compiler griping about no return
+            throw std::runtime_error("*** IF YOU SEE THIS, PLEASE REPORT A BUG ***");
+        }
+
+        // validate transformed parameters
+        for (int i0__ = 0; i0__ < num_legis; ++i0__) {
+            if (stan::math::is_uninitialized(L_full(i0__))) {
+                std::stringstream msg__;
+                msg__ << "Undefined transformed parameter: L_full" << '[' << i0__ << ']';
+                throw std::runtime_error(msg__.str());
+            }
+        }
+
+        const char* function__ = "validate transformed params";
+        (void) function__;  // dummy to suppress unused var warning
+
+        // model body
+        try {
+            {
+                Eigen::Matrix<T__,Eigen::Dynamic,1>  pi1(static_cast<Eigen::VectorXd::Index>(N));
+                (void) pi1;  // dummy to suppress unused var warning
+                stan::math::initialize(pi1, DUMMY_VAR__);
+                stan::math::fill(pi1,DUMMY_VAR__);
+                Eigen::Matrix<T__,Eigen::Dynamic,1>  pi2(static_cast<Eigen::VectorXd::Index>(N));
+                (void) pi2;  // dummy to suppress unused var warning
+                stan::math::initialize(pi2, DUMMY_VAR__);
+                stan::math::fill(pi2,DUMMY_VAR__);
+
+
+                lp_accum__.add(normal_log<propto__>(sigma_full, 0, 5));
+                lp_accum__.add(normal_log<propto__>(L_free, 0, 5));
+                lp_accum__.add(normal_log<propto__>(sigma_abs_open, 0, 5));
+                lp_accum__.add(normal_log<propto__>(avg_particip, 0, 5));
+                lp_accum__.add(normal_log<propto__>(B_yes, 0, 5));
+                lp_accum__.add(normal_log<propto__>(B_abs, 0, 5));
+                for (int n = 1; n <= N; ++n) {
+
+                    stan::math::assign(get_base1_lhs(pi1,n,"pi1",1), ((get_base1(sigma_full,get_base1(bb,n,"bb",1),"sigma_full",1) * get_base1(L_full,get_base1(ll,n,"ll",1),"L_full",1)) - get_base1(B_yes,get_base1(bb,n,"bb",1),"B_yes",1)));
+                    stan::math::assign(get_base1_lhs(pi2,n,"pi2",1), (((get_base1(sigma_abs_open,get_base1(bb,n,"bb",1),"sigma_abs_open",1) * get_base1(L_full,get_base1(ll,n,"ll",1),"L_full",1)) - get_base1(B_abs,get_base1(bb,n,"bb",1),"B_abs",1)) + (avg_particip * get_base1(particip,get_base1(ll,n,"ll",1),"particip",1))));
+                    if (as_bool(logical_eq(get_base1(absence,n,"absence",1),1))) {
+
+                        lp_accum__.add(bernoulli_logit_log<propto__>(1, get_base1(pi2,n,"pi2",1)));
+                    } else {
+
+                        lp_accum__.add(bernoulli_logit_log<propto__>(0, get_base1(pi2,n,"pi2",1)));
+                        lp_accum__.add(bernoulli_logit_log<propto__>(get_base1(Y_new,n,"Y_new",1), get_base1(pi1,n,"pi1",1)));
+                    }
+                }
+            }
+        } catch (const std::exception& e) {
+            stan::lang::rethrow_located(e,current_statement_begin__);
+            // Next line prevents compiler griping about no return
+            throw std::runtime_error("*** IF YOU SEE THIS, PLEASE REPORT A BUG ***");
+        }
+
+        lp_accum__.add(lp__);
+        return lp_accum__.sum();
+
+    } // log_prob()
+
+    template <bool propto, bool jacobian, typename T_>
+    T_ log_prob(Eigen::Matrix<T_,Eigen::Dynamic,1>& params_r,
+               std::ostream* pstream = 0) const {
+      std::vector<T_> vec_params_r;
+      vec_params_r.reserve(params_r.size());
+      for (int i = 0; i < params_r.size(); ++i)
+        vec_params_r.push_back(params_r(i));
+      std::vector<int> vec_params_i;
+      return log_prob<propto,jacobian,T_>(vec_params_r, vec_params_i, pstream);
+    }
+
+
+    void get_param_names(std::vector<std::string>& names__) const {
+        names__.resize(0);
+        names__.push_back("L_free");
+        names__.push_back("B_yes");
+        names__.push_back("sigma_full");
+        names__.push_back("B_abs");
+        names__.push_back("sigma_abs_open");
+        names__.push_back("avg_particip");
+        names__.push_back("L_full");
+    }
+
+
+    void get_dims(std::vector<std::vector<size_t> >& dimss__) const {
+        dimss__.resize(0);
+        std::vector<size_t> dims__;
+        dims__.resize(0);
+        dims__.push_back((num_legis - (restrict * 2)));
+        dimss__.push_back(dims__);
+        dims__.resize(0);
+        dims__.push_back(num_bills);
+        dimss__.push_back(dims__);
+        dims__.resize(0);
+        dims__.push_back(num_bills);
+        dimss__.push_back(dims__);
+        dims__.resize(0);
+        dims__.push_back(num_bills);
+        dimss__.push_back(dims__);
+        dims__.resize(0);
+        dims__.push_back(num_bills);
+        dimss__.push_back(dims__);
+        dims__.resize(0);
+        dimss__.push_back(dims__);
+        dims__.resize(0);
+        dims__.push_back(num_legis);
+        dimss__.push_back(dims__);
+    }
+
+    template <typename RNG>
+    void write_array(RNG& base_rng__,
+                     std::vector<double>& params_r__,
+                     std::vector<int>& params_i__,
+                     std::vector<double>& vars__,
+                     bool include_tparams__ = true,
+                     bool include_gqs__ = true,
+                     std::ostream* pstream__ = 0) const {
+        vars__.resize(0);
+        stan::io::reader<double> in__(params_r__,params_i__);
+        static const char* function__ = "model_binary_absence_inflate_pin_person_namespace::write_array";
+        (void) function__; // dummy call to supress warning
+        // read-transform, write parameters
+        vector_d L_free = in__.vector_constrain((num_legis - (restrict * 2)));
+        vector_d B_yes = in__.vector_constrain(num_bills);
+        vector_d sigma_full = in__.vector_constrain(num_bills);
+        vector_d B_abs = in__.vector_constrain(num_bills);
+        vector_d sigma_abs_open = in__.vector_constrain(num_bills);
+        double avg_particip = in__.scalar_constrain();
+        for (int k_0__ = 0; k_0__ < (num_legis - (restrict * 2)); ++k_0__) {
+            vars__.push_back(L_free[k_0__]);
+        }
+        for (int k_0__ = 0; k_0__ < num_bills; ++k_0__) {
+            vars__.push_back(B_yes[k_0__]);
+        }
+        for (int k_0__ = 0; k_0__ < num_bills; ++k_0__) {
+            vars__.push_back(sigma_full[k_0__]);
+        }
+        for (int k_0__ = 0; k_0__ < num_bills; ++k_0__) {
+            vars__.push_back(B_abs[k_0__]);
+        }
+        for (int k_0__ = 0; k_0__ < num_bills; ++k_0__) {
+            vars__.push_back(sigma_abs_open[k_0__]);
+        }
+        vars__.push_back(avg_particip);
+
+        if (!include_tparams__) return;
+        // declare and define transformed parameters
+        double lp__ = 0.0;
+        (void) lp__; // dummy call to supress warning
+        stan::math::accumulator<double> lp_accum__;
+
+        double DUMMY_VAR__(std::numeric_limits<double>::quiet_NaN());
+        (void) DUMMY_VAR__;  // suppress unused var warning
+
+        vector_d L_full(static_cast<Eigen::VectorXd::Index>(num_legis));
+        (void) L_full;  // dummy to suppress unused var warning
+        stan::math::initialize(L_full, std::numeric_limits<double>::quiet_NaN());
+        stan::math::fill(L_full,DUMMY_VAR__);
+
+
+        try {
+            stan::math::assign(L_full, append_row(L_free,append_row(L_restrict_high,L_restrict_low)));
+        } catch (const std::exception& e) {
+            stan::lang::rethrow_located(e,current_statement_begin__);
+            // Next line prevents compiler griping about no return
+            throw std::runtime_error("*** IF YOU SEE THIS, PLEASE REPORT A BUG ***");
+        }
+
+        // validate transformed parameters
+
+        // write transformed parameters
+        for (int k_0__ = 0; k_0__ < num_legis; ++k_0__) {
+            vars__.push_back(L_full[k_0__]);
+        }
+
+        if (!include_gqs__) return;
+        // declare and define generated quantities
+
+
+        try {
+        } catch (const std::exception& e) {
+            stan::lang::rethrow_located(e,current_statement_begin__);
+            // Next line prevents compiler griping about no return
+            throw std::runtime_error("*** IF YOU SEE THIS, PLEASE REPORT A BUG ***");
+        }
+
+        // validate generated quantities
+
+        // write generated quantities
+    }
+
+    template <typename RNG>
+    void write_array(RNG& base_rng,
+                     Eigen::Matrix<double,Eigen::Dynamic,1>& params_r,
+                     Eigen::Matrix<double,Eigen::Dynamic,1>& vars,
+                     bool include_tparams = true,
+                     bool include_gqs = true,
+                     std::ostream* pstream = 0) const {
+      std::vector<double> params_r_vec(params_r.size());
+      for (int i = 0; i < params_r.size(); ++i)
+        params_r_vec[i] = params_r(i);
+      std::vector<double> vars_vec;
+      std::vector<int> params_i_vec;
+      write_array(base_rng,params_r_vec,params_i_vec,vars_vec,include_tparams,include_gqs,pstream);
+      vars.resize(vars_vec.size());
+      for (int i = 0; i < vars.size(); ++i)
+        vars(i) = vars_vec[i];
+    }
+
+    static std::string model_name() {
+        return "model_binary_absence_inflate_pin_person";
+    }
+
+
+    void constrained_param_names(std::vector<std::string>& param_names__,
+                                 bool include_tparams__ = true,
+                                 bool include_gqs__ = true) const {
+        std::stringstream param_name_stream__;
+        for (int k_0__ = 1; k_0__ <= (num_legis - (restrict * 2)); ++k_0__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "L_free" << '.' << k_0__;
+            param_names__.push_back(param_name_stream__.str());
+        }
+        for (int k_0__ = 1; k_0__ <= num_bills; ++k_0__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "B_yes" << '.' << k_0__;
+            param_names__.push_back(param_name_stream__.str());
+        }
+        for (int k_0__ = 1; k_0__ <= num_bills; ++k_0__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "sigma_full" << '.' << k_0__;
+            param_names__.push_back(param_name_stream__.str());
+        }
+        for (int k_0__ = 1; k_0__ <= num_bills; ++k_0__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "B_abs" << '.' << k_0__;
+            param_names__.push_back(param_name_stream__.str());
+        }
+        for (int k_0__ = 1; k_0__ <= num_bills; ++k_0__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "sigma_abs_open" << '.' << k_0__;
+            param_names__.push_back(param_name_stream__.str());
+        }
+        param_name_stream__.str(std::string());
+        param_name_stream__ << "avg_particip";
+        param_names__.push_back(param_name_stream__.str());
+
+        if (!include_gqs__ && !include_tparams__) return;
+        for (int k_0__ = 1; k_0__ <= num_legis; ++k_0__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "L_full" << '.' << k_0__;
+            param_names__.push_back(param_name_stream__.str());
+        }
+
+        if (!include_gqs__) return;
+    }
+
+
+    void unconstrained_param_names(std::vector<std::string>& param_names__,
+                                   bool include_tparams__ = true,
+                                   bool include_gqs__ = true) const {
+        std::stringstream param_name_stream__;
+        for (int k_0__ = 1; k_0__ <= (num_legis - (restrict * 2)); ++k_0__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "L_free" << '.' << k_0__;
+            param_names__.push_back(param_name_stream__.str());
+        }
+        for (int k_0__ = 1; k_0__ <= num_bills; ++k_0__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "B_yes" << '.' << k_0__;
+            param_names__.push_back(param_name_stream__.str());
+        }
+        for (int k_0__ = 1; k_0__ <= num_bills; ++k_0__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "sigma_full" << '.' << k_0__;
+            param_names__.push_back(param_name_stream__.str());
+        }
+        for (int k_0__ = 1; k_0__ <= num_bills; ++k_0__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "B_abs" << '.' << k_0__;
+            param_names__.push_back(param_name_stream__.str());
+        }
+        for (int k_0__ = 1; k_0__ <= num_bills; ++k_0__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "sigma_abs_open" << '.' << k_0__;
+            param_names__.push_back(param_name_stream__.str());
+        }
+        param_name_stream__.str(std::string());
+        param_name_stream__ << "avg_particip";
+        param_names__.push_back(param_name_stream__.str());
+
+        if (!include_gqs__ && !include_tparams__) return;
+        for (int k_0__ = 1; k_0__ <= num_legis; ++k_0__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "L_full" << '.' << k_0__;
+            param_names__.push_back(param_name_stream__.str());
+        }
+
+        if (!include_gqs__) return;
+    }
+
+}; // model
+
+} // namespace
+
+
+
+
+// Code generated by Stan version 2.13
+
+#include <stan/model/model_header.hpp>
+
+namespace model_grm_absence_inflate_constrain_namespace {
+
+using std::istream;
+using std::string;
+using std::stringstream;
+using std::vector;
+using stan::io::dump;
+using stan::math::lgamma;
+using stan::model::prob_grad;
+using namespace stan::math;
+
+typedef Eigen::Matrix<double,Eigen::Dynamic,1> vector_d;
+typedef Eigen::Matrix<double,1,Eigen::Dynamic> row_vector_d;
+typedef Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> matrix_d;
+
+static int current_statement_begin__;
+
+class model_grm_absence_inflate_constrain : public prob_grad {
 private:
     int N;
     vector<int> Y;
@@ -5083,7 +7465,7 @@ private:
     vector<int> absence;
     vector<int> Y_new;
 public:
-    model_grm_absence_inflate(stan::io::var_context& context__,
+    model_grm_absence_inflate_constrain(stan::io::var_context& context__,
         std::ostream* pstream__ = 0)
         : prob_grad(0) {
         typedef boost::ecuyer1988 rng_t;
@@ -5092,7 +7474,7 @@ public:
     }
 
     template <class RNG>
-    model_grm_absence_inflate(stan::io::var_context& context__,
+    model_grm_absence_inflate_constrain(stan::io::var_context& context__,
         RNG& base_rng__,
         std::ostream* pstream__ = 0)
         : prob_grad(0) {
@@ -5105,7 +7487,7 @@ public:
                    std::ostream* pstream__) {
         current_statement_begin__ = -1;
 
-        static const char* function__ = "model_grm_absence_inflate_namespace::model_grm_absence_inflate";
+        static const char* function__ = "model_grm_absence_inflate_constrain_namespace::model_grm_absence_inflate_constrain";
         (void) function__; // dummy call to supress warning
         size_t pos__;
         (void) pos__; // dummy call to supress warning
@@ -5218,7 +7600,7 @@ public:
         ++num_params_r__;
     }
 
-    ~model_grm_absence_inflate() { }
+    ~model_grm_absence_inflate_constrain() { }
 
 
     void transform_inits(const stan::io::var_context& context__,
@@ -5574,7 +7956,7 @@ public:
                      std::ostream* pstream__ = 0) const {
         vars__.resize(0);
         stan::io::reader<double> in__(params_r__,params_i__);
-        static const char* function__ = "model_grm_absence_inflate_namespace::write_array";
+        static const char* function__ = "model_grm_absence_inflate_constrain_namespace::write_array";
         (void) function__; // dummy call to supress warning
         // read-transform, write parameters
         vector_d L_free = in__.vector_constrain(num_legis);
@@ -5683,7 +8065,7 @@ public:
     }
 
     static std::string model_name() {
-        return "model_grm_absence_inflate";
+        return "model_grm_absence_inflate_constrain";
     }
 
 
@@ -6496,7 +8878,7 @@ public:
 
 #include <stan/model/model_header.hpp>
 
-namespace model_ratingscale_absence_inflate_namespace {
+namespace model_ratingscale_absence_inflate_constrain_namespace {
 
 using std::istream;
 using std::string;
@@ -6513,7 +8895,7 @@ typedef Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> matrix_d;
 
 static int current_statement_begin__;
 
-class model_ratingscale_absence_inflate : public prob_grad {
+class model_ratingscale_absence_inflate_constrain : public prob_grad {
 private:
     int N;
     vector<int> Y;
@@ -6527,7 +8909,7 @@ private:
     vector<int> absence;
     vector<int> Y_new;
 public:
-    model_ratingscale_absence_inflate(stan::io::var_context& context__,
+    model_ratingscale_absence_inflate_constrain(stan::io::var_context& context__,
         std::ostream* pstream__ = 0)
         : prob_grad(0) {
         typedef boost::ecuyer1988 rng_t;
@@ -6536,7 +8918,7 @@ public:
     }
 
     template <class RNG>
-    model_ratingscale_absence_inflate(stan::io::var_context& context__,
+    model_ratingscale_absence_inflate_constrain(stan::io::var_context& context__,
         RNG& base_rng__,
         std::ostream* pstream__ = 0)
         : prob_grad(0) {
@@ -6549,7 +8931,7 @@ public:
                    std::ostream* pstream__) {
         current_statement_begin__ = -1;
 
-        static const char* function__ = "model_ratingscale_absence_inflate_namespace::model_ratingscale_absence_inflate";
+        static const char* function__ = "model_ratingscale_absence_inflate_constrain_namespace::model_ratingscale_absence_inflate_constrain";
         (void) function__; // dummy call to supress warning
         size_t pos__;
         (void) pos__; // dummy call to supress warning
@@ -6663,7 +9045,7 @@ public:
         ++num_params_r__;
     }
 
-    ~model_ratingscale_absence_inflate() { }
+    ~model_ratingscale_absence_inflate_constrain() { }
 
 
     void transform_inits(const stan::io::var_context& context__,
@@ -7041,7 +9423,7 @@ public:
                      std::ostream* pstream__ = 0) const {
         vars__.resize(0);
         stan::io::reader<double> in__(params_r__,params_i__);
-        static const char* function__ = "model_ratingscale_absence_inflate_namespace::write_array";
+        static const char* function__ = "model_ratingscale_absence_inflate_constrain_namespace::write_array";
         (void) function__; // dummy call to supress warning
         // read-transform, write parameters
         vector_d L_free = in__.vector_constrain(num_legis);
@@ -7148,7 +9530,7 @@ public:
     }
 
     static std::string model_name() {
-        return "model_ratingscale_absence_inflate";
+        return "model_ratingscale_absence_inflate_constrain";
     }
 
 
@@ -7280,7 +9662,7 @@ public:
 
 #include <stan/model/model_header.hpp>
 
-namespace model_ratingscale_absence_inflate_fix_sigma_abs_namespace {
+namespace model_ratingscale_absence_inflate_constrain_sigma_abs_namespace {
 
 using std::istream;
 using std::string;
@@ -7297,7 +9679,7 @@ typedef Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> matrix_d;
 
 static int current_statement_begin__;
 
-class model_ratingscale_absence_inflate_fix_sigma_abs : public prob_grad {
+class model_ratingscale_absence_inflate_constrain_sigma_abs : public prob_grad {
 private:
     int N;
     vector<int> Y;
@@ -7311,7 +9693,7 @@ private:
     vector<int> absence;
     vector<int> Y_new;
 public:
-    model_ratingscale_absence_inflate_fix_sigma_abs(stan::io::var_context& context__,
+    model_ratingscale_absence_inflate_constrain_sigma_abs(stan::io::var_context& context__,
         std::ostream* pstream__ = 0)
         : prob_grad(0) {
         typedef boost::ecuyer1988 rng_t;
@@ -7320,7 +9702,7 @@ public:
     }
 
     template <class RNG>
-    model_ratingscale_absence_inflate_fix_sigma_abs(stan::io::var_context& context__,
+    model_ratingscale_absence_inflate_constrain_sigma_abs(stan::io::var_context& context__,
         RNG& base_rng__,
         std::ostream* pstream__ = 0)
         : prob_grad(0) {
@@ -7333,7 +9715,7 @@ public:
                    std::ostream* pstream__) {
         current_statement_begin__ = -1;
 
-        static const char* function__ = "model_ratingscale_absence_inflate_fix_sigma_abs_namespace::model_ratingscale_absence_inflate_fix_sigma_abs";
+        static const char* function__ = "model_ratingscale_absence_inflate_constrain_sigma_abs_namespace::model_ratingscale_absence_inflate_constrain_sigma_abs";
         (void) function__; // dummy call to supress warning
         size_t pos__;
         (void) pos__; // dummy call to supress warning
@@ -7447,7 +9829,7 @@ public:
         ++num_params_r__;
     }
 
-    ~model_ratingscale_absence_inflate_fix_sigma_abs() { }
+    ~model_ratingscale_absence_inflate_constrain_sigma_abs() { }
 
 
     void transform_inits(const stan::io::var_context& context__,
@@ -7809,7 +10191,7 @@ public:
                      std::ostream* pstream__ = 0) const {
         vars__.resize(0);
         stan::io::reader<double> in__(params_r__,params_i__);
-        static const char* function__ = "model_ratingscale_absence_inflate_fix_sigma_abs_namespace::write_array";
+        static const char* function__ = "model_ratingscale_absence_inflate_constrain_sigma_abs_namespace::write_array";
         (void) function__; // dummy call to supress warning
         // read-transform, write parameters
         vector_d L_free = in__.vector_constrain(num_legis);
@@ -7908,7 +10290,7 @@ public:
     }
 
     static std::string model_name() {
-        return "model_ratingscale_absence_inflate_fix_sigma_abs";
+        return "model_ratingscale_absence_inflate_constrain_sigma_abs";
     }
 
 

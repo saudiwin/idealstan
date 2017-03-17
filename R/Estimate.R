@@ -9,10 +9,9 @@
 #' @useDynLib idealstan, .registration = TRUE
 #' @export
 make_idealdata <- function(vote_data=NULL,legis_data=NULL,bill_data=NULL,
-                           votes=NULL,abs_vote=NA,exclude_level=NULL) {
+                           votes=NULL,abs_vote=NA,exclude_level=NULL,inflate=TRUE) {
   
   if(class(vote_data)=='matrix') {
-    
     votes <- c(votes,abs_vote)
     
     # Register all possible votes as integers, then before running the model we can change them if need be.
@@ -52,7 +51,6 @@ estimate_ideal <- function(idealdata=NULL,use_subset=FALSE,sample_it=FALSE,
    
     #Using an un-identified model with variational inference, find those parameters that would be most useful for
     #constraining/pinning to have an identified model for full Bayesian inference
-    
   
   num_legis <- nrow(idealdata@vote_matrix)
   num_bills <- ncol(idealdata@vote_matrix)
@@ -67,7 +65,7 @@ estimate_ideal <- function(idealdata=NULL,use_subset=FALSE,sample_it=FALSE,
   Y <- c(idealdata@vote_matrix)
 
   if(!grepl('absence',modeltype)) {
-    remove_nas <- !(Y==votecount)  
+    remove_nas <- !(Y==idealdata@vote_count)  
     Y <- Y[remove_nas]
     legispoints <- legispoints[remove_nas]
     billpoints <- billpoints[remove_nas]
@@ -106,7 +104,7 @@ estimate_ideal <- function(idealdata=NULL,use_subset=FALSE,sample_it=FALSE,
   Y <- c(idealdata@vote_matrix)
   
   if(!grepl('absence',modeltype)) {
-    remove_nas <- !(Y==votecount)  
+    remove_nas <- !(Y==idealdata@vote_count)  
     Y <- Y[remove_nas]
     legispoints <- legispoints[remove_nas]
     billpoints <- billpoints[remove_nas]

@@ -67,8 +67,8 @@ id_params_constrain_guided_inflate <- function(lookat_params=NULL,restrict_param
     return(list(restrict=list(restrict=nfix[2]),matrix=x,param_fix=param_fix,
            restrict_vals=legis$avg[1:nfix[2]],
            unrestricted=lookat_params,
-           restrict_legis=c(keep_rows_high,keep_rows_low,
-           restrict_bills='None')))
+           restrict_legis=c(keep_rows_high,keep_rows_low),
+           restrict_bills='None'))
   } else if('bill' %in% restrict_params) {
     sigmas_est <- lookat_params[,grepl('sigma\\[',colnames(lookat_params))]
     sigmas_est <- sigmas_est %>% as_data_frame %>% gather(param_name,value) %>% group_by(param_name) %>% 

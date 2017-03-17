@@ -65,9 +65,9 @@ model {
       pi1[n] = sigma_full[bb[n]] *  L_full[ll[n]] - B_yes[bb[n]];
       pi2[n] = sigma_abs_open[bb[n]] * L_full[ll[n]] - B_abs[bb[n]] + avg_particip * particip[ll[n]];
   if(absence[n]==1) {
-	  1 ~ bernoulli_logit(pi2[n]);
+	  0 ~ bernoulli_logit(pi2[n]);
   } else {
-    0 ~ bernoulli_logit(pi2[n]);
+    1 ~ bernoulli_logit(pi2[n]);
     Y_new[n] ~ bernoulli_logit(pi1[n]);
   }
   }
