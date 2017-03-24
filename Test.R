@@ -32,18 +32,11 @@ rownames(to_use) <- rownames(newdata$legis.data)
 idealdata <- make_idealdata(vote_data=to_use,legis_data=newdata$legis.data,votes=as.character(names(all_vals[1:3])),
                            abs_vote = '4')
 
-<<<<<<< HEAD
-estimated_full <- estimate_ideal(idealdata=idealdata,use_subset = FALSE,sample_it=TRUE,ncores = 2,
-                            use_vb = FALSE)
-
-estimated_vb <- estimate_ideal(idealdata=idealdata,use_subset = FALSE,sample_it=FALSE,ncores = 2,
-=======
-# estimated_full <- estimate_ideal(idealdata=idealdata,use_subset = FALSE,sample_it=TRUE,ncores = 4,
+# estimated_full <- estimate_ideal(idealdata=idealdata,use_subset = FALSE,sample_it=TRUE,ncores = 2,
 #                             use_vb = FALSE)
-
-estimated_vb <- estimate_ideal(idealdata=idealdata,use_subset = FALSE,sample_it=FALSE,ncores = 4,
->>>>>>> aab3a97486101bb7cce71e6c8797f1ff830d88ba
-                            use_vb = TRUE)
+# 
+# estimated_vb <- estimate_ideal(idealdata=idealdata,use_subset = FALSE,sample_it=FALSE,ncores = 2,
+# 
 
 
 
@@ -52,15 +45,6 @@ estimated_vb <- estimate_ideal(idealdata=idealdata,use_subset = FALSE,sample_it=
 ideal_data_binary <- make_idealdata(vote_data=to_use,legis_data=newdata$legis.data,votes=as.character(names(all_vals[1:3])),
                                     abs_vote = '4',exclude_level='2')
 
-<<<<<<< HEAD
-
-estimated_binary <- estimate_ideal(idealdata=ideal_data_binary,use_subset = FALSE,sample_it=FALSE,ncores = 4,
-                                   use_vb = FALSE,nfix=c(1,1),fixparams = c('person'))
-
-
-estimated_binary_vb <- estimate_ideal(idealdata=ideal_data_binary,use_subset = FALSE,sample_it=TRUE,ncores = 2,
-                                   use_vb = TRUE,nfix=1)
-=======
 estimated_binary_test <- estimate_ideal(idealdata=ideal_data_binary,use_subset = FALSE,ncores = 4,
                                    use_vb = FALSE,nfix=c(5,5),restrict_params ='person',sample_it=FALSE,sample_size=30)
 
@@ -138,7 +122,7 @@ all_bs_abs <- apply(B_abs,2,mean)
 all_sigma <- apply(sigma_full,2,mean)
 all_sigma_abs <- apply(sigma_abs,2,mean)
 
->>>>>>> aab3a97486101bb7cce71e6c8797f1ff830d88ba
+
 
 # Now let's use the simulation functions
 
