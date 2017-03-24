@@ -5,7 +5,7 @@
 \title{This is the constructor fucnction for the idealdata object, which is necessary to estimate an idealstan model.}
 \usage{
 make_idealdata(vote_data = NULL, legis_data = NULL, bill_data = NULL,
-  votes = NULL, abs_vote = NA, exclude_level = NULL)
+  votes = NULL, abs_vote = NA, exclude_level = NULL, inflate = TRUE)
 }
 \description{
 This is the constructor fucnction for the idealdata object, which is necessary to estimate an idealstan model.

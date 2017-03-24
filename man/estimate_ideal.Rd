@@ -7,8 +7,9 @@
 estimate_ideal(idealdata = NULL, use_subset = FALSE, sample_it = FALSE,
   subset_party = NULL, subset_legis = NULL, sample_size = 20,
   nchains = 4, niters = 2000, use_vb = FALSE, nfix = 10,
-  fixparams = "bill", fixtype = "vb", warmup = floor(niters/2),
-  ncores = NULL, modeltype = "binary_absence_inflate", ...)
+  restrict_params = "bill", fixtype = "vb", warmup = floor(niters/2),
+  ncores = NULL, restrict_names = NULL, restrict_type = "constrain",
+  modeltype = "binary_absence_inflate", ...)
 }
 \description{
 Estimate an idealstan model using an idealdata object.

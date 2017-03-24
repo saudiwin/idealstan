@@ -7,7 +7,14 @@ setClass('idealdata',
                     restrict_count='numeric',
                     restrict_data='list',
                     stanmodel='stanmodel',
-                    param_fix='character'))
+                    param_fix='character',
+                    restrict_vals='numeric',
+                    subset_party='character',
+                    subset_legis='character',
+                    to_sample='numeric',
+                    unrestricted='matrix',
+                    restrict_bills='ANY',
+                    restrict_legis='ANY'))
 
 setClass('idealstan',
          slots=list(vote_data='idealdata',
@@ -15,7 +22,24 @@ setClass('idealstan',
                     model_type='character',
                     model_code='character',
                     test_model_code='character',
-                    stan_samples='stanfit'))
+                    stan_samples='stanfit',
+                    use_vb='logical'))
+
+setClass('idealsim',
+         slots=list(vote_data='idealdata',
+                     num_legis='numeric',
+                     num_bills='numeric',
+                     absence_discrim_sd='numeric',
+                     absence_diff_mean='numeric',
+                     reg_discrim_sd='numeric',
+                     ideal_pts_sd='numeric',
+                     prior_func='ANY',
+                     ordinal='logical',
+                     ordinal_outcomes='numeric',
+                     graded_response='logical',
+                     true_legis='matrix',
+                     true_reg_discrim='matrix',
+                     true_abs_discrim='matrix'))
 
 setGeneric('subset_ideal',signature='object',
            function(object,...) standardGeneric('subset_ideal'))
@@ -23,24 +47,32 @@ setGeneric('subset_ideal',signature='object',
 setMethod('subset_ideal',signature(object='idealdata'),
           function(object,use_subset=FALSE,sample_it=FALSE,subset_party=NULL,subset_legis=NULL,sample_size=20) {
             
+            
+            # Functions for subsetting data and sampling
+            
             x <- object@vote_matrix
             parliament <- object@legis_data
             
             if(use_subset==TRUE & !is.null(subset_party)) {
-              if(!all(bloc %in% parliament$bloc)) stop('The specified parliament bloc must be in the list of blocs in the legislature data.')
-              x <- x[parliament$bloc %in% subset_party,]
+              if(!all(subset_party %in% parliament$party)) stop('The specified parliament bloc/party must be in the list of blocs/parties in the legislature data.')
+              x <- x[parliament$party %in% subset_party,]
+
+              object@subset_party <- subset_party
             } 
             if(use_subset==TRUE & !is.null(subset_legis)) {
               if(!all(subset_legis %in% parliament$legis.names[parliament$bloc %in% subset_party])) {
                 stop('The legislators to subset must be members of the subsetted bloc as well.')
               }
               x <- x[parliament$legis.names %in% subset_legis,]
+              object@subset_legis <- subset_legis
             }
             
             if(sample_it==TRUE) {
-              x <- x[sample(1:nrow(x),sample_size),]
+              object@to_sample <- sample(1:nrow(x),sample_size)
+              x <- x[object@to_sample,]
             }
         object@vote_matrix <- x
+
         return(object)
         })
 
@@ -88,12 +120,13 @@ setMethod('sample_model',signature(object='idealdata'),
             out_model <- sampling(object@stanmodel,data=this_data,chains=nchains,iter=niters,cores=ncores,
                                   warmup=warmup,...)
             } else {
-            out_model <- vb(to_use,data=this_data,...)
+            out_model <- vb(object@stanmodel,data=this_data,...)
             }
             outobj <- new('idealstan',
                 vote_data=object,
                 model_code=object@stanmodel@model_code,
-                stan_samples=out_model)
+                stan_samples=out_model,
+                use_vb=use_vb)
             
             return(outobj)
           })
@@ -105,85 +138,59 @@ setGeneric('id_model',
 #' @export
 setMethod('id_model',signature(object='idealdata'),
           function(object,fixtype='vb',modeltype=NULL,this_data=NULL,nfix=10,
-                   fixparams=NULL) {
+                   restrict_params=NULL,restrict_type=NULL,restrict_names=NULL) {
 
+            
             x <- object@vote_matrix
             
             to_use <- stanmodels[[paste0(modeltype,'_nofix')]]
-           post_modes <- rstan::vb(object=to_use,data =this_data,
-                             algorithm='meanfield')
+            post_modes <- rstan::vb(object=to_use,data =this_data,
+                                    algorithm='meanfield')
             
             lookat_params <- rstan::extract(post_modes,permuted=FALSE)
             lookat_params <- lookat_params[,1,]
             
-            all_fixed <- id_params(lookat_params=lookat_params,fixparams=fixparams,nfix=nfix,x=x)
+            # Need to know if this is an absence-inflated model, as it will change how identification happens
             
-            #Rerun to see if restriction works
-            # Note: Rerunning doesn't seem to help so I'm dropping that idea
-            # 
-            # this_data$restrict <- nfix
-            # 
-            # post_modes_2 <- rstan::vb(object=to_use,data =this_data,
-            #                         algorithm='meanfield')
-            # 
-            # lookat_params_2 <- rstan::extract(post_modes_2,permuted=FALSE)
-            # lookat_params_2 <- lookat_params_2[,1,]
-            # 
-            # # If the second round did better than the first, use the second round for identification
-            # 
-            # if(param_fix=='sigma') {
-            #   sigmas_est_2 <- lookat_params_2[,grepl('sigma_adj',colnames(lookat_params_2))]
-            #   sigmas_est_2 <- sigmas_est_2 %>% as_data_frame %>% gather(param_name,value) %>% group_by(param_name) %>% 
-            #     summarize(avg=mean(value),high=quantile(value,0.95),low=quantile(value,0.05),sd=sd(value),interval=high-low)
-            #   
-            #   sigmas_2 <- arrange(sigmas_est_2,avg)
-            #   
-            #   sigmas_est_fix <- lookat_params_2[,grepl('sigma_restrict',colnames(lookat_params_2))]
-            #   if(is.matrix(sigmas_est_fix)==TRUE) {
-            #   sigmas_est_fix <- sigmas_est_fix %>% as_data_frame %>% gather(param_name,value) %>% group_by(param_name) %>% 
-            #     summarize(avg=mean(value),high=quantile(value,0.95),low=quantile(value,0.05),sd=sd(value),interval=high-low)
-            #   } else {
-            #     sigmas_est_fix <- data_frame(avg=mean(sigmas_est_fix),high=quantile(sigmas_est_fix,0.95),
-            #                                      low=quantile(sigmas_est_fix,.05),sd=sd(sigmas_est_fix),interval=high-low,
-            #                                      param_name='sigma_restrict')
-            #   }
-            #   sigmas_fix <- arrange(sigmas_est_fix,avg)
-            #   
-            #   if(mean(sigmas_2$avg[1:(nfix*2)])>mean(sigmas_fix$avg)) {
-            #     keep_cols <- as.numeric(stringr::str_extract(sigmas_2$param_name,'[0-9]+')[1:nfix])
-            #     x <- cbind(x[,-keep_cols],x[,keep_cols])
-            #   }
-            # } else if(param_fix=='sigma_abs') {
-            #   sigmas_est_abs_2 <- lookat_params_2[,grepl('sigma_abs_adj',colnames(lookat_params_2))]
-            #   sigmas_est_abs_2 <- sigmas_est_abs_2 %>% as_data_frame %>% gather(param_name,value) %>% group_by(param_name) %>% 
-            #     summarize(avg=mean(value),high=quantile(value,0.95),low=quantile(value,0.05),sd=sd(value),interval=high-low)
-            #   
-            #   sigmas_abs_2 <- arrange(sigmas_est_abs_2,avg)
-            #   
-            #   sigmas_abs_est_fix <- lookat_params_2[,grepl('sigma_abs_restrict',colnames(lookat_params_2))]
-            #   if(is.matrix(sigmas_abs_est_fix)==TRUE) {
-            #   sigmas_abs_est_fix <- sigmas_abs_est_fix %>% as_data_frame %>% gather(param_name,value) %>% group_by(param_name) %>% 
-            #     summarize(avg=mean(value),high=quantile(value,0.95),low=quantile(value,0.05),sd=sd(value),interval=high-low)
-            #   } else {
-            #     sigmas_abs_est_fix <- data_frame(avg=mean(sigmas_abs_est_fix),high=quantile(sigmas_abs_est_fix,0.95),
-            #                                      low=quantile(sigmas_abs_est_fix,.05),sd=sd(sigmas_abs_est_fix),interval=high-low,
-            #                                      param_name='sigma_abs_restrict')
-            #   }
-            #   
-            #   sigmas_abs_fix <- arrange(sigmas_abs_est_fix,avg)
-            #   
-            #   if(mean(abs(sigmas_abs_2$avg[1:(nfix*2)]))>mean(abs(sigmas_abs_fix$avg))) {
-            #     keep_cols <- as.numeric(stringr::str_extract(sigmas_abs_2$param_name,'[0-9]+')[1:nfix])
-            #     x <- cbind(x[,-keep_cols],x[,keep_cols])
-            #     }
-            #   
-            # }
+            absence_inflate <- grepl(pattern = 'inflate',modeltype)
             
-            object@vote_matrix <- x
-            object@restrict_data <- all_fixed$restrict
-            object@restrict_count <- nfix
-            object@param_fix <- all_fixed$param_fix
-            object@stanmodel <- stanmodels[[paste0(modeltype,'_fix_',paste0(all_fixed$param_fix,collapse='_'))]]
+            if(is.null(restrict_names) & restrict_type=='constrain' & absence_inflate==TRUE) {
+              all_fixed <- id_params_constrain_guided_inflate(lookat_params=lookat_params,restrict_params=restrict_params,
+                                                              nfix=nfix,x=x)
+              object@vote_matrix <- all_fixed$matrix
+              object@restrict_data <- all_fixed$restrict
+              object@restrict_count <- nfix
+              object@restrict_vals <- all_fixed$restrict_vals
+              object@param_fix <- all_fixed$param_fix
+              object@stanmodel <- stanmodels[[paste0(modeltype,'_',restrict_type,'_',paste0(all_fixed$param_fix,collapse='_'))]]
+              object@unrestricted <- all_fixed$unrestricted
+              object@restrict_bills <- all_fixed$restrict_bills
+              object@restrict_legis <- all_fixed$restrict_legis
+            } else if(is.null(restrict_names) & restrict_type=='constrain' & absence_inflate==FALSE) {
+              all_fixed <- id_params_constrain_guided_2pl(lookat_params=lookat_params,restrict_params=restrict_params,
+                                                              nfix=nfix,x=x)
+              object@vote_matrix <- all_fixed$matrix
+              object@restrict_data <- all_fixed$restrict
+              object@restrict_count <- nfix
+              object@restrict_vals <- all_fixed$restrict_vals
+              object@param_fix <- all_fixed$param_fix
+              object@stanmodel <- stanmodels[[paste0(modeltype,'_',restrict_type,'_',paste0(all_fixed$param_fix,collapse='_'))]]
+              object@unrestricted <- all_fixed$unrestricted
+              object@restrict_bills <- all_fixed$restrict_bills
+              object@restrict_legis <- all_fixed$restrict_legis
+            } else if(!is.null(restrict_names) & restrict_type=='pin' & absence_inflate==TRUE) {
+              all_fixed <- id_params_pin_unguided_inflate(restrict_params=restrict_params,
+                                                  nfix=nfix,x=x,person_names=object@vote_data@legis.data$legis.names,
+                                                  bill_names=colnames(x),restrict_names=restrict_names)
+              object@vote_matrix <- all_fixed$matrix
+              object@restrict_vals <- all_fixed$restrict_vals
+              object@param_fix <- all_fixed$param_fix
+              object@restrict_bills <- all_fixed$restrict_bills
+              object@restrict_legis <- all_fixed$restrict_legis
+              object@stanmodel <- stanmodels[[paste0(modeltype,'_',restrict_type,'_',paste0(all_fixed$param_fix,collapse='_'))]]
+            }
+            
+            
             return(object)
           })
 
@@ -207,5 +214,23 @@ setMethod('summary',signature(object='idealstan'),
               select(parameters,posterior_mean,posterior_median,posterior_sd,Prob.025,
                      Prob.25,Prob.75,Prob.975)
             return(this_summary)
+          })
+
+
+setGeneric('plot_model',
+           signature='object',
+           function(object,...) standardGeneric('plot_model'))
+
+#' The base plotting function. Default plot shows legislator ideal points with bills as equiprobability lines 
+#' (also called trace contour plots and cutting lines).
+#' @export
+setMethod(plot_model, signature(object='idealstan'),
+          function(object,plot_type='legislators',...) {
+            if(plot_type=='legislators') {
+              legis_plot(object,...)
+            } else if(plot_type=='histogram') {
+              all_hist_plot(object,...)
+            }
+
           })
  
