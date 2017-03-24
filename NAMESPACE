@@ -3,6 +3,7 @@
 export(compare_models)
 export(estimate_ideal)
 export(make_idealdata)
+export(simulate_absence)
 exportMethods(id_model)
 exportMethods(plot_model)
 exportMethods(summary)

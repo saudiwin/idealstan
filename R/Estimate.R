@@ -21,6 +21,10 @@ make_idealdata <- function(vote_data=NULL,legis_data=NULL,bill_data=NULL,
   } else {
     stop('Please provide either a matrix or a rollcall object as the vote_data argument.')
   }
+
+  
+  #before doing this, need to ensure that 1) all legislators in legis_data have votes and 
+  #2) the rows were correctly ordered to match vote_data <-> legis_data
   
   legis_data$legis.names <- row.names(vote_data)
   row.names(cleaned) <- as.character(1:nrow(cleaned))
@@ -40,6 +44,10 @@ estimate_ideal <- function(idealdata=NULL,use_subset=FALSE,sample_it=FALSE,
                            fixtype='vb',warmup=floor(niters/2),ncores=NULL,
                            restrict_names=NULL,restrict_type='constrain',modeltype='binary_absence_inflate',...) {
   
+
+  if(class(idealdata)=='idealsim') {
+    idealdata <- idealdata@vote_data
+  }
   
   if(use_subset==TRUE || sample_it==TRUE) {
     idealdata <- subset_ideal(idealdata,use_subset=use_subset,sample_it=sample_it,subset_party=subset_party,

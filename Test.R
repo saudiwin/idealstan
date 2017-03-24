@@ -12,8 +12,10 @@ require(readr)
 #this is out of date, use new CSV Files
 newdata <- readKH(file='senate_114.ord')
 
+#Need to drop Obama
 
-to_use <- newdata$votes 
+to_use <- newdata$votes[-1,]
+newdata$legis.data <- newdata$legis.data[-1,]
 to_use <- apply(to_use,2,function(x) {
   y <- recode(x,`1`=3L,`6`=1L,`7`=2L,`9`=4L)
   return(y)
@@ -25,13 +27,13 @@ all_vals <- table(to_use)
 
 #Save row names (Congresspeople)
 
-rownames(to_use) <- rownames(newdata$votes)
+rownames(to_use) <- rownames(newdata$legis.data)
 
 idealdata <- make_idealdata(vote_data=to_use,legis_data=newdata$legis.data,votes=as.character(names(all_vals[1:3])),
                            abs_vote = '4')
 
-estimated_full <- estimate_ideal(idealdata=idealdata,use_subset = FALSE,sample_it=TRUE,ncores = 4,
-                            use_vb = FALSE)
+# estimated_full <- estimate_ideal(idealdata=idealdata,use_subset = FALSE,sample_it=TRUE,ncores = 4,
+#                             use_vb = FALSE)
 
 estimated_vb <- estimate_ideal(idealdata=idealdata,use_subset = FALSE,sample_it=FALSE,ncores = 4,
                             use_vb = TRUE)
@@ -44,13 +46,13 @@ ideal_data_binary <- make_idealdata(vote_data=to_use,legis_data=newdata$legis.da
                                     abs_vote = '4',exclude_level='2')
 
 estimated_binary_test <- estimate_ideal(idealdata=ideal_data_binary,use_subset = FALSE,ncores = 4,
-                                   use_vb = FALSE,nfix=c(3,3),restrict_params ='person',sample_it=FALSE,sample_size=30)
+                                   use_vb = FALSE,nfix=c(5,5),restrict_params ='person',sample_it=FALSE,sample_size=30)
 
 all_out <- rstan::extract(estimated_binary_test@stan_samples,permuted=FALSE)
 
 if(estimated_binary@use_vb==FALSE) {
   all_out <- as.array(all_out)
-  mcmc_violin(all_out,pars='sigma_abs_open[1]') + theme_minimal()
+  mcmc_violin(all_out,pars='B_yes[502]') + theme_minimal()
   mcmc_violin(all_out,regex_pars='L_restrict_high') + theme_minimal()
   mcmc_violin(all_out,regex_pars='L_restrict_low') + theme_minimal()
 } else {
@@ -74,8 +76,8 @@ if(estimated_binary_no_inflate@use_vb==FALSE) {
   mcmc_dens(all_out,regex_pars='sigma_abs_restrict')
 }
 
-compare_models(model1=estimated_binary,model2=estimated_binary_no_inflate,
-               scale_flip=TRUE,labels=c('Absences','No Absences'),hjust=-0.1)
+compare_models(model1=estimated_binary_test,model2=estimated_binary_no_inflate,
+               scale_flip=F,labels=c('Absences','No Absences'),hjust=-0.1)
 
 ggsave(filename = 'compared_UScong.png',width = 10,height=7,units='in')
 
@@ -119,3 +121,13 @@ all_bs <- apply(B_yes,2,mean)
 all_bs_abs <- apply(B_abs,2,mean)
 all_sigma <- apply(sigma_full,2,mean)
 all_sigma_abs <- apply(sigma_abs,2,mean)
+
+
+# Now let's use the simulation functions
+
+test_data <- simulate_absence()
+
+#See if this works
+
+test_data_model <- estimate_ideal(idealdata = test_data,use_vb=TRUE,modeltype = 'ratingscale_absence_inflate')
+plot_model(test_data_model,hjust_length=-2)

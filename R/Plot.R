@@ -37,8 +37,8 @@ legis_plot <- function(object,labels='legis',return_data=FALSE,bill_plot=NULL,
                           party=legis_data$party)
   
   outplot <- person_params %>% ggplot() + 
-    geom_text(aes(x=reorder(legis.names,median_pt),y=median_pt,label=reorder(party,median_pt),color=bill_vote),size=text_size_party) +
-    geom_text(aes(x=reorder(legis.names,median_pt),y=median_pt,label=reorder(legis.names,median_pt),color=bill_vote),
+    geom_text(aes(x=reorder(legis.names,median_pt),y=median_pt,label=reorder(party,median_pt)),size=text_size_party) +
+    geom_text(aes(x=reorder(legis.names,median_pt),y=median_pt,label=reorder(legis.names,median_pt)),
               check_overlap=TRUE,hjust=hjust_length,size=text_size_label) +
     geom_linerange(aes(x=reorder(legis.names,median_pt),ymin=low_pt,ymax=high_pt),alpha=legis_ci_alpha) + 
     theme_minimal() + ylab("") + xlab("") +
@@ -144,7 +144,11 @@ legis_plot <- function(object,labels='legis',return_data=FALSE,bill_plot=NULL,
   
   if(return_data==TRUE) {
     
-    return(list(outplot=outplot,plot_data=person_params,bill_data=bill_pos))
+    return_list <- list(outplot=outplot,plot_data=person_params)
+    if(!is.null(bill_plot)) {
+      return_list$bill_data <- bill_pos
+    }
+    return(return_list)
     
   } else (
     return(outplot)
@@ -187,5 +191,59 @@ compare_models <- function(model1=NULL,model2=NULL,scale_flip=FALSE,return_data=
   } else {
     return(outplot)
   }
+  
+}
+
+all_hist_plot <- function(object,params=NULL,param_labels=NULL,hist_type='all',
+                          return_data=FALSE,func=median,...) {
+  
+  stan_params <- switch(params,
+                   absence_diff='B_abs',
+                   absence_discrim='sigma_abs_open',
+                   regular_diff='B_yes',
+                   regular_discrim='sigma_full',
+                   legis='L_full')
+  
+  estimates <- rstan::extract(object@stan_samples,pars=stan_params)[[1]] 
+  param_length <- ncol(estimates)
+  estimates <- estimates %>% as_data_frame %>% 
+    gather(param,value) 
+  if(!is.null(param_labels)) {
+    if(length(param_labels)==param_length) {
+      estimates$param_id <- paste0(param_labels,'_',1:param_length)  
+    } else {
+      warning('The length of the parameter labels is not the same as the actual number of parameters. Using default labels instead.')
+      estimates$param_id <- paste0(params,'_',1:param_length)
+    }
+    
+  } else {
+    estimates$param_id <- paste0(params,'_',1:param_length)
+  }
+  
+  estimates <- select(estimates,value,param_id) %>% group_by(param_id) %>%
+    summarize(low_pt=quantile(value,0.1),high_pt=quantile(value,0.9),
+                                                          median_pt=func(value))
+  estimates <- gather(estimates,obs_type,value,-param_id)
+  outplot <- ggplot(estimates,aes(x=value)) + geom_density() + theme_minimal()
+  if(hist_type=='all') {
+    outplot <- ggplot(estimates,aes(x=value)) + geom_density() + theme_minimal() + facet_wrap(~obs_type,
+                                                                                              nrow=3,scales = "free")
+  } else if(hist_type=='high') {
+    outplot <- filter(estimates,obs_type='high_pt') %>% 
+    ggplot(aes(x=value)) + geom_density() + theme_minimal() 
+  } else if(hist_type=='low') {
+    outplot <- filter(estimates,obs_type='low_pt') %>% 
+      ggplot(aes(x=value)) + geom_density() + theme_minimal() 
+  } else if(hist_type=='function') {
+    outplot <- filter(estimates,obs_type='median_pt') %>% 
+      ggplot(aes(x=value)) + geom_density() + theme_minimal() 
+  }
+  
+  if(return_data==TRUE) {
+    return(list(plot=outplot,plot_data=estimates))
+  } else {
+    return(outplot)
+  }
+  
   
 }

@@ -3230,7 +3230,7 @@ public:
             }
             for (int n = 1; n <= N; ++n) {
 
-                if (as_bool(logical_gt(get_base1(Y,n,"Y",1),1))) {
+                if (as_bool(logical_gt(get_base1(Y_new,n,"Y_new",1),1))) {
 
                     stan::math::assign(get_base1_lhs(absence,n,"absence",1), 1);
                 } else {

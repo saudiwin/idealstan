@@ -25,6 +25,22 @@ setClass('idealstan',
                     stan_samples='stanfit',
                     use_vb='logical'))
 
+setClass('idealsim',
+         slots=list(vote_data='idealdata',
+                     num_legis='numeric',
+                     num_bills='numeric',
+                     absence_discrim_sd='numeric',
+                     absence_diff_mean='numeric',
+                     reg_discrim_sd='numeric',
+                     ideal_pts_sd='numeric',
+                     prior_func='ANY',
+                     ordinal='logical',
+                     ordinal_outcomes='numeric',
+                     graded_response='logical',
+                     true_legis='matrix',
+                     true_reg_discrim='matrix',
+                     true_abs_discrim='matrix'))
+
 setGeneric('subset_ideal',signature='object',
            function(object,...) standardGeneric('subset_ideal'))
 
@@ -123,6 +139,7 @@ setGeneric('id_model',
 setMethod('id_model',signature(object='idealdata'),
           function(object,fixtype='vb',modeltype=NULL,this_data=NULL,nfix=10,
                    restrict_params=NULL,restrict_type=NULL,restrict_names=NULL) {
+
             
             x <- object@vote_matrix
             
@@ -211,6 +228,8 @@ setMethod(plot_model, signature(object='idealstan'),
           function(object,plot_type='legislators',...) {
             if(plot_type=='legislators') {
               legis_plot(object,...)
+            } else if(plot_type=='histogram') {
+              all_hist_plot(object,...)
             }
 
           })
