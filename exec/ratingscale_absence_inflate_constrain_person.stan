@@ -15,41 +15,45 @@ data {
 transformed data {
 	int m;                         // # steps
 	int absence[N];
-	int Y_new[N];
-	Y_new = Y;
+	
+	m = max(Y) - 1;
   for(n in 1:N) {
-    if(Y[n]>3) {
+    if(Y[n]>m) {
       absence[n]=1;
     } else {
       absence[n]=0;
     }
   }
-  m=3;
+
 }
 
 parameters {
-  vector[num_legis] L_free;
+  vector[num_bills] sigma_abs_full;
+  vector[num_legis-restrict] L_free;
+  vector[num_bills] sigma_full;
+  vector<upper=0>[restrict] L_restrict_low;
+  vector<lower=0>[restrict] L_restrict_high;
+
   vector[num_bills] B_yes;
-  vector[num_bills] sigma;
   vector [num_bills] B_abs;
-  vector [num_bills-restrict] sigma_abs_open;
-  vector<upper=0>[restrict] sigma_abs_restrict;
   ordered[m-1] steps_votes;
   real avg_particip;
 }
 
 transformed parameters {
-vector[num_bills] sigma_abs_adj;
-sigma_abs_adj = append_row(sigma_abs_open,sigma_abs_restrict);
+  
+  vector[num_legis] L_full;
+  L_full = append_row(L_free,append_row(L_restrict_high,L_restrict_low));
 }
 
 model {	
   vector[N] pi1;
   vector[N] pi2;
-  sigma ~ normal(0,5);
-  sigma_abs_restrict ~normal(0,5);
+  sigma_full ~ normal(0,5);
   L_free ~ normal(0,1);
-  sigma_abs_open ~normal(0,5);
+  L_restrict_low ~ normal(0,5);
+  L_restrict_high ~ normal(0,5);
+  sigma_abs_full ~normal(0,5);
   avg_particip ~ normal(0,5);
   
   for(i in 1:(m-2)) {
@@ -61,8 +65,8 @@ model {
 
   //model
   for(n in 1:N) {
-      pi1[n] = sigma[bb[n]] *  L_free[ll[n]] - B_yes[bb[n]];
-      pi2[n] = sigma_abs_adj[bb[n]] * L_free[ll[n]] - B_abs[bb[n]] + avg_particip * particip[ll[n]];
+      pi1[n] = sigma_full[bb[n]] *  L_full[ll[n]] - B_yes[bb[n]];
+      pi2[n] = sigma_abs_full[bb[n]] * L_full[ll[n]] - B_abs[bb[n]] + avg_particip * particip[ll[n]];
   if(absence[n]==1) {
 	  1 ~ bernoulli_logit(pi2[n]);
   } else {

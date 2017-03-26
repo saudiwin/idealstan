@@ -1,7 +1,7 @@
 setClass('idealdata',
          slots=list(vote_matrix='matrix',
                     legis_data='data.frame',
-                    vote_labels='character',
+                    vote_labels='ANY',
                     vote_count='integer',
                     abs_vote='ANY',
                     restrict_count='numeric',
@@ -139,6 +139,7 @@ setGeneric('id_model',
 setMethod('id_model',signature(object='idealdata'),
           function(object,fixtype='vb',modeltype=NULL,this_data=NULL,nfix=10,
                    restrict_params=NULL,restrict_type=NULL,restrict_names=NULL) {
+
 
             
             x <- object@vote_matrix

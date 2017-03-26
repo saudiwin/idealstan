@@ -103,8 +103,10 @@ simulate_absence <- function(num_legis=10,num_bills=100,absence_discrim_sd=1,abs
     row.names(combined) <- paste0('Legis_',1:nrow(combined))
     out_data <- make_idealdata(vote_data=combined,legis_data=data_frame(legis.names=paste0('Legis_',1:nrow(combined)),
                                                                         party='L'),
-                               votes=as.character(1:ordinal_outcomes),
-                               abs_vote = as.character(ordinal_outcomes+1))
+                               abs_vote = ordinal_outcomes+1,
+                               yes_vote = ordinal_outcomes,
+                               no_vote = 1,
+                               abst_vote = 2:(ordinal_outcomes-1))
     
   } else if(ordinal==TRUE & graded_response==TRUE) {
     
@@ -146,6 +148,7 @@ simulate_absence <- function(num_legis=10,num_bills=100,absence_discrim_sd=1,abs
 #' @export
 test_idealstan <- function(legis_range=c(10,100),simul_type='absence',...) {
   
+  browser()
   if(simul_type=='absence') {
     simul_func <- simulate_absence()
   }

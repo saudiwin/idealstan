@@ -128,7 +128,15 @@ all_sigma_abs <- apply(sigma_abs,2,mean)
 
 test_data <- simulate_absence()
 
+# Now make second test_data that strips out the absences and switches to binary
+
+test_data_bin <- make_idealdata(vote_data=test_data@vote_data@vote_matrix,legis_data = test_data@vote_data@legis_data,
+                                yes_vote = 3,no_vote = 1,
+                                inflate = FALSE,ordinal=FALSE)
+
 #See if this works
 
-test_data_model <- estimate_ideal(idealdata = test_data,use_vb=TRUE,modeltype = 'ratingscale_absence_inflate')
-plot_model(test_data_model,hjust_length=-2)
+test_data_bin <- estimate_ideal(idealdata = test_data_bin,use_vb=TRUE)
+test_data_abs <- estimate_ideal(idealdata = test_data,use_vb=TRUE,modeltype='ratingscale_absence_inflate')
+plot_model(test_data_bin,hjust_length=-2)
+compare_models(test_data_bin,test_data_abs)

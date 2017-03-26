@@ -9,13 +9,23 @@
 #' @useDynLib idealstan, .registration = TRUE
 #' @export
 make_idealdata <- function(vote_data=NULL,legis_data=NULL,bill_data=NULL,
-                           votes=NULL,abs_vote=NA,exclude_level=NULL,inflate=TRUE) {
+                           abs_vote=NA,yes_vote=3L,no_vote=1L,abst_vote=2L,
+                           ordinal=TRUE,
+                           exclude_level=NULL,inflate=TRUE) {
+  
+  if(ordinal==TRUE & inflate==TRUE) {
+    votes <- c(no_vote,abst_vote,yes_vote,abs_vote)
+  } else if(ordinal==FALSE & inflate==TRUE) {
+    votes <- c(no_vote,yes_vote,abs_vote)
+  } else {
+    votes <- c(no_vote,yes_vote)
+  }
   
   if(class(vote_data)=='matrix') {
-    votes <- c(votes,abs_vote)
+    
     
     # Register all possible votes as integers, then before running the model we can change them if need be.
-    cleaned <- vote_data %>% as_data_frame %>% mutate_all(funs(factor(.,levels=votes,exclude=exclude_level))) %>% mutate_all(funs(as.integer(.))) %>% as.matrix
+    cleaned <- vote_data %>% as_data_frame %>% mutate_all(funs(factor(.,levels=votes))) %>% mutate_all(funs(as.integer(.))) %>% as.matrix
   } else if(class(vote_data)=='rollcall') {
     
   } else {
@@ -72,18 +82,12 @@ estimate_ideal <- function(idealdata=NULL,use_subset=FALSE,sample_it=FALSE,
   avg_particip <- scale(avg_particip)[,1]
   Y <- c(idealdata@vote_matrix)
 
-  if(!grepl('absence',modeltype)) {
-    remove_nas <- !(Y==idealdata@vote_count)  
-    Y <- Y[remove_nas]
-    legispoints <- legispoints[remove_nas]
-    billpoints <- billpoints[remove_nas]
-  } 
-  if(grepl('binary',modeltype)) {
+  #Remove NA values, which should have been coded correctly in the make_idealdata function
+  
     remove_nas <- !is.na(Y)
     Y <- Y[remove_nas]
     legispoints <- legispoints[remove_nas]
     billpoints <- billpoints[remove_nas]
-  }
   
   this_data <- list(N=length(Y),
                     Y=Y,
@@ -111,18 +115,12 @@ estimate_ideal <- function(idealdata=NULL,use_subset=FALSE,sample_it=FALSE,
   avg_particip <- scale(avg_particip)[,1]
   Y <- c(idealdata@vote_matrix)
   
-  if(!grepl('absence',modeltype)) {
-    remove_nas <- !(Y==idealdata@vote_count)  
-    Y <- Y[remove_nas]
-    legispoints <- legispoints[remove_nas]
-    billpoints <- billpoints[remove_nas]
-  } 
-  if(grepl('binary',modeltype)) {
-    remove_nas <- !is.na(Y)
-    Y <- Y[remove_nas]
-    legispoints <- legispoints[remove_nas]
-    billpoints <- billpoints[remove_nas]
-  }
+  #Remove NA values, which should have been coded correctly in the make_idealdata function
+  
+  remove_nas <- !is.na(Y)
+  Y <- Y[remove_nas]
+  legispoints <- legispoints[remove_nas]
+  billpoints <- billpoints[remove_nas]
   
   this_data <- list(N=length(Y),
                     Y=Y,

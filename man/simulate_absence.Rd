@@ -5,7 +5,7 @@
 \title{A function designed to simulate absence-inflated data with either binary or ordinal outcomes}
 \usage{
 simulate_absence(num_legis = 10, num_bills = 100, absence_discrim_sd = 1,
-  absence_diff = 0.5, reg_discrim_sd = 4, ideal_pts_sd = 1,
+  absence_diff_mean = 0.5, reg_discrim_sd = 4, ideal_pts_sd = 1,
   prior_type = "gaussian", ordinal = TRUE, ordinal_outcomes = 3,
   graded_response = FALSE)
 }

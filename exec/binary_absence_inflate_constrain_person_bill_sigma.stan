@@ -24,7 +24,7 @@ transformed data {
 	  Y_new=Y;
 	}
   for(n in 1:N) {
-    if(Y[n]>1) {
+    if(Y_new[n]>1) {
       absence[n]=1;
     } else {
       absence[n]=0;
