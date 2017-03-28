@@ -2,7 +2,7 @@
 #' @import lazyeval
 legis_plot <- function(object,labels='legis',return_data=FALSE,bill_plot=NULL,
                        text_size_label=2,text_size_party=2.5,hjust_length=-0.7,
-                       legis_ci_alpha=0.5,abs_and_reg='both',...) {
+                       legis_ci_alpha=0.5,abs_and_reg='both',show_true=FALSE,...) {
 
   legis_data <- object@vote_data@legis_data
   
@@ -36,6 +36,13 @@ legis_plot <- function(object,labels='legis',return_data=FALSE,bill_plot=NULL,
   person_params <- mutate(person_params,legis.names=legis_data$legis.names,
                           party=legis_data$party)
   
+  if(show_true==TRUE) {
+    person_params <- mutate(person_params,true_vals=scale(legis_data$true_legis)[,1],
+                            median_pt=scale(median_pt)[,1],
+                            low_pt=scale(low_pt)[,1],
+                            high_pt=scale(high_pt)[,1])
+  }
+  
   outplot <- person_params %>% ggplot() + 
     geom_text(aes(x=reorder(legis.names,median_pt),y=median_pt,label=reorder(party,median_pt)),size=text_size_party) +
     geom_text(aes(x=reorder(legis.names,median_pt),y=median_pt,label=reorder(legis.names,median_pt)),
@@ -52,7 +59,7 @@ legis_plot <- function(object,labels='legis',return_data=FALSE,bill_plot=NULL,
     bill_diff_reg <- paste0('B_yes[',bill_num,']')
     
     if(grepl('inflate',object@model_type)) {
-      bill_discrim_abs <- paste0('sigma_abs_open[',bill_num,']')
+      bill_discrim_abs <- paste0('sigma_abs_full[',bill_num,']')
       bill_diff_abs <- paste0('B_abs[',bill_num,']')
       
       to_rstan <- c(bill_discrim_reg,bill_diff_reg,bill_discrim_abs,bill_diff_abs)
@@ -107,6 +114,12 @@ legis_plot <- function(object,labels='legis',return_data=FALSE,bill_plot=NULL,
     }
     person_params <- mutate(person_params,bill_vote=factor(bill_vote,levels=as.numeric(as.factor(object@vote_data@vote_labels)),
                                                            labels = object@vote_data@vote_labels))
+    if(show_true==TRUE) {
+      person_params <- mutate(person_params,true_vals=scale(legis_data$true_legis)[,1],
+                              median_pt=scale(median_pt)[,1],
+                              low_pt=scale(low_pt)[,1],
+                              high_pt=scale(high_pt)[,1])
+    }
     person_params <- left_join(person_params,bill_pos,c('bill_type'='bill_num'))
     
     # Choose a plot based on the user's options
@@ -138,6 +151,11 @@ legis_plot <- function(object,labels='legis',return_data=FALSE,bill_plot=NULL,
       outplot <- outplot + facet_wrap(~bill_type,dir='v') 
     }
     
+    
+  }
+  
+  if(show_true==TRUE) {
+    outplot <- outplot + geom_point(aes(x=reorder(legis.names,median_pt),y=true_vals),color='black',shape=2)
     
   }
 
@@ -194,12 +212,13 @@ compare_models <- function(model1=NULL,model2=NULL,scale_flip=FALSE,return_data=
   
 }
 
+#' @export
 all_hist_plot <- function(object,params=NULL,param_labels=NULL,hist_type='all',
                           return_data=FALSE,func=median,...) {
   
   stan_params <- switch(params,
                    absence_diff='B_abs',
-                   absence_discrim='sigma_abs_open',
+                   absence_discrim='sigma_abs_full',
                    regular_diff='B_yes',
                    regular_discrim='sigma_full',
                    legis='L_full')

@@ -101,8 +101,10 @@ simulate_absence <- function(num_legis=10,num_bills=100,absence_discrim_sd=1,abs
     
     colnames(combined) <- paste0('Vote_',1:ncol(combined))
     row.names(combined) <- paste0('Legis_',1:nrow(combined))
+    
     out_data <- make_idealdata(vote_data=combined,legis_data=data_frame(legis.names=paste0('Legis_',1:nrow(combined)),
-                                                                        party='L'),
+                                                                        party='L',
+                                                                        true_legis=as.numeric(ideal_pts)),
                                abs_vote = ordinal_outcomes+1,
                                yes_vote = ordinal_outcomes,
                                no_vote = 1,

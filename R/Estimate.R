@@ -50,7 +50,7 @@ make_idealdata <- function(vote_data=NULL,legis_data=NULL,bill_data=NULL,
 #' @export
 estimate_ideal <- function(idealdata=NULL,use_subset=FALSE,sample_it=FALSE,
                            subset_party=NULL,subset_legis=NULL,sample_size=20,
-                           nchains=4,niters=2000,use_vb=FALSE,nfix=10,restrict_params='bill',
+                           nchains=4,niters=2000,use_vb=FALSE,nfix=c(1,1),restrict_params='bill',
                            fixtype='vb',warmup=floor(niters/2),ncores=NULL,
                            restrict_names=NULL,restrict_type='constrain',modeltype='binary_absence_inflate',...) {
   
