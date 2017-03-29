@@ -29,65 +29,61 @@ all_vals <- table(to_use)
 
 rownames(to_use) <- rownames(newdata$legis.data)
 
-idealdata <- make_idealdata(vote_data=to_use,legis_data=newdata$legis.data,votes=as.character(names(all_vals[1:3])),
-                           abs_vote = '4')
+idealdata <- make_idealdata(vote_data=to_use,legis_data=newdata$legis.data,
+                           abs_vote = 1,yes_vote = 3,no_vote = 1,abst_vote = 2,ordinal = FALSE)
 
-# estimated_full <- estimate_ideal(idealdata=idealdata,use_subset = FALSE,sample_it=TRUE,ncores = 2,
-#                             use_vb = FALSE)
+estimated_full <- estimate_ideal(idealdata=idealdata,modeltype = 'binary_absence_inflate')
+
+# Now try non-inflated binary model
+
+ideal_data_binary <- make_idealdata(vote_data=to_use,legis_data=newdata$legis.data,
+                                    abs_vote = 1,yes_vote = 3,no_vote = 1,abst_vote = 2,ordinal = FALSE,inflate=FALSE)
+
+estimated_no_abs <- estimate_ideal(idealdata=ideal_data_binary,modeltype = 'binary_2pl')
+
+saveRDS(estimated_full,'senate_114_bin_abs.rds')
+saveRDS(estimated_no_abs,'senate_114_bin_no_abs.rds')
+
+# all_out <- rstan::extract(estimated_binary_test@stan_samples,permuted=FALSE)
+
+# if(estimated_binary@use_vb==FALSE) {
+#   all_out <- as.array(all_out)
+#   mcmc_violin(all_out,pars='B_yes[502]') + theme_minimal()
+#   mcmc_violin(all_out,regex_pars='L_restrict_high') + theme_minimal()
+#   mcmc_violin(all_out,regex_pars='L_restrict_low') + theme_minimal()
+# } else {
+#   mcmc_dens(all_out,pars='sigma_abs_open[1]')
+#   mcmc_dens(all_out,regex_pars='sigma_abs_restrict')
+# }
 # 
-# estimated_vb <- estimate_ideal(idealdata=idealdata,use_subset = FALSE,sample_it=FALSE,ncores = 2,
+# ideal_data_binary <- make_idealdata(vote_data=to_use,legis_data=newdata$legis.data,votes=as.character(names(all_vals[1:3])),
+#                                     abs_vote = '4',exclude_level='2',inflate=FALSE)
 # 
+# estimated_binary_no_inflate <- estimate_ideal(idealdata=ideal_data_binary,use_subset = FALSE,ncores = 4,
+#                                    modeltype='binary_2pl',
+#                                    use_vb = FALSE,nfix=c(5,5),restrict_params ='person',sample_it=FALSE,sample_size=30)
+# 
+# if(estimated_binary_no_inflate@use_vb==FALSE) {
+#   all_out <- as.array(rstan::extract(estimated_binary_no_inflate@stan_samples,permuted=FALSE))
+#   mcmc_violin(all_out,regex_pars='L_restrict_high') + theme_minimal()
+#   mcmc_violin(all_out,regex_pars='L_restrict_low') + theme_minimal()
+# } else {
+#   mcmc_dens(all_out,pars='sigma_abs_open[1]')
+#   mcmc_dens(all_out,regex_pars='sigma_abs_restrict')
+# }
 
-
-
-# Now try a binary inflated model by excluding the abstention category (2)
-
-ideal_data_binary <- make_idealdata(vote_data=to_use,legis_data=newdata$legis.data,votes=as.character(names(all_vals[1:3])),
-                                    abs_vote = '4',exclude_level='2')
-
-estimated_binary_test <- estimate_ideal(idealdata=ideal_data_binary,use_subset = FALSE,ncores = 4,
-                                   use_vb = FALSE,nfix=c(5,5),restrict_params ='person',sample_it=FALSE,sample_size=30)
-
-all_out <- rstan::extract(estimated_binary_test@stan_samples,permuted=FALSE)
-
-if(estimated_binary@use_vb==FALSE) {
-  all_out <- as.array(all_out)
-  mcmc_violin(all_out,pars='B_yes[502]') + theme_minimal()
-  mcmc_violin(all_out,regex_pars='L_restrict_high') + theme_minimal()
-  mcmc_violin(all_out,regex_pars='L_restrict_low') + theme_minimal()
-} else {
-  mcmc_dens(all_out,pars='sigma_abs_open[1]')
-  mcmc_dens(all_out,regex_pars='sigma_abs_restrict')
-}
-
-ideal_data_binary <- make_idealdata(vote_data=to_use,legis_data=newdata$legis.data,votes=as.character(names(all_vals[1:3])),
-                                    abs_vote = '4',exclude_level='2',inflate=FALSE)
-
-estimated_binary_no_inflate <- estimate_ideal(idealdata=ideal_data_binary,use_subset = FALSE,ncores = 4,
-                                   modeltype='binary_2pl',
-                                   use_vb = FALSE,nfix=c(5,5),restrict_params ='person',sample_it=FALSE,sample_size=30)
-
-if(estimated_binary_no_inflate@use_vb==FALSE) {
-  all_out <- as.array(rstan::extract(estimated_binary_no_inflate@stan_samples,permuted=FALSE))
-  mcmc_violin(all_out,regex_pars='L_restrict_high') + theme_minimal()
-  mcmc_violin(all_out,regex_pars='L_restrict_low') + theme_minimal()
-} else {
-  mcmc_dens(all_out,pars='sigma_abs_open[1]')
-  mcmc_dens(all_out,regex_pars='sigma_abs_restrict')
-}
-
-compare_models(model1=estimated_binary_test,model2=estimated_binary_no_inflate,
+compare_models(model1=estimated_full,model2=estimated_no_abs,
                scale_flip=F,labels=c('Absences','No Absences'),hjust=-0.1)
 
 ggsave(filename = 'compared_UScong.png',width = 10,height=7,units='in')
 
 # Look at differences in ideal points by data
 
-absence <- plot_model(estimated_binary,return_data=TRUE)$plot_data
+absence <- plot_model(estimated_full,return_data=TRUE)$plot_data
 absence <- mutate(absence,median_pt=median_pt*-1,
                   low_pt=low_pt*-1,
                   high_pt=high_pt*-1) %>% arrange(median_pt)
-no_absence <- plot_model(estimated_binary_no_inflate,return_data=TRUE)$plot_data %>% arrange(median_pt)
+no_absence <- plot_model(estimated_no_abs,return_data=TRUE)$plot_data %>% arrange(median_pt)
 combined <- bind_rows(mutate(absence,model_type='absence',ranks=rank(median_pt),
                              ranks=if_else(median_pt<0,ranks,101-ranks)),
                       mutate(no_absence,model_type='no absence',ranks=rank(median_pt),
@@ -101,11 +97,11 @@ combined <- arrange(combined,legis.names,model_type) %>% group_by(legis.names) %
 
 # Looking at bills
 
-plot_model(estimated_binary_test,bill_plot='Vote 275',text_size_label=3,text_size_party=2)
+plot_model(estimated_full,bill_plot='Vote 275',text_size_label=3,text_size_party=2)
 
 #manual check of discrim/diff parameters
 
-get_all <- rstan::extract(estimated_binary_test@stan_samples)
+get_all <- rstan::extract(estimated_full@stan_samples)
 
 avg_particip <- get_all$avg_particip
 
@@ -124,21 +120,4 @@ all_sigma_abs <- apply(sigma_abs,2,mean)
 
 
 
-# Now let's use the simulation functions
 
-test_data <- simulate_absence(num_legis=100,num_bills=500)
-
-# Now make second test_data that strips out the absences and switches to binary
-
-test_data_bin <- make_idealdata(vote_data=test_data@vote_data@vote_matrix,legis_data = test_data@vote_data@legis_data,
-                                yes_vote = 3,no_vote = 1,
-                                inflate = FALSE,ordinal=FALSE)
-
-test_data_bin@legis_data$legis.names <- paste0('Legis_',1:nrow(test_data_bin@vote_matrix))
-
-#See if this works
-
-test_data_bin <- estimate_ideal(idealdata = test_data_bin,use_vb=TRUE)
-test_data_abs <- estimate_ideal(idealdata = test_data,use_vb=TRUE,modeltype='ratingscale_absence_inflate')
-plot_model(test_data_abs,hjust_length=-2,show_true=TRUE)
-compare_models(test_data_bin,test_data_abs)
