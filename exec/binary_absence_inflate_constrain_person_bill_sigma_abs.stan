@@ -38,7 +38,7 @@ parameters {
   vector[num_bills] B_yes;
   vector[num_bills] sigma_full;
   vector [num_bills] B_abs;
-  vector [num_bills-restrict_b] sigma_abs_open;
+  vector [num_bills-restrict_b] sigma_abs_free;
   vector<upper=0>[restrict_b] sigma_abs_restrict;
   real avg_particip;
 }
@@ -46,7 +46,7 @@ parameters {
 transformed parameters {
 vector[num_bills] sigma_abs_full;
 vector[num_legis] L_full;
-sigma_abs_full = append_row(sigma_abs_open,sigma_abs_restrict);
+sigma_abs_full = append_row(sigma_abs_free,sigma_abs_restrict);
 L_full = append_row(L_free,L_restrict);
 }
 
@@ -56,7 +56,7 @@ model {
   sigma_full ~ normal(0,5);
   L_free ~ normal(0,1);
   L_restrict ~ normal(0,1);
-  sigma_abs_open ~normal(0,5);
+  sigma_abs_free ~normal(0,5);
   sigma_abs_restrict ~normal(0,5);
   avg_particip ~ normal(0,5);
 	

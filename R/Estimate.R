@@ -15,10 +15,21 @@ make_idealdata <- function(vote_data=NULL,legis_data=NULL,bill_data=NULL,
   
   if(ordinal==TRUE & inflate==TRUE) {
     votes <- c(no_vote,abst_vote,yes_vote,abs_vote)
+    votes_int <- as.integer(factor(votes,levels=votes))
+    names(votes_int) <- votes
+    vote_labels <- list(No=votes_int[no_vote],Abstain=votes_int[abst_vote],Yes=votes_int[yes_vote],
+                        Absent=votes_int[abs_vote])
   } else if(ordinal==FALSE & inflate==TRUE) {
     votes <- c(no_vote,yes_vote,abs_vote)
+    votes_int <- as.integer(factor(votes,levels=votes))
+    names(votes_int) <- votes
+    vote_labels <- list(No=votes_int[no_vote],Yes=votes_int[yes_vote],
+                        Absent=votes_int[abs_vote])
   } else {
     votes <- c(no_vote,yes_vote)
+    votes_int <- as.integer(factor(votes,levels=votes))
+    names(votes_int) <- votes
+    vote_labels <- list(No=votes_int[no_vote],Yes=votes_int[yes_vote])
   }
   
   if(class(vote_data)=='matrix') {
@@ -41,7 +52,7 @@ make_idealdata <- function(vote_data=NULL,legis_data=NULL,bill_data=NULL,
   new('idealdata',
       vote_matrix=cleaned,
       legis_data=legis_data,
-      vote_labels=votes,
+      vote_labels=vote_labels,
       vote_count=length(votes) - length(exclude_level),
       abs_vote=abs_vote)
 }

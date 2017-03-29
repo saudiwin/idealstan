@@ -1,8 +1,9 @@
 #' @import ggplot2
 #' @import lazyeval
 legis_plot <- function(object,labels='legis',return_data=FALSE,bill_plot=NULL,
-                       text_size_label=2,text_size_party=2.5,hjust_length=-0.7,
-                       legis_ci_alpha=0.5,abs_and_reg='both',show_true=FALSE,...) {
+                       text_size_label=2,text_size_party=2.5,hjust_length=-0.7,legis_labels=TRUE,
+                       legis_ci_alpha=0.5,abs_and_reg='both',show_true=FALSE,party_color=TRUE,
+                       party_overlap=FALSE,...) {
 
   legis_data <- object@vote_data@legis_data
   
@@ -36,6 +37,8 @@ legis_plot <- function(object,labels='legis',return_data=FALSE,bill_plot=NULL,
   person_params <- mutate(person_params,legis.names=legis_data$legis.names,
                           party=legis_data$party)
   
+  # Rescale simulated values to ensure that they match estimated values in terms of scale multiplicativity
+  
   if(show_true==TRUE) {
     person_params <- mutate(person_params,true_vals=scale(legis_data$true_legis)[,1],
                             median_pt=scale(median_pt)[,1],
@@ -43,14 +46,40 @@ legis_plot <- function(object,labels='legis',return_data=FALSE,bill_plot=NULL,
                             high_pt=scale(high_pt)[,1])
   }
   
-  outplot <- person_params %>% ggplot() + 
-    geom_text(aes(x=reorder(legis.names,median_pt),y=median_pt,label=reorder(party,median_pt)),size=text_size_party) +
-    geom_text(aes(x=reorder(legis.names,median_pt),y=median_pt,label=reorder(legis.names,median_pt)),
-              check_overlap=TRUE,hjust=hjust_length,size=text_size_label) +
-    geom_linerange(aes(x=reorder(legis.names,median_pt),ymin=low_pt,ymax=high_pt),alpha=legis_ci_alpha) + 
-    theme_minimal() + ylab("") + xlab("") +
-    theme(axis.text.y=element_blank(),panel.grid.major.y = element_blank()) + coord_flip()
+  # Default plot: party names plotted as points
+  
+  if(party_color==TRUE) {
+    outplot <- person_params %>% ggplot() +
+      geom_text(aes(x=reorder(legis.names,median_pt),y=median_pt,label=reorder(party,median_pt),color=party),size=text_size_party,check_overlap = party_overlap,show.legend = FALSE) +
+      geom_linerange(aes(x=reorder(legis.names,median_pt),ymin=low_pt,ymax=high_pt,color=party),alpha=legis_ci_alpha,show.legend = FALSE)
+  } else if(party_color==FALSE) {
+    outplot <- person_params %>% ggplot() +
+      geom_text(aes(x=reorder(legis.names,median_pt),y=median_pt,label=reorder(party,median_pt)),size=text_size_party,check_overlap = party_overlap) +
+      geom_linerange(aes(x=reorder(legis.names,median_pt),ymin=low_pt,ymax=high_pt),alpha=legis_ci_alpha)
+  }
+    
+    # determine if legislator names should be plotted
 
+  if(legis_labels==TRUE & party_color==TRUE) {
+    outplot <- outplot + geom_text(aes(x=reorder(legis.names,median_pt),y=median_pt,label=reorder(legis.names,median_pt),color=party),
+                                       check_overlap=TRUE,hjust=hjust_length,size=text_size_label,show.legend = FALSE)
+  } else if(legis_labels==TRUE & party_color==FALSE) {
+    outplot <- outplot + geom_text(aes(x=reorder(legis.names,median_pt),y=median_pt,label=reorder(legis.names,median_pt)),
+                                   check_overlap=TRUE,hjust=hjust_length,size=text_size_label)
+  }
+  
+  # Add a dirty trick to enable the legend to show what party labels instead of just the letter 'a'
+  
+  if(party_color==TRUE) {
+    
+    outplot <- outplot + geom_point(aes(x=reorder(legis.names,median_pt),y=median_pt,color=party),size=0,stroke=0) +
+      guides(colour = guide_legend(title="",override.aes = list(size = 5, shape = sapply(levels(person_params$party),utf8ToInt))))
+  }
+     
+    # Add theme elements
+    
+  outplot <- outplot  + theme_minimal() + ylab("") + xlab("") +
+      theme(axis.text.y=element_blank(),panel.grid.major.y = element_blank()) + coord_flip() 
   
 
   if(!is.null(bill_plot)) {
@@ -104,7 +133,13 @@ legis_plot <- function(object,labels='legis',return_data=FALSE,bill_plot=NULL,
     
     #Redo the legislator plot to make room for bill covariates
     
-    cols <- object@vote_data@vote_matrix[,bill_plot] %>% as_data_frame
+    # Pick up bills and put the labels back on
+    cols <- object@vote_data@vote_matrix[,bill_plot] %>% as_data_frame 
+    cols <- lapply(cols,function(x) {
+      levels(x) <- object@vote_data@vote_labels
+    }) %>% as_data_frame
+    
+    
     if(length(bill_plot)>1) {
       person_params <- bind_cols(person_params,cols) %>% gather(bill_type,bill_vote,one_of(bill_plot))
     } else {
@@ -129,7 +164,8 @@ legis_plot <- function(object,labels='legis',return_data=FALSE,bill_plot=NULL,
     } 
     
     outplot <- person_params %>% ggplot() + 
-      geom_text(aes(x=reorder(legis.names,median_pt),y=median_pt,label=reorder(party,median_pt),color=bill_vote),size=text_size_party) + 
+      geom_text(aes(x=reorder(legis.names,median_pt),y=median_pt,label=reorder(party,median_pt),color=bill_vote),size=text_size_party,
+                check_overlap = party_overlap) + 
       geom_text(aes(x=reorder(legis.names,median_pt),y=median_pt,label=reorder(legis.names,median_pt),color=bill_vote),
                 check_overlap=TRUE,hjust=hjust_length,size=text_size_label) +
       geom_linerange(aes(x=reorder(legis.names,median_pt),ymin=low_pt,ymax=high_pt),alpha=legis_ci_alpha) + 

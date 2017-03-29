@@ -3,7 +3,7 @@
 simulate_absence <- function(num_legis=10,num_bills=100,absence_discrim_sd=1,absence_diff_mean=0.5,
                              reg_discrim_sd=4,
                              ideal_pts_sd=1,prior_type='gaussian',ordinal=TRUE,ordinal_outcomes=3,
-                             graded_response=FALSE) {
+                             graded_response=FALSE,noise=0.05) {
   
   # Allow for different type of distributions for ideal points
   
@@ -50,7 +50,7 @@ simulate_absence <- function(num_legis=10,num_bills=100,absence_discrim_sd=1,abs
   # First generate prob of absences
   # Use matrix multiplication because it's faster (unlike the stan method)
   
-  pr_absence <- plogis(t(t(ideal_pts %*% t(absence_discrim))-absence_diff) - 0.1*avg_particip)
+  pr_absence <- plogis(t(t(ideal_pts %*% t(absence_discrim))-absence_diff + prior_func(params=list(N=num_bills,mean=0,sd=noise))) - 0.1*avg_particip)
   
   # Estimate prob of people voting on a bill (yes/no/abstain), then deflate that by the probability
   # of absence
@@ -65,7 +65,7 @@ simulate_absence <- function(num_legis=10,num_bills=100,absence_discrim_sd=1,abs
     reg_diff <- prior_func(params=list(N=num_bills,mean=0,sd=1))
     reg_discrim <- prior_func(params=list(N=num_bills,mean=0,sd=reg_discrim_sd)) %>% as.matrix
     
-    pr_vote <-t(t(ideal_pts %*% t(reg_discrim))-reg_diff)
+    pr_vote <-t(t(ideal_pts %*% t(reg_discrim))-reg_diff + prior_func(params=list(N=num_bills,mean=0,sd=noise)))
     
   cutpoints <- quantile(pr_vote,probs=seq(0,1,length.out = ordinal_outcomes+1))
   cutpoints <- cutpoints[2:(length(cutpoints)-1)]
