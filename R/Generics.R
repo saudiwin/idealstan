@@ -147,7 +147,7 @@ setMethod('id_model',signature(object='idealdata'),
             to_use <- stanmodels[[paste0(modeltype,'_nofix')]]
             post_modes <- rstan::vb(object=to_use,data =this_data,
                                     algorithm='meanfield')
-            
+
             lookat_params <- rstan::extract(post_modes,permuted=FALSE)
             lookat_params <- lookat_params[,1,]
             
