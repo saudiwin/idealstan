@@ -36,14 +36,14 @@ parameters {
   vector[num_bills] B_yes;
   vector[num_bills] sigma_full;
   vector [num_bills] B_abs;
-  vector [num_bills-restrict] sigma_abs_open;
+  vector [num_bills-restrict] sigma_abs_free;
   vector<upper=0>[restrict] sigma_abs_restrict;
   real avg_particip;
 }
 
 transformed parameters {
-vector[num_bills] sigma_abs_adj;
-sigma_abs_adj = append_row(sigma_abs_open,sigma_abs_restrict);
+vector[num_bills] sigma_abs_full;
+sigma_abs_full = append_row(sigma_abs_free,sigma_abs_restrict);
 }
 
 model {	
@@ -52,7 +52,7 @@ model {
   sigma_full ~ normal(0,5);
   sigma_abs_restrict ~normal(0,5);
   L_full ~ normal(0,1);
-  sigma_abs_open ~normal(0,5);
+  sigma_abs_free ~normal(0,5);
   avg_particip ~ normal(0,5);
 	
   B_yes ~ normal(0,5);
@@ -61,7 +61,7 @@ model {
   //model
   for(n in 1:N) {
       pi1[n] = sigma_full[bb[n]] *  L_full[ll[n]] - B_yes[bb[n]];
-      pi2[n] = sigma_abs_adj[bb[n]] * L_full[ll[n]] - B_abs[bb[n]] + avg_particip * particip[ll[n]];
+      pi2[n] = sigma_abs_full[bb[n]] * L_full[ll[n]] - B_abs[bb[n]] + avg_particip * particip[ll[n]];
   if(absence[n]==1) {
 	  1 ~ bernoulli_logit(pi2[n]);
   } else {

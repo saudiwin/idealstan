@@ -15,23 +15,21 @@ make_idealdata <- function(vote_data=NULL,legis_data=NULL,bill_data=NULL,
 
   if(ordinal==TRUE & inflate==TRUE) {
     votes <- c(no_vote,abst_vote,yes_vote,abs_vote)
-    votes_int <- as.integer(factor(votes,levels=votes))
-    names(votes_int) <- votes
-    vote_labels <- list(No=votes_int[no_vote],Abstain=votes_int[abst_vote],Yes=votes_int[yes_vote],
-                        Absent=votes_int[abs_vote])
-    abs_vote <- votes_int[length(votes_int)]
+    vote_int <- as.integer(factor(votes,levels=votes))
+    names(vote_int) <- votes
+    vote_labels <-  c('No','Abstain','Yes','Absent')
+    abs_vote <- vote_int[length(vote_int)]
   } else if(ordinal==FALSE & inflate==TRUE) {
     votes <- c(no_vote,yes_vote,abs_vote)
-    votes_int <- as.integer(factor(votes,levels=votes))
-    names(votes_int) <- votes
-    vote_labels <- list(No=votes_int[no_vote],Yes=votes_int[yes_vote],
-                        Absent=votes_int[abs_vote])
-    abs_vote <- votes_int[length(votes_int)]
+    vote_int <- as.integer(factor(votes,levels=votes))
+    names(vote_int) <- votes
+    vote_labels <-  c('No','Yes','Absent')
+    abs_vote <- vote_int[length(vote_int)]
   } else {
     votes <- c(no_vote,yes_vote)
-    votes_int <- as.integer(factor(votes,levels=votes))
-    names(votes_int) <- votes
-    vote_labels <- list(No=votes_int[no_vote],Yes=votes_int[yes_vote])
+    vote_int <- as.integer(factor(votes,levels=votes))
+    names(vote_int) <- votes
+    vote_labels <-  c('No','Yes')
     abs_vote <- NA
   }
   
@@ -56,6 +54,7 @@ make_idealdata <- function(vote_data=NULL,legis_data=NULL,bill_data=NULL,
       vote_matrix=cleaned,
       legis_data=legis_data,
       vote_labels=vote_labels,
+      vote_int=vote_int,
       vote_count=length(votes) - length(exclude_level),
       abs_vote=abs_vote)
 }

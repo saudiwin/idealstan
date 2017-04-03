@@ -2622,19 +2622,19 @@ public:
             throw std::runtime_error(std::string("Error transforming variable B_abs: ") + e.what());
         }
 
-        if (!(context__.contains_r("sigma_abs_open")))
-            throw std::runtime_error("variable sigma_abs_open missing");
-        vals_r__ = context__.vals_r("sigma_abs_open");
+        if (!(context__.contains_r("sigma_abs_free")))
+            throw std::runtime_error("variable sigma_abs_free missing");
+        vals_r__ = context__.vals_r("sigma_abs_free");
         pos__ = 0U;
-        context__.validate_dims("initialization", "sigma_abs_open", "vector_d", context__.to_vec((num_bills - restrict)));
-        // generate_declaration sigma_abs_open
-        vector_d sigma_abs_open(static_cast<Eigen::VectorXd::Index>((num_bills - restrict)));
+        context__.validate_dims("initialization", "sigma_abs_free", "vector_d", context__.to_vec((num_bills - restrict)));
+        // generate_declaration sigma_abs_free
+        vector_d sigma_abs_free(static_cast<Eigen::VectorXd::Index>((num_bills - restrict)));
         for (int j1__ = 0U; j1__ < (num_bills - restrict); ++j1__)
-            sigma_abs_open(j1__) = vals_r__[pos__++];
+            sigma_abs_free(j1__) = vals_r__[pos__++];
         try {
-            writer__.vector_unconstrain(sigma_abs_open);
+            writer__.vector_unconstrain(sigma_abs_free);
         } catch (const std::exception& e) { 
-            throw std::runtime_error(std::string("Error transforming variable sigma_abs_open: ") + e.what());
+            throw std::runtime_error(std::string("Error transforming variable sigma_abs_free: ") + e.what());
         }
 
         if (!(context__.contains_r("sigma_abs_restrict")))
@@ -2724,12 +2724,12 @@ public:
         else
             B_abs = in__.vector_constrain(num_bills);
 
-        Eigen::Matrix<T__,Eigen::Dynamic,1>  sigma_abs_open;
-        (void) sigma_abs_open;  // dummy to suppress unused var warning
+        Eigen::Matrix<T__,Eigen::Dynamic,1>  sigma_abs_free;
+        (void) sigma_abs_free;  // dummy to suppress unused var warning
         if (jacobian__)
-            sigma_abs_open = in__.vector_constrain((num_bills - restrict),lp__);
+            sigma_abs_free = in__.vector_constrain((num_bills - restrict),lp__);
         else
-            sigma_abs_open = in__.vector_constrain((num_bills - restrict));
+            sigma_abs_free = in__.vector_constrain((num_bills - restrict));
 
         Eigen::Matrix<T__,Eigen::Dynamic,1>  sigma_abs_restrict;
         (void) sigma_abs_restrict;  // dummy to suppress unused var warning
@@ -2747,14 +2747,14 @@ public:
 
 
         // transformed parameters
-        Eigen::Matrix<T__,Eigen::Dynamic,1>  sigma_abs_adj(static_cast<Eigen::VectorXd::Index>(num_bills));
-        (void) sigma_abs_adj;  // dummy to suppress unused var warning
-        stan::math::initialize(sigma_abs_adj, DUMMY_VAR__);
-        stan::math::fill(sigma_abs_adj,DUMMY_VAR__);
+        Eigen::Matrix<T__,Eigen::Dynamic,1>  sigma_abs_full(static_cast<Eigen::VectorXd::Index>(num_bills));
+        (void) sigma_abs_full;  // dummy to suppress unused var warning
+        stan::math::initialize(sigma_abs_full, DUMMY_VAR__);
+        stan::math::fill(sigma_abs_full,DUMMY_VAR__);
 
 
         try {
-            stan::math::assign(sigma_abs_adj, append_row(sigma_abs_open,sigma_abs_restrict));
+            stan::math::assign(sigma_abs_full, append_row(sigma_abs_free,sigma_abs_restrict));
         } catch (const std::exception& e) {
             stan::lang::rethrow_located(e,current_statement_begin__);
             // Next line prevents compiler griping about no return
@@ -2763,9 +2763,9 @@ public:
 
         // validate transformed parameters
         for (int i0__ = 0; i0__ < num_bills; ++i0__) {
-            if (stan::math::is_uninitialized(sigma_abs_adj(i0__))) {
+            if (stan::math::is_uninitialized(sigma_abs_full(i0__))) {
                 std::stringstream msg__;
-                msg__ << "Undefined transformed parameter: sigma_abs_adj" << '[' << i0__ << ']';
+                msg__ << "Undefined transformed parameter: sigma_abs_full" << '[' << i0__ << ']';
                 throw std::runtime_error(msg__.str());
             }
         }
@@ -2789,14 +2789,14 @@ public:
                 lp_accum__.add(normal_log<propto__>(sigma_full, 0, 5));
                 lp_accum__.add(normal_log<propto__>(sigma_abs_restrict, 0, 5));
                 lp_accum__.add(normal_log<propto__>(L_full, 0, 1));
-                lp_accum__.add(normal_log<propto__>(sigma_abs_open, 0, 5));
+                lp_accum__.add(normal_log<propto__>(sigma_abs_free, 0, 5));
                 lp_accum__.add(normal_log<propto__>(avg_particip, 0, 5));
                 lp_accum__.add(normal_log<propto__>(B_yes, 0, 5));
                 lp_accum__.add(normal_log<propto__>(B_abs, 0, 5));
                 for (int n = 1; n <= N; ++n) {
 
                     stan::math::assign(get_base1_lhs(pi1,n,"pi1",1), ((get_base1(sigma_full,get_base1(bb,n,"bb",1),"sigma_full",1) * get_base1(L_full,get_base1(ll,n,"ll",1),"L_full",1)) - get_base1(B_yes,get_base1(bb,n,"bb",1),"B_yes",1)));
-                    stan::math::assign(get_base1_lhs(pi2,n,"pi2",1), (((get_base1(sigma_abs_adj,get_base1(bb,n,"bb",1),"sigma_abs_adj",1) * get_base1(L_full,get_base1(ll,n,"ll",1),"L_full",1)) - get_base1(B_abs,get_base1(bb,n,"bb",1),"B_abs",1)) + (avg_particip * get_base1(particip,get_base1(ll,n,"ll",1),"particip",1))));
+                    stan::math::assign(get_base1_lhs(pi2,n,"pi2",1), (((get_base1(sigma_abs_full,get_base1(bb,n,"bb",1),"sigma_abs_full",1) * get_base1(L_full,get_base1(ll,n,"ll",1),"L_full",1)) - get_base1(B_abs,get_base1(bb,n,"bb",1),"B_abs",1)) + (avg_particip * get_base1(particip,get_base1(ll,n,"ll",1),"particip",1))));
                     if (as_bool(logical_eq(get_base1(absence,n,"absence",1),1))) {
 
                         lp_accum__.add(bernoulli_logit_log<propto__>(1, get_base1(pi2,n,"pi2",1)));
@@ -2836,10 +2836,10 @@ public:
         names__.push_back("B_yes");
         names__.push_back("sigma_full");
         names__.push_back("B_abs");
-        names__.push_back("sigma_abs_open");
+        names__.push_back("sigma_abs_free");
         names__.push_back("sigma_abs_restrict");
         names__.push_back("avg_particip");
-        names__.push_back("sigma_abs_adj");
+        names__.push_back("sigma_abs_full");
     }
 
 
@@ -2888,7 +2888,7 @@ public:
         vector_d B_yes = in__.vector_constrain(num_bills);
         vector_d sigma_full = in__.vector_constrain(num_bills);
         vector_d B_abs = in__.vector_constrain(num_bills);
-        vector_d sigma_abs_open = in__.vector_constrain((num_bills - restrict));
+        vector_d sigma_abs_free = in__.vector_constrain((num_bills - restrict));
         vector_d sigma_abs_restrict = in__.vector_ub_constrain(0,restrict);
         double avg_particip = in__.scalar_constrain();
         for (int k_0__ = 0; k_0__ < num_legis; ++k_0__) {
@@ -2904,7 +2904,7 @@ public:
             vars__.push_back(B_abs[k_0__]);
         }
         for (int k_0__ = 0; k_0__ < (num_bills - restrict); ++k_0__) {
-            vars__.push_back(sigma_abs_open[k_0__]);
+            vars__.push_back(sigma_abs_free[k_0__]);
         }
         for (int k_0__ = 0; k_0__ < restrict; ++k_0__) {
             vars__.push_back(sigma_abs_restrict[k_0__]);
@@ -2920,14 +2920,14 @@ public:
         double DUMMY_VAR__(std::numeric_limits<double>::quiet_NaN());
         (void) DUMMY_VAR__;  // suppress unused var warning
 
-        vector_d sigma_abs_adj(static_cast<Eigen::VectorXd::Index>(num_bills));
-        (void) sigma_abs_adj;  // dummy to suppress unused var warning
-        stan::math::initialize(sigma_abs_adj, std::numeric_limits<double>::quiet_NaN());
-        stan::math::fill(sigma_abs_adj,DUMMY_VAR__);
+        vector_d sigma_abs_full(static_cast<Eigen::VectorXd::Index>(num_bills));
+        (void) sigma_abs_full;  // dummy to suppress unused var warning
+        stan::math::initialize(sigma_abs_full, std::numeric_limits<double>::quiet_NaN());
+        stan::math::fill(sigma_abs_full,DUMMY_VAR__);
 
 
         try {
-            stan::math::assign(sigma_abs_adj, append_row(sigma_abs_open,sigma_abs_restrict));
+            stan::math::assign(sigma_abs_full, append_row(sigma_abs_free,sigma_abs_restrict));
         } catch (const std::exception& e) {
             stan::lang::rethrow_located(e,current_statement_begin__);
             // Next line prevents compiler griping about no return
@@ -2938,7 +2938,7 @@ public:
 
         // write transformed parameters
         for (int k_0__ = 0; k_0__ < num_bills; ++k_0__) {
-            vars__.push_back(sigma_abs_adj[k_0__]);
+            vars__.push_back(sigma_abs_full[k_0__]);
         }
 
         if (!include_gqs__) return;
@@ -3006,7 +3006,7 @@ public:
         }
         for (int k_0__ = 1; k_0__ <= (num_bills - restrict); ++k_0__) {
             param_name_stream__.str(std::string());
-            param_name_stream__ << "sigma_abs_open" << '.' << k_0__;
+            param_name_stream__ << "sigma_abs_free" << '.' << k_0__;
             param_names__.push_back(param_name_stream__.str());
         }
         for (int k_0__ = 1; k_0__ <= restrict; ++k_0__) {
@@ -3021,7 +3021,7 @@ public:
         if (!include_gqs__ && !include_tparams__) return;
         for (int k_0__ = 1; k_0__ <= num_bills; ++k_0__) {
             param_name_stream__.str(std::string());
-            param_name_stream__ << "sigma_abs_adj" << '.' << k_0__;
+            param_name_stream__ << "sigma_abs_full" << '.' << k_0__;
             param_names__.push_back(param_name_stream__.str());
         }
 
@@ -3055,7 +3055,7 @@ public:
         }
         for (int k_0__ = 1; k_0__ <= (num_bills - restrict); ++k_0__) {
             param_name_stream__.str(std::string());
-            param_name_stream__ << "sigma_abs_open" << '.' << k_0__;
+            param_name_stream__ << "sigma_abs_free" << '.' << k_0__;
             param_names__.push_back(param_name_stream__.str());
         }
         for (int k_0__ = 1; k_0__ <= restrict; ++k_0__) {
@@ -3070,7 +3070,7 @@ public:
         if (!include_gqs__ && !include_tparams__) return;
         for (int k_0__ = 1; k_0__ <= num_bills; ++k_0__) {
             param_name_stream__.str(std::string());
-            param_name_stream__ << "sigma_abs_adj" << '.' << k_0__;
+            param_name_stream__ << "sigma_abs_full" << '.' << k_0__;
             param_names__.push_back(param_name_stream__.str());
         }
 

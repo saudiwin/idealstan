@@ -11,7 +11,9 @@ require(readr)
 
 #this is out of date, use new CSV Files
 newdata <- readKH(file = 'senate_114.ord')
-
+out_sum <- summary(newdata,verbose=TRUE)
+legis_sum <- out_sum$legisTab
+bill_sum <- out_sum$voteTab
 #Need to drop Obama
 
 to_use <- newdata$votes[-1, ]
@@ -107,7 +109,10 @@ compare_models(
   model2 = estimated_no_abs,
   scale_flip = F,
   labels = c('Absences', 'No Absences'),
-  hjust = -0.1
+  hjust = -0.3,
+  palette='Paired',
+  color_direction=-1,
+  text_size_label = 2.2
 )
 
 ggsave(
@@ -156,12 +161,24 @@ combined <-
 
 
 # Looking at bills
-
+# This is the bill with the highest number of absences = Vote 480
 plot_model(
   estimated_full,
-  bill_plot = 'Vote 275',
-  text_size_label = 3,
-  text_size_party = 2
+  bill_plot = 'Vote 464',
+  text_size_label = 2.2,
+  text_size_party = 1,
+  abs_and_reg='absence',
+  hjust_length=-.3,
+  legis_ci_alpha=0.3
+) + scale_color_discrete(guide=guide_legend(title='Vote')) + 
+  scale_linetype(labels=c('90%','10%'), guide=guide_legend(title='Bill\nAbsence\nMidpoint\nHPD')) +
+  theme(strip.text=element_blank())
+
+ggsave(
+  filename = 'energy_bill.png',
+  width = 10,
+  height = 7,
+  units = 'in'
 )
 
 #manual check of discrim/diff parameters
@@ -172,7 +189,7 @@ avg_particip <- get_all$avg_particip
 
 B_yes <- get_all$B_yes
 B_abs <- get_all$B_abs
-sigma_abs <- get_all$sigma_abs_open
+sigma_abs <- get_all$sigma_abs_full
 sigma_full <- get_all$sigma_full
 
 discrim1 <- mean(B_abs[, 187] / sigma_abs[, 187])
@@ -182,3 +199,8 @@ all_bs <- apply(B_yes, 2, mean)
 all_bs_abs <- apply(B_abs, 2, mean)
 all_sigma <- apply(sigma_full, 2, mean)
 all_sigma_abs <- apply(sigma_abs, 2, mean)
+
+bill_discrim <- all_bs_abs/all_sigma_abs
+bill_order <- sort(bill_discrim,index.return=TRUE)
+bill_order <- data_frame(x=bill_order$x,int=bill_order$ix) %>% mutate(dist_zero=(x-0)^2) %>% 
+  arrange(dist_zero)

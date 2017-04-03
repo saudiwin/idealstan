@@ -14,7 +14,8 @@ setClass('idealdata',
                     to_sample='numeric',
                     unrestricted='matrix',
                     restrict_bills='ANY',
-                    restrict_legis='ANY'))
+                    restrict_legis='ANY',
+                    vote_int='numeric'))
 
 setClass('idealstan',
          slots=list(vote_data='idealdata',

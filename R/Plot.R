@@ -136,10 +136,9 @@ legis_plot <- function(object,labels='legis',return_data=FALSE,bill_plot=NULL,
     # Pick up bills and put the labels back on
     cols <- object@vote_data@vote_matrix[,bill_plot] %>% as_data_frame 
     cols <- lapply(cols,function(x) {
-      levels(x) <- object@vote_data@vote_labels
+      x <- factor(x,levels=object@vote_data@vote_int,labels=object@vote_data@vote_labels)
     }) %>% as_data_frame
-    
-    
+
     if(length(bill_plot)>1) {
       person_params <- bind_cols(person_params,cols) %>% gather(bill_type,bill_vote,one_of(bill_plot))
     } else {
@@ -147,8 +146,7 @@ legis_plot <- function(object,labels='legis',return_data=FALSE,bill_plot=NULL,
       names(person_params) <- c(names(person_params)[-length(names(person_params))],'bill_vote')
       person_params <- mutate(person_params,bill_type=bill_plot)
     }
-    person_params <- mutate(person_params,bill_vote=factor(bill_vote,levels=as.numeric(as.factor(object@vote_data@vote_labels)),
-                                                           labels = object@vote_data@vote_labels))
+
     if(show_true==TRUE) {
       person_params <- mutate(person_params,true_vals=scale(legis_data$true_legis)[,1],
                               median_pt=scale(median_pt)[,1],
@@ -215,7 +213,8 @@ legis_plot <- function(object,labels='legis',return_data=FALSE,bill_plot=NULL,
 #' @param scale_flip This parameter is set to true if you have two models that are reflected around the ideal point axis. This can happen as a result of identification and is harmless.
 #' @export
 compare_models <- function(model1=NULL,model2=NULL,scale_flip=FALSE,return_data=FALSE,
-                           labels=NULL,hjust=-.1) {
+                           labels=NULL,hjust=-.1,palette='Set1',color_direction=1,
+                           text_size_label=2) {
   
 
   data1 <- legis_plot(model1,return_data=TRUE)$plot_data
@@ -232,12 +231,14 @@ compare_models <- function(model1=NULL,model2=NULL,scale_flip=FALSE,return_data=
   combined_data <- bind_rows(data1,data2)
   
   outplot <- combined_data %>% ggplot(aes(y=reorder(legis.names,median_pt),x=median_pt,color=this_model)) + 
-    geom_point() + geom_text(aes(label=reorder(legis.names,median_pt)),check_overlap=TRUE,hjust=hjust) +
+    geom_point() + geom_text(aes(label=reorder(legis.names,median_pt)),size=text_size_label,
+                             check_overlap=TRUE,hjust=hjust) +
     geom_errorbarh(aes(xmin=low_pt,xmax=high_pt)) + theme_minimal() + ylab("") + xlab("") +
     theme(axis.text.y=element_blank(),panel.grid.major.y = element_blank())
   
   if(!is.null(labels)) {
-    outplot <- outplot + scale_colour_brewer(palette='Set1',labels=labels,guide=guide_legend(title=''))
+    outplot <- outplot + scale_colour_brewer(palette=palette,labels=labels,direction=color_direction,
+                                             guide=guide_legend(title=''))
   }
   
   if(return_data==TRUE) {
