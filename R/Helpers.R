@@ -26,7 +26,7 @@ id_params_constrain_guided_inflate <- function(lookat_params=NULL,restrict_param
     
     # Then do the bill fixes
     
-    sigmas_est <- lookat_params[,grepl('sigma_full\\[',colnames(lookat_params))]
+    sigmas_est <- lookat_params[,grepl('sigma\\[',colnames(lookat_params))]
     sigmas_est <- sigmas_est %>% as_data_frame %>% gather(param_name,value) %>% group_by(param_name) %>% 
       summarize(avg=mean(value),high=quantile(value,0.95),low=quantile(value,0.05),sd=sd(value),interval=high-low)
     
@@ -70,7 +70,7 @@ id_params_constrain_guided_inflate <- function(lookat_params=NULL,restrict_param
            restrict_legis=c(keep_rows_high,keep_rows_low),
            restrict_bills='None'))
   } else if('bill' %in% restrict_params) {
-    sigmas_est <- lookat_params[,grepl('sigma_full\\[',colnames(lookat_params))]
+    sigmas_est <- lookat_params[,grepl('sigma\\[',colnames(lookat_params))]
     sigmas_est <- sigmas_est %>% as_data_frame %>% gather(param_name,value) %>% group_by(param_name) %>% 
       summarize(avg=mean(value),high=quantile(value,0.95),low=quantile(value,0.05),sd=sd(value),interval=high-low)
     
@@ -128,8 +128,8 @@ id_params_constrain_guided_2pl <- function(lookat_params=NULL,restrict_params=NU
     
     # Then do the bill fixes
     
-    sigmas_est <- lookat_params[,grepl('sigma_full\\[',colnames(lookat_params))]
-    sigmas_est <- sigmas_est %>% as_data_frame %>% gather(param_name,value) %>% group_by(param_name) %>% 
+    sigmas_est <- lookat_params[,grepl('sigma\\[',colnames(lookat_params))]
+    sigmas <- sigmas_est %>% as_data_frame %>% gather(param_name,value) %>% group_by(param_name) %>% 
       summarize(avg=mean(value),high=quantile(value,0.95),low=quantile(value,0.05),sd=sd(value),interval=high-low)
 
     keep_cols <- as.numeric(stringr::str_extract(sigmas$param_name,'[0-9]+')[1:nfix[1]])
@@ -160,8 +160,8 @@ id_params_constrain_guided_2pl <- function(lookat_params=NULL,restrict_params=NU
                 unrestricted=lookat_params,
                 restrict_legis=c(keep_rows_high,keep_rows_low),restrict_bills='None'))
   } else if('bill' %in% restrict_params) {
-    sigmas_est <- lookat_params[,grepl('sigma_full\\[',colnames(lookat_params))]
-    sigmas_est <- sigmas_est %>% as_data_frame %>% gather(param_name,value) %>% group_by(param_name) %>% 
+    sigmas_est <- lookat_params[,grepl('sigma\\[',colnames(lookat_params))]
+    sigmas <- sigmas_est %>% as_data_frame %>% gather(param_name,value) %>% group_by(param_name) %>% 
       summarize(avg=mean(value),high=quantile(value,0.95),low=quantile(value,0.05),sd=sd(value),interval=high-low)
 
      keep_cols <- as.numeric(stringr::str_extract(sigmas$param_name,'[0-9]+')[1:nfix[1]])

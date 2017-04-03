@@ -1973,19 +1973,19 @@ public:
             throw std::runtime_error(std::string("Error transforming variable B_abs: ") + e.what());
         }
 
-        if (!(context__.contains_r("sigma_abs_open")))
-            throw std::runtime_error("variable sigma_abs_open missing");
-        vals_r__ = context__.vals_r("sigma_abs_open");
+        if (!(context__.contains_r("sigma_abs_full")))
+            throw std::runtime_error("variable sigma_abs_full missing");
+        vals_r__ = context__.vals_r("sigma_abs_full");
         pos__ = 0U;
-        context__.validate_dims("initialization", "sigma_abs_open", "vector_d", context__.to_vec(num_bills));
-        // generate_declaration sigma_abs_open
-        vector_d sigma_abs_open(static_cast<Eigen::VectorXd::Index>(num_bills));
+        context__.validate_dims("initialization", "sigma_abs_full", "vector_d", context__.to_vec(num_bills));
+        // generate_declaration sigma_abs_full
+        vector_d sigma_abs_full(static_cast<Eigen::VectorXd::Index>(num_bills));
         for (int j1__ = 0U; j1__ < num_bills; ++j1__)
-            sigma_abs_open(j1__) = vals_r__[pos__++];
+            sigma_abs_full(j1__) = vals_r__[pos__++];
         try {
-            writer__.vector_unconstrain(sigma_abs_open);
+            writer__.vector_unconstrain(sigma_abs_full);
         } catch (const std::exception& e) { 
-            throw std::runtime_error(std::string("Error transforming variable sigma_abs_open: ") + e.what());
+            throw std::runtime_error(std::string("Error transforming variable sigma_abs_full: ") + e.what());
         }
 
         if (!(context__.contains_r("avg_particip")))
@@ -2067,12 +2067,12 @@ public:
         else
             B_abs = in__.vector_constrain(num_bills);
 
-        Eigen::Matrix<T__,Eigen::Dynamic,1>  sigma_abs_open;
-        (void) sigma_abs_open;  // dummy to suppress unused var warning
+        Eigen::Matrix<T__,Eigen::Dynamic,1>  sigma_abs_full;
+        (void) sigma_abs_full;  // dummy to suppress unused var warning
         if (jacobian__)
-            sigma_abs_open = in__.vector_constrain(num_bills,lp__);
+            sigma_abs_full = in__.vector_constrain(num_bills,lp__);
         else
-            sigma_abs_open = in__.vector_constrain(num_bills);
+            sigma_abs_full = in__.vector_constrain(num_bills);
 
         T__ avg_particip;
         (void) avg_particip;  // dummy to suppress unused var warning
@@ -2130,7 +2130,7 @@ public:
                 current_statement_begin__ = 54;
                 lp_accum__.add(normal_log<propto__>(L_full, 0, 1));
                 current_statement_begin__ = 55;
-                lp_accum__.add(normal_log<propto__>(sigma_abs_open, 0, 5));
+                lp_accum__.add(normal_log<propto__>(sigma_abs_full, 0, 5));
                 current_statement_begin__ = 56;
                 lp_accum__.add(normal_log<propto__>(avg_particip, 0, 5));
                 current_statement_begin__ = 58;
@@ -2143,7 +2143,7 @@ public:
                     current_statement_begin__ = 63;
                     stan::math::assign(get_base1_lhs(pi1,n,"pi1",1), ((get_base1(sigma_full,get_base1(bb,n,"bb",1),"sigma_full",1) * get_base1(L_full,get_base1(ll,n,"ll",1),"L_full",1)) - get_base1(B_yes,get_base1(bb,n,"bb",1),"B_yes",1)));
                     current_statement_begin__ = 64;
-                    stan::math::assign(get_base1_lhs(pi2,n,"pi2",1), (((get_base1(sigma_abs_open,get_base1(bb,n,"bb",1),"sigma_abs_open",1) * get_base1(L_full,get_base1(ll,n,"ll",1),"L_full",1)) - get_base1(B_abs,get_base1(bb,n,"bb",1),"B_abs",1)) + (avg_particip * get_base1(particip,get_base1(ll,n,"ll",1),"particip",1))));
+                    stan::math::assign(get_base1_lhs(pi2,n,"pi2",1), (((get_base1(sigma_abs_full,get_base1(bb,n,"bb",1),"sigma_abs_full",1) * get_base1(L_full,get_base1(ll,n,"ll",1),"L_full",1)) - get_base1(B_abs,get_base1(bb,n,"bb",1),"B_abs",1)) + (avg_particip * get_base1(particip,get_base1(ll,n,"ll",1),"particip",1))));
                     current_statement_begin__ = 65;
                     if (as_bool(logical_eq(get_base1(absence,n,"absence",1),1))) {
 
@@ -2188,7 +2188,7 @@ public:
         names__.push_back("sigma_free");
         names__.push_back("sigma_restrict");
         names__.push_back("B_abs");
-        names__.push_back("sigma_abs_open");
+        names__.push_back("sigma_abs_full");
         names__.push_back("avg_particip");
         names__.push_back("sigma_full");
     }
@@ -2240,7 +2240,7 @@ public:
         vector_d sigma_free = in__.vector_constrain((num_bills - restrict));
         vector_d sigma_restrict = in__.vector_ub_constrain(0,restrict);
         vector_d B_abs = in__.vector_constrain(num_bills);
-        vector_d sigma_abs_open = in__.vector_constrain(num_bills);
+        vector_d sigma_abs_full = in__.vector_constrain(num_bills);
         double avg_particip = in__.scalar_constrain();
         for (int k_0__ = 0; k_0__ < num_legis; ++k_0__) {
             vars__.push_back(L_full[k_0__]);
@@ -2258,7 +2258,7 @@ public:
             vars__.push_back(B_abs[k_0__]);
         }
         for (int k_0__ = 0; k_0__ < num_bills; ++k_0__) {
-            vars__.push_back(sigma_abs_open[k_0__]);
+            vars__.push_back(sigma_abs_full[k_0__]);
         }
         vars__.push_back(avg_particip);
 
@@ -2363,7 +2363,7 @@ public:
         }
         for (int k_0__ = 1; k_0__ <= num_bills; ++k_0__) {
             param_name_stream__.str(std::string());
-            param_name_stream__ << "sigma_abs_open" << '.' << k_0__;
+            param_name_stream__ << "sigma_abs_full" << '.' << k_0__;
             param_names__.push_back(param_name_stream__.str());
         }
         param_name_stream__.str(std::string());
@@ -2412,7 +2412,7 @@ public:
         }
         for (int k_0__ = 1; k_0__ <= num_bills; ++k_0__) {
             param_name_stream__.str(std::string());
-            param_name_stream__ << "sigma_abs_open" << '.' << k_0__;
+            param_name_stream__ << "sigma_abs_full" << '.' << k_0__;
             param_names__.push_back(param_name_stream__.str());
         }
         param_name_stream__.str(std::string());

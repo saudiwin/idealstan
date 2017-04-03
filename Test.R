@@ -10,16 +10,23 @@ require(bayesplot)
 require(readr)
 
 #this is out of date, use new CSV Files
-newdata <- readKH(file='senate_114.ord')
+newdata <- readKH(file = 'senate_114.ord')
 
 #Need to drop Obama
 
-to_use <- newdata$votes[-1,]
-newdata$legis.data <- newdata$legis.data[-1,]
-to_use <- apply(to_use,2,function(x) {
-  y <- recode(x,`1`=3L,`6`=1L,`7`=2L,`9`=4L)
+to_use <- newdata$votes[-1, ]
+newdata$legis.data <- newdata$legis.data[-1, ]
+to_use <- apply(to_use, 2, function(x) {
+  y <- recode(
+    x,
+    `1` = 3L,
+    `6` = 1L,
+    `7` = 2L,
+    `9` = 4L
+  )
   return(y)
 })
+
 
 bill_data <- read_csv('rollcall_senate_114.csv')
 
@@ -29,20 +36,43 @@ all_vals <- table(to_use)
 
 rownames(to_use) <- rownames(newdata$legis.data)
 
-idealdata <- make_idealdata(vote_data=to_use,legis_data=newdata$legis.data,
-                           abs_vote = 1,yes_vote = 3,no_vote = 1,abst_vote = 2,ordinal = FALSE)
+idealdata <-
+  make_idealdata(
+    vote_data = to_use,
+    legis_data = newdata$legis.data,
+    abs_vote = 4,
+    yes_vote = 3,
+    no_vote = 1,
+    abst_vote = 2,
+    ordinal = FALSE
+  )
 
-estimated_full <- estimate_ideal(idealdata=idealdata,modeltype = 'binary_absence_inflate')
+estimated_full <-
+  estimate_ideal(idealdata = idealdata,
+                 modeltype = 'binary_absence_inflate',
+                 use_vb = TRUE)
 
 # Now try non-inflated binary model
 
-ideal_data_binary <- make_idealdata(vote_data=to_use,legis_data=newdata$legis.data,
-                                    abs_vote = 1,yes_vote = 3,no_vote = 1,abst_vote = 2,ordinal = FALSE,inflate=FALSE)
+ideal_data_binary <-
+  make_idealdata(
+    vote_data = to_use,
+    legis_data = newdata$legis.data,
+    abs_vote = 4,
+    yes_vote = 3,
+    no_vote = 1,
+    abst_vote = 2,
+    ordinal = FALSE,
+    inflate = FALSE
+  )
 
-estimated_no_abs <- estimate_ideal(idealdata=ideal_data_binary,modeltype = 'binary_2pl')
+estimated_no_abs <-
+  estimate_ideal(idealdata = ideal_data_binary,
+                 modeltype = 'binary_2pl',
+                 use_vb = TRUE)
 
-saveRDS(estimated_full,'senate_114_bin_abs.rds')
-saveRDS(estimated_no_abs,'senate_114_bin_no_abs.rds')
+saveRDS(estimated_full, 'senate_114_bin_abs.rds')
+saveRDS(estimated_no_abs, 'senate_114_bin_no_abs.rds')
 
 # all_out <- rstan::extract(estimated_binary_test@stan_samples,permuted=FALSE)
 
@@ -55,14 +85,14 @@ saveRDS(estimated_no_abs,'senate_114_bin_no_abs.rds')
 #   mcmc_dens(all_out,pars='sigma_abs_open[1]')
 #   mcmc_dens(all_out,regex_pars='sigma_abs_restrict')
 # }
-# 
+#
 # ideal_data_binary <- make_idealdata(vote_data=to_use,legis_data=newdata$legis.data,votes=as.character(names(all_vals[1:3])),
 #                                     abs_vote = '4',exclude_level='2',inflate=FALSE)
-# 
+#
 # estimated_binary_no_inflate <- estimate_ideal(idealdata=ideal_data_binary,use_subset = FALSE,ncores = 4,
 #                                    modeltype='binary_2pl',
 #                                    use_vb = FALSE,nfix=c(5,5),restrict_params ='person',sample_it=FALSE,sample_size=30)
-# 
+#
 # if(estimated_binary_no_inflate@use_vb==FALSE) {
 #   all_out <- as.array(rstan::extract(estimated_binary_no_inflate@stan_samples,permuted=FALSE))
 #   mcmc_violin(all_out,regex_pars='L_restrict_high') + theme_minimal()
@@ -72,32 +102,67 @@ saveRDS(estimated_no_abs,'senate_114_bin_no_abs.rds')
 #   mcmc_dens(all_out,regex_pars='sigma_abs_restrict')
 # }
 
-compare_models(model1=estimated_full,model2=estimated_no_abs,
-               scale_flip=F,labels=c('Absences','No Absences'),hjust=-0.1)
+compare_models(
+  model1 = estimated_full,
+  model2 = estimated_no_abs,
+  scale_flip = F,
+  labels = c('Absences', 'No Absences'),
+  hjust = -0.1
+)
 
-ggsave(filename = 'compared_UScong.png',width = 10,height=7,units='in')
+ggsave(
+  filename = 'compared_UScong.png',
+  width = 10,
+  height = 7,
+  units = 'in'
+)
 
 # Look at differences in ideal points by data
 
-absence <- plot_model(estimated_full,return_data=TRUE)$plot_data
-absence <- mutate(absence,median_pt=median_pt*-1,
-                  low_pt=low_pt*-1,
-                  high_pt=high_pt*-1) %>% arrange(median_pt)
-no_absence <- plot_model(estimated_no_abs,return_data=TRUE)$plot_data %>% arrange(median_pt)
-combined <- bind_rows(mutate(absence,model_type='absence',ranks=rank(median_pt),
-                             ranks=if_else(median_pt<0,ranks,101-ranks)),
-                      mutate(no_absence,model_type='no absence',ranks=rank(median_pt),
-                             ranks=if_else(median_pt<0,ranks,101-ranks)))
+absence <- plot_model(estimated_full, return_data = TRUE)$plot_data
+absence <- mutate(
+  absence,
+  median_pt = median_pt * -1,
+  low_pt = low_pt * -1,
+  high_pt = high_pt * -1
+) %>% arrange(median_pt)
+no_absence <-
+  plot_model(estimated_no_abs, return_data = TRUE)$plot_data %>% arrange(median_pt)
+combined <-
+  bind_rows(
+    mutate(
+      absence,
+      model_type = 'absence',
+      ranks = rank(median_pt),
+      ranks = if_else(median_pt < 0, ranks, 101 -
+                        ranks)
+    ),
+    mutate(
+      no_absence,
+      model_type = 'no absence',
+      ranks = rank(median_pt),
+      ranks = if_else(median_pt < 0, ranks, 101 -
+                        ranks)
+    )
+  )
 
-group_by(combined,model_type) %>% summarize(mean(abs(high_pt-low_pt)))
+group_by(combined, model_type) %>% summarize(mean(abs(high_pt - low_pt)))
 
-combined <- arrange(combined,legis.names,model_type) %>% group_by(legis.names) %>% mutate(changed_legis=median_pt - lag(median_pt),
-                                                                                          changed_rank=ranks-lag(ranks))
+combined <-
+  arrange(combined, legis.names, model_type) %>% group_by(legis.names) %>% mutate(changed_legis =
+                                                                                    median_pt - lag(median_pt),
+                                                                                  changed_rank =
+                                                                                    ranks - lag(ranks))
 
 
 # Looking at bills
 
-plot_model(estimated_full,bill_plot='Vote 275',text_size_label=3,text_size_party=2)
+plot_model(
+  estimated_full,
+  bill_plot = 'Vote 275',
+  text_size_label = 3,
+  text_size_party = 2
+)
 
 #manual check of discrim/diff parameters
 
@@ -110,14 +175,10 @@ B_abs <- get_all$B_abs
 sigma_abs <- get_all$sigma_abs_open
 sigma_full <- get_all$sigma_full
 
-discrim1 <- mean(B_abs[,187]/sigma_abs[,187])
-discrim2 <- mean(B_yes[,187]/sigma_full[,187])
+discrim1 <- mean(B_abs[, 187] / sigma_abs[, 187])
+discrim2 <- mean(B_yes[, 187] / sigma_full[, 187])
 
-all_bs <- apply(B_yes,2,mean)
-all_bs_abs <- apply(B_abs,2,mean)
-all_sigma <- apply(sigma_full,2,mean)
-all_sigma_abs <- apply(sigma_abs,2,mean)
-
-
-
-
+all_bs <- apply(B_yes, 2, mean)
+all_bs_abs <- apply(B_abs, 2, mean)
+all_sigma <- apply(sigma_full, 2, mean)
+all_sigma_abs <- apply(sigma_abs, 2, mean)

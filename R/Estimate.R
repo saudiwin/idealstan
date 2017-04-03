@@ -12,24 +12,27 @@ make_idealdata <- function(vote_data=NULL,legis_data=NULL,bill_data=NULL,
                            abs_vote=NA,yes_vote=3L,no_vote=1L,abst_vote=2L,
                            ordinal=TRUE,
                            exclude_level=NULL,inflate=TRUE) {
-  
+
   if(ordinal==TRUE & inflate==TRUE) {
     votes <- c(no_vote,abst_vote,yes_vote,abs_vote)
     votes_int <- as.integer(factor(votes,levels=votes))
     names(votes_int) <- votes
     vote_labels <- list(No=votes_int[no_vote],Abstain=votes_int[abst_vote],Yes=votes_int[yes_vote],
                         Absent=votes_int[abs_vote])
+    abs_vote <- votes_int[length(votes_int)]
   } else if(ordinal==FALSE & inflate==TRUE) {
     votes <- c(no_vote,yes_vote,abs_vote)
     votes_int <- as.integer(factor(votes,levels=votes))
     names(votes_int) <- votes
     vote_labels <- list(No=votes_int[no_vote],Yes=votes_int[yes_vote],
                         Absent=votes_int[abs_vote])
+    abs_vote <- votes_int[length(votes_int)]
   } else {
     votes <- c(no_vote,yes_vote)
     votes_int <- as.integer(factor(votes,levels=votes))
     names(votes_int) <- votes
     vote_labels <- list(No=votes_int[no_vote],Yes=votes_int[yes_vote])
+    abs_vote <- NA
   }
   
   if(class(vote_data)=='matrix') {
@@ -64,7 +67,6 @@ estimate_ideal <- function(idealdata=NULL,use_subset=FALSE,sample_it=FALSE,
                            nchains=4,niters=2000,use_vb=FALSE,nfix=c(1,1),restrict_params='bill',
                            fixtype='vb',warmup=floor(niters/2),ncores=NULL,
                            restrict_names=NULL,restrict_type='constrain',modeltype='binary_absence_inflate',...) {
-  browser()
 
   if(class(idealdata)=='idealsim') {
     idealdata <- idealdata@vote_data
@@ -86,7 +88,11 @@ estimate_ideal <- function(idealdata=NULL,use_subset=FALSE,sample_it=FALSE,
   legispoints <- rep(1:num_legis,times=num_bills)
   billpoints <- rep(1:num_bills,each=num_legis)
   avg_particip <- apply(idealdata@vote_matrix,1,function(x) {
-    count_abs <- sum(x==idealdata@abs_vote,na.rm=TRUE)
+    if(is.na(idealdata@abs_vote)) {
+      count_abs <- sum(is.na(x))
+    } else {
+      count_abs <- sum(x==idealdata@abs_vote,na.rm=TRUE)
+    }
     particip_rate <- 1 - (count_abs/length(x))
     return(particip_rate)
   }) 
@@ -119,7 +125,11 @@ estimate_ideal <- function(idealdata=NULL,use_subset=FALSE,sample_it=FALSE,
   legispoints <- rep(1:num_legis,times=num_bills)
   billpoints <- rep(1:num_bills,each=num_legis)
   avg_particip <- apply(idealdata@vote_matrix,1,function(x) {
-    count_abs <- sum(x==idealdata@vote_count,na.rm=TRUE)
+    if(is.na(idealdata@abs_vote)) {
+      count_abs <- sum(is.na(x))
+    } else {
+      count_abs <- sum(x==idealdata@abs_vote,na.rm=TRUE)
+    }
     particip_rate <- 1 - (count_abs/length(x))
     return(particip_rate)
   }) 
