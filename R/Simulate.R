@@ -150,13 +150,25 @@ simulate_absence <- function(num_legis=10,num_bills=100,absence_discrim_sd=1,abs
 #' @export
 test_idealstan <- function(legis_range=c(10,100),simul_type='absence',...) {
   
-  browser()
   if(simul_type=='absence') {
-    simul_func <- simulate_absence()
+    simul_func <- simulate_absence
   }
   
   all_sims <- lapply(seq(legis_range[1],legis_range[2],by=2), function(N,...){
     sim_data <- simul_func(num_legis=N,...)
   },...)
+  
+  all_data <- lapply(all_sims, function(m) {
+                          out_data <- make_idealdata(vote_data=m@vote_data@vote_matrix,legis_data = m@vote_data@legis_data,
+                                  yes_vote = 3,no_vote = 1,
+                                  inflate = TRUE,ordinal=FALSE)})
+  
+  
+  #See if this works
+  
+  est_models <- lapply(all_data,estimate_ideal)
+  est_models_vb <- lapply(all_data,estimate_ideal,use_vb=TRUE)
+  
+  return(list('regular'=est_models,'vb'=est_models_vb))
   
 }

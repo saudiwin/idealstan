@@ -214,7 +214,8 @@ legis_plot <- function(object,labels='legis',return_data=FALSE,bill_plot=NULL,
 #' @export
 compare_models <- function(model1=NULL,model2=NULL,scale_flip=FALSE,return_data=FALSE,
                            labels=NULL,hjust=-.1,palette='Set1',color_direction=1,
-                           text_size_label=2) {
+                           text_size_label=2,
+                           rescale=FALSE) {
   
 
   data1 <- legis_plot(model1,return_data=TRUE)$plot_data
@@ -229,6 +230,10 @@ compare_models <- function(model1=NULL,model2=NULL,scale_flip=FALSE,return_data=
   }
   
   combined_data <- bind_rows(data1,data2)
+  
+  if(rescale==TRUE) {
+    combined_data <- mutate(combined_data, median_pt=scale(median_pt)[,1])
+  }
   
   outplot <- combined_data %>% ggplot(aes(y=reorder(legis.names,median_pt),x=median_pt,color=this_model)) + 
     geom_point() + geom_text(aes(label=reorder(legis.names,median_pt)),size=text_size_label,

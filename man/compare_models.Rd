@@ -7,7 +7,7 @@ is the same for both models.}
 \usage{
 compare_models(model1 = NULL, model2 = NULL, scale_flip = FALSE,
   return_data = FALSE, labels = NULL, hjust = -0.1, palette = "Set1",
-  color_direction = 1, text_size_label = 2)
+  color_direction = 1, text_size_label = 2, rescale = FALSE)
 }
 \arguments{
 \item{scale_flip}{This parameter is set to true if you have two models that are reflected around the ideal point axis. This can happen as a result of identification and is harmless.}

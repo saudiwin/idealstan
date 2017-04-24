@@ -40,7 +40,10 @@ setClass('idealsim',
                      graded_response='logical',
                      true_legis='matrix',
                      true_reg_discrim='matrix',
-                     true_abs_discrim='matrix'))
+                     true_abs_discrim='matrix',
+                     est_legis='matrix',
+                     est_reg_discrim='matrix',
+                     est_abs_discrim='matrix'))
 
 setGeneric('subset_ideal',signature='object',
            function(object,...) standardGeneric('subset_ideal'))

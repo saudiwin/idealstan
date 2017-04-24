@@ -52,7 +52,10 @@ idealdata <-
 estimated_full <-
   estimate_ideal(idealdata = idealdata,
                  modeltype = 'binary_absence_inflate',
-                 use_vb = TRUE)
+                 use_vb = FALSE,
+                 ncores=4,
+                 nfix=c(8,8),
+                 restrict_params='person')
 
 # Now try non-inflated binary model
 
@@ -71,38 +74,28 @@ ideal_data_binary <-
 estimated_no_abs <-
   estimate_ideal(idealdata = ideal_data_binary,
                  modeltype = 'binary_2pl',
-                 use_vb = TRUE)
+                 use_vb = FALSE,
+                 ncores = 4,
+                 nfix=c(8,8),
+                 restrict_params='person')
 
 saveRDS(estimated_full, 'senate_114_bin_abs.rds')
 saveRDS(estimated_no_abs, 'senate_114_bin_no_abs.rds')
 
-# all_out <- rstan::extract(estimated_binary_test@stan_samples,permuted=FALSE)
+ all_out <- rstan::extract(estimated_full@stan_samples,permuted=FALSE)
 
-# if(estimated_binary@use_vb==FALSE) {
-#   all_out <- as.array(all_out)
-#   mcmc_violin(all_out,pars='B_yes[502]') + theme_minimal()
-#   mcmc_violin(all_out,regex_pars='L_restrict_high') + theme_minimal()
-#   mcmc_violin(all_out,regex_pars='L_restrict_low') + theme_minimal()
-# } else {
-#   mcmc_dens(all_out,pars='sigma_abs_open[1]')
-#   mcmc_dens(all_out,regex_pars='sigma_abs_restrict')
-# }
-#
-# ideal_data_binary <- make_idealdata(vote_data=to_use,legis_data=newdata$legis.data,votes=as.character(names(all_vals[1:3])),
-#                                     abs_vote = '4',exclude_level='2',inflate=FALSE)
-#
-# estimated_binary_no_inflate <- estimate_ideal(idealdata=ideal_data_binary,use_subset = FALSE,ncores = 4,
-#                                    modeltype='binary_2pl',
-#                                    use_vb = FALSE,nfix=c(5,5),restrict_params ='person',sample_it=FALSE,sample_size=30)
-#
-# if(estimated_binary_no_inflate@use_vb==FALSE) {
-#   all_out <- as.array(rstan::extract(estimated_binary_no_inflate@stan_samples,permuted=FALSE))
-#   mcmc_violin(all_out,regex_pars='L_restrict_high') + theme_minimal()
-#   mcmc_violin(all_out,regex_pars='L_restrict_low') + theme_minimal()
-# } else {
-#   mcmc_dens(all_out,pars='sigma_abs_open[1]')
-#   mcmc_dens(all_out,regex_pars='sigma_abs_restrict')
-# }
+
+   all_out <- as.array(all_out)
+   mcmc_violin(all_out,pars='B_yes[502]') + theme_minimal()
+   mcmc_violin(all_out,regex_pars='restrict') + theme_minimal()
+
+   all_out <- rstan::extract(estimated_full@stan_samples,permuted=FALSE)
+   
+   
+   all_out_bin <- as.array(rstan::extract(estimated_no_abs@stan_samples,permuted=FALSE))
+   mcmc_violin(all_out_bin,pars='B_yes[502]') + theme_minimal()
+   mcmc_violin(all_out_bin,regex_pars='restrict') + theme_minimal()
+
 
 compare_models(
   model1 = estimated_full,
