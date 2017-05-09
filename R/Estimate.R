@@ -8,10 +8,10 @@
 #' @import methods
 #' @useDynLib idealstan, .registration = TRUE
 #' @export
-make_idealdata <- function(vote_data=NULL,legis_data=NULL,bill_data=NULL,
+make_idealdata <- function(vote_data=NULL,simul_data=NULL,legis_data=NULL,bill_data=NULL,
                            abs_vote=NA,yes_vote=3L,no_vote=1L,abst_vote=2L,
                            ordinal=TRUE,
-                           exclude_level=NULL,inflate=TRUE) {
+                           exclude_level=NULL,inflate=TRUE,simulation=FALSE) {
 
   if(ordinal==TRUE & inflate==TRUE) {
     votes <- c(no_vote,abst_vote,yes_vote,abs_vote)
@@ -50,13 +50,19 @@ make_idealdata <- function(vote_data=NULL,legis_data=NULL,bill_data=NULL,
   
   legis_data$legis.names <- row.names(vote_data)
   row.names(cleaned) <- as.character(1:nrow(cleaned))
-  new('idealdata',
+  outobj <- new('idealdata',
       vote_matrix=cleaned,
       legis_data=legis_data,
       vote_labels=vote_labels,
       vote_int=vote_int,
       vote_count=length(votes) - length(exclude_level),
       abs_vote=abs_vote)
+  
+  if(simulation==TRUE) {
+    outobj@simul_data <- simul_data
+    outobj@simulation <- simulation
+  }
+  return(outobj)
 }
 
 #' Estimate an idealstan model using an idealdata object.
@@ -66,10 +72,7 @@ estimate_ideal <- function(idealdata=NULL,use_subset=FALSE,sample_it=FALSE,
                            nchains=4,niters=2000,use_vb=FALSE,nfix=c(1,1),restrict_params='bill',
                            fixtype='vb',warmup=floor(niters/2),ncores=NULL,
                            restrict_names=NULL,restrict_type='constrain',modeltype='binary_absence_inflate',...) {
-
-  if(class(idealdata)=='idealsim') {
-    idealdata <- idealdata@vote_data
-  }
+  
   
   if(use_subset==TRUE || sample_it==TRUE) {
     idealdata <- subset_ideal(idealdata,use_subset=use_subset,sample_it=sample_it,subset_party=subset_party,

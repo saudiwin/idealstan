@@ -108,7 +108,21 @@ simulate_absence <- function(num_legis=10,num_bills=100,absence_discrim_sd=1,abs
                                abs_vote = ordinal_outcomes+1,
                                yes_vote = ordinal_outcomes,
                                no_vote = 1,
-                               abst_vote = 2:(ordinal_outcomes-1))
+                               abst_vote = 2:(ordinal_outcomes-1),
+                               simul_data=list(num_legis=num_legis,
+                                              num_bills=num_bills,
+                                              absence_discrim_sd=absence_discrim_sd,
+                                              absence_diff_mean=absence_diff_mean,
+                                              reg_discrim_sd=reg_discrim_sd,
+                                              ideal_pts_sd=ideal_pts_sd,
+                                              prior_func=prior_func,
+                                              ordinal=ordinal,
+                                              ordinal_outcomes=ordinal_outcomes,
+                                              graded_response=graded_response,
+                                              true_legis=ideal_pts,
+                                              true_reg_discrim=reg_discrim,
+                                              true_abs_discrim=absence_discrim),
+                               simulation=TRUE)
     
   } else if(ordinal==TRUE & graded_response==TRUE) {
     
@@ -127,20 +141,7 @@ simulate_absence <- function(num_legis=10,num_bills=100,absence_discrim_sd=1,abs
     
   }
   
-  return(new('idealsim',vote_data=out_data,
-              num_legis=num_legis,
-              num_bills=num_bills,
-              absence_discrim_sd=absence_discrim_sd,
-              absence_diff_mean=absence_diff_mean,
-              reg_discrim_sd=reg_discrim_sd,
-              ideal_pts_sd=ideal_pts_sd,
-              prior_func=prior_func,
-              ordinal=ordinal,
-              ordinal_outcomes=ordinal_outcomes,
-              graded_response=graded_response,
-         true_legis=ideal_pts,
-         true_reg_discrim=reg_discrim,
-         true_abs_discrim=absence_discrim))
+  return(out_data)
   
   
 }
@@ -148,27 +149,81 @@ simulate_absence <- function(num_legis=10,num_bills=100,absence_discrim_sd=1,abs
 #' A function that loops over numbers of legislators/bills to provide a coherent over-view of 
 #' idealstan performance for a given model type.
 #' @export
-test_idealstan <- function(legis_range=c(10,100),simul_type='absence',...) {
+test_idealstan <- function(legis_range=c(10,100),simul_type='absence',is.ordinal=TRUE,...) {
   
   if(simul_type=='absence') {
     simul_func <- simulate_absence
+    if(is.ordinal==TRUE) {
+      model_type <- 'ratingscale_absence_inflate'
+    } else {
+      model_type <- 'binary_absence_inflate'
+    }
   }
   
-  all_sims <- lapply(seq(legis_range[1],legis_range[2],by=2), function(N,...){
-    sim_data <- simul_func(num_legis=N,...)
-  },...)
-  
-  all_data <- lapply(all_sims, function(m) {
-                          out_data <- make_idealdata(vote_data=m@vote_data@vote_matrix,legis_data = m@vote_data@legis_data,
-                                  yes_vote = 3,no_vote = 1,
-                                  inflate = TRUE,ordinal=FALSE)})
-  
+  all_sims <- lapply(seq(legis_range[1],legis_range[2],by=2), function(N){
+    sim_data <- simul_func(num_legis=N,ordinal=is.ordinal)
+  })
   
   #See if this works
   
-  est_models <- lapply(all_data,estimate_ideal)
-  est_models_vb <- lapply(all_data,estimate_ideal,use_vb=TRUE)
+  est_models <- lapply(all_sims,estimate_ideal,modeltype=model_type,...)
+  est_models_vb <- lapply(all_sims,estimate_ideal,use_vb=TRUE,model_type=model_type)
   
   return(list('regular'=est_models,'vb'=est_models_vb))
   
+}
+
+#' RMSE function for calculating individual RMSE values compared to true simulation scores
+#' Returns a data frame with RMSE plus quantiles.
+#' @param est_param A matrix of posterior draws of a parameter
+#' @param true_param A matrix (one column) of true parameter values
+#' @export
+calc_rmse <- function(est_param,true_param) {
+  all_rmse <- sapply(1:ncol(est_param), function(i) {
+    this_param <- sqrt((est_param[,i] - true_param[i,])^2)
+  })
+  
+  out_data1 <- data_frame(avg=apply(all_rmse,2,mean),
+                         high=apply(all_rmse,2,quantile,probs=0.9),
+                         low=apply(all_rmse,2,quantile,probs=0.1),
+                         total_avg=mean(all_rmse),
+                         total_high=quantile(all_rmse,0.9),
+                         total_low=quantile(all_rmse,0.1),
+                         Params=1:ncol(est_param))
+  
+  # Do a scale flip and check
+  
+  true_param <- true_param * -1
+  
+  out_data2 <- data_frame(avg=apply(all_rmse,2,mean),
+                          high=apply(all_rmse,2,quantile,probs=0.9),
+                          low=apply(all_rmse,2,quantile,probs=0.1),
+                          total_avg=mean(all_rmse),
+                          total_high=quantile(all_rmse,0.9),
+                          total_low=quantile(all_rmse,0.1),
+                          Params=1:ncol(est_param))
+  
+  if(mean(out_data1$total_avg)<mean(out_data2$total_avg)) {
+    return(out_data1)
+  } else {
+    return(out_data2)
+  }
+}
+
+#' Function that computes how often the true value of the parameter is included within the 
+#' 90/10 high posterior density interval
+#' @param est_param A matrix of posterior draws of a parameter
+#' @param true_param A matrix (one column) of true parameter values
+#' @export
+calc_coverage <- function(est_param,true_param) {
+  all_covs <- sapply(1:ncol(est_param), function(i) {
+    high <- quantile(est_param[,i],.9)
+    low <- quantile(est_param[,i],.1)
+    this_param <- (true_param[i,] < high) && (true_param[i,] > low)
+  })
+  
+  out_data <- data_frame(avg=all_covs,
+                         Params=1:ncol(est_param))
+  
+  return(out_data)
 }

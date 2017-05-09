@@ -12,4 +12,3 @@
 The base plotting function. Default plot shows legislator ideal points with bills as equiprobability lines 
 (also called trace contour plots and cutting lines).
 }
-

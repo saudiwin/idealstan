@@ -15,7 +15,9 @@ setClass('idealdata',
                     unrestricted='matrix',
                     restrict_bills='ANY',
                     restrict_legis='ANY',
-                    vote_int='numeric'))
+                    vote_int='numeric',
+                    simul_data='list',
+                    simulation='logical'))
 
 setClass('idealstan',
          slots=list(vote_data='idealdata',
@@ -24,26 +26,8 @@ setClass('idealstan',
                     model_code='character',
                     test_model_code='character',
                     stan_samples='stanfit',
-                    use_vb='logical'))
-
-setClass('idealsim',
-         slots=list(vote_data='idealdata',
-                     num_legis='numeric',
-                     num_bills='numeric',
-                     absence_discrim_sd='numeric',
-                     absence_diff_mean='numeric',
-                     reg_discrim_sd='numeric',
-                     ideal_pts_sd='numeric',
-                     prior_func='ANY',
-                     ordinal='logical',
-                     ordinal_outcomes='numeric',
-                     graded_response='logical',
-                     true_legis='matrix',
-                     true_reg_discrim='matrix',
-                     true_abs_discrim='matrix',
-                     est_legis='matrix',
-                     est_reg_discrim='matrix',
-                     est_abs_discrim='matrix'))
+                    use_vb='logical',
+                    simulation='logical'))
 
 setGeneric('subset_ideal',signature='object',
            function(object,...) standardGeneric('subset_ideal'))
@@ -124,7 +108,7 @@ setMethod('sample_model',signature(object='idealdata'),
             out_model <- sampling(object@stanmodel,data=this_data,chains=nchains,iter=niters,cores=ncores,
                                   warmup=warmup,...)
             } else {
-            out_model <- vb(object@stanmodel,data=this_data,...)
+            out_model <- vb(object@stanmodel,data=this_data)
             }
             outobj <- new('idealstan',
                 vote_data=object,

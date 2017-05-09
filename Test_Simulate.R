@@ -10,9 +10,11 @@ model_types <- c('absence')
 
 
 all_types <- lapply(model_types, function(m) {
-  out_models <- test_idealstan(legis_range=c(10,20),simul_type='absence')
+  out_models <- test_idealstan(legis_range=c(10,20),simul_type='absence',ncores=4)
   
   
   
   
 })
+
+plot_sims(all_types[[1]]$regular[[1]])
