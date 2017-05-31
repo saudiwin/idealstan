@@ -4,13 +4,15 @@
 \alias{estimate_ideal}
 \title{Estimate an idealstan model using an idealdata object.}
 \usage{
-estimate_ideal(idealdata = NULL, use_subset = FALSE, sample_it = FALSE,
-  subset_party = NULL, subset_legis = NULL, sample_size = 20,
-  nchains = 4, niters = 2000, use_vb = FALSE, nfix = c(1, 1),
-  restrict_params = "bill", fixtype = "vb", warmup = floor(niters/2),
-  ncores = NULL, simulation = FALSE, restrict_names = NULL,
-  restrict_type = "constrain", modeltype = "binary_absence_inflate", ...)
+estimate_ideal(idealdata = NULL, modeltype = 2, use_subset = FALSE,
+  sample_it = FALSE, subset_party = NULL, subset_legis = NULL,
+  sample_size = 20, nchains = 4, niters = 2000, use_vb = FALSE,
+  nfix = c(1, 1), restrict_params = "bill", pin_vals = NULL,
+  restrict_rows = NULL, restrict_type = "constrain_oneway",
+  fixtype = "vb", warmup = floor(niters/2), ncores = NULL,
+  auto_id = FALSE, ...)
 }
 \description{
 Estimate an idealstan model using an idealdata object.
 }
+

@@ -4,10 +4,12 @@
 \alias{make_idealdata}
 \title{This is the constructor fucnction for the idealdata object, which is necessary to estimate an idealstan model.}
 \usage{
-make_idealdata(vote_data = NULL, legis_data = NULL, bill_data = NULL,
-  abs_vote = NA, yes_vote = 3L, no_vote = 1L, abst_vote = 2L,
-  ordinal = TRUE, exclude_level = NULL, inflate = TRUE)
+make_idealdata(vote_data = NULL, simul_data = NULL, legis_data = NULL,
+  bill_data = NULL, abs_vote = NA, yes_vote = 3L, no_vote = 1L,
+  abst_vote = 2L, ordinal = TRUE, exclude_level = NULL, inflate = TRUE,
+  simulation = FALSE)
 }
 \description{
 This is the constructor fucnction for the idealdata object, which is necessary to estimate an idealstan model.
 }
+

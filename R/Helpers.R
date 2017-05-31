@@ -1,3 +1,20 @@
+#' Function that does automatic identification of models using VB
+.vb_fix <- function(object=NULL,this_data=NULL,nfix=NULL,auto_id=FALSE,...) {
+
+  }
+  
+#' Function that pins certain parameters to fixed points
+.pinned_fix <- function(object=NULL,this_data=NULL,nfix=NULL,restrict_params=NULL,
+                        restrict_names=NULL,pin_vals=NULL,...) {
+  
+}
+
+#' Function that constrains certain known parameters
+.constrain_fix <- function(object=NULL,this_data=NULL,nfix=NULL,restrict_params=NULL,
+                           restrict_names=NULL,restrict_type=NULL,...) {
+  
+}
+
 #' Function that works with id_model to re-arrange bills or legislators to constrain for identification
 id_params_constrain_guided_inflate <- function(lookat_params=NULL,restrict_params=NULL,nfix=NULL,x=NULL) {
 

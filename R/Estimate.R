@@ -67,11 +67,12 @@ make_idealdata <- function(vote_data=NULL,simul_data=NULL,legis_data=NULL,bill_d
 
 #' Estimate an idealstan model using an idealdata object.
 #' @export
-estimate_ideal <- function(idealdata=NULL,use_subset=FALSE,sample_it=FALSE,
+estimate_ideal <- function(idealdata=NULL,modeltype=2,use_subset=FALSE,sample_it=FALSE,
                            subset_party=NULL,subset_legis=NULL,sample_size=20,
                            nchains=4,niters=2000,use_vb=FALSE,nfix=c(1,1),restrict_params='bill',
+                           pin_vals=NULL,restrict_rows=NULL,restrict_type='constrain_oneway',
                            fixtype='vb',warmup=floor(niters/2),ncores=NULL,
-                           restrict_names=NULL,restrict_type='constrain',modeltype='binary_absence_inflate',...) {
+                           auto_id=FALSE,...) {
   
   
   if(use_subset==TRUE || sample_it==TRUE) {
@@ -117,8 +118,9 @@ estimate_ideal <- function(idealdata=NULL,use_subset=FALSE,sample_it=FALSE,
                     particip=avg_particip)
   
   idealdata <- id_model(object=idealdata,fixtype=fixtype,modeltype=modeltype,this_data=this_data,
-                        nfix=nfix,restrict_params=restrict_params,restrict_names=restrict_names,
-                        restrict_type=restrict_type)
+                        nfix=nfix,restrict_params=restrict_params,restrict_rows=restrict_rows,
+                        restrict_type=restrict_type,pin_vals=pin_vals,
+                        auto_id=auto_id)
   
   # Now remake the data to reflect the constrained parameters
   

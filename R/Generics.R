@@ -126,22 +126,22 @@ setGeneric('id_model',
 #' @export
 setMethod('id_model',signature(object='idealdata'),
           function(object,fixtype='vb',modeltype=NULL,this_data=NULL,nfix=10,
-                   restrict_params=NULL,restrict_type=NULL,restrict_names=NULL) {
-
-
+                   restrict_params=NULL,restrict_type=NULL,restrict_names=NULL,auto_id=FALSE,
+                   pin_vals=NULL) {
             
             x <- object@vote_matrix
             
-            to_use <- stanmodels[[paste0(modeltype,'_nofix')]]
+            run_id <- switch(fixtype,vb=.vb_fix,pinned=.pinned_fix,constrained=.constrain_fix)
+            
+            to_use <- stanmodels[[1]]
             post_modes <- rstan::vb(object=to_use,data =this_data,
                                     algorithm='meanfield')
 
             lookat_params <- rstan::extract(post_modes,permuted=FALSE)
             lookat_params <- lookat_params[,1,]
-            
-            # Need to know if this is an absence-inflated model, as it will change how identification happens
-            
-            absence_inflate <- grepl(pattern = 'inflate',modeltype)
+            browser()
+            run_id(object,this_data,nfix,restrict_params,restrict_type,restrict_names,auto_id,
+                   pin_vals)
             
             if(is.null(restrict_names) & restrict_type=='constrain' & absence_inflate==TRUE) {
               all_fixed <- id_params_constrain_guided_inflate(lookat_params=lookat_params,restrict_params=restrict_params,
