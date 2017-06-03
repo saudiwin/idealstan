@@ -8,9 +8,11 @@
 #' @import methods
 #' @useDynLib idealstan, .registration = TRUE
 #' @export
-make_idealdata <- function(vote_data=NULL,simul_data=NULL,legis_data=NULL,bill_data=NULL,
+make_idealdata <- function(vote_data=NULL,simul_data=NULL,
+                           legis_cov=NULL,bill_cov=NULL,
+                           legis_data=NULL,bill_data=NULL,
                            abs_vote=NA,yes_vote=3L,no_vote=1L,abst_vote=2L,
-                           ordinal=TRUE,
+                           ordinal=TRUE,time=NULL,
                            exclude_level=NULL,inflate=TRUE,simulation=FALSE) {
 
   if(ordinal==TRUE & inflate==TRUE) {
@@ -43,16 +45,50 @@ make_idealdata <- function(vote_data=NULL,simul_data=NULL,legis_data=NULL,bill_d
   } else {
     stop('Please provide either a matrix or a rollcall object as the vote_data argument.')
   }
-
+  if(!is.null(time)) {
+    if(length(time)!=nrow(cleaned)) {
+      stop('Time vector must be same length as the number of columns in the vote matrix.')
+    }
+    time <- as.numeric(factor(time))
+    max_t <- max(time)
+  } else {
+    time <- rep(1,ncol(cleaned))
+  }
   
   #before doing this, need to ensure that 1) all legislators in legis_data have votes and 
   #2) the rows were correctly ordered to match vote_data <-> legis_data
+  if(!is.null(legis_cov)) {
+    if('data.frame' %in% class(legis_cov)) {
+      legis_cov <- as.matrix(legis_cov) %>% array(dim(c(nrow(legis_cov),length(legis_cov),max_t)))
+      
+    } else if('matrix' %in% class(legis_cov)) {
+      legis_cov <- array(legis_cov,dim(c(nrow(legis_cov),ncol(legis_cov),max_t)))
+    }
+
+  }
+  
+  if(!is.null(bill_cov_reg)) {
+    if(nrow(bill_cov)!=ncol(cleaned)) {
+      stop('Bill covariate data must be same length as the number of columns of vote matrix.')
+    }
+  }
+  if(!is.null(bill_cov_abs)) {
+    if(nrow(bill_cov_abs)!=ncol(cleaned)) {
+      stop('Bill covariate data must be same length as the number of columns of vote matrix.')
+    }
+  }
   
   legis_data$legis.names <- row.names(vote_data)
+  
   row.names(cleaned) <- as.character(1:nrow(cleaned))
+  
   outobj <- new('idealdata',
       vote_matrix=cleaned,
       legis_data=legis_data,
+      legis_cov=legis_cov,
+      time=time,
+      bill_cov_reg=bill_cov_reg,
+      bill_cov_abs=bill_cov_abs,
       vote_labels=vote_labels,
       vote_int=vote_int,
       vote_count=length(votes) - length(exclude_level),
@@ -108,8 +144,9 @@ estimate_ideal <- function(idealdata=NULL,modeltype=2,use_subset=FALSE,sample_it
     Y <- Y[remove_nas]
     legispoints <- legispoints[remove_nas]
     billpoints <- billpoints[remove_nas]
-  
+
   this_data <- list(N=length(Y),
+                    T=max(idealdata@time),
                     Y=Y,
                     num_legis=num_legis,
                     num_bills=num_bills,
@@ -148,6 +185,7 @@ estimate_ideal <- function(idealdata=NULL,modeltype=2,use_subset=FALSE,sample_it
   billpoints <- billpoints[remove_nas]
   
   this_data <- list(N=length(Y),
+                    T=dim(idealdata@legis_cov)[3],
                     Y=Y,
                     num_legis=num_legis,
                     num_bills=num_bills,

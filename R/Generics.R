@@ -1,6 +1,10 @@
 setClass('idealdata',
          slots=list(vote_matrix='matrix',
                     legis_data='data.frame',
+                    bill_cov_reg='data.frame',
+                    bill_cov_abs='data.frame',
+                    legis_cov='array',
+                    time='vector',
                     vote_labels='ANY',
                     vote_count='integer',
                     abs_vote='ANY',
@@ -126,7 +130,7 @@ setGeneric('id_model',
 #' @export
 setMethod('id_model',signature(object='idealdata'),
           function(object,fixtype='vb',modeltype=NULL,this_data=NULL,nfix=10,
-                   restrict_params=NULL,restrict_type=NULL,restrict_names=NULL,auto_id=FALSE,
+                   restrict_params=NULL,restrict_type=NULL,restrict_rows=NULL,auto_id=FALSE,
                    pin_vals=NULL) {
             
             x <- object@vote_matrix
