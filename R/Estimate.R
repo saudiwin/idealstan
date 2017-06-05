@@ -126,6 +126,7 @@ estimate_ideal <- function(idealdata=NULL,modeltype=2,use_subset=FALSE,sample_it
   num_bills <- ncol(idealdata@vote_matrix)
   legispoints <- rep(1:num_legis,times=num_bills)
   billpoints <- rep(1:num_bills,each=num_legis)
+  timepoints <- idealdata@time[billpoints]
   avg_particip <- apply(idealdata@vote_matrix,1,function(x) {
     if(is.na(idealdata@abs_vote)) {
       count_abs <- sum(is.na(x))
@@ -152,6 +153,7 @@ estimate_ideal <- function(idealdata=NULL,modeltype=2,use_subset=FALSE,sample_it
                     num_bills=num_bills,
                     ll=legispoints,
                     bb=billpoints,
+                    time=timepoints,
                     particip=avg_particip)
   
   idealdata <- id_model(object=idealdata,fixtype=fixtype,modeltype=modeltype,this_data=this_data,
@@ -165,6 +167,7 @@ estimate_ideal <- function(idealdata=NULL,modeltype=2,use_subset=FALSE,sample_it
   num_bills <- ncol(idealdata@vote_matrix)
   legispoints <- rep(1:num_legis,times=num_bills)
   billpoints <- rep(1:num_bills,each=num_legis)
+  timepoints <- idealdata@time[billpoints]
   avg_particip <- apply(idealdata@vote_matrix,1,function(x) {
     if(is.na(idealdata@abs_vote)) {
       count_abs <- sum(is.na(x))
@@ -185,12 +188,13 @@ estimate_ideal <- function(idealdata=NULL,modeltype=2,use_subset=FALSE,sample_it
   billpoints <- billpoints[remove_nas]
   
   this_data <- list(N=length(Y),
-                    T=dim(idealdata@legis_cov)[3],
+                    T=max(idealdata@time),
                     Y=Y,
                     num_legis=num_legis,
                     num_bills=num_bills,
                     ll=legispoints,
                     bb=billpoints,
+                    time=timepoints,
                     particip=avg_particip)
   
   this_data <- c(this_data,idealdata@restrict_data)
