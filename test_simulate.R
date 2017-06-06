@@ -1,33 +1,20 @@
-# Test file to show how package works
+# Generate data for each coded model and see if they are properly identified
+# Calculate RMSE compared to true values
+# See if HPDs have approximately accurate coverage
 
-# Import latest senate data using pscl
-require(pscl)
-require(dplyr)
 require(idealstan)
-require(tidyr)
-require(ggplot2)
+require(dplyr)
 require(bayesplot)
-require(readr)
 
-# Now let's use the simulation functions
-
-test_data <- simulate_absence(num_legis=100,num_bills=500)
-
-# Now make second test_data that strips out the absences and switches to binary
-
-test_data_bin <- make_idealdata(vote_data=test_data@vote_data@vote_matrix,legis_data = test_data@vote_data@legis_data,
-                                yes_vote = 3,no_vote = 1,
-                                inflate = TRUE,ordinal=FALSE)
+model_types <- c('absence')
 
 
-#See if this works
+all_types <- lapply(model_types, function(m) {
+  out_models <- test_idealstan(legis_range=c(10,20),simul_type='absence',ncores=4)
+  
+  
+  
+  
+})
 
-test_data_bin <- estimate_ideal(idealdata = test_data_bin,use_vb=TRUE)
-test_data_abs <- estimate_ideal(idealdata = test_data,use_vb=TRUE,modeltype='ratingscale_absence_inflate')
-plot_model(test_data_abs,hjust_length=-2,show_true=TRUE)
-test_data_bin@vote_data@legis_data$legis.names <- paste0('Legis_',test_data_bin@vote_data@legis_data$legis.names)
-compare_models(test_data_bin,test_data_abs)
-
-# Now let's see what pscl/dwnominate will do
-
- 
+plot_sims(all_types[[1]]$regular[[1]])
