@@ -4,7 +4,7 @@
 \alias{estimate_ideal}
 \title{Estimate an idealstan model using an idealdata object.}
 \usage{
-estimate_ideal(idealdata = NULL, modeltype = 2, use_subset = FALSE,
+estimate_ideal(idealdata = NULL, model_type = 2, use_subset = FALSE,
   sample_it = FALSE, subset_party = NULL, subset_legis = NULL,
   sample_size = 20, nchains = 4, niters = 2000, use_vb = FALSE,
   nfix = c(1, 1), restrict_params = "bill", pin_vals = NULL,

@@ -2,86 +2,86 @@
 
 if(model_type==1) {
   //2 PL no inflation
-    for(t in 1:T) {
+
       for(n in 1:N) {
-        pi1[n] = sigma_reg_full[bb[n]] *  L_full[t,ll[n]] - B_yes[bb[n]];
+        pi1[n] = sigma_reg_full[bb[n]] *  L_full[time[n],ll[n]] - B_yes[bb[n]];
       }
-      Y_new[t] ~ bernoulli_logit(pi1);
-    }
+      Y_new ~ bernoulli_logit(pi1);
+
 } else if(model_type==2) {
   //2 PL inflation
-    for(t in 1:T) {
+
       for(n in 1:N) {
-        pi1[n] = sigma_reg_full[bb[n]] *  L_full[t,ll[n]] - B_yes[bb[n]];
-        pi2[n] = sigma_abs_full[bb[n]] * L_full[t,ll[n]] - 
+        pi1[n] = sigma_reg_full[bb[n]] *  L_full[time[n],ll[n]] - B_yes[bb[n]];
+        pi2[n] = sigma_abs_full[bb[n]] * L_full[time[n],ll[n]] - 
                   B_abs[bb[n]] + avg_particip * particip[ll[n]];
-        if(absence[n,t]==1) {
+        if(absence[n]==1) {
   	      1 ~ bernoulli_logit(pi2[n]);
         } else {
           0 ~ bernoulli_logit(pi2[n]);
-          Y[t,n] ~ bernoulli_logit(pi1[n]);
+          Y[n] ~ bernoulli_logit(pi1[n]);
           }
         }
-      }
+
 } else if(model_type==3) {
   //ratingscale no inflation
-  for(t in 1:T) {
+
     for(n in 1:N) {
-      pi1[n] = sigma_reg_full[bb[n]] *  L_full[t,ll[n]] - B_yes[bb[n]];
-        Y[t,n] ~ ordered_logistic(pi1[n],steps_votes);
+      pi1[n] = sigma_reg_full[bb[n]] *  L_full[time[n],ll[n]] - B_yes[bb[n]];
+        Y[n] ~ ordered_logistic(pi1[n],steps_votes);
       }
-    }
+
 } else if(model_type==4) {
   //ratingscale inflation
-    for(t in 1:T) {
+
     for(n in 1:N) {
-      pi1[n] = sigma_reg_full[bb[n]] *  L_full[t,ll[n]] - B_yes[bb[n]];
-      pi2[n] = sigma_abs_full[bb[n]] * L_full[t,ll[n]] - B_abs[bb[n]] + 
+      pi1[n] = sigma_reg_full[bb[n]] *  L_full[time[n],ll[n]] - B_yes[bb[n]];
+      pi2[n] = sigma_abs_full[bb[n]] * L_full[time[n],ll[n]] - B_abs[bb[n]] + 
       avg_particip * particip[ll[n]];
-      if(absence[n,t]==1) {
+      if(absence[n]==1) {
 	      1 ~ bernoulli_logit(pi2[n]);
       } else {
         0 ~ bernoulli_logit(pi2[n]);
-        Y[t,n] ~ ordered_logistic(pi1[n],steps_votes);
+        Y[n] ~ ordered_logistic(pi1[n],steps_votes);
       }
-    }
+
   }
 } else if(model_type==5) {
   //grm no inflation
-  for(t in 1:T) {
+
     for(n in 1:N) {
-      pi1[n] = sigma_reg_full[bb[n]] *  L_full[t,ll[n]] - B_yes[bb[n]];
-        Y[t,n] ~ ordered_logistic(pi1[n],steps_votes_grm[bb[n]]);
+      pi1[n] = sigma_reg_full[bb[n]] *  L_full[time[n],ll[n]] - B_yes[bb[n]];
+        Y[n] ~ ordered_logistic(pi1[n],steps_votes_grm[bb[n]]);
       }
-    }
+
 } else if(model_type==6) {
   //grm inflation
-    for(t in 1:T) {
+
     for(n in 1:N) {
-      pi1[n] = sigma_reg_full[bb[n]] *  L_full[t,ll[n]] - B_yes[bb[n]];
-      pi2[n] = sigma_abs_full[bb[n]] * L_full[t,ll[n]] - B_abs[bb[n]] + 
+      pi1[n] = sigma_reg_full[bb[n]] *  L_full[time[n],ll[n]] - B_yes[bb[n]];
+      pi2[n] = sigma_abs_full[bb[n]] * L_full[time[n],ll[n]] - B_abs[bb[n]] + 
       avg_particip * particip[ll[n]];
-      if(absence[n,t]==1) {
+      if(absence[n]==1) {
 	      1 ~ bernoulli_logit(pi2[n]);
       } else {
         0 ~ bernoulli_logit(pi2[n]);
-        Y[t,n] ~ ordered_logistic(pi1[n],steps_votes_grm[bb[n]]);
+        Y[n] ~ ordered_logistic(pi1[n],steps_votes_grm[bb[n]]);
       }
     }
-  }
+
 } else if(model_type==7) {
   //hurdle poisson
-    for(t in 1:T) {
+
     for(n in 1:N) {
-      pi1[n] = sigma_reg_full[bb[n]] *  L_full[t,ll[n]] - B_yes[bb[n]];
-      pi2[n] = sigma_abs_full[bb[n]] * L_full[t,ll[n]] - B_abs[bb[n]] + 
+      pi1[n] = sigma_reg_full[bb[n]] *  L_full[time[n],ll[n]] - B_yes[bb[n]];
+      pi2[n] = sigma_abs_full[bb[n]] * L_full[time[n],ll[n]] - B_abs[bb[n]] + 
       avg_particip * particip[ll[n]];
-      if(absence[n,t]==1) {
+      if(absence[n]==1) {
 	      1 ~ bernoulli_logit(pi2[n]);
       } else {
         0 ~ bernoulli_logit(pi2[n]);
-        Y[t,n] ~ poisson(pi1[n]);
+        Y[n] ~ poisson(pi1[n]);
       }
     }
-  }
+
 }

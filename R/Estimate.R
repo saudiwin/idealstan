@@ -9,7 +9,8 @@
 #' @useDynLib idealstan, .registration = TRUE
 #' @export
 make_idealdata <- function(vote_data=NULL,simul_data=NULL,
-                           legis_cov=NULL,bill_cov=NULL,
+                           legis_cov=NULL,bill_cov_reg=NULL,
+                           bill_cov_abs=NULL,
                            legis_data=NULL,bill_data=NULL,
                            abs_vote=NA,yes_vote=3L,no_vote=1L,abst_vote=2L,
                            ordinal=TRUE,time=NULL,
@@ -59,29 +60,35 @@ make_idealdata <- function(vote_data=NULL,simul_data=NULL,
   #2) the rows were correctly ordered to match vote_data <-> legis_data
   if(!is.null(legis_cov)) {
     if('data.frame' %in% class(legis_cov)) {
-      legis_cov <- as.matrix(legis_cov) %>% array(dim(c(nrow(legis_cov),length(legis_cov),max_t)))
+      legis_cov <- as.matrix(legis_cov)
       
     } else if('matrix' %in% class(legis_cov)) {
-      legis_cov <- array(legis_cov,dim(c(nrow(legis_cov),ncol(legis_cov),max_t)))
+      legis_cov <- array(legis_cov,dim(c(ncol(legis_cov),nrow(legis_cov),max_t)))
     }
 
+  } else {
+    legis_cov <- array(c(rep(1,nrow(legis_data)),1,1),dim=c(1,nrow(legis_data),1))
   }
   
   if(!is.null(bill_cov_reg)) {
     if(nrow(bill_cov)!=ncol(cleaned)) {
       stop('Bill covariate data must be same length as the number of columns of vote matrix.')
     }
+  } else {
+    bill_cov_reg <- matrix(rep(1,ncol(cleaned)),nrow=ncol(cleaned),ncol=1)
   }
   if(!is.null(bill_cov_abs)) {
     if(nrow(bill_cov_abs)!=ncol(cleaned)) {
       stop('Bill covariate data must be same length as the number of columns of vote matrix.')
     }
+  } else {
+    bill_cov_abs <- matrix(rep(1,ncol(cleaned)),nrow=ncol(cleaned),ncol=1)
   }
   
   legis_data$legis.names <- row.names(vote_data)
   
   row.names(cleaned) <- as.character(1:nrow(cleaned))
-  
+
   outobj <- new('idealdata',
       vote_matrix=cleaned,
       legis_data=legis_data,
@@ -103,7 +110,7 @@ make_idealdata <- function(vote_data=NULL,simul_data=NULL,
 
 #' Estimate an idealstan model using an idealdata object.
 #' @export
-estimate_ideal <- function(idealdata=NULL,modeltype=2,use_subset=FALSE,sample_it=FALSE,
+estimate_ideal <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=FALSE,
                            subset_party=NULL,subset_legis=NULL,sample_size=20,
                            nchains=4,niters=2000,use_vb=FALSE,nfix=c(1,1),restrict_params='bill',
                            pin_vals=NULL,restrict_rows=NULL,restrict_type='constrain_oneway',
@@ -116,8 +123,9 @@ estimate_ideal <- function(idealdata=NULL,modeltype=2,use_subset=FALSE,sample_it
                               subset_legis=subset_legis,sample_size=sample_size)
   }
   
-
-    to_use <- stanmodels[[modeltype]]
+  
+    hier_type <- .get_hier_type(idealdata)
+    to_use <- stanmodels[['irt_standard']]
    
     #Using an un-identified model with variational inference, find those parameters that would be most useful for
     #constraining/pinning to have an identified model for full Bayesian inference
@@ -149,14 +157,22 @@ estimate_ideal <- function(idealdata=NULL,modeltype=2,use_subset=FALSE,sample_it
   this_data <- list(N=length(Y),
                     T=max(idealdata@time),
                     Y=Y,
+                    hier_type=hier_type,
                     num_legis=num_legis,
                     num_bills=num_bills,
                     ll=legispoints,
                     bb=billpoints,
                     time=timepoints,
-                    particip=avg_particip)
+                    LX=dim(idealdata@legis_cov)[1],
+                    SRX=ncol(idealdata@bill_cov_reg),
+                    SAX=ncol(idealdata@bill_cov_abs),
+                    legis_pred=idealdata@legis_cov,
+                    srx_pred=idealdata@bill_cov_reg,
+                    sax_pred=idealdata@bill_cov_abs,
+                    particip=avg_particip,
+                    model_type=model_type)
   
-  idealdata <- id_model(object=idealdata,fixtype=fixtype,modeltype=modeltype,this_data=this_data,
+  idealdata <- id_model(object=idealdata,fixtype=fixtype,model_type=model_type,this_data=this_data,
                         nfix=nfix,restrict_params=restrict_params,restrict_rows=restrict_rows,
                         restrict_type=restrict_type,pin_vals=pin_vals,
                         auto_id=auto_id)
@@ -190,19 +206,27 @@ estimate_ideal <- function(idealdata=NULL,modeltype=2,use_subset=FALSE,sample_it
   this_data <- list(N=length(Y),
                     T=max(idealdata@time),
                     Y=Y,
+                    hier_type=hier_type,
                     num_legis=num_legis,
                     num_bills=num_bills,
                     ll=legispoints,
                     bb=billpoints,
+                    LX=dim(idealdata@legis_cov)[1],
+                    SRX=ncol(idealdata@bill_cov_reg),
+                    SAX=ncol(idealdata@bill_cov_abs),
+                    legis_pred=idealdata@legis_cov,
+                    srx_pred=idealdata@bill_cov_reg,
+                    sax_pred=idealdata@bill_cov_abs,
                     time=timepoints,
-                    particip=avg_particip)
+                    particip=avg_particip,
+                    model_type=model_type)
   
   this_data <- c(this_data,idealdata@restrict_data)
   
   outobj <- sample_model(object=idealdata,nchains=nchains,niters=niters,warmup=warmup,ncores=ncores,
                          this_data=this_data,use_vb=use_vb,...)
   
-  outobj@model_type <- modeltype
+  outobj@model_type <- model_type
   
   return(outobj)
   
