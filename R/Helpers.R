@@ -1,16 +1,16 @@
 #' Function that does automatic identification of models using VB
-.vb_fix <- function(object=NULL,this_data=NULL,nfix=NULL,auto_id=FALSE,...) {
+.vb_fix <- function(object=NULL,this_params=NULL,this_data=NULL,nfix=NULL,auto_id=FALSE,...) {
 
   }
   
 #' Function that pins certain parameters to fixed points
-.pinned_fix <- function(object=NULL,this_data=NULL,nfix=NULL,restrict_params=NULL,
+.pinned_fix <- function(object=NULL,this_params=NULL,this_data=NULL,nfix=NULL,restrict_params=NULL,
                         restrict_names=NULL,pin_vals=NULL,...) {
   
 }
 
 #' Function that constrains certain known parameters
-.constrain_fix <- function(object=NULL,this_data=NULL,nfix=NULL,restrict_params=NULL,
+.constrain_fix <- function(object=NULL,this_params=NULL,this_data=NULL,nfix=NULL,restrict_params=NULL,
                            restrict_names=NULL,restrict_type=NULL,...) {
   
 }

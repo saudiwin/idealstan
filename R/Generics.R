@@ -141,11 +141,11 @@ setMethod('id_model',signature(object='idealdata'),
             to_use <- stanmodels[['irt_standard_noid']]
             post_modes <- rstan::vb(object=to_use,data =this_data,
                                     algorithm='meanfield')
-
+            browser()
             lookat_params <- rstan::extract(post_modes,permuted=FALSE)
             lookat_params <- lookat_params[,1,]
 
-            run_id(object,this_data,nfix,restrict_params,restrict_type,restrict_rows,auto_id,
+            run_id(object,this_data,this_params=lookat_params,nfix,restrict_params,restrict_type,restrict_rows,auto_id,
                    pin_vals)
             
             if(is.null(restrict_rows) & restrict_type=='constrain' & absence_inflate==TRUE) {
