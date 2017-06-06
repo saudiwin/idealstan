@@ -154,9 +154,9 @@ test_idealstan <- function(legis_range=c(10,100),simul_type='absence',is.ordinal
   if(simul_type=='absence') {
     simul_func <- simulate_absence
     if(is.ordinal==TRUE) {
-      model_type <- 'ratingscale_absence_inflate'
+      model_type <- 4
     } else {
-      model_type <- 'binary_absence_inflate'
+      model_type <- 2
     }
   }
   
@@ -166,7 +166,7 @@ test_idealstan <- function(legis_range=c(10,100),simul_type='absence',is.ordinal
   
   #See if this works
   
-  est_models <- lapply(all_sims,estimate_ideal,modeltype=model_type,...)
+  est_models <- lapply(all_sims,estimate_ideal,model_type=model_type,...)
   est_models_vb <- lapply(all_sims,estimate_ideal,use_vb=TRUE,model_type=model_type)
   
   return(list('regular'=est_models,'vb'=est_models_vb))

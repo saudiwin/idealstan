@@ -230,3 +230,26 @@ id_params_pin_unguided_inflate <- function(restrict_params=NULL,nfix=NULL,x=NULL
   return(list(restrict=list(matrix=x,param_fix=restrict_params,restrict_vals=restrict_pos)))
   
 }
+
+#' Function that figures out what kind of hierarchical model (if any) is being run
+.get_hier_type <- function(obj) {
+  if(nrow(obj@legis_cov)==1 && length(obj@bill_cov_reg)==1 && length(obj@bill_cov_abs)==1) {
+    return(8)
+  } else if(nrow(obj@legis_cov)>1 && length(obj@bill_cov_reg)==1 && length(obj@bill_cov_abs)==1) {
+    return(1)
+  } else if(nrow(obj@legis_cov)==1 && length(obj@bill_cov_reg)>1 && length(obj@bill_cov_abs)==1) {
+    return(2)
+  } else if(nrow(obj@legis_cov)==1 && length(obj@bill_cov_reg)==1 && length(obj@bill_cov_abs)>1) {
+    return(3)
+  } else if(nrow(obj@legis_cov)>1 && length(obj@bill_cov_reg)>1 && length(obj@bill_cov_abs)==1) {
+    return(4)
+  } else if(nrow(obj@legis_cov)>1 && length(obj@bill_cov_reg)==1 && length(obj@bill_cov_abs)>1) {
+    return(5)
+  } else if(nrow(obj@legis_cov)==1 && length(obj@bill_cov_reg)>1 && length(obj@bill_cov_abs)>1) {
+    return(6)
+  } else if(nrow(obj@legis_cov)>1 && length(obj@bill_cov_reg)>1 && length(obj@bill_cov_abs)>1) {
+    return(7)
+  } else {
+    stop('Hierarchical modeling undefined.')
+  }
+}

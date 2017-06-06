@@ -1,6 +1,11 @@
 setClass('idealdata',
          slots=list(vote_matrix='matrix',
                     legis_data='data.frame',
+                    bill_data='data.frame',
+                    bill_cov_reg='matrix',
+                    bill_cov_abs='matrix',
+                    legis_cov='array',
+                    time='vector',
                     vote_labels='ANY',
                     vote_count='integer',
                     abs_vote='ANY',
@@ -125,25 +130,25 @@ setGeneric('id_model',
 
 #' @export
 setMethod('id_model',signature(object='idealdata'),
-          function(object,fixtype='vb',modeltype=NULL,this_data=NULL,nfix=10,
-                   restrict_params=NULL,restrict_type=NULL,restrict_names=NULL,auto_id=FALSE,
+          function(object,fixtype='vb',model_type=NULL,this_data=NULL,nfix=10,
+                   restrict_params=NULL,restrict_type=NULL,restrict_rows=NULL,auto_id=FALSE,
                    pin_vals=NULL) {
             
             x <- object@vote_matrix
             
             run_id <- switch(fixtype,vb=.vb_fix,pinned=.pinned_fix,constrained=.constrain_fix)
             
-            to_use <- stanmodels[[1]]
+            to_use <- stanmodels[['irt_standard_noid']]
             post_modes <- rstan::vb(object=to_use,data =this_data,
                                     algorithm='meanfield')
 
             lookat_params <- rstan::extract(post_modes,permuted=FALSE)
             lookat_params <- lookat_params[,1,]
-            browser()
-            run_id(object,this_data,nfix,restrict_params,restrict_type,restrict_names,auto_id,
+
+            run_id(object,this_data,nfix,restrict_params,restrict_type,restrict_rows,auto_id,
                    pin_vals)
             
-            if(is.null(restrict_names) & restrict_type=='constrain' & absence_inflate==TRUE) {
+            if(is.null(restrict_rows) & restrict_type=='constrain' & absence_inflate==TRUE) {
               all_fixed <- id_params_constrain_guided_inflate(lookat_params=lookat_params,restrict_params=restrict_params,
                                                               nfix=nfix,x=x)
               object@vote_matrix <- all_fixed$matrix
@@ -151,7 +156,7 @@ setMethod('id_model',signature(object='idealdata'),
               object@restrict_count <- nfix
               object@restrict_vals <- all_fixed$restrict_vals
               object@param_fix <- all_fixed$param_fix
-              object@stanmodel <- stanmodels[[paste0(modeltype,'_',restrict_type,'_',paste0(all_fixed$param_fix,collapse='_'))]]
+              object@stanmodel <- stanmodels[[paste0(model_type,'_',restrict_type,'_',paste0(all_fixed$param_fix,collapse='_'))]]
               object@unrestricted <- all_fixed$unrestricted
               object@restrict_bills <- all_fixed$restrict_bills
               object@restrict_legis <- all_fixed$restrict_legis
@@ -163,7 +168,7 @@ setMethod('id_model',signature(object='idealdata'),
               object@restrict_count <- nfix
               object@restrict_vals <- all_fixed$restrict_vals
               object@param_fix <- all_fixed$param_fix
-              object@stanmodel <- stanmodels[[paste0(modeltype,'_',restrict_type,'_',paste0(all_fixed$param_fix,collapse='_'))]]
+              object@stanmodel <- stanmodels[[paste0(model_type,'_',restrict_type,'_',paste0(all_fixed$param_fix,collapse='_'))]]
               object@unrestricted <- all_fixed$unrestricted
               object@restrict_bills <- all_fixed$restrict_bills
               object@restrict_legis <- all_fixed$restrict_legis
@@ -176,7 +181,7 @@ setMethod('id_model',signature(object='idealdata'),
               object@param_fix <- all_fixed$param_fix
               object@restrict_bills <- all_fixed$restrict_bills
               object@restrict_legis <- all_fixed$restrict_legis
-              object@stanmodel <- stanmodels[[paste0(modeltype,'_',restrict_type,'_',paste0(all_fixed$param_fix,collapse='_'))]]
+              object@stanmodel <- stanmodels[[paste0(model_type,'_',restrict_type,'_',paste0(all_fixed$param_fix,collapse='_'))]]
             }
             
             

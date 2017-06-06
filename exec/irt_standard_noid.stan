@@ -28,10 +28,6 @@ data {
   // int with_absence;
   int<lower=1> num_legis;
   int<lower=1> num_bills;
-  int constrain_par;
-  int constraint_type;
-  int num_fix_high;
-  int num_fix_low;
   int ll[N];
   int bb[N];
   int time[N];
@@ -39,7 +35,7 @@ data {
   matrix[num_legis,LX] legis_pred[T];
   matrix[num_bills,SRX] srx_pred;
   matrix[num_bills,SAX] sax_pred;
-  vector[num_fix_high] pin_vals;
+
 }
 
 transformed data {
@@ -72,16 +68,14 @@ transformed data {
       }
   }
   
-  #include "create_constrained.stan"
+
 
 }
 
 parameters {
-  vector[num_bills-num_constrain_sa] sigma_abs_free;
-  vector[num_legis-num_constrain_l] L_free[T];
-  vector[num_bills-num_constrain_sr] sigma_reg_free;
-  vector<upper=0>[num_constrain_sr+num_constrain_l+num_constrain_sa] restrict_low[T];
-  vector<lower=0>[num_constrain_sr+num_constrain_l+num_constrain_sa] restrict_high[T];
+  vector[num_bills] sigma_abs_free;
+  vector[num_legis] L_free[T];
+  vector[num_bills] sigma_reg_free;
   vector[LX] legis_x;
   vector[SRX] sigma_reg_x;
   vector[SAX] sigma_abs_x;
@@ -101,7 +95,9 @@ transformed parameters {
   vector[num_bills] sigma_abs_full;
   vector[num_bills] sigma_reg_full;
   
-  #include "build_params.stan"
+  L_full=L_free;
+  sigma_abs_full=sigma_abs_free;
+  sigma_reg_full=sigma_reg_free;
   
   
 }
@@ -111,9 +107,18 @@ model {
   vector[N] pi1;
   vector[N] pi2;
   
-  #include "modeling_statement.stan"
+  for(t in 1:T) {
+  L_free[t] ~ normal(0,1);
+  }
+  sigma_abs_free ~ normal(0,5);
+  sigma_reg_free ~ normal(0,5);
+  legis_x ~ normal(0,5);
+  sigma_reg_x ~ normal(0,5);
+  sigma_abs_x ~ normal(0,5);
+  legis_x_cons ~ normal(0,5);
+  sigma_reg_x_cons ~ normal(0,5);
+  sigma_abs_x_cons ~ normal(0,5);
   
-
   avg_particip ~ normal(0,5);
   
   for(i in 1:(m-2)) {
