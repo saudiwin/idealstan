@@ -10,4 +10,3 @@ id_params_constrain_guided_inflate(lookat_params = NULL,
 \description{
 Function that works with id_model to re-arrange bills or legislators to constrain for identification
 }
-

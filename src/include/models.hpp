@@ -314,7 +314,7 @@ public:
                     }
                 }
             }
-            stan::math::assign(num_constrain_l, num_fix_high);
+            stan::math::assign(num_constrain_l, (num_fix_high + num_fix_low));
             stan::math::assign(num_constrain_sr, 0);
             stan::math::assign(num_constrain_sa, 0);
         } catch (const std::exception& e) {
@@ -334,11 +334,10 @@ public:
         num_params_r__ += (num_legis - num_constrain_l);
         validate_non_negative_index("sigma_reg_free", "(num_bills - num_constrain_sr)", (num_bills - num_constrain_sr));
         num_params_r__ += (num_bills - num_constrain_sr);
-        validate_non_negative_index("restrict_low", "((num_constrain_sr + num_constrain_l) + num_constrain_sa)", ((num_constrain_sr + num_constrain_l) + num_constrain_sa));
-        validate_non_negative_index("restrict_low", "T", T);
-        num_params_r__ += ((num_constrain_sr + num_constrain_l) + num_constrain_sa) * T;
-        validate_non_negative_index("restrict_high", "((num_constrain_sr + num_constrain_l) + num_constrain_sa)", ((num_constrain_sr + num_constrain_l) + num_constrain_sa));
-        num_params_r__ += ((num_constrain_sr + num_constrain_l) + num_constrain_sa);
+        validate_non_negative_index("restrict_low", "num_fix_low", num_fix_low);
+        num_params_r__ += num_fix_low;
+        validate_non_negative_index("restrict_high", "num_fix_high", num_fix_high);
+        num_params_r__ += num_fix_high;
         validate_non_negative_index("B_yes", "num_bills", num_bills);
         num_params_r__ += num_bills;
         validate_non_negative_index("B_abs", "num_bills", num_bills);
@@ -416,17 +415,14 @@ public:
             throw std::runtime_error("variable restrict_low missing");
         vals_r__ = context__.vals_r("restrict_low");
         pos__ = 0U;
-        validate_non_negative_index("restrict_low", "T", T);
-        validate_non_negative_index("restrict_low", "((num_constrain_sr + num_constrain_l) + num_constrain_sa)", ((num_constrain_sr + num_constrain_l) + num_constrain_sa));
-        context__.validate_dims("initialization", "restrict_low", "vector_d", context__.to_vec(T,((num_constrain_sr + num_constrain_l) + num_constrain_sa)));
+        validate_non_negative_index("restrict_low", "num_fix_low", num_fix_low);
+        context__.validate_dims("initialization", "restrict_low", "vector_d", context__.to_vec(num_fix_low));
         // generate_declaration restrict_low
-        std::vector<vector_d> restrict_low(T,vector_d(static_cast<Eigen::VectorXd::Index>(((num_constrain_sr + num_constrain_l) + num_constrain_sa))));
-        for (int j1__ = 0U; j1__ < ((num_constrain_sr + num_constrain_l) + num_constrain_sa); ++j1__)
-            for (int i0__ = 0U; i0__ < T; ++i0__)
-                restrict_low[i0__](j1__) = vals_r__[pos__++];
-        for (int i0__ = 0U; i0__ < T; ++i0__)
-            try {
-            writer__.vector_ub_unconstrain(0,restrict_low[i0__]);
+        vector_d restrict_low(static_cast<Eigen::VectorXd::Index>(num_fix_low));
+        for (int j1__ = 0U; j1__ < num_fix_low; ++j1__)
+            restrict_low(j1__) = vals_r__[pos__++];
+        try {
+            writer__.vector_ub_unconstrain(0,restrict_low);
         } catch (const std::exception& e) { 
             throw std::runtime_error(std::string("Error transforming variable restrict_low: ") + e.what());
         }
@@ -435,11 +431,11 @@ public:
             throw std::runtime_error("variable restrict_high missing");
         vals_r__ = context__.vals_r("restrict_high");
         pos__ = 0U;
-        validate_non_negative_index("restrict_high", "((num_constrain_sr + num_constrain_l) + num_constrain_sa)", ((num_constrain_sr + num_constrain_l) + num_constrain_sa));
-        context__.validate_dims("initialization", "restrict_high", "vector_d", context__.to_vec(((num_constrain_sr + num_constrain_l) + num_constrain_sa)));
+        validate_non_negative_index("restrict_high", "num_fix_high", num_fix_high);
+        context__.validate_dims("initialization", "restrict_high", "vector_d", context__.to_vec(num_fix_high));
         // generate_declaration restrict_high
-        vector_d restrict_high(static_cast<Eigen::VectorXd::Index>(((num_constrain_sr + num_constrain_l) + num_constrain_sa)));
-        for (int j1__ = 0U; j1__ < ((num_constrain_sr + num_constrain_l) + num_constrain_sa); ++j1__)
+        vector_d restrict_high(static_cast<Eigen::VectorXd::Index>(num_fix_high));
+        for (int j1__ = 0U; j1__ < num_fix_high; ++j1__)
             restrict_high(j1__) = vals_r__[pos__++];
         try {
             writer__.vector_lb_unconstrain(0,restrict_high);
@@ -579,22 +575,19 @@ public:
         else
             sigma_reg_free = in__.vector_constrain((num_bills - num_constrain_sr));
 
-        vector<Eigen::Matrix<T__,Eigen::Dynamic,1> > restrict_low;
-        size_t dim_restrict_low_0__ = T;
-        restrict_low.reserve(dim_restrict_low_0__);
-        for (size_t k_0__ = 0; k_0__ < dim_restrict_low_0__; ++k_0__) {
-            if (jacobian__)
-                restrict_low.push_back(in__.vector_ub_constrain(0,((num_constrain_sr + num_constrain_l) + num_constrain_sa),lp__));
-            else
-                restrict_low.push_back(in__.vector_ub_constrain(0,((num_constrain_sr + num_constrain_l) + num_constrain_sa)));
-        }
+        Eigen::Matrix<T__,Eigen::Dynamic,1>  restrict_low;
+        (void) restrict_low;  // dummy to suppress unused var warning
+        if (jacobian__)
+            restrict_low = in__.vector_ub_constrain(0,num_fix_low,lp__);
+        else
+            restrict_low = in__.vector_ub_constrain(0,num_fix_low);
 
         Eigen::Matrix<T__,Eigen::Dynamic,1>  restrict_high;
         (void) restrict_high;  // dummy to suppress unused var warning
         if (jacobian__)
-            restrict_high = in__.vector_lb_constrain(0,((num_constrain_sr + num_constrain_l) + num_constrain_sa),lp__);
+            restrict_high = in__.vector_lb_constrain(0,num_fix_high,lp__);
         else
-            restrict_high = in__.vector_lb_constrain(0,((num_constrain_sr + num_constrain_l) + num_constrain_sa));
+            restrict_high = in__.vector_lb_constrain(0,num_fix_high);
 
         Eigen::Matrix<T__,Eigen::Dynamic,1>  B_yes;
         (void) B_yes;  // dummy to suppress unused var warning
@@ -657,7 +650,7 @@ public:
 
 
         try {
-            stan::math::assign(L_full, append_row(L_free,restrict_high));
+            stan::math::assign(L_full, append_row(L_free,append_row(restrict_high,restrict_low)));
             stan::math::assign(sigma_abs_full, sigma_abs_free);
             stan::math::assign(sigma_reg_full, sigma_reg_free);
         } catch (const std::exception& e) {
@@ -711,7 +704,8 @@ public:
 
                 if (as_bool((primitive_value((primitive_value(logical_eq(hier_type,8)) && primitive_value(logical_eq(constraint_type,2)))) && primitive_value(logical_eq(constrain_par,1))))) {
 
-                    lp_accum__.add(normal_log<propto__>(restrict_high, 0, 1));
+                    lp_accum__.add(normal_log<propto__>(restrict_high, 0, 5));
+                    lp_accum__.add(normal_log<propto__>(restrict_low, 0, 5));
                     lp_accum__.add(normal_log<propto__>(L_free, 0, 1));
                     if (as_bool(logical_gt(T,1))) {
 
@@ -735,10 +729,6 @@ public:
 
                     for (int n = 1; n <= N; ++n) {
 
-                        if (pstream__) {
-                            stan_print(pstream__,get_base1(absence,n,"absence",1));
-                            *pstream__ << std::endl;
-                        }
                         stan::math::assign(get_base1_lhs(pi1,n,"pi1",1), ((get_base1(sigma_reg_full,get_base1(bb,n,"bb",1),"sigma_reg_full",1) * get_base1(L_full,get_base1(ll,n,"ll",1),"L_full",1)) - get_base1(B_yes,get_base1(bb,n,"bb",1),"B_yes",1)));
                         stan::math::assign(get_base1_lhs(pi2,n,"pi2",1), (((get_base1(sigma_abs_full,get_base1(bb,n,"bb",1),"sigma_abs_full",1) * get_base1(L_full,get_base1(ll,n,"ll",1),"L_full",1)) - get_base1(B_abs,get_base1(bb,n,"bb",1),"B_abs",1)) + (avg_particip * get_base1(particip,get_base1(ll,n,"ll",1),"particip",1))));
                         if (as_bool(logical_eq(get_base1(absence,n,"absence",1),1))) {
@@ -806,11 +796,10 @@ public:
         dims__.push_back((num_bills - num_constrain_sr));
         dimss__.push_back(dims__);
         dims__.resize(0);
-        dims__.push_back(T);
-        dims__.push_back(((num_constrain_sr + num_constrain_l) + num_constrain_sa));
+        dims__.push_back(num_fix_low);
         dimss__.push_back(dims__);
         dims__.resize(0);
-        dims__.push_back(((num_constrain_sr + num_constrain_l) + num_constrain_sa));
+        dims__.push_back(num_fix_high);
         dimss__.push_back(dims__);
         dims__.resize(0);
         dims__.push_back(num_bills);
@@ -854,12 +843,8 @@ public:
         vector_d sigma_abs_free = in__.vector_constrain((num_bills - num_constrain_sa));
         vector_d L_free = in__.vector_constrain((num_legis - num_constrain_l));
         vector_d sigma_reg_free = in__.vector_constrain((num_bills - num_constrain_sr));
-        vector<vector_d> restrict_low;
-        size_t dim_restrict_low_0__ = T;
-        for (size_t k_0__ = 0; k_0__ < dim_restrict_low_0__; ++k_0__) {
-            restrict_low.push_back(in__.vector_ub_constrain(0,((num_constrain_sr + num_constrain_l) + num_constrain_sa)));
-        }
-        vector_d restrict_high = in__.vector_lb_constrain(0,((num_constrain_sr + num_constrain_l) + num_constrain_sa));
+        vector_d restrict_low = in__.vector_ub_constrain(0,num_fix_low);
+        vector_d restrict_high = in__.vector_lb_constrain(0,num_fix_high);
         vector_d B_yes = in__.vector_constrain(num_bills);
         vector_d B_abs = in__.vector_constrain(num_bills);
         vector_d steps_votes = in__.ordered_constrain((m - 1));
@@ -878,12 +863,10 @@ public:
         for (int k_0__ = 0; k_0__ < (num_bills - num_constrain_sr); ++k_0__) {
             vars__.push_back(sigma_reg_free[k_0__]);
         }
-        for (int k_1__ = 0; k_1__ < ((num_constrain_sr + num_constrain_l) + num_constrain_sa); ++k_1__) {
-            for (int k_0__ = 0; k_0__ < T; ++k_0__) {
-                vars__.push_back(restrict_low[k_0__][k_1__]);
-            }
+        for (int k_0__ = 0; k_0__ < num_fix_low; ++k_0__) {
+            vars__.push_back(restrict_low[k_0__]);
         }
-        for (int k_0__ = 0; k_0__ < ((num_constrain_sr + num_constrain_l) + num_constrain_sa); ++k_0__) {
+        for (int k_0__ = 0; k_0__ < num_fix_high; ++k_0__) {
             vars__.push_back(restrict_high[k_0__]);
         }
         for (int k_0__ = 0; k_0__ < num_bills; ++k_0__) {
@@ -932,7 +915,7 @@ public:
 
 
         try {
-            stan::math::assign(L_full, append_row(L_free,restrict_high));
+            stan::math::assign(L_full, append_row(L_free,append_row(restrict_high,restrict_low)));
             stan::math::assign(sigma_abs_full, sigma_abs_free);
             stan::math::assign(sigma_reg_full, sigma_reg_free);
         } catch (const std::exception& e) {
@@ -1012,14 +995,12 @@ public:
             param_name_stream__ << "sigma_reg_free" << '.' << k_0__;
             param_names__.push_back(param_name_stream__.str());
         }
-        for (int k_1__ = 1; k_1__ <= ((num_constrain_sr + num_constrain_l) + num_constrain_sa); ++k_1__) {
-            for (int k_0__ = 1; k_0__ <= T; ++k_0__) {
-                param_name_stream__.str(std::string());
-                param_name_stream__ << "restrict_low" << '.' << k_0__ << '.' << k_1__;
-                param_names__.push_back(param_name_stream__.str());
-            }
+        for (int k_0__ = 1; k_0__ <= num_fix_low; ++k_0__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "restrict_low" << '.' << k_0__;
+            param_names__.push_back(param_name_stream__.str());
         }
-        for (int k_0__ = 1; k_0__ <= ((num_constrain_sr + num_constrain_l) + num_constrain_sa); ++k_0__) {
+        for (int k_0__ = 1; k_0__ <= num_fix_high; ++k_0__) {
             param_name_stream__.str(std::string());
             param_name_stream__ << "restrict_high" << '.' << k_0__;
             param_names__.push_back(param_name_stream__.str());
@@ -1090,14 +1071,12 @@ public:
             param_name_stream__ << "sigma_reg_free" << '.' << k_0__;
             param_names__.push_back(param_name_stream__.str());
         }
-        for (int k_1__ = 1; k_1__ <= ((num_constrain_sr + num_constrain_l) + num_constrain_sa); ++k_1__) {
-            for (int k_0__ = 1; k_0__ <= T; ++k_0__) {
-                param_name_stream__.str(std::string());
-                param_name_stream__ << "restrict_low" << '.' << k_0__ << '.' << k_1__;
-                param_names__.push_back(param_name_stream__.str());
-            }
+        for (int k_0__ = 1; k_0__ <= num_fix_low; ++k_0__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "restrict_low" << '.' << k_0__;
+            param_names__.push_back(param_name_stream__.str());
         }
-        for (int k_0__ = 1; k_0__ <= ((num_constrain_sr + num_constrain_l) + num_constrain_sa); ++k_0__) {
+        for (int k_0__ = 1; k_0__ <= num_fix_high; ++k_0__) {
             param_name_stream__.str(std::string());
             param_name_stream__ << "restrict_high" << '.' << k_0__;
             param_names__.push_back(param_name_stream__.str());

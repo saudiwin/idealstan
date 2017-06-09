@@ -8,6 +8,7 @@ require(tidyr)
 require(ggplot2)
 require(bayesplot)
 require(readr)
+require(rstan)
 
 #this is out of date, use new CSV Files
 newdata <- readKH(file = 'senate_114.ord')
@@ -52,10 +53,36 @@ idealdata <-
 estimated_full <-
   estimate_ideal(idealdata = idealdata,
                  model_type = 4,
-                 use_vb = T,
+                 use_vb = F,
                  ncores=4,
-                 nfix=8,
+                 nfix=4,
+                 restrict_type='constrain_twoway',
                  restrict_params='legis')
+compile_old <- stan_model('old_code/ratingscale_absence_inflate_constrain_person.stan')
+Y <- c(idealdata@vote_matrix)
+N <- length(Y)
+num_legis <- nrow(idealdata@vote_matrix)
+num_bills <- ncol(idealdata@vote_matrix)
+legispoints <- rep(1:num_legis,times=num_bills)
+billpoints <- rep(1:num_bills,each=num_legis)
+timepoints <- idealdata@time[billpoints]
+avg_particip <- apply(idealdata@vote_matrix,1,function(x) {
+  if(is.na(idealdata@abs_vote)) {
+    count_abs <- sum(is.na(x))
+  } else {
+    count_abs <- sum(x==idealdata@abs_vote,na.rm=TRUE)
+  }
+  particip_rate <- 1 - (count_abs/length(x))
+  return(particip_rate)
+}) 
+this_data <- list(N=N,
+                  Y=Y,
+                  num_legis=num_legis,
+                  num_bills=num_bills,
+                  ll=legispoints,
+                  bb=billpoints,
+                  particip=avg_particip,
+                  restrict=4)
 
 # Now try non-inflated binary model
 
@@ -73,11 +100,11 @@ ideal_data_binary <-
 
 estimated_no_abs <-
   estimate_ideal(idealdata = ideal_data_binary,
-                 modeltype = 'binary_2pl',
-                 use_vb = FALSE,
+                 model_type = 1,
+                 use_vb = T,
                  ncores = 4,
                  nfix=c(8,8),
-                 restrict_params='person')
+                 restrict_params='legis')
 
 saveRDS(estimated_full, 'senate_114_bin_abs.rds')
 saveRDS(estimated_no_abs, 'senate_114_bin_no_abs.rds')

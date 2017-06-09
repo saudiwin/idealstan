@@ -73,7 +73,7 @@ transformed data {
   }
   
   
-    num_constrain_l=num_fix_high;
+    num_constrain_l=num_fix_high+num_fix_low;
     num_constrain_sr=0;
     num_constrain_sa=0;
 
@@ -84,9 +84,9 @@ parameters {
   //vector[num_legis-num_constrain_l] L_free[T];
   vector[num_legis-num_constrain_l] L_free;
   vector[num_bills-num_constrain_sr] sigma_reg_free;
-  vector<upper=0>[num_constrain_sr+num_constrain_l+num_constrain_sa] restrict_low[T];
+  vector<upper=0>[num_fix_low] restrict_low;
   //vector<lower=0>[num_constrain_sr+num_constrain_l+num_constrain_sa] restrict_high[T];
-  vector<lower=0>[num_constrain_sr+num_constrain_l+num_constrain_sa] restrict_high;
+  vector<lower=0>[num_fix_high] restrict_high;
   // vector[LX] legis_x;
   // vector[SRX] sigma_reg_x;
   // vector[SAX] sigma_abs_x;
@@ -110,7 +110,7 @@ transformed parameters {
     // for(t in 1:T) {
     //   L_full[t] = append_row(L_free[t],restrict_high[t]);
     // }
-  L_full = append_row(L_free,restrict_high);
+  L_full = append_row(L_free,append_row(restrict_high,restrict_low));
   sigma_abs_full = sigma_abs_free;
   sigma_reg_full = sigma_reg_free;
   
@@ -125,7 +125,8 @@ model {
   
           
     if(hier_type==8 && constraint_type==2 && constrain_par==1) {
-        restrict_high ~ normal(0,1);
+        restrict_high ~ normal(0,5);
+        restrict_low ~ normal(0,5);
           L_free ~ normal(0,1);
           //add basic integrated time-series prior
           if(T>1) {

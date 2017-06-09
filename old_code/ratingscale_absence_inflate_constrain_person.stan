@@ -29,7 +29,7 @@ transformed data {
 
 parameters {
   vector[num_bills] sigma_abs_full;
-  vector[num_legis-restrict] L_free;
+  vector[num_legis-(restrict*2)] L_free;
   vector[num_bills] sigma_full;
   vector<upper=0>[restrict] L_restrict_low;
   vector<lower=0>[restrict] L_restrict_high;

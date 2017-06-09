@@ -58,7 +58,7 @@
        } else if(all_args$restrict_type=='constrain_twoway') {
          to_constrain_high <- sort(legis,index.return=TRUE,decreasing=TRUE)
          to_constrain_high <- to_constrain_high$ix[1:nfix]
-         to_constrain_low <- sort(sigma_abs_std,index.return=TRUE)
+         to_constrain_low <- sort(legis,index.return=TRUE)
          to_constrain_low <- to_constrain_low$ix[1:nfix]
        }
        object@vote_matrix <- object@vote_matrix[c((1:nrow(object@vote_matrix))[-c(to_constrain_high,
@@ -68,7 +68,7 @@
        
      }
   
-   object@restrict_count <- nfix
+   object@restrict_count <- c(to_constrain_high,to_constrain_low)
    
    if(all_args$restrict_params=='bill') {
      this_data$num_fix_high <- nfix
