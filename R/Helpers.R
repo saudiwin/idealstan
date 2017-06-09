@@ -1,7 +1,142 @@
 #' Function that does automatic identification of models using VB
-.vb_fix <- function(object=NULL,this_params=NULL,this_data=NULL,nfix=NULL,auto_id=FALSE,...) {
+.vb_fix <- function(object=NULL,this_params=NULL,
+                    this_data=NULL,nfix=NULL,auto_id=FALSE,...) {
 
-  }
+   all_args <- list(...) 
+   all_params <- attributes(this_params)$dimnames$parameters
+   old_matrix <- object@vote_matrix
+
+     if(all_args$restrict_params=='bill') {
+       # first we calculate the standardized discrimination parameters for the bills
+       # we want to know which distribution has more spread/information
+       # we will identify the one that has the greater spread
+       sigma_reg <- apply(this_params[,grepl(pattern = 'sigma_reg_full',x=all_params)],2,mean)
+       sigma_reg_sd <- apply(this_params[,grepl(pattern = 'sigma_reg_full',x=all_params)],2,sd)
+       sigma_abs <- apply(this_params[,grepl(pattern = 'sigma_abs_full',x=all_params)],2,mean)
+       sigma_abs_sd <- apply(this_params[,grepl(pattern = 'sigma_abs_full',x=all_params)],2,sd)
+       sigma_reg_std <- sigma_reg/sigma_reg_sd
+       sigma_abs_std <- sigma_abs / sigma_abs_sd
+       if(max(abs(sigma_reg_std))>max(abs(sigma_abs_std))) {
+         # Now get nfix number of reg discrim parameters to constrain/fix
+         if(all_args$restrict_type=='constrain_oneway') {
+           fix_param <- 'sigma_reg'
+           to_constrain_high <- sort(abs(sigma_reg_std),index.return=TRUE,decreasing=TRUE)
+           to_constrain_high <- to_constrain_high$ix[1:nfix]
+           to_constrain_low <- NULL
+         } else if(all_args$restrict_type=='constrain_twoway') {
+           fix_param <- 'sigma_reg'
+           to_constrain_high <- sort(sigma_reg_std,index.return=TRUE,decreasing=TRUE)
+           to_constrain_high <- to_constrain_high$ix[1:nfix]
+           to_constrain_low <- sort(sigma_reg_std,index.return=TRUE)
+           to_constrain_low <- to_constrain_low$ix[1:nfix]
+         }
+       } else {
+         if(all_args$restrict_type=='constrain_oneway') {
+           fix_param <- 'sigma_abs'
+           to_constrain_high <- sort(abs(sigma_abs_std),index.return=TRUE,decreasing=TRUE)
+           to_constrain_high <- to_constrain_high$ix[1:nfix]
+           to_constrain_low <- NULL
+         } else if(all_args$restrict_type=='constrain_twoway') {
+           to_constrain_high <- sort(sigma_abs_std,index.return=TRUE,decreasing=TRUE)
+           to_constrain_high <- to_constrain_high$ix[1:nfix]
+           to_constrain_low <- sort(sigma_abs_std,index.return=TRUE)
+           to_constrain_low <- to_constrain_low$ix[1:nfix]
+         }
+       }
+       object@vote_matrix <- object@vote_matrix[,c((1:ncol(object@vote_matrix))[-c(to_constrain_high,
+                                                                              to_constrain_low)],
+                                                to_constrain_high,
+                                                to_constrain_low)]
+       
+     } else if(all_args$restrict_params=='legis') {
+       legis <- apply(this_params[,grepl(pattern = 'L_full',x=all_params)],2,mean)
+       fix_param <- "L_free"
+       if(all_args$restrict_type=='constrain_oneway') {
+         to_constrain_high <- sort(abs(legis),index.return=TRUE,decreasing=TRUE)
+         to_constrain_high <- to_constrain_high$ix[1:nfix]
+         to_constrain_low <- NULL
+       } else if(all_args$restrict_type=='constrain_twoway') {
+         to_constrain_high <- sort(legis,index.return=TRUE,decreasing=TRUE)
+         to_constrain_high <- to_constrain_high$ix[1:nfix]
+         to_constrain_low <- sort(sigma_abs_std,index.return=TRUE)
+         to_constrain_low <- to_constrain_low$ix[1:nfix]
+       }
+       object@vote_matrix <- object@vote_matrix[c((1:nrow(object@vote_matrix))[-c(to_constrain_high,
+                                                                              to_constrain_low)],
+                                                to_constrain_high,
+                                                   to_constrain_low),]
+       
+     }
+  
+   object@restrict_count <- nfix
+   
+   if(all_args$restrict_params=='bill') {
+     this_data$num_fix_high <- nfix
+     if(is.null(to_constrain_low)) {
+       this_data$num_fix_low <- 0
+       this_data$constraint_type <- 2
+     } else {
+       this_data$num_fix_low <- nfix
+       this_data$constraint_type <- 3
+     }
+   } else if(all_args$restrict_params=='legis') {
+     this_data$num_fix_high <- nfix
+     if(is.null(to_constrain_low)) {
+       this_data$num_fix_low <- 0
+       this_data$constraint_type <- 2
+     } else {
+       this_data$num_fix_low <- nfix
+       this_data$constraint_type <- 3
+     }
+   }
+   
+   if(fix_param=='sigma_abs') {
+     this_data$constrain_par <- 2
+   } else if(fix_param=='sigma_reg') {
+     this_data$constrain_par <- 3
+   } else if(fix_param=='L_free') {
+     this_data$constrain_par <- 1
+   }
+   
+   this_data$pin_vals <- rep(1,nfix)
+   dim(this_data$pin_vals) <- nfix
+   
+   if(auto_id==TRUE) {
+     # Now re-run ID on 4 VB chains and see if the parameters are stable
+     print('Running automatic identification check.')
+
+     all_vbs <- lapply(1:4,function(i,this_data=NULL) {
+       vb_out <- vb(object=stanmodels[['irt_standard']],data=this_data,algorithm='meanfield')
+       lookat_params <- rstan::extract(vb_out,permuted=FALSE)
+       lookat_params <- lookat_params[,1,]
+      out_param <- apply(lookat_params,2,mean)
+     },this_data=this_data)
+
+     signs <- sapply(all_vbs,sign)
+     equal_ratio <- apply(signs,1,function(r) {
+       all(r==r[1])
+     })
+     if(mean(equal_ratio)<0.9) {
+       print(paste0('Model is not yet identified. Increasing constraint number to ',nfix+1))
+       .vb_fix(object=object,this_params=this_params,this_data=this_data,nfix=nfix+1,auto_id=TRUE,...)
+     } else {
+       print(paste0('Automatic identification has occurred for ',all_args$restrict_type,
+             ' identification with ',nfix,' constraints.'))
+     }
+   }
+   
+   object@restrict_num_high <- nfix
+   if(is.null(to_constrain_low)) {
+     object@restrict_num_low <- 0L
+   } else {
+     object@restrict_num_low <- nfix
+   }
+   object@constraint_type <- this_data$constraint_type
+   object@param_fix <- this_data$constrain_par
+   object@unrestricted <- old_matrix
+   object@restrict_vals <- this_data$pin_vals
+   return(object)
+}
   
 #' Function that pins certain parameters to fixed points
 .pinned_fix <- function(object=NULL,this_params=NULL,this_data=NULL,nfix=NULL,restrict_params=NULL,
@@ -38,7 +173,7 @@ id_params_constrain_guided_inflate <- function(lookat_params=NULL,restrict_param
       summarize(avg=mean(value),high=quantile(value,0.95),low=quantile(value,0.05),sd=sd(value),interval=high-low)
     
     legis <- arrange(legis_est,desc(avg))
-    keep_rows <- as.numeric(stringr::str_extract(legis$param_name,'[0-9]+')[1:nfix[2]])
+    keep_rows <- as.numeric(stringr::str_extract(legis$param_name,'[0-9]+')[1:nfix])
     x <- rbind(x[-keep_rows,],x[keep_rows,])
     
     # Then do the bill fixes
@@ -53,19 +188,19 @@ id_params_constrain_guided_inflate <- function(lookat_params=NULL,restrict_param
       summarize(avg=mean(value),high=quantile(value,0.95),low=quantile(value,0.05),sd=sd(value),interval=high-low)
     
     sigmas_abs <- arrange(sigmas_est_abs,avg)
-    if((mean(sigmas$avg[1:nfix[1]])<mean(sigmas_abs$avg[1:nfix[1]])) & (mean(sigmas$interval[1:nfix[1]])<mean(sigmas_abs$interval[1:nfix[1]]))) {
-      keep_cols <- as.numeric(stringr::str_extract(sigmas$param_name,'[0-9]+')[1:nfix[1]])
+    if((mean(sigmas$avg[1:nfix])<mean(sigmas_abs$avg[1:nfix])) & (mean(sigmas$interval[1:nfix])<mean(sigmas_abs$interval[1:nfix]))) {
+      keep_cols <- as.numeric(stringr::str_extract(sigmas$param_name,'[0-9]+')[1:nfix])
       param_fix <- c('person','bill','sigma')
     } else {
-      keep_cols <- as.numeric(stringr::str_extract(sigmas_abs$param_name,'[0-9]+')[1:nfix[1]])
+      keep_cols <- as.numeric(stringr::str_extract(sigmas_abs$param_name,'[0-9]+')[1:nfix])
       param_fix <- c('person','bill','sigma_abs')
     }
     x <- cbind(x[,-keep_cols],x[,keep_cols])
     
-    return(list(restrict=list(restrict_l=nfix[2],restrict_b=nfix[1]),matrix=x,param_fix=param_fix,
-                restrict_vals=c(sigmas_abs$avg[1:nfix[1]],
-                                sigmas$avg[1:nfix[1]],
-                                legis$avg[1:nfix[2]]),
+    return(list(restrict=list(restrict_l=nfix,restrict_b=nfix),matrix=x,param_fix=param_fix,
+                restrict_vals=c(sigmas_abs$avg[1:nfix],
+                                sigmas$avg[1:nfix],
+                                legis$avg[1:nfix]),
                 unrestricted=lookat_params,
                 restrict_legis=keep_rows,
                 restrict_bills=keep_cols))
@@ -76,13 +211,13 @@ id_params_constrain_guided_inflate <- function(lookat_params=NULL,restrict_param
       summarize(avg=mean(value),high=quantile(value,0.95),low=quantile(value,0.05),sd=sd(value),interval=high-low)
     
     legis <- arrange(legis_est,desc(avg))
-    keep_rows_low <- as.numeric(stringr::str_extract(legis$param_name,'[0-9]+')[1:nfix[2]])
+    keep_rows_low <- as.numeric(stringr::str_extract(legis$param_name,'[0-9]+')[1:nfix])
     legis <- arrange(legis_est,avg)
-    keep_rows_high <- as.numeric(stringr::str_extract(legis$param_name,'[0-9]+')[1:nfix[2]])
+    keep_rows_high <- as.numeric(stringr::str_extract(legis$param_name,'[0-9]+')[1:nfix])
     x <- rbind(x[-c(keep_rows_high,keep_rows_low),],x[c(keep_rows_high,keep_rows_low),])
     param_fix <- 'person'
-    return(list(restrict=list(restrict=nfix[2]),matrix=x,param_fix=param_fix,
-           restrict_vals=legis$avg[1:nfix[2]],
+    return(list(restrict=list(restrict=nfix),matrix=x,param_fix=param_fix,
+           restrict_vals=legis$avg[1:nfix],
            unrestricted=lookat_params,
            restrict_legis=c(keep_rows_high,keep_rows_low),
            restrict_bills='None'))
@@ -97,17 +232,17 @@ id_params_constrain_guided_inflate <- function(lookat_params=NULL,restrict_param
       summarize(avg=mean(value),high=quantile(value,0.95),low=quantile(value,0.05),sd=sd(value),interval=high-low)
     
     sigmas_abs <- arrange(sigmas_est_abs,avg)
-    if((mean(sigmas$avg[1:nfix[1]])<mean(sigmas_abs$avg[1:nfix[1]])) & (mean(sigmas$interval[1:nfix[1]])<mean(sigmas_abs$interval[1:nfix[1]]))) {
-      keep_cols <- as.numeric(stringr::str_extract(sigmas$param_name,'[0-9]+')[1:nfix[1]])
+    if((mean(sigmas$avg[1:nfix])<mean(sigmas_abs$avg[1:nfix])) & (mean(sigmas$interval[1:nfix])<mean(sigmas_abs$interval[1:nfix]))) {
+      keep_cols <- as.numeric(stringr::str_extract(sigmas$param_name,'[0-9]+')[1:nfix])
       param_fix <- c('bill','sigma')
     } else {
-      keep_cols <- as.numeric(stringr::str_extract(sigmas_abs$param_name,'[0-9]+')[1:nfix[1]])
+      keep_cols <- as.numeric(stringr::str_extract(sigmas_abs$param_name,'[0-9]+')[1:nfix])
       param_fix <- c('bill','sigma_abs')
     }
     x <- cbind(x[,-keep_cols],x[,keep_cols])
-    return(list(restrict=list(restrict=nfix[1]),matrix=x,param_fix=param_fix,
-           restrict_vals=c(sigmas$avg[1:nfix[1]],
-                           sigmas_abs$avg[1:nfix[1]]),
+    return(list(restrict=list(restrict=nfix),matrix=x,param_fix=param_fix,
+           restrict_vals=c(sigmas$avg[1:nfix],
+                           sigmas_abs$avg[1:nfix]),
            unrestricted=lookat_params,
            restrict_bills=keep_cols,
            restrict_legis='None'))
@@ -140,7 +275,7 @@ id_params_constrain_guided_2pl <- function(lookat_params=NULL,restrict_params=NU
       summarize(avg=mean(value),high=quantile(value,0.95),low=quantile(value,0.05),sd=sd(value),interval=high-low)
     
     legis <- arrange(legis_est,desc(avg))
-    keep_rows <- as.numeric(stringr::str_extract(legis$param_name,'[0-9]+')[1:nfix[2]])
+    keep_rows <- as.numeric(stringr::str_extract(legis$param_name,'[0-9]+')[1:nfix])
     x <- rbind(x[-keep_rows,],x[keep_rows,])
     
     # Then do the bill fixes
@@ -149,14 +284,14 @@ id_params_constrain_guided_2pl <- function(lookat_params=NULL,restrict_params=NU
     sigmas <- sigmas_est %>% as_data_frame %>% gather(param_name,value) %>% group_by(param_name) %>% 
       summarize(avg=mean(value),high=quantile(value,0.95),low=quantile(value,0.05),sd=sd(value),interval=high-low)
 
-    keep_cols <- as.numeric(stringr::str_extract(sigmas$param_name,'[0-9]+')[1:nfix[1]])
+    keep_cols <- as.numeric(stringr::str_extract(sigmas$param_name,'[0-9]+')[1:nfix])
     param_fix <- c('person','bill','sigma')
 
     x <- cbind(x[,-keep_cols],x[,keep_cols])
     
-    return(list(restrict=list(restrict_l=nfix[2],restrict_b=nfix[1]),matrix=x,param_fix=param_fix,
-                restrict_vals=c(sigmas$avg[1:nfix[1]],
-                                legis$avg[1:nfix[2]]),
+    return(list(restrict=list(restrict_l=nfix,restrict_b=nfix),matrix=x,param_fix=param_fix,
+                restrict_vals=c(sigmas$avg[1:nfix],
+                                legis$avg[1:nfix]),
                 unrestricted=lookat_params,
                 restrict_legis=keep_rows,
                 restrict_bills=keep_cols))
@@ -167,13 +302,13 @@ id_params_constrain_guided_2pl <- function(lookat_params=NULL,restrict_params=NU
       summarize(avg=mean(value),high=quantile(value,0.95),low=quantile(value,0.05),sd=sd(value),interval=high-low)
     
     legis <- arrange(legis_est,desc(avg))
-    keep_rows_low <- as.numeric(stringr::str_extract(legis$param_name,'[0-9]+')[1:nfix[2]])
+    keep_rows_low <- as.numeric(stringr::str_extract(legis$param_name,'[0-9]+')[1:nfix])
     legis <- arrange(legis_est,avg)
-    keep_rows_high <- as.numeric(stringr::str_extract(legis$param_name,'[0-9]+')[1:nfix[2]])
+    keep_rows_high <- as.numeric(stringr::str_extract(legis$param_name,'[0-9]+')[1:nfix])
     x <- rbind(x[-c(keep_rows_high,keep_rows_low),],x[c(keep_rows_high,keep_rows_low),])
     param_fix <- 'person'
-    return(list(restrict=list(restrict=nfix[2]),matrix=x,param_fix=param_fix,
-                restrict_vals=legis$avg[1:nfix[2]],
+    return(list(restrict=list(restrict=nfix),matrix=x,param_fix=param_fix,
+                restrict_vals=legis$avg[1:nfix],
                 unrestricted=lookat_params,
                 restrict_legis=c(keep_rows_high,keep_rows_low),restrict_bills='None'))
   } else if('bill' %in% restrict_params) {
@@ -181,12 +316,12 @@ id_params_constrain_guided_2pl <- function(lookat_params=NULL,restrict_params=NU
     sigmas <- sigmas_est %>% as_data_frame %>% gather(param_name,value) %>% group_by(param_name) %>% 
       summarize(avg=mean(value),high=quantile(value,0.95),low=quantile(value,0.05),sd=sd(value),interval=high-low)
 
-     keep_cols <- as.numeric(stringr::str_extract(sigmas$param_name,'[0-9]+')[1:nfix[1]])
+     keep_cols <- as.numeric(stringr::str_extract(sigmas$param_name,'[0-9]+')[1:nfix])
       param_fix <- c('bill','sigma')
 
     x <- cbind(x[,-keep_cols],x[,keep_cols])
-    return(list(restrict=list(restrict=nfix[1]),matrix=x,param_fix=param_fix,
-                restrict_vals=sigmas$avg[1:nfix[1]],
+    return(list(restrict=list(restrict=nfix),matrix=x,param_fix=param_fix,
+                restrict_vals=sigmas$avg[1:nfix],
                 unrestricted=lookat_params,
                 restrict_bills=keep_cols,
                 restrict_legis='None'))
@@ -233,21 +368,22 @@ id_params_pin_unguided_inflate <- function(restrict_params=NULL,nfix=NULL,x=NULL
 
 #' Function that figures out what kind of hierarchical model (if any) is being run
 .get_hier_type <- function(obj) {
-  if(nrow(obj@legis_cov)==1 && length(obj@bill_cov_reg)==1 && length(obj@bill_cov_abs)==1) {
+
+  if(all(obj@legis_cov) && all(obj@bill_cov_reg) && all(obj@bill_cov_abs)) {
     return(8)
-  } else if(nrow(obj@legis_cov)>1 && length(obj@bill_cov_reg)==1 && length(obj@bill_cov_abs)==1) {
+  } else if(!all(obj@legis_cov) && all(obj@bill_cov_reg) && all(obj@bill_cov_abs)) {
     return(1)
-  } else if(nrow(obj@legis_cov)==1 && length(obj@bill_cov_reg)>1 && length(obj@bill_cov_abs)==1) {
+  } else if(all(obj@legis_cov) && !all(obj@bill_cov_reg) && all(obj@bill_cov_abs)) {
     return(2)
-  } else if(nrow(obj@legis_cov)==1 && length(obj@bill_cov_reg)==1 && length(obj@bill_cov_abs)>1) {
+  } else if(all(obj@legis_cov) && all(obj@bill_cov_reg) && !all(obj@bill_cov_abs)) {
     return(3)
-  } else if(nrow(obj@legis_cov)>1 && length(obj@bill_cov_reg)>1 && length(obj@bill_cov_abs)==1) {
+  } else if(!all(obj@legis_cov) && !all(obj@bill_cov_reg) && all(obj@bill_cov_abs)) {
     return(4)
-  } else if(nrow(obj@legis_cov)>1 && length(obj@bill_cov_reg)==1 && length(obj@bill_cov_abs)>1) {
+  } else if(!all(obj@legis_cov) && all(obj@bill_cov_reg) && !all(obj@bill_cov_abs)) {
     return(5)
-  } else if(nrow(obj@legis_cov)==1 && length(obj@bill_cov_reg)>1 && length(obj@bill_cov_abs)>1) {
+  } else if(all(obj@legis_cov) && !all(obj@bill_cov_reg) && !all(obj@bill_cov_abs)) {
     return(6)
-  } else if(nrow(obj@legis_cov)>1 && length(obj@bill_cov_reg)>1 && length(obj@bill_cov_abs)>1) {
+  } else if(!all(obj@legis_cov) && !all(obj@bill_cov_reg) && !all(obj@bill_cov_abs)) {
     return(7)
   } else {
     stop('Hierarchical modeling undefined.')

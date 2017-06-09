@@ -46,16 +46,16 @@ idealdata <-
     yes_vote = 3,
     no_vote = 1,
     abst_vote = 2,
-    ordinal = FALSE
+    ordinal = TRUE
   )
 
 estimated_full <-
   estimate_ideal(idealdata = idealdata,
-                 modeltype = 'binary_absence_inflate',
-                 use_vb = FALSE,
+                 model_type = 4,
+                 use_vb = T,
                  ncores=4,
-                 nfix=c(8,8),
-                 restrict_params='person')
+                 nfix=8,
+                 restrict_params='legis')
 
 # Now try non-inflated binary model
 

@@ -12,14 +12,15 @@ setClass('idealdata',
                     restrict_count='numeric',
                     restrict_data='list',
                     stanmodel='stanmodel',
-                    param_fix='character',
-                    restrict_vals='numeric',
+                    param_fix='numeric',
+                    constraint_type='numeric',
+                    restrict_vals='ANY',
                     subset_party='character',
                     subset_legis='character',
                     to_sample='numeric',
                     unrestricted='matrix',
-                    restrict_bills='ANY',
-                    restrict_legis='ANY',
+                    restrict_num_high='numeric',
+                    restrict_num_low='numeric',
                     vote_int='numeric',
                     simul_data='list',
                     simulation='logical'))
@@ -27,7 +28,7 @@ setClass('idealdata',
 setClass('idealstan',
          slots=list(vote_data='idealdata',
                     to_fix='list',
-                    model_type='character',
+                    model_type='numeric',
                     model_code='character',
                     test_model_code='character',
                     stan_samples='stanfit',
@@ -49,7 +50,7 @@ setMethod('subset_ideal',signature(object='idealdata'),
             if(use_subset==TRUE & !is.null(subset_party)) {
               if(!all(subset_party %in% parliament$party)) stop('The specified parliament bloc/party must be in the list of blocs/parties in the legislature data.')
               x <- x[parliament$party %in% subset_party,]
-
+              
               object@subset_party <- subset_party
             } 
             if(use_subset==TRUE & !is.null(subset_legis)) {
@@ -64,39 +65,39 @@ setMethod('subset_ideal',signature(object='idealdata'),
               object@to_sample <- sample(1:nrow(x),sample_size)
               x <- x[object@to_sample,]
             }
-        object@vote_matrix <- x
-
-        return(object)
-        })
+            object@vote_matrix <- x
+            
+            return(object)
+          })
 
 setGeneric('clean_bills',signature='object',
            function(object,...) standardGeneric('clean_bills'))
 
 setMethod('clean_bills',signature(object='idealdata'),
           function(object) {
-          x <- object@vote_matrix
+            x <- object@vote_matrix
             
-          if(grepl('absence_inflate|ordinal',x@model_type)) {
-            select_cols <- apply(x,2, {
-              if(length(table(x))<(vote_count-1)) {
-                FALSE
-              } else {
-                TRUE
-              }
-            })
-            x <- x[,select_cols]
-          } else {
-            select_cols <- apply(x,2, {
-              if(length(table(x))<(vote_count)) {
-                FALSE
-              } else {
-                TRUE
-              }
-            })
-            x <- x[,select_cols]
-          }
-          object@vote_matrix <- x
-          return(object)
+            if(grepl('absence_inflate|ordinal',x@model_type)) {
+              select_cols <- apply(x,2, {
+                if(length(table(x))<(vote_count-1)) {
+                  FALSE
+                } else {
+                  TRUE
+                }
+              })
+              x <- x[,select_cols]
+            } else {
+              select_cols <- apply(x,2, {
+                if(length(table(x))<(vote_count)) {
+                  FALSE
+                } else {
+                  TRUE
+                }
+              })
+              x <- x[,select_cols]
+            }
+            object@vote_matrix <- x
+            return(object)
           })
 
 setGeneric('sample_model',signature='object',
@@ -105,21 +106,21 @@ setGeneric('sample_model',signature='object',
 setMethod('sample_model',signature(object='idealdata'),
           function(object,nchains=4,niters=2000,warmup=floor(niters/2),ncores=NULL,
                    to_use=to_use,this_data=this_data,use_vb=FALSE,...) {
-            
+
             if(is.null(ncores)) {
               ncores <- 1
             }
             if(use_vb==FALSE) {
-            out_model <- sampling(object@stanmodel,data=this_data,chains=nchains,iter=niters,cores=ncores,
-                                  warmup=warmup,...)
+              out_model <- sampling(object@stanmodel,data=this_data,chains=nchains,iter=niters,cores=ncores,
+                                    warmup=warmup,...)
             } else {
-            out_model <- vb(object@stanmodel,data=this_data)
+              out_model <- vb(object@stanmodel,data=this_data)
             }
             outobj <- new('idealstan',
-                vote_data=object,
-                model_code=object@stanmodel@model_code,
-                stan_samples=out_model,
-                use_vb=use_vb)
+                          vote_data=object,
+                          model_code=object@stanmodel@model_code,
+                          stan_samples=out_model,
+                          use_vb=use_vb)
             
             return(outobj)
           })
@@ -133,7 +134,7 @@ setMethod('id_model',signature(object='idealdata'),
           function(object,fixtype='vb',model_type=NULL,this_data=NULL,nfix=10,
                    restrict_params=NULL,restrict_type=NULL,restrict_rows=NULL,auto_id=FALSE,
                    pin_vals=NULL) {
-            
+
             x <- object@vote_matrix
             
             run_id <- switch(fixtype,vb=.vb_fix,pinned=.pinned_fix,constrained=.constrain_fix)
@@ -141,48 +142,14 @@ setMethod('id_model',signature(object='idealdata'),
             to_use <- stanmodels[['irt_standard_noid']]
             post_modes <- rstan::vb(object=to_use,data =this_data,
                                     algorithm='meanfield')
-            browser()
+            
             lookat_params <- rstan::extract(post_modes,permuted=FALSE)
             lookat_params <- lookat_params[,1,]
 
-            run_id(object,this_data,this_params=lookat_params,nfix,restrict_params,restrict_type,restrict_rows,auto_id,
-                   pin_vals)
-            
-            if(is.null(restrict_rows) & restrict_type=='constrain' & absence_inflate==TRUE) {
-              all_fixed <- id_params_constrain_guided_inflate(lookat_params=lookat_params,restrict_params=restrict_params,
-                                                              nfix=nfix,x=x)
-              object@vote_matrix <- all_fixed$matrix
-              object@restrict_data <- all_fixed$restrict
-              object@restrict_count <- nfix
-              object@restrict_vals <- all_fixed$restrict_vals
-              object@param_fix <- all_fixed$param_fix
-              object@stanmodel <- stanmodels[[paste0(model_type,'_',restrict_type,'_',paste0(all_fixed$param_fix,collapse='_'))]]
-              object@unrestricted <- all_fixed$unrestricted
-              object@restrict_bills <- all_fixed$restrict_bills
-              object@restrict_legis <- all_fixed$restrict_legis
-            } else if(is.null(restrict_names) & restrict_type=='constrain' & absence_inflate==FALSE) {
-              all_fixed <- id_params_constrain_guided_2pl(lookat_params=lookat_params,restrict_params=restrict_params,
-                                                              nfix=nfix,x=x)
-              object@vote_matrix <- all_fixed$matrix
-              object@restrict_data <- all_fixed$restrict
-              object@restrict_count <- nfix
-              object@restrict_vals <- all_fixed$restrict_vals
-              object@param_fix <- all_fixed$param_fix
-              object@stanmodel <- stanmodels[[paste0(model_type,'_',restrict_type,'_',paste0(all_fixed$param_fix,collapse='_'))]]
-              object@unrestricted <- all_fixed$unrestricted
-              object@restrict_bills <- all_fixed$restrict_bills
-              object@restrict_legis <- all_fixed$restrict_legis
-            } else if(!is.null(restrict_names) & restrict_type=='pin' & absence_inflate==TRUE) {
-              all_fixed <- id_params_pin_unguided_inflate(restrict_params=restrict_params,
-                                                  nfix=nfix,x=x,person_names=object@vote_data@legis.data$legis.names,
-                                                  bill_names=colnames(x),restrict_names=restrict_names)
-              object@vote_matrix <- all_fixed$matrix
-              object@restrict_vals <- all_fixed$restrict_vals
-              object@param_fix <- all_fixed$param_fix
-              object@restrict_bills <- all_fixed$restrict_bills
-              object@restrict_legis <- all_fixed$restrict_legis
-              object@stanmodel <- stanmodels[[paste0(model_type,'_',restrict_type,'_',paste0(all_fixed$param_fix,collapse='_'))]]
-            }
+            object <- run_id(object=object,this_data=this_data,this_params=lookat_params,nfix=nfix,
+                   restrict_params=restrict_params,restrict_type=restrict_type,
+                   restrict_rows=restrict_rows,auto_id=auto_id,
+                   pin_vals=pin_vals)
             
             
             return(object)
@@ -198,13 +165,13 @@ setMethod('summary',signature(object='idealstan'),
             this_summary <- rstan::summary(object@stan_samples)[[1]] %>% as_data_frame
             this_summary <- mutate(this_summary,
                                    parameters=row.names(rstan::summary(object@stan_samples)[[1]])) %>% 
-                            rename(posterior_mean=`mean`,
-                                   posterior_sd=`sd`,
-                                   posterior_median=`50%`,
-                                   Prob.025=`2.5%`,
-                                   Prob.25=`25%`,
-                                   Prob.75=`75%`,
-                                   Prob.975=`97.5%`) %>% 
+              rename(posterior_mean=`mean`,
+                     posterior_sd=`sd`,
+                     posterior_median=`50%`,
+                     Prob.025=`2.5%`,
+                     Prob.25=`25%`,
+                     Prob.75=`75%`,
+                     Prob.975=`97.5%`) %>% 
               select(parameters,posterior_mean,posterior_median,posterior_sd,Prob.025,
                      Prob.25,Prob.75,Prob.975)
             return(this_summary)
@@ -225,6 +192,5 @@ setMethod(plot_model, signature(object='idealstan'),
             } else if(plot_type=='histogram') {
               all_hist_plot(object,...)
             }
-
+            
           })
- 

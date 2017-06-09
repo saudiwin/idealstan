@@ -112,7 +112,7 @@ make_idealdata <- function(vote_data=NULL,simul_data=NULL,
 #' @export
 estimate_ideal <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=FALSE,
                            subset_party=NULL,subset_legis=NULL,sample_size=20,
-                           nchains=4,niters=2000,use_vb=FALSE,nfix=c(1,1),restrict_params='bill',
+                           nchains=4,niters=2000,use_vb=FALSE,nfix=1,restrict_params='bill',
                            pin_vals=NULL,restrict_rows=NULL,restrict_type='constrain_oneway',
                            fixtype='vb',warmup=floor(niters/2),ncores=NULL,
                            auto_id=FALSE,...) {
@@ -124,8 +124,8 @@ estimate_ideal <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_i
   }
   
   
-    hier_type <- .get_hier_type(idealdata)
-    to_use <- stanmodels[['irt_standard']]
+    hier_type <- suppressWarnings(.get_hier_type(idealdata))
+    idealdata@stanmodel <- stanmodels[['irt_standard']]
    
     #Using an un-identified model with variational inference, find those parameters that would be most useful for
     #constraining/pinning to have an identified model for full Bayesian inference
@@ -153,6 +153,7 @@ estimate_ideal <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_i
     Y <- Y[remove_nas]
     legispoints <- legispoints[remove_nas]
     billpoints <- billpoints[remove_nas]
+    timepoints <- timepoints[remove_nas]
 
   this_data <- list(N=length(Y),
                     T=max(idealdata@time),
@@ -176,7 +177,7 @@ estimate_ideal <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_i
                         nfix=nfix,restrict_params=restrict_params,restrict_rows=restrict_rows,
                         restrict_type=restrict_type,pin_vals=pin_vals,
                         auto_id=auto_id)
-  
+
   # Now remake the data to reflect the constrained parameters
   
   num_legis <- nrow(idealdata@vote_matrix)
@@ -202,6 +203,7 @@ estimate_ideal <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_i
   Y <- Y[remove_nas]
   legispoints <- legispoints[remove_nas]
   billpoints <- billpoints[remove_nas]
+  timepoints <- timepoints[remove_nas]
   
   this_data <- list(N=length(Y),
                     T=max(idealdata@time),
@@ -211,6 +213,10 @@ estimate_ideal <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_i
                     num_bills=num_bills,
                     ll=legispoints,
                     bb=billpoints,
+                    num_fix_high=idealdata@restrict_num_high,
+                    num_fix_low=idealdata@restrict_num_low,
+                    constrain_par=idealdata@param_fix,
+                    constraint_type=idealdata@constraint_type,
                     LX=dim(idealdata@legis_cov)[1],
                     SRX=ncol(idealdata@bill_cov_reg),
                     SAX=ncol(idealdata@bill_cov_abs),
@@ -219,9 +225,8 @@ estimate_ideal <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_i
                     sax_pred=idealdata@bill_cov_abs,
                     time=timepoints,
                     particip=avg_particip,
-                    model_type=model_type)
-  
-  this_data <- c(this_data,idealdata@restrict_data)
+                    model_type=model_type,
+                    pin_vals=idealdata@restrict_vals)
   
   outobj <- sample_model(object=idealdata,nchains=nchains,niters=niters,warmup=warmup,ncores=ncores,
                          this_data=this_data,use_vb=use_vb,...)
