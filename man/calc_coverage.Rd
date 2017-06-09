@@ -16,4 +16,3 @@ calc_coverage(est_param, true_param)
 Function that computes how often the true value of the parameter is included within the 
 90/10 high posterior density interval
 }
-
