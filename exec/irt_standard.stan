@@ -36,18 +36,18 @@ data {
   int bb[N];
   int time[N];
   vector[num_legis] particip;
-  matrix[num_legis,LX] legis_pred[T];
-  matrix[num_bills,SRX] srx_pred;
-  matrix[num_bills,SAX] sax_pred;
-  vector[num_fix_high] pin_vals;
+  //matrix[num_legis,LX] legis_pred[T];
+  //matrix[num_bills,SRX] srx_pred;
+  //matrix[num_bills,SAX] sax_pred;
+  //vector[num_fix_high] pin_vals;
 }
 
 transformed data {
 	int m;                         // # steps
 	int absence[N]; // need to create absence indicator
-	int num_constrain_l;
-	int num_constrain_sa;
-	int num_constrain_sr;
+	// int num_constrain_l;
+	// int num_constrain_sa;
+	// int num_constrain_sr;
 	int Y_new[N];
 	if(model_type==2||model_type==4||model_type==6) {
 	  //count down one if model is inflated
@@ -73,17 +73,17 @@ transformed data {
   }
   
   
-    num_constrain_l=num_fix_high+num_fix_low;
-    num_constrain_sr=0;
-    num_constrain_sa=0;
+    // num_constrain_l=num_fix_high;
+    // num_constrain_sr=0;
+    // num_constrain_sa=0;
 
 }
 
 parameters {
-  vector[num_bills-num_constrain_sa] sigma_abs_free;
+  vector[num_bills] sigma_abs_free;
   //vector[num_legis-num_constrain_l] L_free[T];
-  vector[num_legis-num_constrain_l] L_free;
-  vector[num_bills-num_constrain_sr] sigma_reg_free;
+  vector[num_legis-num_fix_high-num_fix_low] L_free;
+  vector[num_bills] sigma_reg_free;
   vector<upper=0>[num_fix_low] restrict_low;
   //vector<lower=0>[num_constrain_sr+num_constrain_l+num_constrain_sa] restrict_high[T];
   vector<lower=0>[num_fix_high] restrict_high;
@@ -96,7 +96,7 @@ parameters {
   vector[num_bills] B_yes;
   vector[num_bills] B_abs;
   ordered[m-1] steps_votes;
-  ordered[m-1] steps_votes_grm[num_bills];
+  //ordered[m-1] steps_votes_grm[num_bills];
   real avg_particip;
 }
 
@@ -125,8 +125,7 @@ model {
   
           
     if(hier_type==8 && constraint_type==2 && constrain_par==1) {
-        restrict_high ~ normal(0,5);
-        restrict_low ~ normal(0,5);
+        restrict_high ~ normal(0,1);
           L_free ~ normal(0,1);
           //add basic integrated time-series prior
           if(T>1) {

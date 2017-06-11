@@ -48,15 +48,8 @@ private:
     vector<int> bb;
     vector<int> time;
     vector_d particip;
-    vector<matrix_d> legis_pred;
-    matrix_d srx_pred;
-    matrix_d sax_pred;
-    vector_d pin_vals;
     int m;
     vector<int> absence;
-    int num_constrain_l;
-    int num_constrain_sa;
-    int num_constrain_sr;
     vector<int> Y_new;
 public:
     model_irt_standard(stan::io::var_context& context__,
@@ -206,66 +199,6 @@ public:
         for (size_t i_vec__ = 0; i_vec__ < particip_i_vec_lim__; ++i_vec__) {
             particip[i_vec__] = vals_r__[pos__++];
         }
-        validate_non_negative_index("legis_pred", "T", T);
-        validate_non_negative_index("legis_pred", "num_legis", num_legis);
-        validate_non_negative_index("legis_pred", "LX", LX);
-        context__.validate_dims("data initialization", "legis_pred", "matrix_d", context__.to_vec(T,num_legis,LX));
-        validate_non_negative_index("legis_pred", "T", T);
-        validate_non_negative_index("legis_pred", "num_legis", num_legis);
-        validate_non_negative_index("legis_pred", "LX", LX);
-        legis_pred = std::vector<matrix_d>(T,matrix_d(static_cast<Eigen::VectorXd::Index>(num_legis),static_cast<Eigen::VectorXd::Index>(LX)));
-        vals_r__ = context__.vals_r("legis_pred");
-        pos__ = 0;
-        size_t legis_pred_m_mat_lim__ = num_legis;
-        size_t legis_pred_n_mat_lim__ = LX;
-        for (size_t n_mat__ = 0; n_mat__ < legis_pred_n_mat_lim__; ++n_mat__) {
-            for (size_t m_mat__ = 0; m_mat__ < legis_pred_m_mat_lim__; ++m_mat__) {
-                size_t legis_pred_limit_0__ = T;
-                for (size_t i_0__ = 0; i_0__ < legis_pred_limit_0__; ++i_0__) {
-                    legis_pred[i_0__](m_mat__,n_mat__) = vals_r__[pos__++];
-            }
-            }
-        }
-        validate_non_negative_index("srx_pred", "num_bills", num_bills);
-        validate_non_negative_index("srx_pred", "SRX", SRX);
-        context__.validate_dims("data initialization", "srx_pred", "matrix_d", context__.to_vec(num_bills,SRX));
-        validate_non_negative_index("srx_pred", "num_bills", num_bills);
-        validate_non_negative_index("srx_pred", "SRX", SRX);
-        srx_pred = matrix_d(static_cast<Eigen::VectorXd::Index>(num_bills),static_cast<Eigen::VectorXd::Index>(SRX));
-        vals_r__ = context__.vals_r("srx_pred");
-        pos__ = 0;
-        size_t srx_pred_m_mat_lim__ = num_bills;
-        size_t srx_pred_n_mat_lim__ = SRX;
-        for (size_t n_mat__ = 0; n_mat__ < srx_pred_n_mat_lim__; ++n_mat__) {
-            for (size_t m_mat__ = 0; m_mat__ < srx_pred_m_mat_lim__; ++m_mat__) {
-                srx_pred(m_mat__,n_mat__) = vals_r__[pos__++];
-            }
-        }
-        validate_non_negative_index("sax_pred", "num_bills", num_bills);
-        validate_non_negative_index("sax_pred", "SAX", SAX);
-        context__.validate_dims("data initialization", "sax_pred", "matrix_d", context__.to_vec(num_bills,SAX));
-        validate_non_negative_index("sax_pred", "num_bills", num_bills);
-        validate_non_negative_index("sax_pred", "SAX", SAX);
-        sax_pred = matrix_d(static_cast<Eigen::VectorXd::Index>(num_bills),static_cast<Eigen::VectorXd::Index>(SAX));
-        vals_r__ = context__.vals_r("sax_pred");
-        pos__ = 0;
-        size_t sax_pred_m_mat_lim__ = num_bills;
-        size_t sax_pred_n_mat_lim__ = SAX;
-        for (size_t n_mat__ = 0; n_mat__ < sax_pred_n_mat_lim__; ++n_mat__) {
-            for (size_t m_mat__ = 0; m_mat__ < sax_pred_m_mat_lim__; ++m_mat__) {
-                sax_pred(m_mat__,n_mat__) = vals_r__[pos__++];
-            }
-        }
-        validate_non_negative_index("pin_vals", "num_fix_high", num_fix_high);
-        context__.validate_dims("data initialization", "pin_vals", "vector_d", context__.to_vec(num_fix_high));
-        validate_non_negative_index("pin_vals", "num_fix_high", num_fix_high);
-        pin_vals = vector_d(static_cast<Eigen::VectorXd::Index>(num_fix_high));
-        vals_r__ = context__.vals_r("pin_vals");
-        pos__ = 0;
-        size_t pin_vals_i_vec_lim__ = num_fix_high;
-        for (size_t i_vec__ = 0; i_vec__ < pin_vals_i_vec_lim__; ++i_vec__) {
-            pin_vals[i_vec__] = vals_r__[pos__++];
-        }
 
         // validate, data variables
         check_greater_or_equal(function__,"num_legis",num_legis,1);
@@ -276,12 +209,6 @@ public:
         validate_non_negative_index("absence", "N", N);
         absence = std::vector<int>(N,int(0));
         stan::math::fill(absence, std::numeric_limits<int>::min());
-        num_constrain_l = int(0);
-        stan::math::fill(num_constrain_l, std::numeric_limits<int>::min());
-        num_constrain_sa = int(0);
-        stan::math::fill(num_constrain_sa, std::numeric_limits<int>::min());
-        num_constrain_sr = int(0);
-        stan::math::fill(num_constrain_sr, std::numeric_limits<int>::min());
         validate_non_negative_index("Y_new", "N", N);
         Y_new = std::vector<int>(N,int(0));
         stan::math::fill(Y_new, std::numeric_limits<int>::min());
@@ -314,9 +241,6 @@ public:
                     }
                 }
             }
-            stan::math::assign(num_constrain_l, (num_fix_high + num_fix_low));
-            stan::math::assign(num_constrain_sr, 0);
-            stan::math::assign(num_constrain_sa, 0);
         } catch (const std::exception& e) {
             stan::lang::rethrow_located(e,current_statement_begin__);
             // Next line prevents compiler griping about no return
@@ -328,12 +252,12 @@ public:
         // validate, set parameter ranges
         num_params_r__ = 0U;
         param_ranges_i__.clear();
-        validate_non_negative_index("sigma_abs_free", "(num_bills - num_constrain_sa)", (num_bills - num_constrain_sa));
-        num_params_r__ += (num_bills - num_constrain_sa);
-        validate_non_negative_index("L_free", "(num_legis - num_constrain_l)", (num_legis - num_constrain_l));
-        num_params_r__ += (num_legis - num_constrain_l);
-        validate_non_negative_index("sigma_reg_free", "(num_bills - num_constrain_sr)", (num_bills - num_constrain_sr));
-        num_params_r__ += (num_bills - num_constrain_sr);
+        validate_non_negative_index("sigma_abs_free", "num_bills", num_bills);
+        num_params_r__ += num_bills;
+        validate_non_negative_index("L_free", "((num_legis - num_fix_high) - num_fix_low)", ((num_legis - num_fix_high) - num_fix_low));
+        num_params_r__ += ((num_legis - num_fix_high) - num_fix_low);
+        validate_non_negative_index("sigma_reg_free", "num_bills", num_bills);
+        num_params_r__ += num_bills;
         validate_non_negative_index("restrict_low", "num_fix_low", num_fix_low);
         num_params_r__ += num_fix_low;
         validate_non_negative_index("restrict_high", "num_fix_high", num_fix_high);
@@ -344,9 +268,6 @@ public:
         num_params_r__ += num_bills;
         validate_non_negative_index("steps_votes", "(m - 1)", (m - 1));
         num_params_r__ += (m - 1);
-        validate_non_negative_index("steps_votes_grm", "(m - 1)", (m - 1));
-        validate_non_negative_index("steps_votes_grm", "num_bills", num_bills);
-        num_params_r__ += (m - 1) * num_bills;
         ++num_params_r__;
     }
 
@@ -367,11 +288,11 @@ public:
             throw std::runtime_error("variable sigma_abs_free missing");
         vals_r__ = context__.vals_r("sigma_abs_free");
         pos__ = 0U;
-        validate_non_negative_index("sigma_abs_free", "(num_bills - num_constrain_sa)", (num_bills - num_constrain_sa));
-        context__.validate_dims("initialization", "sigma_abs_free", "vector_d", context__.to_vec((num_bills - num_constrain_sa)));
+        validate_non_negative_index("sigma_abs_free", "num_bills", num_bills);
+        context__.validate_dims("initialization", "sigma_abs_free", "vector_d", context__.to_vec(num_bills));
         // generate_declaration sigma_abs_free
-        vector_d sigma_abs_free(static_cast<Eigen::VectorXd::Index>((num_bills - num_constrain_sa)));
-        for (int j1__ = 0U; j1__ < (num_bills - num_constrain_sa); ++j1__)
+        vector_d sigma_abs_free(static_cast<Eigen::VectorXd::Index>(num_bills));
+        for (int j1__ = 0U; j1__ < num_bills; ++j1__)
             sigma_abs_free(j1__) = vals_r__[pos__++];
         try {
             writer__.vector_unconstrain(sigma_abs_free);
@@ -383,11 +304,11 @@ public:
             throw std::runtime_error("variable L_free missing");
         vals_r__ = context__.vals_r("L_free");
         pos__ = 0U;
-        validate_non_negative_index("L_free", "(num_legis - num_constrain_l)", (num_legis - num_constrain_l));
-        context__.validate_dims("initialization", "L_free", "vector_d", context__.to_vec((num_legis - num_constrain_l)));
+        validate_non_negative_index("L_free", "((num_legis - num_fix_high) - num_fix_low)", ((num_legis - num_fix_high) - num_fix_low));
+        context__.validate_dims("initialization", "L_free", "vector_d", context__.to_vec(((num_legis - num_fix_high) - num_fix_low)));
         // generate_declaration L_free
-        vector_d L_free(static_cast<Eigen::VectorXd::Index>((num_legis - num_constrain_l)));
-        for (int j1__ = 0U; j1__ < (num_legis - num_constrain_l); ++j1__)
+        vector_d L_free(static_cast<Eigen::VectorXd::Index>(((num_legis - num_fix_high) - num_fix_low)));
+        for (int j1__ = 0U; j1__ < ((num_legis - num_fix_high) - num_fix_low); ++j1__)
             L_free(j1__) = vals_r__[pos__++];
         try {
             writer__.vector_unconstrain(L_free);
@@ -399,11 +320,11 @@ public:
             throw std::runtime_error("variable sigma_reg_free missing");
         vals_r__ = context__.vals_r("sigma_reg_free");
         pos__ = 0U;
-        validate_non_negative_index("sigma_reg_free", "(num_bills - num_constrain_sr)", (num_bills - num_constrain_sr));
-        context__.validate_dims("initialization", "sigma_reg_free", "vector_d", context__.to_vec((num_bills - num_constrain_sr)));
+        validate_non_negative_index("sigma_reg_free", "num_bills", num_bills);
+        context__.validate_dims("initialization", "sigma_reg_free", "vector_d", context__.to_vec(num_bills));
         // generate_declaration sigma_reg_free
-        vector_d sigma_reg_free(static_cast<Eigen::VectorXd::Index>((num_bills - num_constrain_sr)));
-        for (int j1__ = 0U; j1__ < (num_bills - num_constrain_sr); ++j1__)
+        vector_d sigma_reg_free(static_cast<Eigen::VectorXd::Index>(num_bills));
+        for (int j1__ = 0U; j1__ < num_bills; ++j1__)
             sigma_reg_free(j1__) = vals_r__[pos__++];
         try {
             writer__.vector_unconstrain(sigma_reg_free);
@@ -491,25 +412,6 @@ public:
             throw std::runtime_error(std::string("Error transforming variable steps_votes: ") + e.what());
         }
 
-        if (!(context__.contains_r("steps_votes_grm")))
-            throw std::runtime_error("variable steps_votes_grm missing");
-        vals_r__ = context__.vals_r("steps_votes_grm");
-        pos__ = 0U;
-        validate_non_negative_index("steps_votes_grm", "num_bills", num_bills);
-        validate_non_negative_index("steps_votes_grm", "(m - 1)", (m - 1));
-        context__.validate_dims("initialization", "steps_votes_grm", "vector_d", context__.to_vec(num_bills,(m - 1)));
-        // generate_declaration steps_votes_grm
-        std::vector<vector_d> steps_votes_grm(num_bills,vector_d(static_cast<Eigen::VectorXd::Index>((m - 1))));
-        for (int j1__ = 0U; j1__ < (m - 1); ++j1__)
-            for (int i0__ = 0U; i0__ < num_bills; ++i0__)
-                steps_votes_grm[i0__](j1__) = vals_r__[pos__++];
-        for (int i0__ = 0U; i0__ < num_bills; ++i0__)
-            try {
-            writer__.ordered_unconstrain(steps_votes_grm[i0__]);
-        } catch (const std::exception& e) { 
-            throw std::runtime_error(std::string("Error transforming variable steps_votes_grm: ") + e.what());
-        }
-
         if (!(context__.contains_r("avg_particip")))
             throw std::runtime_error("variable avg_particip missing");
         vals_r__ = context__.vals_r("avg_particip");
@@ -557,23 +459,23 @@ public:
         Eigen::Matrix<T__,Eigen::Dynamic,1>  sigma_abs_free;
         (void) sigma_abs_free;  // dummy to suppress unused var warning
         if (jacobian__)
-            sigma_abs_free = in__.vector_constrain((num_bills - num_constrain_sa),lp__);
+            sigma_abs_free = in__.vector_constrain(num_bills,lp__);
         else
-            sigma_abs_free = in__.vector_constrain((num_bills - num_constrain_sa));
+            sigma_abs_free = in__.vector_constrain(num_bills);
 
         Eigen::Matrix<T__,Eigen::Dynamic,1>  L_free;
         (void) L_free;  // dummy to suppress unused var warning
         if (jacobian__)
-            L_free = in__.vector_constrain((num_legis - num_constrain_l),lp__);
+            L_free = in__.vector_constrain(((num_legis - num_fix_high) - num_fix_low),lp__);
         else
-            L_free = in__.vector_constrain((num_legis - num_constrain_l));
+            L_free = in__.vector_constrain(((num_legis - num_fix_high) - num_fix_low));
 
         Eigen::Matrix<T__,Eigen::Dynamic,1>  sigma_reg_free;
         (void) sigma_reg_free;  // dummy to suppress unused var warning
         if (jacobian__)
-            sigma_reg_free = in__.vector_constrain((num_bills - num_constrain_sr),lp__);
+            sigma_reg_free = in__.vector_constrain(num_bills,lp__);
         else
-            sigma_reg_free = in__.vector_constrain((num_bills - num_constrain_sr));
+            sigma_reg_free = in__.vector_constrain(num_bills);
 
         Eigen::Matrix<T__,Eigen::Dynamic,1>  restrict_low;
         (void) restrict_low;  // dummy to suppress unused var warning
@@ -609,16 +511,6 @@ public:
             steps_votes = in__.ordered_constrain((m - 1),lp__);
         else
             steps_votes = in__.ordered_constrain((m - 1));
-
-        vector<Eigen::Matrix<T__,Eigen::Dynamic,1> > steps_votes_grm;
-        size_t dim_steps_votes_grm_0__ = num_bills;
-        steps_votes_grm.reserve(dim_steps_votes_grm_0__);
-        for (size_t k_0__ = 0; k_0__ < dim_steps_votes_grm_0__; ++k_0__) {
-            if (jacobian__)
-                steps_votes_grm.push_back(in__.ordered_constrain((m - 1),lp__));
-            else
-                steps_votes_grm.push_back(in__.ordered_constrain((m - 1)));
-        }
 
         T__ avg_particip;
         (void) avg_particip;  // dummy to suppress unused var warning
@@ -704,8 +596,7 @@ public:
 
                 if (as_bool((primitive_value((primitive_value(logical_eq(hier_type,8)) && primitive_value(logical_eq(constraint_type,2)))) && primitive_value(logical_eq(constrain_par,1))))) {
 
-                    lp_accum__.add(normal_log<propto__>(restrict_high, 0, 5));
-                    lp_accum__.add(normal_log<propto__>(restrict_low, 0, 5));
+                    lp_accum__.add(normal_log<propto__>(restrict_high, 0, 1));
                     lp_accum__.add(normal_log<propto__>(L_free, 0, 1));
                     if (as_bool(logical_gt(T,1))) {
 
@@ -775,7 +666,6 @@ public:
         names__.push_back("B_yes");
         names__.push_back("B_abs");
         names__.push_back("steps_votes");
-        names__.push_back("steps_votes_grm");
         names__.push_back("avg_particip");
         names__.push_back("L_full");
         names__.push_back("sigma_abs_full");
@@ -787,13 +677,13 @@ public:
         dimss__.resize(0);
         std::vector<size_t> dims__;
         dims__.resize(0);
-        dims__.push_back((num_bills - num_constrain_sa));
+        dims__.push_back(num_bills);
         dimss__.push_back(dims__);
         dims__.resize(0);
-        dims__.push_back((num_legis - num_constrain_l));
+        dims__.push_back(((num_legis - num_fix_high) - num_fix_low));
         dimss__.push_back(dims__);
         dims__.resize(0);
-        dims__.push_back((num_bills - num_constrain_sr));
+        dims__.push_back(num_bills);
         dimss__.push_back(dims__);
         dims__.resize(0);
         dims__.push_back(num_fix_low);
@@ -808,10 +698,6 @@ public:
         dims__.push_back(num_bills);
         dimss__.push_back(dims__);
         dims__.resize(0);
-        dims__.push_back((m - 1));
-        dimss__.push_back(dims__);
-        dims__.resize(0);
-        dims__.push_back(num_bills);
         dims__.push_back((m - 1));
         dimss__.push_back(dims__);
         dims__.resize(0);
@@ -840,27 +726,22 @@ public:
         static const char* function__ = "model_irt_standard_namespace::write_array";
         (void) function__;  // dummy to suppress unused var warning
         // read-transform, write parameters
-        vector_d sigma_abs_free = in__.vector_constrain((num_bills - num_constrain_sa));
-        vector_d L_free = in__.vector_constrain((num_legis - num_constrain_l));
-        vector_d sigma_reg_free = in__.vector_constrain((num_bills - num_constrain_sr));
+        vector_d sigma_abs_free = in__.vector_constrain(num_bills);
+        vector_d L_free = in__.vector_constrain(((num_legis - num_fix_high) - num_fix_low));
+        vector_d sigma_reg_free = in__.vector_constrain(num_bills);
         vector_d restrict_low = in__.vector_ub_constrain(0,num_fix_low);
         vector_d restrict_high = in__.vector_lb_constrain(0,num_fix_high);
         vector_d B_yes = in__.vector_constrain(num_bills);
         vector_d B_abs = in__.vector_constrain(num_bills);
         vector_d steps_votes = in__.ordered_constrain((m - 1));
-        vector<vector_d> steps_votes_grm;
-        size_t dim_steps_votes_grm_0__ = num_bills;
-        for (size_t k_0__ = 0; k_0__ < dim_steps_votes_grm_0__; ++k_0__) {
-            steps_votes_grm.push_back(in__.ordered_constrain((m - 1)));
-        }
         double avg_particip = in__.scalar_constrain();
-        for (int k_0__ = 0; k_0__ < (num_bills - num_constrain_sa); ++k_0__) {
+        for (int k_0__ = 0; k_0__ < num_bills; ++k_0__) {
             vars__.push_back(sigma_abs_free[k_0__]);
         }
-        for (int k_0__ = 0; k_0__ < (num_legis - num_constrain_l); ++k_0__) {
+        for (int k_0__ = 0; k_0__ < ((num_legis - num_fix_high) - num_fix_low); ++k_0__) {
             vars__.push_back(L_free[k_0__]);
         }
-        for (int k_0__ = 0; k_0__ < (num_bills - num_constrain_sr); ++k_0__) {
+        for (int k_0__ = 0; k_0__ < num_bills; ++k_0__) {
             vars__.push_back(sigma_reg_free[k_0__]);
         }
         for (int k_0__ = 0; k_0__ < num_fix_low; ++k_0__) {
@@ -877,11 +758,6 @@ public:
         }
         for (int k_0__ = 0; k_0__ < (m - 1); ++k_0__) {
             vars__.push_back(steps_votes[k_0__]);
-        }
-        for (int k_1__ = 0; k_1__ < (m - 1); ++k_1__) {
-            for (int k_0__ = 0; k_0__ < num_bills; ++k_0__) {
-                vars__.push_back(steps_votes_grm[k_0__][k_1__]);
-            }
         }
         vars__.push_back(avg_particip);
 
@@ -980,17 +856,17 @@ public:
                                  bool include_tparams__ = true,
                                  bool include_gqs__ = true) const {
         std::stringstream param_name_stream__;
-        for (int k_0__ = 1; k_0__ <= (num_bills - num_constrain_sa); ++k_0__) {
+        for (int k_0__ = 1; k_0__ <= num_bills; ++k_0__) {
             param_name_stream__.str(std::string());
             param_name_stream__ << "sigma_abs_free" << '.' << k_0__;
             param_names__.push_back(param_name_stream__.str());
         }
-        for (int k_0__ = 1; k_0__ <= (num_legis - num_constrain_l); ++k_0__) {
+        for (int k_0__ = 1; k_0__ <= ((num_legis - num_fix_high) - num_fix_low); ++k_0__) {
             param_name_stream__.str(std::string());
             param_name_stream__ << "L_free" << '.' << k_0__;
             param_names__.push_back(param_name_stream__.str());
         }
-        for (int k_0__ = 1; k_0__ <= (num_bills - num_constrain_sr); ++k_0__) {
+        for (int k_0__ = 1; k_0__ <= num_bills; ++k_0__) {
             param_name_stream__.str(std::string());
             param_name_stream__ << "sigma_reg_free" << '.' << k_0__;
             param_names__.push_back(param_name_stream__.str());
@@ -1019,13 +895,6 @@ public:
             param_name_stream__.str(std::string());
             param_name_stream__ << "steps_votes" << '.' << k_0__;
             param_names__.push_back(param_name_stream__.str());
-        }
-        for (int k_1__ = 1; k_1__ <= (m - 1); ++k_1__) {
-            for (int k_0__ = 1; k_0__ <= num_bills; ++k_0__) {
-                param_name_stream__.str(std::string());
-                param_name_stream__ << "steps_votes_grm" << '.' << k_0__ << '.' << k_1__;
-                param_names__.push_back(param_name_stream__.str());
-            }
         }
         param_name_stream__.str(std::string());
         param_name_stream__ << "avg_particip";
@@ -1056,17 +925,17 @@ public:
                                    bool include_tparams__ = true,
                                    bool include_gqs__ = true) const {
         std::stringstream param_name_stream__;
-        for (int k_0__ = 1; k_0__ <= (num_bills - num_constrain_sa); ++k_0__) {
+        for (int k_0__ = 1; k_0__ <= num_bills; ++k_0__) {
             param_name_stream__.str(std::string());
             param_name_stream__ << "sigma_abs_free" << '.' << k_0__;
             param_names__.push_back(param_name_stream__.str());
         }
-        for (int k_0__ = 1; k_0__ <= (num_legis - num_constrain_l); ++k_0__) {
+        for (int k_0__ = 1; k_0__ <= ((num_legis - num_fix_high) - num_fix_low); ++k_0__) {
             param_name_stream__.str(std::string());
             param_name_stream__ << "L_free" << '.' << k_0__;
             param_names__.push_back(param_name_stream__.str());
         }
-        for (int k_0__ = 1; k_0__ <= (num_bills - num_constrain_sr); ++k_0__) {
+        for (int k_0__ = 1; k_0__ <= num_bills; ++k_0__) {
             param_name_stream__.str(std::string());
             param_name_stream__ << "sigma_reg_free" << '.' << k_0__;
             param_names__.push_back(param_name_stream__.str());
@@ -1095,13 +964,6 @@ public:
             param_name_stream__.str(std::string());
             param_name_stream__ << "steps_votes" << '.' << k_0__;
             param_names__.push_back(param_name_stream__.str());
-        }
-        for (int k_1__ = 1; k_1__ <= (m - 1); ++k_1__) {
-            for (int k_0__ = 1; k_0__ <= num_bills; ++k_0__) {
-                param_name_stream__.str(std::string());
-                param_name_stream__ << "steps_votes_grm" << '.' << k_0__ << '.' << k_1__;
-                param_names__.push_back(param_name_stream__.str());
-            }
         }
         param_name_stream__.str(std::string());
         param_name_stream__ << "avg_particip";

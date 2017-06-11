@@ -12,3 +12,4 @@ simulate_absence(num_legis = 10, num_bills = 100, absence_discrim_sd = 1,
 \description{
 A function designed to simulate absence-inflated data with either binary or ordinal outcomes
 }
+

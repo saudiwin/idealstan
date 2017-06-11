@@ -5,6 +5,7 @@
 require(idealstan)
 require(dplyr)
 require(bayesplot)
+require(rstan)
 
 model_types <- c('absence')
 
