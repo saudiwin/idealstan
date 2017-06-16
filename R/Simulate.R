@@ -179,9 +179,19 @@ test_idealstan <- function(legis_range=c(10,100),simul_type='absence',is.ordinal
 #' @param true_param A matrix (one column) of true parameter values
 #' @export
 calc_rmse <- function(est_param,true_param) {
-  all_rmse <- sapply(1:ncol(est_param), function(i) {
-    this_param <- sqrt((est_param[,i] - true_param[i,])^2)
-  })
+  
+  if(class(est_param)=='array') {
+    param_length <- dim(est_param)[3]
+    all_rmse <- sapply(1:param_length, function(i) {
+      this_param <- sqrt((est_param[,,i] - true_param[i,])^2)
+    })
+  } else if(class(est_param)=='matrix') {
+    param_length <- ncol(est_param)
+    all_rmse <- sapply(1:param_length, function(i) {
+      this_param <- sqrt((est_param[,i] - true_param[i,])^2)
+    })
+  }
+
   
   out_data1 <- data_frame(avg=apply(all_rmse,2,mean),
                          high=apply(all_rmse,2,quantile,probs=0.9),
@@ -189,7 +199,7 @@ calc_rmse <- function(est_param,true_param) {
                          total_avg=mean(all_rmse),
                          total_high=quantile(all_rmse,0.9),
                          total_low=quantile(all_rmse,0.1),
-                         Params=1:ncol(est_param))
+                         Params=1:param_length)
   
   # Do a scale flip and check
   
@@ -201,7 +211,7 @@ calc_rmse <- function(est_param,true_param) {
                           total_avg=mean(all_rmse),
                           total_high=quantile(all_rmse,0.9),
                           total_low=quantile(all_rmse,0.1),
-                          Params=1:ncol(est_param))
+                          Params=1:param_length)
   
   if(mean(out_data1$total_avg)<mean(out_data2$total_avg)) {
     return(out_data1)
@@ -216,14 +226,26 @@ calc_rmse <- function(est_param,true_param) {
 #' @param true_param A matrix (one column) of true parameter values
 #' @export
 calc_coverage <- function(est_param,true_param) {
-  all_covs <- sapply(1:ncol(est_param), function(i) {
-    high <- quantile(est_param[,i],.9)
-    low <- quantile(est_param[,i],.1)
-    this_param <- (true_param[i,] < high) && (true_param[i,] > low)
-  })
+  
+  if(class(est_param)=='array') {
+    param_length <- dim(est_param)[3]
+    all_covs <- sapply(1:param_length, function(i) {
+      high <- quantile(est_param[,,i],.9)
+      low <- quantile(est_param[,,i],.1)
+      this_param <- (true_param[i,] < high) && (true_param[i,] > low)
+    })
+  } else if(class(est_param)=='matrix') {
+    param_length <- ncol(est_param)
+    all_covs <- sapply(1:param_length, function(i) {
+      high <- quantile(est_param[,i],.9)
+      low <- quantile(est_param[,i],.1)
+      this_param <- (true_param[i,] < high) && (true_param[i,] > low)
+    })
+  }
+
   
   out_data <- data_frame(avg=all_covs,
-                         Params=1:ncol(est_param))
+                         Params=1:param_length)
   
   return(out_data)
 }

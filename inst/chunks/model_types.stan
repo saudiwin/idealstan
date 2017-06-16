@@ -19,7 +19,7 @@ if(model_type==1) {
   	      1 ~ bernoulli_logit(pi2[n]);
         } else {
           0 ~ bernoulli_logit(pi2[n]);
-          Y[n] ~ bernoulli_logit(pi1[n]);
+          Y_new[n] ~ bernoulli_logit(pi1[n]);
           }
         }
 

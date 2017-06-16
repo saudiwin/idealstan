@@ -7,7 +7,7 @@
 estimate_ideal(idealdata = NULL, model_type = 2, use_subset = FALSE,
   sample_it = FALSE, subset_party = NULL, subset_legis = NULL,
   sample_size = 20, nchains = 4, niters = 2000, use_vb = FALSE,
-  nfix = c(1, 1), restrict_params = "bill", pin_vals = NULL,
+  nfix = 1, restrict_params = "bill", pin_vals = NULL,
   restrict_rows = NULL, restrict_type = "constrain_oneway",
   fixtype = "vb", warmup = floor(niters/2), ncores = NULL,
   auto_id = FALSE, ...)

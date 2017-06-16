@@ -262,7 +262,7 @@ all_hist_plot <- function(object,params=NULL,param_labels=NULL,hist_type='all',
                    absence_diff='B_abs',
                    absence_discrim='sigma_abs_full',
                    regular_diff='B_yes',
-                   regular_discrim='sigma_full',
+                   regular_discrim='sigma_reg_full',
                    legis='L_full')
   
   estimates <- rstan::extract(object@stan_samples,pars=stan_params)[[1]] 
@@ -315,14 +315,15 @@ plot_sims <- function(sims,type='RMSE') {
   stat_func <- switch(type,
                       RMSE=calc_rmse,
                       coverage=calc_coverage)
-  if(grepl('absence',sims@model_type)) {
+  if(sims@model_type %in% c(2,4,6)) {
   all_pos <- rstan::extract(sims@stan_samples)
-  est_params <- list(legis=all_pos$L_full,reg_discrim=all_pos$sigma_full,
+  est_params <- list(legis=all_pos$L_full,reg_discrim=all_pos$sigma_reg_full,
                      abs_discrim=all_pos$sigma_abs_full)
   true_params <- list(true_legis=sims@vote_data@simul_data$true_legis,
                       true_reg_discrim=sims@vote_data@simul_data$true_reg_discrim,
                       true_abs_discrim=sims@vote_data@simul_data$true_abs_discrim)
   over_params <- lapply(1:length(est_params), function(i) {
+
               output <- stat_func(est_params[[i]],true_params[[i]])
               }) %>% bind_rows() %>% 
     mutate(param_id=paste0(c(rep('Legislator',sims@vote_data@simul_data$num_legis),
