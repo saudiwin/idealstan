@@ -387,12 +387,12 @@ public:
         num_params_r__ += (num_legis - num_constrain_l) * T;
         validate_non_negative_index("sigma_reg_free", "(num_bills - num_constrain_sr)", (num_bills - num_constrain_sr));
         num_params_r__ += (num_bills - num_constrain_sr);
-        validate_non_negative_index("restrict_low", "num_fix_high", num_fix_high);
+        validate_non_negative_index("restrict_low", "num_fix_low", num_fix_low);
         validate_non_negative_index("restrict_low", "T", T);
-        num_params_r__ += num_fix_high * T;
-        validate_non_negative_index("restrict_high", "num_fix_low", num_fix_low);
-        validate_non_negative_index("restrict_high", "T", T);
         num_params_r__ += num_fix_low * T;
+        validate_non_negative_index("restrict_high", "num_fix_high", num_fix_high);
+        validate_non_negative_index("restrict_high", "T", T);
+        num_params_r__ += num_fix_high * T;
         validate_non_negative_index("legis_x", "LX", LX);
         num_params_r__ += LX;
         validate_non_negative_index("sigma_reg_x", "SRX", SRX);
@@ -486,11 +486,11 @@ public:
         vals_r__ = context__.vals_r("restrict_low");
         pos__ = 0U;
         validate_non_negative_index("restrict_low", "T", T);
-        validate_non_negative_index("restrict_low", "num_fix_high", num_fix_high);
-        context__.validate_dims("initialization", "restrict_low", "vector_d", context__.to_vec(T,num_fix_high));
+        validate_non_negative_index("restrict_low", "num_fix_low", num_fix_low);
+        context__.validate_dims("initialization", "restrict_low", "vector_d", context__.to_vec(T,num_fix_low));
         // generate_declaration restrict_low
-        std::vector<vector_d> restrict_low(T,vector_d(static_cast<Eigen::VectorXd::Index>(num_fix_high)));
-        for (int j1__ = 0U; j1__ < num_fix_high; ++j1__)
+        std::vector<vector_d> restrict_low(T,vector_d(static_cast<Eigen::VectorXd::Index>(num_fix_low)));
+        for (int j1__ = 0U; j1__ < num_fix_low; ++j1__)
             for (int i0__ = 0U; i0__ < T; ++i0__)
                 restrict_low[i0__](j1__) = vals_r__[pos__++];
         for (int i0__ = 0U; i0__ < T; ++i0__)
@@ -505,11 +505,11 @@ public:
         vals_r__ = context__.vals_r("restrict_high");
         pos__ = 0U;
         validate_non_negative_index("restrict_high", "T", T);
-        validate_non_negative_index("restrict_high", "num_fix_low", num_fix_low);
-        context__.validate_dims("initialization", "restrict_high", "vector_d", context__.to_vec(T,num_fix_low));
+        validate_non_negative_index("restrict_high", "num_fix_high", num_fix_high);
+        context__.validate_dims("initialization", "restrict_high", "vector_d", context__.to_vec(T,num_fix_high));
         // generate_declaration restrict_high
-        std::vector<vector_d> restrict_high(T,vector_d(static_cast<Eigen::VectorXd::Index>(num_fix_low)));
-        for (int j1__ = 0U; j1__ < num_fix_low; ++j1__)
+        std::vector<vector_d> restrict_high(T,vector_d(static_cast<Eigen::VectorXd::Index>(num_fix_high)));
+        for (int j1__ = 0U; j1__ < num_fix_high; ++j1__)
             for (int i0__ = 0U; i0__ < T; ++i0__)
                 restrict_high[i0__](j1__) = vals_r__[pos__++];
         for (int i0__ = 0U; i0__ < T; ++i0__)
@@ -755,9 +755,9 @@ public:
         restrict_low.reserve(dim_restrict_low_0__);
         for (size_t k_0__ = 0; k_0__ < dim_restrict_low_0__; ++k_0__) {
             if (jacobian__)
-                restrict_low.push_back(in__.vector_ub_constrain(0,num_fix_high,lp__));
+                restrict_low.push_back(in__.vector_ub_constrain(0,num_fix_low,lp__));
             else
-                restrict_low.push_back(in__.vector_ub_constrain(0,num_fix_high));
+                restrict_low.push_back(in__.vector_ub_constrain(0,num_fix_low));
         }
 
         vector<Eigen::Matrix<T__,Eigen::Dynamic,1> > restrict_high;
@@ -765,9 +765,9 @@ public:
         restrict_high.reserve(dim_restrict_high_0__);
         for (size_t k_0__ = 0; k_0__ < dim_restrict_high_0__; ++k_0__) {
             if (jacobian__)
-                restrict_high.push_back(in__.vector_lb_constrain(0,num_fix_low,lp__));
+                restrict_high.push_back(in__.vector_lb_constrain(0,num_fix_high,lp__));
             else
-                restrict_high.push_back(in__.vector_lb_constrain(0,num_fix_low));
+                restrict_high.push_back(in__.vector_lb_constrain(0,num_fix_high));
         }
 
         Eigen::Matrix<T__,Eigen::Dynamic,1>  legis_x;
@@ -2099,11 +2099,11 @@ public:
         dimss__.push_back(dims__);
         dims__.resize(0);
         dims__.push_back(T);
-        dims__.push_back(num_fix_high);
+        dims__.push_back(num_fix_low);
         dimss__.push_back(dims__);
         dims__.resize(0);
         dims__.push_back(T);
-        dims__.push_back(num_fix_low);
+        dims__.push_back(num_fix_high);
         dimss__.push_back(dims__);
         dims__.resize(0);
         dims__.push_back(LX);
@@ -2173,12 +2173,12 @@ public:
         vector<vector_d> restrict_low;
         size_t dim_restrict_low_0__ = T;
         for (size_t k_0__ = 0; k_0__ < dim_restrict_low_0__; ++k_0__) {
-            restrict_low.push_back(in__.vector_ub_constrain(0,num_fix_high));
+            restrict_low.push_back(in__.vector_ub_constrain(0,num_fix_low));
         }
         vector<vector_d> restrict_high;
         size_t dim_restrict_high_0__ = T;
         for (size_t k_0__ = 0; k_0__ < dim_restrict_high_0__; ++k_0__) {
-            restrict_high.push_back(in__.vector_lb_constrain(0,num_fix_low));
+            restrict_high.push_back(in__.vector_lb_constrain(0,num_fix_high));
         }
         vector_d legis_x = in__.vector_constrain(LX);
         vector_d sigma_reg_x = in__.vector_constrain(SRX);
@@ -2206,12 +2206,12 @@ public:
         for (int k_0__ = 0; k_0__ < (num_bills - num_constrain_sr); ++k_0__) {
             vars__.push_back(sigma_reg_free[k_0__]);
         }
-        for (int k_1__ = 0; k_1__ < num_fix_high; ++k_1__) {
+        for (int k_1__ = 0; k_1__ < num_fix_low; ++k_1__) {
             for (int k_0__ = 0; k_0__ < T; ++k_0__) {
                 vars__.push_back(restrict_low[k_0__][k_1__]);
             }
         }
-        for (int k_1__ = 0; k_1__ < num_fix_low; ++k_1__) {
+        for (int k_1__ = 0; k_1__ < num_fix_high; ++k_1__) {
             for (int k_0__ = 0; k_0__ < T; ++k_0__) {
                 vars__.push_back(restrict_high[k_0__][k_1__]);
             }
@@ -2412,14 +2412,14 @@ public:
             param_name_stream__ << "sigma_reg_free" << '.' << k_0__;
             param_names__.push_back(param_name_stream__.str());
         }
-        for (int k_1__ = 1; k_1__ <= num_fix_high; ++k_1__) {
+        for (int k_1__ = 1; k_1__ <= num_fix_low; ++k_1__) {
             for (int k_0__ = 1; k_0__ <= T; ++k_0__) {
                 param_name_stream__.str(std::string());
                 param_name_stream__ << "restrict_low" << '.' << k_0__ << '.' << k_1__;
                 param_names__.push_back(param_name_stream__.str());
             }
         }
-        for (int k_1__ = 1; k_1__ <= num_fix_low; ++k_1__) {
+        for (int k_1__ = 1; k_1__ <= num_fix_high; ++k_1__) {
             for (int k_0__ = 1; k_0__ <= T; ++k_0__) {
                 param_name_stream__.str(std::string());
                 param_name_stream__ << "restrict_high" << '.' << k_0__ << '.' << k_1__;
@@ -2526,14 +2526,14 @@ public:
             param_name_stream__ << "sigma_reg_free" << '.' << k_0__;
             param_names__.push_back(param_name_stream__.str());
         }
-        for (int k_1__ = 1; k_1__ <= num_fix_high; ++k_1__) {
+        for (int k_1__ = 1; k_1__ <= num_fix_low; ++k_1__) {
             for (int k_0__ = 1; k_0__ <= T; ++k_0__) {
                 param_name_stream__.str(std::string());
                 param_name_stream__ << "restrict_low" << '.' << k_0__ << '.' << k_1__;
                 param_names__.push_back(param_name_stream__.str());
             }
         }
-        for (int k_1__ = 1; k_1__ <= num_fix_low; ++k_1__) {
+        for (int k_1__ = 1; k_1__ <= num_fix_high; ++k_1__) {
             for (int k_0__ = 1; k_0__ <= T; ++k_0__) {
                 param_name_stream__.str(std::string());
                 param_name_stream__ << "restrict_high" << '.' << k_0__ << '.' << k_1__;
