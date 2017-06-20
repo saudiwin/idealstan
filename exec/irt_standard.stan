@@ -80,8 +80,8 @@ parameters {
   vector[num_bills-num_constrain_sa] sigma_abs_free;
   vector[num_legis-num_constrain_l] L_free[T];
   vector[num_bills-num_constrain_sr] sigma_reg_free;
-  vector<upper=0>[num_fix_high] restrict_low[T];
-  vector<lower=0>[num_fix_low] restrict_high[T];
+  vector<upper=0>[num_fix_low] restrict_low[T];
+  vector<lower=0>[num_fix_high] restrict_high[T];
   vector[LX] legis_x;
   vector[SRX] sigma_reg_x;
   vector[SAX] sigma_abs_x;

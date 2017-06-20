@@ -24,7 +24,7 @@ test_out <- estimate_ideal(idealdata = one_model,
                            restrict_params='legis',
                            restrict_ind_high=c(high_leg,low_leg),
                            pin_vals = c(high_leg_pin,low_leg_pin),
-                           fixtype='constrained')
+                           fixtype='pinned')
 restrict_params <- test_out@vote_data@restrict_count
 
 all_params <- extract_samples(test_out)
