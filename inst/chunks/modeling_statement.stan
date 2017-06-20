@@ -198,12 +198,12 @@
       //now we pin
       if(hier_type==1||hier_type==4||hier_type==5||hier_type==7) {
           //when restricting both, need to be very careful with how high and low restrictions are indexed
-            pinned_pars[1] ~ normal(pin_vals,.1);
+            pinned_pars[1] ~ normal(pin_vals,.01);
             L_free[1] ~ normal(legis_pred[1,1:(num_legis-num_constrain_l),]*legis_x,1);
             //add basic integrated time-series prior
             if(T>1) {
               for(t in 2:T) {
-                pinned_pars[t] ~ normal(pin_vals,.1);
+                pinned_pars[t] ~ normal(pin_vals,.01);
                 L_free[t] ~ normal(L_free[t-1] + legis_pred[t,1:(num_legis-num_constrain_l),]*legis_x,1);
               }
             }
@@ -225,13 +225,13 @@
             }
       } else {
         //legis the same for all other hier_type combinations
-          pinned_pars[1] ~ normal(pin_vals,.1);
+          pinned_pars[1] ~ normal(pin_vals,.01);
 
           L_free[1] ~ normal(0,1);
           //add basic integrated time-series prior
           if(T>1) {
             for(t in 2:T) {
-              pinned_pars[t] ~ normal(pin_vals,.1);
+              pinned_pars[t] ~ normal(pin_vals,.01);
               L_free[t] ~ normal(L_free[t-1],1);
             }
           } 
@@ -512,7 +512,7 @@
         if(hier_type==3||hier_type==5||hier_type==6||hier_type==7) {
         //all combinations where hier_type parameters in absences
         sigma_abs_free ~ normal(sax_pred[num_bills-num_constrain_sa,]*sigma_abs_x,5);
-        pinned_pars[1] ~ normal(pin_vals,.1);
+        pinned_pars[1] ~ normal(pin_vals,.01);
         if(hier_type==3) {
           sigma_reg_free ~ normal(0,5);
           L_free[1] ~ normal(0,1);
@@ -550,7 +550,7 @@
         }
       } else {
         //all other hier_type combinations where absences d/n have hier_typearchical priors
-        pinned_pars[1] ~ normal(pin_vals,.1);
+        pinned_pars[1] ~ normal(pin_vals,.01);
         sigma_abs_free ~ normal(0,5);
         //run through remaining hier_type combinations--not 3,5,6 or 7 but rather 1,2,4,8
         if(hier_type==1) {
@@ -767,7 +767,7 @@
         if(hier_type==3||hier_type==5||hier_type==6||hier_type==7) {
         //all combinations where hier_type parameters in absences
         sigma_reg_free ~ normal(srx_pred[num_bills-num_constrain_sr,]*sigma_reg_x,5);
-        pinned_pars[1] ~ normal(pin_vals,.1);
+        pinned_pars[1] ~ normal(pin_vals,.01);
         if(hier_type==2) {
           sigma_abs_free ~ normal(0,5);
           L_free[1] ~ normal(0,1);
@@ -805,7 +805,7 @@
         }
       } else {
         //all other hier_type combinations where absences d/n have hier_typearchical priors
-        pinned_pars[1] ~ normal(pin_vals,.1);
+        pinned_pars[1] ~ normal(pin_vals,.01);
         sigma_reg_free ~ normal(0,5);
         //run through remaining hier_type combinations--not 2,4,6 or 7 but rather 1,3,5,8
         if(hier_type==1) {
@@ -850,13 +850,22 @@
   }
   
   if(constraint_type!=4) {
-    pinned_pars[1] ~ normal(0,1);
+    for(t in 1:T) {
+      pinned_pars[t] ~ normal(0,1);
+    }
+    
     
   }
   if(constraint_type!=1 || constraint_type!=3) {
-    restrict_low ~ normal(0,1);
+    for(t in 1:T) {
+      restrict_low[t] ~ normal(0,1);
+    }
+    
   }
   if(constraint_type==4 || constraint_type==2) {
-    restrict_high ~ normal(0,1);
+    for(t in 1:T) {
+      restrict_high[t] ~ normal(0,1);
+    }
+    
   }
 
