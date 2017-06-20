@@ -55,7 +55,7 @@ make_idealdata <- function(vote_data=NULL,simul_data=NULL,
   } else {
     time <- rep(1,ncol(cleaned))
   }
-  
+  colnames(cleaned) <- as.character(1:ncol(cleaned))
   #before doing this, need to ensure that 1) all legislators in legis_data have votes and 
   #2) the rows were correctly ordered to match vote_data <-> legis_data
   if(!is.null(legis_cov)) {
@@ -113,7 +113,9 @@ make_idealdata <- function(vote_data=NULL,simul_data=NULL,
 estimate_ideal <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=FALSE,
                            subset_party=NULL,subset_legis=NULL,sample_size=20,
                            nchains=4,niters=2000,use_vb=FALSE,nfix=1,restrict_params='bill',
-                           pin_vals=NULL,restrict_rows=NULL,restrict_type='constrain_oneway',
+                           pin_vals=NULL,restrict_ind_high=NULL,
+                           restrict_ind_low=NULL,
+                           restrict_type='constrain_oneway',
                            fixtype='vb',warmup=floor(niters/2),ncores=NULL,
                            auto_id=FALSE,...) {
   
@@ -123,7 +125,7 @@ estimate_ideal <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_i
                               subset_legis=subset_legis,sample_size=sample_size)
   }
   
-  
+
     hier_type <- suppressWarnings(.get_hier_type(idealdata))
     idealdata@stanmodel <- stanmodels[['irt_standard']]
    
@@ -174,8 +176,9 @@ estimate_ideal <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_i
                     model_type=model_type)
   
   idealdata <- id_model(object=idealdata,fixtype=fixtype,model_type=model_type,this_data=this_data,
-                        nfix=nfix,restrict_params=restrict_params,restrict_rows=restrict_rows,
-                        restrict_type=restrict_type,pin_vals=pin_vals,
+                        nfix=nfix,restrict_params=restrict_params,restrict_ind_high=restrict_ind_high,
+                        restrict_ind_low=restrict_ind_low,
+                        restrict_type=restrict_type,
                         auto_id=auto_id)
 
   # Now remake the data to reflect the constrained parameters
@@ -204,7 +207,13 @@ estimate_ideal <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_i
   legispoints <- legispoints[remove_nas]
   billpoints <- billpoints[remove_nas]
   timepoints <- timepoints[remove_nas]
-  
+
+  pin_vals <- if(any(is.null(pin_vals))) {
+    rep(1,idealdata@restrict_num_high)
+  } else {
+    pin_vals
+  }
+  dim(pin_vals) <- idealdata@restrict_num_high
   this_data <- list(N=length(Y),
                     T=max(idealdata@time),
                     Y=Y,
@@ -226,7 +235,7 @@ estimate_ideal <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_i
                     time=timepoints,
                     particip=avg_particip,
                     model_type=model_type,
-                    pin_vals=idealdata@restrict_vals)
+                    pin_vals=pin_vals)
   
   outobj <- sample_model(object=idealdata,nchains=nchains,niters=niters,warmup=warmup,ncores=ncores,
                          this_data=this_data,use_vb=use_vb,...)

@@ -132,24 +132,19 @@ setGeneric('id_model',
 #' @export
 setMethod('id_model',signature(object='idealdata'),
           function(object,fixtype='vb',model_type=NULL,this_data=NULL,nfix=10,
-                   restrict_params=NULL,restrict_type=NULL,restrict_rows=NULL,auto_id=FALSE,
-                   pin_vals=NULL) {
+                   restrict_params=NULL,restrict_type=NULL,restrict_ind_high=NULL,
+                   restrict_ind_low=NULL,
+                   auto_id=FALSE) {
 
             x <- object@vote_matrix
             
             run_id <- switch(fixtype,vb=.vb_fix,pinned=.pinned_fix,constrained=.constrain_fix)
-            
-            to_use <- stanmodels[['irt_standard_noid']]
-            post_modes <- rstan::vb(object=to_use,data =this_data,
-                                    algorithm='meanfield')
-            
-            lookat_params <- rstan::extract(post_modes,permuted=FALSE)
-            lookat_params <- lookat_params[,1,]
 
-            object <- run_id(object=object,this_data=this_data,this_params=lookat_params,nfix=nfix,
+            object <- run_id(object=object,this_data=this_data,nfix=nfix,
                    restrict_params=restrict_params,restrict_type=restrict_type,
-                   restrict_rows=restrict_rows,auto_id=auto_id,
-                   pin_vals=pin_vals)
+                   restrict_ind_high=restrict_ind_high,
+                   restrict_ind_low=restrict_ind_low,
+                   auto_id=auto_id)
             
             
             return(object)

@@ -7,13 +7,13 @@
   if(constrain_par==1) {
     if(constraint_type==1) {
       if(hier_type==1||hier_type==4||hier_type==5||hier_type==7) {
-            restrict_low[1] ~ normal(legis_pred[1,(num_legis-num_constrain_l+1):num_legis,]*legis_x_cons,1);
+            restrict_low[1] ~ normal(legis_pred[1,(num_legis-num_constrain_l+1):num_legis,]*legis_x_cons,5);
             L_free[1] ~ normal(legis_pred[1,1:(num_legis-num_constrain_l),]*legis_x,1);
             //add basic integrated time-series prior
             if(T>1) {
               for(t in 2:T) {
                 restrict_low[t] ~ normal(restrict_low[t-1] +
-                legis_pred[t,(num_legis-num_constrain_l+1):num_legis,]*legis_x_cons,1);
+                legis_pred[t,(num_legis-num_constrain_l+1):num_legis,]*legis_x_cons,5);
                 
                 L_free[t] ~ normal(L_free[t-1] + legis_pred[t,1:(num_legis-num_constrain_l),]*legis_x,1);
               }
@@ -36,12 +36,12 @@
             }
       } else {
         //legis the same for all other hier_type combinations
-          restrict_low[1] ~ normal(0,1);
+          restrict_low[1] ~ normal(0,5);
           L_free[1] ~ normal(0,1);
           //add basic integrated time-series prior
           if(T>1) {
             for(t in 2:T) {
-              restrict_low[t] ~ normal(restrict_low[t-1],1);
+              restrict_low[t] ~ normal(restrict_low[t-1],5);
               L_free[t] ~ normal(L_free[t-1],1);
             }
           } 
@@ -69,13 +69,13 @@
       //just copy and paste for all other constraint types, change the type of constraint in the legis block
       if(hier_type==1||hier_type==4||hier_type==5||hier_type==7) {
 
-            restrict_high[1] ~ normal(legis_pred[1,(num_legis-num_constrain_l+1):num_legis,]*legis_x_cons,1);
+            restrict_high[1] ~ normal(legis_pred[1,(num_legis-num_constrain_l+1):num_legis,]*legis_x_cons,5);
             L_free[1] ~ normal(legis_pred[1,1:(num_legis-2*num_constrain_l),]*legis_x,1);
             //add basic integrated time-series prior
             if(T>1) {
               for(t in 2:T) {
                 restrict_high[t] ~ normal(restrict_high[t-1] +
-                legis_pred[t,(num_legis-num_constrain_l+1):num_legis,]*legis_x_cons,1);
+                legis_pred[t,(num_legis-num_constrain_l+1):num_legis,]*legis_x_cons,5);
                 
                 L_free[t] ~ normal(L_free[t-1] + legis_pred[t,1:(num_legis-num_constrain_l),]*legis_x,1);
               }
@@ -98,12 +98,12 @@
         }
       } else {
         //legis the same for all other hier_type combinations
-          restrict_high[1] ~ normal(0,1);
+          restrict_high[1] ~ normal(0,5);
           L_free[1] ~ normal(0,1);
           //add basic integrated time-series prior
           if(T>1) {
             for(t in 2:T) {
-              restrict_high[t] ~ normal(restrict_high[t-1],1);
+              restrict_high[t] ~ normal(restrict_high[t-1],5);
               L_free[t] ~ normal(L_free[t-1],1);
             }
           } 
@@ -130,18 +130,18 @@
       //just copy and paste for all other constraint types, change the type of constraint in the legis block
       if(hier_type==1||hier_type==4||hier_type==5||hier_type==7) {
           //when restricting both, need to be very careful with how high and low restrictions are indexed
-            restrict_high[1] ~ normal(legis_pred[1,(num_legis-(2*num_constrain_l)+1):(num_legis-num_constrain_l),]*legis_x_cons,1);
-            restrict_low[1] ~ normal(legis_pred[1,(num_legis-num_constrain_l+1):num_legis,]*legis_x_cons,1);
-            L_free[1] ~ normal(legis_pred[1,1:(num_legis-num_constrain_l),]*legis_x,1);
+            restrict_high[1] ~ normal(legis_pred[1,(num_legis-(2*num_constrain_l)+1):(num_legis-num_constrain_l),]*legis_x_cons,5);
+            restrict_low[1] ~ normal(legis_pred[1,(num_legis-num_constrain_l+1):num_legis,]*legis_x_cons,5);
+            L_free[1] ~ normal(legis_pred[1,1:(num_legis-num_constrain_l),]*legis_x,5);
             //add basic integrated time-series prior
             if(T>1) {
               for(t in 2:T) {
                 restrict_high[t] ~ normal(restrict_high[t-1] +
-                legis_pred[t,(num_legis-(2*num_constrain_l)+1):(num_legis-num_constrain_l),]*legis_x_cons,1);
+                legis_pred[t,(num_legis-(2*num_constrain_l)+1):(num_legis-num_constrain_l),]*legis_x_cons,5);
                 
                 restrict_low[t] ~ normal(restrict_high[t-1] +
                 legis_pred[t,
-                (num_legis-num_constrain_l+1):num_legis,]*legis_x_cons,1);
+                (num_legis-num_constrain_l+1):num_legis,]*legis_x_cons,5);
                 
                 L_free[t] ~ normal(L_free[t-1] + legis_pred[t,1:(num_legis-num_constrain_l),]*legis_x,1);
               }
@@ -164,14 +164,14 @@
             }
       } else {
         //legis the same for all other hier_type combinations
-          restrict_high[1] ~ normal(0,1);
-          restrict_low[1] ~ normal(0,1);
+          restrict_high[1] ~ normal(0,5);
+          restrict_low[1] ~ normal(0,5);
           L_free[1] ~ normal(0,1);
           //add basic integrated time-series prior
           if(T>1) {
             for(t in 2:T) {
-              restrict_high[t] ~ normal(restrict_high[t-1],1);
-              L_free[t] ~ normal(L_free[t-1],1);
+              restrict_high[t] ~ normal(restrict_high[t-1],5);
+              L_free[t] ~ normal(L_free[t-1],5);
             }
           } 
           
@@ -231,7 +231,7 @@
           //add basic integrated time-series prior
           if(T>1) {
             for(t in 2:T) {
-              restrict_high[t] ~ normal(pin_vals,1);
+              restrict_high[t] ~ normal(pin_vals,.1);
               L_free[t] ~ normal(L_free[t-1],1);
             }
           } 
@@ -427,8 +427,8 @@
         if(hier_type==3||hier_type==5||hier_type==6||hier_type==7) {
         //all combinations where hier_type parameters in absences
         sigma_abs_free ~ normal(sax_pred[num_bills-num_constrain_sa,]*sigma_abs_x,5);
-        restrict_high[1] ~ normal(sax_pred[(num_bills-(2*num_constrain_sa)+1):(num_bills-num_constrain_sa),]*sigma_abs_x_cons,1);
-        restrict_low[1] ~ normal(sax_pred[(num_bills-num_constrain_sa+1):num_bills,]*sigma_abs_x_cons,1);
+        restrict_high[1] ~ normal(sax_pred[(num_bills-(2*num_constrain_sa)+1):(num_bills-num_constrain_sa),]*sigma_abs_x_cons,5);
+        restrict_low[1] ~ normal(sax_pred[(num_bills-num_constrain_sa+1):num_bills,]*sigma_abs_x_cons,5);
         if(hier_type==3) {
           sigma_reg_free ~ normal(0,5);
           L_free[1] ~ normal(0,1);
@@ -682,8 +682,8 @@
         if(hier_type==3||hier_type==5||hier_type==6||hier_type==7) {
         //all combinations where hier_type parameters in absences
         sigma_reg_free ~ normal(srx_pred[num_bills-num_constrain_sr,]*sigma_reg_x,5);
-        restrict_high[1] ~ normal(srx_pred[(num_bills-(2*num_constrain_sr)+1):(num_bills-num_constrain_sr),]*sigma_reg_x_cons,1);
-        restrict_low[1] ~ normal(srx_pred[(num_bills-num_constrain_sr+1):num_bills,]*sigma_reg_x_cons,1);
+        restrict_high[1] ~ normal(srx_pred[(num_bills-(2*num_constrain_sr)+1):(num_bills-num_constrain_sr),]*sigma_reg_x_cons,5);
+        restrict_low[1] ~ normal(srx_pred[(num_bills-num_constrain_sr+1):num_bills,]*sigma_reg_x_cons,5);
         if(hier_type==2) {
           sigma_abs_free ~ normal(0,5);
           L_free[1] ~ normal(0,1);

@@ -1,6 +1,13 @@
 #' Function that does automatic identification of models using VB
-.vb_fix <- function(object=NULL,this_params=NULL,
+.vb_fix <- function(object=NULL,
                     this_data=NULL,nfix=NULL,auto_id=FALSE,...) {
+  
+  to_use <- stanmodels[['irt_standard_noid']]
+  post_modes <- rstan::vb(object=to_use,data =this_data,
+                          algorithm='meanfield')
+  
+  lookat_params <- rstan::extract(post_modes,permuted=FALSE)
+  this_params <- lookat_params[,1,]
 
    all_args <- list(...) 
    all_params <- attributes(this_params)$dimnames$parameters
@@ -73,7 +80,7 @@
    if(all_args$restrict_params=='bill') {
      this_data$num_fix_high <- nfix
      if(is.null(to_constrain_low)) {
-       this_data$num_fix_low <- 0
+       this_data$num_fix_low <- 1
        this_data$constraint_type <- 2
      } else {
        this_data$num_fix_low <- nfix
@@ -82,7 +89,7 @@
    } else if(all_args$restrict_params=='legis') {
      this_data$num_fix_high <- nfix
      if(is.null(to_constrain_low)) {
-       this_data$num_fix_low <- 0
+       this_data$num_fix_low <- 1
        this_data$constraint_type <- 2
      } else {
        this_data$num_fix_low <- nfix
@@ -127,26 +134,88 @@
    
    object@restrict_num_high <- nfix
    if(is.null(to_constrain_low)) {
-     object@restrict_num_low <- 0L
+     object@restrict_num_low <- 1
    } else {
      object@restrict_num_low <- nfix
    }
    object@constraint_type <- this_data$constraint_type
    object@param_fix <- this_data$constrain_par
    object@unrestricted <- old_matrix
-   object@restrict_vals <- this_data$pin_vals
    return(object)
 }
   
 #' Function that pins certain parameters to fixed points
-.pinned_fix <- function(object=NULL,this_params=NULL,this_data=NULL,nfix=NULL,restrict_params=NULL,
-                        restrict_names=NULL,pin_vals=NULL,...) {
+.pinned_fix <- function(object=NULL,nfix=NULL,restrict_params=NULL,
+                        restrict_ind_high=NULL,...) {
+  all_args <- list(...) 
+  if(is.null(restrict_ind_high)) {
+    stop('You must specify indices for pinned paramters as restrict_ind_high.')
+  }
+
+  old_matrix <- object@vote_matrix
+  to_constrain_high <- restrict_ind_high
+  to_constrain_low <- NULL
+  
+  if(any(restrict_params %in% c('discrim_reg','discrim_abs'))) {
+    object@vote_matrix <- object@vote_matrix[c((1:nrow(object@vote_matrix))[-c(to_constrain_high,
+                                                                               to_constrain_low)],
+                                               to_constrain_high,
+                                               to_constrain_low),]
+    param_fix <- switch(all_args$restrict_params,discrim_reg='sigma_reg',discrim_abs='sigma_abs')
+  } else if(restrict_params=='legis') {
+    object@vote_matrix <- object@vote_matrix[c((1:nrow(object@vote_matrix))[-c(to_constrain_high,
+                                                                               to_constrain_low)],
+                                               to_constrain_high,
+                                               to_constrain_low),]
+    param_fix <- 'L_free'
+  }
+  object@restrict_num_high <- length(to_constrain_high)
+  object@restrict_num_low <- 1
+  object@constraint_type <- 4
+  object@param_fix <- switch(param_fix,L_free=1L,sigma_reg=3L,sigma_abs=2L)
+  object@unrestricted <- old_matrix
+  return(object)
   
 }
 
 #' Function that constrains certain known parameters
-.constrain_fix <- function(object=NULL,this_params=NULL,this_data=NULL,nfix=NULL,restrict_params=NULL,
-                           restrict_names=NULL,restrict_type=NULL,...) {
+.constrain_fix <- function(object=NULL,restrict_params=NULL,
+                           restrict_ind_high=NULL,
+                           restrict_ind_low=NULL,restrict_type=NULL,...) {
+
+  all_args <- list(...) 
+  if(is.null(restrict_ind_high)) {
+    stop('You must specify at least one bill or legislator to constrain high in restrict_ind_high.')
+  }
+  old_matrix <- object@vote_matrix
+  to_constrain_high <- restrict_ind_high
+  to_constrain_low <- restrict_ind_low
+
+  
+  if(any(restrict_params %in% c('discrim_reg','discrim_abs'))) {
+    object@vote_matrix <- object@vote_matrix[c((1:nrow(object@vote_matrix))[-c(to_constrain_high,
+                                                                               to_constrain_low)],
+                                               to_constrain_high,
+                                               to_constrain_low),]
+    param_fix <- switch(all_args$restrict_params,discrim_reg='sigma_reg',discrim_abs='sigma_abs')
+  } else if(restrict_params=='legis') {
+    object@vote_matrix <- object@vote_matrix[c((1:nrow(object@vote_matrix))[-c(to_constrain_high,
+                                                                               to_constrain_low)],
+                                               to_constrain_high,
+                                               to_constrain_low),]
+    param_fix <- 'L_free'
+  }
+  object@restrict_num_high <- length(to_constrain_high)
+  if(is.null(to_constrain_low)) {
+    object@restrict_num_low <- 1
+  } else {
+    object@restrict_num_low <- length(to_constrain_low)
+  }
+  object@constraint_type <- switch(restrict_type,constrain_oneway=2L,
+                                   constrain_twoway=3L)
+  object@param_fix <- switch(param_fix,L_free=1L,sigma_reg=3L,sigma_abs=2L)
+  object@unrestricted <- old_matrix
+  return(object)
   
 }
 
@@ -388,4 +457,9 @@ id_params_pin_unguided_inflate <- function(restrict_params=NULL,nfix=NULL,x=NULL
   } else {
     stop('Hierarchical modeling undefined.')
   }
+}
+
+#' @export
+extract_samples <- function(obj,...) {
+  rstan::extract(obj@stan_samples,...)
 }

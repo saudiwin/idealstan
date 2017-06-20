@@ -183,12 +183,12 @@ calc_rmse <- function(est_param,true_param) {
   if(class(est_param)=='array') {
     param_length <- dim(est_param)[3]
     all_rmse <- sapply(1:param_length, function(i) {
-      this_param <- sqrt((est_param[,,i] - true_param[i,])^2)
+      this_param <- sqrt((est_param[,,i] - true_param[i])^2)
     })
   } else if(class(est_param)=='matrix') {
     param_length <- ncol(est_param)
     all_rmse <- sapply(1:param_length, function(i) {
-      this_param <- sqrt((est_param[,i] - true_param[i,])^2)
+      this_param <- sqrt((est_param[,i] - true_param[i])^2)
     })
   }
 
@@ -201,23 +201,9 @@ calc_rmse <- function(est_param,true_param) {
                          total_low=quantile(all_rmse,0.1),
                          Params=1:param_length)
   
-  # Do a scale flip and check
-  
-  true_param <- true_param * -1
-  
-  out_data2 <- data_frame(avg=apply(all_rmse,2,mean),
-                          high=apply(all_rmse,2,quantile,probs=0.9),
-                          low=apply(all_rmse,2,quantile,probs=0.1),
-                          total_avg=mean(all_rmse),
-                          total_high=quantile(all_rmse,0.9),
-                          total_low=quantile(all_rmse,0.1),
-                          Params=1:param_length)
-  
-  if(mean(out_data1$total_avg)<mean(out_data2$total_avg)) {
+
     return(out_data1)
-  } else {
-    return(out_data2)
-  }
+
 }
 
 #' Function that computes how often the true value of the parameter is included within the 
@@ -226,20 +212,20 @@ calc_rmse <- function(est_param,true_param) {
 #' @param true_param A matrix (one column) of true parameter values
 #' @export
 calc_coverage <- function(est_param,true_param) {
-  
+
   if(class(est_param)=='array') {
     param_length <- dim(est_param)[3]
     all_covs <- sapply(1:param_length, function(i) {
       high <- quantile(est_param[,,i],.9)
       low <- quantile(est_param[,,i],.1)
-      this_param <- (true_param[i,] < high) && (true_param[i,] > low)
+      this_param <- (true_param[i] < high) && (true_param[i] > low)
     })
   } else if(class(est_param)=='matrix') {
     param_length <- ncol(est_param)
     all_covs <- sapply(1:param_length, function(i) {
       high <- quantile(est_param[,i],.9)
       low <- quantile(est_param[,i],.1)
-      this_param <- (true_param[i,] < high) && (true_param[i,] > low)
+      this_param <- (true_param[i] < high) && (true_param[i] > low)
     })
   }
 
@@ -248,4 +234,37 @@ calc_coverage <- function(est_param,true_param) {
                          Params=1:param_length)
   
   return(out_data)
+}
+
+#' Residual function for checking estimated samples compared to true simulation scores
+#' Returns a data frame with residuals plus quantiles.
+#' @param est_param A matrix of posterior draws of a parameter
+#' @param true_param A matrix (one column) of true parameter values
+#' @export
+calc_resid <- function(est_param,true_param) {
+  
+  if(class(est_param)=='array') {
+    param_length <- dim(est_param)[3]
+    all_resid <- sapply(1:param_length, function(i) {
+      this_param <- (est_param[,,i] - true_param[i])
+    })
+  } else if(class(est_param)=='matrix') {
+    param_length <- ncol(est_param)
+    all_resid <- sapply(1:param_length, function(i) {
+      this_param <- (est_param[,i] - true_param[i])
+    })
+  }
+  
+  
+  out_data1 <- data_frame(avg=apply(all_resid,2,mean),
+                          high=apply(all_resid,2,quantile,probs=0.9),
+                          low=apply(all_resid,2,quantile,probs=0.1),
+                          total_avg=mean(all_resid),
+                          total_high=quantile(all_resid,0.9),
+                          total_low=quantile(all_resid,0.1),
+                          Params=1:param_length)
+  
+
+    return(out_data1)
+
 }
