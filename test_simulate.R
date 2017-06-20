@@ -34,41 +34,30 @@ true_sigma_reg <- test_out@vote_data@simul_data$true_reg_discrim %>% as.numeric
 hist_rhats(test_out)
 plot_sims(test_out)
 plot_sims(test_out,type='residual')
-# compile_old <- stan_model('old_code/ratingscale_absence_inflate_constrain_person.stan')
-# vote_matrix <- one_model@vote_matrix
-# vote_matrix <- vote_matrix[c((1:nrow(vote_matrix)[-restrict_params]),restrict_params),]
-# Y <- c(vote_matrix)
-# N <- length(Y)
-# num_legis <- nrow(vote_matrix)
-# num_bills <- ncol(vote_matrix)
-# legispoints <- rep(1:num_legis,times=num_bills)
-# billpoints <- rep(1:num_bills,each=num_legis)
-# timepoints <- one_model@time[billpoints]
-# avg_particip <- apply(vote_matrix,1,function(x) {
-#   if(is.na(one_model@abs_vote)) {
-#     count_abs <- sum(is.na(x))
-#   } else {
-#     count_abs <- sum(x==one_model@abs_vote,na.rm=TRUE)
-#   }
-#   particip_rate <- 1 - (count_abs/length(x))
-#   return(particip_rate)
-# }) 
-# this_data <- list(N=N,
-#                   Y=Y,
-#                   num_legis=num_legis,
-#                   num_bills=num_bills,
-#                   ll=legispoints,
-#                   bb=billpoints,
-#                   particip=avg_particip,
-#                   restrict=1)
-# old_model <- sampling(compile_old,cores=4,data=this_data)
+# try again, this time identify the sigma absences
+true_sigma_abs <- one_model@simul_data$true_abs_discrim
+high_abs <- sort(true_sigma_abs,decreasing=TRUE,index.return=TRUE)
+low_abs <- sort(true_sigma_abs,index.return=TRUE)
+high_abs_pin <- max(true_sigma_abs)
+low_abs_pin <- min(true_sigma_abs)
 
-# all_types <- lapply(model_types, function(m) {
-#   out_models <- test_idealstan(legis_range=c(10,20),simul_type='absence',ncores=4,auto_id=FALSE,use_vb=FALSE)
-#   
-#   
-#   
-#   
-# })
-# 
-# plot_sims(all_types[[1]]$regular[[1]])
+test_out <- estimate_ideal(idealdata = one_model,
+                           model_type = 4,
+                           use_vb = FALSE,
+                           ncores = 4,
+                           nfix=2,
+                           restrict_type='constrain_twoway',
+                           restrict_params='discrim_abs',
+                           restrict_ind_high=c(high_abs$ix[1:5],low_abs$ix[1:5]),
+                           pin_vals = c(high_abs$x[1:5],low_abs$x[1:5]),
+                           fixtype='pinned')
+restrict_params <- test_out@vote_data@restrict_count
+
+all_params <- extract_samples(test_out)
+all_legis <- apply(all_params$L_full,3,mean)
+all_sigma_abs <- apply(all_params$sigma_abs_full,2,mean)
+true_sigma_abs <- test_out@vote_data@simul_data$true_abs_discrim[as.numeric(colnames(test_out@vote_data@vote_matrix)),] %>% as.numeric
+hist_rhats(test_out)
+plot_sims(test_out)
+plot_sims(test_out,type='residual')
+

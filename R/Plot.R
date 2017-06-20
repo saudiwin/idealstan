@@ -350,7 +350,8 @@ plot_sims <- function(sims,type='RMSE') {
   ggplot(over_params,aes(y=avg,x=param_id,ymax=high,ymin=low)) + geom_pointrange() +
     theme_minimal() + xlab("Parameters") + ylab(type) + facet_wrap(~param_type,scales = "free",
                                                                    ncol=1) +
-    theme(panel.grid = element_blank()) + 
+    theme(panel.grid = element_blank(),
+          axis.text.x = element_blank()) + 
     geom_hline(yintercept=0,linetype=3) 
   
 }
@@ -361,5 +362,5 @@ hist_rhats <- function(obj) {
   get_out <- rstan::summary(obj@stan_samples)$summary
   data_frame(Rhats=get_out[,'Rhat']) %>% 
     ggplot(aes(x=Rhats)) + theme_minimal() + geom_histogram() +
-    ylab('Parameters')
+    ylab('Parameters') +theme(panel.grid=element_blank())
 }

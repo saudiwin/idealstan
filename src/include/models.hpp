@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 /* 
   
   We will use the standard GPL license for this package_version
@@ -394,6 +393,9 @@ public:
         validate_non_negative_index("restrict_high", "num_fix_high", num_fix_high);
         validate_non_negative_index("restrict_high", "T", T);
         num_params_r__ += num_fix_high * T;
+        validate_non_negative_index("pinned_pars", "num_fix_high", num_fix_high);
+        validate_non_negative_index("pinned_pars", "T", T);
+        num_params_r__ += num_fix_high * T;
         validate_non_negative_index("legis_x", "LX", LX);
         num_params_r__ += LX;
         validate_non_negative_index("sigma_reg_x", "SRX", SRX);
@@ -518,6 +520,25 @@ public:
             writer__.vector_lb_unconstrain(0,restrict_high[i0__]);
         } catch (const std::exception& e) { 
             throw std::runtime_error(std::string("Error transforming variable restrict_high: ") + e.what());
+        }
+
+        if (!(context__.contains_r("pinned_pars")))
+            throw std::runtime_error("variable pinned_pars missing");
+        vals_r__ = context__.vals_r("pinned_pars");
+        pos__ = 0U;
+        validate_non_negative_index("pinned_pars", "T", T);
+        validate_non_negative_index("pinned_pars", "num_fix_high", num_fix_high);
+        context__.validate_dims("initialization", "pinned_pars", "vector_d", context__.to_vec(T,num_fix_high));
+        // generate_declaration pinned_pars
+        std::vector<vector_d> pinned_pars(T,vector_d(static_cast<Eigen::VectorXd::Index>(num_fix_high)));
+        for (int j1__ = 0U; j1__ < num_fix_high; ++j1__)
+            for (int i0__ = 0U; i0__ < T; ++i0__)
+                pinned_pars[i0__](j1__) = vals_r__[pos__++];
+        for (int i0__ = 0U; i0__ < T; ++i0__)
+            try {
+            writer__.vector_unconstrain(pinned_pars[i0__]);
+        } catch (const std::exception& e) { 
+            throw std::runtime_error(std::string("Error transforming variable pinned_pars: ") + e.what());
         }
 
         if (!(context__.contains_r("legis_x")))
@@ -771,6 +792,16 @@ public:
                 restrict_high.push_back(in__.vector_lb_constrain(0,num_fix_high));
         }
 
+        vector<Eigen::Matrix<T__,Eigen::Dynamic,1> > pinned_pars;
+        size_t dim_pinned_pars_0__ = T;
+        pinned_pars.reserve(dim_pinned_pars_0__);
+        for (size_t k_0__ = 0; k_0__ < dim_pinned_pars_0__; ++k_0__) {
+            if (jacobian__)
+                pinned_pars.push_back(in__.vector_constrain(num_fix_high,lp__));
+            else
+                pinned_pars.push_back(in__.vector_constrain(num_fix_high));
+        }
+
         Eigen::Matrix<T__,Eigen::Dynamic,1>  legis_x;
         (void) legis_x;  // dummy to suppress unused var warning
         if (jacobian__)
@@ -881,7 +912,7 @@ public:
 
                         stan::math::assign(get_base1_lhs(L_full,t,"L_full",1), append_row(get_base1(L_free,t,"L_free",1),get_base1(restrict_low,t,"restrict_low",1)));
                     }
-                } else if (as_bool((primitive_value(logical_eq(constraint_type,2)) || primitive_value(logical_eq(constraint_type,4))))) {
+                } else if (as_bool(logical_eq(constraint_type,2))) {
 
                     for (int t = 1; t <= T; ++t) {
 
@@ -893,6 +924,12 @@ public:
 
                         stan::math::assign(get_base1_lhs(L_full,t,"L_full",1), append_row(get_base1(L_free,t,"L_free",1),append_row(get_base1(restrict_high,t,"restrict_high",1),get_base1(restrict_low,t,"restrict_low",1))));
                     }
+                } else if (as_bool(logical_eq(constraint_type,4))) {
+
+                    for (int t = 1; t <= T; ++t) {
+
+                        stan::math::assign(get_base1_lhs(L_full,t,"L_full",1), append_row(get_base1(L_free,t,"L_free",1),get_base1(pinned_pars,t,"pinned_pars",1)));
+                    }
                 }
                 stan::math::assign(sigma_abs_full, sigma_abs_free);
                 stan::math::assign(sigma_reg_full, sigma_reg_free);
@@ -901,12 +938,15 @@ public:
                 if (as_bool(logical_eq(constraint_type,1))) {
 
                     stan::math::assign(sigma_abs_full, append_row(sigma_abs_free,get_base1(restrict_low,1,"restrict_low",1)));
-                } else if (as_bool((primitive_value(logical_eq(constraint_type,2)) || primitive_value(logical_eq(constraint_type,4))))) {
+                } else if (as_bool(logical_eq(constraint_type,2))) {
 
                     stan::math::assign(sigma_abs_full, append_row(sigma_abs_free,get_base1(restrict_high,1,"restrict_high",1)));
                 } else if (as_bool(logical_eq(constraint_type,3))) {
 
                     stan::math::assign(sigma_abs_full, append_row(sigma_abs_free,append_row(get_base1(restrict_low,1,"restrict_low",1),get_base1(restrict_high,1,"restrict_high",1))));
+                } else if (as_bool(logical_eq(constraint_type,4))) {
+
+                    stan::math::assign(sigma_abs_full, append_row(sigma_abs_free,get_base1(pinned_pars,1,"pinned_pars",1)));
                 }
                 stan::math::assign(L_full, L_free);
                 stan::math::assign(sigma_reg_full, sigma_reg_free);
@@ -915,12 +955,15 @@ public:
                 if (as_bool(logical_eq(constraint_type,1))) {
 
                     stan::math::assign(sigma_reg_full, append_row(get_base1(sigma_reg_free,1,"sigma_reg_free",1),get_base1(restrict_low,1,"restrict_low",1)));
-                } else if (as_bool((primitive_value(logical_eq(constraint_type,2)) || primitive_value(logical_eq(constraint_type,4))))) {
+                } else if (as_bool(logical_eq(constraint_type,2))) {
 
                     stan::math::assign(sigma_reg_full, append_row(sigma_reg_free,get_base1(restrict_high,1,"restrict_high",1)));
                 } else if (as_bool(logical_eq(constraint_type,3))) {
 
                     stan::math::assign(sigma_reg_full, append_row(sigma_reg_free,append_row(get_base1(restrict_low,1,"restrict_low",1),get_base1(restrict_high,1,"restrict_high",1))));
+                } else if (as_bool(logical_eq(constraint_type,4))) {
+
+                    stan::math::assign(sigma_reg_full, append_row(sigma_reg_free,get_base1(pinned_pars,1,"pinned_pars",1)));
                 }
                 stan::math::assign(sigma_abs_full, sigma_abs_free);
                 stan::math::assign(L_full, L_free);
@@ -976,6 +1019,23 @@ public:
                 stan::math::fill(pi2,DUMMY_VAR__);
 
 
+                lp_accum__.add(normal_log<propto__>(legis_x, 0, 5));
+                lp_accum__.add(normal_log<propto__>(legis_x_cons, 0, 5));
+                lp_accum__.add(normal_log<propto__>(sigma_abs_x, 0, 5));
+                lp_accum__.add(normal_log<propto__>(sigma_reg_x, 0, 5));
+                lp_accum__.add(normal_log<propto__>(sigma_abs_x_cons, 0, 5));
+                lp_accum__.add(normal_log<propto__>(sigma_reg_x_cons, 0, 5));
+                lp_accum__.add(normal_log<propto__>(avg_particip, 0, 5));
+                for (int i = 1; i <= (m - 2); ++i) {
+
+                    lp_accum__.add(normal_log<propto__>((get_base1(steps_votes,(i + 1),"steps_votes",1) - get_base1(steps_votes,i,"steps_votes",1)), 0, 5));
+                }
+                lp_accum__.add(normal_log<propto__>(B_yes, 0, 5));
+                lp_accum__.add(normal_log<propto__>(B_abs, 0, 5));
+                for (int b = 1; b <= num_bills; ++b) {
+
+                    lp_accum__.add(normal_log<propto__>(get_base1(steps_votes_grm,b,"steps_votes_grm",1), 0, 5));
+                }
                 if (as_bool(logical_eq(constrain_par,1))) {
 
                     if (as_bool(logical_eq(constraint_type,1))) {
@@ -1168,13 +1228,13 @@ public:
 
                         if (as_bool((primitive_value((primitive_value((primitive_value(logical_eq(hier_type,1)) || primitive_value(logical_eq(hier_type,4)))) || primitive_value(logical_eq(hier_type,5)))) || primitive_value(logical_eq(hier_type,7))))) {
 
-                            lp_accum__.add(normal_log<propto__>(get_base1(restrict_high,1,"restrict_high",1), pin_vals, 0.10000000000000001));
+                            lp_accum__.add(normal_log<propto__>(get_base1(pinned_pars,1,"pinned_pars",1), pin_vals, 0.01));
                             lp_accum__.add(normal_log<propto__>(get_base1(L_free,1,"L_free",1), multiply(stan::model::rvalue(legis_pred, stan::model::cons_list(stan::model::index_uni(1), stan::model::cons_list(stan::model::index_min_max(1, (num_legis - num_constrain_l)), stan::model::cons_list(stan::model::index_omni(), stan::model::nil_index_list()))), "legis_pred"),legis_x), 1));
                             if (as_bool(logical_gt(T,1))) {
 
                                 for (int t = 2; t <= T; ++t) {
 
-                                    lp_accum__.add(normal_log<propto__>(get_base1(restrict_high,t,"restrict_high",1), pin_vals, 0.10000000000000001));
+                                    lp_accum__.add(normal_log<propto__>(get_base1(pinned_pars,t,"pinned_pars",1), pin_vals, 0.01));
                                     lp_accum__.add(normal_log<propto__>(get_base1(L_free,t,"L_free",1), add(get_base1(L_free,(t - 1),"L_free",1),multiply(stan::model::rvalue(legis_pred, stan::model::cons_list(stan::model::index_uni(t), stan::model::cons_list(stan::model::index_min_max(1, (num_legis - num_constrain_l)), stan::model::cons_list(stan::model::index_omni(), stan::model::nil_index_list()))), "legis_pred"),legis_x)), 1));
                                 }
                             }
@@ -1197,13 +1257,13 @@ public:
                             }
                         } else {
 
-                            lp_accum__.add(normal_log<propto__>(get_base1(restrict_high,1,"restrict_high",1), pin_vals, 0.10000000000000001));
+                            lp_accum__.add(normal_log<propto__>(get_base1(pinned_pars,1,"pinned_pars",1), pin_vals, 0.01));
                             lp_accum__.add(normal_log<propto__>(get_base1(L_free,1,"L_free",1), 0, 1));
                             if (as_bool(logical_gt(T,1))) {
 
                                 for (int t = 2; t <= T; ++t) {
 
-                                    lp_accum__.add(normal_log<propto__>(get_base1(restrict_high,t,"restrict_high",1), pin_vals, 0.10000000000000001));
+                                    lp_accum__.add(normal_log<propto__>(get_base1(pinned_pars,t,"pinned_pars",1), pin_vals, 0.01));
                                     lp_accum__.add(normal_log<propto__>(get_base1(L_free,t,"L_free",1), get_base1(L_free,(t - 1),"L_free",1), 1));
                                 }
                             }
@@ -1538,7 +1598,7 @@ public:
                         if (as_bool((primitive_value((primitive_value((primitive_value(logical_eq(hier_type,3)) || primitive_value(logical_eq(hier_type,5)))) || primitive_value(logical_eq(hier_type,6)))) || primitive_value(logical_eq(hier_type,7))))) {
 
                             lp_accum__.add(normal_log<propto__>(sigma_abs_free, multiply(stan::model::rvalue(sax_pred, stan::model::cons_list(stan::model::index_uni((num_bills - num_constrain_sa)), stan::model::cons_list(stan::model::index_omni(), stan::model::nil_index_list())), "sax_pred"),sigma_abs_x), 5));
-                            lp_accum__.add(normal_log<propto__>(get_base1(restrict_high,1,"restrict_high",1), pin_vals, 0.10000000000000001));
+                            lp_accum__.add(normal_log<propto__>(get_base1(pinned_pars,1,"pinned_pars",1), pin_vals, 0.01));
                             if (as_bool(logical_eq(hier_type,3))) {
 
                                 lp_accum__.add(normal_log<propto__>(sigma_reg_free, 0, 5));
@@ -1586,7 +1646,7 @@ public:
                             }
                         } else {
 
-                            lp_accum__.add(normal_log<propto__>(get_base1(restrict_high,1,"restrict_high",1), pin_vals, 0.10000000000000001));
+                            lp_accum__.add(normal_log<propto__>(get_base1(pinned_pars,1,"pinned_pars",1), pin_vals, 0.01));
                             lp_accum__.add(normal_log<propto__>(sigma_abs_free, 0, 5));
                             if (as_bool(logical_eq(hier_type,1))) {
 
@@ -1846,7 +1906,7 @@ public:
                         if (as_bool((primitive_value((primitive_value((primitive_value(logical_eq(hier_type,3)) || primitive_value(logical_eq(hier_type,5)))) || primitive_value(logical_eq(hier_type,6)))) || primitive_value(logical_eq(hier_type,7))))) {
 
                             lp_accum__.add(normal_log<propto__>(sigma_reg_free, multiply(stan::model::rvalue(srx_pred, stan::model::cons_list(stan::model::index_uni((num_bills - num_constrain_sr)), stan::model::cons_list(stan::model::index_omni(), stan::model::nil_index_list())), "srx_pred"),sigma_reg_x), 5));
-                            lp_accum__.add(normal_log<propto__>(get_base1(restrict_high,1,"restrict_high",1), pin_vals, 0.10000000000000001));
+                            lp_accum__.add(normal_log<propto__>(get_base1(pinned_pars,1,"pinned_pars",1), pin_vals, 0.01));
                             if (as_bool(logical_eq(hier_type,2))) {
 
                                 lp_accum__.add(normal_log<propto__>(sigma_abs_free, 0, 5));
@@ -1894,7 +1954,7 @@ public:
                             }
                         } else {
 
-                            lp_accum__.add(normal_log<propto__>(get_base1(restrict_high,1,"restrict_high",1), pin_vals, 0.10000000000000001));
+                            lp_accum__.add(normal_log<propto__>(get_base1(pinned_pars,1,"pinned_pars",1), pin_vals, 0.01));
                             lp_accum__.add(normal_log<propto__>(sigma_reg_free, 0, 5));
                             if (as_bool(logical_eq(hier_type,1))) {
 
@@ -1944,16 +2004,26 @@ public:
                         }
                     }
                 }
-                lp_accum__.add(normal_log<propto__>(avg_particip, 0, 5));
-                for (int i = 1; i <= (m - 2); ++i) {
+                if (as_bool(logical_neq(constraint_type,4))) {
 
-                    lp_accum__.add(normal_log<propto__>((get_base1(steps_votes,(i + 1),"steps_votes",1) - get_base1(steps_votes,i,"steps_votes",1)), 0, 5));
+                    for (int t = 1; t <= T; ++t) {
+
+                        lp_accum__.add(normal_log<propto__>(get_base1(pinned_pars,t,"pinned_pars",1), 0, 1));
+                    }
                 }
-                lp_accum__.add(normal_log<propto__>(B_yes, 0, 5));
-                lp_accum__.add(normal_log<propto__>(B_abs, 0, 5));
-                for (int b = 1; b <= num_bills; ++b) {
+                if (as_bool((primitive_value(logical_neq(constraint_type,1)) || primitive_value(logical_neq(constraint_type,3))))) {
 
-                    lp_accum__.add(normal_log<propto__>(get_base1(steps_votes_grm,b,"steps_votes_grm",1), 0, 5));
+                    for (int t = 1; t <= T; ++t) {
+
+                        lp_accum__.add(normal_log<propto__>(get_base1(restrict_low,t,"restrict_low",1), 0, 1));
+                    }
+                }
+                if (as_bool((primitive_value(logical_eq(constraint_type,4)) || primitive_value(logical_eq(constraint_type,2))))) {
+
+                    for (int t = 1; t <= T; ++t) {
+
+                        lp_accum__.add(normal_log<propto__>(get_base1(restrict_high,t,"restrict_high",1), 0, 1));
+                    }
                 }
                 if (as_bool(logical_eq(model_type,1))) {
 
@@ -2068,6 +2138,7 @@ public:
         names__.push_back("sigma_reg_free");
         names__.push_back("restrict_low");
         names__.push_back("restrict_high");
+        names__.push_back("pinned_pars");
         names__.push_back("legis_x");
         names__.push_back("sigma_reg_x");
         names__.push_back("sigma_abs_x");
@@ -2101,6 +2172,10 @@ public:
         dims__.resize(0);
         dims__.push_back(T);
         dims__.push_back(num_fix_low);
+        dimss__.push_back(dims__);
+        dims__.resize(0);
+        dims__.push_back(T);
+        dims__.push_back(num_fix_high);
         dimss__.push_back(dims__);
         dims__.resize(0);
         dims__.push_back(T);
@@ -2181,6 +2256,11 @@ public:
         for (size_t k_0__ = 0; k_0__ < dim_restrict_high_0__; ++k_0__) {
             restrict_high.push_back(in__.vector_lb_constrain(0,num_fix_high));
         }
+        vector<vector_d> pinned_pars;
+        size_t dim_pinned_pars_0__ = T;
+        for (size_t k_0__ = 0; k_0__ < dim_pinned_pars_0__; ++k_0__) {
+            pinned_pars.push_back(in__.vector_constrain(num_fix_high));
+        }
         vector_d legis_x = in__.vector_constrain(LX);
         vector_d sigma_reg_x = in__.vector_constrain(SRX);
         vector_d sigma_abs_x = in__.vector_constrain(SAX);
@@ -2215,6 +2295,11 @@ public:
         for (int k_1__ = 0; k_1__ < num_fix_high; ++k_1__) {
             for (int k_0__ = 0; k_0__ < T; ++k_0__) {
                 vars__.push_back(restrict_high[k_0__][k_1__]);
+            }
+        }
+        for (int k_1__ = 0; k_1__ < num_fix_high; ++k_1__) {
+            for (int k_0__ = 0; k_0__ < T; ++k_0__) {
+                vars__.push_back(pinned_pars[k_0__][k_1__]);
             }
         }
         for (int k_0__ = 0; k_0__ < LX; ++k_0__) {
@@ -2288,7 +2373,7 @@ public:
 
                         stan::math::assign(get_base1_lhs(L_full,t,"L_full",1), append_row(get_base1(L_free,t,"L_free",1),get_base1(restrict_low,t,"restrict_low",1)));
                     }
-                } else if (as_bool((primitive_value(logical_eq(constraint_type,2)) || primitive_value(logical_eq(constraint_type,4))))) {
+                } else if (as_bool(logical_eq(constraint_type,2))) {
 
                     for (int t = 1; t <= T; ++t) {
 
@@ -2300,6 +2385,12 @@ public:
 
                         stan::math::assign(get_base1_lhs(L_full,t,"L_full",1), append_row(get_base1(L_free,t,"L_free",1),append_row(get_base1(restrict_high,t,"restrict_high",1),get_base1(restrict_low,t,"restrict_low",1))));
                     }
+                } else if (as_bool(logical_eq(constraint_type,4))) {
+
+                    for (int t = 1; t <= T; ++t) {
+
+                        stan::math::assign(get_base1_lhs(L_full,t,"L_full",1), append_row(get_base1(L_free,t,"L_free",1),get_base1(pinned_pars,t,"pinned_pars",1)));
+                    }
                 }
                 stan::math::assign(sigma_abs_full, sigma_abs_free);
                 stan::math::assign(sigma_reg_full, sigma_reg_free);
@@ -2308,12 +2399,15 @@ public:
                 if (as_bool(logical_eq(constraint_type,1))) {
 
                     stan::math::assign(sigma_abs_full, append_row(sigma_abs_free,get_base1(restrict_low,1,"restrict_low",1)));
-                } else if (as_bool((primitive_value(logical_eq(constraint_type,2)) || primitive_value(logical_eq(constraint_type,4))))) {
+                } else if (as_bool(logical_eq(constraint_type,2))) {
 
                     stan::math::assign(sigma_abs_full, append_row(sigma_abs_free,get_base1(restrict_high,1,"restrict_high",1)));
                 } else if (as_bool(logical_eq(constraint_type,3))) {
 
                     stan::math::assign(sigma_abs_full, append_row(sigma_abs_free,append_row(get_base1(restrict_low,1,"restrict_low",1),get_base1(restrict_high,1,"restrict_high",1))));
+                } else if (as_bool(logical_eq(constraint_type,4))) {
+
+                    stan::math::assign(sigma_abs_full, append_row(sigma_abs_free,get_base1(pinned_pars,1,"pinned_pars",1)));
                 }
                 stan::math::assign(L_full, L_free);
                 stan::math::assign(sigma_reg_full, sigma_reg_free);
@@ -2322,12 +2416,15 @@ public:
                 if (as_bool(logical_eq(constraint_type,1))) {
 
                     stan::math::assign(sigma_reg_full, append_row(get_base1(sigma_reg_free,1,"sigma_reg_free",1),get_base1(restrict_low,1,"restrict_low",1)));
-                } else if (as_bool((primitive_value(logical_eq(constraint_type,2)) || primitive_value(logical_eq(constraint_type,4))))) {
+                } else if (as_bool(logical_eq(constraint_type,2))) {
 
                     stan::math::assign(sigma_reg_full, append_row(sigma_reg_free,get_base1(restrict_high,1,"restrict_high",1)));
                 } else if (as_bool(logical_eq(constraint_type,3))) {
 
                     stan::math::assign(sigma_reg_full, append_row(sigma_reg_free,append_row(get_base1(restrict_low,1,"restrict_low",1),get_base1(restrict_high,1,"restrict_high",1))));
+                } else if (as_bool(logical_eq(constraint_type,4))) {
+
+                    stan::math::assign(sigma_reg_full, append_row(sigma_reg_free,get_base1(pinned_pars,1,"pinned_pars",1)));
                 }
                 stan::math::assign(sigma_abs_full, sigma_abs_free);
                 stan::math::assign(L_full, L_free);
@@ -2424,6 +2521,13 @@ public:
             for (int k_0__ = 1; k_0__ <= T; ++k_0__) {
                 param_name_stream__.str(std::string());
                 param_name_stream__ << "restrict_high" << '.' << k_0__ << '.' << k_1__;
+                param_names__.push_back(param_name_stream__.str());
+            }
+        }
+        for (int k_1__ = 1; k_1__ <= num_fix_high; ++k_1__) {
+            for (int k_0__ = 1; k_0__ <= T; ++k_0__) {
+                param_name_stream__.str(std::string());
+                param_name_stream__ << "pinned_pars" << '.' << k_0__ << '.' << k_1__;
                 param_names__.push_back(param_name_stream__.str());
             }
         }
@@ -2538,6 +2642,13 @@ public:
             for (int k_0__ = 1; k_0__ <= T; ++k_0__) {
                 param_name_stream__.str(std::string());
                 param_name_stream__ << "restrict_high" << '.' << k_0__ << '.' << k_1__;
+                param_names__.push_back(param_name_stream__.str());
+            }
+        }
+        for (int k_1__ = 1; k_1__ <= num_fix_high; ++k_1__) {
+            for (int k_0__ = 1; k_0__ <= T; ++k_0__) {
+                param_name_stream__.str(std::string());
+                param_name_stream__ << "pinned_pars" << '.' << k_0__ << '.' << k_1__;
                 param_names__.push_back(param_name_stream__.str());
             }
         }
@@ -3979,5 +4090,3 @@ public:
 
 
 #endif
-=======
->>>>>>> 837342d4f30b4ca9d3f62af24e6cd91d47b47374
