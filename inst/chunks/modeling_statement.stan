@@ -850,7 +850,7 @@
   }
   
   if(constraint_type!=4) {
-    pinned_pars ~ normal(0,1);
+    pinned_pars[1] ~ normal(0,1);
     
   }
   if(constraint_type!=1 || constraint_type!=3) {
