@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 /* 
   
   We will use the standard GPL license for this package_version
@@ -3978,3 +3979,5 @@ public:
 
 
 #endif
+=======
+>>>>>>> 837342d4f30b4ca9d3f62af24e6cd91d47b47374

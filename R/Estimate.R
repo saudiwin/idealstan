@@ -236,7 +236,7 @@ estimate_ideal <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_i
                     particip=avg_particip,
                     model_type=model_type,
                     pin_vals=pin_vals)
-  browser()
+
   outobj <- sample_model(object=idealdata,nchains=nchains,niters=niters,warmup=warmup,ncores=ncores,
                          this_data=this_data,use_vb=use_vb,...)
   
