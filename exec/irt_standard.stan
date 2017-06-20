@@ -71,7 +71,7 @@ transformed data {
         }
       }
   }
-  
+  //determine how many and which parameters to constrain
   #include "create_constrained.stan"
 
 }
@@ -82,6 +82,7 @@ parameters {
   vector[num_bills-num_constrain_sr] sigma_reg_free;
   vector<upper=0>[num_fix_low] restrict_low[T];
   vector<lower=0>[num_fix_high] restrict_high[T];
+  vector[num_fix_high] pinned_pars[T];
   vector[LX] legis_x;
   vector[SRX] sigma_reg_x;
   vector[SAX] sigma_abs_x;
@@ -100,7 +101,7 @@ transformed parameters {
   vector[num_legis] L_full[T];
   vector[num_bills] sigma_abs_full;
   vector[num_bills] sigma_reg_full;
-  
+  //combine constrained and unconstrained parameters
   #include "build_params.stan"
   
   
@@ -111,8 +112,12 @@ model {
   vector[N] pi1;
   vector[N] pi2;
   
-  #include "modeling_statement.stan"
-  
+    legis_x ~ normal(0,5);
+  legis_x_cons ~ normal(0,5);
+  sigma_abs_x ~ normal(0,5);
+  sigma_reg_x ~ normal(0,5);
+  sigma_abs_x_cons ~ normal(0,5);
+  sigma_reg_x_cons ~ normal(0,5);
 
   avg_particip ~ normal(0,5);
   
@@ -125,9 +130,13 @@ model {
   for(b in 1:num_bills) {
   steps_votes_grm[b] ~ normal(0,5);
   }
-  //model
+  
+  //priors for legislators and bill parameters
+  #include "modeling_statement.stan"
+  
+  //all model types
 
-#include "model_types.stan"
+  #include "model_types.stan"
 
 
   
