@@ -6,7 +6,7 @@ simulate_absence <- function(num_legis=10,num_bills=100,absence_discrim_sd=1,abs
                              graded_response=FALSE,noise=0.05) {
   
   # Allow for different type of distributions for ideal points
-  
+
   if(prior_type=='gaussian') {
     
     prior_func <- function(params) {
@@ -50,8 +50,8 @@ simulate_absence <- function(num_legis=10,num_bills=100,absence_discrim_sd=1,abs
   # First generate prob of absences
   # Use matrix multiplication because it's faster (unlike the stan method)
   
-  pr_absence <- plogis(t(t(ideal_pts %*% t(absence_discrim))-absence_diff + prior_func(params=list(N=num_bills,mean=0,sd=noise))) - 0.1*avg_particip)
-  
+  #pr_absence <- plogis(t(t(ideal_pts %*% t(absence_discrim))-absence_diff + prior_func(params=list(N=num_bills,mean=0,sd=noise))) - 0.1*avg_particip)
+  pr_absence <- plogis(t(t(ideal_pts %*% t(absence_discrim))) -absence_diff - 0.1*avg_particip)
   # Estimate prob of people voting on a bill (yes/no/abstain), then deflate that by the probability
   # of absence
   
@@ -65,8 +65,8 @@ simulate_absence <- function(num_legis=10,num_bills=100,absence_discrim_sd=1,abs
     reg_diff <- prior_func(params=list(N=num_bills,mean=0,sd=1))
     reg_discrim <- prior_func(params=list(N=num_bills,mean=0,sd=reg_discrim_sd)) %>% as.matrix
     
-    pr_vote <-t(t(ideal_pts %*% t(reg_discrim))-reg_diff + prior_func(params=list(N=num_bills,mean=0,sd=noise)))
-    
+    #pr_vote <-t(t(ideal_pts %*% t(reg_discrim))-reg_diff + prior_func(params=list(N=num_bills,mean=0,sd=noise)))
+    pr_vote <- t(t(ideal_pts %*% t(reg_discrim))-reg_diff)
   cutpoints <- quantile(pr_vote,probs=seq(0,1,length.out = ordinal_outcomes+1))
   cutpoints <- cutpoints[2:(length(cutpoints)-1)]
   
@@ -242,7 +242,7 @@ calc_coverage <- function(est_param,true_param) {
 #' @param true_param A matrix (one column) of true parameter values
 #' @export
 calc_resid <- function(est_param,true_param) {
-  
+
   if(class(est_param)=='array') {
     param_length <- dim(est_param)[3]
     all_resid <- sapply(1:param_length, function(i) {

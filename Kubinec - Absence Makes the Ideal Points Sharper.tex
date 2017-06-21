@@ -1,5 +1,5 @@
-%\input{|"curl -L 'https://virginia.box.com/shared/static/9120uqo655t0kwesti7t3exa7zsgbwdq.tex'"}
-\include{article_header}
+\input{|"curl -L 'https://virginia.box.com/shared/static/9120uqo655t0kwesti7t3exa7zsgbwdq.tex'"}
+%\include{article_header}
 \title{Absence Makes the Ideal Points Sharper: Full-data IRT Models for Legislatures}
 \linespread{1.5}
 \begin{document}
@@ -28,7 +28,9 @@
 	
 	None of these papers, however, attempts to directly incorporate absences or abstentions into the afore-mentioned ideal point models, which usually code absences and abstentions as missing data. \textcite{rubin2002} argue that for missing data to be ignorable, the probability that an observation is missing must not depend on the value of the observation. \textcite{rosas2015} is the first to apply this theoretical approach to rollcall voting data via an imputation model of legislative behavior framed in terms of disagreement between a party member and the party's official position.  As \textcite{rosas2015} point out, in the case of rollcall vote data, the assumption that absences and abstentions can be thought of as a plausibly random distribution yes/no votes is unlikely to be true. In \citeauthor{rosas2015}'s model, yes and no votes are imputed based on whether a party member is in agreement with his or her party given the assumption that, conditional on knowing whether a party member is in disagreement, the ensuing decision to vote yes or no only depends on observed ideal points \parencite{rubin2002}, and hence is imputable. This model provides a compelling account of how a legislator may decide to abstain in a vote; however, the model's applicability is also limited to this situation. In addition, \citeauthor{rosas2015} collapse both absences and abstentions into a single category because in their framework these actions are equal signals of party disagreement.
 	
-	By comparison, the model that I propose should apply to abstention and absence data more broadly, although it does not provide special insight into intra-party dynamics. The main difference is that I do not attempt to impute observations. 
+	In the broader IRT field there are extant approaches to handling missing data. \textcite{mislevy2016} provides a helpful summary of these approaches by showing how ignorability of missing data, and the crucial MAR assumption, depends on the relationship between the person ``ability" parameters (i.e., legislative ideology) and the item parameters (i.e., bill yes/no points). However, he concludes that if the missing data is due to ``intentional ommission" or to ``examinee choice", then no extant IRT missing-data model is able to meet the MAR assumption (p. 192). As I and others have argued, virtually all recorded legislative actions are intentional at some level. To correctly impute votes, we would need to imagine a counter-factual world in which some divine force pushes the legislator to be present and to cast either a yes or no vote. We can use parametric models like  \citeauthor{rosas2015} to provide a clear context for imagining this possibility, but otherwise a standard imputation model will provide biased estimates in this situation.
+	
+	By comparison, the model that I propose should apply to abstention and absence data more broadly, although it does not provide special insight into intra-party dynamics. The main difference is that I do not attempt to impute observations. By treating absences and abstentions as strategic actions, I can directly incorporate them into the model as additional evidence of legislators' ideal points. This change in focus allows for a complete-data IRT model that uses every category of vote (absent,abstain,yes,no) in legislative roll-call datasets.
 	
 	
 	

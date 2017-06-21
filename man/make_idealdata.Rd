@@ -13,3 +13,4 @@ make_idealdata(vote_data = NULL, simul_data = NULL, legis_cov = NULL,
 \description{
 This is the constructor fucnction for the idealdata object, which is necessary to estimate an idealstan model.
 }
+

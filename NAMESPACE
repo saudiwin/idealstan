@@ -2,6 +2,7 @@
 
 export(all_hist_plot)
 export(calc_coverage)
+export(calc_resid)
 export(calc_rmse)
 export(compare_models)
 export(estimate_ideal)

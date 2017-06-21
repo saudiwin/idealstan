@@ -195,11 +195,11 @@
 
   
   if(any(restrict_params %in% c('discrim_reg','discrim_abs'))) {
-    object@vote_matrix <- object@vote_matrix[c((1:nrow(object@vote_matrix))[-c(to_constrain_high,
-                                                                               to_constrain_low)],
-                                               to_constrain_high,
-                                               to_constrain_low),]
-    param_fix <- switch(all_args$restrict_params,discrim_reg='sigma_reg',discrim_abs='sigma_abs')
+    object@vote_matrix <- object@vote_matrix[,c((1:ncol(object@vote_matrix))[-c(to_constrain_high,
+                                                                                to_constrain_low)],
+                                                to_constrain_high,
+                                                to_constrain_low)]
+    param_fix <- switch(restrict_params,discrim_reg='sigma_reg',discrim_abs='sigma_abs')
   } else if(restrict_params=='legis') {
     object@vote_matrix <- object@vote_matrix[c((1:nrow(object@vote_matrix))[-c(to_constrain_high,
                                                                                to_constrain_low)],

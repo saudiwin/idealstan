@@ -9,7 +9,7 @@ require(rstan)
 require(shinystan)
 model_types <- c('absence')
 
-one_model <- simulate_absence(num_legis=20)
+one_model <- simulate_absence(num_legis = 20)
 true_legis <- one_model@simul_data$true_legis
 high_leg <- which(true_legis==max(true_legis))
 low_leg <- which(true_legis==min(true_legis))
@@ -29,8 +29,8 @@ restrict_params <- test_out@vote_data@restrict_count
 
 all_params <- extract_samples(test_out)
 all_legis <- apply(all_params$L_full,3,mean)
-all_sigma_reg <- apply(all_params$sigma_reg_full,2,mean)
-true_sigma_reg <- test_out@vote_data@simul_data$true_reg_discrim %>% as.numeric
+true_legis <- true_legis[as.numeric(row.names(test_out@vote_data@vote_matrix)),]
+data_frame(all_legis,true_legis) %>% View
 hist_rhats(test_out)
 plot_sims(test_out)
 plot_sims(test_out,type='residual')
@@ -50,7 +50,7 @@ test_out <- estimate_ideal(idealdata = one_model,
                            restrict_params='discrim_abs',
                            restrict_ind_high=c(high_abs$ix[1:5],low_abs$ix[1:5]),
                            pin_vals = c(high_abs$x[1:5],low_abs$x[1:5]),
-                           fixtype='pinned')
+                           fixtype='constrained')
 restrict_params <- test_out@vote_data@restrict_count
 
 all_params <- extract_samples(test_out)
