@@ -31,7 +31,7 @@ simulate_absence <- function(num_legis=10,num_bills=100,absence_discrim_sd=5,abs
   
   #Fixed average participation value for each legislator
   
-  avg_particip <- rnorm(n=num_legis,mean=0,sd=.1)
+  avg_particip <- rnorm(n=1,mean=0,sd=1)
   
   # First simulate ideal points for legislators/bills
   # Bill difficulty parameters are fixed because they are not entirely interesting (they represent intercepts)
@@ -55,8 +55,9 @@ simulate_absence <- function(num_legis=10,num_bills=100,absence_discrim_sd=5,abs
   bill_points <- rep(1:num_bills,each=num_legis)
   
   pr_absence <- sapply(1:length(legis_points), function(n) {
-    ideal_pts[legis_points[n]]*absence_discrim[bill_points[n]] - absence_diff[bill_points[n]] + avg_particip[legis_points[n]]
+    ideal_pts[legis_points[n]]*absence_discrim[bill_points[n]] - absence_diff[bill_points[n]] + avg_particip
   }) %>% plogis
+  
     #plogis(t(t(ideal_pts %*% t(absence_discrim))) -absence_diff - 0.1*avg_particip)
   # Estimate prob of people voting on a bill (yes/no/abstain), then deflate that by the probability
   # of absence
