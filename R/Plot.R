@@ -347,7 +347,7 @@ plot_sims <- function(sims,type='RMSE') {
                         rep('Absence Discrimination',sims@vote_data@simul_data$num_bills)))
   }
 
-  ggplot(over_params,aes(y=avg,x=param_id,ymax=high,ymin=low)) + geom_pointrange() +
+  ggplot(over_params,aes(y=avg,x=param_id,ymax=high,ymin=low)) + geom_pointrange(size=0.5) +
     theme_minimal() + xlab("Parameters") + ylab(type) + facet_wrap(~param_type,scales = "free",
                                                                    ncol=1) +
     theme(panel.grid = element_blank(),

@@ -199,12 +199,12 @@
       if(hier_type==1||hier_type==4||hier_type==5||hier_type==7) {
           //when restricting both, need to be very careful with how high and low restrictions are indexed
             pinned_pars[1] ~ normal(pin_vals,.01);
-            L_free[1] ~ normal(legis_pred[1,1:(num_legis-num_constrain_l),]*legis_x,1);
+            L_free[1] ~ normal(legis_pred[1,1:(num_legis-num_constrain_l),]*legis_x,5);
             //add basic integrated time-series prior
             if(T>1) {
               for(t in 2:T) {
                 pinned_pars[t] ~ normal(pin_vals,.01);
-                L_free[t] ~ normal(L_free[t-1] + legis_pred[t,1:(num_legis-num_constrain_l),]*legis_x,1);
+                L_free[t] ~ normal(L_free[t-1] + legis_pred[t,1:(num_legis-num_constrain_l),]*legis_x,5);
               }
             }
             
@@ -227,12 +227,12 @@
         //legis the same for all other hier_type combinations
           pinned_pars[1] ~ normal(pin_vals,.01);
 
-          L_free[1] ~ normal(0,1);
+          L_free[1] ~ normal(0,5);
           //add basic integrated time-series prior
           if(T>1) {
             for(t in 2:T) {
               pinned_pars[t] ~ normal(pin_vals,.01);
-              L_free[t] ~ normal(L_free[t-1],1);
+              L_free[t] ~ normal(L_free[t-1],5);
             }
           } 
           

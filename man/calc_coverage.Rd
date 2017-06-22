@@ -5,7 +5,7 @@
 \title{Function that computes how often the true value of the parameter is included within the 
 90/10 high posterior density interval}
 \usage{
-calc_coverage(est_param, true_param)
+calc_coverage(obj)
 }
 \arguments{
 \item{est_param}{A matrix of posterior draws of a parameter}
@@ -16,3 +16,4 @@ calc_coverage(est_param, true_param)
 Function that computes how often the true value of the parameter is included within the 
 90/10 high posterior density interval
 }
+
