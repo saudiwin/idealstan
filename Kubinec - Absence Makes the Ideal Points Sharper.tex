@@ -1,6 +1,7 @@
 %\input{|"curl -L 'https://virginia.box.com/shared/static/9120uqo655t0kwesti7t3exa7zsgbwdq.tex'"}
 \include{article_header}
 \title{Absence Makes the Ideal Points Sharper: Full-data IRT Models for Legislatures}
+\usepackage{amsmath,amsthm, amssymb, latexsym}
 \linespread{1.5}
 \begin{document}
 	
@@ -33,6 +34,32 @@
 	
 	
 	\section*{Absence-Inflated Hurdle Model}
+	
+	To handle the full range of strategic outcomes in legislative data, I propose embedding two IRT equations inside of a hurdle model. A hurdle model, which is similar to a zero-inflated model, accounts for one-way censoring in data by separately modeling a probability that an observation belongs to either the hurdle or to the full IRT model. 
+	
+	I begin with an IRT ordered logit model, which is known as a rating-scale model in the IRT literature.\footnote{A rating-scale model has fixed cutpoints for the entire data and matches the parameterization of the commonly-used ordered logit model. The graded-response model, on the other hand, estimates separate cutpoints for each bill. While it is an interesting extension of the basic model, it is not considered in this paper, although it can be estimated in the \texttt{idealstan} R package.} The $K$ category vote outcome $_k$ can be modeled as a likelihood function $L(\cdot)$ of $I$ legislator ideal points $x_i$, $J$ bill discrimination parameters $\beta_j$ and bill intercepts $\alpha_j$. Each equation is put inside $\zeta(\cdot)$, which represents the logit function. Formally, the full likelihood is:
+	
+					\[
+	L(\beta,\alpha,x|Y_{k}) = \prod_{n}^{i=1} \prod_{m}^{j=1}
+	\begin{cases} 
+	1 -  \zeta(x_{i}'\beta_j - \alpha_j - c_1) & \text{if } K = 0 \\
+	\zeta(x_{i}'\beta_j - \alpha_j - c_{k-1}) - \zeta(x_{i}'\beta_j - \alpha_j - c_{k})       & \text{if } 0 < k < K, \text{ and} \\
+	\zeta(x_{i}'\beta_j - \alpha_j - c_{k-1}) - 0 & \text{if } k=K
+	\end{cases}
+	\]
+	
+	The use of $K$ ordered outcomes allows the model to incorporate abstentions as a third category between yes and no votes. Because the cutpoints are estimated from the data, the actual width of the utility apportioned to voting in each category will vary from dataset to dataset. In the Bayesian framework with priors on variables described later, there is no risk of cutpoint collapse because any bills with zero abstentions will simply default to the prior.
+	
+	The bill intercepts also have a slightly different interpretation in this model. The intercept for each bill is actually $\alpha_j + c_k$ for all $K$ so that in effect the bill has an intercept for each category of vote outcome. Otherwise, however, the estimated parameters are interpreted identically to the standard IRT model \parencite{jackman2004}. The $x_i$ represent legislator ideal points and the bill midpoints (i.e., the line of indifference for each vote outcome) are equal to $\frac{\alpha_j + c_{k-1}}{\beta_j}$. Thus for a rollcall voting model with three distinct outcomes, yes, no and abstain, there will be two lines of indifference (or equiprobability contours) for each bill that separate legislators into groups that are more or less likely to vote in each vote category. For the binary case in which $K=2$, the cutpoints collapse into the bill intercepts and a standard binary logit model is estimated.
+	
+		 \[
+	L(\beta,\alpha,X,Q,\gamma,\omega,\phi|Y_{k},Y_{r}) = 
+	\prod_{n}^{i=1} \prod_{m}^{j=1}
+	\begin{cases}
+	\zeta({x_{i}'\gamma_j - \omega_j + \phi q_i}) & \text{if } r=0, \text{ and} \\
+	(1-\zeta({x_{i}'\gamma_j - \omega_j + \phi q_i}))L(\beta,\alpha,X|Y_{k1}) & \text{if } r=1
+	\end{cases}
+	\]
 	
 	\section*{Simulation Results}
 	
