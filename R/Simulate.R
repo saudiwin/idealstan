@@ -149,8 +149,10 @@ simulate_absence <- function(num_legis=10,num_bills=100,absence_discrim_sd=1,abs
 #' A function that loops over numbers of legislators/bills to provide a coherent over-view of 
 #' idealstan performance for a given model type.
 #' @export
-test_idealstan <- function(legis_range=c(10,100),simul_type='absence',is.ordinal=TRUE,...) {
-  
+test_idealstan <- function(legis_range=c(10,100),simul_type='absence',is.ordinal=TRUE,
+                           restrict_type='constrain_twoway',restrict_params='legis',
+                           num_constrain=1,fixtype='constrained',...) {
+
   if(simul_type=='absence') {
     simul_func <- simulate_absence
     if(is.ordinal==TRUE) {
@@ -159,17 +161,77 @@ test_idealstan <- function(legis_range=c(10,100),simul_type='absence',is.ordinal
       model_type <- 2
     }
   }
-  
-  all_sims <- lapply(seq(legis_range[1],legis_range[2],by=2), function(N){
+  full_range <- seq(legis_range[1],legis_range[2],by=2)
+  all_sims <- lapply(full_range, function(N){
     sim_data <- simul_func(num_legis=N,ordinal=is.ordinal)
+
+    true_param <- switch(restrict_params,
+                             legis=sim_data@simul_data$true_legis,
+                             discrim_reg=sim_data@simul_data$true_reg_discrim,
+                             discrim_abs=sim_data@simul_data$true_abs_discrim)
+  
+    high_par <- sort(true_param,decreasing=TRUE,index.return=TRUE)$ix[1:num_constrain]
+    low_par <- sort(true_param,index.return=TRUE)$ix[1:num_constrain]
+    high_par_est <- sort(true_param,decreasing=TRUE,index.return=TRUE)$x[1:num_constrain]
+    low_par_est <- sort(true_param,index.return=TRUE)$x[1:num_constrain]
+    return(list(sim_data=sim_data,
+                high_par=high_par,
+                low_par=low_par,
+                high_par_est=high_par_est,
+                low_par_est=low_par_est))
   })
+  
+  
   
   #See if this works
   
-  est_models <- lapply(all_sims,estimate_ideal,model_type=model_type,...)
-  est_models_vb <- lapply(all_sims,estimate_ideal,use_vb=TRUE,model_type=model_type)
+  est_models <- lapply(all_sims,function(m,...) {
+
+    estimate_ideal(m$sim_data,
+                   use_vb=FALSE,
+                   restrict_ind_high=c(m$high_par,m$low_par),
+                   pin_vals = c(m$high_par_est,m$low_par_est),
+                   fixtype=fixtype,
+                   restrict_params=restrict_params,
+                   restrict_type=restrict_type,
+                   ...)
+    
+    },...)
+
+  est_models_vb <-  lapply(all_sims,function(m,...) {
+    
+    estimate_ideal(m$sim_data,
+                   use_vb=TRUE,
+                   restrict_ind_high=c(m$high_par,m$low_par),
+                   pin_vals = c(m$high_par_est,m$low_par_est),
+                   fixtype=fixtype,
+                   restrict_params=restrict_params,
+                   restrict_type=restrict_type,
+                   ...)
+    
+  },...)
   
-  return(list('regular'=est_models,'vb'=est_models_vb))
+  est_models_cov <- lapply(est_models,calc_coverage)
+  est_models_vb_cov <- lapply(est_models_vb,calc_coverage)
+  
+  leg_compare <- lapply(1:length(est_models), function(i) {
+    data_frame(reg_cov=est_models_cov[[i]]$legis_cov,vb_cov=est_models_vb_cov[[i]]$legis_cov,
+               param='legis',iter=full_range[i])
+  }) %>% bind_rows()
+  
+  sigma_abs_compare <- lapply(1:length(est_models), function(i) {
+    data_frame(reg_cov=est_models_cov[[i]]$sigma_abs_cov,vb_cov=est_models_vb_cov[[i]]$sigma_abs_cov,
+               param='abs_discrim',iter=full_range[i])
+  }) %>% bind_rows()
+  
+  sigma_reg_compare <- lapply(1:length(est_models), function(i) {
+    data_frame(reg_cov=est_models_cov[[i]]$sigma_reg_cov,vb_cov=est_models_vb_cov[[i]]$sigma_reg_cov,
+               param='reg_discrim',iter=full_range[i])
+  }) %>% bind_rows()
+  
+  
+  
+  return(bind_rows(leg_compare,sigma_abs_compare,sigma_reg_compare))
   
 }
 
@@ -211,27 +273,40 @@ calc_rmse <- function(est_param,true_param) {
 #' @param est_param A matrix of posterior draws of a parameter
 #' @param true_param A matrix (one column) of true parameter values
 #' @export
-calc_coverage <- function(est_param,true_param) {
+calc_coverage <- function(obj) {
 
-  if(class(est_param)=='array') {
-    param_length <- dim(est_param)[3]
-    all_covs <- sapply(1:param_length, function(i) {
-      high <- quantile(est_param[,,i],.9)
-      low <- quantile(est_param[,,i],.1)
-      this_param <- (true_param[i] < high) && (true_param[i] > low)
-    })
-  } else if(class(est_param)=='matrix') {
-    param_length <- ncol(est_param)
-    all_covs <- sapply(1:param_length, function(i) {
-      high <- quantile(est_param[,i],.9)
-      low <- quantile(est_param[,i],.1)
-      this_param <- (true_param[i] < high) && (true_param[i] > low)
-    })
+  all_params <- rstan::extract(obj@stan_samples)
+  
+  all_true <- obj@vote_data@simul_data
+  
+  true_legis <- all_true$true_legis[as.numeric(row.names(obj@vote_data@vote_matrix)),]
+  true_sigma_reg <- all_true$true_abs_discrim[as.numeric(colnames(obj@vote_data@vote_matrix)),]
+  true_sigma_abs <- all_true$true_abs_discrim[as.numeric(colnames(obj@vote_data@vote_matrix)),] %>% as.numeric
+  
+  over_params <- function(est_param,true_param) {
+    if(class(est_param)=='array') {
+      param_length <- dim(est_param)[3]
+      all_covs <- sapply(1:param_length, function(i) {
+        high <- quantile(est_param[,,i],.9)
+        low <- quantile(est_param[,,i],.1)
+        this_param <- (true_param[i] < high) && (true_param[i] > low)
+      })
+    } else if(class(est_param)=='matrix') {
+      param_length <- ncol(est_param)
+      all_covs <- sapply(1:param_length, function(i) {
+        high <- quantile(est_param[,i],.9)
+        low <- quantile(est_param[,i],.1)
+        this_param <- (true_param[i] < high) && (true_param[i] > low)
+      })
+    }
+    return(all_covs)
   }
 
+
   
-  out_data <- data_frame(avg=all_covs,
-                         Params=1:param_length)
+  out_data <- list(legis_cov=over_params(all_params$L_full,true_legis),
+                         sigma_abs_cov=over_params(all_params$sigma_abs_full,true_sigma_abs),
+                         sigma_reg_cov=over_params(all_params$sigma_reg_full,true_sigma_reg))
   
   return(out_data)
 }
