@@ -1,7 +1,7 @@
 #' A function designed to simulate absence-inflated data with either binary or ordinal outcomes
 #' @export
-simulate_absence <- function(num_legis=10,num_bills=100,absence_discrim_sd=1,absence_diff_mean=0.5,
-                             reg_discrim_sd=4,
+simulate_absence <- function(num_legis=10,num_bills=100,absence_discrim_sd=5,absence_diff_mean=0.5,
+                             reg_discrim_sd=5,
                              ideal_pts_sd=1,prior_type='gaussian',ordinal=TRUE,ordinal_outcomes=3,
                              graded_response=FALSE,noise=0.05) {
   
@@ -36,7 +36,7 @@ simulate_absence <- function(num_legis=10,num_bills=100,absence_discrim_sd=1,abs
   # First simulate ideal points for legislators/bills
   # Bill difficulty parameters are fixed because they are not entirely interesting (they represent intercepts)
   
-  absence_diff <- prior_func(params=list(N=num_bills,mean=absence_diff_mean,sd=1)) 
+  absence_diff <- prior_func(params=list(N=num_bills,mean=absence_diff_mean,sd=5)) 
   
   
   #Discrimination parameters more important because they reflect how much information a bill contributes
@@ -51,7 +51,13 @@ simulate_absence <- function(num_legis=10,num_bills=100,absence_discrim_sd=1,abs
   # Use matrix multiplication because it's faster (unlike the stan method)
   
   #pr_absence <- plogis(t(t(ideal_pts %*% t(absence_discrim))-absence_diff + prior_func(params=list(N=num_bills,mean=0,sd=noise))) - 0.1*avg_particip)
-  pr_absence <- plogis(t(t(ideal_pts %*% t(absence_discrim))) -absence_diff - 0.1*avg_particip)
+  legis_points <- rep(1:num_legis,times=num_bills)
+  bill_points <- rep(1:num_bills,each=num_legis)
+  
+  pr_absence <- sapply(1:length(legis_points), function(n) {
+    ideal_pts[legis_points[n]]*absence_discrim[bill_points[n]] - absence_diff[bill_points[n]] + avg_particip[legis_points[n]]
+  }) %>% plogis
+    #plogis(t(t(ideal_pts %*% t(absence_discrim))) -absence_diff - 0.1*avg_particip)
   # Estimate prob of people voting on a bill (yes/no/abstain), then deflate that by the probability
   # of absence
   
@@ -62,40 +68,51 @@ simulate_absence <- function(num_legis=10,num_bills=100,absence_discrim_sd=1,abs
     # Standard model for ordinal outcomes is the rating-scale model, also called a "divide by total"
     # ordinal logit/categorical logit
     
-    reg_diff <- prior_func(params=list(N=num_bills,mean=0,sd=1))
+    reg_diff <- prior_func(params=list(N=num_bills,mean=0,sd=5))
     reg_discrim <- prior_func(params=list(N=num_bills,mean=0,sd=reg_discrim_sd)) %>% as.matrix
     
-    #pr_vote <-t(t(ideal_pts %*% t(reg_discrim))-reg_diff + prior_func(params=list(N=num_bills,mean=0,sd=noise)))
-    pr_vote <- t(t(ideal_pts %*% t(reg_discrim))-reg_diff)
-  cutpoints <- quantile(pr_vote,probs=seq(0,1,length.out = ordinal_outcomes+1))
-  cutpoints <- cutpoints[2:(length(cutpoints)-1)]
+    # First calculate probabilities of vote outcomes for all legislators
+    
+
+    pr_vote <- sapply(1:length(legis_points), function(n) {
+      ideal_pts[legis_points[n]]*reg_discrim[bill_points[n]] - reg_diff[bill_points[n]]
+    })
+    
+    # pr_vote <- t(t(ideal_pts %*% t(reg_discrim))-reg_diff)
+    # Now create cutpoints that are equally spaced in the ideal point space
+    cutpoints <- quantile(pr_vote,probs=seq(0,1,length.out = ordinal_outcomes+1))
+    cutpoints <- cutpoints[2:(length(cutpoints)-1)]
   
     #Generate outcomes by legislator
     
     cuts <- sapply(cutpoints,function(y) {
-      pr_vote - y
+      y - pr_vote
     },simplify='array')
     
-    probs_out <- apply(cuts,c(1,2),function(x) {
-      adj_out <- c(1,plogis(x)) - c(plogis(x),0)
-    })
+    # probs_out <- apply(cuts,c(1,2),function(x) {
+    #   adj_out <- c(1,plogis(x)) - c(plogis(x),0)
+    # })
+    
+    # Now we pick votes as a function of the number of categories
+    # This code should work for any number of categories
+    votes <- sapply(1:nrow(cuts), function(i) {
+      pr_logis <- plogis(cuts[i,])
+      pr_cuts <-  c(pr_logis[1],pr_logis[-1] - pr_logis[-length(pr_logis)])
+      pr_cuts <- c(pr_cuts,1-sum(pr_cuts))
+    }) %>% 
+      apply(2,function(r,col_length) {
+        sample(1:col_length,size=1,prob=r)
+      },col_length=nrow(.))
+    
   
     # now determine if the outcome. legislators only vote if they show up
-    # transform the absence matrix
+    # Absences are coded as category 4
     
-    absences <- apply(pr_absence,c(1,2),function(x) 
-        ifelse(x<0.5,1,NA))
-    votes <- apply(probs_out,3,function(x) {
-     each_bill <- apply(x,2,function(y) sample(length(y),size=1,prob = y)) 
-    })
+    combined <- if_else(pr_absence<0.5,votes,as.integer(ordinal_outcomes)+1L)
     
-    combined <- t(sapply(1:nrow(absences), function(x) {
-      output <- absences[x,] * votes[x,]
-    }))
+    # Create a vote matrix
     
-    # Finally, replace absences with a new category, 6
-    
-    combined <- replace(combined,is.na(combined),ordinal_outcomes+1)
+    combined <- matrix(combined,ncol=num_bills,nrow=num_legis,byrow = F)
     
     #Got the vote matrix, run ideal_data
     
