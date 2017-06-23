@@ -48,24 +48,24 @@ high_leg <- which(true_legis==max(true_legis))
 low_leg <- which(true_legis==min(true_legis))
 high_leg_pin <- max(true_legis)
 low_leg_pin <- min(true_legis)
-# 
-# restrict_ind_high=c(high_abs$ix[1:5],low_abs$ix[1:5]),
-# pin_vals = c(high_abs$x[1:5],low_abs$x[1:5]),
 
-#  test_out <- estimate_ideal(idealdata = one_model,
-#                             model_type = 4,
-#                             use_vb = FALSE,
-#                             ncores = 4,
-#                             nfix=1,
-#                             restrict_type='constrain_twoway',
-#                             restrict_params='legis',
-#                             restrict_ind_high=c(high_leg,low_leg),
-#                             pin_vals = c(high_leg_pin,low_leg_pin),
-#                             fixtype='pinned')
-#  coverages <- calc_coverage(test_out)
-#  hist_rhats(test_out)
-#  plot_sims(test_out)
-#  plot_sims(test_out,type='residual')
+# restrict_ind_high=c(high_abs$ix[1:5],low_abs$ix[1:5]),
+# pin_vals = c(high_abs$x[1:5],low_abs$x[1:5])
+
+ test_out <- estimate_ideal(idealdata = one_model,
+                            model_type = 4,
+                            use_vb = FALSE,
+                            ncores = 4,
+                            nfix=1,
+                            restrict_type='constrain_twoway',
+                            restrict_params='legis',
+                            restrict_ind_high=c(high_leg,low_leg),
+                            pin_vals = c(high_leg_pin,low_leg_pin),
+                            fixtype='pinned')
+ coverages <- calc_coverage(test_out)
+ hist_rhats(test_out)
+ plot_sims(test_out)
+ plot_sims(test_out,type='residual')
 # all_params <- rstan::extract(test_out@stan_samples)
 # all_abs_discrim <- apply(all_params$sigma_abs_full,2,mean)
 # all_reg_discrim <- apply(all_params$sigma_reg_full,2,mean)
