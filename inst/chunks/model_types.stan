@@ -14,7 +14,7 @@ if(model_type==1) {
       for(n in 1:N) {
         pi1[n] = sigma_reg_full[bb[n]] *  L_full[time[n],ll[n]] - B_yes[bb[n]];
         pi2[n] = sigma_abs_full[bb[n]] * L_full[time[n],ll[n]] - 
-                  B_abs[bb[n]] + avg_particip;
+                  B_abs[bb[n]];
         if(absence[n]==1) {
   	      1 ~ bernoulli_logit(pi2[n]);
         } else {
@@ -36,8 +36,7 @@ if(model_type==1) {
 
     for(n in 1:N) {
       pi1[n] = sigma_reg_full[bb[n]] *  L_full[time[n],ll[n]] - B_yes[bb[n]];
-      pi2[n] = sigma_abs_full[bb[n]] * L_full[time[n],ll[n]] - B_abs[bb[n]] + 
-      avg_particip;
+      pi2[n] = sigma_abs_full[bb[n]] * L_full[time[n],ll[n]] - B_abs[bb[n]];
       if(absence[n]==1) {
 	      1 ~ bernoulli_logit(pi2[n]);
       } else {
@@ -59,8 +58,7 @@ if(model_type==1) {
 
     for(n in 1:N) {
       pi1[n] = sigma_reg_full[bb[n]] *  L_full[time[n],ll[n]] - B_yes[bb[n]];
-      pi2[n] = sigma_abs_full[bb[n]] * L_full[time[n],ll[n]] - B_abs[bb[n]] + 
-      avg_particip;
+      pi2[n] = sigma_abs_full[bb[n]] * L_full[time[n],ll[n]] - B_abs[bb[n]];
       if(absence[n]==1) {
 	      1 ~ bernoulli_logit(pi2[n]);
       } else {
@@ -74,8 +72,7 @@ if(model_type==1) {
 
     for(n in 1:N) {
       pi1[n] = sigma_reg_full[bb[n]] *  L_full[time[n],ll[n]] - B_yes[bb[n]];
-      pi2[n] = sigma_abs_full[bb[n]] * L_full[time[n],ll[n]] - B_abs[bb[n]] + 
-      avg_particip;
+      pi2[n] = sigma_abs_full[bb[n]] * L_full[time[n],ll[n]] - B_abs[bb[n]];
       if(absence[n]==1) {
 	      1 ~ bernoulli_logit(pi2[n]);
       } else {
