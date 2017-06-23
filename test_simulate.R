@@ -24,7 +24,10 @@ test_out <- test_idealstan(legis_range=c(10,50),
                            restrict_type='constrain_twoway',
                            restrict_params='legis',
                            fixtype='pinned')
+
 # restrict_params <- test_out@vote_data@restrict_count
+ggplot(test_out,aes(y=estimate,x=iter)) + theme_minimal()+
+  stat_smooth(aes(colour=model_type)) + facet_wrap(~param,nrow = 3)
 # 
 # all_params <- extract_samples(test_out)
 # all_legis <- apply(all_params$L_full,3,mean)
