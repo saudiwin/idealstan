@@ -228,8 +228,8 @@ test_idealstan <- function(legis_range=c(10,100),simul_type='absence',is.ordinal
     
   },...)
   
-  est_models_cov <- lapply(est_models,calc_coverage)
-  est_models_vb_cov <- lapply(est_models_vb,calc_coverage)
+  est_models_cov <- lapply(est_models,calc_coverage) %>% bind_rows()
+  est_models_vb_cov <- lapply(est_models_vb,calc_coverage) %>% bind_rows()
   
   leg_compare <- lapply(1:length(est_models), function(i) {
     data_frame(reg_cov=est_models_cov[[i]]$legis_cov,vb_cov=est_models_vb_cov[[i]]$legis_cov,
