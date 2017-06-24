@@ -227,9 +227,11 @@ test_idealstan <- function(legis_range=c(10,100),simul_type='absence',is.ordinal
                    ...)
     
   },...)
+
   
   est_models_cov <- lapply(est_models,calc_coverage) %>% bind_rows()
   est_models_vb_cov <- lapply(est_models_vb,calc_coverage) %>% bind_rows()
+
   
   leg_compare <- lapply(1:length(est_models), function(i) {
     data_frame(reg_cov=est_models_cov[[i]]$legis_cov,vb_cov=est_models_vb_cov[[i]]$legis_cov,
@@ -257,7 +259,16 @@ test_idealstan <- function(legis_range=c(10,100),simul_type='absence',is.ordinal
 #' @param est_param A matrix of posterior draws of a parameter
 #' @param true_param A matrix (one column) of true parameter values
 #' @export
-calc_rmse <- function(est_param,true_param) {
+calc_rmse <- function(obj) {
+  all_params <- rstan::extract(obj@stan_samples)
+  
+  all_true <- obj@vote_data@simul_data
+  
+  true_legis <- all_true$true_legis[as.numeric(row.names(obj@vote_data@vote_matrix)),]
+  true_sigma_reg <- all_true$true_abs_discrim[as.numeric(colnames(obj@vote_data@vote_matrix)),]
+  true_sigma_abs <- all_true$true_abs_discrim[as.numeric(colnames(obj@vote_data@vote_matrix)),] %>% as.numeric
+  
+  over_params <- function(est_param,true_param) {
   
   if(class(est_param)=='array') {
     param_length <- dim(est_param)[3]
@@ -270,18 +281,24 @@ calc_rmse <- function(est_param,true_param) {
       this_param <- sqrt((est_param[,i] - true_param[i])^2)
     })
   }
-
-  
-  out_data1 <- data_frame(avg=apply(all_rmse,2,mean),
-                         high=apply(all_rmse,2,quantile,probs=0.9),
-                         low=apply(all_rmse,2,quantile,probs=0.1),
-                         total_avg=mean(all_rmse),
-                         total_high=quantile(all_rmse,0.9),
-                         total_low=quantile(all_rmse,0.1),
-                         Params=1:param_length)
-  
-
+    
+    out_data1 <- data_frame(avg=apply(all_rmse,2,mean),
+                            high=apply(all_rmse,2,quantile,probs=0.9),
+                            low=apply(all_rmse,2,quantile,probs=0.1),
+                            total_avg=mean(all_rmse),
+                            total_high=quantile(all_rmse,0.9),
+                            total_low=quantile(all_rmse,0.1),
+                            Params=1:param_length,
+                            est_type='RMSE')
     return(out_data1)
+  }
+  
+  
+  out_data <- list(legis_cov=over_params(all_params$L_full,true_legis),
+                   sigma_abs_cov=over_params(all_params$sigma_abs_full,true_sigma_abs),
+                   sigma_reg_cov=over_params(all_params$sigma_reg_full,true_sigma_reg))
+  
+  return(out_data)
 
 }
 
@@ -316,6 +333,7 @@ calc_coverage <- function(obj) {
         this_param <- (true_param[i] < high) && (true_param[i] > low)
       })
     }
+    all_covs <- data_frame(avg=all_covs,est_type='Coverage')
     return(all_covs)
   }
 
@@ -333,7 +351,17 @@ calc_coverage <- function(obj) {
 #' @param est_param A matrix of posterior draws of a parameter
 #' @param true_param A matrix (one column) of true parameter values
 #' @export
-calc_resid <- function(est_param,true_param) {
+calc_resid <- function(obj) {
+  
+  all_params <- rstan::extract(obj@stan_samples)
+  
+  all_true <- obj@vote_data@simul_data
+  
+  true_legis <- all_true$true_legis[as.numeric(row.names(obj@vote_data@vote_matrix)),]
+  true_sigma_reg <- all_true$true_abs_discrim[as.numeric(colnames(obj@vote_data@vote_matrix)),]
+  true_sigma_abs <- all_true$true_abs_discrim[as.numeric(colnames(obj@vote_data@vote_matrix)),] %>% as.numeric
+  
+  over_params <- function(est_param,true_param) {
 
   if(class(est_param)=='array') {
     param_length <- dim(est_param)[3]
@@ -354,9 +382,17 @@ calc_resid <- function(est_param,true_param) {
                           total_avg=mean(all_resid),
                           total_high=quantile(all_resid,0.9),
                           total_low=quantile(all_resid,0.1),
-                          Params=1:param_length)
+                          Params=1:param_length,
+                          est_type='Residuals')
   
 
     return(out_data1)
+  }
+  
+  out_data <- list(legis_cov=over_params(all_params$L_full,true_legis),
+                   sigma_abs_cov=over_params(all_params$sigma_abs_full,true_sigma_abs),
+                   sigma_reg_cov=over_params(all_params$sigma_reg_full,true_sigma_reg))
+  
+  return(out_data)
 
 }
