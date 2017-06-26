@@ -240,16 +240,17 @@ test_idealstan <- function(legis_range=c(10,100),simul_type='absence',is.ordinal
                            num_constrain=1,fixtype='constrained',...) {
 
   if(simul_type=='absence') {
-    simul_func <- simulate_absence
+    simul_func <- simulate_models
     if(is.ordinal==TRUE) {
       model_type <- 4
     } else {
       model_type <- 2
     }
+    absence <- T
   }
   full_range <- seq(legis_range[1],legis_range[2],by=2)
   all_sims <- lapply(full_range, function(N){
-    sim_data <- simul_func(num_legis=N,ordinal=is.ordinal)
+    sim_data <- simul_func(num_legis=N,ordinal=is.ordinal,absence=absence)
 
     true_param <- switch(restrict_params,
                              legis=sim_data@simul_data$true_legis,
