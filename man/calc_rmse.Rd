@@ -5,7 +5,7 @@
 \title{RMSE function for calculating individual RMSE values compared to true simulation scores
 Returns a data frame with RMSE plus quantiles.}
 \usage{
-calc_rmse(obj)
+calc_rmse(obj, rep = 1)
 }
 \arguments{
 \item{est_param}{A matrix of posterior draws of a parameter}
@@ -16,4 +16,3 @@ calc_rmse(obj)
 RMSE function for calculating individual RMSE values compared to true simulation scores
 Returns a data frame with RMSE plus quantiles.
 }
-

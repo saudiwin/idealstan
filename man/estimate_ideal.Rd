@@ -15,4 +15,3 @@ estimate_ideal(idealdata = NULL, model_type = 2, use_subset = FALSE,
 \description{
 Estimate an idealstan model using an idealdata object.
 }
-

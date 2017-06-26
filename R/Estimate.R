@@ -138,10 +138,11 @@ estimate_ideal <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_i
   billpoints <- rep(1:num_bills,each=num_legis)
   timepoints <- idealdata@time[billpoints]
   avg_particip <- apply(idealdata@vote_matrix,1,function(x) {
-    if(is.na(idealdata@abs_vote)) {
-      count_abs <- sum(is.na(x))
-    } else {
+    if(model_type %in% c(2,4,6)) {
       count_abs <- sum(x==idealdata@abs_vote,na.rm=TRUE)
+      
+    } else {
+      count_abs <- sum(is.na(x))
     }
     particip_rate <- 1 - (count_abs/length(x))
     return(particip_rate)
@@ -189,10 +190,11 @@ estimate_ideal <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_i
   billpoints <- rep(1:num_bills,each=num_legis)
   timepoints <- idealdata@time[billpoints]
   avg_particip <- apply(idealdata@vote_matrix,1,function(x) {
-    if(is.na(idealdata@abs_vote)) {
-      count_abs <- sum(is.na(x))
-    } else {
+    if(model_type %in% c(2,4,6)) {
       count_abs <- sum(x==idealdata@abs_vote,na.rm=TRUE)
+      
+    } else {
+      count_abs <- sum(is.na(x))
     }
     particip_rate <- 1 - (count_abs/length(x))
     return(particip_rate)

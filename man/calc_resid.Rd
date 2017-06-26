@@ -5,7 +5,7 @@
 \title{Residual function for checking estimated samples compared to true simulation scores
 Returns a data frame with residuals plus quantiles.}
 \usage{
-calc_resid(obj)
+calc_resid(obj, rep = 1)
 }
 \arguments{
 \item{est_param}{A matrix of posterior draws of a parameter}
@@ -16,4 +16,3 @@ calc_resid(obj)
 Residual function for checking estimated samples compared to true simulation scores
 Returns a data frame with residuals plus quantiles.
 }
-

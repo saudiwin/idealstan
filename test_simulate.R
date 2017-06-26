@@ -17,7 +17,7 @@ model_types <- c('absence')
 # low_leg <- which(true_legis==min(true_legis))
 # high_leg_pin <- max(true_legis)
 # low_leg_pin <- min(true_legis)
-test_out <- test_idealstan(legis_range=c(10,50),
+test_out <- test_idealstan(legis_range=c(10,12),
                            model_type = 4,
                            ncores = 4,
                            nfix=2,
@@ -26,6 +26,12 @@ test_out <- test_idealstan(legis_range=c(10,50),
                            fixtype='pinned')
 
 # restrict_params <- test_out@vote_data@restrict_count
+
+# Let's look at full Bayesian inference
+
+ggplot(test_out$est_models,aes(y=avg,x=iter)) + stat_smooth(method='lm') + 
+  facet_wrap(~ID,scales = 'free_y') + theme_minimal()
+
 ggplot(test_out,aes(y=estimate,x=iter)) + theme_minimal()+
   stat_smooth(aes(colour=model_type)) + facet_wrap(~param,nrow = 3)
 # 
@@ -37,10 +43,15 @@ ggplot(test_out,aes(y=estimate,x=iter)) + theme_minimal()+
 # plot_sims(test_out)
 # plot_sims(test_out,type='residual')
 # try again, this time identify the sigma absences
-one_model <- simulate_absence()
+one_model <- simulate_models(absence=F,absence_discrim_sd = 5,
+                              reg_discrim_sd = 5,
+                             diff_sd = 5)
 true_sigma_abs <- one_model@simul_data$true_abs_discrim
 high_abs <- sort(true_sigma_abs,decreasing=TRUE,index.return=TRUE)
 low_abs <- sort(true_sigma_abs,index.return=TRUE)
+true_sigma_reg <- one_model@simul_data$true_reg_discrim
+high_reg <- sort(true_sigma_reg,decreasing=TRUE,index.return=TRUE)
+low_reg <- sort(true_sigma_reg,index.return=TRUE)
 high_abs_pin <- max(true_sigma_abs)
 low_abs_pin <- min(true_sigma_abs)
 true_legis <- one_model@simul_data$true_legis
@@ -55,14 +66,15 @@ low_leg_pin <- min(true_legis)
 
  test_out <- estimate_ideal(idealdata = one_model,
 
-                            model_type = 4,
+                            model_type = 3,
                             use_vb = FALSE,
                             ncores = 4,
-                            nfix=1,
+                            nfix=4,
                             restrict_type='constrain_twoway',
-                            restrict_params='legis',
-                            restrict_ind_high=c(high_leg,low_leg),
-                            pin_vals = c(high_leg_pin,low_leg_pin),
+                            restrict_params='discrim_reg',
+                            restrict_ind_high=high_reg$ix[1:7],
+                            #restrict_ind_low = low_abs$ix[1:7],
+                            pin_vals = high_reg$x[1:7],
                             fixtype='pinned')
  coverages <- calc_coverage(test_out)
 
@@ -74,6 +86,9 @@ low_leg_pin <- min(true_legis)
  plot_sims(test_out)
  plot_sims(test_out,type='residual')
 
-# all_params <- rstan::extract(test_out@stan_samples)
-# all_abs_discrim <- apply(all_params$sigma_abs_full,2,mean)
-# all_reg_discrim <- apply(all_params$sigma_reg_full,2,mean)
+all_params <- rstan::extract(test_out@stan_samples)
+all_abs_discrim <- apply(all_params$sigma_abs_full,2,mean)
+all_reg_discrim <- apply(all_params$sigma_reg_full,2,mean)
+all_legis <- apply(all_params$L_full,3,mean)
+compare_legis <- data_frame(all_legis,high_pt=true_legis+2*apply(all_params$L_full,3,sd),true_legis,
+                            low_pt=true_legis-2*apply(all_params$L_full,3,sd))
