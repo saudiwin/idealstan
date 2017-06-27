@@ -1,0 +1,63 @@
+# These functions are implemented for compatibility with the 
+# rstantools package (and rstanarm)
+# They are S3 generic methods that are run on idealstan objects
+
+#' Generic function for drawing from the posterior predictive distribution
+#' of an idealstan object.
+#' 
+#' Given a fitted idealstan object, this function will create posterior 
+#' replications of the outcome variable (i.e. votes) for each posterior draw.
+#' Note that the resulting file could become quite large if each posterior draw 
+#' is used, this the default is set to only pull 100 replications, which is generally
+#' enough for most uses.
+#'
+#' @export
+#' @param object A fitted idealstan object
+#' @param draws Number of draws to use from the total number of posterior draws (number of chains x number of iterations)
+#' @param seed An optional seed to use for the replications to ensure reproducibility
+#' @return \code{posterior_predict} returns a matrix where the number of columns \eqn{K} is equal to the number of \code{draws}
+#' and the number of rows \eqn{J} is equal to the number of votes (scores) for all bills (items) in the IRT model. The 
+#' returned matrix will also have class "\code{ppd}" to indicate it contains draws from the posterior predictive distribution.
+#'
+#'
+#' @examples
+#' 
+#' \donttest{
+#' if (require("rstanarm")) {
+#'   fit <- stan_glm(mpg ~ wt + am, data = mtcars)
+#'   yrep <- posterior_predict(fit)
+#'   all.equal(ncol(yrep), nobs(fit))
+#'
+#'   nd <- data.frame(wt = mean(mtcars$wt), am = c(0, 1))
+#'   ytilde <- posterior_predict(fit, newdata = nd)
+#'   all.equal(ncol(ytilde), nrow(nd))
+#' }
+#' }
+#'
+#' # Also see help("posterior_predict", package = "rstanarm")
+posterior_predict.idealstan <- function(object,draws=100,seed=NULL) {
+
+  
+  all_params <- rstan::extract(object@stan_samples)
+  legis_points <- rep(1:dim(all_params$L_full)[3],times=ncol(all_params$sigma_reg_full))
+  bill_points <- rep(1:ncol(all_params$sigma_reg_full),each=dim(all_params$L_full)[3])
+  time_points <- object@vote_data@time[bill_points]
+  n_votes <- length(legis_points)
+  n_iters <- nrow(all_params$sigma_reg_full)
+  print(paste0('Processing posterior replications for ',n_votes,' votes using ',draws,
+               ' posterior samples out of a total of ',n_iters, ' samples.'))
+  
+  model_type <- object@model_type
+  
+  rep_func <- switch(as.character(model_type),`4`=.predict_abs_ord)
+  
+  out_predict <- rep_func(all_params=all_params,n_votes=n_votes,n_iters=n_iters,
+                          legis_points=legis_points,
+                          bill_points=bill_points,
+                          obj=object,
+                          time=time_points,
+                          draws=draws)
+  
+  class(out_predict) <- c('matrix','ppd')
+  return(out_predict)
+}

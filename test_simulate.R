@@ -47,8 +47,8 @@ ggplot(test_out,aes(y=estimate,x=iter)) + theme_minimal()+
 # try again, this time identify the sigma absences
 one_model <- simulate_models(absence=T,
                              ordinal=T,
-                             num_legis = 50,
-                             num_bills=50,
+                             num_legis = 100,
+                             num_bills=100,
                               absence_discrim_sd = .1,
                              reg_discrim_sd = .1,
                              absence_diff_mean = 0.5,
@@ -79,9 +79,12 @@ low_leg_pin <- min(true_legis)
                             nfix=4,
                             restrict_type='constrain_twoway',
                             restrict_params='legis',
-                            restrict_ind_high=c(high_leg$ix[1:4],low_leg$ix[1:4]),
-                            pin_vals = c(high_leg$x[1:4],low_leg$x[1:4]),
+                            restrict_ind_high=c(high_leg$ix[1:10],low_leg$ix[1:10]),
+                            pin_vals = c(high_leg$x[1:10],low_leg$x[1:10]),
                             fixtype='pinned')
+ all_predict <- posterior_predict(test_out)
+ ppc_bars(c(test_out@vote_data@vote_matrix),all_predict)
+ ppc_rootogram(c(test_out@vote_data@vote_matrix),all_predict)
  coverages <- calc_coverage(test_out)
 
   hist_rhats(test_out)

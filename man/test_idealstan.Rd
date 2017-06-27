@@ -5,7 +5,7 @@
 \title{A function that loops over numbers of legislators/bills to provide a coherent over-view of 
 idealstan performance for a given model type.}
 \usage{
-test_idealstan(legis_range = c(10, 100), simul_type = "absence",
+test_idealstan(legis_range = c(10, 100), by = 10, simul_type = "absence",
   is.ordinal = TRUE, restrict_type = "constrain_twoway",
   restrict_params = "legis", num_constrain = 1, fixtype = "constrained",
   ...)

@@ -273,10 +273,16 @@ simulate_models <- function(num_legis=50,num_bills=50,absence_discrim_sd=.1,abse
 #' A function that loops over numbers of legislators/bills to provide a coherent over-view of 
 #' idealstan performance for a given model type.
 #' @export
-test_idealstan <- function(legis_range=c(10,100),by=10,simul_type='absence',is.ordinal=TRUE,
+test_idealstan <- function(param_range=c(50,150),by=10,simul_type='absence',is.ordinal=TRUE,
                            restrict_type='constrain_twoway',restrict_params='legis',
-                           num_constrain=1,fixtype='constrained',...) {
+                           num_constrain=10,fixtype='pinned',...) {
 
+  #check for inconsistent parameters
+  
+  if(num_constrain>(min(param_range)-1)) {
+    stop('Please do not select num_constrain greater than the minimum of param_range.')
+  }
+  
   if(simul_type=='absence') {
     simul_func <- simulate_models
     if(is.ordinal==TRUE) {
@@ -286,9 +292,9 @@ test_idealstan <- function(legis_range=c(10,100),by=10,simul_type='absence',is.o
     }
     absence <- T
   }
-  full_range <- seq(legis_range[1],legis_range[2],by=by)
+  full_range <- seq(param_range[1],param_range[2],by=by)
   all_sims <- lapply(full_range, function(N){
-    sim_data <- simul_func(num_legis=N,ordinal=is.ordinal,absence=absence)
+    sim_data <- simul_func(num_legis=N,num_bills=N,ordinal=is.ordinal,absence=absence)
 
     true_param <- switch(restrict_params,
                              legis=sim_data@simul_data$true_legis,
