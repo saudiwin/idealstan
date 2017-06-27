@@ -3,26 +3,21 @@
 # They are S3 generic methods that are run on idealstan objects
 
 #' Generic function for drawing from the posterior predictive distribution
-#' of an idealstan object.
-#' 
-#' Given a fitted idealstan object, this function will create posterior 
-#' replications of the outcome variable (i.e. votes) for each posterior draw.
-#' Note that the resulting file could become quite large if each posterior draw 
-#' is used, this the default is set to only pull 100 replications, which is generally
-#' enough for most uses.
+#'
+#' Draw from the posterior predictive distribution of the outcome. See
+#' \code{\link[rstanarm]{posterior_predict.stanreg}} in the
+#' \pkg{\link[rstanarm]{rstanarm}} package for an example.
 #'
 #' @export
-#' @param object A fitted idealstan object
-#' @param draws Number of draws to use from the total number of posterior draws (number of chains x number of iterations)
-#' @param seed An optional seed to use for the replications to ensure reproducibility
-#' @param sample_votes The number of votes to sample from the total number of votes. Note that with large IRT datasets, the number of votes grows exponentially as a function of legislators and bills
-#' @return \code{posterior_predict} returns a matrix where the number of columns \eqn{K} is equal to the number of \code{draws}
-#' and the number of rows \eqn{J} is equal to the number of votes (scores) for all bills (items) in the IRT model. The 
-#' returned matrix will also have class "\code{ppd}" to indicate it contains draws from the posterior predictive distribution.
+#' @return \code{posterior_predict} methods should return a \eqn{D} by \eqn{N}
+#'   matrix, where \eqn{D} is the number of draws from the posterior predictive
+#'   distribution and \eqn{N} is the number of data points being predicted per
+#'   draw.
 #'
 #'
 #' @examples
-#' 
+#' # Example using rstanarm package:
+#' # posterior_predict method for 'stanreg' objects
 #' \donttest{
 #' if (require("rstanarm")) {
 #'   fit <- stan_glm(mpg ~ wt + am, data = mtcars)
@@ -36,10 +31,15 @@
 #' }
 #'
 #' # Also see help("posterior_predict", package = "rstanarm")
+#'
+posterior_predict <- function(object, ...) {
+  UseMethod("posterior_predict")
+}
+
+#' @export
 posterior_predict.idealstan <- function(object,draws=100,seed=NULL,
                                         sample_votes=NULL) {
 
-  
   all_params <- rstan::extract(object@stan_samples)
   legis_points <- rep(1:dim(all_params$L_full)[3],times=ncol(all_params$sigma_reg_full))
   bill_points <- rep(1:ncol(all_params$sigma_reg_full),each=dim(all_params$L_full)[3])
@@ -62,7 +62,7 @@ posterior_predict.idealstan <- function(object,draws=100,seed=NULL,
   
   rep_func <- switch(as.character(model_type),`4`=.predict_abs_ord)
   
-  out_predict <- rep_func(all_params=all_params,n_votes=n_votes,n_iters=n_iters,
+  out_predict <- rep_func(all_params=all_params,
                           legis_points=legis_points,
                           bill_points=bill_points,
                           obj=object,

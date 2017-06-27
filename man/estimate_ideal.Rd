@@ -2,7 +2,9 @@
 % Please edit documentation in R/Estimate.R
 \name{estimate_ideal}
 \alias{estimate_ideal}
-\title{Estimate an idealstan model using an idealdata object.}
+\title{Estimate an idealstan model using an idealdata object.
+This function will take a pre-processed \code{idealdata} vote/score matrix and run one of the available IRT models on the data using
+Stan's MCMC engine.}
 \usage{
 estimate_ideal(idealdata = NULL, model_type = 2, use_subset = FALSE,
   sample_it = FALSE, subset_party = NULL, subset_legis = NULL,
@@ -10,8 +12,16 @@ estimate_ideal(idealdata = NULL, model_type = 2, use_subset = FALSE,
   nfix = 1, restrict_params = "bill", pin_vals = NULL,
   restrict_ind_high = NULL, restrict_ind_low = NULL,
   restrict_type = "constrain_oneway", fixtype = "vb",
-  warmup = floor(niters/2), ncores = NULL, auto_id = FALSE, ...)
+  warmup = floor(niters/2), ncores = NULL, auto_id = FALSE,
+  reg_discrim_sd = 0.5, abs_discrim_sd = 0.5, ...)
+}
+\arguments{
+\item{reg_discrim_sd}{Set the standard deviation of the bimodal prior for the discrimination parameters in the vote/score model}
+
+\item{abs_discrim_sd}{Set the standard deviation of the bimodal prior for the discrimination parameters in the absence hurdle model}
 }
 \description{
 Estimate an idealstan model using an idealdata object.
+This function will take a pre-processed \code{idealdata} vote/score matrix and run one of the available IRT models on the data using
+Stan's MCMC engine.
 }

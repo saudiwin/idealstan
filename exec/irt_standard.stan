@@ -40,6 +40,9 @@ data {
   matrix[num_bills,SRX] srx_pred;
   matrix[num_bills,SAX] sax_pred;
   vector[num_fix_high] pin_vals;
+  real reg_discrim_sd;
+  real abs_discrim_sd;
+  real legis_sd;
 }
 
 transformed data {
@@ -139,7 +142,7 @@ model {
   }
   
   //priors for legislators and bill parameters
-  #include "modeling_statement.stan"
+  #include "modeling_statement_v2.stan"
   
   //all model types
 
