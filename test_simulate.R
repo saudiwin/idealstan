@@ -17,7 +17,9 @@ model_types <- c('absence')
 # low_leg <- which(true_legis==min(true_legis))
 # high_leg_pin <- max(true_legis)
 # low_leg_pin <- min(true_legis)
-test_out <- test_idealstan(legis_range=c(20,50),
+
+test_out <- test_idealstan(legis_range=c(10,50),
+
                            model_type = 4,
                            ncores = 4,
                            nfix=2,
