@@ -137,17 +137,7 @@ estimate_ideal <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_i
   legispoints <- rep(1:num_legis,times=num_bills)
   billpoints <- rep(1:num_bills,each=num_legis)
   timepoints <- idealdata@time[billpoints]
-  avg_particip <- apply(idealdata@vote_matrix,1,function(x) {
-    if(model_type %in% c(2,4,6)) {
-      count_abs <- sum(x==idealdata@abs_vote,na.rm=TRUE)
-      
-    } else {
-      count_abs <- sum(is.na(x))
-    }
-    particip_rate <- 1 - (count_abs/length(x))
-    return(particip_rate)
-  }) 
-  avg_particip <- scale(avg_particip)[,1]
+  avg_particip <- rep(1,num_legis)
   Y <- c(idealdata@vote_matrix)
 
   #Remove NA values, which should have been coded correctly in the make_idealdata function
@@ -189,17 +179,19 @@ estimate_ideal <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_i
   legispoints <- rep(1:num_legis,times=num_bills)
   billpoints <- rep(1:num_bills,each=num_legis)
   timepoints <- idealdata@time[billpoints]
-  avg_particip <- apply(idealdata@vote_matrix,1,function(x) {
-    if(model_type %in% c(2,4,6)) {
-      count_abs <- sum(x==idealdata@abs_vote,na.rm=TRUE)
-      
-    } else {
-      count_abs <- sum(is.na(x))
-    }
-    particip_rate <- 1 - (count_abs/length(x))
-    return(particip_rate)
-  }) 
-  avg_particip <- scale(avg_particip)[,1]
+
+    
+  #   apply(idealdata@vote_matrix,1,function(x) {
+  #     if(model_type %in% c(2,4,6)) {
+  #       count_abs <- sum(x==idealdata@abs_vote,na.rm=TRUE)
+  #       
+  #     } else {
+  #       count_abs <- sum(is.na(x))
+  #     }
+  #     particip_rate <- 1 - (count_abs/length(x))
+  #     return(particip_rate)
+  #   }) 
+  # avg_particip <- scale(avg_particip)[,1]
   Y <- c(idealdata@vote_matrix)
   
   #Remove NA values, which should have been coded correctly in the make_idealdata function

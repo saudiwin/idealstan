@@ -49,9 +49,12 @@ transformed data {
 	int num_constrain_sa;
 	int num_constrain_sr;
 	int Y_new[N];
-	if(model_type==2||model_type==4||model_type==6) {
+	if(model_type==4||model_type==6) {
 	  //count down one if model is inflated
 	  m = max(Y) - 1;
+	} else if(model_type==1||model_type==2) {
+	  //binary models
+	  m = 3;
 	} else {
 	  m= max(Y);
 	}
@@ -120,15 +123,19 @@ model {
   sigma_reg_x_cons ~ normal(0,5);
 
   avg_particip ~ normal(0,5);
-  
-  for(i in 1:(m-2)) {
-    steps_votes[i+1] - steps_votes[i] ~ normal(0,5); 
+  if(model_type>3 && model_type<8) {
+     for(i in 1:(m-2)) {
+    steps_votes[i+1] - steps_votes[i] ~ normal(0,10); 
   }
+  } else {
+    steps_votes ~ normal(0,5);
+  }
+ 
 	
-  B_yes ~ normal(0,5);
-  B_abs ~ normal(0,5);
+  B_yes ~ normal(0,10);
+  B_abs ~ normal(0,10);
   for(b in 1:num_bills) {
-  steps_votes_grm[b] ~ normal(0,5);
+  steps_votes_grm[b] ~ normal(0,10);
   }
   
   //priors for legislators and bill parameters

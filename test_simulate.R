@@ -17,7 +17,7 @@ model_types <- c('absence')
 # low_leg <- which(true_legis==min(true_legis))
 # high_leg_pin <- max(true_legis)
 # low_leg_pin <- min(true_legis)
-test_out <- test_idealstan(legis_range=c(10,12),
+test_out <- test_idealstan(legis_range=c(20,50),
                            model_type = 4,
                            ncores = 4,
                            nfix=2,
@@ -29,7 +29,7 @@ test_out <- test_idealstan(legis_range=c(10,12),
 
 # Let's look at full Bayesian inference
 
-ggplot(test_out$est_models,aes(y=avg,x=iter)) + stat_smooth(method='lm') + 
+ggplot(test_out$est_models,aes(y=avg,x=iter)) + stat_smooth() + 
   facet_wrap(~ID,scales = 'free_y') + theme_minimal()
 
 ggplot(test_out,aes(y=estimate,x=iter)) + theme_minimal()+
@@ -43,9 +43,14 @@ ggplot(test_out,aes(y=estimate,x=iter)) + theme_minimal()+
 # plot_sims(test_out)
 # plot_sims(test_out,type='residual')
 # try again, this time identify the sigma absences
-one_model <- simulate_models(absence=F,absence_discrim_sd = 5,
-                              reg_discrim_sd = 5,
-                             diff_sd = 5)
+one_model <- simulate_models(absence=T,
+                             ordinal=T,
+                             num_legis = 50,
+                             num_bills=50,
+                              absence_discrim_sd = .1,
+                             reg_discrim_sd = .1,
+                             absence_diff_mean = 0.5,
+                             diff_sd = .5)
 true_sigma_abs <- one_model@simul_data$true_abs_discrim
 high_abs <- sort(true_sigma_abs,decreasing=TRUE,index.return=TRUE)
 low_abs <- sort(true_sigma_abs,index.return=TRUE)
@@ -55,8 +60,8 @@ low_reg <- sort(true_sigma_reg,index.return=TRUE)
 high_abs_pin <- max(true_sigma_abs)
 low_abs_pin <- min(true_sigma_abs)
 true_legis <- one_model@simul_data$true_legis
-high_leg <- which(true_legis==max(true_legis))
-low_leg <- which(true_legis==min(true_legis))
+high_leg <- sort(true_legis,decreasing = T,index.return=T)
+low_leg <- sort(true_legis,index.return=T)
 high_leg_pin <- max(true_legis)
 low_leg_pin <- min(true_legis)
 
@@ -66,29 +71,30 @@ low_leg_pin <- min(true_legis)
 
  test_out <- estimate_ideal(idealdata = one_model,
 
-                            model_type = 3,
+                            model_type = 4,
                             use_vb = FALSE,
                             ncores = 4,
                             nfix=4,
                             restrict_type='constrain_twoway',
-                            restrict_params='discrim_reg',
-                            restrict_ind_high=high_reg$ix[1:7],
-                            #restrict_ind_low = low_abs$ix[1:7],
-                            pin_vals = high_reg$x[1:7],
+                            restrict_params='legis',
+                            restrict_ind_high=c(high_leg$ix[1:4],low_leg$ix[1:4]),
+                            pin_vals = c(high_leg$x[1:4],low_leg$x[1:4]),
                             fixtype='pinned')
  coverages <- calc_coverage(test_out)
 
-#  hist_rhats(test_out)
-#  plot_sims(test_out)
-#  plot_sims(test_out,type='residual')
+  hist_rhats(test_out)
+  plot_sims(test_out)
+  plot_sims(test_out,type='residual')
 
  hist_rhats(test_out)
  plot_sims(test_out)
  plot_sims(test_out,type='residual')
 
 all_params <- rstan::extract(test_out@stan_samples)
-all_abs_discrim <- apply(all_params$sigma_abs_full,2,mean)
-all_reg_discrim <- apply(all_params$sigma_reg_full,2,mean)
-all_legis <- apply(all_params$L_full,3,mean)
-compare_legis <- data_frame(all_legis,high_pt=true_legis+2*apply(all_params$L_full,3,sd),true_legis,
-                            low_pt=true_legis-2*apply(all_params$L_full,3,sd))
+all_abs_discrim <- apply(all_params$sigma_abs_full,2,median)
+all_reg_discrim <- apply(all_params$sigma_reg_full,2,median)
+all_legis <- apply(all_params$L_full,3,median)
+compare_legis <- data_frame(all_legis,high_pt=apply(all_params$L_full,3,quantile,.95),true_legis[as.numeric(row.names(test_out@vote_data@vote_matrix))],
+                            low_pt=apply(all_params$L_full,3,quantile,.05))
+compare_reg_discrim <- data_frame(all_reg_discrim,high_pt=apply(all_params$sigma_reg_free,2,quantile,.95),true_sigma_reg[as.numeric(colnames(test_out@vote_data@vote_matrix))],
+                            low_pt=apply(all_params$sigma_reg_free,2,quantile,.05))

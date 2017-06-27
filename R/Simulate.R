@@ -1,7 +1,7 @@
 #' A function designed to simulate absence-inflated data with either binary or ordinal outcomes
 #' @export
-simulate_models <- function(num_legis=10,num_bills=100,absence_discrim_sd=1,absence_diff_mean=0.5,
-                             reg_discrim_sd=1,diff_sd=1,
+simulate_models <- function(num_legis=50,num_bills=50,absence_discrim_sd=.1,absence_diff_mean=0.5,
+                             reg_discrim_sd=.1,diff_sd=.1,
                              ideal_pts_sd=1,prior_type='gaussian',ordinal=TRUE,ordinal_outcomes=3,
                              graded_response=FALSE,noise=0.05,absence=TRUE) {
   
@@ -40,8 +40,8 @@ simulate_models <- function(num_legis=10,num_bills=100,absence_discrim_sd=1,abse
   
   
   #Discrimination parameters more important because they reflect how much information a bill contributes
-  
-  absence_discrim <- prior_func(params=list(N=num_bills,mean=0,sd=absence_discrim_sd))
+  # need to make some of them negative to reflect the switching nature of policies
+  absence_discrim <- prior_func(params=list(N=num_bills,mean=1,sd=absence_discrim_sd)) * if_else(runif(num_bills)>0.5,1,-1)
   
   # Legislator ideal points common to both types of models (absence and regular)
   
@@ -58,7 +58,7 @@ simulate_models <- function(num_legis=10,num_bills=100,absence_discrim_sd=1,abse
     ideal_pts[legis_points[n]]*absence_discrim[bill_points[n]] - absence_diff[bill_points[n]]}) %>% plogis
   
   reg_diff <- prior_func(params=list(N=num_bills,mean=0,sd=diff_sd))
-  reg_discrim <- prior_func(params=list(N=num_bills,mean=0,sd=reg_discrim_sd))
+  reg_discrim <- prior_func(params=list(N=num_bills,mean=1,sd=reg_discrim_sd)) * if_else(runif(num_bills)>0.5,1,-1)
   
   pr_vote <- sapply(1:length(legis_points), function(n) {
     ideal_pts[legis_points[n]]*reg_discrim[bill_points[n]] - reg_diff[bill_points[n]]
@@ -158,6 +158,48 @@ simulate_models <- function(num_legis=10,num_bills=100,absence_discrim_sd=1,abse
       
     })
     
+  } else if(ordinal==FALSE & graded_response==FALSE & absence==FALSE) {
+    
+    #standard IRT 2-PL model
+
+    votes <- as.numeric(plogis(pr_vote)>0.5)
+    
+    
+    # now determine if the outcome. legislators only vote if they show up
+    # Absences are coded as category 4
+    
+    combined <- votes
+    
+    # Create a vote matrix
+    
+    combined <- matrix(combined,ncol=num_bills,nrow=num_legis,byrow = F)
+    
+    #Got the vote matrix, run ideal_data
+    
+    colnames(combined) <- paste0('Vote_',1:ncol(combined))
+    row.names(combined) <- paste0('Legis_',1:nrow(combined))
+    
+    out_data <- make_idealdata(vote_data=combined,legis_data=data_frame(legis.names=paste0('Legis_',1:nrow(combined)),
+                                                                        party='L',
+                                                                        true_legis=as.numeric(ideal_pts)),
+                               abs_vote = NULL,
+                               yes_vote = 1,
+                               no_vote = 0,
+                               abst_vote = NULL,
+                               simul_data=list(num_legis=num_legis,
+                                               num_bills=num_bills,
+                                               absence_discrim_sd=absence_discrim_sd,
+                                               absence_diff_mean=absence_diff_mean,
+                                               reg_discrim_sd=reg_discrim_sd,
+                                               ideal_pts_sd=ideal_pts_sd,
+                                               prior_func=prior_func,
+                                               ordinal=ordinal,
+                                               ordinal_outcomes=ordinal_outcomes,
+                                               graded_response=graded_response,
+                                               true_legis=ideal_pts,
+                                               true_reg_discrim=reg_discrim,
+                                               true_abs_discrim=absence_discrim),
+                               simulation=TRUE)
   } else if(ordinal==TRUE & graded_response==FALSE & absence==FALSE) {
     
     cutpoints <- quantile(pr_vote,probs=seq(0,1,length.out = ordinal_outcomes+1))
@@ -169,9 +211,7 @@ simulate_models <- function(num_legis=10,num_bills=100,absence_discrim_sd=1,abse
       pr_vote - y
     },simplify='array')
     
-    # probs_out <- apply(cuts,c(1,2),function(x) {
-    #   adj_out <- c(1,plogis(x)) - c(plogis(x),0)
-    # })
+
     
     # Now we pick votes as a function of the number of categories
     # This code should work for any number of categories
@@ -184,10 +224,8 @@ simulate_models <- function(num_legis=10,num_bills=100,absence_discrim_sd=1,abse
         all_pos <- which(cuts[i,]>0)+1
         return(as.integer(all_pos[1]))
       }
-      # pr_cuts <-  c(pr_logis[1],pr_logis[-1] - pr_logis[-length(pr_logis)])
-      # pr_cuts <- c(pr_cuts,1-sum(pr_cuts))
-      # return(which(pr_cuts==max(pr_cuts)))
     })
+
     
     
     # now determine if the outcome. legislators only vote if they show up
@@ -235,7 +273,7 @@ simulate_models <- function(num_legis=10,num_bills=100,absence_discrim_sd=1,abse
 #' A function that loops over numbers of legislators/bills to provide a coherent over-view of 
 #' idealstan performance for a given model type.
 #' @export
-test_idealstan <- function(legis_range=c(10,100),simul_type='absence',is.ordinal=TRUE,
+test_idealstan <- function(legis_range=c(10,100),by=10,simul_type='absence',is.ordinal=TRUE,
                            restrict_type='constrain_twoway',restrict_params='legis',
                            num_constrain=1,fixtype='constrained',...) {
 
@@ -248,7 +286,7 @@ test_idealstan <- function(legis_range=c(10,100),simul_type='absence',is.ordinal
     }
     absence <- T
   }
-  full_range <- seq(legis_range[1],legis_range[2],by=2)
+  full_range <- seq(legis_range[1],legis_range[2],by=by)
   all_sims <- lapply(full_range, function(N){
     sim_data <- simul_func(num_legis=N,ordinal=is.ordinal,absence=absence)
 
@@ -395,18 +433,22 @@ calc_coverage <- function(obj,rep=1) {
     if(class(est_param)=='array') {
       param_length <- dim(est_param)[3]
       all_covs <- sapply(1:param_length, function(i) {
-        # high <- quantile(est_param[,,i],.9)
-        # low <- quantile(est_param[,,i],.1)
+        high <- quantile(est_param[,,i],.95)
+        low <- quantile(est_param[,,i],.05)
         this_sd <- sd(est_param[,,i])
-        this_param <- (true_param[i] < (true_param[i]+1.96*this_sd)) && (true_param[i] > (true_param[i]-1.96*this_sd))
+        #this_param <- (true_param[i] < (true_param[i]+1.96*this_sd)) && (true_param[i] > (true_param[i]-1.96*this_sd))
+        this_param <- (true_param[i] < high) && (true_param[i] >low)
+        
       })
     } else if(class(est_param)=='matrix') {
       param_length <- ncol(est_param)
       all_covs <- sapply(1:param_length, function(i) {
-        # high <- quantile(est_param[,i],.9)
-        # low <- quantile(est_param[,i],.1)
+         high <- quantile(est_param[,i],.95)
+         low <- quantile(est_param[,i],.05)
         this_sd <- sd(est_param[,i])
-        this_param <- (true_param[i] < (true_param[i]+1.96*this_sd)) && (true_param[i] > (true_param[i]-1.96*this_sd))
+        #this_param <- (true_param[i] < (true_param[i]+1.96*this_sd)) && (true_param[i] > (true_param[i]-1.96*this_sd))
+        this_param <- (true_param[i] < high) && (true_param[i] > low)
+        
       })
     }
     all_covs <- data_frame(avg=as.numeric(all_covs),est_type='Coverage',iter=rep)
