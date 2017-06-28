@@ -316,43 +316,16 @@ plot_sims <- function(sims,type='RMSE') {
   stat_func <- switch(type,
                       RMSE=calc_rmse,
                       residual=calc_resid)
-  if(sims@model_type %in% c(2,4,6)) {
-  all_pos <- rstan::extract(sims@stan_samples)
-  est_params <- list(legis=all_pos$L_full,reg_discrim=all_pos$sigma_reg_full,
-                     abs_discrim=all_pos$sigma_abs_full)
-  true_params <- list(true_legis=sims@vote_data@simul_data$true_legis,
-                      true_reg_discrim=sims@vote_data@simul_data$true_reg_discrim,
-                      true_abs_discrim=sims@vote_data@simul_data$true_abs_discrim)
-  # Need to re-order based on constraints
-
-    if(sims@vote_data@param_fix==1) {
-      true_params$true_legis <- true_params$true_legis[as.numeric(row.names(sims@vote_data@vote_matrix)),]
-    } else if(sims@vote_data@param_fix==2) {
-      true_params$true_abs_discrim <- true_params$true_abs_discrim[as.numeric(colnames(sims@vote_data@vote_matrix)),]
-    } else if(sims@vote_data@param_fix==3) {
-      true_params$true_reg_discrim <- true_params$true_reg_discrim[as.numeric(colnames(sims@vote_data@vote_matrix)),]
-    }
-
   
-  over_params <- lapply(1:length(est_params), function(i) {
-
-              output <- stat_func(est_params[[i]],true_params[[i]])
-              }) %>% bind_rows() %>% 
-    mutate(param_id=paste0(c(rep('Legislator',sims@vote_data@simul_data$num_legis),
-                        rep('Regular Discrimination',sims@vote_data@simul_data$num_bills),
-                        rep('Absence Discrimination',sims@vote_data@simul_data$num_bills)),
-                        '_',Params),
-           param_type=c(rep('Legislator',sims@vote_data@simul_data$num_legis),
-                        rep('Regular Discrimination',sims@vote_data@simul_data$num_bills),
-                        rep('Absence Discrimination',sims@vote_data@simul_data$num_bills)))
-  }
-
-  ggplot(over_params,aes(y=avg,x=param_id,ymax=high,ymin=low)) + geom_pointrange(size=0.5) +
-    theme_minimal() + xlab("Parameters") + ylab(type) + facet_wrap(~param_type,scales = "free",
+  
+  stat_func(sims) %>% 
+    bind_rows(.id='ID') %>% 
+    ggplot(aes(y=avg,x=Params,ymax=high,ymin=low)) + geom_pointrange(size=1) +
+      theme_minimal() + xlab("Parameters") + ylab(type) + facet_wrap(~ID,scales = "free",
                                                                    ncol=1) +
-    theme(panel.grid = element_blank(),
+      theme(panel.grid = element_blank(),
           axis.text.x = element_blank()) + 
-    geom_hline(yintercept=0,linetype=3) 
+      geom_hline(yintercept=0,linetype=3) 
   
 }
 

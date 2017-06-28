@@ -95,17 +95,17 @@ simulate_models <- function(num_legis=50,num_bills=50,absence_discrim_sd=.1,abse
     # Now we pick votes as a function of the number of categories
     # This code should work for any number of categories
     votes <- sapply(1:nrow(cuts), function(i) {
-      if(all(cuts[i,]>0)) {
-        return(as.integer(ordinal_outcomes))
-      } else if(all(cuts[i,]<0)) {
-        return(1L)
-      } else {
-        all_pos <- which(cuts[i,]>0)+1
-        return(as.integer(all_pos[1]))
-      }
-      # pr_cuts <-  c(pr_logis[1],pr_logis[-1] - pr_logis[-length(pr_logis)])
-      # pr_cuts <- c(pr_cuts,1-sum(pr_cuts))
-      # return(which(pr_cuts==max(pr_cuts)))
+      this_cut <- cuts[i,]
+      
+      pr_bottom <- 1 - plogis(this_cut[1])
+      
+      mid_prs <- sapply(1:(length(this_cut)-1), function(c) {
+        plogis(this_cut[c]) - plogis(this_cut[c+1])
+      })
+      
+      pr_top <- plogis(this_cut[length(this_cut)])
+      
+      return(sample(1:(length(this_cut)+1),size=1,prob=c(pr_bottom,mid_prs,pr_top)))
     })
     
   
