@@ -36,8 +36,8 @@ simulate_models <- function(num_legis=50,num_bills=50,absence_discrim_sd=.1,abse
   # First simulate ideal points for legislators/bills
   # Bill difficulty parameters are fixed because they are not entirely interesting (they represent intercepts)
   
-  absence_diff <- prior_func(params=list(N=num_bills,mean=absence_diff_mean,sd=diff_sd)) 
-  
+  absence_diff <- prior_func(params=list(N=num_bills-1,mean=absence_diff_mean,sd=diff_sd)) 
+  absence_diff <- c(0,absence_diff)
   
   #Discrimination parameters more important because they reflect how much information a bill contributes
   # need to make some of them negative to reflect the switching nature of policies
@@ -57,7 +57,8 @@ simulate_models <- function(num_legis=50,num_bills=50,absence_discrim_sd=.1,abse
   pr_absence <- sapply(1:length(legis_points), function(n) {
     ideal_pts[legis_points[n]]*absence_discrim[bill_points[n]] - absence_diff[bill_points[n]]}) %>% plogis
   
-  reg_diff <- prior_func(params=list(N=num_bills,mean=0,sd=diff_sd))
+  reg_diff <- prior_func(params=list(N=num_bills-1,mean=0,sd=diff_sd))
+  reg_diff <- c(0,reg_diff)
   reg_discrim <- prior_func(params=list(N=num_bills,mean=1,sd=reg_discrim_sd)) * if_else(runif(num_bills)>0.5,1,-1)
   
   pr_vote <- sapply(1:length(legis_points), function(n) {

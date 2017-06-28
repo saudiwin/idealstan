@@ -99,8 +99,6 @@ parameters {
   vector[SAX] sigma_abs_x_cons;
   vector[num_bills-1] B_int_free;
   vector[num_bills-1] A_int_free;
-  vector[num_bills] B_yes;
-  vector[num_bills] B_abs;
   ordered[m-1] steps_votes;
   ordered[m-1] steps_votes_grm[num_bills];
   real avg_particip;
@@ -117,10 +115,10 @@ transformed parameters {
   
   //add in a paramter to the intercepts to prevent additive aliasing
 
-  B_int_full[1:(num_bills-1)] = B_int_free;
-  A_int_full[1:(num_bills-1)] = A_int_free;
-  B_int_full[num_bills] = -1*sum(B_int_free);
-  A_int_full[num_bills] = -1*sum(A_int_free); 
+  B_int_full[2:num_bills] = B_int_free;
+  A_int_full[2:num_bills] = A_int_free;
+  B_int_full[1] = 0.0;
+  A_int_full[1] = 0.0; 
   //combine constrained and unconstrained parameters
   #include "build_params.stan"
   
@@ -156,12 +154,13 @@ model {
   }
   
   //priors for legislators and bill parameters
-  #include "modeling_statement_v4.stan"
+  #include "modeling_statement_v5.stan"
   
   //all model types
 
   #include "model_types.stan"
 
+/* This file sets up the various types of IRT models that can be run in idealstan */
 
   
 }

@@ -77,20 +77,19 @@ low_leg_pin <- min(true_legis)
                             ncores = 4,
                             nfix=4,
                             restrict_type='constrain_twoway',
-                            restrict_params='legis',
-                            restrict_ind_high=c(high_leg$ix[1]),
-                            restrict_ind_low=low_leg$ix[1],
-                            pin_vals = c(high_abs$x[1]),
-                            fixtype='pinned',
-                            reg_discrim_sd = 10,
-                            abs_discrim_sd = 10,
-                            legis_sd=10,
-                            diff_sd=10,
-                            restrict_sd=10)
+                            restrict_params='discrim_abs',
+                            restrict_ind_high=high_abs$ix[1:5],
+                            restrict_ind_low=low_abs$ix[1:5],
+                            #pin_vals = c(high_abs$x[1],low_leg$x[1]),
+                            fixtype='constrained',
+                            reg_discrim_sd = 3,
+                            abs_discrim_sd = 3,
+                            legis_sd=1,
+                            diff_sd=3,
+                            restrict_sd=1)
  all_predict <- posterior_predict(test_out)
  bayesplot::ppc_bars(c(test_out@vote_data@vote_matrix),all_predict)
  
- bayesplot::ppc_rootogram(c(test_out@vote_data@vote_matrix),all_predict)
  coverages <- calc_coverage(test_out)
   lapply(coverages,function(x) mean(x$avg))
   apply(test_out@vote_data@vote_matrix,2,table)

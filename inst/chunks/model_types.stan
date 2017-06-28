@@ -4,7 +4,7 @@ if(model_type==1) {
   //2 PL no inflation
 
       for(n in 1:N) {
-        pi1[n] = sigma_reg_full[bb[n]] *  L_full[time[n],ll[n]] - B_yes[bb[n]];
+        pi1[n] = sigma_reg_full[bb[n]] *  L_full[time[n],ll[n]] - B_int_full[bb[n]];
       }
       Y_new ~ bernoulli_logit(pi1);
 
@@ -12,9 +12,9 @@ if(model_type==1) {
   //2 PL inflation
 
       for(n in 1:N) {
-        pi1[n] = sigma_reg_full[bb[n]] *  L_full[time[n],ll[n]] - B_yes[bb[n]];
+        pi1[n] = sigma_reg_full[bb[n]] *  L_full[time[n],ll[n]] - B_int_full[bb[n]];
         pi2[n] = sigma_abs_full[bb[n]] * L_full[time[n],ll[n]] - 
-                  B_abs[bb[n]];
+                  A_int_full[bb[n]];
         if(absence[n]==1) {
   	      1 ~ bernoulli_logit(pi2[n]);
         } else {
@@ -27,7 +27,7 @@ if(model_type==1) {
   //ratingscale no inflation
 
     for(n in 1:N) {
-      pi1[n] = sigma_reg_full[bb[n]] *  L_full[time[n],ll[n]] - B_yes[bb[n]];
+      pi1[n] = sigma_reg_full[bb[n]] *  L_full[time[n],ll[n]] - B_int_full[bb[n]];
         Y[n] ~ ordered_logistic(pi1[n],steps_votes);
       }
 
@@ -35,8 +35,8 @@ if(model_type==1) {
   //ratingscale inflation
 
     for(n in 1:N) {
-      pi1[n] = sigma_reg_full[bb[n]] *  L_full[time[n],ll[n]] - B_yes[bb[n]];
-      pi2[n] = sigma_abs_full[bb[n]] * L_full[time[n],ll[n]] - B_abs[bb[n]];
+      pi1[n] = sigma_reg_full[bb[n]] *  L_full[time[n],ll[n]] - B_int_full[bb[n]];
+      pi2[n] = sigma_abs_full[bb[n]] * L_full[time[n],ll[n]] - A_int_full[bb[n]];
       if(absence[n]==1) {
 	      1 ~ bernoulli_logit(pi2[n]);
       } else {
@@ -49,7 +49,7 @@ if(model_type==1) {
   //grm no inflation
 
     for(n in 1:N) {
-      pi1[n] = sigma_reg_full[bb[n]] *  L_full[time[n],ll[n]] - B_yes[bb[n]];
+      pi1[n] = sigma_reg_full[bb[n]] *  L_full[time[n],ll[n]] - B_int_full[bb[n]];
         Y[n] ~ ordered_logistic(pi1[n],steps_votes_grm[bb[n]]);
       }
 
@@ -57,8 +57,8 @@ if(model_type==1) {
   //grm inflation
 
     for(n in 1:N) {
-      pi1[n] = sigma_reg_full[bb[n]] *  L_full[time[n],ll[n]] - B_yes[bb[n]];
-      pi2[n] = sigma_abs_full[bb[n]] * L_full[time[n],ll[n]] - B_abs[bb[n]];
+      pi1[n] = sigma_reg_full[bb[n]] *  L_full[time[n],ll[n]] - B_int_full[bb[n]];
+      pi2[n] = sigma_abs_full[bb[n]] * L_full[time[n],ll[n]] - A_int_full[bb[n]];
       if(absence[n]==1) {
 	      1 ~ bernoulli_logit(pi2[n]);
       } else {
@@ -71,8 +71,8 @@ if(model_type==1) {
   //hurdle poisson
 
     for(n in 1:N) {
-      pi1[n] = sigma_reg_full[bb[n]] *  L_full[time[n],ll[n]] - B_yes[bb[n]];
-      pi2[n] = sigma_abs_full[bb[n]] * L_full[time[n],ll[n]] - B_abs[bb[n]];
+      pi1[n] = sigma_reg_full[bb[n]] *  L_full[time[n],ll[n]] - B_int_full[bb[n]];
+      pi2[n] = sigma_abs_full[bb[n]] * L_full[time[n],ll[n]] - A_int_full[bb[n]];
       if(absence[n]==1) {
 	      1 ~ bernoulli_logit(pi2[n]);
       } else {

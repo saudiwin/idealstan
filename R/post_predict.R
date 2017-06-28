@@ -12,9 +12,9 @@
     out_votes <- sapply(sample_votes, function(v) {
       #Loop over individual votes
       pr_absence <- plogis(all_params$sigma_abs_full[s,bill_points[v]]*all_params$L_full[s,time_points[v],legis_points[v]] - 
-                             all_params$B_abs[s,bill_points[v]])
+                             all_params$A_int_full[s,bill_points[v]])
       pr_vote <- all_params$sigma_reg_full[s,bill_points[v]]*all_params$L_full[s,time_points[v],legis_points[v]] - 
-                          all_params$B_yes[s,bill_points[v]]
+                          all_params$B_int_full[s,bill_points[v]]
       votes <- if_else(pr_absence>0.5,abs_cat,.sample_cut(pr_vote=pr_vote,
                                                           cutpoints=all_params$steps_votes[s,],
                                                           n_outcomes=length(all_votes)))

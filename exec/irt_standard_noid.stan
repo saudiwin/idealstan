@@ -87,6 +87,8 @@ parameters {
   ordered[m-1] steps_votes;
   ordered[m-1] steps_votes_grm[num_bills];
   real avg_particip;
+  vector[num_bills-1] B_int_free;
+  vector[num_bills-1] A_int_free;
 }
 
 transformed parameters {
@@ -94,10 +96,17 @@ transformed parameters {
   vector[num_legis] L_full[T];
   vector[num_bills] sigma_abs_full;
   vector[num_bills] sigma_reg_full;
+  vector[num_bills] B_int_full;
+  vector[num_bills] A_int_full;
   
   L_full=L_free;
   sigma_abs_full=sigma_abs_free;
   sigma_reg_full=sigma_reg_free;
+  
+  B_int_full[2:num_bills] = B_int_free;
+  A_int_full[2:num_bills] = A_int_free;
+  B_int_full[1] = 0.0;
+  A_int_full[1] = 0.0;
   
   
 }
@@ -125,8 +134,8 @@ model {
     steps_votes[i+1] - steps_votes[i] ~ normal(0,5); 
   }
 	
-  B_yes ~ normal(0,5);
-  B_abs ~ normal(0,5);
+  B_int_free ~ normal(0,5);
+  A_int_free ~ normal(0,5);
   for(b in 1:num_bills) {
   steps_votes_grm[b] ~ normal(0,5);
   }
