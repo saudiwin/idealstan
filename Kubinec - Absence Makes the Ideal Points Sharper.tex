@@ -70,7 +70,13 @@ The methodology that has been used so far to address this problem is multiple im
 	
 	The addition of parameters, and the dependent relationship between the hurdle model and the vote model, makes estimation more challenging. Estimating the parameters with Bayesian MCMC requires the usual identification restrictions on parameters \parencite{jackman2004,gelman2005}, but the additional parameters may require further constraints in order to identify the model. There is no easy or straightforward method to identify this model as it depends in part on the presence of information in the model about both bills and legislators. However, the usage of usual identification methods, such as constraining polarity and fixing parameters is able to identify most models as long as the number of bills and legislators is suitably large (i.e., at least ten).
 	
+	The following priors are put on all of the parameters:
 	
+	\[
+	c_k - c_{k-1} ~ N(0,5)
+		
+	
+	\]
 	
 	
 	
