@@ -1,4 +1,4 @@
-#' This is the constructor fucnction for the idealdata object, which is necessary to estimate an idealstan model.
+#' Create data to run IRT model
 #' @import rstan
 #' @import dplyr
 #' @importFrom tidyr gather spread
@@ -7,6 +7,15 @@
 #' @import Rcpp
 #' @import methods
 #' @useDynLib idealstan, .registration = TRUE
+#' 
+#' To run an IRT model using \code{idealstan}, you must first process your data using the \code{make_ideal} function. 
+#' 
+#' @param vote_data Your legislator-bill (person-item) matrix in which legislators (persons) are in rows and 
+#'    bills (items) are in columns. The cells of the matrix should contain consecutive integers \eqn{1,...K} for 
+#'    ordinal \eqn{K} outcomes or integers \eqn{[0,1]} for a binary outcome in which 0 equals no (or incorrect) and 
+#'    1 equals yes (or correct). If absences are included, they should be coded as the highest category \eqn{K+1} for
+#'    ordinal outcomes and 2 for binary outcomes.
+#' 
 #' @export
 make_idealdata <- function(vote_data=NULL,simul_data=NULL,
                            legis_cov=NULL,bill_cov_reg=NULL,
