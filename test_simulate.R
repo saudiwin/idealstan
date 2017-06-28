@@ -47,8 +47,8 @@ ggplot(test_out,aes(y=estimate,x=iter)) + theme_minimal()+
 # try again, this time identify the sigma absences
 one_model <- simulate_models(absence=T,
                              ordinal=T,
-                             num_legis = 30,
-                             num_bills=30,
+                             num_legis = 50,
+                             num_bills=50,
                               absence_discrim_sd = .25,
                              reg_discrim_sd = .25,
                              absence_diff_mean = 0.5,
@@ -76,28 +76,29 @@ low_leg_pin <- min(true_legis)
                             use_vb = FALSE,
                             ncores = 4,
                             nfix=4,
-                            restrict_type='constrain_oneway',
-                            restrict_params='discrim_abs',
-                            restrict_ind_high=c(high_abs$ix[1]),
+                            restrict_type='constrain_twoway',
+                            restrict_params='legis',
+                            restrict_ind_high=c(high_leg$ix[1]),
+                            restrict_ind_low=low_leg$ix[1],
                             pin_vals = c(high_abs$x[1]),
-                            fixtype='constrained',
-                            reg_discrim_sd = .25,
-                            abs_discrim_sd = .25,
-                            legis_sd=1)
+                            fixtype='pinned',
+                            reg_discrim_sd = 10,
+                            abs_discrim_sd = 10,
+                            legis_sd=10,
+                            diff_sd=10,
+                            restrict_sd=10)
  all_predict <- posterior_predict(test_out)
- ppc_bars(c(test_out@vote_data@vote_matrix),all_predict)
+ bayesplot::ppc_bars(c(test_out@vote_data@vote_matrix),all_predict)
  
- ppc_rootogram(c(test_out@vote_data@vote_matrix),all_predict)
+ bayesplot::ppc_rootogram(c(test_out@vote_data@vote_matrix),all_predict)
  coverages <- calc_coverage(test_out)
   lapply(coverages,function(x) mean(x$avg))
+  apply(test_out@vote_data@vote_matrix,2,table)
+  apply(test_out@vote_data@vote_matrix,1,table)
   hist_rhats(test_out)
   plot_sims(test_out)
   plot_sims(test_out,type='residual')
 
- hist_rhats(test_out)
- plot_sims(test_out)
- 
- plot_sims(test_out,type='residual')
 
 all_params <- rstan::extract(test_out@stan_samples)
 all_abs_discrim <- apply(all_params$sigma_abs_full,2,median)

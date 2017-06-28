@@ -43,6 +43,8 @@ data {
   real reg_discrim_sd;
   real abs_discrim_sd;
   real legis_sd;
+  real diff_sd;
+  real restrict_sd;
 }
 
 transformed data {
@@ -95,6 +97,8 @@ parameters {
   vector[LX] legis_x_cons;
   vector[SRX] sigma_reg_x_cons;
   vector[SAX] sigma_abs_x_cons;
+  vector[num_bills-1] B_int_free;
+  vector[num_bills-1] A_int_free;
   vector[num_bills] B_yes;
   vector[num_bills] B_abs;
   ordered[m-1] steps_votes;
@@ -107,6 +111,16 @@ transformed parameters {
   vector[num_legis] L_full[T];
   vector[num_bills] sigma_abs_full;
   vector[num_bills] sigma_reg_full;
+  
+  vector[num_bills] B_int_full;
+  vector[num_bills] A_int_full;
+  
+  //add in a paramter to the intercepts to prevent additive aliasing
+
+  B_int_full[1:(num_bills-1)] = B_int_free;
+  A_int_full[1:(num_bills-1)] = A_int_free;
+  B_int_full[num_bills] = -1*sum(B_int_free);
+  A_int_full[num_bills] = -1*sum(A_int_free); 
   //combine constrained and unconstrained parameters
   #include "build_params.stan"
   
@@ -128,21 +142,21 @@ model {
   avg_particip ~ normal(0,5);
   if(model_type>3 && model_type<8) {
      for(i in 1:(m-2)) {
-    steps_votes[i+1] - steps_votes[i] ~ normal(0,10); 
+    steps_votes[i+1] - steps_votes[i] ~ normal(0,5); 
   }
   } else {
     steps_votes ~ normal(0,5);
   }
  
 	
-  B_yes ~ normal(0,10);
-  B_abs ~ normal(0,10);
+  B_int_free ~ normal(0,diff_sd);
+  A_int_free ~ normal(0,diff_sd);
   for(b in 1:num_bills) {
-  steps_votes_grm[b] ~ normal(0,10);
+  steps_votes_grm[b] ~ normal(0,5);
   }
   
   //priors for legislators and bill parameters
-  #include "modeling_statement_v2.stan"
+  #include "modeling_statement_v4.stan"
   
   //all model types
 

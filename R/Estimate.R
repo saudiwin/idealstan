@@ -120,9 +120,11 @@ make_idealdata <- function(vote_data=NULL,simul_data=NULL,
 #' Estimate an idealstan model using an idealdata object.
 #' This function will take a pre-processed \code{idealdata} vote/score matrix and run one of the available IRT models on the data using
 #' Stan's MCMC engine.
-#' @param reg_discrim_sd Set the standard deviation of the bimodal prior for the discrimination parameters in the vote/score model
-#' @param abs_discrim_sd Set the standard deviation of the bimodal prior for the discrimination parameters in the absence hurdle model
-#' @param legis_sd Set the standard deviation for the legislators (persons) parameters
+#' @param reg_discrim_sd Set the prior standard deviation of the bimodal prior for the discrimination parameters in the vote/score model
+#' @param abs_discrim_sd Set the prior standard deviation of the bimodal prior for the discrimination parameters in the absence hurdle model
+#' @param legis_sd Set the prior standard deviation for the legislators (persons) parameters
+#' @param diff_sd Set the prior standard deviation for the bill (item) intercepts.
+#' @param restrict_sd Set the prior standard deviation for constrained parameters
 #' @export
 estimate_ideal <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=FALSE,
                            subset_party=NULL,subset_legis=NULL,sample_size=20,
@@ -135,6 +137,8 @@ estimate_ideal <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_i
                            reg_discrim_sd=0.5,
                            abs_discrim_sd=0.5,
                            legis_sd=1,
+                           diff_sd=0.5,
+                           restrict_sd=5,
                            ...) {
   
   
@@ -184,7 +188,9 @@ estimate_ideal <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_i
                     particip=avg_particip,
                     model_type=model_type,
                     reg_discrim_sd=reg_discrim_sd,
-                    abs_discrim_sd=abs_discrim_sd)
+                    abs_discrim_sd=abs_discrim_sd,
+                    diff_sd=diff_sd,
+                    restrict_sd=restrict_sd)
   
   idealdata <- id_model(object=idealdata,fixtype=fixtype,model_type=model_type,this_data=this_data,
                         nfix=nfix,restrict_params=restrict_params,restrict_ind_high=restrict_ind_high,
@@ -251,7 +257,9 @@ estimate_ideal <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_i
                     model_type=model_type,
                     pin_vals=pin_vals,
                     reg_discrim_sd=reg_discrim_sd,
-                    abs_discrim_sd=abs_discrim_sd)
+                    abs_discrim_sd=abs_discrim_sd,
+                    diff_sd=diff_sd,
+                    restrict_sd=restrict_sd)
 
   outobj <- sample_model(object=idealdata,nchains=nchains,niters=niters,warmup=warmup,ncores=ncores,
                          this_data=this_data,use_vb=use_vb,...)
