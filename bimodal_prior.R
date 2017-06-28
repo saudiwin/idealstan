@@ -27,3 +27,15 @@ ggmcmc::ggs_density(ggmcmc::ggs(samples))+theme_minimal()
 
 target += log_sum_exp(normal_lpdf(sigma_abs_free|-1,abs_discrim_sd),normal_lpdf(sigma_abs_free|1,abs_discrim_sd));
 target += log_sum_exp(normal_lpdf(sigma_reg_free|-1,reg_discrim_sd),normal_lpdf(sigma_reg_free|1,reg_discrim_sd));
+
+for(b in 1:rows(sigma_abs_free)) {
+  target += log_mix(0.5,
+                    normal_lpdf(sigma_abs_free[b] | 1,abs_discrim_sd),
+                    normal_lpdf(sigma_abs_free[b] | -1,abs_discrim_sd));
+}
+
+for(b in 1:rows(sigma_reg_free)) {
+  target += log_mix(0.5,
+                    normal_lpdf(sigma_reg_free[b] | 1,reg_discrim_sd),
+                    normal_lpdf(sigma_reg_free[b] | -1,reg_discrim_sd));
+}
