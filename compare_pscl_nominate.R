@@ -77,6 +77,7 @@ estimated_full <-
                  abs_discrim_sd = 5,
                  reg_discrim_sd = 5,
                  legis_sd = 5,
+                 diff_sd=5,
                  seed=84520)
 output <- rstan::extract(estimated_full@stan_samples)
 abs_pts <- data_frame(ideal_pts=apply(output$L_full,3,median),
