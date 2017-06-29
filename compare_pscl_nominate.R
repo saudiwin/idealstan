@@ -65,7 +65,7 @@ idealdata <-
 estimated_full <-
   estimate_ideal(idealdata = idealdata,
                  model_type = 2,
-                 use_vb = F,
+                 use_vb = T,
                  ncores=4,
                  nfix=1,
                  restrict_type='constrain_oneway',
@@ -138,3 +138,46 @@ big_diff %>% ggplot((aes(y=ideal_pts_std,ymin=low_pt_std,ymax=high_pt_std))) +
                 y=ideal_pts*2.5)) +
   scale_colour_brewer(palette='Set1',name="") +
   guides(shape='none')
+
+# Now we want to look at the bill pts
+require(readr)
+bills_data <- read_csv('rollcall_senate_114.csv') %>% 
+  mutate(vote_id=paste0('Vote_',1:n()))
+bills <- as_data_frame(output$sigma_abs_full)
+names(bills) <- paste0('Vote_',1:ncol(bills))
+
+bills <- mutate(bills,iter=1:n()) %>% gather(bill_name,estimate,-iter) %>% 
+  left_join(bills_data,by=c('bill_name'='vote_id')) %>% 
+  group_by(bill_name) %>% 
+  mutate(abs_ideal=median(estimate),
+         high_ideal=quantile(estimate,.95),
+         low_ideal=quantile(estimate,.05),
+         high_nom=mid.dim1 + 1.96*spread.dim1,
+         low_nom=mid.dim1 - 1.96*spread.dim2) 
+# 
+# bills %>% distinct(bill_name,.keep_all=T) %>% 
+#   gather(model_type,midpoint,estimate,mid.dim1) %>%
+#   ggplot(aes(y=midpoint,x=reorder(bill_name,midpoint),colour=model_type,shape=model_type)) +
+#     geom_pointrange(aes(ymin=position=position_dodge(width=0.3),
+#                     size=0.15) + 
+#     coord_flip() + theme_minimal() +
+#     theme(panel.grid = element_blank()) +
+#     xlab('Ideal Point Scores (Liberal to Conservative)') +
+#     ylab('') +
+#     scale_colour_brewer(palette='Accent',name="")
+require(stargazer)
+bills %>% 
+  ungroup %>% 
+  distinct(bill_name,.keep_all=T) %>% 
+  arrange(abs_ideal) %>% slice(1:10) %>% 
+  select(description,date) %>% 
+  write_csv('most_cons_bills.csv')
+
+bills %>% 
+  ungroup %>% 
+  distinct(bill_name,.keep_all=T) %>% 
+  arrange(desc(abs_ideal)) %>% slice(1:10) %>% 
+  select(description,date) %>% 
+  write_csv('most_lib_bills.csv')
+
+
