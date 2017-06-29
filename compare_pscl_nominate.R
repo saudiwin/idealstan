@@ -36,16 +36,15 @@ wnominate_pts <- data_frame(ideal_pts=wnominate_model$legislators$coord1D,
                             model_type='W-NOMINATE')
 
 # now run idealstan
-
+newdata <- readKH(file='senate_114.ord')
 to_use <- newdata$votes[-1, ]
 newdata$legis.data <- newdata$legis.data[-1, ]
 to_use <- apply(to_use, 2, function(x) {
   y <- recode(
     x,
-    `1` = 3L,
+    `1` = 2L,
     `6` = 1L,
-    `7` = 2L,
-    `9` = 4L
+    `9` = 3L
   )
   return(y)
 })
@@ -56,26 +55,25 @@ idealdata <-
   make_idealdata(
     vote_data = to_use,
     legis_data = newdata$legis.data,
-    abs_vote = 4,
-    yes_vote = 3,
+    abs_vote = 3,
+    yes_vote = 2,
     no_vote = 1,
-    abst_vote = 2,
-    ordinal = TRUE
+    ordinal = F,
+    exclude_level = 7
   )
 
 estimated_full <-
   estimate_ideal(idealdata = idealdata,
-                 model_type = 4,
-                 use_vb = T,
+                 model_type = 2,
+                 use_vb = F,
                  ncores=4,
                  nfix=1,
-                 restrict_type='constrain_twoway',
+                 restrict_type='constrain_oneway',
                  restrict_params='legis',
-                 restrict_ind_high = c(which(row.names(to_use)=='SASSE (R NE)'),
-                                       which(row.names(to_use)=='SANDERS (Indep VT)')),
+                 restrict_ind_high = c(which(row.names(to_use)=='SASSE (R NE)')),
                  auto_id=F,
                  fixtype='pinned',
-                 pin_vals=c(1,-1),
+                 pin_vals=1,
                  abs_discrim_sd = 5,
                  reg_discrim_sd = 5,
                  legis_sd = 5,
@@ -114,9 +112,28 @@ ggsave('all_perf.png',width=7,height=10,scale=1.1,units='in')
 # Identify those legislators who show biggest discrepancies.
 
 big_diff <- group_by(all_perf,legislators) %>% arrange(legislators,model_type) %>% 
-  mutate(total_diff=max(abs(ranks[1]-ranks[2]), abs(ranks[1]-ranks[3]))) %>% 
+  mutate(total_diff=if_else(max(abs(ranks[2]-ranks[1]))>max(abs(ranks[3]-ranks[1])),
+                            ranks[2]-ranks[1],ranks[3]-ranks[1])) %>% 
     ungroup() %>% 
-           arrange(desc(total_diff)) %>% 
-           slice(1:30)
+           arrange(desc(abs(total_diff))) %>% 
+           slice(1:30) %>% 
+  group_by(legislators) %>% 
+  mutate(labels=ifelse(sample(1:3,size = 1)==model_type,legislators,NA)) %>% 
+  ungroup %>% 
+         mutate(legislators=factor(legislators,levels=unique(legislators)),
+                rank_labels=if_else(total_diff>0,paste0('Rank +',as.integer(total_diff)),
+                                    paste0('Rank ',as.integer(total_diff))),
+                rank_labels=if_else(model_type=='IRT 2-PL',rank_labels,''))
           
-compare_diff <- filter(all_perf, legislators %in% big_diff$legis_names) %>% arrange(legislators)
+big_diff %>% ggplot((aes(y=ideal_pts_std,ymin=low_pt_std,ymax=high_pt_std))) +
+  geom_pointrange(aes(color=model_type,shape=model_type,x=factor(legislators)),fill=NA,position=position_dodge(width=.5),
+                  size=0.5) + 
+  theme_minimal() +
+  theme(panel.grid = element_blank(),
+        axis.text.x=element_text(angle=90,hjust=1)) +
+  xlab('Positive Rank Changes Indicate More Conservative and Vice Versa') +
+  ylab('') + 
+  geom_text(aes(label=rank_labels,x=legislators,
+                y=ideal_pts*2.5)) +
+  scale_colour_brewer(palette='Set1',name="") +
+  guides(shape='none')

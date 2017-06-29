@@ -59,7 +59,7 @@ transformed data {
 	  m = max(Y) - 1;
 	} else if(model_type==1||model_type==2) {
 	  //binary models
-	  m = 3;
+	  m = 2;
 	} else {
 	  m= max(Y);
 	}
