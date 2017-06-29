@@ -139,6 +139,8 @@ big_diff %>% ggplot((aes(y=ideal_pts_std,ymin=low_pt_std,ymax=high_pt_std))) +
   scale_colour_brewer(palette='Set1',name="") +
   guides(shape='none')
 
+ggsave('big_diff.png',width=10,height=5,units='in',scale=1.1)
+
 # Now we want to look at the bill pts
 require(readr)
 bills_data <- read_csv('rollcall_senate_114.csv') %>% 
