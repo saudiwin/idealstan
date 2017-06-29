@@ -76,9 +76,6 @@ simulate_models <- function(num_legis=50,num_bills=50,absence_discrim_sd=.1,abse
     # Standard model for ordinal outcomes is the rating-scale model, also called a "divide by total"
     # ordinal logit/categorical logit
     
-    # First calculate probabilities of vote outcomes for all legislators
-    
-    # pr_vote <- t(t(ideal_pts %*% t(reg_discrim))-reg_diff)
     # Now create cutpoints that are equally spaced in the ideal point space
     cutpoints <- quantile(pr_vote,probs=seq(0,1,length.out = ordinal_outcomes+1))
     cutpoints <- cutpoints[2:(length(cutpoints)-1)]
@@ -88,10 +85,7 @@ simulate_models <- function(num_legis=50,num_bills=50,absence_discrim_sd=.1,abse
     cuts <- sapply(cutpoints,function(y) {
       pr_vote - y
     },simplify='array')
-    
-    # probs_out <- apply(cuts,c(1,2),function(x) {
-    #   adj_out <- c(1,plogis(x)) - c(plogis(x),0)
-    # })
+
 
     # Now we pick votes as a function of the number of categories
     # This code should work for any number of categories

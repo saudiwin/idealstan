@@ -189,6 +189,7 @@ estimate_ideal <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_i
                     model_type=model_type,
                     reg_discrim_sd=reg_discrim_sd,
                     abs_discrim_sd=abs_discrim_sd,
+                    legis_sd=legis_sd,
                     diff_sd=diff_sd,
                     restrict_sd=restrict_sd)
   
@@ -259,6 +260,7 @@ estimate_ideal <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_i
                     reg_discrim_sd=reg_discrim_sd,
                     abs_discrim_sd=abs_discrim_sd,
                     diff_sd=diff_sd,
+                    legis_sd=legis_sd,
                     restrict_sd=restrict_sd)
 
   outobj <- sample_model(object=idealdata,nchains=nchains,niters=niters,warmup=warmup,ncores=ncores,

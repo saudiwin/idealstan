@@ -45,8 +45,8 @@ ggplot(test_out,aes(y=estimate,x=iter)) + theme_minimal()+
 # plot_sims(test_out)
 # plot_sims(test_out,type='residual')
 # try again, this time identify the sigma absences
-one_model <- simulate_models(absence=T,
-                             ordinal=T,
+one_model <- simulate_models(absence=F,
+                             ordinal=F,
                              num_legis = 50,
                              num_bills=50,
                               absence_discrim_sd = .25,
@@ -72,14 +72,14 @@ low_leg_pin <- min(true_legis)
 
 
  test_out <- estimate_ideal(idealdata = one_model,
-                            model_type = 4,
+                            model_type = 1,
                             use_vb = FALSE,
                             ncores = 4,
                             nfix=4,
                             restrict_type='constrain_twoway',
-                            restrict_params='discrim_abs',
-                            restrict_ind_high=high_abs$ix[1:5],
-                            restrict_ind_low=low_abs$ix[1:5],
+                            restrict_params='legis',
+                            restrict_ind_high=high_leg$ix[1],
+                            #restrict_ind_low=low_leg$ix[1:5],
                             #pin_vals = c(high_abs$x[1],low_leg$x[1]),
                             fixtype='constrained',
                             reg_discrim_sd = 3,
@@ -98,7 +98,8 @@ low_leg_pin <- min(true_legis)
   plot_sims(test_out)
   plot_sims(test_out,type='residual')
 
-
+all_pars <- summary(test_out)
+filter(all_pars,par_type=='B_int_full') %>% ggplot(aes(x=posterior_median)) + geom_histogram()
 all_params <- rstan::extract(test_out@stan_samples)
 all_abs_discrim <- apply(all_params$sigma_abs_full,2,median)
 all_reg_discrim <- apply(all_params$sigma_reg_full,2,median)

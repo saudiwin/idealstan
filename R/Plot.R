@@ -320,7 +320,7 @@ plot_sims <- function(sims,type='RMSE') {
   
   stat_func(sims) %>% 
     bind_rows(.id='ID') %>% 
-    ggplot(aes(y=avg,x=Params,ymax=high,ymin=low)) + geom_pointrange(size=.1) +
+    ggplot(aes(y=avg,x=Params,ymax=high,ymin=low)) + geom_pointrange(size=.3) +
       theme_minimal() + xlab("Parameters") + ylab(type) + facet_wrap(~ID,scales = "free",
                                                                    ncol=1) +
       theme(panel.grid = element_blank(),

@@ -159,7 +159,8 @@ setMethod('summary',signature(object='idealstan'),
             
             this_summary <- rstan::summary(object@stan_samples)[[1]] %>% as_data_frame
             this_summary <- mutate(this_summary,
-                                   parameters=row.names(rstan::summary(object@stan_samples)[[1]])) %>% 
+                                   parameters=row.names(rstan::summary(object@stan_samples)[[1]]),
+                                   par_type=stringr::str_extract(parameters,'[A-Za-z_]+')) %>% 
               rename(posterior_mean=`mean`,
                      posterior_sd=`sd`,
                      posterior_median=`50%`,
@@ -167,7 +168,7 @@ setMethod('summary',signature(object='idealstan'),
                      Prob.25=`25%`,
                      Prob.75=`75%`,
                      Prob.975=`97.5%`) %>% 
-              select(parameters,posterior_mean,posterior_median,posterior_sd,Prob.025,
+              select(parameters,par_type,posterior_mean,posterior_median,posterior_sd,Prob.025,
                      Prob.25,Prob.75,Prob.975)
             return(this_summary)
           })
