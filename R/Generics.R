@@ -146,7 +146,7 @@ setMethod('id_model',signature(object='idealdata'),
                    restrict_ind_low=restrict_ind_low,
                    auto_id=auto_id)
             
-            
+
             return(object)
           })
 

@@ -184,7 +184,7 @@
 .constrain_fix <- function(object=NULL,restrict_params=NULL,
                            restrict_ind_high=NULL,
                            restrict_ind_low=NULL,restrict_type=NULL,...) {
-
+  
   all_args <- list(...) 
   if(is.null(restrict_ind_high)) {
     stop('You must specify at least one bill or legislator to constrain high in restrict_ind_high.')
@@ -193,7 +193,7 @@
   to_constrain_high <- restrict_ind_high
   to_constrain_low <- restrict_ind_low
 
-  
+
   if(any(restrict_params %in% c('discrim_reg','discrim_abs'))) {
     object@vote_matrix <- object@vote_matrix[,c((1:ncol(object@vote_matrix))[-c(to_constrain_high,
                                                                                 to_constrain_low)],

@@ -49,3 +49,24 @@
   return(as.integer(sample(1:(length(cuts)+1),size=1,prob=c(pr_bottom,mid_prs,pr_top))))
 
 }
+
+#' Function to predict absence-inflated ordinal models
+.predict_2pl <- function(all_params=NULL,n_iters=NULL,sample_draws=NULL,sample_votes=NULL,
+                             legis_points=NULL,bill_points=NULL,time_points=NULL,
+                             obj=NULL) {
+  
+  
+  all_votes <- as.integer(obj@vote_data@vote_int)
+  out_matrix <- sapply(sample_draws,function(s) {
+    # Loop over samples
+    out_votes <- sapply(sample_votes, function(v) {
+      #Loop over individual votes
+      pr_vote <- all_params$sigma_reg_full[s,bill_points[v]]*all_params$L_full[s,time_points[v],legis_points[v]] - 
+        all_params$B_int_full[s,bill_points[v]]
+      votes <- if_else(pr_vote>0.5,2L,1L)
+      return(votes)
+    })
+  })
+  # transpose to fit bayesplot function
+  return(t(out_matrix))
+}

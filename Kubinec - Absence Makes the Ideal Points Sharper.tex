@@ -57,6 +57,10 @@ The methodology that has been used so far to address this problem is multiple im
 	
 	The bill intercepts also have a slightly different interpretation in this model. The intercept for each bill is actually $\alpha_j + c_k$ for all $K$ so that in effect the bill has an intercept for each category of vote outcome. Otherwise, however, the estimated parameters are interpreted identically to the standard IRT model \parencite{jackman2004}. The $x_i$ represent legislator ideal points and the bill midpoints (i.e., the line of indifference for each vote outcome) are equal to $\frac{\alpha_j + c_{k-1}}{\beta_j}$. Thus for a rollcall voting model with three distinct outcomes, yes, no and abstain, there will be two lines of indifference (or equiprobability contours) for each bill that separate legislators into groups that are more or less likely to vote in each vote category. For the binary case in which $K=2$, the cutpoints collapse into the bill intercepts and a standard binary logit model is estimated.
 	
+	In order to model absences, this standard IRT model is embedded within a hurdle framework, which is similar to the zero-inflated models popular with handling over-dispersion in count data. We assume that the probability that a legislator is absent is equal to $r$ and the probability that the legislator shows up to vote is equal to $1-r$. The probability $r$ is itself modeled as a binary IRT model in which the ideal points $x_i$ are shared with the vote equation while the bills receive separate parameters $\gamma_j$ for discrimination and $\omega_j$ as intercepts. Functionally, this means that the probability of any vote $K$ is decreased proportionally as the probability of absence $r$ increases. A legislator will only vote if the hurdle of strategic absence is overcome. That is to say, not only does each bill have a point in a voting ideal space, it also has a point in an absence ideal space that is also relative to the legislators' own ideal points.
+	
+	The combined model is as follows:
+	
 		 \[
 	L(\beta,\alpha,X,Q,\gamma,\omega|Y_{k},Y_{r}) = 
 	\prod_{n}^{i=1} \prod_{m}^{j=1}
@@ -66,26 +70,33 @@ The methodology that has been used so far to address this problem is multiple im
 	\end{cases}
 	\]
 	
-	Substantively, the additional bill parameters $\gamma_j$ and $\omega_j$ represent the position in the ideal point space of the salience of a particular bill. $\omega_j$ refers to the average probability that legislators will be absent on a given bill, while $\gamma_j$ reflects the position in which the bill is pointing in the ideal space, i.e., whether a bill is liberal or conservative.. Unlike in standard IRT models,the $\gamma_j$ parameters are unconstrained to allow a bill to have either a conservative or liberal polarity in the ideal point space. 
+	Substantively, the additional bill parameters $\gamma_j$ and $\omega_j$ represent the position in the ideal point space of the salience of a particular bill. $\omega_j$ refers to the average probability that legislators will be absent on a given bill, while $\gamma_j$ reflects the position in which the bill is pointing in the ideal space, i.e., whether a bill is liberal or conservative. Unlike in standard IRT models,the $\gamma_j$ and $\beta_j$ discrimination parameters are unconstrained to allow a bill to have either a conservative or liberal polarity in the ideal point space. 
 	
-	The addition of parameters, and the dependent relationship between the hurdle model and the vote model, makes estimation more challenging. Estimating the parameters with Bayesian MCMC requires the usual identification restrictions on parameters \parencite{jackman2004,gelman2005}, but the additional parameters may require further constraints in order to identify the model. There is no easy or straightforward method to identify this model as it depends in part on the presence of information in the model about both bills and legislators. However, the usage of usual identification methods, such as constraining polarity and fixing parameters is able to identify most models as long as the number of bills and legislators is suitably large (i.e., at least ten).
+	The addition of parameters, and the dependent relationship between the hurdle model and the vote model, makes estimation more challenging. Estimating the parameters with Bayesian MCMC requires the usual identification restrictions on parameters \parencite{jackman2004,gelman2005}, but the additional parameters may require further constraints in order to identify the model. There is no easy or straightforward method to identify this model as it depends in part on the presence of information in the model about both bills and legislators. However, the usage of usual identification methods, such as constraining polarity and fixing parameters is able to identify most models.\footnote{In the R package \texttt{idealstan} I provide methods for automatically identifying models through the use of variational Bayesian inference}
 	
 	The following priors are put on all of the parameters:
 	
-	\[
-	c_k - c_{k-1} ~ N(0,5)
-		
+	\begin{align*}
+		c_k - c_{k-1} &\sim N(0,5)\\
+		\gamma_j &\sim N(0,5)\\
+		\omega_j &\sim N(0,5)\\
+		\beta_j &\sim N(0,5)\\
+		\alpha_j &\sim N(0,5)\\
+		x_i &\sim N(0,1)
+	\end{align*}
+
 	
-	\]
+	Essentially, all parameters are given a weakly informative $N(0,5)$ prior (five is a large number on the logit scale). For scale identification purposes, the $x_i$ ideal points are given a $N(0,1)$ prior. In addition, one each of the $\alpha_j$ and $\omega_j$ intercepts are fixed at zero in order to prevent scale shifts in the parameters. A prior is put on the difference between the cutpoints $c_k$ rather than on the cutpoints themselves because it is difficult to affix concrete values to cutpoints a-priori, although the differences between cutpoints can be weakly identified. The prior on the cutpoints prevents cutpoint collapse so that it is not necessary to have a certain number of abstentions for each bill, while the bias of using a weakly informative prior is minimal.
 	
+	To show how the model performs, I simulated data of 50 legislators and 50 bills. For the purposes of identification, I fixed two values of two legislators to their true values in order to identify the scale. Estimation of the model was through an R package \texttt{idealstan} that provides this model along with other absence-inflated IRT ideal point models for both ordinal and binary data. The results of the simulation are shown in Figure \ref{sim_results}.
 	
-	
-	
-	
-	
-	\section*{Simulation Results}
+	\begin{figure}
+		\caption{True and Estimated Values}\label{sim_results}
+	\end{figure} 
 	
 	\section*{Empirical Applications}
+	
+	As an empirical application of the model, I look at two datasets, one from the 114th Senate and the second from a transitional democracy, Tunisia. For both datasets I use existing R packages, \texttt{wnominate} and \texttt{pscl}, to obtain ideal scores using the NOMINATE and IRT methods respectively.
 	
 	\subsection*{US Congress}
 	

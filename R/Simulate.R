@@ -41,8 +41,8 @@ simulate_models <- function(num_legis=50,num_bills=50,absence_discrim_sd=.1,abse
   
   #Discrimination parameters more important because they reflect how much information a bill contributes
   # need to make some of them negative to reflect the switching nature of policies
-  absence_discrim <- prior_func(params=list(N=num_bills,mean=1,sd=absence_discrim_sd)) * if_else(runif(num_bills)>0.5,1,-1)
-  
+  absence_discrim <- prior_func(params=list(N=num_bills-1,mean=1,sd=absence_discrim_sd)) * if_else(runif(num_bills-1)>0.5,1,-1)
+  absence_discrim <- c(-0.5,absence_discrim)
   # Legislator ideal points common to both types of models (absence and regular)
   
   ideal_pts <- prior_func(params=list(N=num_legis,mean=0,sd=ideal_pts_sd))
@@ -59,8 +59,8 @@ simulate_models <- function(num_legis=50,num_bills=50,absence_discrim_sd=.1,abse
   
   reg_diff <- prior_func(params=list(N=num_bills-1,mean=0,sd=diff_sd))
   reg_diff <- c(0,reg_diff)
-  reg_discrim <- prior_func(params=list(N=num_bills,mean=1,sd=reg_discrim_sd)) * if_else(runif(num_bills)>0.5,1,-1)
-  
+  reg_discrim <- prior_func(params=list(N=num_bills-1,mean=1,sd=reg_discrim_sd)) * if_else(runif(num_bills-1)>0.5,1,-1)
+  reg_discrim <- c(0.5,reg_discrim)
   pr_vote <- sapply(1:length(legis_points), function(n) {
     ideal_pts[legis_points[n]]*reg_discrim[bill_points[n]] - reg_diff[bill_points[n]]
   })
@@ -107,7 +107,7 @@ simulate_models <- function(num_legis=50,num_bills=50,absence_discrim_sd=.1,abse
     # now determine if the outcome. legislators only vote if they show up
     # Absences are coded as category 4
     
-    combined <- if_else(pr_absence<0.5,votes,as.integer(ordinal_outcomes)+1L)
+    combined <- if_else(pr_absence<runif(length(legis_points)),votes,as.integer(ordinal_outcomes)+1L)
     
     # Create a vote matrix
     
@@ -157,7 +157,7 @@ simulate_models <- function(num_legis=50,num_bills=50,absence_discrim_sd=.1,abse
     
     #standard IRT 2-PL model
 
-    votes <- as.numeric(plogis(pr_vote)>0.5)
+    votes <- as.numeric(plogis(pr_vote)>runif(length(legis_points)))
     
     
     # now determine if the outcome. legislators only vote if they show up
