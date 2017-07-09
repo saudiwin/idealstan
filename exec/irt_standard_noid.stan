@@ -35,6 +35,11 @@ data {
   matrix[num_legis,LX] legis_pred[T];
   matrix[num_bills,SRX] srx_pred;
   matrix[num_bills,SAX] sax_pred;
+  real reg_discrim_sd;
+  real abs_discrim_sd;
+  real legis_sd;
+  real diff_sd;
+  real restrict_sd;
 
 }
 
@@ -45,9 +50,12 @@ transformed data {
 	int num_constrain_sa;
 	int num_constrain_sr;
 	int Y_new[N];
-	if(model_type==2||model_type==4||model_type==6) {
+	if(model_type==4||model_type==6) {
 	  //count down one if model is inflated
 	  m = max(Y) - 1;
+	} else if(model_type==1||model_type==2) {
+	  //binary models
+	  m = 2;
 	} else {
 	  m= max(Y);
 	}
@@ -82,13 +90,11 @@ parameters {
   vector[LX] legis_x_cons;
   vector[SRX] sigma_reg_x_cons;
   vector[SAX] sigma_abs_x_cons;
-  vector[num_bills] B_yes;
-  vector[num_bills] B_abs;
   ordered[m-1] steps_votes;
   ordered[m-1] steps_votes_grm[num_bills];
   real avg_particip;
   vector[num_bills-1] B_int_free;
-  vector[num_bills-1] A_int_free;
+  vector[num_bills] A_int_free;
 }
 
 transformed parameters {
@@ -104,10 +110,9 @@ transformed parameters {
   sigma_reg_full=sigma_reg_free;
   
   B_int_full[2:num_bills] = B_int_free;
-  A_int_full[2:num_bills] = A_int_free;
   B_int_full[1] = 0.0;
-  A_int_full[1] = 0.0;
-  
+  A_int_full=A_int_free;
+  //B_int_full=B_int_free;
   
 }
 
@@ -117,10 +122,10 @@ model {
   vector[N] pi2;
   
   for(t in 1:T) {
-  L_free[t] ~ normal(0,1);
+  L_free[t] ~ normal(0,legis_sd);
   }
-  sigma_abs_free ~ normal(0,5);
-  sigma_reg_free ~ normal(0,5);
+  sigma_abs_free ~ normal(0,abs_discrim_sd);
+  sigma_reg_free ~ normal(0,reg_discrim_sd);
   legis_x ~ normal(0,5);
   sigma_reg_x ~ normal(0,5);
   sigma_abs_x ~ normal(0,5);
@@ -129,13 +134,16 @@ model {
   sigma_abs_x_cons ~ normal(0,5);
   
   avg_particip ~ normal(0,5);
-  
-  for(i in 1:(m-2)) {
+  if(model_type>3 && model_type<8) {
+    for(i in 1:(m-2)) {
     steps_votes[i+1] - steps_votes[i] ~ normal(0,5); 
+    }
+  } else {
+    steps_votes ~ normal(0,5);
   }
 	
-  B_int_free ~ normal(0,5);
-  A_int_free ~ normal(0,5);
+  B_int_free ~ normal(0,diff_sd);
+  A_int_free ~ normal(0,diff_sd);
   for(b in 1:num_bills) {
   steps_votes_grm[b] ~ normal(0,5);
   }

@@ -13,12 +13,19 @@ estimate_ideal(idealdata = NULL, model_type = 2, use_subset = FALSE,
   restrict_ind_high = NULL, restrict_ind_low = NULL,
   restrict_type = "constrain_oneway", fixtype = "vb",
   warmup = floor(niters/2), ncores = NULL, auto_id = FALSE,
-  reg_discrim_sd = 0.5, abs_discrim_sd = 0.5, ...)
+  reg_discrim_sd = 0.5, abs_discrim_sd = 0.5, legis_sd = 1,
+  diff_sd = 0.5, restrict_sd = 5, ...)
 }
 \arguments{
-\item{reg_discrim_sd}{Set the standard deviation of the bimodal prior for the discrimination parameters in the vote/score model}
+\item{reg_discrim_sd}{Set the prior standard deviation of the bimodal prior for the discrimination parameters in the vote/score model}
 
-\item{abs_discrim_sd}{Set the standard deviation of the bimodal prior for the discrimination parameters in the absence hurdle model}
+\item{abs_discrim_sd}{Set the prior standard deviation of the bimodal prior for the discrimination parameters in the absence hurdle model}
+
+\item{legis_sd}{Set the prior standard deviation for the legislators (persons) parameters}
+
+\item{diff_sd}{Set the prior standard deviation for the bill (item) intercepts.}
+
+\item{restrict_sd}{Set the prior standard deviation for constrained parameters}
 }
 \description{
 Estimate an idealstan model using an idealdata object.

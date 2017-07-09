@@ -2,7 +2,7 @@
 % Please edit documentation in R/Estimate.R
 \name{make_idealdata}
 \alias{make_idealdata}
-\title{This is the constructor fucnction for the idealdata object, which is necessary to estimate an idealstan model.}
+\title{Create data to run IRT model}
 \usage{
 make_idealdata(vote_data = NULL, simul_data = NULL, legis_cov = NULL,
   bill_cov_reg = NULL, bill_cov_abs = NULL, legis_data = NULL,
@@ -10,6 +10,13 @@ make_idealdata(vote_data = NULL, simul_data = NULL, legis_cov = NULL,
   abst_vote = 2L, ordinal = TRUE, time = NULL, exclude_level = NULL,
   inflate = TRUE, simulation = FALSE)
 }
+\arguments{
+\item{vote_data}{Your legislator-bill (person-item) matrix in which legislators (persons) are in rows and 
+bills (items) are in columns. The cells of the matrix should contain consecutive integers \eqn{1,...K} for 
+ordinal \eqn{K} outcomes or integers \eqn{[0,1]} for a binary outcome in which 0 equals no (or incorrect) and 
+1 equals yes (or correct). If absences are included, they should be coded as the highest category \eqn{K+1} for
+ordinal outcomes and 2 for binary outcomes.}
+}
 \description{
-This is the constructor fucnction for the idealdata object, which is necessary to estimate an idealstan model.
+To run an IRT model using \code{idealstan}, you must first process your data using the \code{make_ideal} function.
 }

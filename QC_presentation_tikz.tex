@@ -33,7 +33,7 @@
 				(1 - \zeta(x_{i}'\beta_j - \alpha_j))^{(1-{y_{ij}})}
 			\end{equation*}
 			
-			Where $B_j$ represent bill discrimination parameters, $\alpha_j$ represent bill intercepts, $x_i$ are the legislator ideal points and $\zeta$ is a link function (generally logit or probit).
+			Where $\beta_j$ represent bill discrimination parameters, $\alpha_j$ represent bill intercepts, $x_i$ are the legislator ideal points and $\zeta$ is a link function (generally logit or probit).
 			
 			\begin{itemize}
 				\item Model assumes that legislators are present at all votes.
@@ -69,7 +69,7 @@
 					This ordinal model is deflated by the probability that a legislator is present  to model the combined $Y_{(k,r)}$ likelihood. The probability of $r=0$ absence is a separate IRT model of common ideal points $x_i$,  and separate bill discrimination/intercepts $\gamma_j$ and $\omega_j$.
 					
 					 \[
-					 L(\beta,\alpha,X,Q,\gamma,\omega,\phi|Y_{k},Y_{r}) = 
+					 L(\beta,\alpha,X,Q,\gamma,\omega|Y_{kr}) = 
 					 \prod_{n}^{i=1} \prod_{m}^{j=1}
 					 \begin{cases}
 					 \zeta({x_{i}'\gamma_j - \omega_j}) & \text{if } r=0, \text{ and} \\
@@ -81,8 +81,7 @@
 		
 		\column{0.4}
 		\block{Case Study: 114th Senate}{
-			In the most recent Senate, modeling absences as an explicit category still largely aligns with the NOMINATE and \texttt{ideal} models that are popularly used for ideal point estimation. This is because of low general absence rates (and virtually no absentions) among U.S. Senators.
-			
+			In the most recent Senate, modeling absences as an explicit category still largely aligns with the NOMINATE and \texttt{ideal} models that are popularly used for ideal point estimation. This is because of low absence rates (and virtually no absentions) among U.S. Senators.
 			\centering
 				\includegraphics[height=23in]{all_perf}
 		
@@ -108,7 +107,8 @@
 		
 		\block{Case Study: Tunisian Parliament}{
 			
-			Parliaments with coalition governments can have the opposite effect when incorporating absences because absences can represent votes against the coalition's main position when true no votes are impossible.
+			Parliaments with coalition governments can have much higher absentee rates and abstention rates. The data below from Tunisia's legislative assembly, which is considered a transitional democracy, show significantly divering estimates from the standard models.
+			\centering
 			
 			\includegraphics[width=\linewidth]{tunisia_ARP_compare}
 			

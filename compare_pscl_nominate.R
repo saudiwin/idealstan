@@ -29,7 +29,7 @@ pscl_model <- ideal(newdata,store.item=TRUE,normalize = T)
 pscl_pts <- data_frame(ideal_pts=apply(pscl_model$x,2,median)*-1,
                        high_pt=apply(pscl_model$x,2,quantile,probs=0.95)*-1,
                        low_pt=apply(pscl_model$x,2,quantile,probs=0.05)*-1,
-                       model_type='IRT 2-PL')
+                       model_type='CJR')
 wnominate_pts <- data_frame(ideal_pts=wnominate_model$legislators$coord1D,
                             high_pt=wnominate_model$legislators$coord1D + 1.96*wnominate_model$legislators$se1D,
                             low_pt=wnominate_model$legislators$coord1D - 1.96*wnominate_model$legislators$se1D,
@@ -61,24 +61,30 @@ idealdata <-
     ordinal = F,
     exclude_level = 7
   )
-
+#,which(row.names(to_use)=='SANDERS (Indep VT)')
 estimated_full <-
   estimate_ideal(idealdata = idealdata,
                  model_type = 2,
-                 use_vb = T,
+                 use_vb = F,
                  ncores=4,
-                 nfix=1,
-                 restrict_type='constrain_oneway',
+                 nfix=2,
+                 restrict_type='constrain_twoway',
                  restrict_params='legis',
-                 restrict_ind_high = c(which(row.names(to_use)=='SASSE (R NE)')),
+                 restrict_ind_high = c(which(row.names(to_use)=='SASSE (R NE)'),
+                                       which(row.names(to_use)=='CRUZ (R TX)'),
+                                       which(row.names(to_use)=='RUBIO (R FL)')),
+                 restrict_ind_low=c(which(row.names(to_use)=='SANDERS (Indep VT)'),
+                                    which(row.names(to_use)=='REID (D NV)'),
+                                    which(row.names(to_use)=='WARREN (D MA)')),
                  auto_id=F,
-                 fixtype='pinned',
-                 pin_vals=1,
+                 fixtype='constrained',
+                 #pin_vals=c(1),
                  abs_discrim_sd = 5,
                  reg_discrim_sd = 5,
-                 legis_sd = 5,
+                 legis_sd = 1,
                  diff_sd=5,
                  seed=84520)
+saveRDS(estimated_full,'senate_104_absence_inf.rds')
 output <- rstan::extract(estimated_full@stan_samples)
 abs_pts <- data_frame(ideal_pts=apply(output$L_full,3,median),
                          high_pt=apply(output$L_full,3,quantile,probs=0.95),
@@ -103,8 +109,8 @@ all_perf %>%
                   size=0.15) + 
   coord_flip() + theme_minimal() +
   theme(panel.grid = element_blank()) +
-  xlab('Ideal Point Scores (Liberal to Conservative)') +
-  ylab('') +
+  ylab('Ideal Point Scores (Liberal to Conservative)') +
+  xlab('') +
   scale_colour_brewer(palette='Accent',name="")
   
 ggsave('all_perf.png',width=7,height=10,scale=1.1,units='in')
@@ -124,7 +130,7 @@ big_diff <- group_by(all_perf,legislators) %>% arrange(legislators,model_type) %
          mutate(legislators=factor(legislators,levels=unique(legislators)),
                 rank_labels=if_else(total_diff>0,paste0('Rank +',as.integer(total_diff)),
                                     paste0('Rank ',as.integer(total_diff))),
-                rank_labels=if_else(model_type=='IRT 2-PL',rank_labels,''))
+                rank_labels=if_else(model_type=='CJR',rank_labels,''))
           
 big_diff %>% ggplot((aes(y=ideal_pts_std,ymin=low_pt_std,ymax=high_pt_std))) +
   geom_pointrange(aes(color=model_type,shape=model_type,x=factor(legislators)),fill=NA,position=position_dodge(width=.5),
@@ -172,14 +178,14 @@ bills %>%
   ungroup %>% 
   distinct(bill_name,.keep_all=T) %>% 
   arrange(abs_ideal) %>% slice(1:10) %>% 
-  select(description,date) %>% 
+  dplyr::select(description,date) %>% 
   write_csv('most_cons_bills.csv')
 
 bills %>% 
   ungroup %>% 
   distinct(bill_name,.keep_all=T) %>% 
   arrange(desc(abs_ideal)) %>% slice(1:10) %>% 
-  select(description,date) %>% 
+  dplyr::select(description,date) %>% 
   write_csv('most_lib_bills.csv')
 
 

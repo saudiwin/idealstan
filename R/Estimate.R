@@ -1,12 +1,4 @@
 #' Create data to run IRT model
-#' @import rstan
-#' @import dplyr
-#' @importFrom tidyr gather spread
-#' @import bayesplot
-#' @import rstantools
-#' @import Rcpp
-#' @import methods
-#' @useDynLib idealstan, .registration = TRUE
 #' 
 #' To run an IRT model using \code{idealstan}, you must first process your data using the \code{make_ideal} function. 
 #' 
@@ -17,6 +9,14 @@
 #'    ordinal outcomes and 2 for binary outcomes.
 #' 
 #' @export
+#' @import rstan
+#' @import dplyr
+#' @importFrom tidyr gather spread
+#' @import bayesplot
+#' @import rstantools
+#' @import Rcpp
+#' @import methods
+#' @useDynLib idealstan, .registration = TRUE
 make_idealdata <- function(vote_data=NULL,simul_data=NULL,
                            legis_cov=NULL,bill_cov_reg=NULL,
                            bill_cov_abs=NULL,
@@ -132,7 +132,7 @@ estimate_ideal <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_i
                            pin_vals=NULL,restrict_ind_high=NULL,
                            restrict_ind_low=NULL,
                            restrict_type='constrain_oneway',
-                           fixtype='vb',warmup=floor(niters/2),ncores=NULL,
+                           fixtype='vb',warmup=floor(niters/2),ncores=4,
                            auto_id=FALSE,
                            reg_discrim_sd=0.5,
                            abs_discrim_sd=0.5,
@@ -197,7 +197,8 @@ estimate_ideal <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_i
                         nfix=nfix,restrict_params=restrict_params,restrict_ind_high=restrict_ind_high,
                         restrict_ind_low=restrict_ind_low,
                         restrict_type=restrict_type,
-                        auto_id=auto_id)
+                        auto_id=auto_id,
+                        ncores=ncores)
 
   # Now remake the data to reflect the constrained parameters
   

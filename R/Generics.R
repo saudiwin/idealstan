@@ -134,7 +134,8 @@ setMethod('id_model',signature(object='idealdata'),
           function(object,fixtype='vb',model_type=NULL,this_data=NULL,nfix=10,
                    restrict_params=NULL,restrict_type=NULL,restrict_ind_high=NULL,
                    restrict_ind_low=NULL,
-                   auto_id=FALSE) {
+                   auto_id=FALSE,
+                   ncores=NULL) {
 
             x <- object@vote_matrix
             
@@ -144,7 +145,8 @@ setMethod('id_model',signature(object='idealdata'),
                    restrict_params=restrict_params,restrict_type=restrict_type,
                    restrict_ind_high=restrict_ind_high,
                    restrict_ind_low=restrict_ind_low,
-                   auto_id=auto_id)
+                   auto_id=auto_id,
+                   ncores=ncores)
             
 
             return(object)

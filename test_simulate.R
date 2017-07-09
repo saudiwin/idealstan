@@ -49,10 +49,10 @@ one_model <- simulate_models(absence=T,
                              ordinal=T,
                              num_legis =50,
                              num_bills=50,
-                              absence_discrim_sd = .25,
-                             reg_discrim_sd = .25,
+                              absence_discrim_sd = 2,
+                             reg_discrim_sd = 2,
                              absence_diff_mean = 0.5,
-                             diff_sd = .25)
+                             diff_sd = .5)
 true_sigma_abs <- one_model@simul_data$true_abs_discrim
 high_abs <- sort(true_sigma_abs,decreasing=TRUE,index.return=TRUE)
 low_abs <- sort(true_sigma_abs,index.return=TRUE)
@@ -78,11 +78,12 @@ low_leg_pin <- min(true_legis)
                             nfix=4,
                             restrict_type='constrain_twoway',
                             restrict_params='legis',
-                            restrict_ind_high=c(high_leg$ix[1],low_leg$ix[1]),
-                            pin_vals = c(high_leg$x[1],low_leg$x[1]),
-                            fixtype='pinned',
+                            restrict_ind_high=c(high_leg$ix[1:2]),
+                            restrict_ind_low = low_leg$ix[1:2],
+                            #pin_vals = c(high_leg$x[1],low_leg$x[1]),
+                            fixtype='constrained',
                             reg_discrim_sd = 10,
-                            abs_discrim_sd = 10,
+                            abs_discrim_sd = 1,
                             legis_sd=10,
                             diff_sd=10,
                             restrict_sd=10)
@@ -98,7 +99,7 @@ low_leg_pin <- min(true_legis)
   plot_sims(test_out,type='residual')
 
 all_pars <- summary(test_out)
-filter(all_pars,par_type=='B_int_full') %>% ggplot(aes(x=posterior_median)) + geom_histogram()
+filter(all_pars,par_type=='A_int_full') %>% ggplot(aes(x=posterior_median)) + geom_histogram()
 all_params <- rstan::extract(test_out@stan_samples)
 all_abs_discrim <- apply(all_params$sigma_abs_full,2,median)
 all_reg_discrim <- apply(all_params$sigma_reg_full,2,median)

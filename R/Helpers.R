@@ -1,6 +1,15 @@
 #' Function that does automatic identification of models using VB
 .vb_fix <- function(object=NULL,
-                    this_data=NULL,nfix=NULL,auto_id=FALSE,...) {
+                    this_data=NULL,nfix=NULL,auto_id=FALSE,
+                    ncores=NULL,all_args=NULL,...) {
+
+  # check for windows 
+  if(ncores>1) {
+    if(.Platform$OS.type=='windows') {
+      ncores <- 1
+    }
+  }
+  
   
   to_use <- stanmodels[['irt_standard_noid']]
   post_modes <- rstan::vb(object=to_use,data =this_data,
@@ -8,8 +17,10 @@
   
   lookat_params <- rstan::extract(post_modes,permuted=FALSE)
   this_params <- lookat_params[,1,]
-
-   all_args <- list(...) 
+  if(is.null(all_args)) {
+    all_args <- list(...) 
+  } 
+    
    all_params <- attributes(this_params)$dimnames$parameters
    old_matrix <- object@vote_matrix
 
@@ -50,10 +61,10 @@
            to_constrain_low <- to_constrain_low$ix[1:nfix]
          }
        }
-       object@vote_matrix <- object@vote_matrix[,c((1:ncol(object@vote_matrix))[-c(to_constrain_high,
-                                                                              to_constrain_low)],
-                                                to_constrain_high,
-                                                to_constrain_low)]
+       object@vote_matrix[,c((1:ncol(object@vote_matrix))[-c(to_constrain_high,
+                                                             to_constrain_low)],
+                             to_constrain_high,
+                             to_constrain_low)]
        
      } else if(all_args$restrict_params=='legis') {
        legis <- apply(this_params[,grepl(pattern = 'L_full',x=all_params)],2,mean)
@@ -69,9 +80,9 @@
          to_constrain_low <- to_constrain_low$ix[1:nfix]
        }
        object@vote_matrix <- object@vote_matrix[c((1:nrow(object@vote_matrix))[-c(to_constrain_high,
-                                                                              to_constrain_low)],
-                                                to_constrain_high,
-                                                   to_constrain_low),]
+                                                                                  to_constrain_low)],
+                                                  to_constrain_high,
+                                                  to_constrain_low),]
        
      }
   
@@ -112,20 +123,22 @@
      # Now re-run ID on 4 VB chains and see if the parameters are stable
      print('Running automatic identification check.')
 
-     all_vbs <- lapply(1:4,function(i,this_data=NULL) {
+     all_vbs <- parallel::mclapply(1:4,function(i,this_data=NULL) {
        vb_out <- vb(object=stanmodels[['irt_standard']],data=this_data,algorithm='meanfield')
        lookat_params <- rstan::extract(vb_out,permuted=FALSE)
        lookat_params <- lookat_params[,1,]
       out_param <- apply(lookat_params,2,mean)
-     },this_data=this_data)
+     },this_data=this_data,mc.cores=ncores)
 
      signs <- sapply(all_vbs,sign)
      equal_ratio <- apply(signs,1,function(r) {
        all(r==r[1])
      })
+     print(paste0('The model currently has ',round(mean(equal_ratio),1),' correct signs identified.'))
      if(mean(equal_ratio)<0.9) {
        print(paste0('Model is not yet identified. Increasing constraint number to ',nfix+1))
-       .vb_fix(object=object,this_params=this_params,this_data=this_data,nfix=nfix+1,auto_id=TRUE,...)
+       .vb_fix(object=object,this_params=this_params,this_data=this_data,nfix=nfix+1,auto_id=TRUE,ncores=ncores,
+               all_args=all_args)
      } else {
        print(paste0('Automatic identification has occurred for ',all_args$restrict_type,
              ' identification with ',nfix,' constraints.'))
