@@ -1,13 +1,14 @@
 Package: idealstan
 Type: Package
-Title: Bayesian Ideal Point & IRT Models with Stan
+Title: Bayesian IRT Ideal Point Models with Stan
 Version: 0.1
-Date: 2016-12-26
+Date: 2017-07-12
 Author: Robert Kubinec
 Maintainer: Robert Kubinec <rmk7xy@virginia.edu>
-Description: This package (still in development) offers standard and
-    experimental ideal-point based scaling methods for rollcall voting data (or any
-    other kind of binary or ordinal item-response theory data).
+Description: This package (still in development) offers ideal-point scaling methods that incorporate additional 
+response categories and missing/censored values, including absences and abstentions, for rollcall voting data (or any
+    other kind of binary or ordinal item-response theory data). Full and approximate Bayesian estimation is done via the Stan sampling 
+    engine (www.mc-stan.org).
 License: GPL
 Depends:
     R (>= 3.1),

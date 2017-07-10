@@ -23,19 +23,19 @@ if (constrain_par == 1) {
         //all done with assigning legislator priors, now just add normal priors for the other coefs
         //constrain_par==1 so this is all that is required
         
-          sigma_abs_free ~ normal(0,abs_discrim_sd);
+          sigma_abs_free ~ normal(0,discrim_abs_sd);
 
         
-          sigma_reg_free ~ normal(0,reg_discrim_sd);
+          sigma_reg_free ~ normal(0,discrim_reg_sd);
 
       } else if (hier_type == 4) {
         sigma_reg_free~normal(srx_pred * sigma_reg_x, 10);
         
-          sigma_abs_free ~ normal(0,abs_discrim_sd);
+          sigma_abs_free ~ normal(0,discrim_abs_sd);
 
       } else if (hier_type == 5) {
         
-          sigma_reg_free ~ normal(0,reg_discrim_sd);
+          sigma_reg_free ~ normal(0,discrim_reg_sd);
 
         sigma_abs_free~normal(sax_pred * sigma_abs_x, 10);
       } else if (hier_type == 7) {
@@ -59,11 +59,11 @@ if (constrain_par == 1) {
       if (hier_type == 2) {
         sigma_reg_free~normal(srx_pred * sigma_reg_x, 10);
         
-          sigma_abs_free ~ normal(0,abs_discrim_sd);
+          sigma_abs_free ~ normal(0,discrim_abs_sd);
 
       } else if (hier_type == 3) {
         
-          sigma_reg_free ~ normal(0,reg_discrim_sd);
+          sigma_reg_free ~ normal(0,discrim_reg_sd);
 
         sigma_abs_free~normal(sax_pred * sigma_abs_x, 10);
       } else if (hier_type == 6) {
@@ -71,10 +71,10 @@ if (constrain_par == 1) {
         sigma_abs_free~normal(sax_pred * sigma_abs_x, 10);
       } else if (hier_type == 8) {
         
-          sigma_abs_free ~ normal(0,abs_discrim_sd);
+          sigma_abs_free ~ normal(0,discrim_abs_sd);
 
         
-          sigma_reg_free ~ normal(0,reg_discrim_sd);
+          sigma_reg_free ~ normal(0,discrim_reg_sd);
 
       }
 
@@ -101,19 +101,19 @@ if (constrain_par == 1) {
         //all done with assigning legislator priors, now just add normal priors for the other coefs
         //constrain_par==1 so this is all that is required
         
-          sigma_abs_free ~ normal(0,abs_discrim_sd);
+          sigma_abs_free ~ normal(0,discrim_abs_sd);
 
         
-          sigma_reg_free ~ normal(0,reg_discrim_sd);
+          sigma_reg_free ~ normal(0,discrim_reg_sd);
 
       } else if (hier_type == 4) {
         sigma_reg_free~normal(srx_pred * sigma_reg_x, 10);
         
-          sigma_abs_free ~ normal(0,abs_discrim_sd);
+          sigma_abs_free ~ normal(0,discrim_abs_sd);
  
       } else if (hier_type == 5) {
         
-          sigma_reg_free ~ normal(0,reg_discrim_sd);
+          sigma_reg_free ~ normal(0,discrim_reg_sd);
 
         sigma_abs_free~normal(sax_pred * sigma_abs_x, 10);
       } else if (hier_type == 7) {
@@ -137,11 +137,11 @@ if (constrain_par == 1) {
       if (hier_type == 2) {
         sigma_reg_free~normal(srx_pred * sigma_reg_x, 10);
         
-          sigma_abs_free ~ normal(0,abs_discrim_sd);
+          sigma_abs_free ~ normal(0,discrim_abs_sd);
 
       } else if (hier_type == 3) {
         
-          sigma_reg_free ~ normal(0,reg_discrim_sd);
+          sigma_reg_free ~ normal(0,discrim_reg_sd);
 
         sigma_abs_free~normal(sax_pred * sigma_abs_x, 10);
       } else if (hier_type == 6) {
@@ -149,10 +149,10 @@ if (constrain_par == 1) {
         sigma_abs_free~normal(sax_pred * sigma_abs_x, 10);
       } else if (hier_type == 8) {
         
-          sigma_abs_free ~ normal(0,abs_discrim_sd);
+          sigma_abs_free ~ normal(0,discrim_abs_sd);
 
         
-          sigma_reg_free ~ normal(0,reg_discrim_sd);
+          sigma_reg_free ~ normal(0,discrim_reg_sd);
 
       }
 
@@ -183,19 +183,19 @@ if (constrain_par == 1) {
         //all done with assigning legislator priors, now just add normal priors for the other coefs
         //constrain_par==1 so this is all that is required
         
-          sigma_abs_free ~ normal(0,abs_discrim_sd);
+          sigma_abs_free ~ normal(0,discrim_abs_sd);
 
         
-          sigma_reg_free ~ normal(0,reg_discrim_sd);
+          sigma_reg_free ~ normal(0,discrim_reg_sd);
 
       } else if (hier_type == 4) {
         sigma_reg_free~normal(srx_pred * sigma_reg_x, 10);
         
-          sigma_abs_free ~ normal(0,abs_discrim_sd);
+          sigma_abs_free ~ normal(0,discrim_abs_sd);
 
       } else if (hier_type == 5) {
         
-          sigma_reg_free ~ normal(0,reg_discrim_sd);
+          sigma_reg_free ~ normal(0,discrim_reg_sd);
 
         sigma_abs_free~normal(sax_pred * sigma_abs_x, 10);
       } else if (hier_type == 7) {
@@ -220,11 +220,11 @@ if (constrain_par == 1) {
       if (hier_type == 2) {
         sigma_reg_free~normal(srx_pred * sigma_reg_x, 10);
         
-          sigma_abs_free ~ normal(0,abs_discrim_sd);
+          sigma_abs_free ~ normal(0,discrim_abs_sd);
 
       } else if (hier_type == 3) {
         
-          sigma_reg_free ~ normal(0,reg_discrim_sd);
+          sigma_reg_free ~ normal(0,discrim_reg_sd);
 
         sigma_abs_free~normal(sax_pred * sigma_abs_x, 10);
       } else if (hier_type == 6) {
@@ -232,10 +232,10 @@ if (constrain_par == 1) {
         sigma_abs_free~normal(sax_pred * sigma_abs_x, 10);
       } else if (hier_type == 8) {
         
-          sigma_abs_free ~ normal(0,abs_discrim_sd);
+          sigma_abs_free ~ normal(0,discrim_abs_sd);
 
         
-          sigma_reg_free ~ normal(0,reg_discrim_sd);
+          sigma_reg_free ~ normal(0,discrim_reg_sd);
 
       }
 
@@ -260,19 +260,19 @@ if (constrain_par == 1) {
         //all done with assigning legislator priors, now just add normal priors for the other coefs
         //constrain_par==1 so this is all that is required
         
-          sigma_abs_free ~ normal(0,abs_discrim_sd);
+          sigma_abs_free ~ normal(0,discrim_abs_sd);
 
         
-          sigma_reg_free ~ normal(0,reg_discrim_sd);
+          sigma_reg_free ~ normal(0,discrim_reg_sd);
 
       } else if (hier_type == 4) {
         sigma_reg_free~normal(srx_pred * sigma_reg_x, 10);
         
-          sigma_abs_free ~ normal(0,abs_discrim_sd);
+          sigma_abs_free ~ normal(0,discrim_abs_sd);
 
       } else if (hier_type == 5) {
         
-          sigma_reg_free ~ normal(0,reg_discrim_sd);
+          sigma_reg_free ~ normal(0,discrim_reg_sd);
 
         sigma_abs_free~normal(sax_pred * sigma_abs_x, 10);
       } else if (hier_type == 7) {
@@ -297,11 +297,11 @@ if (constrain_par == 1) {
       if (hier_type == 2) {
         sigma_reg_free~normal(srx_pred * sigma_reg_x, 10);
         
-          sigma_abs_free ~ normal(0,abs_discrim_sd);
+          sigma_abs_free ~ normal(0,discrim_abs_sd);
 
       } else if (hier_type == 3) {
         
-          sigma_reg_free ~ normal(0,reg_discrim_sd);
+          sigma_reg_free ~ normal(0,discrim_reg_sd);
 
         sigma_abs_free~normal(sax_pred * sigma_abs_x, 10);
       } else if (hier_type == 6) {
@@ -309,10 +309,10 @@ if (constrain_par == 1) {
         sigma_abs_free~normal(sax_pred * sigma_abs_x, 10);
       } else if (hier_type == 8) {
         
-          sigma_abs_free ~ normal(0,abs_discrim_sd);
+          sigma_abs_free ~ normal(0,discrim_abs_sd);
 
         
-          sigma_reg_free ~ normal(0,reg_discrim_sd);
+          sigma_reg_free ~ normal(0,discrim_reg_sd);
 
       }
     }
@@ -328,7 +328,7 @@ if (constrain_par == 1) {
       restrict_low[1] ~normal(sax_pred[(num_bills - num_constrain_sa + 1):num_legis, ] * sigma_abs_x_cons, restrict_sd);
       if (hier_type == 3) {
         
-          sigma_reg_free ~ normal(0,reg_discrim_sd);
+          sigma_reg_free ~ normal(0,discrim_reg_sd);
 
         L_free[1] ~normal(0, legis_sd);
         if (T > 1) {
@@ -345,7 +345,7 @@ if (constrain_par == 1) {
           }
         }
         
-          sigma_reg_free ~ normal(0,reg_discrim_sd);
+          sigma_reg_free ~ normal(0,discrim_reg_sd);
 
       } else if (hier_type == 6) {
         sigma_reg_free~normal(srx_pred * sigma_reg_x, 10);
@@ -369,7 +369,7 @@ if (constrain_par == 1) {
       //all other hier_type combinations where absences d/n have hier_typearchical priors
       restrict_low[1] ~normal(0, restrict_sd);
       
-        sigma_abs_free ~ normal(0,abs_discrim_sd);
+        sigma_abs_free ~ normal(0,discrim_abs_sd);
 
       //run through remaining hier_type combinations--not 3,5,6 or 7 but rather 1,2,4,8
       if (hier_type == 1) {
@@ -381,7 +381,7 @@ if (constrain_par == 1) {
           }
         }
         
-          sigma_reg_free ~ normal(0,reg_discrim_sd);
+          sigma_reg_free ~ normal(0,discrim_reg_sd);
 
       } else if (hier_type == 2) {
         sigma_reg_free~normal(srx_pred * sigma_reg_x, 10);
@@ -402,7 +402,7 @@ if (constrain_par == 1) {
         }
       } else if (hier_type == 8) {
         
-          sigma_reg_free ~ normal(0,reg_discrim_sd);
+          sigma_reg_free ~ normal(0,discrim_reg_sd);
 
         L_free[1] ~normal(0, legis_sd);
         if (T > 1) {
@@ -421,7 +421,7 @@ if (constrain_par == 1) {
       restrict_high[1] ~normal(sax_pred[(num_bills - num_constrain_sa + 1):num_bills, ] * sigma_abs_x_cons, restrict_sd);
       if (hier_type == 3) {
         
-          sigma_reg_free ~ normal(0,reg_discrim_sd);
+          sigma_reg_free ~ normal(0,discrim_reg_sd);
 
         L_free[1] ~normal(0, legis_sd);
         if (T > 1) {
@@ -438,7 +438,7 @@ if (constrain_par == 1) {
           }
         }
         
-          sigma_reg_free ~ normal(0,reg_discrim_sd);
+          sigma_reg_free ~ normal(0,discrim_reg_sd);
 
       } else if (hier_type == 6) {
         sigma_reg_free~normal(srx_pred * sigma_reg_x, 10);
@@ -462,7 +462,7 @@ if (constrain_par == 1) {
       //all other hier_type combinations where absences d/n have hier_typearchical priors
       restrict_high[1] ~normal(0, restrict_sd);
       
-        sigma_abs_free ~ normal(0,abs_discrim_sd);
+        sigma_abs_free ~ normal(0,discrim_abs_sd);
 
       //run through remaining hier_type combinations--not 3,5,6 or 7 but rather 1,2,4,8
       if (hier_type == 1) {
@@ -474,7 +474,7 @@ if (constrain_par == 1) {
           }
         }
         
-          sigma_reg_free ~ normal(0,reg_discrim_sd);
+          sigma_reg_free ~ normal(0,discrim_reg_sd);
 
       } else if (hier_type == 2) {
         sigma_reg_free~normal(srx_pred * sigma_reg_x, 10);
@@ -495,7 +495,7 @@ if (constrain_par == 1) {
         }
       } else if (hier_type == 8) {
         
-          sigma_reg_free ~ normal(0,reg_discrim_sd);
+          sigma_reg_free ~ normal(0,discrim_reg_sd);
 
         L_free[1] ~normal(0, legis_sd);
         if (T > 1) {
@@ -515,7 +515,7 @@ if (constrain_par == 1) {
       restrict_low[1] ~normal(sax_pred[(num_bills - num_constrain_sa + 1):num_bills, ] * sigma_abs_x_cons, restrict_sd);
       if (hier_type == 3) {
         
-          sigma_reg_free ~ normal(0,reg_discrim_sd);
+          sigma_reg_free ~ normal(0,discrim_reg_sd);
 
         L_free[1] ~normal(0, legis_sd);
         if (T > 1) {
@@ -532,7 +532,7 @@ if (constrain_par == 1) {
           }
         }
         
-          sigma_reg_free ~ normal(0,reg_discrim_sd);
+          sigma_reg_free ~ normal(0,discrim_reg_sd);
 
       } else if (hier_type == 6) {
         sigma_reg_free~normal(srx_pred * sigma_reg_x, 10);
@@ -557,7 +557,7 @@ if (constrain_par == 1) {
       restrict_high[1] ~normal(0, restrict_sd);
       restrict_low[1] ~normal(0, restrict_sd);
       
-        sigma_abs_free ~ normal(0,abs_discrim_sd);
+        sigma_abs_free ~ normal(0,discrim_abs_sd);
 
       //run through remaining hier_type combinations--not 3,5,6 or 7 but rather 1,2,4,8
       if (hier_type == 1) {
@@ -569,7 +569,7 @@ if (constrain_par == 1) {
           }
         }
         
-          sigma_reg_free ~ normal(0,reg_discrim_sd);
+          sigma_reg_free ~ normal(0,discrim_reg_sd);
 
       } else if (hier_type == 2) {
         sigma_reg_free~normal(srx_pred * sigma_reg_x, 10);
@@ -590,7 +590,7 @@ if (constrain_par == 1) {
         }
       } else if (hier_type == 8) {
         
-          sigma_reg_free ~ normal(0,reg_discrim_sd);
+          sigma_reg_free ~ normal(0,discrim_reg_sd);
 
         L_free[1] ~normal(0, legis_sd);
         if (T > 1) {
@@ -609,7 +609,7 @@ if (constrain_par == 1) {
       pinned_pars[1] ~normal(pin_vals, .01);
       if (hier_type == 3) {
         
-          sigma_reg_free ~ normal(0,reg_discrim_sd);
+          sigma_reg_free ~ normal(0,discrim_reg_sd);
 
         L_free[1] ~normal(0, legis_sd);
         if (T > 1) {
@@ -626,7 +626,7 @@ if (constrain_par == 1) {
           }
         }
         
-          sigma_reg_free ~ normal(0,reg_discrim_sd);
+          sigma_reg_free ~ normal(0,discrim_reg_sd);
 
       } else if (hier_type == 6) {
         sigma_reg_free~normal(srx_pred * sigma_reg_x, 10);
@@ -650,7 +650,7 @@ if (constrain_par == 1) {
       //all other hier_type combinations where absences d/n have hier_typearchical priors
       pinned_pars[1] ~normal(pin_vals, .01);
       
-        sigma_abs_free ~ normal(0,abs_discrim_sd);
+        sigma_abs_free ~ normal(0,discrim_abs_sd);
 
       //run through remaining hier_type combinations--not 3,5,6 or 7 but rather 1,2,4,8
       if (hier_type == 1) {
@@ -662,7 +662,7 @@ if (constrain_par == 1) {
           }
         }
         
-          sigma_reg_free ~ normal(0,reg_discrim_sd);
+          sigma_reg_free ~ normal(0,discrim_reg_sd);
 
       } else if (hier_type == 2) {
         sigma_reg_free~normal(srx_pred * sigma_reg_x, 10);
@@ -683,7 +683,7 @@ if (constrain_par == 1) {
         }
       } else if (hier_type == 8) {
         
-          sigma_reg_free ~ normal(0,reg_discrim_sd);
+          sigma_reg_free ~ normal(0,discrim_reg_sd);
 
         L_free[1] ~normal(0, legis_sd);
         if (T > 1) {
@@ -706,7 +706,7 @@ if (constrain_par == 1) {
       restrict_high[1] ~normal(srx_pred[(num_bills - num_constrain_sr + 1):num_bills, ] * sigma_reg_x_cons, restrict_sd);
       if (hier_type == 2) {
         
-          sigma_abs_free ~ normal(0,abs_discrim_sd);
+          sigma_abs_free ~ normal(0,discrim_abs_sd);
 
         L_free[1] ~normal(0, legis_sd);
         if (T > 1) {
@@ -723,7 +723,7 @@ if (constrain_par == 1) {
           }
         }
         
-          sigma_abs_free ~ normal(0,abs_discrim_sd);
+          sigma_abs_free ~ normal(0,discrim_abs_sd);
 
       } else if (hier_type == 6) {
         sigma_abs_free~normal(sax_pred * sigma_abs_x, 10);
@@ -747,7 +747,7 @@ if (constrain_par == 1) {
       //all other hier_type combinations where absences d/n have hier_typearchical priors
       restrict_high[1] ~normal(0, restrict_sd);
       
-        sigma_reg_free ~ normal(0,reg_discrim_sd);
+        sigma_reg_free ~ normal(0,discrim_reg_sd);
 
       //run through remaining hier_type combinations--not 3,5,6 or 7 but rather 1,2,4,8
       if (hier_type == 1) {
@@ -759,7 +759,7 @@ if (constrain_par == 1) {
           }
         }
         
-          sigma_abs_free ~ normal(0,abs_discrim_sd);
+          sigma_abs_free ~ normal(0,discrim_abs_sd);
 
       } else if (hier_type == 3) {
         sigma_abs_free~normal(sax_pred * sigma_abs_x, 10);
@@ -780,7 +780,7 @@ if (constrain_par == 1) {
         }
       } else if (hier_type == 8) {
         
-          sigma_abs_free ~ normal(0,abs_discrim_sd);
+          sigma_abs_free ~ normal(0,discrim_abs_sd);
 
         L_free[1] ~normal(0, legis_sd);
         if (T > 1) {
@@ -800,7 +800,7 @@ if (constrain_par == 1) {
       restrict_low[1] ~normal(srx_pred[(num_bills - num_constrain_sr + 1):num_bills, ] * sigma_reg_x_cons, restrict_sd);
       if (hier_type == 2) {
         
-          sigma_abs_free ~ normal(0,abs_discrim_sd);
+          sigma_abs_free ~ normal(0,discrim_abs_sd);
 
         L_free[1] ~normal(0, legis_sd);
         if (T > 1) {
@@ -817,7 +817,7 @@ if (constrain_par == 1) {
           }
         }
         
-          sigma_abs_free ~ normal(0,abs_discrim_sd);
+          sigma_abs_free ~ normal(0,discrim_abs_sd);
 
       } else if (hier_type == 6) {
         sigma_abs_free~normal(sax_pred * sigma_abs_x, 10);
@@ -842,7 +842,7 @@ if (constrain_par == 1) {
       restrict_high[1] ~normal(0, restrict_sd);
       restrict_low[1] ~normal(0, restrict_sd);
       
-        sigma_reg_free ~ normal(0,reg_discrim_sd);
+        sigma_reg_free ~ normal(0,discrim_reg_sd);
 
       //run through remaining hier_type combinations--not 3,5,6 or 7 but rather 1,2,4,8
       if (hier_type == 1) {
@@ -854,7 +854,7 @@ if (constrain_par == 1) {
           }
         }
         
-          sigma_abs_free ~ normal(0,abs_discrim_sd);
+          sigma_abs_free ~ normal(0,discrim_abs_sd);
 
       } else if (hier_type == 3) {
         sigma_abs_free~normal(sax_pred * sigma_abs_x, 10);
@@ -875,7 +875,7 @@ if (constrain_par == 1) {
         }
       } else if (hier_type == 8) {
         
-          sigma_abs_free ~ normal(0,abs_discrim_sd);
+          sigma_abs_free ~ normal(0,discrim_abs_sd);
 
         L_free[1] ~normal(0, legis_sd);
         if (T > 1) {
@@ -894,7 +894,7 @@ if (constrain_par == 1) {
       pinned_pars[1] ~normal(pin_vals, .01);
       if (hier_type == 2) {
         
-          sigma_abs_free ~ normal(0,abs_discrim_sd);
+          sigma_abs_free ~ normal(0,discrim_abs_sd);
 
         L_free[1] ~normal(0, legis_sd);
         if (T > 1) {
@@ -911,7 +911,7 @@ if (constrain_par == 1) {
           }
         }
         
-          sigma_abs_free ~ normal(0,abs_discrim_sd);
+          sigma_abs_free ~ normal(0,discrim_abs_sd);
 
       } else if (hier_type == 6) {
         sigma_abs_free~normal(sax_pred * sigma_abs_x, 10);
@@ -935,7 +935,7 @@ if (constrain_par == 1) {
       //all other hier_type combinations where absences d/n have hier_typearchical priors
       pinned_pars[1] ~normal(pin_vals, .01);
       
-        sigma_reg_free ~ normal(0,reg_discrim_sd);
+        sigma_reg_free ~ normal(0,discrim_reg_sd);
 
       //run through remaining hier_type combinations--not 2,4,6 or 7 but rather 1,3,5,8
       if (hier_type == 1) {
@@ -947,7 +947,7 @@ if (constrain_par == 1) {
           }
         }
         
-          sigma_abs_free ~ normal(0,abs_discrim_sd);
+          sigma_abs_free ~ normal(0,discrim_abs_sd);
 
       } else if (hier_type == 3) {
         sigma_abs_free~normal(sax_pred * sigma_abs_x, 10);
@@ -968,7 +968,7 @@ if (constrain_par == 1) {
         }
       } else if (hier_type == 8) {
         
-          sigma_abs_free ~ normal(0,abs_discrim_sd);
+          sigma_abs_free ~ normal(0,discrim_abs_sd);
 
         L_free[1] ~normal(0, legis_sd);
         if (T > 1) {

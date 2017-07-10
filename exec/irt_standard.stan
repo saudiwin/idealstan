@@ -40,8 +40,8 @@ data {
   matrix[num_bills,SRX] srx_pred;
   matrix[num_bills,SAX] sax_pred;
   vector[num_fix_high] pin_vals;
-  real reg_discrim_sd;
-  real abs_discrim_sd;
+  real discrim_reg_sd;
+  real discrim_abs_sd;
   real legis_sd;
   real diff_abs_sd;
   real diff_reg_sd;

@@ -1,3 +1,9 @@
+#' Data and Identification for \code{id_estimate}
+#' 
+#' \code{idealdata} objects contain the relevant legislator/bill (person/item) matrix of data along with slots containing information
+#' about the kind of identification used in the estimation.
+#' @seealso \code{\link{id_make}} to create an \code{idealdata} object suitable for estimation with \code{id_estimate}.
+#' @export
 setClass('idealdata',
          slots=list(vote_matrix='matrix',
                     legis_data='data.frame',
@@ -25,6 +31,13 @@ setClass('idealdata',
                     simul_data='list',
                     simulation='logical'))
 
+
+#' Results of \code{\link{id_estimate}} function
+#' 
+#' The \code{idealstan} objects store the results of estimations carried out by the \code{\link{id_estimate}} function. 
+#' These objects include the full results of Bayesian sampling performed by the \code{\link[rstan]{stan}} function in the \pkg{rstan}
+#' package.
+#' @export
 setClass('idealstan',
          slots=list(vote_data='idealdata',
                     to_fix='list',
@@ -129,7 +142,6 @@ setGeneric('id_model',
            signature='object',
            function(object,...) standardGeneric('id_model'))
 
-#' @export
 setMethod('id_model',signature(object='idealdata'),
           function(object,fixtype='vb',model_type=NULL,this_data=NULL,nfix=10,
                    restrict_params=NULL,restrict_type=NULL,restrict_ind_high=NULL,
@@ -152,6 +164,14 @@ setMethod('id_model',signature(object='idealdata'),
             return(object)
           })
 
+#' Posterior Summaries for fitted \code{idealstan} object
+#' 
+#' This function produces quantiles and standard deviations for the posterior samples of \code{\link{idealstan}} objects.
+#' 
+#' @param object An \code{idealstan} object fitted by \code{\link{id_estimate}}
+#' 
+#' @return A \code{\link[dplyr]{tibble}} data frame with parameters as rows and descriptive statistics as columns
+#' 
 #' @export
 setMethod('summary',signature(object='idealstan'),
           function(object) {
@@ -176,19 +196,34 @@ setMethod('summary',signature(object='idealstan'),
           })
 
 
-setGeneric('plot_model',
+setGeneric('id_plot',
            signature='object',
-           function(object,...) standardGeneric('plot_model'))
+           function(object,...) standardGeneric('id_plot'))
 
-#' The base plotting function. Default plot shows legislator ideal points with bills as equiprobability lines 
-#' (also called trace contour plots and cutting lines).
+#' Plot Results of \code{\link{id_estimate}}
+#' 
+#' This function allows you to access the full range of plotting options for fitted \code{idealstan} models.
+#' 
+#' \code{id_plot} is a wrapper function that can access the various plotting functions available in the \code{idealstan} package. 
+#'    Currently, the options are limited to a plot of legislator/person ideal points with bills/item midpoints as an optional overlay.
+#'    Additional plots will be available in future versions of \code{idealstan}.
+#' @param plot_type Specify the plot as a character string. Currently 'legislators' for legislator/person ideal point plot and 
+#'    'histogram' for a histogram of model estimates for given parameters.
+#' @param ... Additional arguments passed on to the underlying functions. See individual function documentation for details.
+#' @return A \code{\link[ggplot2]{ggplot}} object
+#' @seealso \code{\link{id_plot_legis}} for a legislator/person ideal point plot, 
+#' \code{\link{id_plot_all_hist}} for a standard histogram plot,
+#' \code{\link{id_plot_compare}} for an ideal point plot of two different models of the same data,
+#' \code{\link{id_plot_rhats}} for a histogram of \code{Rhat} values,
+#' \code{\link{id_plot_sims}} for plotting true versus estimated values,
+#' \code{\link{id_estimate}} for how to estimate an \code{idealstan} object.
 #' @export
-setMethod(plot_model, signature(object='idealstan'),
+setMethod(id_plot, signature(object='idealstan'),
           function(object,plot_type='legislators',...) {
             if(plot_type=='legislators') {
-              legis_plot(object,...)
+              id_plot_legis(object,...)
             } else if(plot_type=='histogram') {
-              all_hist_plot(object,...)
+              id_plot_all_hist(object,...)
             }
             
           })

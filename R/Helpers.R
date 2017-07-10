@@ -142,6 +142,7 @@
      } else {
        print(paste0('Automatic identification has occurred for ',all_args$restrict_type,
              ' identification with ',nfix,' constraints.'))
+       browser()
      }
    }
    

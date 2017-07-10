@@ -69,7 +69,7 @@ estimate_arp <- estimate_ideal(arp_ideal_data,
                                reg_discrim_sd = 5,
                                legis_sd = 5,
                                diff_sd=5,
-                               nfix=5,
+                               nfix=3,
                                restrict_type='constrain_twoway',
                                fixtype='vb',restrict_params = 'legis',
                                seed=84520)
