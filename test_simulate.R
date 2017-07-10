@@ -78,15 +78,15 @@ low_leg_pin <- min(true_legis)
                             nfix=2,
                             restrict_type='constrain_twoway',
                             restrict_params='legis',
-                            restrict_ind_high=c(high_leg$ix[1:3]),
-                            restrict_ind_low = low_leg$ix[1:3],
+                            restrict_ind_high=c(high_leg$ix[1:5]),
+                            restrict_ind_low = low_leg$ix[1:5],
                             #pin_vals = c(high_leg$x[1],low_leg$x[1]),
                             fixtype='constrained',
-                            discrim_reg_sd =1,
+                            discrim_reg_sd =5,
                             discrim_abs_sd = 1,
                             legis_sd=1,
-                            diff_abs_sd=1,
-                            diff_reg_sd=1,
+                            diff_abs_sd=5,
+                            diff_reg_sd=5,
                             restrict_sd=1)
  all_predict <- posterior_predict(test_out)
  bayesplot::ppc_bars(c(test_out@vote_data@vote_matrix),all_predict)
