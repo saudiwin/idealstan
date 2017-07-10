@@ -314,8 +314,8 @@ id_plot_all_hist <- function(object,params=NULL,param_labels=NULL,hist_type='all
 id_plot_sims <- function(sims,type='RMSE') {
 
   stat_func <- switch(type,
-                      RMSE=calc_rmse,
-                      residual=calc_resid)
+                      RMSE=id_sim_rmse,
+                      residual=id_sim_resid)
   
   
   stat_func(sims) %>% 

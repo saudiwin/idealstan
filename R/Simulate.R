@@ -117,7 +117,7 @@ id_sim_gen <- function(num_legis=50,num_bills=50,absence_discrim_sd=1,absence_di
     colnames(combined) <- paste0('Vote_',1:ncol(combined))
     row.names(combined) <- paste0('Legis_',1:nrow(combined))
     
-    out_data <- make_idealdata(vote_data=combined,legis_data=data_frame(legis.names=paste0('Legis_',1:nrow(combined)),
+    out_data <- id_make(vote_data=combined,legis_data=data_frame(legis.names=paste0('Legis_',1:nrow(combined)),
                                                                         party='L',
                                                                         true_legis=as.numeric(ideal_pts)),
                                abs_vote = ordinal_outcomes+1,
@@ -173,7 +173,7 @@ id_sim_gen <- function(num_legis=50,num_bills=50,absence_discrim_sd=1,absence_di
     colnames(combined) <- paste0('Vote_',1:ncol(combined))
     row.names(combined) <- paste0('Legis_',1:nrow(combined))
     
-    out_data <- make_idealdata(vote_data=combined,legis_data=data_frame(legis.names=paste0('Legis_',1:nrow(combined)),
+    out_data <- id_make(vote_data=combined,legis_data=data_frame(legis.names=paste0('Legis_',1:nrow(combined)),
                                                                         party='L',
                                                                         true_legis=as.numeric(ideal_pts)),
                                abs_vote = NULL,
@@ -236,7 +236,7 @@ id_sim_gen <- function(num_legis=50,num_bills=50,absence_discrim_sd=1,absence_di
     colnames(combined) <- paste0('Vote_',1:ncol(combined))
     row.names(combined) <- paste0('Legis_',1:nrow(combined))
     
-    out_data <- make_idealdata(vote_data=combined,legis_data=data_frame(legis.names=paste0('Legis_',1:nrow(combined)),
+    out_data <- id_make(vote_data=combined,legis_data=data_frame(legis.names=paste0('Legis_',1:nrow(combined)),
                                                                         party='L',
                                                                         true_legis=as.numeric(ideal_pts)),
                                abs_vote = ordinal_outcomes+1,
@@ -312,7 +312,7 @@ id_sim_test <- function(param_range=c(50,150),by=10,simul_type='absence',is.ordi
   
   est_models <- lapply(all_sims,function(m,...) {
 
-    estimate_ideal(m$sim_data,
+    id_estimate(m$sim_data,
                    use_vb=FALSE,
                    restrict_ind_high=c(m$high_par,m$low_par),
                    pin_vals = c(m$high_par_est,m$low_par_est),
@@ -325,7 +325,7 @@ id_sim_test <- function(param_range=c(50,150),by=10,simul_type='absence',is.ordi
 
   est_models_vb <-  lapply(all_sims,function(m,...) {
     
-    estimate_ideal(m$sim_data,
+    id_estimate(m$sim_data,
                    use_vb=TRUE,
                    restrict_ind_high=c(m$high_par,m$low_par),
                    pin_vals = c(m$high_par_est,m$low_par_est),

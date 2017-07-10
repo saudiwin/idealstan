@@ -18,7 +18,7 @@ model_types <- c('absence')
 # high_leg_pin <- max(true_legis)
 # low_leg_pin <- min(true_legis)
 
-test_out <- test_idealstan(legis_range=c(10,50),
+test_out <- id_test(legis_range=c(10,50),
 
                            model_type = 4,
                            ncores = 4,
@@ -45,12 +45,12 @@ ggplot(test_out,aes(y=estimate,x=iter)) + theme_minimal()+
 # plot_sims(test_out)
 # plot_sims(test_out,type='residual')
 # try again, this time identify the sigma absences
-one_model <- simulate_models(absence=T,
+one_model <- id_sim_gen(absence=T,
                              ordinal=T,
-                             num_legis =20,
+                             num_legis =50,
                              num_bills=50,
-                              absence_discrim_sd = 1,
-                             reg_discrim_sd = 1,
+                              absence_discrim_sd = .25,
+                             reg_discrim_sd = .25,
                              absence_diff_mean = 0.5,
                              diff_sd = 1)
 true_sigma_abs <- one_model@simul_data$true_abs_discrim
@@ -71,7 +71,7 @@ low_leg_pin <- min(true_legis)
 # pin_vals = c(high_abs$x[1:5],low_abs$x[1:5])
 
 
- test_out <- estimate_ideal(idealdata = one_model,
+ test_out <- id_estimate(idealdata = one_model,
                             model_type = 4,
                             use_vb = FALSE,
                             ncores = 4,
@@ -82,8 +82,8 @@ low_leg_pin <- min(true_legis)
                             restrict_ind_low = low_leg$ix[1:3],
                             #pin_vals = c(high_leg$x[1],low_leg$x[1]),
                             fixtype='constrained',
-                            reg_discrim_sd =2,
-                            abs_discrim_sd = 2,
+                            discrim_reg_sd =1,
+                            discrim_abs_sd = 1,
                             legis_sd=1,
                             diff_abs_sd=1,
                             diff_reg_sd=1,
@@ -91,13 +91,13 @@ low_leg_pin <- min(true_legis)
  all_predict <- posterior_predict(test_out)
  bayesplot::ppc_bars(c(test_out@vote_data@vote_matrix),all_predict)
  
- coverages <- calc_coverage(test_out)  
+ coverages <- id_sim_coverage(test_out)  
   lapply(coverages,function(x) mean(x$avg))
   #apply(test_out@vote_data@vote_matrix,2,table)
   #apply(test_out@vote_data@vote_matrix,1,table)
-  hist_rhats(test_out)
-  plot_sims(test_out)
-  plot_sims(test_out,type='residual')
+  id_plot_rhats(test_out)
+  id_plot_sims(test_out)
+  id_plot_sims(test_out,type='residual')
 
 all_pars <- summary(test_out)
 filter(all_pars,par_type=='A_int_full') %>% ggplot(aes(x=posterior_median)) + geom_histogram()
