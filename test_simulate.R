@@ -49,15 +49,10 @@ one_model <- id_sim_gen(absence=T,
                              ordinal=T,
                              num_legis =50,
                              num_bills=50,
-<<<<<<< HEAD
-                              absence_discrim_sd = .5,
-                             reg_discrim_sd = .5,
-=======
-                              absence_discrim_sd = .25,
-                             reg_discrim_sd = .25,
->>>>>>> cdb4a4db36534a237e3923e381a417013bb203f8
+                              absence_discrim_sd = 2,
+                             reg_discrim_sd = 2,
                              absence_diff_mean = 0.5,
-                             diff_sd = 1)
+                             diff_sd = .25)
 true_sigma_abs <- one_model@simul_data$true_abs_discrim
 high_abs <- sort(true_sigma_abs,decreasing=TRUE,index.return=TRUE)
 low_abs <- sort(true_sigma_abs,index.return=TRUE)
@@ -88,11 +83,11 @@ low_leg_pin <- min(true_legis)
                             #pin_vals = c(high_leg$x[1],low_leg$x[1]),
                             fixtype='constrained',
                             discrim_reg_sd =5,
-                            discrim_abs_sd = 1,
-                            legis_sd=1,
+                            discrim_abs_sd = 5,
+                            legis_sd=5,
                             diff_abs_sd=5,
                             diff_reg_sd=5,
-                            restrict_sd=1)
+                            restrict_sd=5)
  all_predict <- posterior_predict(test_out)
  bayesplot::ppc_bars(c(test_out@vote_data@vote_matrix),all_predict)
  

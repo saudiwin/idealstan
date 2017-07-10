@@ -39,7 +39,8 @@ id_sim_gen <- function(num_legis=50,num_bills=50,absence_discrim_sd=1,absence_di
   absence_diff <- prior_func(params=list(N=num_bills-1,mean=absence_diff_mean,sd=diff_sd)) 
   #Discrimination parameters more important because they reflect how much information a bill contributes
   # need to make some of them negative to reflect the switching nature of policies
-  absence_discrim <- prior_func(params=list(N=num_bills,mean=1,sd=absence_discrim_sd)) * if_else(runif(num_bills-1)>0.5,1,-1)
+  #absence_discrim <- prior_func(params=list(N=num_bills,mean=1,sd=absence_discrim_sd)) * if_else(runif(num_bills-1)>0.5,1,-1)
+  absence_discrim <- prior_func(params=list(N=num_bills,mean=0,sd=absence_discrim_sd))
   # Legislator ideal points common to both types of models (absence and regular)
   
   ideal_pts <- prior_func(params=list(N=num_legis,mean=0,sd=ideal_pts_sd))
@@ -56,8 +57,9 @@ id_sim_gen <- function(num_legis=50,num_bills=50,absence_discrim_sd=1,absence_di
   
   reg_diff <- prior_func(params=list(N=num_bills-1,mean=0,sd=diff_sd))
   reg_diff <- c(0,reg_diff)
-  reg_discrim <- prior_func(params=list(N=num_bills-1,mean=1,sd=reg_discrim_sd)) * if_else(runif(num_bills-1)>0.5,1,-1)
-  reg_discrim <- c(0.5,reg_discrim)
+  #reg_discrim <- prior_func(params=list(N=num_bills,mean=1,sd=reg_discrim_sd)) * if_else(runif(num_bills-1)>0.5,1,-1)
+  reg_discrim <- prior_func(params=list(N=num_bills,mean=0,sd=reg_discrim_sd))
+  
   pr_vote <- sapply(1:length(legis_points), function(n) {
     ideal_pts[legis_points[n]]*reg_discrim[bill_points[n]] - reg_diff[bill_points[n]]
   })
