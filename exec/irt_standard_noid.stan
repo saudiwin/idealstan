@@ -35,8 +35,8 @@ data {
   matrix[num_legis,LX] legis_pred[T];
   matrix[num_bills,SRX] srx_pred;
   matrix[num_bills,SAX] sax_pred;
-  real reg_discrim_sd;
-  real abs_discrim_sd;
+  real discrim_reg_sd;
+  real discrim_abs_sd;
   real legis_sd;
   real diff_abs_sd;
   real diff_reg_sd;
@@ -125,8 +125,8 @@ model {
   for(t in 1:T) {
   L_free[t] ~ normal(0,legis_sd);
   }
-  sigma_abs_free ~ normal(0,abs_discrim_sd);
-  sigma_reg_free ~ normal(0,reg_discrim_sd);
+  sigma_abs_free ~ normal(0,discrim_abs_sd);
+  sigma_reg_free ~ normal(0,discrim_reg_sd);
   legis_x ~ normal(0,5);
   sigma_reg_x ~ normal(0,5);
   sigma_abs_x ~ normal(0,5);

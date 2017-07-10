@@ -64,12 +64,11 @@ arp_ideal_data <- make_idealdata(vote_data = vote_matrix,
 
 estimate_arp <- estimate_ideal(arp_ideal_data,
                                model_type=4,
-                               auto_id=TRUE,
                                abs_discrim_sd = 5,
                                reg_discrim_sd = 5,
                                legis_sd = 5,
                                diff_sd=5,
-                               nfix=5,
+                               nfix=10,
                                restrict_type='constrain_twoway',
                                fixtype='vb',restrict_params = 'legis',
                                seed=84520)

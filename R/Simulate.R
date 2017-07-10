@@ -1,6 +1,6 @@
 #' A function designed to simulate absence-inflated data with either binary or ordinal outcomes
 #' @export
-simulate_models <- function(num_legis=50,num_bills=50,absence_discrim_sd=1,absence_diff_mean=0.5,
+id_sim_gen <- function(num_legis=50,num_bills=50,absence_discrim_sd=1,absence_diff_mean=0.5,
                              reg_discrim_sd=1,diff_sd=1,
                              ideal_pts_sd=1,prior_type='gaussian',ordinal=TRUE,ordinal_outcomes=3,
                              graded_response=FALSE,absence=TRUE) {
@@ -117,7 +117,7 @@ simulate_models <- function(num_legis=50,num_bills=50,absence_discrim_sd=1,absen
     colnames(combined) <- paste0('Vote_',1:ncol(combined))
     row.names(combined) <- paste0('Legis_',1:nrow(combined))
     
-    out_data <- make_idealdata(vote_data=combined,legis_data=data_frame(legis.names=paste0('Legis_',1:nrow(combined)),
+    out_data <- id_make(vote_data=combined,legis_data=data_frame(legis.names=paste0('Legis_',1:nrow(combined)),
                                                                         party='L',
                                                                         true_legis=as.numeric(ideal_pts)),
                                abs_vote = ordinal_outcomes+1,
@@ -173,7 +173,7 @@ simulate_models <- function(num_legis=50,num_bills=50,absence_discrim_sd=1,absen
     colnames(combined) <- paste0('Vote_',1:ncol(combined))
     row.names(combined) <- paste0('Legis_',1:nrow(combined))
     
-    out_data <- make_idealdata(vote_data=combined,legis_data=data_frame(legis.names=paste0('Legis_',1:nrow(combined)),
+    out_data <- id_make(vote_data=combined,legis_data=data_frame(legis.names=paste0('Legis_',1:nrow(combined)),
                                                                         party='L',
                                                                         true_legis=as.numeric(ideal_pts)),
                                abs_vote = NULL,
@@ -236,7 +236,7 @@ simulate_models <- function(num_legis=50,num_bills=50,absence_discrim_sd=1,absen
     colnames(combined) <- paste0('Vote_',1:ncol(combined))
     row.names(combined) <- paste0('Legis_',1:nrow(combined))
     
-    out_data <- make_idealdata(vote_data=combined,legis_data=data_frame(legis.names=paste0('Legis_',1:nrow(combined)),
+    out_data <- id_make(vote_data=combined,legis_data=data_frame(legis.names=paste0('Legis_',1:nrow(combined)),
                                                                         party='L',
                                                                         true_legis=as.numeric(ideal_pts)),
                                abs_vote = ordinal_outcomes+1,
@@ -267,7 +267,7 @@ simulate_models <- function(num_legis=50,num_bills=50,absence_discrim_sd=1,absen
 #' A function that loops over numbers of legislators/bills to provide a coherent over-view of 
 #' idealstan performance for a given model type.
 #' @export
-test_idealstan <- function(param_range=c(50,150),by=10,simul_type='absence',is.ordinal=TRUE,
+id_sim_test <- function(param_range=c(50,150),by=10,simul_type='absence',is.ordinal=TRUE,
                            restrict_type='constrain_twoway',restrict_params='legis',
                            num_constrain=10,fixtype='pinned',...) {
 
@@ -312,7 +312,7 @@ test_idealstan <- function(param_range=c(50,150),by=10,simul_type='absence',is.o
   
   est_models <- lapply(all_sims,function(m,...) {
 
-    estimate_ideal(m$sim_data,
+    id_estimate(m$sim_data,
                    use_vb=FALSE,
                    restrict_ind_high=c(m$high_par,m$low_par),
                    pin_vals = c(m$high_par_est,m$low_par_est),
@@ -325,7 +325,7 @@ test_idealstan <- function(param_range=c(50,150),by=10,simul_type='absence',is.o
 
   est_models_vb <-  lapply(all_sims,function(m,...) {
     
-    estimate_ideal(m$sim_data,
+    id_estimate(m$sim_data,
                    use_vb=TRUE,
                    restrict_ind_high=c(m$high_par,m$low_par),
                    pin_vals = c(m$high_par_est,m$low_par_est),
@@ -338,22 +338,22 @@ test_idealstan <- function(param_range=c(50,150),by=10,simul_type='absence',is.o
 
 
   est_models_cov <- lapply(1:length(est_models),function(i) {
-    calc_coverage(est_models[[i]],rep=i) %>% bind_rows(.id="ID")
+    id_sim_coverage(est_models[[i]],rep=i) %>% bind_rows(.id="ID")
     }) %>% bind_rows
   est_models_vb_cov <- lapply(1:length(est_models),function(i) {
-    calc_coverage(est_models_vb[[i]],rep=i) %>% bind_rows(.id="ID")
+    id_sim_coverage(est_models_vb[[i]],rep=i) %>% bind_rows(.id="ID")
   }) %>% bind_rows
   est_models_rmse <- lapply(1:length(est_models),function(i) {
-    calc_rmse(est_models[[i]],rep=i) %>% bind_rows(.id="ID")
+    id_sim_rmse(est_models[[i]],rep=i) %>% bind_rows(.id="ID")
   }) %>% bind_rows
   est_models_vb_rmse <- lapply(1:length(est_models),function(i) {
-    calc_rmse(est_models[[i]],rep=i) %>% bind_rows(.id="ID")
+    id_sim_rmse(est_models[[i]],rep=i) %>% bind_rows(.id="ID")
   }) %>% bind_rows
   est_models_resid <- lapply(1:length(est_models),function(i) {
-    calc_resid(est_models[[i]],rep=i) %>% bind_rows(.id="ID")
+    id_sim_resid(est_models[[i]],rep=i) %>% bind_rows(.id="ID")
   }) %>% bind_rows
   est_models_vb_resid <- lapply(1:length(est_models),function(i) {
-    calc_resid(est_models[[i]],rep=i) %>% bind_rows(.id="ID")
+    id_sim_resid(est_models[[i]],rep=i) %>% bind_rows(.id="ID")
   }) %>% bind_rows
   
   
@@ -369,7 +369,7 @@ test_idealstan <- function(param_range=c(50,150),by=10,simul_type='absence',is.o
 #' @param est_param A matrix of posterior draws of a parameter
 #' @param true_param A matrix (one column) of true parameter values
 #' @export
-calc_rmse <- function(obj,rep=1) {
+id_sim_rmse <- function(obj,rep=1) {
   all_params <- rstan::extract(obj@stan_samples)
   
   all_true <- obj@vote_data@simul_data
@@ -418,7 +418,7 @@ calc_rmse <- function(obj,rep=1) {
 #' @param est_param A matrix of posterior draws of a parameter
 #' @param true_param A matrix (one column) of true parameter values
 #' @export
-calc_coverage <- function(obj,rep=1,quantiles=c(.95,.05)) {
+id_sim_coverage <- function(obj,rep=1,quantiles=c(.95,.05)) {
 
   all_params <- rstan::extract(obj@stan_samples)
   
@@ -469,7 +469,7 @@ calc_coverage <- function(obj,rep=1,quantiles=c(.95,.05)) {
 #' @param est_param A matrix of posterior draws of a parameter
 #' @param true_param A matrix (one column) of true parameter values
 #' @export
-calc_resid <- function(obj,rep=1) {
+id_sim_resid <- function(obj,rep=1) {
   
   all_params <- rstan::extract(obj@stan_samples)
   
