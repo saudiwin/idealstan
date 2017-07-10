@@ -20,3 +20,4 @@ ordinal outcomes and 2 for binary outcomes.}
 \description{
 To run an IRT model using \code{idealstan}, you must first process your data using the \code{make_ideal} function.
 }
+

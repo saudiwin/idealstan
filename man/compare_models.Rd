@@ -16,3 +16,4 @@ compare_models(model1 = NULL, model2 = NULL, scale_flip = FALSE,
 Function to compare two fitted idealstan models by plotting ideal points. Assumes that underlying data
 is the same for both models.
 }
+

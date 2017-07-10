@@ -16,3 +16,4 @@ calc_rmse(obj, rep = 1)
 RMSE function for calculating individual RMSE values compared to true simulation scores
 Returns a data frame with RMSE plus quantiles.
 }
+

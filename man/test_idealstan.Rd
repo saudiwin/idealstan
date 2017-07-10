@@ -13,3 +13,4 @@ test_idealstan(param_range = c(50, 150), by = 10, simul_type = "absence",
 A function that loops over numbers of legislators/bills to provide a coherent over-view of 
 idealstan performance for a given model type.
 }
+

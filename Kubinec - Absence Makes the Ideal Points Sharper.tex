@@ -96,9 +96,27 @@ The methodology that has been used so far to address this problem is multiple im
 	
 	\section*{Empirical Applications}
 	
-	As an empirical application of the model, I look at two datasets, one from the 114th Senate and the second from a transitional democracy, Tunisia. For both datasets I use existing R packages, \texttt{wnominate} and \texttt{pscl}, to obtain ideal scores using the NOMINATE and IRT methods respectively.
+	As an empirical application of the model, I look at two rollcall datasets, one from the 114th Senate and the second from a transitional democracy, Tunisia. For both datasets I use existing R packages, \texttt{wnominate} and \texttt{pscl}, to obtain ideal scores using the W-NOMINATE and IRT methods respectively. I then estimated absence-inflated models for both datasets, a binary IRT for the Senate data and an ordinal IRT for the Tunisian data. I did not use an ordinal model for the Senate data because there were only a handful of abstentions in the 114th Senate, and estimating cutpoints for abstention would make little difference to the model. 
 	
 	\subsection*{US Congress}
+	
+	The estimation results for the 114th Senate show that overall the absence-inflated model and both \texttt{ideal} and W-NOMINATE correlate very highly, as might be expected given the relatively low rates of absence. Figure \ref{compare_con} reveals that the models tend to diverge only in the tails of the Republican and Democrat parties. Furthermore, although the absence-inflated model is structurally more similar to \texttt{ideal} in that it is based on an IRT framework, for some legislators the absence-inflation model is closer to W-NOMINATE's estimate. 
+	
+	\begin{figure}
+		\centering
+		\caption{Comparison of Ideal, W-NOMINATE and Absence-Inflation Models for 114th Senate}\label{compare_con}
+			\includegraphics[width=\linewidth]{all_perf}
+	\end{figure}
+	
+	Figure \ref{compare_con} shows that the standard models of \texttt{ideal} and W-NOMINATE are quite accurate at capturing ideal points despite the fact that these models drop absences. The close correlation between the scores shows that even if the assumptions of these models are not met, the resulting estimates are still very usable because the low number of absences ensures the model is still a close approximation of reality. However, as may be expected, the estimates diverge for those legislators who have higher rates of absence. For the 114th Senate, these are primarily Senators who were competing in the presidential primaries: Bernie Sanders, Ted Cruz and Marco Rubio. In fact, the absence-inflation model shows Ted Cruz and Marco Rubio as the most conservative senators in the data set, which is likely because Cruz and Rubio made sure they showed up for votes that mattered to the conservative Republican base during the primary season.
+	
+	\begin{figure}
+		\centering
+		\caption{Rank Changes for 114th Senate}\label{rank_sen}
+		\includegraphics[width=0.8\linewidth]{big_diff}
+	\end{figure}
+	
+	To track these changes within models, I show in Figure \ref{rank_sen} the largest changes in ranks between the absence-inflated model and the two standard models. Positive rank changes in the figure indicate a senator became more conservative as a result of having his or her absences included in the ideal point estimation. In some cases, such as with Bernie Sanders, the absence-inflated model is closer to the IRT-based \texttt{ideal} than the normal utility W-NOMINATE. But with Ted Cruz, Marco Rubio, and Harry Reid, who retired at the end of 114th Congress, the absence-inflated model is markedly different. With all three senators, the absence-inflated model shows the moving towards the ideological extremes. This is likely because all three Congresspeople had an incentive to only show up to bills for which their absence points were relatively polarized: for Cruz and Rubio, pleasing the conservative base, and for Reid, a chance to live out his ideological principles with conviction before retirement.
 	
 	\subsection*{Tunisian Parliament}
 	

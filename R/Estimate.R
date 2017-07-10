@@ -134,11 +134,12 @@ estimate_ideal <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_i
                            restrict_type='constrain_oneway',
                            fixtype='vb',warmup=floor(niters/2),ncores=4,
                            auto_id=FALSE,
-                           reg_discrim_sd=0.5,
-                           abs_discrim_sd=0.5,
+                           reg_discrim_sd=1,
+                           abs_discrim_sd=1,
                            legis_sd=1,
-                           diff_sd=0.5,
-                           restrict_sd=5,
+                           diff_reg_sd=5,
+                           diff_abs_sd=1,
+                           restrict_sd=1,
                            ...) {
   
   
@@ -190,7 +191,8 @@ estimate_ideal <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_i
                     reg_discrim_sd=reg_discrim_sd,
                     abs_discrim_sd=abs_discrim_sd,
                     legis_sd=legis_sd,
-                    diff_sd=diff_sd,
+                    diff_reg_sd=diff_reg_sd,
+                    diff_abs_sd=diff_abs_sd,
                     restrict_sd=restrict_sd)
   
   idealdata <- id_model(object=idealdata,fixtype=fixtype,model_type=model_type,this_data=this_data,
@@ -260,7 +262,8 @@ estimate_ideal <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_i
                     pin_vals=pin_vals,
                     reg_discrim_sd=reg_discrim_sd,
                     abs_discrim_sd=abs_discrim_sd,
-                    diff_sd=diff_sd,
+                    diff_reg_sd=diff_reg_sd,
+                    diff_abs_sd=diff_abs_sd,
                     legis_sd=legis_sd,
                     restrict_sd=restrict_sd)
 

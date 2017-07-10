@@ -4,12 +4,12 @@
 \alias{simulate_models}
 \title{A function designed to simulate absence-inflated data with either binary or ordinal outcomes}
 \usage{
-simulate_models(num_legis = 50, num_bills = 50, absence_discrim_sd = 0.1,
-  absence_diff_mean = 0.5, reg_discrim_sd = 0.1, diff_sd = 0.1,
+simulate_models(num_legis = 50, num_bills = 50, absence_discrim_sd = 1,
+  absence_diff_mean = 0.5, reg_discrim_sd = 1, diff_sd = 1,
   ideal_pts_sd = 1, prior_type = "gaussian", ordinal = TRUE,
-  ordinal_outcomes = 3, graded_response = FALSE, noise = 0.05,
-  absence = TRUE)
+  ordinal_outcomes = 3, graded_response = FALSE, absence = TRUE)
 }
 \description{
 A function designed to simulate absence-inflated data with either binary or ordinal outcomes
 }
+

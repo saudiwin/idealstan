@@ -1,9 +1,9 @@
 #' A function designed to simulate absence-inflated data with either binary or ordinal outcomes
 #' @export
-simulate_models <- function(num_legis=50,num_bills=50,absence_discrim_sd=.1,absence_diff_mean=0.5,
-                             reg_discrim_sd=.1,diff_sd=.1,
+simulate_models <- function(num_legis=50,num_bills=50,absence_discrim_sd=1,absence_diff_mean=0.5,
+                             reg_discrim_sd=1,diff_sd=1,
                              ideal_pts_sd=1,prior_type='gaussian',ordinal=TRUE,ordinal_outcomes=3,
-                             graded_response=FALSE,noise=0.05,absence=TRUE) {
+                             graded_response=FALSE,absence=TRUE) {
   
   # Allow for different type of distributions for ideal points
 
@@ -36,8 +36,7 @@ simulate_models <- function(num_legis=50,num_bills=50,absence_discrim_sd=.1,abse
   # First simulate ideal points for legislators/bills
   # Bill difficulty parameters are fixed because they are not entirely interesting (they represent intercepts)
   
-  absence_diff <- prior_func(params=list(N=num_bills-1,mean=absence_diff_mean,sd=diff_sd)) 
-  absence_diff <- c(0,absence_diff)
+  absence_diff <- prior_func(params=list(N=num_bills,mean=absence_diff_mean,sd=diff_sd)) 
   
   #Discrimination parameters more important because they reflect how much information a bill contributes
   # need to make some of them negative to reflect the switching nature of policies
@@ -419,7 +418,7 @@ calc_rmse <- function(obj,rep=1) {
 #' @param est_param A matrix of posterior draws of a parameter
 #' @param true_param A matrix (one column) of true parameter values
 #' @export
-calc_coverage <- function(obj,rep=1) {
+calc_coverage <- function(obj,rep=1,quantiles=c(.95,.05)) {
 
   all_params <- rstan::extract(obj@stan_samples)
   
@@ -434,8 +433,8 @@ calc_coverage <- function(obj,rep=1) {
     if(class(est_param)=='array') {
       param_length <- dim(est_param)[3]
       all_covs <- sapply(1:param_length, function(i) {
-        high <- quantile(est_param[,,i],.95)
-        low <- quantile(est_param[,,i],.05)
+        high <- quantile(est_param[,,i],quantiles[1])
+        low <- quantile(est_param[,,i],quantiles[2])
         this_sd <- sd(est_param[,,i])
         #this_param <- (true_param[i] < (true_param[i]+1.96*this_sd)) && (true_param[i] > (true_param[i]-1.96*this_sd))
         this_param <- (true_param[i] < high) && (true_param[i] >low)

@@ -12,9 +12,9 @@ estimate_ideal(idealdata = NULL, model_type = 2, use_subset = FALSE,
   nfix = 1, restrict_params = "bill", pin_vals = NULL,
   restrict_ind_high = NULL, restrict_ind_low = NULL,
   restrict_type = "constrain_oneway", fixtype = "vb",
-  warmup = floor(niters/2), ncores = NULL, auto_id = FALSE,
-  reg_discrim_sd = 0.5, abs_discrim_sd = 0.5, legis_sd = 1,
-  diff_sd = 0.5, restrict_sd = 5, ...)
+  warmup = floor(niters/2), ncores = 4, auto_id = FALSE,
+  reg_discrim_sd = 1, abs_discrim_sd = 1, legis_sd = 1, diff_reg_sd = 5,
+  diff_abs_sd = 1, restrict_sd = 1, ...)
 }
 \arguments{
 \item{reg_discrim_sd}{Set the prior standard deviation of the bimodal prior for the discrimination parameters in the vote/score model}
@@ -23,12 +23,13 @@ estimate_ideal(idealdata = NULL, model_type = 2, use_subset = FALSE,
 
 \item{legis_sd}{Set the prior standard deviation for the legislators (persons) parameters}
 
-\item{diff_sd}{Set the prior standard deviation for the bill (item) intercepts.}
-
 \item{restrict_sd}{Set the prior standard deviation for constrained parameters}
+
+\item{diff_sd}{Set the prior standard deviation for the bill (item) intercepts.}
 }
 \description{
 Estimate an idealstan model using an idealdata object.
 This function will take a pre-processed \code{idealdata} vote/score matrix and run one of the available IRT models on the data using
 Stan's MCMC engine.
 }
+

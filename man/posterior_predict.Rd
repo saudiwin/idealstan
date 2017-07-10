@@ -35,3 +35,4 @@ if (require("rstanarm")) {
 # Also see help("posterior_predict", package = "rstanarm")
 
 }
+

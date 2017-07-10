@@ -16,3 +16,4 @@ calc_resid(obj, rep = 1)
 Residual function for checking estimated samples compared to true simulation scores
 Returns a data frame with residuals plus quantiles.
 }
+

@@ -43,7 +43,8 @@ data {
   real reg_discrim_sd;
   real abs_discrim_sd;
   real legis_sd;
-  real diff_sd;
+  real diff_abs_sd;
+  real diff_reg_sd;
   real restrict_sd;
 }
 
@@ -147,8 +148,8 @@ model {
   }
  
 	
-  B_int_free ~ normal(0,diff_sd);
-  A_int_free ~ normal(0,diff_sd);
+  B_int_free ~ normal(0,diff_reg_sd);
+  A_int_free ~ normal(0,diff_abs_sd);
   for(b in 1:num_bills) {
   steps_votes_grm[b] ~ normal(0,5);
   }
