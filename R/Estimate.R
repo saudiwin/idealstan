@@ -166,7 +166,7 @@ id_make <- function(vote_data=NULL,simul_data=NULL,
 #'   \item Ordinal IRT (rating scale) model incorporating abstentions as middle category with absence inflation
 #' }
 #' Additional models are available but have not yet been tested. You can find them by searching the included stan files for more info.
-#' @section Identification
+#' @section Identification:
 #' Identifying IRT models is challenging, and ideal point models are still more challenging because the discrimination parameters are not constrained.
 #' As a result, more care must be taken to obtain estimates that are the same regardless of starting values. 
 #' The parameter \code{fixtype} enables you to change the type of identification used. The default, 'vb', does not require any further

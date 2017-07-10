@@ -16,7 +16,10 @@ references:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE,warning=FALSE)
+require(idealstan)
+require(dplyr)
+require(ggplot2)
 ```
 
 ## R Package Idealstan (V0.1) README
@@ -26,3 +29,50 @@ This package implements new IRT models (models for absences and for dynamic hiea
 This vignette demonstrates basic usage of the package, which is currently in alpha. A beta release is scheduled for July 13, 2017. 
 
 This package takes an approach to modeling legislative roll call data (and other IRT data) that uses a hurdle model to separately account for the probability that a legislator (i.e., test-taker) will show up to vote. This absence-inflated model estimates additional bill (item) parameters to reflect the relative gain or loss a legislator has from showing up to vote. Further details of this model are explained in @kubinec2017.
+
+To begin with, we can simulate data from an ordinal ideal-point model in which there are three possible responses corresponding to a legislator voting: yes, abstain and no. An additional category is also simulated that indicates whether a legislator shows up to vote or is absent. While traditional ideal point models tend to drop absences, this package can model absences via a hurdle model in which the censoring of the vote/score data is estimated as a function of individual bill intercepts and discrimination parameters for the decision to be absent or present.
+
+```{r sim_data}
+
+ord_ideal_sim <- id_sim_gen(num_legis=20)
+knitr::kable(as_data_frame(head(ord_ideal_sim@vote_matrix)))
+```
+
+The vote/score matrix has legislators/persons in the rows and bills/items in the columns. In this simulated data, yes votes are recorded as `3`, no votes as `1`, abstentions as `2`, and absences as `4`. 
+
+The function `id_estimate` will take this processed data and run an IRT ideal point model. Currently both inflated and non-inflated versions of the standard binary IRT 2-PL model and the ordinal IRT model (i.e., a rating-scale model) are supported. The package also includes models for hierarchical parameters for legislators/persons and bills/items, along with dynamic IRT models, but these have as yet not been fully tested.
+
+The package has options for identification that are similar to other IRT packages in which the row or column indices of legislators/persons or bills/items to constrain are specified to the `id_estimate` function. For example, we can use the true values of the simulated legislators to constrain two legislators with the highest ideal points and two legislators with the lowest ideal points:
+
+```{r constrain_sim}
+true_legis <- ord_ideal_sim@simul_data$true_legis
+high_leg <- sort(true_legis,decreasing = T,index.return=T)
+low_leg <- sort(true_legis,index.return=T)
+
+ord_ideal_est <- id_estimate(idealdata=ord_ideal_sim,
+                             model_type=4,
+                             fixtype='constrained',
+                             restrict_type='constrain_twoway',
+                             restrict_ind_high = high_leg$ix[1:2],
+                             restrict_ind_low=low_leg$ix[1:2],
+                             refresh=500)
+```
+
+We can then check and see how well the Stan estimation engine was able to capture the "true" values used in the simulation by looking at the residuals between the estimated and the true values:
+
+```{r check_true}
+id_plot_sims(ord_ideal_est,type='residual')
+```
+
+`legis_resid` are the legislator/person ideal points, `sigma_abs_resid` are the bill/item absence-inflated discrimination parameters, and `sigma_reg_resid` are the bill/item non-inflated discrimination parameters.
+
+Although the model does not do a perfect job of capturing the true values, it is reasonably close for most of the parameters.
+
+The main use of this package is for datasets that are set up in a rollcall voting framework, although any dataset can be used if the responses are binary or ordinal. To show how the package functions empirically, I include in the package the complete voting record of the 114th Senate.
+
+```{r use_senate}
+
+
+
+```
+

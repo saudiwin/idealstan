@@ -67,9 +67,9 @@ See \code{\link[rstan]{stan}} for more info.}
 non-identified form. Depending on what is set via \code{restrict_type} and \code{restrict_params}, bills/items or 
 persons/legislators will be used to constrain and identify the model.}
 
-\item{discrim_reg_sd}{Set the prior standard deviation of the bimodal prior for the discrimination parameters in the vote/score model}
+\item{discrim_reg_sd}{Set the prior standard deviation of the bimodal prior for the discrimination parameters for the non-inflated model.}
 
-\item{discrim_abs_sd}{Set the prior standard deviation of the bimodal prior for the discrimination parameters in the absence hurdle model}
+\item{discrim_abs_sd}{Set the prior standard deviation of the bimodal prior for the discrimination parameters for the inflated model.}
 
 \item{legis_sd}{Set the prior standard deviation for the legislators (persons) parameters}
 
@@ -105,6 +105,33 @@ As of this version of \code{idealstan}, the following model types are available:
 }
 Additional models are available but have not yet been tested. You can find them by searching the included stan files for more info.
 }
+\section{Identification}{
+
+Identifying IRT models is challenging, and ideal point models are still more challenging because the discrimination parameters are not constrained.
+As a result, more care must be taken to obtain estimates that are the same regardless of starting values. 
+The parameter \code{fixtype} enables you to change the type of identification used. The default, 'vb', does not require any further
+information from you in order for the model to be fit. In this version of identification, an unidentified model is run using
+variational Bayesian inference (see \code{\link[rstan]{vb}}). If \code{restrict_type} is set to 'constrain_oneway', then the \code{nfix}
+highest legislators/persons (if \code{restrict_params} is 'legis') or bills/items (if \code{restrict_params} equals 'bills') 
+are used to constrain and identify the model. If \code{restrict_type} is set to 'constrain_twoway', then \code{nfix} highest and lowest legislators/persons
+or bills/items are used to constrain and identify the model.
+In addition, if \code{fixtype='vb'} is used, \code{auto_id} can be set to \code{TRUE}. This will run additional varitional Bayesian models
+using the identification achieved and will see if the signs of the estimated parameters are at least 90 percent in the same direction. If so, 
+the model is considered identified. If not, the function will re-run and will increase \code{nfix} by one to see if that will identify the model, 
+ad infinitum.
+If \code{fixtype} is set to 'constrained', then identification is achieved by constraining a specified list of legislators/persons or
+bills/items. If \code{restrict_type} is 'constrain_oneway', then the indices of all constrained legislators/persons or bills/items
+should be included as the row or column indices of these parameters in the response matrix as a vector in \code{restrict_ind_high}.
+If \code{restrict_type} is 'constrain_twoway,' then the indices of high constrained parameters should go in 
+\code{restrict_ind_high} and the indices of low constrained parameters in \code{restrict_ind_low}. The numbers of high and low
+constrained parameters should be equal. To pick the parameter to constrain, set \code{restrict_params} to 'legis' for legislators/persons,
+'discrim_abs' for absence-inflated bill discrimination parameters, and 'discrim_reg' for non-inflated bill discrimination parameters.
+If \code{fixtype} is set to 'pinned', then identification is achieved via pinning with very tight priors a set of legislators/persons or bills/items.
+The indices of legislators/persons (i.e. row indices in the response matrix) or bills/items (column indices in the response matrix) should be passed as a vector
+to \code{restrict_ind_high}, while \code{restrict_ind_low} should be left blank. The particular values to pin these parameters is passed as a 
+numeric vector to \code{pin_vals}.
+}
+
 \seealso{
 \code{\link{id_make}} for pre-processing data,
 \code{\link{id_plot}} for plotting results,
