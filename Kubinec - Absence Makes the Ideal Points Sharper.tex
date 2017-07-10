@@ -88,11 +88,13 @@ The methodology that has been used so far to address this problem is multiple im
 	
 	Essentially, all parameters are given a weakly informative $N(0,5)$ prior (five is a large number on the logit scale). For scale identification purposes, the $x_i$ ideal points are given a $N(0,1)$ prior. In addition, one each of the $\alpha_j$ and $\omega_j$ intercepts are fixed at zero in order to prevent scale shifts in the parameters. A prior is put on the difference between the cutpoints $c_k$ rather than on the cutpoints themselves because it is difficult to affix concrete values to cutpoints a-priori, although the differences between cutpoints can be weakly identified. The prior on the cutpoints prevents cutpoint collapse so that it is not necessary to have a certain number of abstentions for each bill, while the bias of using a weakly informative prior is minimal.
 	
-	To show how the model performs, I simulated data of 50 legislators and 50 bills. For the purposes of identification, I fixed two values of two legislators to their true values in order to identify the scale. Estimation of the model was through an R package \texttt{idealstan} that provides this model along with other absence-inflated IRT ideal point models for both ordinal and binary data. The results of the simulation are shown in Figure \ref{sim_results}.
+	To show how the model performs, I simulated data of 100 legislators and 100 bills. For the purposes of identification, I constrained the signs of ten legislators to identify the scale, and used vague priors on the other parameters as mentioned above. Estimation of the model was through an R package \texttt{idealstan} that provides this model along with other absence-inflated IRT ideal point models for both ordinal and binary data. The results of the simulation are shown in Figure \ref{sim_results}.
 	
 	\begin{figure}
 		\caption{True and Estimated Values}\label{sim_results}
 	\end{figure} 
+	
+	
 	
 	\section*{Empirical Applications}
 	
