@@ -48,9 +48,15 @@ ggplot(test_out,aes(y=estimate,x=iter)) + theme_minimal()+
 one_model <- id_sim_gen(absence=T,
                              ordinal=T,
                              num_legis =100,
+<<<<<<< HEAD
                              num_bills=100,
                               absence_discrim_sd = .25,
                              reg_discrim_sd = .25,
+=======
+                             num_bills=200,
+                              absence_discrim_sd = 2,
+                             reg_discrim_sd = 2,
+>>>>>>> cba415c778e7fe517b09995ddcf8e1f5d209d19e
                              absence_diff_mean = 0.5,
                              diff_sd = .25)
 true_sigma_abs <- one_model@simul_data$true_abs_discrim
@@ -82,12 +88,17 @@ low_leg_pin <- min(true_legis)
                             restrict_ind_low = low_leg$ix[1:5],
                             #pin_vals = c(high_leg$x[1],low_leg$x[1]),
                             fixtype='constrained',
+<<<<<<< HEAD
                             discrim_reg_sd =5,
                             discrim_abs_sd = 5,
+=======
+                            discrim_reg_sd =2,
+                            discrim_abs_sd = 2,
+>>>>>>> cba415c778e7fe517b09995ddcf8e1f5d209d19e
                             legis_sd=1,
                             diff_abs_sd=5,
                             diff_reg_sd=5,
-                            restrict_sd=5)
+                            restrict_sd=1)
  all_predict <- posterior_predict(test_out)
  bayesplot::ppc_bars(c(test_out@vote_data@vote_matrix),all_predict)
  

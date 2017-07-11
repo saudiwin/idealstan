@@ -36,7 +36,7 @@ id_sim_gen <- function(num_legis=50,num_bills=50,absence_discrim_sd=1,absence_di
   # First simulate ideal points for legislators/bills
   # Bill difficulty parameters are fixed because they are not entirely interesting (they represent intercepts)
   
-  absence_diff <- prior_func(params=list(N=num_bills-1,mean=absence_diff_mean,sd=diff_sd)) 
+  absence_diff <- prior_func(params=list(N=num_bills,mean=absence_diff_mean,sd=diff_sd)) 
   #Discrimination parameters more important because they reflect how much information a bill contributes
   # need to make some of them negative to reflect the switching nature of policies
   #absence_discrim <- prior_func(params=list(N=num_bills,mean=1,sd=absence_discrim_sd)) * if_else(runif(num_bills-1)>0.5,1,-1)
