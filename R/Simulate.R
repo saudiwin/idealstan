@@ -429,9 +429,9 @@ id_sim_rmse <- function(obj,rep=1) {
   }
   
   
-  out_data <- list(legis_rmse=over_params(all_params$L_full,true_legis),
-                   sigma_abs_rmse=over_params(all_params$sigma_abs_full,true_sigma_abs),
-                   sigma_reg_rmse=over_params(all_params$sigma_reg_full,true_sigma_reg))
+  out_data <- list(`Ideal Points`=over_params(all_params$L_full,true_legis),
+                   `Absence Discrimination`=over_params(all_params$sigma_abs_full,true_sigma_abs),
+                   `Bill Discrimination`=over_params(all_params$sigma_reg_full,true_sigma_reg))
   
   return(out_data)
 
@@ -532,9 +532,9 @@ id_sim_resid <- function(obj,rep=1) {
     return(out_data1)
   }
   
-  out_data <- list(legis_resid=over_params(all_params$L_full,true_legis),
-                   sigma_abs_resid=over_params(all_params$sigma_abs_full,true_sigma_abs),
-                   sigma_reg_resid=over_params(all_params$sigma_reg_full,true_sigma_reg))
+  out_data <- list(`Ideal Points`=over_params(all_params$L_full,true_legis),
+                   `Absence Discrimination`=over_params(all_params$sigma_abs_full,true_sigma_abs),
+                   `Bill Discrimination`=over_params(all_params$sigma_reg_full,true_sigma_reg))
   
   return(out_data)
 
