@@ -2,13 +2,51 @@
 % Please edit documentation in R/Simulate.R
 \name{id_sim_gen}
 \alias{id_sim_gen}
-\title{A function designed to simulate absence-inflated data with either binary or ordinal outcomes}
+\title{Simulate IRT ideal point data}
 \usage{
-id_sim_gen(num_legis = 50, num_bills = 50, absence_discrim_sd = 1,
-  absence_diff_mean = 0.5, reg_discrim_sd = 1, diff_sd = 1,
+id_sim_gen(num_legis = 20, num_bills = 50, absence_discrim_sd = 2,
+  absence_diff_mean = 0.5, reg_discrim_sd = 2, diff_sd = 0.25,
   ideal_pts_sd = 1, prior_type = "gaussian", ordinal = TRUE,
   ordinal_outcomes = 3, graded_response = FALSE, absence = TRUE)
 }
+\arguments{
+\item{num_legis}{The number of persons/legislators}
+
+\item{num_bills}{The number of items/bills}
+
+\item{absence_discrim_sd}{The SD of the discrimination parameters for the absence model}
+
+\item{absence_diff_mean}{The mean intercept for the absence model; increasing it will lower the total number of
+absences}
+
+\item{reg_discrim_sd}{The SD of the discrimination parameters for the non-inflated model}
+
+\item{ideal_pts_sd}{The SD for the person/legislator ideal points}
+
+\item{prior_type}{The statistical distribution that generates the data. Currently only 
+'gaussian' is supported.}
+
+\item{ordinal}{Whether the data should have binary (\code{FALSE}) or ordinal (\code{TRUE}) responses}
+
+\item{ordinal_outcomes}{If \code{ordinal} is \code{TRUE}, an integer giving the total number of categories}
+
+\item{graded_response}{Not currently implemented}
+
+\item{absence}{If \code{TRUE}, an absence-inflated dataset is produced.}
+}
+\value{
+The results is a \code{\link{idealdata}} object that can be used in the 
+\code{\link{id_estimate}} function to run a model. It can also be used in the simulation
+plotting functions.
+}
 \description{
-A function designed to simulate absence-inflated data with either binary or ordinal outcomes
+A function designed to simulate absence-inflated data with either binary or ordinal outcomes.
+}
+\details{
+This function produces simulated data that matches (as closely as possible) the models
+used in the underlying Stan code. Currently the simulation can produce absence-inflated and
+non-absence-inflated binary and ordinal ideal point models.
+}
+\seealso{
+\code{\link{id_plot_sims}} for plotting fitted models versus true values.
 }

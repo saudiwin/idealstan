@@ -34,7 +34,7 @@ To begin with, we can simulate data from an ordinal ideal-point model in which t
 
 ```{r sim_data}
 
-ord_ideal_sim <- id_sim_gen(num_legis=20)
+ord_ideal_sim <- id_sim_gen()
 knitr::kable(as_data_frame(head(ord_ideal_sim@vote_matrix)))
 ```
 
@@ -68,11 +68,39 @@ id_plot_sims(ord_ideal_est,type='residual')
 
 Although the model does not do a perfect job of capturing the true values, it is reasonably close for most of the parameters.
 
-The main use of this package is for datasets that are set up in a rollcall voting framework, although any dataset can be used if the responses are binary or ordinal. To show how the package functions empirically, I include in the package the complete voting record of the 114th Senate.
+The main use of this package is for datasets that are set up in a rollcall voting framework, although any dataset can be used if the responses are binary or ordinal. To show how the package functions empirically, I include in the package the complete voting record of the 114th Senate from the website (www.voteview.com). We can convert this data, which is currently in the form of a `rollcall` object from the `pscl` package, to an `idealdata` object suitable for estimation by using the `id_make` function and specifying which numbers in the vote/score matrix correspond to yes/no votes (or correct/incorrect). We could specify a middle category, `abs_vote`, but we will not do so in this example because this dataset has very few abstentions so there is no reason to add on the extra complexity for just a handful of votes in the dataset. 
 
 ```{r use_senate}
 
+data('senate114')
+to_use <- senate114$votes
+to_use <- apply(to_use, 2, function(x) {
+  y <- recode(
+    x,
+    `1` = 2L,
+    `6` = 1L,
+    `9` = 3L
+  )
+  return(y)
+})
 
+rownames(to_use) <- rownames(senate114$legis.data)
+
+idealdata <-
+  id_make(
+    vote_data = to_use,
+    legis_data = senate114$legis.data,
+    abs_vote = 3,
+    yes_vote = 2,
+    no_vote = 1,
+    ordinal = F,
+    exclude_level = c(3,7)
+  )
+
+hist(idealdata@vote_matrix)
 
 ```
 
+The plot shows that there are roughly twice as many yes votes (value of 2) versus no votes (value of 1), with a small minority of absences (value of 3).
+
+We can then run a                                                              

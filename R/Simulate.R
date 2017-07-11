@@ -1,7 +1,31 @@
-#' A function designed to simulate absence-inflated data with either binary or ordinal outcomes
+#' Simulate IRT ideal point data
+#' 
+#' A function designed to simulate absence-inflated data with either binary or ordinal outcomes.
+#' 
+#' This function produces simulated data that matches (as closely as possible) the models
+#' used in the underlying Stan code. Currently the simulation can produce absence-inflated and
+#' non-absence-inflated binary and ordinal ideal point models.
+#' 
+#' @param num_legis The number of persons/legislators
+#' @param num_bills The number of items/bills
+#' @param absence_discrim_sd The SD of the discrimination parameters for the absence model
+#' @param absence_diff_mean The mean intercept for the absence model; increasing it will lower the total number of
+#' absences
+#' @param reg_discrim_sd The SD of the discrimination parameters for the non-inflated model
+#' @param ideal_pts_sd The SD for the person/legislator ideal points
+#' @param prior_type The statistical distribution that generates the data. Currently only 
+#' 'gaussian' is supported.
+#' @param ordinal Whether the data should have binary (\code{FALSE}) or ordinal (\code{TRUE}) responses
+#' @param ordinal_outcomes If \code{ordinal} is \code{TRUE}, an integer giving the total number of categories
+#' @param graded_response Not currently implemented
+#' @param absence If \code{TRUE}, an absence-inflated dataset is produced.
+#' @return The results is a \code{\link{idealdata}} object that can be used in the 
+#' \code{\link{id_estimate}} function to run a model. It can also be used in the simulation
+#' plotting functions.
+#' @seealso \code{\link{id_plot_sims}} for plotting fitted models versus true values.
 #' @export
-id_sim_gen <- function(num_legis=50,num_bills=50,absence_discrim_sd=1,absence_diff_mean=0.5,
-                             reg_discrim_sd=1,diff_sd=1,
+id_sim_gen <- function(num_legis=20,num_bills=50,absence_discrim_sd=2,absence_diff_mean=0.5,
+                             reg_discrim_sd=2,diff_sd=.25,
                              ideal_pts_sd=1,prior_type='gaussian',ordinal=TRUE,ordinal_outcomes=3,
                              graded_response=FALSE,absence=TRUE) {
   
