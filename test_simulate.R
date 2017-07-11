@@ -47,8 +47,8 @@ ggplot(test_out,aes(y=estimate,x=iter)) + theme_minimal()+
 # try again, this time identify the sigma absences
 one_model <- id_sim_gen(absence=T,
                              ordinal=T,
-                             num_legis =50,
-                             num_bills=50,
+                             num_legis =100,
+                             num_bills=100,
                               absence_discrim_sd = .25,
                              reg_discrim_sd = .25,
                              absence_diff_mean = 0.5,
@@ -83,7 +83,7 @@ low_leg_pin <- min(true_legis)
                             #pin_vals = c(high_leg$x[1],low_leg$x[1]),
                             fixtype='constrained',
                             discrim_reg_sd =5,
-                            discrim_abs_sd = 1,
+                            discrim_abs_sd = 5,
                             legis_sd=1,
                             diff_abs_sd=5,
                             diff_reg_sd=5,
@@ -97,6 +97,7 @@ low_leg_pin <- min(true_legis)
   #apply(test_out@vote_data@vote_matrix,1,table)
   id_plot_rhats(test_out)
   id_plot_sims(test_out)
+  
   id_plot_sims(test_out,type='residual')
 
 all_pars <- summary(test_out)
