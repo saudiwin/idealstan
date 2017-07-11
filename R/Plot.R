@@ -1,6 +1,33 @@
+#' Plot Legislator/Person and Bill/Item Ideal Points
+#' 
+#' This function can be used on a fitted \code{\link{idealstan}} object to plot the relative positions and 
+#' uncertainties of legislator/persons and bills/items.
+#' 
+#' This plot shows the distribution of ideal points for the legislators/persons in the model. It will plot them as a vertical
+#' dot plot with associated high-density posterior interval (10\% to 90\%). In addition, if the column index for a 
+#' bill/item from the response matrix is passed to the \code{bill_plot} option, then a bill midpoint will be overlain
+#' on the ideal point plot, showing the point at which legislators/persons are indifferent to voting/answering on the 
+#' bill/item. Note that because this is an ideal point model, it is not possible to tell from the midpoint itself
+#' which side will be voting which way. For that reason, the legislators/persons are colored by their votes/scores to
+#' make it clear.
+#' 
+#' @param return_data If true, the calculated legislator/bill data is returned along with the plot in a list
+#' @param bill_plot The column index of the bill/item midpoint to overlay on the plot
+#' @param text_size_label ggplot2 text size for legislator labels
+#' @param text_size_party ggplot2 text size for party text used for points
+#' @param hjust_length horizontal adjustement of the legislator labels
+#' @param legis_labels if \code{TRUE}, use the legis.names column to plot legislator labels
+#' @param legis_ci_alpha The transparency level of the dot plot and confidence bars
+#' @param abs_and_reg Whether to show both absence and regular midpoints if the model is absence-inflated
+#' @param show_true Whether to show the true values of the legislators (if model has been simulated)
+#' @param party_color If \code{TRUE}, give each party/bloc a different color
+#' @param party_overlap Whether to prevent the text from overlapping itself (ggplot2 option)
+#' 
 #' @import ggplot2
 #' @import lazyeval
-id_plot_legis <- function(object,labels='legis',return_data=FALSE,bill_plot=NULL,
+#' @export
+
+id_plot_legis <- function(object,return_data=FALSE,bill_plot=NULL,
                        text_size_label=2,text_size_party=2.5,hjust_length=-0.7,legis_labels=TRUE,
                        legis_ci_alpha=0.5,abs_and_reg='both',show_true=FALSE,party_color=TRUE,
                        party_overlap=FALSE,...) {
@@ -20,25 +47,23 @@ id_plot_legis <- function(object,labels='legis',return_data=FALSE,bill_plot=NULL
   }
   
   # Reorder rows to match those rows that were switched for identification purposes
-  if(is.numeric(object@vote_data@restrict_legis)) {
-  reordered <- object@vote_data@restrict_legis
-  legis_data <- bind_rows(filter(legis_data,!(row_number() %in% reordered)),
-                          slice(legis_data,reordered))
-  }
+
+  legis_data <- slice(legis_data,as.numeric(row.names(object@vote_data@vote_matrix)))
   
   person_params <- rstan::extract(object@stan_samples,pars='L_full')[[1]] %>% 
-    as_data_frame %>% gather(key = legis,value=ideal_pts) %>% mutate(legis=stringr::str_extract(pattern = '[0-9]+',
-                                                                                                string=legis),
-                                                                     legis=as.numeric(legis)) %>% 
+    as_data_frame 
+  names(person_params) <- as.character(1:length(person_params))
+  person_params <- person_params %>% gather(key = legis,value=ideal_pts) %>% 
+    mutate(legis=as.numeric(legis)) %>% 
     group_by(legis) %>% 
     summarize(low_pt=quantile(ideal_pts,0.1),high_pt=quantile(ideal_pts,0.9),
               median_pt=median(ideal_pts))
-  
+
   person_params <- mutate(person_params,legis.names=legis_data$legis.names,
                           party=legis_data$party)
   
   # Rescale simulated values to ensure that they match estimated values in terms of scale multiplicativity
-  
+
   if(show_true==TRUE) {
     person_params <- mutate(person_params,true_vals=scale(legis_data$true_legis)[,1],
                             median_pt=scale(median_pt)[,1],
@@ -47,11 +72,17 @@ id_plot_legis <- function(object,labels='legis',return_data=FALSE,bill_plot=NULL
   }
   
   # Default plot: party names plotted as points
-  
+
   if(party_color==TRUE) {
     outplot <- person_params %>% ggplot() +
-      geom_text(aes(x=reorder(legis.names,median_pt),y=median_pt,label=reorder(party,median_pt),color=party),size=text_size_party,check_overlap = party_overlap,show.legend = FALSE) +
-      geom_linerange(aes(x=reorder(legis.names,median_pt),ymin=low_pt,ymax=high_pt,color=party),alpha=legis_ci_alpha,show.legend = FALSE)
+      geom_text(aes(x=reorder(legis.names,median_pt),
+                    y=median_pt,label=reorder(party,median_pt),
+                    color=party),size=text_size_party,
+                check_overlap = party_overlap,show.legend = FALSE) +
+      geom_linerange(aes(x=reorder(legis.names,median_pt),
+                         ymin=low_pt,ymax=high_pt,color=party),
+                     alpha=legis_ci_alpha,
+                     show.legend = FALSE)
   } else if(party_color==FALSE) {
     outplot <- person_params %>% ggplot() +
       geom_text(aes(x=reorder(legis.names,median_pt),y=median_pt,label=reorder(party,median_pt)),size=text_size_party,check_overlap = party_overlap) +
@@ -73,8 +104,9 @@ id_plot_legis <- function(object,labels='legis',return_data=FALSE,bill_plot=NULL
   if(party_color==TRUE) {
     
     outplot <- outplot + geom_point(aes(x=reorder(legis.names,median_pt),y=median_pt,color=party),size=0,stroke=0) +
-      guides(colour = guide_legend(title="",override.aes = list(size = 5, shape = sapply(levels(person_params$party),utf8ToInt))))
+      guides(colour = guide_legend(title="",override.aes = list(size = 5)))
   }
+  #, shape = sapply(levels(person_params$party),utf8ToInt)
      
     # Add theme elements
     
@@ -84,12 +116,12 @@ id_plot_legis <- function(object,labels='legis',return_data=FALSE,bill_plot=NULL
 
   if(!is.null(bill_plot)) {
     bill_num <- which(colnames(object@vote_data@vote_matrix) %in% bill_plot)
-    bill_discrim_reg <- paste0('sigma_full[',bill_num,']')
-    bill_diff_reg <- paste0('B_yes[',bill_num,']')
+    bill_discrim_reg <- paste0('sigma_reg_full[',bill_num,']')
+    bill_diff_reg <- paste0('B_int_full[',bill_num,']')
     
     if(grepl('inflate',object@model_type)) {
       bill_discrim_abs <- paste0('sigma_abs_full[',bill_num,']')
-      bill_diff_abs <- paste0('B_abs[',bill_num,']')
+      bill_diff_abs <- paste0('A_int_full[',bill_num,']')
       
       to_rstan <- c(bill_discrim_reg,bill_diff_reg,bill_discrim_abs,bill_diff_abs)
     } else {
