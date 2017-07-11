@@ -47,8 +47,8 @@ ggplot(test_out,aes(y=estimate,x=iter)) + theme_minimal()+
 # try again, this time identify the sigma absences
 one_model <- id_sim_gen(absence=T,
                              ordinal=T,
-                             num_legis =50,
-                             num_bills=50,
+                             num_legis =100,
+                             num_bills=200,
                               absence_discrim_sd = 2,
                              reg_discrim_sd = 2,
                              absence_diff_mean = 0.5,
@@ -82,12 +82,12 @@ low_leg_pin <- min(true_legis)
                             restrict_ind_low = low_leg$ix[1:5],
                             #pin_vals = c(high_leg$x[1],low_leg$x[1]),
                             fixtype='constrained',
-                            discrim_reg_sd =5,
-                            discrim_abs_sd = 5,
-                            legis_sd=5,
+                            discrim_reg_sd =2,
+                            discrim_abs_sd = 2,
+                            legis_sd=1,
                             diff_abs_sd=5,
                             diff_reg_sd=5,
-                            restrict_sd=5)
+                            restrict_sd=1)
  all_predict <- posterior_predict(test_out)
  bayesplot::ppc_bars(c(test_out@vote_data@vote_matrix),all_predict)
  
