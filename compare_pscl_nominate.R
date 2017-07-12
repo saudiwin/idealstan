@@ -15,7 +15,7 @@ set.seed(84520)
 newdata <- readKH(file='senate_114.ord')
 
 # let's see what pscl/dwnominate do with the data
-
+estimate_it <- FALSE
 # priors for pscl model to identify the model
 
 cl <- constrain.legis(newdata,
@@ -52,7 +52,7 @@ to_use <- apply(to_use, 2, function(x) {
 rownames(to_use) <- rownames(newdata$legis.data)
 
 idealdata <-
-  make_idealdata(
+  id_make(
     vote_data = to_use,
     legis_data = newdata$legis.data,
     abs_vote = 3,
@@ -62,29 +62,34 @@ idealdata <-
     exclude_level = 7
   )
 #,which(row.names(to_use)=='SANDERS (Indep VT)')
-estimated_full <-
-  estimate_ideal(idealdata = idealdata,
-                 model_type = 2,
-                 use_vb = F,
-                 ncores=4,
-                 nfix=2,
-                 restrict_type='constrain_twoway',
-                 restrict_params='legis',
-                 restrict_ind_high = c(which(row.names(to_use)=='SASSE (R NE)'),
-                                       which(row.names(to_use)=='CRUZ (R TX)'),
-                                       which(row.names(to_use)=='RUBIO (R FL)')),
-                 restrict_ind_low=c(which(row.names(to_use)=='SANDERS (Indep VT)'),
-                                    which(row.names(to_use)=='REID (D NV)'),
-                                    which(row.names(to_use)=='WARREN (D MA)')),
-                 auto_id=F,
-                 fixtype='constrained',
-                 #pin_vals=c(1),
-                 abs_discrim_sd = 5,
-                 reg_discrim_sd = 5,
-                 legis_sd = 1,
-                 diff_sd=5,
-                 seed=84520)
-saveRDS(estimated_full,'senate_104_absence_inf.rds')
+if(estimate_it==TRUE) {
+  estimated_full <-
+    id_estimate(idealdata = idealdata,
+                model_type = 2,
+                use_vb = F,
+                ncores=4,
+                nfix=2,
+                restrict_type='constrain_twoway',
+                restrict_params='legis',
+                restrict_ind_high = c(which(row.names(to_use)=='SASSE (R NE)'),
+                                      which(row.names(to_use)=='CRUZ (R TX)'),
+                                      which(row.names(to_use)=='RUBIO (R FL)')),
+                restrict_ind_low=c(which(row.names(to_use)=='SANDERS (Indep VT)'),
+                                   which(row.names(to_use)=='REID (D NV)'),
+                                   which(row.names(to_use)=='WARREN (D MA)')),
+                auto_id=F,
+                fixtype='constrained',
+                #pin_vals=c(1),
+                abs_discrim_sd = 5,
+                reg_discrim_sd = 5,
+                legis_sd = 1,
+                diff_sd=5,
+                seed=84520)
+  saveRDS(estimated_full,'senate_104_absence_inf.rds')  
+} else {
+  estimated_full <- readRDS('senate_104_absence_inf.rds')
+}
+
 output <- rstan::extract(estimated_full@stan_samples)
 abs_pts <- data_frame(ideal_pts=apply(output$L_full,3,median),
                          high_pt=apply(output$L_full,3,quantile,probs=0.95),
@@ -189,3 +194,10 @@ bills %>%
   write_csv('most_lib_bills.csv')
 
 
+# plot bills
+
+highest_bill <- sort(bills$estimate,decreasing=T,index.return=T)
+lowest_bill <- sort(bills$estimate,index.return=T)
+
+id_plot(estimated_full,bill_plot=highest_bill$ix[1]) +
+  scale_color_brewer(type='qual')

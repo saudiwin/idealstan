@@ -32,8 +32,8 @@ set.seed(66334)
 
 one_model <- id_sim_gen(absence=T,
                              ordinal=T,
-                             num_legis =100,
-                             num_bills=100,
+                             num_legis =50,
+                             num_bills=50,
                               absence_discrim_sd = 2,
                              reg_discrim_sd = 2,
                              absence_diff_mean = 0.5,
@@ -76,10 +76,11 @@ low_leg_pin <- min(true_legis)
  coverages <- id_sim_coverage(test_out)  
   lapply(coverages,function(x) mean(x$avg))
   id_plot_rhats(test_out)
+  
   id_plot_sims(test_out)
   
-  id_plot_sims(test_out,type='residual')
-
+  id_plot_sims(test_out,type='Residual')
+  ggsave('param_resid.png')
  all_pars <- summary(test_out)
 filter(all_pars,par_type=='A_int_full') %>% ggplot(aes(x=posterior_median)) + geom_histogram()
 all_params <- rstan::extract(test_out@stan_samples)
@@ -96,3 +97,66 @@ compare_abs_discrim <- data_frame(all_abs_discrim,high_pt=apply(all_params$sigma
 
 #Now look at NOMINATE and IDEAL on the same data
 
+simdata <- rollcall(one_model@vote_matrix,yea=1,nay=3,notInLegis = c(2,4),
+                    legis.names=row.names(one_model@vote_matrix))
+
+nom_run <- wnominate(simdata,
+                     polarity=as.character(high_leg$ix[1]),
+                     dims=1,trials=10)
+ideal_run <- ideal(simdata,
+                   normalize=T,
+                   store.item = T)
+
+pscl_pts <- data_frame(ideal_pts=apply(ideal_run$x,2,median)*-1,
+                       high_pt=apply(ideal_run$x,2,quantile,probs=0.95)*-1,
+                       low_pt=apply(ideal_run$x,2,quantile,probs=0.05)*-1,
+                       model_type='CJR')
+wnominate_pts <- data_frame(ideal_pts=nom_run$legislators$coord1D,
+                            high_pt=nom_run$legislators$coord1D + 1.96*nom_run$legislators$se1D,
+                            low_pt=nom_run$legislators$coord1D - 1.96*nom_run$legislators$se1D,
+                            model_type='W-NOMINATE')
+output <- rstan::extract(test_out@stan_samples)
+abs_pts <- data_frame(ideal_pts=apply(output$L_full,3,median),
+                      high_pt=apply(output$L_full,3,quantile,probs=0.95),
+                      low_pt=apply(output$L_full,3,quantile,probs=0.05),
+                      model_type='Absence-Inflated',
+                      row_id=as.numeric(row.names(test_out@vote_data@vote_matrix))) %>% 
+  arrange(row_id) %>% 
+  mutate(ranks=1)
+
+all_perf <- bind_rows(pscl_pts,wnominate_pts,abs_pts) %>% 
+  mutate(legislators=as.numeric(rep(row.names(nom_run$legislators),3))) %>% 
+  group_by(model_type) %>% 
+  mutate(ideal_pts_std=(ideal_pts/sd(ideal_pts,na.rm=T))-mean(ideal_pts,na.rm=T),
+         high_pt_std=high_pt/sd(ideal_pts,na.rm=T)-mean(ideal_pts,na.rm=T),
+         low_pt_std=low_pt/sd(ideal_pts,na.rm=T)-mean(ideal_pts,na.rm=T)) %>% 
+  group_by(model_type) %>%
+  arrange(legislators) %>% 
+         mutate(rmse=sqrt((ideal_pts_std-true_legis)^2))
+
+ggplot(all_perf,aes(y=rmse,x=model_type)) +
+  stat_summary() +
+  theme_minimal() +
+  theme(panel.grid=element_blank()) +
+  ylab("") +
+  xlab("Average RMSE")
+
+ggsave('sim_rmse_allmods.png')
+# 
+# all_perf <- bind_rows(all_perf,data_frame(ideal_pts_std=true_legis,model_type='True',
+#                                           legislators=as.character(1:length(true_legis)),
+#                                           est='True')) %>% 
+#   arrange(ideal_pts) %>% slice(1:10)
+# 
+# all_perf %>% 
+#   ggplot((aes(y=ideal_pts_std))) +
+#   geom_point(aes(color=model_type,shape=est,x=reorder(legislators,ideal_pts)),position=position_dodge(width=0.3),
+#                   size=2) + 
+#   coord_flip() + theme_minimal() +
+#   theme(panel.grid = element_blank(),
+#         axis.text.y=element_blank()) +
+#   ylab('Ideal Point Scores (Liberal to Conservative)') +
+#   xlab('') +
+#   scale_colour_brewer(palette='Accent',name="")
+# 
+# ggsave('all_perf_sim.png',width=7,height=10,scale=1.1,units='in')

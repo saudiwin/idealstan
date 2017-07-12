@@ -23,6 +23,10 @@ set.seed(84520)
 
 #CONTROL PANEL
 
+# whether to estimate the model or just used the saved version
+
+estimate_it <- T
+
 # Keep legislators with have voted on at least this many bills
 keep_legis <- 1
 # Use only the parties in the subset_party variable?
@@ -58,21 +62,34 @@ cleaned <- clean_data(keep_legis=keep_legis,use_subset=use_subset,subset_party=s
 
 vote_matrix <- dplyr::select(cleaned$arp_votes,matches('Bill')) %>% as.matrix
 row.names(vote_matrix) <- cleaned$arp_votes$legis.names
-arp_ideal_data <- make_idealdata(vote_data = vote_matrix,
+arp_ideal_data <- id_make(vote_data = vote_matrix,
                                   legis_data=data_frame(cleaned$arp_votes$bloc),
                                  abs_vote=4L)
 
-estimate_arp <- estimate_ideal(arp_ideal_data,
-                               model_type=4,
-                               abs_discrim_sd = 5,
-                               reg_discrim_sd = 5,
-                               legis_sd = 5,
-                               diff_sd=5,
-                               nfix=10,
-                               restrict_type='constrain_twoway',
-                               fixtype='vb',restrict_params = 'legis',
-                               seed=84520)
-saveRDS(estimate_arp,file = 'estimate_arp.rds')
+ggplot(data_frame(x=as.character(c(arp_ideal_data@vote_matrix))),aes(x=x)) +
+  stat_count(width=0.5) + theme_minimal() +
+  theme(panel.grid=element_blank()) +
+  xlab("") +
+  ylab("") + 
+  scale_x_discrete(breaks=c("1","2","3","4"),labels=c('No','Abstain','Yes','Absent'))
+ggsave('arp_hist.png') 
+if(estimate_it==TRUE) {
+  estimate_arp <- id_estimate(arp_ideal_data,
+                              model_type=4,
+                              abs_discrim_sd = 5,
+                              reg_discrim_sd = 5,
+                              legis_sd = 5,
+                              diff_sd=5,
+                              nfix=10,
+                              use_vb = T,
+                              restrict_type='constrain_twoway',
+                              fixtype='vb',restrict_params = 'legis',
+                              seed=84520)
+  saveRDS(estimate_arp,file = 'estimate_arp.rds')
+} else {
+  estimate_arp <- readRDS('estimate_arp.rds')
+}
+
 output <- rstan::extract(estimate_arp@stan_samples)
 
 abs_pts <- data_frame(ideal_pts=apply(output$L_full,3,median),
