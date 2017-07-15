@@ -24,7 +24,8 @@ id_plot_legis(object, return_data = FALSE, bill_plot = NULL,
 
 \item{legis_ci_alpha}{The transparency level of the dot plot and confidence bars}
 
-\item{abs_and_reg}{Whether to show both absence and regular midpoints if the model is absence-inflated}
+\item{abs_and_reg}{Whether to show 'both' absence and regular bill midpoints if the model is absence-inflated, the default,
+or 'Absence-inflated' for only the absence midpoints or 'Non-inflated' for only the non-inflated midpoints}
 
 \item{show_true}{Whether to show the true values of the legislators (if model has been simulated)}
 

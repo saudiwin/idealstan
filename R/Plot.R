@@ -18,7 +18,8 @@
 #' @param hjust_length horizontal adjustement of the legislator labels
 #' @param legis_labels if \code{TRUE}, use the legis.names column to plot legislator labels
 #' @param legis_ci_alpha The transparency level of the dot plot and confidence bars
-#' @param abs_and_reg Whether to show both absence and regular midpoints if the model is absence-inflated
+#' @param abs_and_reg Whether to show 'both' absence and regular bill midpoints if the model is absence-inflated, the default,
+#' or 'Absence-inflated' for only the absence midpoints or 'Non-inflated' for only the non-inflated midpoints
 #' @param show_true Whether to show the true values of the legislators (if model has been simulated)
 #' @param party_color If \code{TRUE}, give each party/bloc a different color
 #' @param party_overlap Whether to prevent the text from overlapping itself (ggplot2 option)
@@ -29,7 +30,7 @@
 
 id_plot_legis <- function(object,return_data=FALSE,bill_plot=NULL,
                        text_size_label=2,text_size_party=2.5,hjust_length=-0.7,legis_labels=TRUE,
-                       legis_ci_alpha=0.5,abs_and_reg='both',show_true=FALSE,party_color=TRUE,
+                       legis_ci_alpha=0.1,abs_and_reg='both',show_true=FALSE,party_color=TRUE,
                        party_overlap=FALSE,...) {
 
   legis_data <- object@vote_data@legis_data
@@ -115,11 +116,12 @@ id_plot_legis <- function(object,return_data=FALSE,bill_plot=NULL,
   
 
   if(!is.null(bill_plot)) {
+
     bill_num <- which(colnames(object@vote_data@vote_matrix) %in% bill_plot)
     bill_discrim_reg <- paste0('sigma_reg_full[',bill_num,']')
     bill_diff_reg <- paste0('B_int_full[',bill_num,']')
     
-    if(grepl('inflate',object@model_type)) {
+    if(any(object@model_type %in% c(2,4,6))) {
       bill_discrim_abs <- paste0('sigma_abs_full[',bill_num,']')
       bill_diff_abs <- paste0('A_int_full[',bill_num,']')
       
@@ -127,41 +129,68 @@ id_plot_legis <- function(object,return_data=FALSE,bill_plot=NULL,
     } else {
       to_rstan <- c(bill_discrim_reg,bill_diff_reg)
     }
-
-    bill_pos <- rstan::extract(object@stan_samples,pars=to_rstan) %>% as_data_frame %>% gather(key = bills,value=ideal_pts) %>% 
-      group_by(bills)
     
+    if(any(object@model_type %in% c(3,4,5,6))) {
+      steps <- rstan::extract(object@stan_samples,pars='steps_votes') 
+    }
+
+    bill_pos <- rstan::extract(object@stan_samples,pars=to_rstan) %>% as_data_frame %>% 
+      gather(key = bills,value=ideal_pts) %>% 
+      group_by(bills) %>% 
+      mutate(rownum=1:n())
+    bill_pos <- spread(bill_pos,bills,ideal_pts) %>% 
+      select(-rownum)
+    names(bill_pos) <- stringr::str_replace_all(names(bill_pos),'[\\[\\]]',replacement='_')
+    bill_diff_reg <- stringr::str_replace_all(bill_diff_reg,'[\\[\\]]',replacement='_')
+    bill_discrim_reg <- stringr::str_replace_all(bill_discrim_reg,'[\\[\\]]',replacement='_')
+    bill_diff_abs <- stringr::str_replace_all(bill_diff_abs,'[\\[\\]]',replacement='_')
+    bill_discrim_abs <- stringr::str_replace_all(bill_discrim_abs,'[\\[\\]]',replacement='_')
     bill_pos <- lapply(1:length(bill_num),function(x) {
 
-      # Need to solve spread issue
-      
-      test_data <- filter(bill_pos,bills==bill_diff_reg[x])
-      row_length <- nrow(test_data)
-      this_dataset <- bill_pos
-      this_dataset$row_num <- 1:row_length
-      this_dataset <- spread(this_dataset,bills,ideal_pts)
-      
-      dots <- list(interp(~mean(var1/var2),var1=as.name(bill_diff_reg[x]),var2=as.name(bill_discrim_reg[x])),
-                   interp(~quantile(var1/var2,0.9),var1=as.name(bill_diff_reg[x]),var2=as.name(bill_discrim_reg[x])),
-                   interp(~quantile(var1/var2,0.1),var1=as.name(bill_diff_reg[x]),var2=as.name(bill_discrim_reg[x])))
-      out_reg <- summarize_(this_dataset,.dots=setNames(dots,c('mean_bill','high_bill','low_bill')))
-      out_reg <- mutate(out_reg,param='regular')
-      if(grepl('inflate',object@model_type)) {
-        dots <- list(interp(~mean(var1/var2),var1=as.name(bill_diff_abs[x]),var2=as.name(bill_discrim_abs[x])),
-                     interp(~quantile(var1/var2,0.9),var1=as.name(bill_diff_abs[x]),var2=as.name(bill_discrim_abs[x])),
-                     interp(~quantile(var1/var2,0.1),var1=as.name(bill_diff_abs[x]),var2=as.name(bill_discrim_abs[x])))
-        
-        out_abs <- summarize_(this_dataset,.dots=setNames(dots,c('mean_bill','high_bill','low_bill')))
-        out_abs <- mutate(out_abs,param='absence')
-        out_reg <- bind_rows(out_reg,out_abs)
+      if(any(object@model_type %in% c(3,4,5,6))) {
+        # ordinal models
+        if(any(object@model_type %in% c(4,6))) {
+          #inflated ordinal
+          out_reg <- .calc_bill(bill_pos,
+                                int_reg=rlang::parse_quosure(bill_diff_reg[x]),
+                                sigma_reg=rlang::parse_quosure(bill_discrim_reg[x]),
+                                int_abs=rlang::parse_quosure(bill_diff_abs[x]),
+                                sigma_abs=rlang::parse_quosure(bill_discrim_abs[x]),
+                                steps_data=steps$steps_votes,
+                                step_num=ncol(steps$steps_votes),
+                                this_num=bill_num[x])
+        } else {
+          #non-inflated Ordinal
+          out_reg <- .calc_bill(bill_pos,
+                                int_reg=rlang::parse_quosure(bill_diff_reg[x]),
+                                sigma_reg=rlang::parse_quosure(bill_discrim_reg[x]),
+                                steps_data=steps$steps_votes,
+                                step_num=ncol(steps$steps_votes),
+                                this_num=bill_num[x])
+        }
+      } else {
+        #binary models
+        #inflated binary
+        if(object@model_type==2) {
+          out_reg <- .calc_bill(bill_pos,
+                                int_reg=rlang::parse_quosure(bill_diff_reg[x]),
+                                sigma_reg=rlang::parse_quosure(bill_discrim_reg[x]),
+                                int_abs=rlang::parse_quosure(bill_diff_abs[x]),
+                                sigma_abs=rlang::parse_quosure(bill_discrim_abs[x]),
+                                this_num=bill_num[x])
+        } else {
+          #non-inflated binary
+          out_reg <- .calc_bill(bill_pos,
+                                int_reg=rlang::parse_quosure(bill_diff_reg[x]),
+                                sigma_reg=rlang::parse_quosure(bill_discrim_reg[x]),
+                                this_num=bill_num[x])
+        }
       }
-      
-      out_reg <- mutate(out_reg, bill_num=bill_plot[x])
       return(out_reg)
     })
-    
-    bill_pos <- bind_rows(bill_pos)
-    bill_pos <- gather(bill_pos,key = ci_type,value=ci_value,high_bill,low_bill)
+
+    bill_pos <- bind_rows(bill_pos) %>% 
+                gather(key = ci_type,value=ci_value,high_bill,low_bill)
     
     #Redo the legislator plot to make room for bill covariates
     
@@ -185,11 +214,14 @@ id_plot_legis <- function(object,return_data=FALSE,bill_plot=NULL,
                               low_pt=scale(low_pt)[,1],
                               high_pt=scale(high_pt)[,1])
     }
-    person_params <- left_join(person_params,bill_pos,c('bill_type'='bill_num'))
+    person_params <- left_join(person_params,bill_pos,c('bill_type'='bill_num')) %>% 
+      mutate(ci_type=factor(ci_type,levels=c('low_bill','high_bill'),
+                            labels=c('10%','90%')))
     
     # Choose a plot based on the user's options
     
-    if(grepl('inflate',object@model_type) & abs_and_reg!='both') {
+    if(any(object@model_type %in% c(2,4,6)) & abs_and_reg!='both') {
+
       person_params <- filter(person_params,param==abs_and_reg)
     } 
     
@@ -203,15 +235,19 @@ id_plot_legis <- function(object,return_data=FALSE,bill_plot=NULL,
       theme(axis.text.y=element_blank(),panel.grid.major.y = element_blank()) + coord_flip()
     
     # Add in bill vertical line (50% equiprobability voting line)
+      outplot <- outplot + geom_hline(aes(yintercept=mean_bill),linetype=2,alpha=0.6) +
+        geom_rug(aes(y=ci_value,linetype=ci_type)) +
+        guides(linetype=guide_legend('Bill\nMidpoint\nHPD'),
+               colour=guide_legend('')) +
+        theme(legend.position = 'bottom')
+
     
-    outplot <- outplot + geom_hline(aes(yintercept=mean_bill),linetype=2,alpha=0.6) +
-      geom_rug(aes(y=ci_value,linetype=ci_type))
     
     #Whether or not to add a facet_wrap
     
-    if(grepl('inflate',object@model_type) & abs_and_reg=='both' & length(bill_plot)>1) {
+    if(any(object@model_type %in% c(2,4,6)) & abs_and_reg=='both' & length(bill_plot)>1) {
       outplot <- outplot + facet_wrap(~param + bill_type,dir='v')
-    } else if(grepl('inflate',object@model_type) & abs_and_reg %in% c('both','absence') & length(bill_plot)==1) {
+    } else if(any(object@model_type %in% c(2,4,6)) & abs_and_reg %in% c('both','absence') & length(bill_plot)==1) {
       outplot <- outplot + facet_wrap(~param,dir='v') 
     } else if(length(bill_plot)>1) {
       outplot <- outplot + facet_wrap(~bill_type,dir='v') 
@@ -340,14 +376,14 @@ id_plot_all_hist <- function(object,params=NULL,param_labels=NULL,hist_type='all
   
   
 }
-#' This function plots the results from a simulation generated by one of the *_simulate functions
+#' This function plots the results from a simulation generated by \code{\link{id_sim_gen}}.
 #' @export
 
 id_plot_sims <- function(sims,type='RMSE') {
 
   stat_func <- switch(type,
                       RMSE=id_sim_rmse,
-                      residual=id_sim_resid)
+                      Residuals=id_sim_resid)
   
   
   stat_func(sims) %>% 
