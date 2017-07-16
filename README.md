@@ -6,13 +6,13 @@ June 22, 2017
 R Package Idealstan (V0.1) README
 ---------------------------------
 
-This package implements new IRT models (models for absences and for dynamic hiearchical models) along with several standard IRT models (2 PL, rating scale, graded response) designed for modeling rollcall voting data and any other kind of binary or ordinal data. It is based on the Stan package for Bayesian modeling, which includes both MCMC full Bayesian inference and a faster variational Bayesian approximation. The package also has plotting functions for model parameters, particularly the legislator (person) ideal points (ability parameters).
+This package implements IRT (item response theory) ideal point models, which are models designed for situations in which actors make strategic choices that correlate with a unidimensional scale, such as the left-right axis in American politics. Compared to traditional IRT, ideal point models have un-constrained discrimination parameters to allow for the polarity in the ideal point space. This package offers standard IRT ideal point models, but goes farther in including models that account for strategic censoring in observations, particularly for legislatures in which legislators (persons) are strategically absent. The package also includes ordinal IRT models for situations in which legislators may vote to abstain (or any other kind of ordinal category). `idealstan` is based on the Stan package for Bayesian inference, which includes both MCMC full Bayesian estimation and a faster variational Bayesian approximation. The package also has plotting functions for model parameters, particularly the legislator (person) ideal points (ability parameters).
 
-This vignette demonstrates basic usage of the package, which is currently in alpha. A beta release is scheduled for July 13, 2017.
+This vignette demonstrates basic usage of the package, which is currently released as a beta version. A release on CRAN is planned within the next two months that will incorporate additional models, including hierarchical and dynamic IRT ideal point modeling.
 
 This package takes an approach to modeling legislative roll call data (and other IRT data) that uses a hurdle model to separately account for the probability that a legislator (i.e., test-taker) will show up to vote. This absence-inflated model estimates additional bill (item) parameters to reflect the relative gain or loss a legislator has from showing up to vote. Further details of this model are explained in Kubinec (2017).
 
-To begin with, we can simulate data from an ordinal ideal-point model in which there are three possible responses corresponding to a legislator voting: yes, abstain and no. An additional category is also simulated that indicates whether a legislator shows up to vote or is absent. While traditional ideal point models tend to drop absences, this package can model absences via a hurdle model in which the censoring of the vote/score data is estimated as a function of individual bill intercepts and discrimination parameters for the decision to be absent or present.
+To begin with, we can simulate data from an ordinal ideal-point model in which there are three possible responses corresponding to a legislator voting: yes, abstain and no. An additional category is also simulated that indicates whether a legislator shows up to vote or is absent. While traditional ideal point models tend to drop absences, this package can utilize absences via a hurdle model in which the censoring of the vote/score data is estimated as a function of individual bill intercepts and discrimination parameters for the decision to be absent or present.
 
 ``` r
 ord_ideal_sim <- id_sim_gen()
@@ -21,12 +21,12 @@ knitr::kable(as_data_frame(head(ord_ideal_sim@vote_matrix)))
 
 |    1|    2|    3|    4|    5|    6|    7|    8|    9|   10|   11|   12|   13|   14|   15|   16|   17|   18|   19|   20|   21|   22|   23|   24|   25|   26|   27|   28|   29|   30|   31|   32|   33|   34|   35|   36|   37|   38|   39|   40|   41|   42|   43|   44|   45|   46|   47|   48|   49|   50|
 |----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|
-|    4|    4|    3|    1|    4|    4|    2|    1|    3|    4|    1|    4|    1|    1|    3|    1|    4|    3|    3|    4|    1|    4|    1|    4|    4|    1|    4|    4|    3|    1|    3|    1|    2|    4|    1|    4|    3|    4|    1|    3|    1|    4|    3|    2|    3|    3|    3|    3|    3|    3|
-|    4|    4|    3|    1|    4|    2|    3|    4|    3|    4|    4|    4|    4|    1|    4|    1|    3|    3|    2|    1|    1|    4|    4|    4|    3|    3|    4|    4|    1|    1|    3|    1|    1|    4|    1|    4|    3|    4|    4|    3|    1|    4|    3|    3|    2|    3|    2|    3|    3|    3|
-|    1|    3|    4|    4|    4|    3|    4|    3|    4|    3|    3|    1|    3|    3|    1|    4|    1|    1|    1|    4|    3|    1|    1|    3|    3|    4|    4|    3|    4|    3|    2|    4|    3|    1|    4|    3|    4|    3|    3|    4|    4|    1|    4|    4|    4|    4|    4|    1|    4|    4|
-|    3|    4|    4|    4|    4|    4|    3|    3|    4|    4|    2|    4|    2|    1|    3|    1|    4|    1|    3|    4|    1|    4|    4|    4|    4|    3|    3|    4|    2|    3|    4|    3|    1|    3|    2|    4|    3|    4|    1|    3|    2|    3|    4|    3|    3|    3|    1|    4|    4|    2|
-|    1|    3|    4|    3|    1|    3|    4|    1|    4|    3|    3|    3|    3|    3|    1|    4|    1|    1|    4|    4|    4|    3|    3|    3|    3|    4|    3|    3|    4|    4|    4|    4|    4|    3|    3|    3|    4|    3|    4|    4|    4|    1|    4|    4|    4|    4|    4|    4|    4|    4|
-|    3|    3|    3|    1|    1|    4|    4|    3|    3|    4|    2|    3|    4|    1|    4|    4|    3|    2|    2|    4|    3|    4|    3|    3|    4|    4|    1|    3|    4|    4|    4|    1|    3|    2|    3|    3|    4|    3|    4|    4|    3|    3|    4|    4|    4|    1|    3|    4|    2|    2|
+|    4|    1|    3|    4|    4|    3|    3|    4|    4|    4|    3|    3|    4|    4|    4|    4|    3|    4|    4|    3|    1|    4|    4|    1|    3|    1|    1|    1|    4|    4|    4|    3|    3|    4|    4|    1|    3|    4|    4|    2|    1|    4|    3|    2|    1|    4|    4|    4|    3|    4|
+|    4|    4|    4|    3|    4|    4|    4|    1|    1|    3|    1|    4|    1|    3|    3|    3|    1|    3|    3|    1|    4|    3|    3|    4|    4|    4|    4|    3|    3|    4|    1|    4|    4|    3|    1|    4|    4|    3|    1|    1|    4|    3|    4|    3|    4|    4|    1|    4|    4|    1|
+|    4|    3|    1|    4|    1|    1|    2|    4|    4|    4|    1|    1|    1|    4|    4|    4|    3|    4|    1|    3|    1|    1|    4|    3|    2|    1|    1|    1|    1|    4|    1|    1|    1|    4|    3|    3|    4|    4|    4|    4|    2|    4|    1|    4|    1|    1|    4|    1|    3|    3|
+|    4|    4|    4|    4|    3|    4|    4|    1|    1|    3|    1|    3|    4|    3|    4|    2|    1|    3|    2|    4|    2|    4|    3|    3|    4|    4|    1|    4|    3|    2|    1|    4|    4|    3|    1|    3|    1|    3|    4|    3|    3|    1|    1|    1|    4|    2|    1|    3|    1|    1|
+|    1|    4|    3|    3|    3|    1|    4|    1|    1|    3|    1|    4|    4|    3|    4|    1|    3|    3|    1|    1|    4|    3|    1|    4|    4|    4|    4|    4|    3|    4|    1|    4|    4|    3|    4|    4|    1|    3|    1|    1|    4|    3|    1|    3|    4|    3|    2|    4|    1|    1|
+|    1|    4|    4|    3|    3|    1|    4|    1|    1|    3|    1|    4|    3|    1|    1|    1|    2|    3|    3|    1|    4|    3|    3|    4|    4|    4|    4|    4|    3|    4|    2|    4|    1|    4|    1|    4|    1|    3|    2|    4|    3|    1|    4|    3|    4|    3|    3|    4|    4|    2|
 
 The vote/score matrix has legislators/persons in the rows and bills/items in the columns. In this simulated data, yes votes are recorded as `3`, no votes as `1`, abstentions as `2`, and absences as `4`.
 
@@ -51,7 +51,7 @@ ord_ideal_est <- id_estimate(idealdata=ord_ideal_sim,
 We can then check and see how well the Stan estimation engine was able to capture the "true" values used in the simulation by looking at the residuals between the estimated and the true values:
 
 ``` r
-id_plot_sims(ord_ideal_est,type='residual')
+id_plot_sims(ord_ideal_est,type='Residuals')
 ```
 
 ![](README_files/figure-markdown_github/check_true-1.png)
@@ -127,8 +127,8 @@ sen_est <- id_estimate(senate_data,
     ## 
     ## 
     ## 
-    ## Gradient evaluation took 0.032 seconds
-    ## 1000 transitions using 10 leapfrog steps per transition would take 320 seconds.
+    ## Gradient evaluation took 0.036 seconds
+    ## 1000 transitions using 10 leapfrog steps per transition would take 360 seconds.
     ## Adjust your expectations accordingly!
     ## 
     ## 
@@ -143,10 +143,10 @@ sen_est <- id_estimate(senate_data,
     ## Begin stochastic gradient ascent.
     ##   iter       ELBO   delta_ELBO_mean   delta_ELBO_med   notes 
     ##    100    -2e+004             1.000            1.000
-    ##    200    -2e+004             0.509            1.000
-    ##    300    -2e+004             0.340            0.017
-    ##    400    -2e+004             0.256            0.017
-    ##    500    -2e+004             0.205            0.004   MEDIAN ELBO CONVERGED
+    ##    200    -2e+004             0.511            1.000
+    ##    300    -2e+004             0.341            0.022
+    ##    400    -2e+004             0.256            0.022
+    ##    500    -2e+004             0.205            0.002   MEDIAN ELBO CONVERGED
     ## 
     ## Drawing a sample of size 1000 from the approximate posterior... 
     ## COMPLETED.
@@ -160,11 +160,23 @@ id_plot(sen_est,legis_ci_alpha=0.7) + scale_colour_brewer(type='qual')
 The `id_plot` function has many other options which are documented in the help files. One notable option, though, is to plot bill midpoints along with the legislator ideal points. The midpoints show the line of equiprobability, i.e., at what ideal point is a legislator indifferent to voting on a bill (or answering an item correctly). To plot a bill midpoint overlay, simply include the column index of bill in the response matrix as the `bill_plot` option:
 
 ``` r
-id_plot(sen_est,legis_ci_alpha=0.7,bill_plot=12) + scale_colour_brewer(type='qual')
+id_plot(sen_est,legis_ci_alpha=0.1,bill_plot=205,
+        abs_and_reg='Non-inflated') + scale_colour_brewer(type='qual')
 ```
 
 ![](README_files/figure-markdown_github/bill_plot-1.png)
 
 The 50th bill in the 114 Senate shows very high discrimination: the bill midpoint is right in the middle of the ideal point distribution, with most Democrats voting yes and most Repulicans voting no. The two rug lines at the bottom of the plot show the high density posterior interval for the bill midpoint, and as can be seen, the uncertainty only included those legislators near the very center of the distribution.
+
+To look at the bill's absence midpoints, simply change the `abs_and_reg` paramater to the `id_plot` function:
+
+``` r
+id_plot(sen_est,legis_ci_alpha=0.1,bill_plot=205,
+        abs_and_reg='Absence-inflated') + scale_colour_brewer(type='qual')
+```
+
+![](README_files/figure-markdown_github/abs_bill_plot-1.png)
+
+This absence midpoint shows that those who were most likely to be absent on this bill were Republicans who were pretty close to the far right (left) of the ideal point distribution. Of course, that does not mean absence always implies that one is far to the right, it is just how this particular bill absence midpoint happens to fall. In addition, the uncertainty around this midpoint is much higher than the vote midpoint.
 
 Kubinec, Robert. 2017. “Absence Makes the Ideal Points Sharper.” In *2017 Political Methodology Annual Conference*.
