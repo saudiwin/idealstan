@@ -11,8 +11,8 @@ id_estimate(idealdata = NULL, model_type = 2, use_subset = FALSE,
   restrict_ind_high = NULL, restrict_ind_low = NULL,
   restrict_type = "constrain_oneway", fixtype = "vb",
   warmup = floor(niters/2), ncores = 4, auto_id = FALSE,
-  discrim_reg_sd = 1, discrim_abs_sd = 1, legis_sd = 1, diff_reg_sd = 5,
-  diff_abs_sd = 1, restrict_sd = 1, ...)
+  discrim_reg_sd = 2, discrim_abs_sd = 2, legis_sd = 1, diff_reg_sd = 5,
+  diff_abs_sd = 5, restrict_sd = 1, ...)
 }
 \arguments{
 \item{model_type}{An integer reflecting the kind of model to be estimated. See above.}

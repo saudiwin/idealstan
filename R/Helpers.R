@@ -479,3 +479,66 @@ id_params_pin_unguided_inflate <- function(restrict_params=NULL,nfix=NULL,x=NULL
 extract_samples <- function(obj,...) {
   rstan::extract(obj@stan_samples,...)
 }
+
+
+#helper to calculate means and high/low points of a column given a name 
+.calc_bill <- function(df,int_reg,
+                       sigma_reg,
+                       int_abs=NULL,
+                       sigma_abs=NULL,
+                       steps_data=NULL,
+                       step_num=2,
+                       this_num=NULL) {
+
+  if(is.null(steps_data)) {
+    # non-ordinal
+    # int_reg <- enenquo(int_reg)
+    # sigma_reg <- enquo(sigma_reg)
+    # int_abs <- enquo(int_abs)
+    # sigma_abs <- enquo(sigma_abs)
+    out_data <- summarize(df,mean_bill=mean((!!int_reg)/(!!sigma_reg)),
+                          high_bill=quantile((!!int_reg)/(!!sigma_reg),0.9),
+                          low_bill=quantile((!!int_reg)/(!!sigma_reg),0.1)) %>% 
+      mutate(param='Non-inflated',
+                          step=1)
+      if(!is.null(int_abs)) {
+
+        out_data <- summarize(df,mean_bill=mean((!!int_abs)/(!!sigma_abs)),
+                              high_bill=quantile((!!int_abs)/(!!sigma_abs),0.9),
+                              low_bill=quantile((!!int_abs)/(!!sigma_abs),0.1)) %>% 
+          mutate(param='Absence-inflated',
+                              step=1) %>% 
+          bind_rows(out_data)
+      }
+    
+  } else {
+    #ordinal
+    # int_reg <- enquo(int_reg)
+    # sigma_reg <- enquo(sigma_reg)
+    # int_abs <- enquo(int_abs)
+    # sigma_abs <- enquo(sigma_abs)
+    
+    out_data <- lapply(1:step_num, function(s,steps_data=NULL) {
+
+    out_data <- summarize(df,mean_bill=mean(((!!int_reg)+steps_data[,s])/(!!sigma_reg)),
+                          high_bill=quantile(((!!int_reg)+steps_data[,s])/(!!sigma_reg),0.9),
+                          low_bill=quantile(((!!int_reg)+steps_data[,s])/(!!sigma_reg),0.1)) %>% 
+      mutate(param='Non-inflated',
+                          step=s)
+    
+    if(!is.null(int_abs)) {
+
+      out_data <- summarize(df,mean_bill=mean(((!!int_abs)+steps_data[,s])/(!!sigma_abs)),
+                            high_bill=quantile(((!!int_abs)+steps_data[,s])/(!!sigma_abs),0.9),
+                            low_bill=quantile(((!!int_abs)+steps_data[,s])/(!!sigma_abs),0.1)) %>% 
+        mutate(param='Absence-inflated',
+                            step=s) %>% 
+        bind_rows(out_data)
+      
+    }
+    return(out_data)
+    },steps_data=steps_data) %>% bind_rows
+    
+  }
+  mutate(out_data,bill_num=this_num) %>% return()
+}
