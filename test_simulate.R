@@ -32,8 +32,13 @@ set.seed(66334)
 
 one_model <- id_sim_gen(absence=T,
                              ordinal=T,
+<<<<<<< HEAD
                              num_legis =50,
                              num_bills=50,
+=======
+                             num_legis =100,
+                             num_bills=100,
+>>>>>>> e5f8dcc94aa80a0f0c07eabc1fd435f162a96e16
                               absence_discrim_sd = 2,
                              reg_discrim_sd = 2,
                              absence_diff_mean = 0.5,
@@ -63,8 +68,13 @@ low_leg_pin <- min(true_legis)
                             restrict_ind_high=c(high_leg$ix[1:10]),
                             restrict_ind_low = low_leg$ix[1:10],
                             fixtype='constrained',
+<<<<<<< HEAD
                             discrim_reg_sd =2,
                             discrim_abs_sd = 2,
+=======
+                            discrim_reg_sd =5,
+                            discrim_abs_sd = 5,
+>>>>>>> e5f8dcc94aa80a0f0c07eabc1fd435f162a96e16
                             legis_sd=1,
                             diff_abs_sd=5,
                             diff_reg_sd=5,
@@ -76,11 +86,18 @@ low_leg_pin <- min(true_legis)
  coverages <- id_sim_coverage(test_out)  
   lapply(coverages,function(x) mean(x$avg))
   id_plot_rhats(test_out)
+<<<<<<< HEAD
   
   id_plot_sims(test_out)
   
   id_plot_sims(test_out,type='Residual')
   ggsave('param_resid.png')
+=======
+  id_plot_sims(test_out)
+  
+  id_plot_sims(test_out,type='residual')
+
+>>>>>>> e5f8dcc94aa80a0f0c07eabc1fd435f162a96e16
  all_pars <- summary(test_out)
 filter(all_pars,par_type=='A_int_full') %>% ggplot(aes(x=posterior_median)) + geom_histogram()
 all_params <- rstan::extract(test_out@stan_samples)
@@ -97,6 +114,7 @@ compare_abs_discrim <- data_frame(all_abs_discrim,high_pt=apply(all_params$sigma
 
 #Now look at NOMINATE and IDEAL on the same data
 
+<<<<<<< HEAD
 simdata <- rollcall(one_model@vote_matrix,yea=1,nay=3,notInLegis = c(2,4),
                     legis.names=row.names(one_model@vote_matrix))
 
@@ -160,3 +178,5 @@ ggsave('sim_rmse_allmods.png')
 #   scale_colour_brewer(palette='Accent',name="")
 # 
 # ggsave('all_perf_sim.png',width=7,height=10,scale=1.1,units='in')
+=======
+>>>>>>> e5f8dcc94aa80a0f0c07eabc1fd435f162a96e16
