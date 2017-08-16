@@ -302,7 +302,7 @@ id_sim_test <- function(param_range=c(50,150),by=10,simul_type='absence',is.ordi
   }
   
   if(simul_type=='absence') {
-    simul_func <- simulate_models
+    simul_func <- id_sim_gen
     if(is.ordinal==TRUE) {
       model_type <- 4
     } else {
@@ -328,6 +328,7 @@ id_sim_test <- function(param_range=c(50,150),by=10,simul_type='absence',is.ordi
                 low_par=low_par,
                 high_par_est=high_par_est,
                 low_par_est=low_par_est))
+    browser()
   })
   
   
