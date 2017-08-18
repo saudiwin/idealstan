@@ -61,7 +61,7 @@ posterior_predict.idealstan <- function(object,draws=100,seed=NULL,
   model_type <- object@model_type
   
   rep_func <- switch(as.character(model_type),`4`=.predict_abs_ord,
-                     `1`=.predict_2pl)
+                     `1`=.predict_2pl,`2`=.predict_abs_bin)
   
   out_predict <- rep_func(all_params=all_params,
                           legis_points=legis_points,
