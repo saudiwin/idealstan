@@ -15,7 +15,7 @@
                              all_params$A_int_full[s,bill_points[v]])
       pr_vote <- all_params$sigma_reg_full[s,bill_points[v]]*all_params$L_full[s,time_points[v],legis_points[v]] - 
                           all_params$B_int_full[s,bill_points[v]]
-      votes <- if_else(pr_absence>0.5,abs_cat,.sample_cut(pr_vote=pr_vote,
+      votes <- if_else(pr_absence>runif(1),abs_cat,.sample_cut(pr_vote=pr_vote,
                                                           cutpoints=all_params$steps_votes[s,],
                                                           n_outcomes=length(all_votes)))
       return(votes)
@@ -50,7 +50,7 @@
 
 }
 
-#' Function to predict absence-inflated ordinal models
+#' Function to predict ordinary 2 PL models
 .predict_2pl <- function(all_params=NULL,n_iters=NULL,sample_draws=NULL,sample_votes=NULL,
                              legis_points=NULL,bill_points=NULL,time_points=NULL,
                              obj=NULL) {
@@ -63,7 +63,32 @@
       #Loop over individual votes
       pr_vote <- all_params$sigma_reg_full[s,bill_points[v]]*all_params$L_full[s,time_points[v],legis_points[v]] - 
         all_params$B_int_full[s,bill_points[v]]
-      votes <- if_else(pr_vote>0.5,2L,1L)
+      votes <- if_else(pr_vote>runif(1),2L,1L)
+      return(votes)
+    })
+  })
+  # transpose to fit bayesplot function
+  return(t(out_matrix))
+}
+
+#' Function to predict absence-inflated binary models
+.predict_abs_bin <- function(all_params=NULL,n_iters=NULL,sample_draws=NULL,sample_votes=NULL,
+                         legis_points=NULL,bill_points=NULL,time_points=NULL,
+                         obj=NULL) {
+  
+  
+  abs_cat <- as.integer(obj@vote_data@abs_vote)
+
+  out_matrix <- sapply(sample_draws,function(s) {
+    # Loop over samples
+    out_votes <- sapply(sample_votes, function(v) {
+      #Loop over individual votes
+      pr_absence <- plogis(all_params$sigma_abs_full[s,bill_points[v]]*all_params$L_full[s,time_points[v],legis_points[v]] - 
+                             all_params$A_int_full[s,bill_points[v]])
+      pr_vote <- all_params$sigma_reg_full[s,bill_points[v]]*all_params$L_full[s,time_points[v],legis_points[v]] - 
+        all_params$B_int_full[s,bill_points[v]]
+      this_vote <- if_else(pr_vote>runif(1),2L,1L)
+      votes <- if_else(pr_absence>runif(1),abs_cat,this_vote)
       return(votes)
     })
   })
