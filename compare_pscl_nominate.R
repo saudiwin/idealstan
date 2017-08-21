@@ -23,7 +23,11 @@ cl <- constrain.legis(newdata,
                       x=list('SASSE (R NE)'=1,
                              'SANDERS (Indep VT)'=-1))
 
-pscl_model <- ideal(newdata,store.item=TRUE,normalize = T)
+pscl_model <- ideal(newdata,store.item=TRUE,normalize = T,
+                    dropList=list(codes='notInLegis',lop=0.0,
+                                   legisMin=20),
+                    maxiter=30000,
+                    burnin=20000)
   wnominate_model <- wnominate(newdata,polarity='SASSE (R NE)',dims=1,trials=10)
 # we can compare models directly by forming an idealstan object out of pscl_model
 
@@ -100,7 +104,7 @@ abs_pts <- data_frame(ideal_pts=apply(output$L_full,3,median),
                         arrange(row_id) %>% 
   mutate(ranks=1)
 
-all_perf <- bind_rows(slice(pscl_pts,-1),slice(wnominate_pts,-1),abs_pts) %>% 
+all_perf <- bind_rows(pscl_pts,slice(wnominate_pts,-1),abs_pts) %>% 
   mutate(legislators=rep(row.names(wnominate_model$legislators)[-1],3)) %>% 
   group_by(model_type) %>% 
   mutate(ideal_pts_std=(ideal_pts/sd(ideal_pts))-mean(ideal_pts),
@@ -204,9 +208,12 @@ ggsave('con_discrim_bill.png',height=8.5,units='in')
 
 # Now we need to do PRE
 
+pscl_data <- dropRollCall(senate114,dropList=list(codes='notInLegis',lop=0,
+                                                  legisMin=20))
+
 keep_rows_nom <- which(is.na(wnominate_model$rollcalls$correctYea))
 keep_rows_nom_car <- colnames(senate114$votes)[keep_rows_nom]
-keep_rows_pscl <- dropRollCall(senate114,dropList=list(codes='notInLegis',lop=0))$dropInfo$votes
+keep_rows_pscl <- pscl_data$dropInfo$votes
 keep_rows_pscl <- which(keep_rows_pscl==F)
 combined_drop <- c(keep_rows_nom,keep_rows_pscl)
 
@@ -217,85 +224,108 @@ combined_drop <- c(keep_rows_nom,keep_rows_pscl)
   pscl_diff <- pscl_model$beta[,,2]
   
   post_pscl <- sapply(1:nrow(pscl_person), function(i) {
-    outcome <-   t(as.matrix(pscl_discrim[i,]) %*% t(pscl_person[i,]))  - pscl_diff[i,]
-    if_else(plogis(outcome)>runif(length(outcome)),2L,1L)
+    outcome <-   t(as.matrix(pscl_discrim[i,]) %*% t(pscl_person[i,]))
+    outcome <- sweep(outcome,2,pscl_diff[i,])
+    if_else(plogis(c(outcome))>runif(length(outcome)),2L,1L)
     })
   
   
   
-  calc_fp <- function(predicted,true,droprows=NULL,drop_o=T) {
+  calc_fp <- function(predicted,true,droprows=NULL,drop_o=T,reorder=NULL) {
   
     if(!is.null(droprows)) {
       true <- true[,-droprows]
     }
     if(drop_o==T) {
       true <- true[-1,]
+    }
+    if(!is.null(reorder)) {
+      true <- true[reorder,]
     }
     true <- as.numeric(c(true))
     predicted==2 & true %in% c(4,5,6)
   }
   
-  calc_fn <- function(predicted,true,droprows=NULL,drop_o=T) {
+  calc_fn <- function(predicted,true,droprows=NULL,drop_o=T,reorder=NULL) {
     if(!is.null(droprows)) {
       true <- true[,-droprows]
     }
     if(drop_o==T) {
       true <- true[-1,]
     }
+    if(!is.null(reorder)) {
+      true <- true[reorder,]
+    }
     true <- as.numeric(c(true))
     predicted==1 & true %in% c(1,2,3)
   }
   
-  fp_abs <- apply(post_abs,1,calc_fp,true=senate114$votes)
-  fn_abs <- apply(post_abs,1,calc_fp,true=senate114$votes)
+  fp_abs <- apply(post_abs,1,calc_fp,true=senate114$votes,
+                  reorder=as.numeric(row.names(estimated_full@vote_data@vote_matrix)))
+  fn_abs <- apply(post_abs,1,calc_fp,true=senate114$votes,
+                  reorder=as.numeric(row.names(estimated_full@vote_data@vote_matrix)))
   fp_pscl <- apply(post_pscl,2,calc_fp,true=senate114$votes,
-                   droprows=keep_rows_pscl,drop_o=F)
+                   droprows=keep_rows_pscl)
   fn_pscl <- apply(post_pscl,2,calc_fp,true=senate114$votes,
-                   droprows=keep_rows_pscl,drop_o=F)
-  
-  drop_pscl <- colnames(dropRollCall(senate114,dropList=list(codes='notInLegis',lop=0))$votes)
+                   droprows=keep_rows_pscl)
+  pscl_data <- dropRollCall(senate114,dropList=list(codes='notInLegis',lop=0,
+                                                    legisMin=20))
+  drop_pscl <- colnames(pscl_data$votes)
   drop_pscl <- which(drop_pscl %in% keep_rows_nom_car)
   
   # need to drop WNOMINATE bills
   
   abs_bill_pts <- rep(1:ncol(idealdata@vote_matrix),each=nrow(idealdata@vote_matrix))
-  abs_pers_pts <- rep(1:nrow(idealdata@vote_matrix),times=ncol(idealdata@vote_matrix))
+  abs_pers_pts <- rep(as.numeric(row.names(estimated_full@vote_data@vote_matrix)),times=ncol(idealdata@vote_matrix))
   pscl_bill_pts <- rep(1:pscl_model$m,each=pscl_model$n)
   pscl_pers_pts <- rep(1:pscl_model$n,times=pscl_model$m)
   
   fp_abs_by_sen <- bind_cols(data_frame(abs_pers_pts),as_data_frame(fp_abs)) %>% 
+    mutate(tot_neg=if_else(c(senate114$votes[-1,]) %in% c(4,5,6),1,0)) %>% 
     filter(!(abs_bill_pts %in% combined_drop)) %>% 
-    gather(iter,value,-abs_pers_pts) %>% 
+    gather(iter,value,-abs_pers_pts,-tot_neg) %>% 
+    group_by(abs_pers_pts,iter) %>% 
+    summarize(mean_fp_iter=sum(value)/sum(tot_neg)) %>%
     group_by(abs_pers_pts) %>% 
-    summarize(mean_fp=mean(value),
-              upper=2*(sqrt((mean_fp*(1-mean_fp)/n()))) + mean_fp,
-              lower=mean_fp-2*(sqrt((mean_fp*(1-mean_fp)/n()))))
+    summarize(mean_fp=mean(mean_fp_iter),
+              sd_mean_fp=sd(mean_fp_iter)) %>% 
+    mutate(legis_names=estimated_full@vote_data@legis_data$legis.names[unique(abs_pers_pts)]) %>% 
+    arrange(mean_fp)
+  
   fp_abs_by_bill <- bind_cols(data_frame(abs_bill_pts),as_data_frame(fp_abs)) %>% 
-    gather(iter,value,-abs_bill_pts) %>% 
+    mutate(tot_neg=if_else(c(senate114$votes[-1,]) %in% c(4,5,6),1,0)) %>% 
+    gather(iter,value,-abs_bill_pts,-tot_neg) %>% 
+    group_by(abs_bill_pts,iter) %>% 
+    summarize(mean_fp_iter=sum(value)/sum(tot_neg)) %>%
     group_by(abs_bill_pts) %>% 
-    summarize(mean_fp=mean(value),
-              upper=2*(sqrt((mean_fp*(1-mean_fp)/n()))) + mean_fp,
-              lower=mean_fp-2*(sqrt((mean_fp*(1-mean_fp)/n()))))
+    summarize(mean_fp=mean(mean_fp_iter),
+              sd_mean_fp=sd(mean_fp_iter))
   
   fp_pscl_by_sen <- bind_cols(data_frame(pscl_pers_pts),as_data_frame(fp_pscl)) %>% 
-    filter(!(pscl_bill_pts %in% drop_pscl),
-           pscl_pers_pts!=1) %>% 
-    gather(iter,value,-pscl_pers_pts) %>% 
+    mutate(tot_neg=if_else(c(senate114$votes[-1,-keep_rows_pscl]) %in% c(4,5,6),1,0)) %>% 
+    filter(!(pscl_bill_pts %in% drop_pscl)) %>% 
+    gather(iter,value,-pscl_pers_pts,-tot_neg) %>% 
+    group_by(pscl_pers_pts,iter) %>% 
+    summarize(mean_fp_iter=sum(value)/sum(tot_neg)) %>%
     group_by(pscl_pers_pts) %>% 
-    summarize(mean_fp=mean(value),
-              upper=2*(sqrt((mean_fp*(1-mean_fp)/n()))) + mean_fp,
-              lower=mean_fp-2*(sqrt((mean_fp*(1-mean_fp)/n()))))
+    summarize(mean_fp=mean(mean_fp_iter),
+              sd_mean_fp=sd(mean_fp_iter)) %>% 
+    mutate(legis_names=row.names(pscl_data$votes)) %>% 
+    arrange(mean_fp)
+  
   fp_pscl_by_bill <- bind_cols(data_frame(pscl_bill_pts),as_data_frame(fp_pscl)) %>% 
-    gather(iter,value,-pscl_bill_pts) %>% 
+    mutate(tot_neg=if_else(c(senate114$votes[-1,-keep_rows_pscl]) %in% c(4,5,6),1,0)) %>% 
+    gather(iter,value,-pscl_bill_pts,-tot_neg) %>% 
+    group_by(pscl_bill_pts,iter) %>% 
+    summarize(mean_fp_iter=sum(value)/sum(tot_neg)) %>%
     group_by(pscl_bill_pts) %>% 
-    summarize(mean_fp=mean(value),
-              upper=2*(sqrt((mean_fp*(1-mean_fp)/n()))) + mean_fp,
-              lower=mean_fp-2*(sqrt((mean_fp*(1-mean_fp)/n()))))
+    summarize(mean_fp=mean(mean_fp_iter),
+              sd_mean_fp=sd(mean_fp_iter))
   
   total_pos_sen <- bind_rows(list(`Absence-Inflated`=fp_abs_by_sen,
                                   `CJR`=fp_pscl_by_sen),.id='Model') %>% 
     group_by(Model) %>% 
-    mutate(overall_mean=mean(mean_fp))
+    mutate(overall_mean=mean(mean_fp,na.rm=T))
   ggplot(total_pos_sen,aes(x=mean_fp)) +
     geom_density(aes(fill=Model),colour=NA,alpha=0.7,
                  adjust=.3) +
@@ -308,51 +338,116 @@ combined_drop <- c(keep_rows_nom,keep_rows_pscl)
                    linetype=Model)) + 
     scale_linetype(name='Pooled Mean')
   
-  ggsave('false_positive_CJR.png')
+  ggsave('false_positive_CJR_sen.png')
   
   fn_abs_by_sen <- bind_cols(data_frame(abs_pers_pts),as_data_frame(fn_abs)) %>% 
+    mutate(tot_neg=if_else(c(senate114$votes[-1,]) %in% c(1,2,3),1,0)) %>% 
     filter(!(abs_bill_pts %in% combined_drop)) %>% 
-    gather(iter,value,-abs_pers_pts) %>% 
+    gather(iter,value,-abs_pers_pts,-tot_neg) %>% 
+    group_by(abs_pers_pts,iter) %>% 
+    summarize(mean_fn_iter=sum(value)/sum(tot_neg)) %>%
     group_by(abs_pers_pts) %>% 
-    summarize(mean_fn=mean(value),
-              upper=2*(sqrt((mean_fn*(1-mean_fn)/n()))) + mean_fn,
-              lower=mean_fn-2*(sqrt((mean_fn*(1-mean_fn)/n()))))
+    summarize(mean_fn=mean(mean_fn_iter),
+              sd_mean_fn=sd(mean_fn_iter)) %>% 
+    mutate(legis_names=estimated_full@vote_data@legis_data$legis.names[unique(abs_pers_pts)]) %>% 
+    arrange(mean_fn)
+  
   fn_abs_by_bill <- bind_cols(data_frame(abs_bill_pts),as_data_frame(fn_abs)) %>% 
-    gather(iter,value,-abs_bill_pts) %>% 
+    mutate(tot_neg=if_else(c(senate114$votes[-1,]) %in% c(1,2,3),1,0)) %>% 
+    gather(iter,value,-abs_bill_pts,-tot_neg) %>% 
+    group_by(abs_bill_pts,iter) %>% 
+    summarize(mean_fn_iter=sum(value)/sum(tot_neg)) %>%
     group_by(abs_bill_pts) %>% 
-    summarize(mean_fn=mean(value),
-              upper=2*(sqrt((mean_fn*(1-mean_fn)/n()))) + mean_fn,
-              lower=mean_fn-2*(sqrt((mean_fn*(1-mean_fn)/n()))))
+    summarize(mean_fn=mean(mean_fn_iter),
+              sd_mean_fn=sd(mean_fn_iter))
   
   fn_pscl_by_sen <- bind_cols(data_frame(pscl_pers_pts),as_data_frame(fn_pscl)) %>% 
-    filter(!(pscl_bill_pts %in% drop_pscl),
-           pscl_pers_pts!=1) %>% 
-    gather(iter,value,-pscl_pers_pts) %>% 
+    mutate(tot_neg=if_else(c(senate114$votes[-1,-keep_rows_pscl]) %in% c(1,2,3),1,0)) %>% 
+    filter(!(pscl_bill_pts %in% combined_drop)) %>% 
+    gather(iter,value,-pscl_pers_pts,-tot_neg) %>% 
+    group_by(pscl_pers_pts,iter) %>% 
+    summarize(mean_fn_iter=sum(value)/sum(tot_neg)) %>%
     group_by(pscl_pers_pts) %>% 
-    summarize(mean_fn=mean(value),
-              upper=2*(sqrt((mean_fn*(1-mean_fn)/n()))) + mean_fn,
-              lower=mean_fn-2*(sqrt((mean_fn*(1-mean_fn)/n()))))
+    summarize(mean_fn=mean(mean_fn_iter),
+              sd_mean_fn=sd(mean_fn_iter)) %>% 
+    mutate(legis_names=row.names(pscl_data$votes)) %>% 
+    arrange(mean_fn)
+  
   fn_pscl_by_bill <- bind_cols(data_frame(pscl_bill_pts),as_data_frame(fn_pscl)) %>% 
-    gather(iter,value,-pscl_bill_pts) %>% 
+    mutate(tot_neg=if_else(c(senate114$votes[-1,-keep_rows_pscl]) %in% c(1,2,3),1,0)) %>% 
+    gather(iter,value,-pscl_bill_pts,-tot_neg) %>% 
+    group_by(pscl_bill_pts,iter) %>% 
+    summarize(mean_fn_iter=sum(value)/sum(tot_neg)) %>%
     group_by(pscl_bill_pts) %>% 
-    summarize(mean_fn=mean(value),
-              upper=2*(sqrt((mean_fn*(1-mean_fn)/n()))) + mean_fn,
-              lower=mean_fn-2*(sqrt((mean_fn*(1-mean_fn)/n()))))
+    summarize(mean_fn=mean(mean_fn_iter),
+              sd_mean_fn=sd(mean_fn_iter)) 
   
   total_pos_sen <- bind_rows(list(`Absence-Inflated`=fn_abs_by_sen,
                                   `CJR`=fn_pscl_by_sen),.id='Model') %>% 
     group_by(Model) %>% 
-    mutate(overall_mean=mean(mean_fn))
+    mutate(overall_mean=mean(mean_fn,na.rm=T),
+           overall_median=median(mean_fn,na.rm=T))
   ggplot(total_pos_sen,aes(x=mean_fn)) +
     geom_density(aes(fill=Model),colour=NA,alpha=0.7,
                  adjust=.3) +
     theme_minimal() +
     theme(panel.grid=element_blank()) +
     scale_fill_discrete(name="Mean by Senator") +
-    xlab('False Positive Rate') +
+    xlab('False Negative Rate') +
     ylab('Density') + 
     geom_vline(aes(xintercept=overall_mean,
                    linetype=Model)) + 
     scale_linetype(name='Pooled Mean')
   
-  ggsave('false_negative_CJR.png')
+  ggsave('false_negative_CJR_sen.png')
+  
+  
+# Now let's also look at W-NOMINATE
+  
+fp_wnom_sen <- mutate(wnominate_model$legislators,
+                     mean_fp=wrongYea/(wrongYea+correctNay))
+
+total_pos_sen <- bind_rows(list(`W-NOMINATE`=fp_wnom_sen,
+                                `Absence-Inflated`=fp_abs_by_sen),
+                           .id='Model') %>% 
+  group_by(Model) %>% 
+  mutate(overall_mean=mean(mean_fp,na.rm=T))
+
+ggplot(total_pos_sen,aes(x=mean_fp)) +
+  geom_density(aes(fill=Model),colour=NA,alpha=0.7,
+               adjust=.3) +
+  theme_minimal() +
+  theme(panel.grid=element_blank()) +
+  scale_fill_discrete(name="Mean by Senator") +
+  xlab('False Positive Rate') +
+  ylab('Density') + 
+  geom_vline(aes(xintercept=overall_mean,
+                 linetype=Model)) + 
+  scale_linetype(name='Pooled Mean')
+
+ggsave('false_positive_WN_sen.png')
+  
+
+fn_wnom_sen <- mutate(wnominate_model$legislators,
+                      mean_fn=wrongNay/(wrongNay+correctYea))
+
+total_pos_sen <- bind_rows(list(`W-NOMINATE`=fn_wnom_sen,
+                                `Absence-Inflated`=fn_abs_by_sen),
+                           .id='Model') %>% 
+  group_by(Model) %>% 
+  mutate(overall_mean=mean(mean_fn,na.rm=T))
+
+ggplot(total_pos_sen,aes(x=mean_fn)) +
+  geom_density(aes(fill=Model),colour=NA,alpha=0.7,
+               adjust=.3) +
+  theme_minimal() +
+  theme(panel.grid=element_blank()) +
+  scale_fill_discrete(name="Mean by Senator") +
+  xlab('False Negative Rate') +
+  ylab('Density') + 
+  geom_vline(aes(xintercept=overall_mean,
+                 linetype=Model)) + 
+  scale_linetype(name='Pooled Mean')
+
+ggsave('false_negative_WN_sen.png')
+
