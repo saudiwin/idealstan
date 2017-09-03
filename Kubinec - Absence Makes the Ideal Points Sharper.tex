@@ -8,7 +8,7 @@
 	\maketitle
 	
 	\begin{abstract}
-		I put forward a Bayesian IRT model that can handle legislator absences and abstentions as additional data for determining legislator ideal points. The estimation uses the concept of a hurdle model to deflate the probabilities of legislator’s votes by the probability of absences. The model produces a single set of ideal points, but utilizes different parameters for bill absence midpoints. Compared to existing approaches, this model tends to produce more accurate estimates of ideal points for US Congresspeople who had higher rates of absence, such as senators on the campaign trail. For parliamentary data, the model provides much more precise estimates, especially in legislatures with very high rates of absence. Additionally, the model can incorporate absentions as a middle category between yes and no votes for legislatures with significant rates of abstentions.\footnote{I want thank Constanza Schibler,Jonathan Kropko and attendees at the 2017 Political Methodology Conference for helpful comments on this project. This paper is a working draft; please do not cite.}
+		I put forward a Bayesian IRT model that can handle legislator absences and abstentions as additional data for determining legislator ideal points. The estimation uses the concept of a hurdle model to deflate the probabilities of legislator’s votes by the probability of absences. The model produces a single set of ideal points, but utilizes different parameters for bill absence midpoints. Compared to existing approaches, this model tends to produce more accurate estimates of ideal points for US Congresspeople who had higher rates of absence, such as senators on the campaign trail. For parliamentary data, the model provides much more precise estimates, especially in legislatures with very high rates of absence. Additionally, the model can incorporate absentions as a middle category between yes and no votes for legislatures with significant rates of abstentions.\footnote{I want thank Constanza Schibler, Jonathan Kropko, Daniel Gingerich and attendees at the 2017 Political Methodology Conference for helpful comments on this project. I also thank the University of Virginia Quantitative Collaborative for computing resources.}
 	\end{abstract}
 	
 	Ideal point modeling of legislatures, and increasingly other kinds of social actors, has become a foundational element of empirical work in political science. However, most models of ideal points are based on binary outcomes that reflect yes and no votes (or positions) while all other actions are recorded as missing data. The argument for doing so is that the yes and no votes contain most of the information about legislator ideal points \parencite[4]{poole2008}, and that incorporating other categories such as abstentions or absences would greatly complicate the estimation without adding much benefit. In relation to the first point, I present a model that uses Bayesian Markov Chain Monte Carlo (MCMC) estimation to handle the contingency inherent in the data. In relation to the second, I show in this paper that absences and abstentions do contain important information about legislator ideal points, a contention that has become more prominent in recent research.
@@ -42,7 +42,7 @@ The methodology that has been used so far to address this problem is multiple im
 	
 	\section*{Absence-Inflated Hurdle Model}
 	
- 	To construct this model, I first return to the canonical treatment of ideal point models in \textcite{enelow198}. In the elementary spatial model that is the foundation of the statistical ideal point literature, a legislator $x_i$ votes for a bill if the yes position $y$ on the bill is closer to $i$ than the no position $n$ on the bill: $\mid x_i-y \mid > \mid x_i - n \mid$, and the legislator is indifferent if the difference in utilities is exactly equal: $\mid x_i-y \mid = \mid x_i - n \mid$. In statistical terms we can imagine legislators having a stochastic ideal point function that can be represented as a normal curve or as a quadratic function \parencite{carroll2009}. This standard form of the model is represented by Figure \ref{ehinich} in which the ideal point $x_i$ is represented by a normal distribution over the possible utilities and the bill positions by vertical lines.
+ 	To construct this model, I first return to the canonical treatment of ideal point models in \textcite{enelow198}. In the elementary spatial model that is the foundation of the statistical ideal point literature, a legislator $x_i$ votes for a bill if the yes position $y$ on the bill is closer to $x_i$ than the no position $n$ on the bill: $\mid x_i-y \mid > \mid x_i - n \mid$, and the legislator is indifferent if the difference in utilities is exactly equal: $\mid x_i-y \mid = \mid x_i - n \mid$. In statistical terms we can imagine legislators having a stochastic ideal point function that can be represented as a normal curve or as a quadratic function \parencite{carroll2009}. This standard form of the model is represented by Figure \ref{ehinich} in which the ideal point $x_i$ is represented by a normal distribution over the possible utilities and the bill positions by vertical lines.
  	\begin{figure}[h!]
  		\caption{Standard Ideal Point Model of \textcite{enelow198}}\label{ehinich}
  		\includegraphics[width=0.9\linewidth]{standard_ideal_pt}
@@ -61,7 +61,7 @@ The methodology that has been used so far to address this problem is multiple im
 This formal model can be directly translated into an ordinal IRT model, which is known as a rating-scale model in the IRT literature.\footnote{A rating-scale model has fixed cutpoints for the entire data and matches the parameterization of the commonly-used ordered logit model. The graded-response model, on the other hand, estimates separate cutpoints for each bill. While it is an interesting extension of the basic model, it is not considered in this paper, although it can be estimated in the \texttt{idealstan} R package.} The $K$ category vote outcome $k$ can be modeled as a likelihood function $L(\cdot)$ of $I$ legislator ideal points $x_i$, $J$ bill discrimination parameters $\beta_j$ and $J$ bill intercepts $\alpha_j$. Each equation is put inside $\zeta(\cdot)$, which represents the logit function. Formally, the full likelihood is:
 	
 					\[
-	L(\beta,\alpha,x|Y_{k}) = \prod_{n}^{i=1} \prod_{m}^{j=1}
+	L(\beta,\alpha,x|Y_{k}) = \prod_{I}^{i=1} \prod_{J}^{j=1}
 	\begin{cases} 
 	1 -  \zeta(x_{i}'\beta_j - \alpha_j - c_1) & \text{if } K = 0 \\
 	\zeta(x_{i}'\beta_j - \alpha_j - c_{k-1}) - \zeta(x_{i}'\beta_j - \alpha_j - c_{k})       & \text{if } 0 < k < K, \text{ and} \\
@@ -79,7 +79,7 @@ This formal model can be directly translated into an ordinal IRT model, which is
 	
 		 \[
 	L(\beta,\alpha,X,Q,\gamma,\omega|Y_{k},Y_{r}) = 
-	\prod_{n}^{i=1} \prod_{m}^{j=1}
+	\prod_{I}^{i=1} \prod_{J}^{j=1}
 	\begin{cases}
 	\zeta(x_{i}'\gamma_j - \omega_j ) & \text{if } r=0, \text{ and} \\
 	(1-\zeta({x_{i}'\gamma_j - \omega_j}))L(\beta,\alpha,X|Y_{k1}) & \text{if } r=1
