@@ -19,7 +19,7 @@
 #' @param legis_labels if \code{TRUE}, use the legis.names column to plot legislator labels
 #' @param legis_ci_alpha The transparency level of the dot plot and confidence bars
 #' @param abs_and_reg Whether to show 'both' absence and regular bill midpoints if the model is absence-inflated, the default,
-#' or 'Absence-inflated' for only the absence midpoints or 'Non-inflated' for only the non-inflated midpoints
+#' or 'Absence Points' for only the absence midpoints or 'Vote Points' for only the non-inflated midpoints
 #' @param show_true Whether to show the true values of the legislators (if model has been simulated)
 #' @param party_color If \code{TRUE}, give each party/bloc a different color
 #' @param party_overlap Whether to prevent the text from overlapping itself (ggplot2 option)
@@ -219,7 +219,7 @@ id_plot_legis <- function(object,return_data=FALSE,bill_plot=NULL,
                             labels=c('10%','90%')))
     
     # Choose a plot based on the user's options
-    
+
     if(any(object@model_type %in% c(2,4,6)) & abs_and_reg!='both') {
 
       person_params <- filter(person_params,param==abs_and_reg)
@@ -247,7 +247,7 @@ id_plot_legis <- function(object,return_data=FALSE,bill_plot=NULL,
     
     if(any(object@model_type %in% c(2,4,6)) & abs_and_reg=='both' & length(bill_plot)>1) {
       outplot <- outplot + facet_wrap(~param + bill_type,dir='v')
-    } else if(any(object@model_type %in% c(2,4,6)) & abs_and_reg %in% c('both','absence') & length(bill_plot)==1) {
+    } else if(any(object@model_type %in% c(2,4,6)) & abs_and_reg %in% c('both','Absence-inflated') & length(bill_plot)==1) {
       outplot <- outplot + facet_wrap(~param,dir='v') 
     } else if(length(bill_plot)>1) {
       outplot <- outplot + facet_wrap(~bill_type,dir='v') 
