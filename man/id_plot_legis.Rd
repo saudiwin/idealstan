@@ -6,7 +6,7 @@
 \usage{
 id_plot_legis(object, return_data = FALSE, bill_plot = NULL,
   text_size_label = 2, text_size_party = 2.5, hjust_length = -0.7,
-  legis_labels = TRUE, legis_ci_alpha = 0.5, abs_and_reg = "both",
+  legis_labels = TRUE, legis_ci_alpha = 0.1, abs_and_reg = "both",
   show_true = FALSE, party_color = TRUE, party_overlap = FALSE, ...)
 }
 \arguments{
@@ -25,7 +25,7 @@ id_plot_legis(object, return_data = FALSE, bill_plot = NULL,
 \item{legis_ci_alpha}{The transparency level of the dot plot and confidence bars}
 
 \item{abs_and_reg}{Whether to show 'both' absence and regular bill midpoints if the model is absence-inflated, the default,
-or 'Absence-inflated' for only the absence midpoints or 'Non-inflated' for only the non-inflated midpoints}
+or 'Absence Points' for only the absence midpoints or 'Vote Points' for only the non-inflated midpoints}
 
 \item{show_true}{Whether to show the true values of the legislators (if model has been simulated)}
 
