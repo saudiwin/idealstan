@@ -8,3 +8,4 @@ src/*.dll
 *.rds
 
 *.hpp
+*.png
