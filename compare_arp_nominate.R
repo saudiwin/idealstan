@@ -72,7 +72,7 @@ ggplot(data_frame(x=as.character(c(arp_ideal_data@vote_matrix))),aes(x=x)) +
   xlab("") +
   ylab("") + 
   scale_x_discrete(breaks=c("1","2","3","4"),labels=c('No','Abstain','Yes','Absent'))
-ggsave('arp_hist.png') 
+ggsave('arp_hist.png',scale=.8) 
 if(estimate_it==TRUE) {
   estimate_arp <- id_estimate(arp_ideal_data,
                               model_type=4,
@@ -200,5 +200,5 @@ estimate_arp@vote_data@legis_data <- mutate(arp_ideal_data@legis_data,
 
 id_plot(estimate_arp,abs_and_reg='Non-inflated',bill_plot=200, party_color=F)
 
-
+ggsave('tunisia_abstain.png')
 

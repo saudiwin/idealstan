@@ -499,14 +499,14 @@ extract_samples <- function(obj,...) {
     out_data <- summarize(df,mean_bill=mean((!!int_reg)/(!!sigma_reg)),
                           high_bill=quantile((!!int_reg)/(!!sigma_reg),0.9),
                           low_bill=quantile((!!int_reg)/(!!sigma_reg),0.1)) %>% 
-      mutate(param='Non-inflated',
+      mutate(param='Vote Points',
                           step=1)
       if(!is.null(int_abs)) {
 
         out_data <- summarize(df,mean_bill=mean((!!int_abs)/(!!sigma_abs)),
                               high_bill=quantile((!!int_abs)/(!!sigma_abs),0.9),
                               low_bill=quantile((!!int_abs)/(!!sigma_abs),0.1)) %>% 
-          mutate(param='Absence-inflated',
+          mutate(param='Absence Points',
                               step=1) %>% 
           bind_rows(out_data)
       }
@@ -523,7 +523,7 @@ extract_samples <- function(obj,...) {
     out_data <- summarize(df,mean_bill=mean(((!!int_reg)+steps_data[,s])/(!!sigma_reg)),
                           high_bill=quantile(((!!int_reg)+steps_data[,s])/(!!sigma_reg),0.9),
                           low_bill=quantile(((!!int_reg)+steps_data[,s])/(!!sigma_reg),0.1)) %>% 
-      mutate(param='Non-inflated',
+      mutate(param='Vote Points',
                           step=s)
     
     if(!is.null(int_abs)) {
@@ -531,7 +531,7 @@ extract_samples <- function(obj,...) {
       out_data <- summarize(df,mean_bill=mean(((!!int_abs)+steps_data[,s])/(!!sigma_abs)),
                             high_bill=quantile(((!!int_abs)+steps_data[,s])/(!!sigma_abs),0.9),
                             low_bill=quantile(((!!int_abs)+steps_data[,s])/(!!sigma_abs),0.1)) %>% 
-        mutate(param='Absence-inflated',
+        mutate(param='Absence Points',
                             step=s) %>% 
         bind_rows(out_data)
       
