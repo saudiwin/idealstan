@@ -1,18 +1,13 @@
 ---
-title: "README"
-author: "Robert Kubinec"
+output:
+  pdf_document: default
+  html_document: default
+---
+---
+title: "Introduction to R Package Idealstan"
+author: ""
 date: "June 22, 2017"
-output: github_document
-references:
-- id: kubinec2017
-  title: Absence Makes the Ideal Points Sharper
-  author:
-  - family: Kubinec
-    given: Robert
-  type: paper-conference
-  container-title: 2017 Political Methodology Annual Conference
-  issued:
-    year: 2017
+output: pdf_document
 ---
 
 ```{r setup, include=FALSE}
@@ -28,7 +23,7 @@ This package implements IRT (item response theory) ideal point models, which are
 
 This vignette demonstrates basic usage of the package, which is currently released as a beta version. A release on CRAN is planned within the next two months that will incorporate additional models, including hierarchical and dynamic IRT ideal point modeling.
 
-This package takes an approach to modeling legislative roll call data (and other IRT data) that uses a hurdle model to separately account for the probability that a legislator (i.e., test-taker) will show up to vote. This absence-inflated model estimates additional bill (item) parameters to reflect the relative gain or loss a legislator has from showing up to vote. Further details of this model are explained in @kubinec2017.
+This package takes an approach to modeling legislative roll call data (and other IRT data) that uses a hurdle model to separately account for the probability that a legislator (i.e., test-taker) will show up to vote. This absence-inflated model estimates additional bill (item) parameters to reflect the relative gain or loss a legislator has from showing up to vote. 
 
 To begin with, we can simulate data from an ordinal ideal-point model in which there are three possible responses corresponding to a legislator voting: yes, abstain and no. An additional category is also simulated that indicates whether a legislator shows up to vote or is absent. While traditional ideal point models tend to drop absences, this package can utilize absences via a hurdle model in which the censoring of the vote/score data is estimated as a function of individual bill intercepts and discrimination parameters for the decision to be absent or present.
 
