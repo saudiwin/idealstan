@@ -6,13 +6,13 @@
 #' used in the underlying Stan code. Currently the simulation can produce absence-inflated and
 #' non-absence-inflated binary and ordinal ideal point models.
 #' 
-#' @param num_legis The number of persons/legislators
+#' @param num_person The number of persons/personlators
 #' @param num_bills The number of items/bills
 #' @param absence_discrim_sd The SD of the discrimination parameters for the absence model
 #' @param absence_diff_mean The mean intercept for the absence model; increasing it will lower the total number of
 #' absences
 #' @param reg_discrim_sd The SD of the discrimination parameters for the non-inflated model
-#' @param ideal_pts_sd The SD for the person/legislator ideal points
+#' @param ideal_pts_sd The SD for the person/personlator ideal points
 #' @param prior_type The statistical distribution that generates the data. Currently only 
 #' 'gaussian' is supported.
 #' @param ordinal Whether the data should have binary (\code{FALSE}) or ordinal (\code{TRUE}) responses
@@ -24,7 +24,7 @@
 #' plotting functions.
 #' @seealso \code{\link{id_plot_sims}} for plotting fitted models versus true values.
 #' @export
-id_sim_gen <- function(num_legis=20,num_bills=50,absence_discrim_sd=2,absence_diff_mean=0.5,
+id_sim_gen <- function(num_person=20,num_bills=50,absence_discrim_sd=2,absence_diff_mean=0.5,
                              reg_discrim_sd=2,diff_sd=.25,
                              ideal_pts_sd=1,prior_type='gaussian',ordinal=TRUE,ordinal_outcomes=3,
                              graded_response=FALSE,absence=TRUE) {
@@ -53,11 +53,11 @@ id_sim_gen <- function(num_legis=20,num_bills=50,absence_discrim_sd=2,absence_di
     }
   }
   
-  #Fixed average participation value for each legislator
+  #Fixed average participation value for each personlator
   
   avg_particip <- rnorm(n=1,mean=0,sd=1)
   
-  # First simulate ideal points for legislators/bills
+  # First simulate ideal points for personlators/bills
   # Bill difficulty parameters are fixed because they are not entirely interesting (they represent intercepts)
   
   absence_diff <- prior_func(params=list(N=num_bills,mean=absence_diff_mean,sd=diff_sd)) 
@@ -65,27 +65,27 @@ id_sim_gen <- function(num_legis=20,num_bills=50,absence_discrim_sd=2,absence_di
   # need to make some of them negative to reflect the switching nature of policies
   #absence_discrim <- prior_func(params=list(N=num_bills,mean=1,sd=absence_discrim_sd)) * if_else(runif(num_bills-1)>0.5,1,-1)
   absence_discrim <- prior_func(params=list(N=num_bills,mean=0,sd=absence_discrim_sd))
-  # Legislator ideal points common to both types of models (absence and regular)
+  # personlator ideal points common to both types of models (absence and regular)
   
-  ideal_pts <- prior_func(params=list(N=num_legis,mean=0,sd=ideal_pts_sd))
+  ideal_pts <- prior_func(params=list(N=num_person,mean=0,sd=ideal_pts_sd))
   
   # First generate prob of absences
   # Use matrix multiplication because it's faster (unlike the stan method)
   
   #pr_absence <- plogis(t(t(ideal_pts %*% t(absence_discrim))-absence_diff + prior_func(params=list(N=num_bills,mean=0,sd=noise))) - 0.1*avg_particip)
-  legis_points <- rep(1:num_legis,times=num_bills)
-  bill_points <- rep(1:num_bills,each=num_legis)
+  person_points <- rep(1:num_person,times=num_bills)
+  bill_points <- rep(1:num_bills,each=num_person)
   
-  pr_absence <- sapply(1:length(legis_points), function(n) {
-    ideal_pts[legis_points[n]]*absence_discrim[bill_points[n]] - absence_diff[bill_points[n]]}) %>% plogis
+  pr_absence <- sapply(1:length(person_points), function(n) {
+    ideal_pts[person_points[n]]*absence_discrim[bill_points[n]] - absence_diff[bill_points[n]]}) %>% plogis
   
   reg_diff <- prior_func(params=list(N=num_bills-1,mean=0,sd=diff_sd))
   reg_diff <- c(0,reg_diff)
   #reg_discrim <- prior_func(params=list(N=num_bills,mean=1,sd=reg_discrim_sd)) * if_else(runif(num_bills-1)>0.5,1,-1)
   reg_discrim <- prior_func(params=list(N=num_bills,mean=0,sd=reg_discrim_sd))
   
-  pr_vote <- sapply(1:length(legis_points), function(n) {
-    ideal_pts[legis_points[n]]*reg_discrim[bill_points[n]] - reg_diff[bill_points[n]]
+  pr_vote <- sapply(1:length(person_points), function(n) {
+    ideal_pts[person_points[n]]*reg_discrim[bill_points[n]] - reg_diff[bill_points[n]]
   })
   
     #plogis(t(t(ideal_pts %*% t(absence_discrim))) -absence_diff - 0.1*avg_particip)
@@ -95,7 +95,7 @@ id_sim_gen <- function(num_legis=20,num_bills=50,absence_discrim_sd=2,absence_di
   if(ordinal==TRUE & graded_response==FALSE & absence==TRUE) {
     
     # Need to simulate a separate prob for each outcome category
-    # I only simulate 3 outcome categories by default as that is what you find in legislatures
+    # I only simulate 3 outcome categories by default as that is what you find in personlatures
     # Standard model for ordinal outcomes is the rating-scale model, also called a "divide by total"
     # ordinal logit/categorical logit
     
@@ -103,7 +103,7 @@ id_sim_gen <- function(num_legis=20,num_bills=50,absence_discrim_sd=2,absence_di
     cutpoints <- quantile(pr_vote,probs=seq(0,1,length.out = ordinal_outcomes+1))
     cutpoints <- cutpoints[2:(length(cutpoints)-1)]
   
-    #Generate outcomes by legislator
+    #Generate outcomes by personlator
     
     cuts <- sapply(cutpoints,function(y) {
       pr_vote - y
@@ -127,28 +127,28 @@ id_sim_gen <- function(num_legis=20,num_bills=50,absence_discrim_sd=2,absence_di
     })
     
   
-    # now determine if the outcome. legislators only vote if they show up
+    # now determine if the outcome. personlators only vote if they show up
     # Absences are coded as category 4
     
-    combined <- if_else(pr_absence<runif(length(legis_points)),votes,as.integer(ordinal_outcomes)+1L)
+    combined <- if_else(pr_absence<runif(length(person_points)),votes,as.integer(ordinal_outcomes)+1L)
     
     # Create a vote matrix
     
-    combined <- matrix(combined,ncol=num_bills,nrow=num_legis,byrow = F)
+    combined <- matrix(combined,ncol=num_bills,nrow=num_person,byrow = F)
     
     #Got the vote matrix, run ideal_data
     
     colnames(combined) <- paste0('Vote_',1:ncol(combined))
-    row.names(combined) <- paste0('Legis_',1:nrow(combined))
+    row.names(combined) <- paste0('person_',1:nrow(combined))
     
-    out_data <- id_make(vote_data=combined,legis_data=data_frame(legis.names=paste0('Legis_',1:nrow(combined)),
+    out_data <- id_make(score_data=combined,person_data=data_frame(person.names=paste0('person_',1:nrow(combined)),
                                                                         party='L',
-                                                                        true_legis=as.numeric(ideal_pts)),
-                               abs_vote = ordinal_outcomes+1,
-                               yes_vote = ordinal_outcomes,
-                               no_vote = 1,
-                               abst_vote = 2:(ordinal_outcomes-1),
-                               simul_data=list(num_legis=num_legis,
+                                                                        true_person=as.numeric(ideal_pts)),
+                               miss_val = ordinal_outcomes+1,
+                               high_val = ordinal_outcomes,
+                               low_val = 1,
+                               middle_val = 2:(ordinal_outcomes-1),
+                               simul_data=list(num_person=num_person,
                                               num_bills=num_bills,
                                               absence_discrim_sd=absence_discrim_sd,
                                               absence_diff_mean=absence_diff_mean,
@@ -158,7 +158,7 @@ id_sim_gen <- function(num_legis=20,num_bills=50,absence_discrim_sd=2,absence_di
                                               ordinal=ordinal,
                                               ordinal_outcomes=ordinal_outcomes,
                                               graded_response=graded_response,
-                                              true_legis=ideal_pts,
+                                              true_person=ideal_pts,
                                               true_reg_discrim=reg_discrim,
                                               true_abs_discrim=absence_discrim),
                                simulation=TRUE)
@@ -180,31 +180,31 @@ id_sim_gen <- function(num_legis=20,num_bills=50,absence_discrim_sd=2,absence_di
     
     #standard IRT 2-PL model
 
-    votes <- as.numeric(plogis(pr_vote)>runif(length(legis_points)))
+    votes <- as.numeric(plogis(pr_vote)>runif(length(person_points)))
     
     
-    # now determine if the outcome. legislators only vote if they show up
+    # now determine if the outcome. personlators only vote if they show up
     # Absences are coded as category 4
     
     combined <- votes
     
     # Create a vote matrix
     
-    combined <- matrix(combined,ncol=num_bills,nrow=num_legis,byrow = F)
+    combined <- matrix(combined,ncol=num_bills,nrow=num_person,byrow = F)
     
     #Got the vote matrix, run ideal_data
     
     colnames(combined) <- paste0('Vote_',1:ncol(combined))
-    row.names(combined) <- paste0('Legis_',1:nrow(combined))
+    row.names(combined) <- paste0('person_',1:nrow(combined))
     
-    out_data <- id_make(vote_data=combined,legis_data=data_frame(legis.names=paste0('Legis_',1:nrow(combined)),
+    out_data <- id_make(score_data=combined,person_data=data_frame(person.names=paste0('person_',1:nrow(combined)),
                                                                         party='L',
-                                                                        true_legis=as.numeric(ideal_pts)),
-                               abs_vote = NULL,
-                               yes_vote = 1,
-                               no_vote = 0,
-                               abst_vote = NULL,
-                               simul_data=list(num_legis=num_legis,
+                                                                        true_person=as.numeric(ideal_pts)),
+                               miss_val = NULL,
+                               high_val = 1,
+                               low_val = 0,
+                               middle_val = NULL,
+                               simul_data=list(num_person=num_person,
                                                num_bills=num_bills,
                                                absence_discrim_sd=absence_discrim_sd,
                                                absence_diff_mean=absence_diff_mean,
@@ -214,7 +214,7 @@ id_sim_gen <- function(num_legis=20,num_bills=50,absence_discrim_sd=2,absence_di
                                                ordinal=ordinal,
                                                ordinal_outcomes=ordinal_outcomes,
                                                graded_response=graded_response,
-                                               true_legis=ideal_pts,
+                                               true_person=ideal_pts,
                                                true_reg_discrim=reg_discrim,
                                                true_abs_discrim=absence_discrim),
                                simulation=TRUE)
@@ -223,7 +223,7 @@ id_sim_gen <- function(num_legis=20,num_bills=50,absence_discrim_sd=2,absence_di
     cutpoints <- quantile(pr_vote,probs=seq(0,1,length.out = ordinal_outcomes+1))
     cutpoints <- cutpoints[2:(length(cutpoints)-1)]
     
-    #Generate outcomes by legislator
+    #Generate outcomes by personlator
     
     cuts <- sapply(cutpoints,function(y) {
       pr_vote - y
@@ -246,28 +246,28 @@ id_sim_gen <- function(num_legis=20,num_bills=50,absence_discrim_sd=2,absence_di
 
     
     
-    # now determine if the outcome. legislators only vote if they show up
+    # now determine if the outcome. personlators only vote if they show up
     # Absences are coded as category 4
     
     combined <- votes
     
     # Create a vote matrix
     
-    combined <- matrix(combined,ncol=num_bills,nrow=num_legis,byrow = F)
+    combined <- matrix(combined,ncol=num_bills,nrow=num_person,byrow = F)
     
     #Got the vote matrix, run ideal_data
     
     colnames(combined) <- paste0('Vote_',1:ncol(combined))
-    row.names(combined) <- paste0('Legis_',1:nrow(combined))
+    row.names(combined) <- paste0('person_',1:nrow(combined))
     
-    out_data <- id_make(vote_data=combined,legis_data=data_frame(legis.names=paste0('Legis_',1:nrow(combined)),
+    out_data <- id_make(score_data=combined,person_data=data_frame(person.names=paste0('person_',1:nrow(combined)),
                                                                         party='L',
-                                                                        true_legis=as.numeric(ideal_pts)),
-                               abs_vote = ordinal_outcomes+1,
-                               yes_vote = ordinal_outcomes,
-                               no_vote = 1,
-                               abst_vote = 2:(ordinal_outcomes-1),
-                               simul_data=list(num_legis=num_legis,
+                                                                        true_person=as.numeric(ideal_pts)),
+                               miss_val = ordinal_outcomes+1,
+                               high_val = ordinal_outcomes,
+                               low_val = 1,
+                               middle_val = 2:(ordinal_outcomes-1),
+                               simul_data=list(num_person=num_person,
                                                num_bills=num_bills,
                                                absence_discrim_sd=absence_discrim_sd,
                                                absence_diff_mean=absence_diff_mean,
@@ -277,7 +277,7 @@ id_sim_gen <- function(num_legis=20,num_bills=50,absence_discrim_sd=2,absence_di
                                                ordinal=ordinal,
                                                ordinal_outcomes=ordinal_outcomes,
                                                graded_response=graded_response,
-                                               true_legis=ideal_pts,
+                                               true_person=ideal_pts,
                                                true_reg_discrim=reg_discrim,
                                                true_abs_discrim=absence_discrim),
                                simulation=TRUE)
@@ -288,11 +288,11 @@ id_sim_gen <- function(num_legis=20,num_bills=50,absence_discrim_sd=2,absence_di
   
 }
 
-#' A function that loops over numbers of legislators/bills to provide a coherent over-view of 
+#' A function that loops over numbers of personlators/bills to provide a coherent over-view of 
 #' idealstan performance for a given model type.
 #' @export
 id_sim_test <- function(param_range=c(50,150),by=10,simul_type='absence',is.ordinal=TRUE,
-                           restrict_type='constrain_twoway',restrict_params='legis',
+                           restrict_type='constrain_twoway',restrict_params='person',
                            num_constrain=10,fixtype='pinned',...) {
 
   #check for inconsistent parameters
@@ -312,12 +312,12 @@ id_sim_test <- function(param_range=c(50,150),by=10,simul_type='absence',is.ordi
   }
   full_range <- seq(param_range[1],param_range[2],by=by)
   all_sims <- lapply(full_range, function(N){
-    sim_data <- simul_func(num_legis=N,num_bills=N,ordinal=is.ordinal,absence=absence)
+    sim_data <- simul_func(num_person=N,num_bills=N,ordinal=is.ordinal,absence=absence)
 
     true_param <- switch(restrict_params,
-                             legis=sim_data@simul_data$true_legis,
+                             person=sim_data@simul_data$true_person,
                              discrim_reg=sim_data@simul_data$true_reg_discrim,
-                             discrim_abs=sim_data@simul_data$true_abs_discrim)
+                             discrim_miss=sim_data@simul_data$true_abs_discrim)
   
     high_par <- sort(true_param,decreasing=TRUE,index.return=TRUE)$ix[1:num_constrain]
     low_par <- sort(true_param,index.return=TRUE)$ix[1:num_constrain]
@@ -397,11 +397,11 @@ id_sim_test <- function(param_range=c(50,150),by=10,simul_type='absence',is.ordi
 id_sim_rmse <- function(obj,rep=1) {
   all_params <- rstan::extract(obj@stan_samples)
   
-  all_true <- obj@vote_data@simul_data
+  all_true <- obj@score_data@simul_data
   
-  true_legis <- all_true$true_legis[as.numeric(row.names(obj@vote_data@vote_matrix))]
-  true_sigma_reg <- all_true$true_reg_discrim[as.numeric(colnames(obj@vote_data@vote_matrix))]
-  true_sigma_abs <- all_true$true_abs_discrim[as.numeric(colnames(obj@vote_data@vote_matrix))]
+  true_person <- all_true$true_person[as.numeric(row.names(obj@score_data@score_matrix))]
+  true_sigma_reg <- all_true$true_reg_discrim[as.numeric(colnames(obj@score_data@score_matrix))]
+  true_sigma_abs <- all_true$true_abs_discrim[as.numeric(colnames(obj@score_data@score_matrix))]
   
   over_params <- function(est_param,true_param) {
   
@@ -430,7 +430,7 @@ id_sim_rmse <- function(obj,rep=1) {
   }
   
   
-  out_data <- list(`Ideal Points`=over_params(all_params$L_full,true_legis),
+  out_data <- list(`Ideal Points`=over_params(all_params$L_full,true_person),
                    `Absence Discrimination`=over_params(all_params$sigma_abs_full,true_sigma_abs),
                    `Bill Discrimination`=over_params(all_params$sigma_reg_full,true_sigma_reg))
   
@@ -447,11 +447,11 @@ id_sim_coverage <- function(obj,rep=1,quantiles=c(.95,.05)) {
 
   all_params <- rstan::extract(obj@stan_samples)
   
-  all_true <- obj@vote_data@simul_data
+  all_true <- obj@score_data@simul_data
   
-  true_legis <- all_true$true_legis[as.numeric(row.names(obj@vote_data@vote_matrix))]
-  true_sigma_reg <- all_true$true_reg_discrim[as.numeric(colnames(obj@vote_data@vote_matrix))]
-  true_sigma_abs <- all_true$true_abs_discrim[as.numeric(colnames(obj@vote_data@vote_matrix))]
+  true_person <- all_true$true_person[as.numeric(row.names(obj@score_data@score_matrix))]
+  true_sigma_reg <- all_true$true_reg_discrim[as.numeric(colnames(obj@score_data@score_matrix))]
+  true_sigma_abs <- all_true$true_abs_discrim[as.numeric(colnames(obj@score_data@score_matrix))]
   
   over_params <- function(est_param,true_param) {
 
@@ -482,7 +482,7 @@ id_sim_coverage <- function(obj,rep=1,quantiles=c(.95,.05)) {
 
 
   
-  out_data <- list(legis_cov=over_params(all_params$L_full,true_legis),
+  out_data <- list(item_cov=over_params(all_params$L_full,true_person),
                          sigma_abs_cov=over_params(all_params$sigma_abs_full,true_sigma_abs),
                          sigma_reg_cov=over_params(all_params$sigma_reg_full,true_sigma_reg))
   
@@ -498,11 +498,11 @@ id_sim_resid <- function(obj,rep=1) {
   
   all_params <- rstan::extract(obj@stan_samples)
   
-  all_true <- obj@vote_data@simul_data
+  all_true <- obj@score_data@simul_data
   
-  true_legis <- all_true$true_legis[as.numeric(row.names(obj@vote_data@vote_matrix))]
-  true_sigma_reg <- all_true$true_reg_discrim[as.numeric(colnames(obj@vote_data@vote_matrix))]
-  true_sigma_abs <- all_true$true_abs_discrim[as.numeric(colnames(obj@vote_data@vote_matrix))]
+  true_person <- all_true$true_person[as.numeric(row.names(obj@score_data@score_matrix))]
+  true_sigma_reg <- all_true$true_reg_discrim[as.numeric(colnames(obj@score_data@score_matrix))]
+  true_sigma_abs <- all_true$true_abs_discrim[as.numeric(colnames(obj@score_data@score_matrix))]
   
   over_params <- function(est_param,true_param) {
 
@@ -533,7 +533,7 @@ id_sim_resid <- function(obj,rep=1) {
     return(out_data1)
   }
   
-  out_data <- list(`Ideal Points`=over_params(all_params$L_full,true_legis),
+  out_data <- list(`Ideal Points`=over_params(all_params$L_full,true_person),
                    `Absence Discrimination`=over_params(all_params$sigma_abs_full,true_sigma_abs),
                    `Bill Discrimination`=over_params(all_params$sigma_reg_full,true_sigma_reg))
   

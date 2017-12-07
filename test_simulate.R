@@ -7,28 +7,11 @@ require(dplyr)
 require(bayesplot)
 require(rstan)
 require(shinystan)
+require(wnominate)
+require(pscl)
 model_types <- c('absence')
 
 set.seed(66334)
-
-# Now we're going to use the real test function
-
-# test_out <- id_test(legis_range=c(10,50),
-# 
-#                            model_type = 4,
-#                            ncores = 4,
-#                            nfix=2,
-#                            restrict_type='constrain_twoway',
-#                            restrict_params='legis',
-#                            fixtype='pinned')
-
-# Let's look at full Bayesian inference
-
-# ggplot(test_out$est_models,aes(y=avg,x=iter)) + stat_smooth() + 
-#   facet_wrap(~ID,scales = 'free_y') + theme_minimal()
-# 
-# ggplot(test_out,aes(y=estimate,x=iter)) + theme_minimal()+
-#   stat_smooth(aes(colour=model_type)) + facet_wrap(~param,nrow = 3)
 
 one_model <- id_sim_gen(absence=T,
                              ordinal=T,
@@ -72,6 +55,11 @@ low_leg_pin <- min(true_legis)
                          seed=66334)
  all_predict <- posterior_predict(test_out)
  bayesplot::ppc_bars(c(test_out@vote_data@vote_matrix),all_predict)
+ ggsave('posterior_predict.png')
+ 
+ # now let's look at the LOO
+ 
+ 
  
  coverages <- id_sim_coverage(test_out)  
   lapply(coverages,function(x) mean(x$avg))
@@ -79,7 +67,7 @@ low_leg_pin <- min(true_legis)
   
   id_plot_sims(test_out)
   
-  id_plot_sims(test_out,type='Residual')
+  id_plot_sims(test_out,type='Residuals')
   ggsave('param_resid.png')
 
  all_pars <- summary(test_out)
@@ -144,22 +132,5 @@ ggplot(all_perf,aes(y=rmse,x=model_type)) +
   xlab("Average RMSE")
 
 ggsave('sim_rmse_allmods.png')
-# 
-# all_perf <- bind_rows(all_perf,data_frame(ideal_pts_std=true_legis,model_type='True',
-#                                           legislators=as.character(1:length(true_legis)),
-#                                           est='True')) %>% 
-#   arrange(ideal_pts) %>% slice(1:10)
-# 
-# all_perf %>% 
-#   ggplot((aes(y=ideal_pts_std))) +
-#   geom_point(aes(color=model_type,shape=est,x=reorder(legislators,ideal_pts)),position=position_dodge(width=0.3),
-#                   size=2) + 
-#   coord_flip() + theme_minimal() +
-#   theme(panel.grid = element_blank(),
-#         axis.text.y=element_blank()) +
-#   ylab('Ideal Point Scores (Liberal to Conservative)') +
-#   xlab('') +
-#   scale_colour_brewer(palette='Accent',name="")
-# 
-# ggsave('all_perf_sim.png',width=7,height=10,scale=1.1,units='in')
+
 

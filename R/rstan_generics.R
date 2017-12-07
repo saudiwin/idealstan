@@ -74,3 +74,16 @@ posterior_predict.idealstan <- function(object,draws=100,seed=NULL,
   class(out_predict) <- c('matrix','ppd')
   return(out_predict)
 }
+
+#' @export
+extract_log_lik <- function(object, ...) {
+  UseMethod("extract_log_lik")
+}
+
+#' This function returns a matrix of an S by N matrix of draws from a fitted idealstan model, where S is the size of the 
+#' posterior sample and N is the total number of parameters in the idealstan model. This matrix can then be used to 
+#' fit an information criterion to assess model fit, see the loo package for details.
+#' @export
+extract_log_lik.idealstan <- function(object) {
+  
+}

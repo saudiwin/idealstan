@@ -19,7 +19,7 @@
 	
 	In this paper I first describe the current state of ideal point modeling with an attention to the growing awareness of the problem of absences and abstentions. I then present the model formally and offer simulation results to verify the model's performance. Finally I examine two different empirical applications of the model, one drawn from data from the United States Congress and the second from the parliament in Tunisia's transitional democracy.
 	
-	\section*{Missing Data in Ideal Point Modeling}
+	\section{Missing Data in Ideal Point Modeling}
 	
 	Following the pioneering work of \textcite{poole1997} and \textcite{jackman2004}, ideal point models have become a standard feature of the analysis of legislators and increasingly other political actors. The canonical ideal point model expresses legislator preferences as distances from a latent position in an $n$-dimensional policy space \parencite{enelow198} where the distances can be calculated either as Euclidean distances (IRT) or using the Normal distribution (i.e., the NOMINATE models), although both of these approaches tend to offer very similar estimates  \parencite{carroll2009}. A fully Bayesian analysis such as \textcite{jackman2004} is able to analyze virtually all bills, but whether done in a frequentist or Bayesian framework, the focus has remained on ideal points as representations of yes/no votes.
 	
@@ -40,7 +40,7 @@ The methodology that has been used so far to address this problem is multiple im
 	
 	
 	
-	\section*{Absence-Inflated Hurdle Model}
+	\section{Absence-Inflated Hurdle Model}
 	
  	To construct this model, I first return to the canonical treatment of ideal point models in \textcite{enelow198}. In the elementary spatial model that is the foundation of the statistical ideal point literature, a legislator $x_i$ votes for a bill if the yes position $y$ on the bill is closer to $x_i$ than the no position $n$ on the bill: $\mid x_i-y \mid > \mid x_i - n \mid$, and the legislator is indifferent if the difference in utilities is exactly equal: $\mid x_i-y \mid = \mid x_i - n \mid$. In statistical terms we can imagine legislators having a stochastic ideal point function that can be represented as a normal curve or as a quadratic function \parencite{carroll2009}. This standard form of the model is represented by Figure \ref{ehinich} in which the ideal point $x_i$ is represented by a normal distribution over the possible utilities and the bill positions by vertical lines.
  	\begin{figure}[h!]
@@ -61,7 +61,7 @@ The methodology that has been used so far to address this problem is multiple im
 This formal model can be directly translated into an ordinal IRT model, which is known as a rating-scale model in the IRT literature.\footnote{A rating-scale model has fixed cutpoints for the entire data and matches the parameterization of the commonly-used ordered logit model. The graded-response model, on the other hand, estimates separate cutpoints for each bill. While it is an interesting extension of the basic model, it is not considered in this paper, although it can be estimated in the \texttt{idealstan} R package.} The $K$ category vote outcome $k$ can be modeled as a likelihood function $L(\cdot)$ of $I$ legislator ideal points $x_i$, $J$ bill discrimination parameters $\beta_j$ and $J$ bill intercepts $\alpha_j$. Each equation is put inside $\zeta(\cdot)$, which represents the logit function. Formally, the full likelihood is:
 	
 					\[
-	L(\beta,\alpha,x|Y_{k}) = \prod_{I}^{i=1} \prod_{J}^{j=1}
+	L(\beta,\alpha,x|Y_{ijk}) = \prod_{i-1}^{I} \prod_{j=1}^{Js}
 	\begin{cases} 
 	1 -  \zeta(x_{i}'\beta_j - \alpha_j - c_1) & \text{if } K = 0 \\
 	\zeta(x_{i}'\beta_j - \alpha_j - c_{k-1}) - \zeta(x_{i}'\beta_j - \alpha_j - c_{k})       & \text{if } 0 < k < K, \text{ and} \\
@@ -73,20 +73,20 @@ This formal model can be directly translated into an ordinal IRT model, which is
 	
 	The bill intercepts also have a slightly different interpretation in this model. The intercept for each bill is actually $\alpha_j + c_k$ for all $K$ so that in effect the bill has an intercept for each category of vote outcome. Otherwise, however, the estimated parameters are interpreted identically to the standard IRT model \parencite{jackman2004}. The $x_i$ represent legislator ideal points, and the bill midpoints (i.e., the line of indifference for each vote outcome) are equal to $\frac{\alpha_j + c_{k-1}}{\beta_j}$. Thus for a rollcall voting model with three distinct outcomes, yes, no and abstain, there will be two lines of indifference (or equiprobability contours) for each bill that separate legislators into groups that are more or less likely to vote in each vote category. For the binary case in which $K=2$, the cutpoints collapse into the bill intercepts and a standard binary logit model is estimated.
 	
-	In order to model absences, this standard IRT model is embedded within a hurdle framework, which is similar to the zero-inflated models popular with handling over-dispersion in count data \parencite{zorn1998}. We assume that the probability that a legislator is absent is equal to $r$ and the probability that the legislator shows up to vote is equal to $1-r$. The probability $r$ is itself modeled as a binary IRT model in which the ideal points $x_i$ are shared with the vote equation while the bills receive separate parameters $\gamma_j$ for discrimination and $\omega_j$ as intercepts. Functionally, this means that the probability of any vote $k$ is decreased proportionally as the probability of absence $r$ increases. A legislator will only vote if the hurdle of strategic absence is overcome. That is to say, not only does each bill have a point in a voting ideal space, it also has a point in an absence ideal space that is also relative to the legislators' own ideal points.
+	In order to model absences, this standard IRT model is embedded within a hurdle framework, which is similar to the zero-inflated models popular with handling over-dispersion in count data \parencite{zorn1998}. We assume that the probability that a legislator is absent $r=0$ is equal to $P_r$ and the probability that the legislator shows up to vote $r=1$ is equal to $1-P_r$. The probability $P_r$ is itself modeled as a binary IRT model in which the ideal points $x_i$ are shared with the vote equation while the bills receive separate parameters $\gamma_j$ for discrimination and $\omega_j$ as intercepts. Functionally, this means that the probability of any vote $k$ is decreased proportionally as the probability of absence $P_r$ increases. A legislator will only vote if the hurdle of strategic absence is overcome. That is to say, not only does each bill have a point in a voting ideal space, it also has a point in an absence ideal space that is also relative to the legislators' own ideal points.
 	
 	The combined model is as follows:
 	
 		 \[
-	L(\beta,\alpha,X,Q,\gamma,\omega|Y_{k},Y_{r}) = 
+	L(\beta,\alpha,X,Q,\gamma,\omega|Y_{ijkr}) = 
 	\prod_{I}^{i=1} \prod_{J}^{j=1}
 	\begin{cases}
 	\zeta(x_{i}'\gamma_j - \omega_j ) & \text{if } r=0, \text{ and} \\
-	(1-\zeta({x_{i}'\gamma_j - \omega_j}))L(\beta,\alpha,X|Y_{k1}) & \text{if } r=1
+	(1-\zeta({x_{i}'\gamma_j - \omega_j}))L(\beta,\alpha,X|Y_{ijk1}) & \text{if } r=1
 	\end{cases}
 	\]
 	
-	Substantively, the additional bill parameters $\gamma_j$ and $\omega_j$ represent the position in the ideal point space of the salience of a particular bill. $\omega_j$ refers to the average probability that legislators will be absent on a given bill, while $\gamma_j$ reflects the position in which the bill is pointing in the ideal space, i.e., whether a bill is liberal or conservative. Unlike in standard IRT models,the $\gamma_j$ and $\beta_j$ discrimination parameters are unconstrained to allow a bill to have either a conservative or liberal polarity in the ideal point space. 
+	Substantively, the additional bill parameters $\gamma_j$ and $\omega_j$ represent the position in the ideal point space of the salience of a particular bill. $\omega_j$ refers to the average probability that legislators will be absent on a given bill, while $\gamma_j$ reflects the position in which the bill is pointing in the ideal space, i.e., whether a bill is liberal or conservative. Unlike in standard IRT models,the $\gamma_j$ and $\beta_j$ discrimination parameters are unconstrained to allow a bill to have either a conservative or liberal polarity in the ideal point space. A longer explication of the model incorporating link functions is available in the appendix. 
 	
 	The addition of parameters, and the dependent relationship between the hurdle model and the vote model, makes estimation more challenging. Estimating the parameters with Bayesian MCMC requires the usual identification restrictions on parameters \parencite{jackman2004,gelman2005}, but the additional parameters may require further constraints in order to identify the model. There is no easy or straightforward method to identify this model as it depends in part on the presence of information in the model about both bills and legislators. However, the usage of usual identification methods, such as constraining polarity and fixing parameters is able to identify most models.\footnote{In the R package \texttt{idealstan} I provide methods for automatically identifying models through the use of variational Bayesian inference} For the purposes of this paper, I identify models by constraining the polarity of legislators, using informative priors and also fixing one bill intercept to zero.
 	
@@ -119,11 +119,11 @@ This formal model can be directly translated into an ordinal IRT model, which is
 	\end{figure} 
 	
 	
-	\section*{Empirical Applications}
+	\section{Empirical Applications}
 	
 	As an empirical application of the model, I look at two rollcall datasets, one from the 114th Senate and the second from a transitional democracy, Tunisia. For both datasets I use existing R packages, \texttt{wnominate} and \texttt{pscl}, to obtain ideal scores using the W-NOMINATE and CJR methods respectively. I then estimated absence-inflated models for both datasets, a binary IRT for the Senate data and an ordinal IRT for the Tunisian data. I did not use an ordinal model for the Senate data because there were only a handful of abstentions in the 114th Senate, and estimating cutpoints for abstention would make little difference to the model. All of the results were standardized to ensure that arbitrary scale shifts did not affect comparisons.
 	
-	\subsection*{US Congress}
+	\subsection{US Congress}
 	
 	The estimation results for the 114th Senate show that overall the absence-inflated model and both CJR and W-NOMINATE correlate very highly, as might be expected given the relatively low rates of absence. Figure \ref{compare_con} reveals that the models tend to diverge only in the tails of the Republican and Democrat parties. Furthermore, although the absence-inflated model is structurally more similar to CJR in that it is based on an IRT framework, for some legislators the absence-inflation model is closer to W-NOMINATE's estimate. 
 	
@@ -219,7 +219,7 @@ While predictive performance is not the primary criterion for evaluating ideal p
 
 
 	
-	\subsection*{Tunisian Parliament}
+	\subsection{Tunisian Parliament}
 	
 	The Tunisian Assembly of Representatives is a legislative body that held its first free and fair elections in the fall of 2014 after the fall of Zine Abedine Ben Ali's dictatorship in 2011. As is the case in many transitional democracies, parliamentary blocs tend to be more fluid and idealogical positions on policy issues are relatively unknown. In addition, the 2014 parliament witnessed the election of many MPs who had outside businesses to run and other conflicts with showing up to the chamber, which led to very high absence rates, sometimes as high as 50 percent. The dataset here presented was obtained from a Tunisian NGO and shows the full voting record, including votes on amendments, in the parliament from 2014 up to the summer of 2016. 
 	
@@ -247,7 +247,7 @@ While predictive performance is not the primary criterion for evaluating ideal p
 		\includegraphics[width=\linewidth]{tunisia_abstain}
 	\end{figure}
 	
-	\section*{Discussion}
+	\section{Discussion}
 	
 	The aim of the absence-inflated model is to provide scholars with an ideal point estimation that can handle most recorded categories in voting data: absences, abstentions, yes and no votes. In theory and in practice, this methodology will improve ideal point estimates both by lowering uncertainty intervals but also by delineating strategic behavior that was previously treated as random or ignorable. The main innovation of this model is to treat absences as a kind of strategic action rather than missing data that must be imputed. Multiple imputation treats absences as containing no information about the ideal point distribution, and for that reason the missing values can and should be filled in with the true yes or no votes. This methodology, however, is unnecessarily restrictive when there is a known relationship between absences and votes: as the probability of absence increases, the probability of any vote decreases proportionally. This fact about the structure of legislative behavior is enough to create a model that incorporates all of the observed data. 
 	
@@ -257,7 +257,7 @@ While predictive performance is not the primary criterion for evaluating ideal p
 	
 	Although comparisons were made with the standard CJR and W-NOMINATE models, it is not the argument of this paper that these ideal point estimators should be avoided by practicioners. These ideal point models are accurate estimations of binary responses, and if the research question primarily focuses on yes and no votes, then these models are more parsimonious and a better fit to the available data.
 	
-	\section*{Conclusion}
+	\section{Conclusion}
 	
 	In this paper I presented an absence-inflated ideal point model that is capable of analyzing the full range of recorded outcomes in a legislature. Absences are addressed by deflating the probability of a legislator's vote choice by the probability that the legislator will choose to be absent on a given vote. This decision is modeled as its own ideal point decision-making process, in which legislators choose to be present when the absence point of the bill gives the legislator greater utility by showing up to vote. The estimation of this additional set of bill parameters provides new avenues for analysis of legislatures that explicitly examine strategic absences, such as US Congresspeople who are on the campaign trail.
 	

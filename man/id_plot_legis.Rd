@@ -5,9 +5,10 @@
 \title{Plot Legislator/Person and Bill/Item Ideal Points}
 \usage{
 id_plot_legis(object, return_data = FALSE, bill_plot = NULL,
-  text_size_label = 2, text_size_party = 2.5, hjust_length = -0.7,
-  legis_labels = TRUE, legis_ci_alpha = 0.1, abs_and_reg = "both",
-  show_true = FALSE, party_color = TRUE, party_overlap = FALSE, ...)
+  text_size_label = 2, text_size_group = 2.5, hjust_length = -0.7,
+  person_labels = TRUE, person_ci_alpha = 0.1, abs_and_reg = "both",
+  show_true = FALSE, group_color = TRUE, hpd_limit = 10,
+  group_overlap = FALSE, ...)
 }
 \arguments{
 \item{return_data}{If true, the calculated legislator/bill data is returned along with the plot in a list}
@@ -16,22 +17,24 @@ id_plot_legis(object, return_data = FALSE, bill_plot = NULL,
 
 \item{text_size_label}{ggplot2 text size for legislator labels}
 
-\item{text_size_party}{ggplot2 text size for party text used for points}
+\item{text_size_group}{ggplot2 text size for group text used for points}
 
 \item{hjust_length}{horizontal adjustement of the legislator labels}
 
-\item{legis_labels}{if \code{TRUE}, use the legis.names column to plot legislator labels}
+\item{person_labels}{if \code{TRUE}, use the person.names column to plot labels for the person (legislator) ideal points}
 
-\item{legis_ci_alpha}{The transparency level of the dot plot and confidence bars}
+\item{person_ci_alpha}{The transparency level of the dot plot and confidence bars for the person ideal points}
 
 \item{abs_and_reg}{Whether to show 'both' absence and regular bill midpoints if the model is absence-inflated, the default,
 or 'Absence Points' for only the absence midpoints or 'Vote Points' for only the non-inflated midpoints}
 
 \item{show_true}{Whether to show the true values of the legislators (if model has been simulated)}
 
-\item{party_color}{If \code{TRUE}, give each party/bloc a different color}
+\item{group_color}{If \code{TRUE}, give each group/bloc a different color}
 
-\item{party_overlap}{Whether to prevent the text from overlapping itself (ggplot2 option)}
+\item{hpd_limit}{The greatest absolute difference in high-posterior density interval shown for any point. Useful for excluding imprecisely estimated persons/legislators from the plot. Leave NULL if you don't want to exclude any.}
+
+\item{group_overlap}{Whether to prevent the text from overlapping itself (ggplot2 option)}
 }
 \description{
 This function can be used on a fitted \code{\link{idealstan}} object to plot the relative positions and 

@@ -110,8 +110,8 @@ transformed parameters {
   sigma_abs_full=sigma_abs_free;
   sigma_reg_full=sigma_reg_free;
   
-  B_int_full[2:num_bills] = B_int_free;
-  B_int_full[1] = 0.0;
+  B_int_full = B_int_free;
+  //B_int_full[1] = 0.0;
   A_int_full=A_int_free;
   //B_int_full=B_int_free;
   

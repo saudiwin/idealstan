@@ -6,15 +6,15 @@
 #' @export
 setClass('idealdata',
          slots=list(vote_matrix='matrix',
-                    legis_data='data.frame',
-                    bill_data='data.frame',
-                    bill_cov_reg='matrix',
-                    bill_cov_abs='matrix',
-                    legis_cov='array',
+                    person_data='data.frame',
+                    item_data='data.frame',
+                    item_cov='matrix',
+                    item_cov_miss='matrix',
+                    person_cov='array',
                     time='vector',
                     vote_labels='ANY',
                     vote_count='integer',
-                    abs_vote='ANY',
+                    miss_val='ANY',
                     restrict_count='numeric',
                     restrict_data='list',
                     stanmodel='stanmodel',
@@ -39,7 +39,7 @@ setClass('idealdata',
 #' package.
 #' @export
 setClass('idealstan',
-         slots=list(vote_data='idealdata',
+         slots=list(score_data='idealdata',
                     to_fix='list',
                     model_type='numeric',
                     model_code='character',
@@ -58,7 +58,7 @@ setMethod('subset_ideal',signature(object='idealdata'),
             # Functions for subsetting data and sampling
             
             x <- object@vote_matrix
-            parliament <- object@legis_data
+            parliament <- object@person_data
             
             if(use_subset==TRUE & !is.null(subset_party)) {
               if(!all(subset_party %in% parliament$party)) stop('The specified parliament bloc/party must be in the list of blocs/parties in the legislature data.')
@@ -130,7 +130,7 @@ setMethod('sample_model',signature(object='idealdata'),
               out_model <- vb(object@stanmodel,data=this_data)
             }
             outobj <- new('idealstan',
-                          vote_data=object,
+                          score_data=object,
                           model_code=object@stanmodel@model_code,
                           stan_samples=out_model,
                           use_vb=use_vb)
@@ -158,7 +158,8 @@ setMethod('id_model',signature(object='idealdata'),
                    restrict_ind_high=restrict_ind_high,
                    restrict_ind_low=restrict_ind_low,
                    auto_id=auto_id,
-                   ncores=ncores)
+                   ncores=ncores,
+                   model_type=model_type)
             
 
             return(object)

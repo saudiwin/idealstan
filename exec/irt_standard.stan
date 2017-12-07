@@ -116,8 +116,8 @@ transformed parameters {
   
   //add in a paramter to the intercepts to prevent additive aliasing
 
-  B_int_full[2:num_bills] = B_int_free;
-  B_int_full[1] = 0.0;
+  B_int_full = B_int_free;
+  //B_int_full[1] = 0.0;
   A_int_full = A_int_free;
   //A_int_full[1]=0.0;
   //A_int_full[2:num_bills] = A_int_free;

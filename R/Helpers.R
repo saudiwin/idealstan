@@ -1,7 +1,8 @@
 #' Function that does automatic identification of models using VB
 .vb_fix <- function(object=NULL,
                     this_data=NULL,nfix=NULL,auto_id=FALSE,
-                    ncores=NULL,all_args=NULL,...) {
+                    ncores=NULL,all_args=NULL,
+                    model_type=NULL,...) {
 
   # check for windows 
   if(ncores>1) {
@@ -22,20 +23,40 @@
   } 
     
    all_params <- attributes(this_params)$dimnames$parameters
-   old_matrix <- object@vote_matrix
+   old_matrix <- object@score_matrix
 
-     if(all_args$restrict_params=='bill') {
+     if(all_args$restrict_params=='items') {
        # first we calculate the standardized discrimination parameters for the bills
        # we want to know which distribution has more spread/information
        # we will identify the one that has the greater spread
        sigma_reg <- apply(this_params[,grepl(pattern = 'sigma_reg_full',x=all_params)],2,mean)
        sigma_reg_sd <- apply(this_params[,grepl(pattern = 'sigma_reg_full',x=all_params)],2,sd)
-       sigma_abs <- apply(this_params[,grepl(pattern = 'sigma_abs_full',x=all_params)],2,mean)
-       sigma_abs_sd <- apply(this_params[,grepl(pattern = 'sigma_abs_full',x=all_params)],2,sd)
        sigma_reg_std <- sigma_reg/sigma_reg_sd
-       sigma_abs_std <- sigma_abs / sigma_abs_sd
-       if(max(abs(sigma_reg_std))>max(abs(sigma_abs_std))) {
+       
+       
+       #look at absences if it is an absence model
+       
+       if(model_type %in% c(2,4,6)) {
+         sigma_abs <- apply(this_params[,grepl(pattern = 'sigma_abs_full',x=all_params)],2,mean)
+         sigma_abs_sd <- apply(this_params[,grepl(pattern = 'sigma_abs_full',x=all_params)],2,sd)
+         sigma_abs_std <- sigma_abs / sigma_abs_sd
+       }
+       
+       if((model_type %in% c(2,4,6)) && max(abs(sigma_reg_std))<max(abs(sigma_abs_std))) {
+         # use absence parameters if the model type support it and they have higher spread
          # Now get nfix number of reg discrim parameters to constrain/fix
+         if(all_args$restrict_type=='constrain_oneway') {
+           fix_param <- 'sigma_abs'
+           to_constrain_high <- sort(abs(sigma_abs_std),index.return=TRUE,decreasing=TRUE)
+           to_constrain_high <- to_constrain_high$ix[1:nfix]
+           to_constrain_low <- NULL
+         } else if(all_args$restrict_type=='constrain_twoway') {
+           to_constrain_high <- sort(sigma_abs_std,index.return=TRUE,decreasing=TRUE)
+           to_constrain_high <- to_constrain_high$ix[1:nfix]
+           to_constrain_low <- sort(sigma_abs_std,index.return=TRUE)
+           to_constrain_low <- to_constrain_low$ix[1:nfix]
+         }
+       } else {
          if(all_args$restrict_type=='constrain_oneway') {
            fix_param <- 'sigma_reg'
            to_constrain_high <- sort(abs(sigma_reg_std),index.return=TRUE,decreasing=TRUE)
@@ -48,38 +69,26 @@
            to_constrain_low <- sort(sigma_reg_std,index.return=TRUE)
            to_constrain_low <- to_constrain_low$ix[1:nfix]
          }
-       } else {
-         if(all_args$restrict_type=='constrain_oneway') {
-           fix_param <- 'sigma_abs'
-           to_constrain_high <- sort(abs(sigma_abs_std),index.return=TRUE,decreasing=TRUE)
-           to_constrain_high <- to_constrain_high$ix[1:nfix]
-           to_constrain_low <- NULL
-         } else if(all_args$restrict_type=='constrain_twoway') {
-           to_constrain_high <- sort(sigma_abs_std,index.return=TRUE,decreasing=TRUE)
-           to_constrain_high <- to_constrain_high$ix[1:nfix]
-           to_constrain_low <- sort(sigma_abs_std,index.return=TRUE)
-           to_constrain_low <- to_constrain_low$ix[1:nfix]
-         }
        }
-       object@vote_matrix[,c((1:ncol(object@vote_matrix))[-c(to_constrain_high,
+       object@score_matrix[,c((1:ncol(object@score_matrix))[-c(to_constrain_high,
                                                              to_constrain_low)],
                              to_constrain_high,
                              to_constrain_low)]
        
-     } else if(all_args$restrict_params=='legis') {
-       legis <- apply(this_params[,grepl(pattern = 'L_full',x=all_params)],2,mean)
+     } else if(all_args$restrict_params=='person') {
+       person <- apply(this_params[,grepl(pattern = 'L_full',x=all_params)],2,mean)
        fix_param <- "L_free"
        if(all_args$restrict_type=='constrain_oneway') {
-         to_constrain_high <- sort(abs(legis),index.return=TRUE,decreasing=TRUE)
+         to_constrain_high <- sort(abs(person),index.return=TRUE,decreasing=TRUE)
          to_constrain_high <- to_constrain_high$ix[1:nfix]
          to_constrain_low <- NULL
        } else if(all_args$restrict_type=='constrain_twoway') {
-         to_constrain_high <- sort(legis,index.return=TRUE,decreasing=TRUE)
+         to_constrain_high <- sort(person,index.return=TRUE,decreasing=TRUE)
          to_constrain_high <- to_constrain_high$ix[1:nfix]
-         to_constrain_low <- sort(legis,index.return=TRUE)
+         to_constrain_low <- sort(person,index.return=TRUE)
          to_constrain_low <- to_constrain_low$ix[1:nfix]
        }
-       object@vote_matrix <- object@vote_matrix[c((1:nrow(object@vote_matrix))[-c(to_constrain_high,
+       object@score_matrix <- object@score_matrix[c((1:nrow(object@score_matrix))[-c(to_constrain_high,
                                                                                   to_constrain_low)],
                                                   to_constrain_high,
                                                   to_constrain_low),]
@@ -88,7 +97,7 @@
   
    object@restrict_count <- c(to_constrain_high,to_constrain_low)
    
-   if(all_args$restrict_params=='bill') {
+   if(all_args$restrict_params=='items') {
      this_data$num_fix_high <- nfix
      if(is.null(to_constrain_low)) {
        this_data$num_fix_low <- 1
@@ -97,7 +106,7 @@
        this_data$num_fix_low <- nfix
        this_data$constraint_type <- 3
      }
-   } else if(all_args$restrict_params=='legis') {
+   } else if(all_args$restrict_params=='person') {
      this_data$num_fix_high <- nfix
      if(is.null(to_constrain_low)) {
        this_data$num_fix_low <- 1
@@ -166,20 +175,20 @@
     stop('You must specify indices for pinned paramters as restrict_ind_high.')
   }
 
-  old_matrix <- object@vote_matrix
+  old_matrix <- object@score_matrix
   to_constrain_high <- restrict_ind_high
   to_constrain_low <- NULL
   
-  if(any(restrict_params %in% c('discrim_reg','discrim_abs'))) {
+  if(any(restrict_params %in% c('discrim_reg','discrim_miss'))) {
 
-    object@vote_matrix <- object@vote_matrix[,c((1:ncol(object@vote_matrix))[-c(to_constrain_high,
+    object@score_matrix <- object@score_matrix[,c((1:ncol(object@score_matrix))[-c(to_constrain_high,
                                                                                 to_constrain_low)],
                                                 to_constrain_high,
                                                 to_constrain_low)]
 
     param_fix <- switch(restrict_params,discrim_reg='sigma_reg',discrim_abs='sigma_abs')
-  } else if(restrict_params=='legis') {
-    object@vote_matrix <- object@vote_matrix[c((1:nrow(object@vote_matrix))[-c(to_constrain_high,
+  } else if(restrict_params=='person') {
+    object@score_matrix <- object@score_matrix[c((1:nrow(object@score_matrix))[-c(to_constrain_high,
                                                                                to_constrain_low)],
                                                to_constrain_high,
                                                to_constrain_low),]
@@ -201,21 +210,23 @@
   
   all_args <- list(...) 
   if(is.null(restrict_ind_high)) {
-    stop('You must specify at least one bill or legislator to constrain high in restrict_ind_high.')
+    stop('You must specify at least one bill or personlator to constrain high in restrict_ind_high.')
   }
-  old_matrix <- object@vote_matrix
+  old_matrix <- object@score_matrix
   to_constrain_high <- restrict_ind_high
   to_constrain_low <- restrict_ind_low
+  if(restrict_ind_high==restrict_ind_low) {
+    stop('You must specify separate bills or persons to constrain high or low.')
+  }
 
-
-  if(any(restrict_params %in% c('discrim_reg','discrim_abs'))) {
-    object@vote_matrix <- object@vote_matrix[,c((1:ncol(object@vote_matrix))[-c(to_constrain_high,
+  if(any(restrict_params %in% c('discrim_reg','discrim_miss'))) {
+    object@score_matrix <- object@score_matrix[,c((1:ncol(object@score_matrix))[-c(to_constrain_high,
                                                                                 to_constrain_low)],
                                                 to_constrain_high,
                                                 to_constrain_low)]
     param_fix <- switch(restrict_params,discrim_reg='sigma_reg',discrim_abs='sigma_abs')
-  } else if(restrict_params=='legis') {
-    object@vote_matrix <- object@vote_matrix[c((1:nrow(object@vote_matrix))[-c(to_constrain_high,
+  } else if(restrict_params=='person') {
+    object@score_matrix <- object@score_matrix[c((1:nrow(object@score_matrix))[-c(to_constrain_high,
                                                                                to_constrain_low)],
                                                to_constrain_high,
                                                to_constrain_low),]
@@ -235,7 +246,7 @@
   
 }
 
-#' Function that works with id_model to re-arrange bills or legislators to constrain for identification
+#' Function that works with id_model to re-arrange bills or personlators to constrain for identification
 id_params_constrain_guided_inflate <- function(lookat_params=NULL,restrict_params=NULL,nfix=NULL,x=NULL) {
 
   restrict_params <- sort(restrict_params,decreasing=TRUE)
@@ -249,16 +260,16 @@ id_params_constrain_guided_inflate <- function(lookat_params=NULL,restrict_param
     colnames(x) <- as.character(1:ncol(x))
   }
   
-  # Use different identifications depending on whether we want to do bills, legislators or both
-  if(('person' %in% restrict_params) && ('bill' %in% restrict_params)) {
+  # Use different identifications depending on whether we want to do bills, personlators or both
+  if(('person' %in% restrict_params) && ('items' %in% restrict_params)) {
     
     # First pull the person fixes
-    legis_est <- lookat_params[,grepl('L_free\\[',colnames(lookat_params))]
-    legis_est <- legis_est %>% as_data_frame %>% gather(param_name,value) %>% group_by(param_name) %>% 
+    person_est <- lookat_params[,grepl('L_free\\[',colnames(lookat_params))]
+    person_est <- person_est %>% as_data_frame %>% gather(param_name,value) %>% group_by(param_name) %>% 
       summarize(avg=mean(value),high=quantile(value,0.95),low=quantile(value,0.05),sd=sd(value),interval=high-low)
     
-    legis <- arrange(legis_est,desc(avg))
-    keep_rows <- as.numeric(stringr::str_extract(legis$param_name,'[0-9]+')[1:nfix])
+    person <- arrange(person_est,desc(avg))
+    keep_rows <- as.numeric(stringr::str_extract(person$param_name,'[0-9]+')[1:nfix])
     x <- rbind(x[-keep_rows,],x[keep_rows,])
     
     # Then do the bill fixes
@@ -275,38 +286,38 @@ id_params_constrain_guided_inflate <- function(lookat_params=NULL,restrict_param
     sigmas_abs <- arrange(sigmas_est_abs,avg)
     if((mean(sigmas$avg[1:nfix])<mean(sigmas_abs$avg[1:nfix])) & (mean(sigmas$interval[1:nfix])<mean(sigmas_abs$interval[1:nfix]))) {
       keep_cols <- as.numeric(stringr::str_extract(sigmas$param_name,'[0-9]+')[1:nfix])
-      param_fix <- c('person','bill','sigma')
+      param_fix <- c('person','items','sigma')
     } else {
       keep_cols <- as.numeric(stringr::str_extract(sigmas_abs$param_name,'[0-9]+')[1:nfix])
-      param_fix <- c('person','bill','sigma_abs')
+      param_fix <- c('person','items','sigma_abs')
     }
     x <- cbind(x[,-keep_cols],x[,keep_cols])
     
     return(list(restrict=list(restrict_l=nfix,restrict_b=nfix),matrix=x,param_fix=param_fix,
                 restrict_vals=c(sigmas_abs$avg[1:nfix],
                                 sigmas$avg[1:nfix],
-                                legis$avg[1:nfix]),
+                                person$avg[1:nfix]),
                 unrestricted=lookat_params,
-                restrict_legis=keep_rows,
+                restrict_person=keep_rows,
                 restrict_bills=keep_cols))
     
   } else if('person' %in% restrict_params) {
-    legis_est <- lookat_params[,grepl('L_free\\[',colnames(lookat_params))]
-    legis_est <- legis_est %>% as_data_frame %>% gather(param_name,value) %>% group_by(param_name) %>% 
+    person_est <- lookat_params[,grepl('L_free\\[',colnames(lookat_params))]
+    person_est <- person_est %>% as_data_frame %>% gather(param_name,value) %>% group_by(param_name) %>% 
       summarize(avg=mean(value),high=quantile(value,0.95),low=quantile(value,0.05),sd=sd(value),interval=high-low)
     
-    legis <- arrange(legis_est,desc(avg))
-    keep_rows_low <- as.numeric(stringr::str_extract(legis$param_name,'[0-9]+')[1:nfix])
-    legis <- arrange(legis_est,avg)
-    keep_rows_high <- as.numeric(stringr::str_extract(legis$param_name,'[0-9]+')[1:nfix])
+    person <- arrange(person_est,desc(avg))
+    keep_rows_low <- as.numeric(stringr::str_extract(person$param_name,'[0-9]+')[1:nfix])
+    person <- arrange(person_est,avg)
+    keep_rows_high <- as.numeric(stringr::str_extract(person$param_name,'[0-9]+')[1:nfix])
     x <- rbind(x[-c(keep_rows_high,keep_rows_low),],x[c(keep_rows_high,keep_rows_low),])
     param_fix <- 'person'
     return(list(restrict=list(restrict=nfix),matrix=x,param_fix=param_fix,
-           restrict_vals=legis$avg[1:nfix],
+           restrict_vals=person$avg[1:nfix],
            unrestricted=lookat_params,
-           restrict_legis=c(keep_rows_high,keep_rows_low),
+           restrict_person=c(keep_rows_high,keep_rows_low),
            restrict_bills='None'))
-  } else if('bill' %in% restrict_params) {
+  } else if('items' %in% restrict_params) {
     sigmas_est <- lookat_params[,grepl('sigma\\[',colnames(lookat_params))]
     sigmas_est <- sigmas_est %>% as_data_frame %>% gather(param_name,value) %>% group_by(param_name) %>% 
       summarize(avg=mean(value),high=quantile(value,0.95),low=quantile(value,0.05),sd=sd(value),interval=high-low)
@@ -319,10 +330,10 @@ id_params_constrain_guided_inflate <- function(lookat_params=NULL,restrict_param
     sigmas_abs <- arrange(sigmas_est_abs,avg)
     if((mean(sigmas$avg[1:nfix])<mean(sigmas_abs$avg[1:nfix])) & (mean(sigmas$interval[1:nfix])<mean(sigmas_abs$interval[1:nfix]))) {
       keep_cols <- as.numeric(stringr::str_extract(sigmas$param_name,'[0-9]+')[1:nfix])
-      param_fix <- c('bill','sigma')
+      param_fix <- c('items','sigma')
     } else {
       keep_cols <- as.numeric(stringr::str_extract(sigmas_abs$param_name,'[0-9]+')[1:nfix])
-      param_fix <- c('bill','sigma_abs')
+      param_fix <- c('items','sigma_abs')
     }
     x <- cbind(x[,-keep_cols],x[,keep_cols])
     return(list(restrict=list(restrict=nfix),matrix=x,param_fix=param_fix,
@@ -330,7 +341,7 @@ id_params_constrain_guided_inflate <- function(lookat_params=NULL,restrict_param
                            sigmas_abs$avg[1:nfix]),
            unrestricted=lookat_params,
            restrict_bills=keep_cols,
-           restrict_legis='None'))
+           restrict_person='None'))
   } else {
     stop('Improper identification parameters passed to the identification function.')
   }
@@ -351,16 +362,16 @@ id_params_constrain_guided_2pl <- function(lookat_params=NULL,restrict_params=NU
     colnames(x) <- as.character(1:ncol(x))
   }
   
-  # Use different identifications depending on whether we want to do bills, legislators or both
-  if(('person' %in% restrict_params) && ('bill' %in% restrict_params)) {
+  # Use different identifications depending on whether we want to do bills, personlators or both
+  if(('person' %in% restrict_params) && ('items' %in% restrict_params)) {
     
     # First pull the person fixes
-    legis_est <- lookat_params[,grepl('L_free\\[',colnames(lookat_params))]
-    legis_est <- legis_est %>% as_data_frame %>% gather(param_name,value) %>% group_by(param_name) %>% 
+    person_est <- lookat_params[,grepl('L_free\\[',colnames(lookat_params))]
+    person_est <- person_est %>% as_data_frame %>% gather(param_name,value) %>% group_by(param_name) %>% 
       summarize(avg=mean(value),high=quantile(value,0.95),low=quantile(value,0.05),sd=sd(value),interval=high-low)
     
-    legis <- arrange(legis_est,desc(avg))
-    keep_rows <- as.numeric(stringr::str_extract(legis$param_name,'[0-9]+')[1:nfix])
+    person <- arrange(person_est,desc(avg))
+    keep_rows <- as.numeric(stringr::str_extract(person$param_name,'[0-9]+')[1:nfix])
     x <- rbind(x[-keep_rows,],x[keep_rows,])
     
     # Then do the bill fixes
@@ -370,46 +381,46 @@ id_params_constrain_guided_2pl <- function(lookat_params=NULL,restrict_params=NU
       summarize(avg=mean(value),high=quantile(value,0.95),low=quantile(value,0.05),sd=sd(value),interval=high-low)
 
     keep_cols <- as.numeric(stringr::str_extract(sigmas$param_name,'[0-9]+')[1:nfix])
-    param_fix <- c('person','bill','sigma')
+    param_fix <- c('person','items','sigma')
 
     x <- cbind(x[,-keep_cols],x[,keep_cols])
     
     return(list(restrict=list(restrict_l=nfix,restrict_b=nfix),matrix=x,param_fix=param_fix,
                 restrict_vals=c(sigmas$avg[1:nfix],
-                                legis$avg[1:nfix]),
+                                person$avg[1:nfix]),
                 unrestricted=lookat_params,
-                restrict_legis=keep_rows,
+                restrict_person=keep_rows,
                 restrict_bills=keep_cols))
     
   } else if('person' %in% restrict_params) {
-    legis_est <- lookat_params[,grepl('L_free\\[',colnames(lookat_params))]
-    legis_est <- legis_est %>% as_data_frame %>% gather(param_name,value) %>% group_by(param_name) %>% 
+    person_est <- lookat_params[,grepl('L_free\\[',colnames(lookat_params))]
+    person_est <- person_est %>% as_data_frame %>% gather(param_name,value) %>% group_by(param_name) %>% 
       summarize(avg=mean(value),high=quantile(value,0.95),low=quantile(value,0.05),sd=sd(value),interval=high-low)
     
-    legis <- arrange(legis_est,desc(avg))
-    keep_rows_low <- as.numeric(stringr::str_extract(legis$param_name,'[0-9]+')[1:nfix])
-    legis <- arrange(legis_est,avg)
-    keep_rows_high <- as.numeric(stringr::str_extract(legis$param_name,'[0-9]+')[1:nfix])
+    person <- arrange(person_est,desc(avg))
+    keep_rows_low <- as.numeric(stringr::str_extract(person$param_name,'[0-9]+')[1:nfix])
+    person <- arrange(person_est,avg)
+    keep_rows_high <- as.numeric(stringr::str_extract(person$param_name,'[0-9]+')[1:nfix])
     x <- rbind(x[-c(keep_rows_high,keep_rows_low),],x[c(keep_rows_high,keep_rows_low),])
     param_fix <- 'person'
     return(list(restrict=list(restrict=nfix),matrix=x,param_fix=param_fix,
-                restrict_vals=legis$avg[1:nfix],
+                restrict_vals=person$avg[1:nfix],
                 unrestricted=lookat_params,
-                restrict_legis=c(keep_rows_high,keep_rows_low),restrict_bills='None'))
-  } else if('bill' %in% restrict_params) {
+                restrict_person=c(keep_rows_high,keep_rows_low),restrict_bills='None'))
+  } else if('items' %in% restrict_params) {
     sigmas_est <- lookat_params[,grepl('sigma\\[',colnames(lookat_params))]
     sigmas <- sigmas_est %>% as_data_frame %>% gather(param_name,value) %>% group_by(param_name) %>% 
       summarize(avg=mean(value),high=quantile(value,0.95),low=quantile(value,0.05),sd=sd(value),interval=high-low)
 
      keep_cols <- as.numeric(stringr::str_extract(sigmas$param_name,'[0-9]+')[1:nfix])
-      param_fix <- c('bill','sigma')
+      param_fix <- c('items','sigma')
 
     x <- cbind(x[,-keep_cols],x[,keep_cols])
     return(list(restrict=list(restrict=nfix),matrix=x,param_fix=param_fix,
                 restrict_vals=sigmas$avg[1:nfix],
                 unrestricted=lookat_params,
                 restrict_bills=keep_cols,
-                restrict_legis='None'))
+                restrict_person='None'))
   } else {
     stop('Improper identification parameters passed to the identification function.')
   }
@@ -431,7 +442,7 @@ id_params_pin_unguided_inflate <- function(restrict_params=NULL,nfix=NULL,x=NULL
     colnames(x) <- as.character(1:ncol(x))
   }
   
-  if(('person' %in% restrict_params) && ('bill' %in% restrict_params)) {
+  if(('person' %in% restrict_params) && ('items' %in% restrict_params)) {
     if(length(restrict_names)<2) {
       stop('You must pass both a bill and a person name to pin a parameter for both bills and persons.')
     }
@@ -442,7 +453,7 @@ id_params_pin_unguided_inflate <- function(restrict_params=NULL,nfix=NULL,x=NULL
   } else if('person' %in% restrict_params) {
     restrict_pos[1] <- which(restrict_names[1]==person_names)
     x <- rbind(x[-restrict_pos[1],],x[restrict_pos[1],])
-  } else if('bill' %in% restrict_params) {
+  } else if('items' %in% restrict_params) {
     restrict_pos[1] <- which(restrict_names[1]==bill_names)
     x <- cbind(x[,-restrict_pos[1]],x[,restrict_pos[1]])
   }
@@ -454,21 +465,21 @@ id_params_pin_unguided_inflate <- function(restrict_params=NULL,nfix=NULL,x=NULL
 #' Function that figures out what kind of hierarchical model (if any) is being run
 .get_hier_type <- function(obj) {
 
-  if(all(obj@legis_cov) && all(obj@bill_cov_reg) && all(obj@bill_cov_abs)) {
+  if(all(obj@person_cov) && all(obj@item_cov) && all(obj@item_cov_miss)) {
     return(8)
-  } else if(!all(obj@legis_cov) && all(obj@bill_cov_reg) && all(obj@bill_cov_abs)) {
+  } else if(!all(obj@person_cov) && all(obj@item_cov) && all(obj@item_cov_miss)) {
     return(1)
-  } else if(all(obj@legis_cov) && !all(obj@bill_cov_reg) && all(obj@bill_cov_abs)) {
+  } else if(all(obj@person_cov) && !all(obj@item_cov) && all(obj@item_cov_miss)) {
     return(2)
-  } else if(all(obj@legis_cov) && all(obj@bill_cov_reg) && !all(obj@bill_cov_abs)) {
+  } else if(all(obj@person_cov) && all(obj@item_cov) && !all(obj@item_cov_miss)) {
     return(3)
-  } else if(!all(obj@legis_cov) && !all(obj@bill_cov_reg) && all(obj@bill_cov_abs)) {
+  } else if(!all(obj@person_cov) && !all(obj@item_cov) && all(obj@item_cov_miss)) {
     return(4)
-  } else if(!all(obj@legis_cov) && all(obj@bill_cov_reg) && !all(obj@bill_cov_abs)) {
+  } else if(!all(obj@person_cov) && all(obj@item_cov) && !all(obj@item_cov_miss)) {
     return(5)
-  } else if(all(obj@legis_cov) && !all(obj@bill_cov_reg) && !all(obj@bill_cov_abs)) {
+  } else if(all(obj@person_cov) && !all(obj@item_cov) && !all(obj@item_cov_miss)) {
     return(6)
-  } else if(!all(obj@legis_cov) && !all(obj@bill_cov_reg) && !all(obj@bill_cov_abs)) {
+  } else if(!all(obj@person_cov) && !all(obj@item_cov) && !all(obj@item_cov_miss)) {
     return(7)
   } else {
     stop('Hierarchical modeling undefined.')
@@ -481,7 +492,7 @@ extract_samples <- function(obj,...) {
 }
 
 
-#helper to calculate means and high/low points of a column given a name 
+#helper to calculate medians and high/low points of a column given a name 
 .calc_bill <- function(df,int_reg,
                        sigma_reg,
                        int_abs=NULL,
@@ -496,14 +507,14 @@ extract_samples <- function(obj,...) {
     # sigma_reg <- enquo(sigma_reg)
     # int_abs <- enquo(int_abs)
     # sigma_abs <- enquo(sigma_abs)
-    out_data <- summarize(df,mean_bill=mean((!!int_reg)/(!!sigma_reg)),
+    out_data <- summarize(df,median_bill=median((!!int_reg)/(!!sigma_reg)),
                           high_bill=quantile((!!int_reg)/(!!sigma_reg),0.9),
                           low_bill=quantile((!!int_reg)/(!!sigma_reg),0.1)) %>% 
       mutate(param='Vote Points',
                           step=1)
       if(!is.null(int_abs)) {
 
-        out_data <- summarize(df,mean_bill=mean((!!int_abs)/(!!sigma_abs)),
+        out_data <- summarize(df,median_bill=median((!!int_abs)/(!!sigma_abs)),
                               high_bill=quantile((!!int_abs)/(!!sigma_abs),0.9),
                               low_bill=quantile((!!int_abs)/(!!sigma_abs),0.1)) %>% 
           mutate(param='Absence Points',
@@ -520,7 +531,7 @@ extract_samples <- function(obj,...) {
     
     out_data <- lapply(1:step_num, function(s,steps_data=NULL) {
 
-    out_data <- summarize(df,mean_bill=mean(((!!int_reg)+steps_data[,s])/(!!sigma_reg)),
+    out_data <- summarize(df,median_bill=median(((!!int_reg)+steps_data[,s])/(!!sigma_reg)),
                           high_bill=quantile(((!!int_reg)+steps_data[,s])/(!!sigma_reg),0.9),
                           low_bill=quantile(((!!int_reg)+steps_data[,s])/(!!sigma_reg),0.1)) %>% 
       mutate(param='Vote Points',
@@ -528,7 +539,7 @@ extract_samples <- function(obj,...) {
     
     if(!is.null(int_abs)) {
 
-      out_data <- summarize(df,mean_bill=mean(((!!int_abs)+steps_data[,s])/(!!sigma_abs)),
+      out_data <- summarize(df,median_bill=median(((!!int_abs)+steps_data[,s])/(!!sigma_abs)),
                             high_bill=quantile(((!!int_abs)+steps_data[,s])/(!!sigma_abs),0.9),
                             low_bill=quantile(((!!int_abs)+steps_data[,s])/(!!sigma_abs),0.1)) %>% 
         mutate(param='Absence Points',

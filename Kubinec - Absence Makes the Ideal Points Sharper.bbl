@@ -1,0 +1,776 @@
+% $ biblatex auxiliary file $
+% $ biblatex bbl format version 2.8 $
+% Do not modify the above lines!
+%
+% This is an auxiliary file used by the 'biblatex' package.
+% This file may safely be deleted. It will be recreated by
+% biber as required.
+%
+\begingroup
+\makeatletter
+\@ifundefined{ver@biblatex.sty}
+  {\@latex@error
+     {Missing 'biblatex' package}
+     {The bibliography requires the 'biblatex' package.}
+      \aftergroup\endinput}
+  {}
+\endgroup
+
+
+\refsection{0}
+  \sortlist[entry]{cms/global/}
+    \entry{gelman2005}{article}{}
+      \name{author}{4}{}{%
+        {{uniquename=0,hash=4d52e3097ffea4d2d4cfc8bbb1b94e69}{%
+           family={Bafumi},
+           familyi={B\bibinitperiod},
+           given={Joseph},
+           giveni={J\bibinitperiod}}}%
+        {{uniquename=0,hash=1e1eb60e3b6e222217bf8e9b24070b28}{%
+           family={Gelman},
+           familyi={G\bibinitperiod},
+           given={Andrew},
+           giveni={A\bibinitperiod}}}%
+        {{uniquename=0,hash=776d6b560a5c8bc966d9d18611a1366d}{%
+           family={Park},
+           familyi={P\bibinitperiod},
+           given={David\bibnamedelima K.},
+           giveni={D\bibinitperiod\bibinitdelim K\bibinitperiod}}}%
+        {{uniquename=0,hash=b5a17ec93e2e11fe6ab836ac9ad83880}{%
+           family={Kaplan},
+           familyi={K\bibinitperiod},
+           given={Noah},
+           giveni={N\bibinitperiod}}}%
+      }
+      \strng{namehash}{96a1b6050e0b948475f521a064ec939b}
+      \strng{fullhash}{9a77c7f11e6c8a0489a5c206f4d31122}
+      \strng{authornamehash}{96a1b6050e0b948475f521a064ec939b}
+      \strng{authorfullhash}{9a77c7f11e6c8a0489a5c206f4d31122}
+      \field{sortinit}{B}
+      \field{sortinithash}{5f6fa000f686ee5b41be67ba6ff7962d}
+      \field{labeldatesource}{year}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Political Analysis}
+      \field{number}{2}
+      \field{title}{Practical Issues in Implementing and Understanding Bayesian Ideal Point Estimation}
+      \field{volume}{13}
+      \field{year}{2005}
+      \field{pages}{171\bibrangedash 187}
+      \range{pages}{17}
+    \endentry
+    \entry{barbera2015}{article}{}
+      \name{author}{1}{}{%
+        {{uniquename=0,hash=1758712d115799f565778c557042b413}{%
+           family={Barber\'{a}},
+           familyi={B\bibinitperiod},
+           given={Pablo},
+           giveni={P\bibinitperiod}}}%
+      }
+      \strng{namehash}{1758712d115799f565778c557042b413}
+      \strng{fullhash}{1758712d115799f565778c557042b413}
+      \strng{authornamehash}{1758712d115799f565778c557042b413}
+      \strng{authorfullhash}{1758712d115799f565778c557042b413}
+      \field{sortinit}{B}
+      \field{sortinithash}{5f6fa000f686ee5b41be67ba6ff7962d}
+      \field{labeldatesource}{year}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Political Analysis}
+      \field{title}{Birds of the Same Feather Tweet Together: Bayesian Ideal Point Estimation Using Twitter Data}
+      \field{volume}{23}
+      \field{year}{2015}
+      \field{pages}{76\bibrangedash 91}
+      \range{pages}{16}
+      \keyw{Latent Space Models}
+    \endentry
+    \entry{bonica2014}{article}{}
+      \name{author}{1}{}{%
+        {{uniquename=0,hash=da6af7365cdb3b443f8352985930182c}{%
+           family={Bonica},
+           familyi={B\bibinitperiod},
+           given={Adam},
+           giveni={A\bibinitperiod}}}%
+      }
+      \strng{namehash}{da6af7365cdb3b443f8352985930182c}
+      \strng{fullhash}{da6af7365cdb3b443f8352985930182c}
+      \strng{authornamehash}{da6af7365cdb3b443f8352985930182c}
+      \strng{authorfullhash}{da6af7365cdb3b443f8352985930182c}
+      \field{sortinit}{B}
+      \field{sortinithash}{5f6fa000f686ee5b41be67ba6ff7962d}
+      \field{labeldatesource}{year}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{American Journal of Political Science}
+      \field{number}{2}
+      \field{title}{Mapping the Ideological Marketplace}
+      \field{volume}{58}
+      \field{year}{2014}
+      \field{pages}{367\bibrangedash 386}
+      \range{pages}{20}
+    \endentry
+    \entry{brauninger2016}{article}{}
+      \name{author}{3}{}{%
+        {{uniquename=0,hash=f2c91e45e037ffb129887a7eebf24a10}{%
+           family={Br\"{a}uninger},
+           familyi={B\bibinitperiod},
+           given={Thomas},
+           giveni={T\bibinitperiod}}}%
+        {{uniquename=0,hash=43b78e42eb0ef4c422a29f3c3b4e7a5a}{%
+           family={M\"{u}ller},
+           familyi={M\bibinitperiod},
+           given={Jochen},
+           giveni={J\bibinitperiod}}}%
+        {{uniquename=0,hash=f5a34fc891a0488d1d260f2f0f435c0d}{%
+           family={Stecker},
+           familyi={S\bibinitperiod},
+           given={Christian},
+           giveni={C\bibinitperiod}}}%
+      }
+      \strng{namehash}{fafa8dff869afa5e31345c6078dca955}
+      \strng{fullhash}{fafa8dff869afa5e31345c6078dca955}
+      \strng{authornamehash}{fafa8dff869afa5e31345c6078dca955}
+      \strng{authorfullhash}{fafa8dff869afa5e31345c6078dca955}
+      \field{sortinit}{B}
+      \field{sortinithash}{5f6fa000f686ee5b41be67ba6ff7962d}
+      \field{labeldatesource}{year}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Political Analysis}
+      \field{number}{2}
+      \field{title}{Modeling Preferences Using Roll Call Votes in Parliamentary Systems}
+      \field{volume}{24}
+      \field{year}{2016}
+      \field{pages}{189\bibrangedash 210}
+      \range{pages}{22}
+    \endentry
+    \entry{carpenter2017}{article}{}
+      \name{author}{10}{}{%
+        {{uniquename=0,hash=5321a7ac2b0407bc405fa8816fd73f09}{%
+           family={Carpenter},
+           familyi={C\bibinitperiod},
+           given={Bob},
+           giveni={B\bibinitperiod}}}%
+        {{uniquename=0,hash=1e1eb60e3b6e222217bf8e9b24070b28}{%
+           family={Gelman},
+           familyi={G\bibinitperiod},
+           given={Andrew},
+           giveni={A\bibinitperiod}}}%
+        {{uniquename=0,hash=a922cd4d9e8a007dcbb79cbc3dcd9a96}{%
+           family={Hoffman},
+           familyi={H\bibinitperiod},
+           given={Matthew\bibnamedelima D.},
+           giveni={M\bibinitperiod\bibinitdelim D\bibinitperiod}}}%
+        {{uniquename=0,hash=fb04571d965766ee6d71dafbd3eb452e}{%
+           family={Lee},
+           familyi={L\bibinitperiod},
+           given={Daniel},
+           giveni={D\bibinitperiod}}}%
+        {{uniquename=0,hash=9cc812cde8c441e79dfaab4955a72c2c}{%
+           family={Goodrich},
+           familyi={G\bibinitperiod},
+           given={Ben},
+           giveni={B\bibinitperiod}}}%
+        {{uniquename=0,hash=1982fa604a3f94837efceaa53330b2a4}{%
+           family={Betancourt},
+           familyi={B\bibinitperiod},
+           given={Michael},
+           giveni={M\bibinitperiod}}}%
+        {{uniquename=0,hash=13e542215366001a04c3d21163d79458}{%
+           family={Brubaker},
+           familyi={B\bibinitperiod},
+           given={Marcus},
+           giveni={M\bibinitperiod}}}%
+        {{uniquename=0,hash=41eee90a96d38ce11a198e6c0aeb415f}{%
+           family={Guo},
+           familyi={G\bibinitperiod},
+           given={Jiqiang},
+           giveni={J\bibinitperiod}}}%
+        {{uniquename=0,hash=137297e0019ba55bca6f9b200782ae52}{%
+           family={Li},
+           familyi={L\bibinitperiod},
+           given={Peter},
+           giveni={P\bibinitperiod}}}%
+        {{uniquename=0,hash=6f0d8885ad4c012b0ced0ee95cdf2729}{%
+           family={Riddell},
+           familyi={R\bibinitperiod},
+           given={Allen},
+           giveni={A\bibinitperiod}}}%
+      }
+      \strng{namehash}{315a7c9e1cdeecc523de3b4d0e029d66}
+      \strng{fullhash}{60acc7adaf9aaa28c2120979308fe32d}
+      \strng{authornamehash}{315a7c9e1cdeecc523de3b4d0e029d66}
+      \strng{authorfullhash}{60acc7adaf9aaa28c2120979308fe32d}
+      \field{sortinit}{C}
+      \field{sortinithash}{095692fd22cc3c74d7fe223d02314dbd}
+      \field{labeldatesource}{year}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Journal of Statistical Software}
+      \field{title}{Stan: A Probabilistic Programming Language}
+      \field{volume}{76}
+      \field{year}{2017}
+    \endentry
+    \entry{carroll2013}{article}{}
+      \name{author}{5}{}{%
+        {{uniquename=0,hash=7c1b6e11a4d509ebb68dcca24dbed359}{%
+           family={Carroll},
+           familyi={C\bibinitperiod},
+           given={Royce},
+           giveni={R\bibinitperiod}}}%
+        {{uniquename=0,hash=9090f73ab87e881bbd012f9f74a7ccb2}{%
+           family={Lewis},
+           familyi={L\bibinitperiod},
+           given={Jeffrey\bibnamedelima B.},
+           giveni={J\bibinitperiod\bibinitdelim B\bibinitperiod}}}%
+        {{uniquename=0,hash=09de20fc004436c5699225d13073908d}{%
+           family={Lo},
+           familyi={L\bibinitperiod},
+           given={James},
+           giveni={J\bibinitperiod}}}%
+        {{uniquename=0,hash=f601f8becd17a37a825635bd3fbdeb7f}{%
+           family={Poole},
+           familyi={P\bibinitperiod},
+           given={Keith\bibnamedelima T.},
+           giveni={K\bibinitperiod\bibinitdelim T\bibinitperiod}}}%
+        {{uniquename=0,hash=1451269397523626c1c93c961319e8a8}{%
+           family={Rosenthal},
+           familyi={R\bibinitperiod},
+           given={Howard},
+           giveni={H\bibinitperiod}}}%
+      }
+      \strng{namehash}{4b27f7f6089549c6c746633c4f2aaa59}
+      \strng{fullhash}{85c1b8b9d28ebf4d0a713d6d2a91a719}
+      \strng{authornamehash}{4b27f7f6089549c6c746633c4f2aaa59}
+      \strng{authorfullhash}{85c1b8b9d28ebf4d0a713d6d2a91a719}
+      \field{sortinit}{C}
+      \field{sortinithash}{095692fd22cc3c74d7fe223d02314dbd}
+      \field{labeldatesource}{year}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{American Journal of Political Science}
+      \field{number}{4}
+      \field{title}{The Structure of Utility in Spatial Models of Voting}
+      \field{volume}{57}
+      \field{year}{2013}
+      \field{pages}{1008\bibrangedash 1028}
+      \range{pages}{21}
+    \endentry
+    \entry{carroll2009}{article}{}
+      \name{author}{5}{}{%
+        {{uniquename=0,hash=7c1b6e11a4d509ebb68dcca24dbed359}{%
+           family={Carroll},
+           familyi={C\bibinitperiod},
+           given={Royce},
+           giveni={R\bibinitperiod}}}%
+        {{uniquename=0,hash=9090f73ab87e881bbd012f9f74a7ccb2}{%
+           family={Lewis},
+           familyi={L\bibinitperiod},
+           given={Jeffrey\bibnamedelima B.},
+           giveni={J\bibinitperiod\bibinitdelim B\bibinitperiod}}}%
+        {{uniquename=0,hash=09de20fc004436c5699225d13073908d}{%
+           family={Lo},
+           familyi={L\bibinitperiod},
+           given={James},
+           giveni={J\bibinitperiod}}}%
+        {{uniquename=0,hash=f601f8becd17a37a825635bd3fbdeb7f}{%
+           family={Poole},
+           familyi={P\bibinitperiod},
+           given={Keith\bibnamedelima T.},
+           giveni={K\bibinitperiod\bibinitdelim T\bibinitperiod}}}%
+        {{uniquename=0,hash=98dd33910fd2ad555d3b34063b44a61a}{%
+           family={Rosenthal},
+           familyi={R\bibinitperiod},
+           given={Howard\bibnamedelima L.},
+           giveni={H\bibinitperiod\bibinitdelim L\bibinitperiod}}}%
+      }
+      \strng{namehash}{4b27f7f6089549c6c746633c4f2aaa59}
+      \strng{fullhash}{58ea57ae04575a2168ae8ec2aaedc0f6}
+      \strng{authornamehash}{4b27f7f6089549c6c746633c4f2aaa59}
+      \strng{authorfullhash}{58ea57ae04575a2168ae8ec2aaedc0f6}
+      \field{sortinit}{C}
+      \field{sortinithash}{095692fd22cc3c74d7fe223d02314dbd}
+      \field{labeldatesource}{year}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Legislative Studies Quarterly}
+      \field{number}{4}
+      \field{title}{Comparing NOMINATE and IDEAL: Points of Difference and Monte Carlo Tests}
+      \field{volume}{34}
+      \field{year}{2009}
+      \field{pages}{555\bibrangedash 591}
+      \range{pages}{37}
+    \endentry
+    \entry{Caughey2016}{article}{}
+      \name{author}{2}{}{%
+        {{uniquename=0,hash=c6fa94065c3740b0f3e95a452c600ef8}{%
+           family={Caughey},
+           familyi={C\bibinitperiod},
+           given={Devin},
+           giveni={D\bibinitperiod}}}%
+        {{uniquename=0,hash=e04abdee8012321275ea1a4af4b832a9}{%
+           family={Schickler},
+           familyi={S\bibinitperiod},
+           given={Eric},
+           giveni={E\bibinitperiod}}}%
+      }
+      \strng{namehash}{61bbf39fa50160e65898cfa9fe6865ab}
+      \strng{fullhash}{61bbf39fa50160e65898cfa9fe6865ab}
+      \strng{authornamehash}{61bbf39fa50160e65898cfa9fe6865ab}
+      \strng{authorfullhash}{61bbf39fa50160e65898cfa9fe6865ab}
+      \field{sortinit}{C}
+      \field{sortinithash}{095692fd22cc3c74d7fe223d02314dbd}
+      \field{labeldatesource}{year}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Studies in American Political Development}
+      \field{number}{2}
+      \field{title}{Substance and Change in Congressional Ideology: NOMINATE and Its Alternatives}
+      \field{volume}{30}
+      \field{year}{2016}
+      \field{pages}{128\bibrangedash 146}
+      \range{pages}{19}
+    \endentry
+    \entry{jackman2004}{article}{}
+      \name{author}{3}{}{%
+        {{uniquename=0,hash=f0a7136edab72b9a6697afc0fa691e23}{%
+           family={Clinton},
+           familyi={C\bibinitperiod},
+           given={Joshua},
+           giveni={J\bibinitperiod}}}%
+        {{uniquename=0,hash=40964af0b06eafe7b25f4e545a94503f}{%
+           family={Jackman},
+           familyi={J\bibinitperiod},
+           given={Simon},
+           giveni={S\bibinitperiod}}}%
+        {{uniquename=0,hash=683904edcb8111ad1573a25e1b6f6d56}{%
+           family={Rivers},
+           familyi={R\bibinitperiod},
+           given={Douglas},
+           giveni={D\bibinitperiod}}}%
+      }
+      \strng{namehash}{5274b14e74ad80997c3b5990dd735ff8}
+      \strng{fullhash}{5274b14e74ad80997c3b5990dd735ff8}
+      \strng{authornamehash}{5274b14e74ad80997c3b5990dd735ff8}
+      \strng{authorfullhash}{5274b14e74ad80997c3b5990dd735ff8}
+      \field{sortinit}{C}
+      \field{sortinithash}{095692fd22cc3c74d7fe223d02314dbd}
+      \field{labeldatesource}{year}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{American Political Science Review}
+      \field{number}{2}
+      \field{title}{The Statistical Analysis of Rollcall Data}
+      \field{volume}{98}
+      \field{year}{2004}
+      \field{pages}{355\bibrangedash 370}
+      \range{pages}{16}
+    \endentry
+    \entry{enelow198}{book}{}
+      \name{author}{2}{}{%
+        {{uniquename=0,hash=fc2e4e224bb17f9e6c1032a727113c66}{%
+           family={Enelow},
+           familyi={E\bibinitperiod},
+           given={James\bibnamedelima M.},
+           giveni={J\bibinitperiod\bibinitdelim M\bibinitperiod}}}%
+        {{uniquename=0,hash=08ae8ca758168f39ede1e58689e7bd17}{%
+           family={Hinich},
+           familyi={H\bibinitperiod},
+           given={Melvin\bibnamedelima J.},
+           giveni={M\bibinitperiod\bibinitdelim J\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {Cambridge University Press}%
+      }
+      \strng{namehash}{333634ca2c0a736e4ac9b712e183a467}
+      \strng{fullhash}{333634ca2c0a736e4ac9b712e183a467}
+      \strng{authornamehash}{333634ca2c0a736e4ac9b712e183a467}
+      \strng{authorfullhash}{333634ca2c0a736e4ac9b712e183a467}
+      \field{sortinit}{E}
+      \field{sortinithash}{07bbd5a529b5beaa311df5be05b874bc}
+      \field{labeldatesource}{year}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{title}{The Spatial Theory of Voting: An Introduction}
+      \field{year}{1984}
+    \endentry
+    \entry{krehbiel2014}{article}{}
+      \name{author}{2}{}{%
+        {{uniquename=0,hash=c7780ef7a2eda59206b58307dff7b9dc}{%
+           family={Krehbiel},
+           familyi={K\bibinitperiod},
+           given={Keith},
+           giveni={K\bibinitperiod}}}%
+        {{uniquename=0,hash=269091445c8bacc54f21bfbc6e560ec6}{%
+           family={Peskowitz},
+           familyi={P\bibinitperiod},
+           given={Zachary},
+           giveni={Z\bibinitperiod}}}%
+      }
+      \strng{namehash}{17dc54394c3b9f5ad61ec4afff0180cb}
+      \strng{fullhash}{17dc54394c3b9f5ad61ec4afff0180cb}
+      \strng{authornamehash}{17dc54394c3b9f5ad61ec4afff0180cb}
+      \strng{authorfullhash}{17dc54394c3b9f5ad61ec4afff0180cb}
+      \field{sortinit}{K}
+      \field{sortinithash}{4c244ceae61406cdc0cc2ce1cb1ff703}
+      \field{labeldatesource}{year}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Journal of Theoretical Politics}
+      \field{number}{4}
+      \field{title}{Legislative Organization and Ideal Point Bias}
+      \field{volume}{27}
+      \field{year}{2014}
+      \field{pages}{673\bibrangedash 703}
+      \range{pages}{31}
+    \endentry
+    \entry{NIPS2015_5758}{incollection}{}
+      \name{author}{4}{}{%
+        {{uniquename=0,hash=9b4bd774638a5e11db087a94dc4950b1}{%
+           family={Kucukelbir},
+           familyi={K\bibinitperiod},
+           given={Alp},
+           giveni={A\bibinitperiod}}}%
+        {{uniquename=0,hash=bb5c273638bcd68f168fefeca29f69c1}{%
+           family={Ranganath},
+           familyi={R\bibinitperiod},
+           given={Rajesh},
+           giveni={R\bibinitperiod}}}%
+        {{uniquename=0,hash=1e1eb60e3b6e222217bf8e9b24070b28}{%
+           family={Gelman},
+           familyi={G\bibinitperiod},
+           given={Andrew},
+           giveni={A\bibinitperiod}}}%
+        {{uniquename=0,hash=df034c01f40f9863f7986f0670e3f863}{%
+           family={Blei},
+           familyi={B\bibinitperiod},
+           given={David},
+           giveni={D\bibinitperiod}}}%
+      }
+      \name{editor}{5}{}{%
+        {{hash=7ace0f703f75865b2add1cb4c55909ea}{%
+           family={Cortes},
+           familyi={C\bibinitperiod},
+           given={C.},
+           giveni={C\bibinitperiod}}}%
+        {{hash=8f87e28885fa1a253eaadafeeb73e581}{%
+           family={Lawrence},
+           familyi={L\bibinitperiod},
+           given={N.\bibnamedelimi D.},
+           giveni={N\bibinitperiod\bibinitdelim D\bibinitperiod}}}%
+        {{hash=0beb50eb25818ba13aab0a4b29a04314}{%
+           family={Lee},
+           familyi={L\bibinitperiod},
+           given={D.\bibnamedelimi D.},
+           giveni={D\bibinitperiod\bibinitdelim D\bibinitperiod}}}%
+        {{hash=f2ea44ad7988f1351e0c0da3857862bd}{%
+           family={Sugiyama},
+           familyi={S\bibinitperiod},
+           given={M.},
+           giveni={M\bibinitperiod}}}%
+        {{hash=825f90fd818e38383a2e80d4d3331dd4}{%
+           family={Garnett},
+           familyi={G\bibinitperiod},
+           given={R.},
+           giveni={R\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {Curran Associates, Inc.}%
+      }
+      \strng{namehash}{79e7ecd137446e05bb8377a30ad2d94a}
+      \strng{fullhash}{1fde798bc10fbbbe5f47e61fdaac6b0d}
+      \strng{authornamehash}{79e7ecd137446e05bb8377a30ad2d94a}
+      \strng{authorfullhash}{1fde798bc10fbbbe5f47e61fdaac6b0d}
+      \strng{editornamehash}{78cd51a7f0c71902ed0dafc6ea6198fb}
+      \strng{editorfullhash}{edb833f08a861649f07af70945dfc3f0}
+      \field{sortinit}{K}
+      \field{sortinithash}{4c244ceae61406cdc0cc2ce1cb1ff703}
+      \field{labeldatesource}{year}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{booktitle}{Advances in Neural Information Processing Systems 28}
+      \field{title}{Automatic Variational Inference in Stan}
+      \field{year}{2015}
+      \field{pages}{568\bibrangedash 576}
+      \range{pages}{9}
+      \verb{url}
+      \verb http://papers.nips.cc/paper/5758-automatic-variational-inference-in-stan.pdf
+      \endverb
+    \endentry
+    \entry{rubin2002}{book}{}
+      \name{author}{2}{}{%
+        {{uniquename=0,hash=59556bd371e553c3cc09dd0c708823c9}{%
+           family={Little},
+           familyi={L\bibinitperiod},
+           given={Roderick\bibnamedelimb J.\bibnamedelimi A.},
+           giveni={R\bibinitperiod\bibinitdelim J\bibinitperiod\bibinitdelim A\bibinitperiod}}}%
+        {{uniquename=0,hash=37fe180f849ae0085cba2b45692be375}{%
+           family={Rubin},
+           familyi={R\bibinitperiod},
+           given={Donald\bibnamedelima B.},
+           giveni={D\bibinitperiod\bibinitdelim B\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {Hoboken, NJ: J. Wiley}%
+      }
+      \strng{namehash}{56900bfab65cbfda680bc2f14ce054e6}
+      \strng{fullhash}{56900bfab65cbfda680bc2f14ce054e6}
+      \strng{authornamehash}{56900bfab65cbfda680bc2f14ce054e6}
+      \strng{authorfullhash}{56900bfab65cbfda680bc2f14ce054e6}
+      \field{sortinit}{L}
+      \field{sortinithash}{7bba64db83423e3c29ad597f3b682cf3}
+      \field{labeldatesource}{year}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{title}{Statistical Analysis with Missing Data}
+      \field{year}{2002}
+      \keyw{Missing Data Imputation}
+    \endentry
+    \entry{mislevy2016}{inbook}{}
+      \name{author}{1}{}{%
+        {{uniquename=0,hash=8b133a7487303065c2791232f01ec705}{%
+           family={Mislevy},
+           familyi={M\bibinitperiod},
+           given={Robert\bibnamedelima J.},
+           giveni={R\bibinitperiod\bibinitdelim J\bibinitperiod}}}%
+      }
+      \name{editor}{1}{}{%
+        {{hash=1b145e78b45590eb94f234dd7a8febf2}{%
+           family={Linden},
+           familyi={L\bibinitperiod},
+           given={Wim\bibnamedelimb J.\bibnamedelimi Van},
+           giveni={W\bibinitperiod\bibinitdelim J\bibinitperiod\bibinitdelim V\bibinitperiod},
+           prefix={der},
+           prefixi={d\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {CRC Press}%
+      }
+      \strng{namehash}{8b133a7487303065c2791232f01ec705}
+      \strng{fullhash}{8b133a7487303065c2791232f01ec705}
+      \strng{authornamehash}{8b133a7487303065c2791232f01ec705}
+      \strng{authorfullhash}{8b133a7487303065c2791232f01ec705}
+      \strng{editornamehash}{1b145e78b45590eb94f234dd7a8febf2}
+      \strng{editorfullhash}{1b145e78b45590eb94f234dd7a8febf2}
+      \field{sortinit}{M}
+      \field{sortinithash}{c26a05ef03e4429073ed5c825140fac3}
+      \field{labeldatesource}{year}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{booktitle}{Handbook of Item Response Theory}
+      \field{title}{Missing Responses in Item Response Modeling}
+      \field{year}{2016}
+      \field{pages}{171\bibrangedash 193}
+      \range{pages}{23}
+    \endentry
+    \entry{poole2008}{report}{}
+      \name{author}{4}{}{%
+        {{uniquename=0,hash=f601f8becd17a37a825635bd3fbdeb7f}{%
+           family={Poole},
+           familyi={P\bibinitperiod},
+           given={Keith\bibnamedelima T.},
+           giveni={K\bibinitperiod\bibinitdelim T\bibinitperiod}}}%
+        {{uniquename=0,hash=9090f73ab87e881bbd012f9f74a7ccb2}{%
+           family={Lewis},
+           familyi={L\bibinitperiod},
+           given={Jeffrey\bibnamedelima B.},
+           giveni={J\bibinitperiod\bibinitdelim B\bibinitperiod}}}%
+        {{uniquename=0,hash=09de20fc004436c5699225d13073908d}{%
+           family={Lo},
+           familyi={L\bibinitperiod},
+           given={James},
+           giveni={J\bibinitperiod}}}%
+        {{uniquename=0,hash=7c1b6e11a4d509ebb68dcca24dbed359}{%
+           family={Carroll},
+           familyi={C\bibinitperiod},
+           given={Royce},
+           giveni={R\bibinitperiod}}}%
+      }
+      \list{institution}{1}{%
+        {Social Science Research Network}%
+      }
+      \strng{namehash}{5ce050ac3f1045eb771c5d2c095fe345}
+      \strng{fullhash}{d6335767b63bec7b6cc39257228aa3dd}
+      \strng{authornamehash}{5ce050ac3f1045eb771c5d2c095fe345}
+      \strng{authorfullhash}{d6335767b63bec7b6cc39257228aa3dd}
+      \field{sortinit}{P}
+      \field{sortinithash}{24100cef455d7974167575052c29146e}
+      \field{labeldatesource}{}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{day}{6}
+      \field{month}{10}
+      \field{title}{Scaling Roll Call Votes with W-NOMINATE in R}
+      \field{type}{Working Paper}
+      \field{year}{2008}
+      \field{dateera}{ce}
+      \verb{url}
+      \verb https://papers.ssrn.com/sol3/papers.cfm?abstract_id=1276082
+      \endverb
+    \endentry
+    \entry{poole1997}{book}{}
+      \name{author}{2}{}{%
+        {{uniquename=0,hash=247a5827b0b9b1f5efc00fa22e367c73}{%
+           family={Poole},
+           familyi={P\bibinitperiod},
+           given={Keith},
+           giveni={K\bibinitperiod}}}%
+        {{uniquename=0,hash=98dd33910fd2ad555d3b34063b44a61a}{%
+           family={Rosenthal},
+           familyi={R\bibinitperiod},
+           given={Howard\bibnamedelima L.},
+           giveni={H\bibinitperiod\bibinitdelim L\bibinitperiod}}}%
+      }
+      \strng{namehash}{79b0e8cd8f7d04c8b04022c8b5080672}
+      \strng{fullhash}{79b0e8cd8f7d04c8b04022c8b5080672}
+      \strng{authornamehash}{79b0e8cd8f7d04c8b04022c8b5080672}
+      \strng{authorfullhash}{79b0e8cd8f7d04c8b04022c8b5080672}
+      \field{sortinit}{P}
+      \field{sortinithash}{24100cef455d7974167575052c29146e}
+      \field{labeldatesource}{year}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{title}{Congress: A Political-Economic History of Roll Call Voting}
+      \field{year}{1997}
+    \endentry
+    \entry{powell2016}{report}{}
+      \name{author}{1}{}{%
+        {{uniquename=0,hash=5b2f9e272fe2c259da63d8f68c09b247}{%
+           family={Powell},
+           familyi={P\bibinitperiod},
+           given={Eleanor\bibnamedelima Neff},
+           giveni={E\bibinitperiod\bibinitdelim N\bibinitperiod}}}%
+      }
+      \list{institution}{1}{%
+        {University of Wisconsin-Madison}%
+      }
+      \strng{namehash}{5b2f9e272fe2c259da63d8f68c09b247}
+      \strng{fullhash}{5b2f9e272fe2c259da63d8f68c09b247}
+      \strng{authornamehash}{5b2f9e272fe2c259da63d8f68c09b247}
+      \strng{authorfullhash}{5b2f9e272fe2c259da63d8f68c09b247}
+      \field{sortinit}{P}
+      \field{sortinithash}{24100cef455d7974167575052c29146e}
+      \field{labeldatesource}{}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{day}{20}
+      \field{month}{9}
+      \field{title}{Ideology and Party-Pressure in Congress: A (New) Data-Based Approach}
+      \field{type}{techreport}
+      \field{year}{2016}
+      \field{dateera}{ce}
+      \verb{url}
+      \verb https://www.gsb.stanford.edu/sites/gsb/files/pe_09_16_powell.pdf
+      \endverb
+    \endentry
+    \entry{rosas2015}{article}{}
+      \name{author}{3}{}{%
+        {{uniquename=0,hash=cd74d52f7d8488cad33ce455d8c75da4}{%
+           family={Rosas},
+           familyi={R\bibinitperiod},
+           given={Guillermo},
+           giveni={G\bibinitperiod}}}%
+        {{uniquename=0,hash=616461cf50cf50f2feaa28b39a675646}{%
+           family={Shomer},
+           familyi={S\bibinitperiod},
+           given={Yael},
+           giveni={Y\bibinitperiod}}}%
+        {{uniquename=0,hash=831473aa183a157f3629fd1c9222c0d1}{%
+           family={Haptonstahl},
+           familyi={H\bibinitperiod},
+           given={Stephen\bibnamedelima R.},
+           giveni={S\bibinitperiod\bibinitdelim R\bibinitperiod}}}%
+      }
+      \strng{namehash}{08308e65ca1fdbb3d9928be0dd70b70c}
+      \strng{fullhash}{08308e65ca1fdbb3d9928be0dd70b70c}
+      \strng{authornamehash}{08308e65ca1fdbb3d9928be0dd70b70c}
+      \strng{authorfullhash}{08308e65ca1fdbb3d9928be0dd70b70c}
+      \field{sortinit}{R}
+      \field{sortinithash}{c15bc8eb6936bc6b3c8baa9e8575af53}
+      \field{labeldatesource}{year}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{American Journal of Political Science}
+      \field{number}{2}
+      \field{title}{No News Is News: Nonignorable Nonresponse in Roll-Call Data Analysis}
+      \field{volume}{59}
+      \field{year}{2015}
+      \field{pages}{511\bibrangedash 528}
+      \range{pages}{18}
+    \endentry
+    \entry{shor2011}{article}{}
+      \name{author}{2}{}{%
+        {{uniquename=0,hash=b149e4ab0d66371e096bceace22d03b8}{%
+           family={Shor},
+           familyi={S\bibinitperiod},
+           given={Boris},
+           giveni={B\bibinitperiod}}}%
+        {{uniquename=0,hash=9fbbed583f845cb1c07a57cd0244afd9}{%
+           family={McCarty},
+           familyi={M\bibinitperiod},
+           given={Nolan},
+           giveni={N\bibinitperiod}}}%
+      }
+      \strng{namehash}{1efc97d336ac2a5c1b448ba8b5a68ca4}
+      \strng{fullhash}{1efc97d336ac2a5c1b448ba8b5a68ca4}
+      \strng{authornamehash}{1efc97d336ac2a5c1b448ba8b5a68ca4}
+      \strng{authorfullhash}{1efc97d336ac2a5c1b448ba8b5a68ca4}
+      \field{sortinit}{S}
+      \field{sortinithash}{3c1547c63380458f8ca90e40ed14b83e}
+      \field{labeldatesource}{year}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{issue}{3}
+      \field{journaltitle}{American Political Science Review}
+      \field{title}{The Ideological Mapping of American Legislatures}
+      \field{volume}{105}
+      \field{year}{2011}
+      \field{pages}{530\bibrangedash 551}
+      \range{pages}{22}
+    \endentry
+    \entry{cisa2015}{online}{}
+      \list{organization}{1}{%
+        {Wired}%
+      }
+      \field{sortinit}{W}
+      \field{sortinithash}{6d25b3eefe5aa2147d1f339686808918}
+      \field{labeldatesource}{}
+      \field{labeltitlesource}{title}
+      \field{day}{27}
+      \field{month}{10}
+      \field{title}{CISA Security Bill Passes Senate with Privacy Flaws Unfixed}
+      \field{year}{2015}
+      \field{dateera}{ce}
+      \verb{url}
+      \verb https://www.wired.com/2015/10/cisa-cybersecurity-information-sharing-act-passes-senate-vote-with-privacy-flaws/
+      \endverb
+    \endentry
+    \entry{zorn1998}{article}{}
+      \name{author}{1}{}{%
+        {{uniquename=0,hash=e5563f3565efb15af569e042a53a7919}{%
+           family={Zorn},
+           familyi={Z\bibinitperiod},
+           given={Christopher\bibnamedelimb J.\bibnamedelimi W.},
+           giveni={C\bibinitperiod\bibinitdelim J\bibinitperiod\bibinitdelim W\bibinitperiod}}}%
+      }
+      \strng{namehash}{e5563f3565efb15af569e042a53a7919}
+      \strng{fullhash}{e5563f3565efb15af569e042a53a7919}
+      \strng{authornamehash}{e5563f3565efb15af569e042a53a7919}
+      \strng{authorfullhash}{e5563f3565efb15af569e042a53a7919}
+      \field{sortinit}{Z}
+      \field{sortinithash}{35589aa085e881766b72503e53fd4c97}
+      \field{labeldatesource}{year}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Sociological Methods \& Research}
+      \field{number}{3}
+      \field{title}{An Analytic and Empirical Examination of Zero-Inflated and Hurdle Poisson Specifications}
+      \field{volume}{26}
+      \field{year}{1998}
+      \field{pages}{368\bibrangedash 400}
+      \range{pages}{33}
+    \endentry
+  \endsortlist
+\endrefsection
+\endinput
+

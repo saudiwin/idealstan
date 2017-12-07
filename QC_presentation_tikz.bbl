@@ -1,0 +1,115 @@
+% $ biblatex auxiliary file $
+% $ biblatex bbl format version 2.8 $
+% Do not modify the above lines!
+%
+% This is an auxiliary file used by the 'biblatex' package.
+% This file may safely be deleted. It will be recreated by
+% biber as required.
+%
+\begingroup
+\makeatletter
+\@ifundefined{ver@biblatex.sty}
+  {\@latex@error
+     {Missing 'biblatex' package}
+     {The bibliography requires the 'biblatex' package.}
+      \aftergroup\endinput}
+  {}
+\endgroup
+
+
+\refsection{0}
+  \sortlist[entry]{apa/global/}
+    \entry{jackman2004}{article}{}
+      \name{author}{3}{}{%
+        {{uniquename=0,hash=f0a7136edab72b9a6697afc0fa691e23}{%
+           family={Clinton},
+           familyi={C\bibinitperiod},
+           given={Joshua},
+           giveni={J\bibinitperiod}}}%
+        {{uniquename=0,hash=40964af0b06eafe7b25f4e545a94503f}{%
+           family={Jackman},
+           familyi={J\bibinitperiod},
+           given={Simon},
+           giveni={S\bibinitperiod}}}%
+        {{uniquename=0,hash=683904edcb8111ad1573a25e1b6f6d56}{%
+           family={Rivers},
+           familyi={R\bibinitperiod},
+           given={Douglas},
+           giveni={D\bibinitperiod}}}%
+      }
+      \strng{namehash}{81231032d1fa48ba785cfc0ffd4b29b7}
+      \strng{fullhash}{5274b14e74ad80997c3b5990dd735ff8}
+      \strng{authornamehash}{81231032d1fa48ba785cfc0ffd4b29b7}
+      \strng{authorfullhash}{5274b14e74ad80997c3b5990dd735ff8}
+      \field{sortinit}{C}
+      \field{sortinithash}{095692fd22cc3c74d7fe223d02314dbd}
+      \field{labeldatesource}{year}
+      \true{uniqueprimaryauthor}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{American Political Science Review}
+      \field{number}{2}
+      \field{title}{The Statistical Analysis of Rollcall Data}
+      \field{volume}{98}
+      \field{year}{2004}
+      \field{pages}{355\bibrangedash 370}
+      \range{pages}{16}
+    \endentry
+    \entry{rubin2002}{book}{}
+      \name{author}{2}{}{%
+        {{uniquename=0,hash=59556bd371e553c3cc09dd0c708823c9}{%
+           family={Little},
+           familyi={L\bibinitperiod},
+           given={Roderick\bibnamedelimb J.\bibnamedelimi A.},
+           giveni={R\bibinitperiod\bibinitdelim J\bibinitperiod\bibinitdelim A\bibinitperiod}}}%
+        {{uniquename=0,hash=37fe180f849ae0085cba2b45692be375}{%
+           family={Rubin},
+           familyi={R\bibinitperiod},
+           given={Donald\bibnamedelima B.},
+           giveni={D\bibinitperiod\bibinitdelim B\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {Hoboken, NJ: J. Wiley}%
+      }
+      \strng{namehash}{56900bfab65cbfda680bc2f14ce054e6}
+      \strng{fullhash}{56900bfab65cbfda680bc2f14ce054e6}
+      \strng{authornamehash}{56900bfab65cbfda680bc2f14ce054e6}
+      \strng{authorfullhash}{56900bfab65cbfda680bc2f14ce054e6}
+      \field{sortinit}{L}
+      \field{sortinithash}{7bba64db83423e3c29ad597f3b682cf3}
+      \field{labeldatesource}{year}
+      \true{uniqueprimaryauthor}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{title}{Statistical Analysis with Missing Data}
+      \field{year}{2002}
+      \keyw{Missing Data Imputation}
+    \endentry
+    \entry{stan2016}{report}{}
+      \name{author}{1}{}{%
+        {{uniquename=0,hash=2418ee02a26ab01ead911ec86c507892}{%
+           family={{Stan Development Team}},
+           familyi={S\bibinitperiod}}}%
+      }
+      \strng{namehash}{2418ee02a26ab01ead911ec86c507892}
+      \strng{fullhash}{2418ee02a26ab01ead911ec86c507892}
+      \strng{authornamehash}{2418ee02a26ab01ead911ec86c507892}
+      \strng{authorfullhash}{2418ee02a26ab01ead911ec86c507892}
+      \field{sortinit}{S}
+      \field{sortinithash}{3c1547c63380458f8ca90e40ed14b83e}
+      \field{labeldatesource}{year}
+      \true{uniqueprimaryauthor}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{title}{Stan Modeling Language Users Guide and Reference Manual}
+      \field{type}{techreport}
+      \field{version}{2.14.0}
+      \field{year}{2016}
+      \verb{url}
+      \verb http://mc-stan.org
+      \endverb
+    \endentry
+  \endsortlist
+\endrefsection
+\endinput
+
