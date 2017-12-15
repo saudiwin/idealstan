@@ -6,6 +6,4 @@ src/*.o
 src/*.so
 src/*.dll
 *.rds
-
-*.hpp
 *.png
