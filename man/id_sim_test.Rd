@@ -2,14 +2,14 @@
 % Please edit documentation in R/Simulate.R
 \name{id_sim_test}
 \alias{id_sim_test}
-\title{A function that loops over numbers of legislators/bills to provide a coherent over-view of 
+\title{A function that loops over numbers of personlators/bills to provide a coherent over-view of 
 idealstan performance for a given model type.}
 \usage{
 id_sim_test(param_range = c(50, 150), by = 10, simul_type = "absence",
   is.ordinal = TRUE, restrict_type = "constrain_twoway",
-  restrict_params = "legis", num_constrain = 10, fixtype = "pinned", ...)
+  restrict_params = "person", num_constrain = 10, fixtype = "pinned", ...)
 }
 \description{
-A function that loops over numbers of legislators/bills to provide a coherent over-view of 
+A function that loops over numbers of personlators/bills to provide a coherent over-view of 
 idealstan performance for a given model type.
 }

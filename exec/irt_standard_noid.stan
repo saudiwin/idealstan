@@ -94,7 +94,7 @@ parameters {
   ordered[m-1] steps_votes;
   ordered[m-1] steps_votes_grm[num_bills];
   real avg_particip;
-  vector[num_bills-1] B_int_free;
+  vector[num_bills] B_int_free;
   vector[num_bills] A_int_free;
 }
 

@@ -8,7 +8,7 @@ id_plot_legis(object, return_data = FALSE, bill_plot = NULL,
   text_size_label = 2, text_size_group = 2.5, hjust_length = -0.7,
   person_labels = TRUE, person_ci_alpha = 0.1, abs_and_reg = "both",
   show_true = FALSE, group_color = TRUE, hpd_limit = 10,
-  group_overlap = FALSE, ...)
+  group_overlap = FALSE, sample_persons = NULL, ...)
 }
 \arguments{
 \item{return_data}{If true, the calculated legislator/bill data is returned along with the plot in a list}
@@ -35,6 +35,9 @@ or 'Absence Points' for only the absence midpoints or 'Vote Points' for only the
 \item{hpd_limit}{The greatest absolute difference in high-posterior density interval shown for any point. Useful for excluding imprecisely estimated persons/legislators from the plot. Leave NULL if you don't want to exclude any.}
 
 \item{group_overlap}{Whether to prevent the text from overlapping itself (ggplot2 option)}
+
+\item{sample_persons}{If you don't want to use the full number of persons/legislators from the model, enter a proportion (between 0 and 1) to select
+only a fraction of the persons/legislators.}
 }
 \description{
 This function can be used on a fitted \code{\link{idealstan}} object to plot the relative positions and 

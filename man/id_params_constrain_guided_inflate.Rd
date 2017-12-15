@@ -2,11 +2,11 @@
 % Please edit documentation in R/Helpers.R
 \name{id_params_constrain_guided_inflate}
 \alias{id_params_constrain_guided_inflate}
-\title{Function that works with id_model to re-arrange bills or legislators to constrain for identification}
+\title{Function that works with id_model to re-arrange bills or personlators to constrain for identification}
 \usage{
 id_params_constrain_guided_inflate(lookat_params = NULL,
   restrict_params = NULL, nfix = NULL, x = NULL)
 }
 \description{
-Function that works with id_model to re-arrange bills or legislators to constrain for identification
+Function that works with id_model to re-arrange bills or personlators to constrain for identification
 }

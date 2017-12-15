@@ -61,7 +61,7 @@ outcome. Used for visualization.}
 
 \item{exclude_level}{A vector of any values that should be treated as \code{NA} in the response matrix. Unlike the \code{middle_val} parameter, these values will be dropped from the data before estimation rather than modeled explicitly.}
 
-\item{inflate}{If \code{TRUE}, the response matrix is set up to enable modeling of missing data/absences (\code{miss_val}) as an inflation model in \code{\link{id_estimate}}}
+\item{inflate}{If \code{TRUE}, the score matrix is set up to enable modeling of missing data/absences (\code{miss_val}) as an inflation model in \code{\link{id_estimate}}}
 
 \item{simulation}{If \code{TRUE}, simulated values are saved in the \code{idealdata} object for later plotting with the \code{\link{id_plot_sim}} function}
 }

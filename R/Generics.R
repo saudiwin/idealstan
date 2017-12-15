@@ -5,7 +5,7 @@
 #' @seealso \code{\link{id_make}} to create an \code{idealdata} object suitable for estimation with \code{id_estimate}.
 #' @export
 setClass('idealdata',
-         slots=list(vote_matrix='matrix',
+         slots=list(score_matrix='matrix',
                     person_data='data.frame',
                     item_data='data.frame',
                     item_cov='matrix',
@@ -21,8 +21,8 @@ setClass('idealdata',
                     param_fix='numeric',
                     constraint_type='numeric',
                     restrict_vals='ANY',
-                    subset_party='character',
-                    subset_legis='character',
+                    subset_group='character',
+                    subset_person='character',
                     to_sample='numeric',
                     unrestricted='matrix',
                     restrict_num_high='numeric',
@@ -52,33 +52,33 @@ setGeneric('subset_ideal',signature='object',
            function(object,...) standardGeneric('subset_ideal'))
 
 setMethod('subset_ideal',signature(object='idealdata'),
-          function(object,use_subset=FALSE,sample_it=FALSE,subset_party=NULL,subset_legis=NULL,sample_size=20) {
+          function(object,use_subset=FALSE,sample_it=FALSE,subset_group=NULL,subset_person=NULL,sample_size=20) {
             
             
             # Functions for subsetting data and sampling
             
-            x <- object@vote_matrix
+            x <- object@score_matrix
             parliament <- object@person_data
             
-            if(use_subset==TRUE & !is.null(subset_party)) {
-              if(!all(subset_party %in% parliament$party)) stop('The specified parliament bloc/party must be in the list of blocs/parties in the legislature data.')
-              x <- x[parliament$party %in% subset_party,]
+            if(use_subset==TRUE & !is.null(subset_group)) {
+              if(!all(subset_group %in% parliament$group)) stop('The specified parliament bloc/party must be in the list of blocs/parties in the legislature data.')
+              x <- x[parliament$group %in% subset_group,]
               
-              object@subset_party <- subset_party
+              object@subset_group <- subset_group
             } 
-            if(use_subset==TRUE & !is.null(subset_legis)) {
-              if(!all(subset_legis %in% parliament$legis.names[parliament$bloc %in% subset_party])) {
+            if(use_subset==TRUE & !is.null(subset_person)) {
+              if(!all(subset_person %in% parliament$person.names[parliament$group%in% subset_group])) {
                 stop('The legislators to subset must be members of the subsetted bloc as well.')
               }
-              x <- x[parliament$legis.names %in% subset_legis,]
-              object@subset_legis <- subset_legis
+              x <- x[parliament$person.names %in% subset_person,]
+              object@subset_person <- subset_person
             }
             
             if(sample_it==TRUE) {
               object@to_sample <- sample(1:nrow(x),sample_size)
               x <- x[object@to_sample,]
             }
-            object@vote_matrix <- x
+            object@score_matrix <- x
             
             return(object)
           })
@@ -88,7 +88,7 @@ setGeneric('clean_bills',signature='object',
 
 setMethod('clean_bills',signature(object='idealdata'),
           function(object) {
-            x <- object@vote_matrix
+            x <- object@score_matrix
             
             if(grepl('absence_inflate|ordinal',x@model_type)) {
               select_cols <- apply(x,2, {
@@ -109,7 +109,7 @@ setMethod('clean_bills',signature(object='idealdata'),
               })
               x <- x[,select_cols]
             }
-            object@vote_matrix <- x
+            object@score_matrix <- x
             return(object)
           })
 
@@ -149,7 +149,7 @@ setMethod('id_model',signature(object='idealdata'),
                    auto_id=FALSE,
                    ncores=NULL) {
 
-            x <- object@vote_matrix
+            x <- object@score_matrix
             
             run_id <- switch(fixtype,vb=.vb_fix,pinned=.pinned_fix,constrained=.constrain_fix)
 

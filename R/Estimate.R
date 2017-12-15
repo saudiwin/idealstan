@@ -36,7 +36,7 @@
 #'  Otherwise, either pass \code{NULL} to this option to use integers for labels or a character vector equal to the number of categories in the
 #'  outcome. Used for visualization.
 #' @param exclude_level A vector of any values that should be treated as \code{NA} in the response matrix. Unlike the \code{middle_val} parameter, these values will be dropped from the data before estimation rather than modeled explicitly.
-#' @param inflate If \code{TRUE}, the response matrix is set up to enable modeling of missing data/absences (\code{miss_val}) as an inflation model in \code{\link{id_estimate}}
+#' @param inflate If \code{TRUE}, the score matrix is set up to enable modeling of missing data/absences (\code{miss_val}) as an inflation model in \code{\link{id_estimate}}
 #' @param simulation If \code{TRUE}, simulated values are saved in the \code{idealdata} object for later plotting with the \code{\link{id_plot_sim}} function
 #' @return A \code{\link{idealdata}} object that can then be used in the \code{\link{id_estimate}} function to fit a model.
 #' @export
@@ -145,7 +145,7 @@ id_make <- function(score_data=NULL,simul_data=NULL,
   }
 
   outobj <- new('idealdata',
-      vote_matrix=cleaned,
+      score_matrix=cleaned,
       person_data=person_data,
       person_cov=person_cov,
       time=time,
@@ -279,19 +279,19 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
     #Using an un-identified model with variational inference, find those parameters that would be most useful for
     #constraining/pinning to have an identified model for full Bayesian inference
   
-  num_legis <- nrow(idealdata@vote_matrix)
-  num_bills <- ncol(idealdata@vote_matrix)
-  personpoints <- rep(1:num_legis,times=num_bills)
+  num_legis <- nrow(idealdata@score_matrix)
+  num_bills <- ncol(idealdata@score_matrix)
+  legispoints <- rep(1:num_legis,times=num_bills)
   billpoints <- rep(1:num_bills,each=num_legis)
   timepoints <- idealdata@time[billpoints]
   avg_particip <- rep(1,num_legis)
-  Y <- c(idealdata@vote_matrix)
+  Y <- c(idealdata@score_matrix)
 
   #Remove NA values, which should have been coded correctly in the make_idealdata function
   
     remove_nas <- !is.na(Y)
     Y <- Y[remove_nas]
-    personpoints <- personpoints[remove_nas]
+    legispoints <- legispoints[remove_nas]
     billpoints <- billpoints[remove_nas]
     timepoints <- timepoints[remove_nas]
 
@@ -301,22 +301,22 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
                     hier_type=hier_type,
                     num_legis=num_legis,
                     num_bills=num_bills,
-                    ll=personpoints,
+                    ll=legispoints,
                     bb=billpoints,
                     time=timepoints,
                     LX=dim(idealdata@person_cov)[1],
                     SRX=ncol(idealdata@item_cov),
                     SAX=ncol(idealdata@item_cov_miss),
-                    person_pred=idealdata@person_cov,
+                    legis_pred=idealdata@person_cov,
                     srx_pred=idealdata@item_cov,
                     sax_pred=idealdata@item_cov_miss,
                     particip=avg_particip,
                     model_type=model_type,
                     discrim_reg_sd=discrim_reg_sd,
-                    discrim_miss_sd=discrim_miss_sd,
-                    person_sd=person_sd,
+                    discrim_abs_sd=discrim_miss_sd,
+                    legis_sd=person_sd,
                     diff_reg_sd=diff_reg_sd,
-                    diff_miss_sd=diff_miss_sd,
+                    diff_abs_sd=diff_miss_sd,
                     restrict_sd=restrict_sd)
   
   idealdata <- id_model(object=idealdata,fixtype=fixtype,model_type=model_type,this_data=this_data,
@@ -328,31 +328,19 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
 
   # Now remake the data to reflect the constrained parameters
  
-  num_legis <- nrow(idealdata@vote_matrix)
-  num_bills <- ncol(idealdata@vote_matrix)
-  personpoints <- rep(1:num_legis,times=num_bills)
+  num_legis <- nrow(idealdata@score_matrix)
+  num_bills <- ncol(idealdata@score_matrix)
+  legispoints <- rep(1:num_legis,times=num_bills)
   billpoints <- rep(1:num_bills,each=num_legis)
   timepoints <- idealdata@time[billpoints]
-
-    
-  #   apply(idealdata@vote_matrix,1,function(x) {
-  #     if(model_type %in% c(2,4,6)) {
-  #       count_abs <- sum(x==idealdata@miss_val,na.rm=TRUE)
-  #       
-  #     } else {
-  #       count_abs <- sum(is.na(x))
-  #     }
-  #     particip_rate <- 1 - (count_abs/length(x))
-  #     return(particip_rate)
-  #   }) 
-  # avg_particip <- scale(avg_particip)[,1]
-  Y <- c(idealdata@vote_matrix)
+  
+  Y <- c(idealdata@score_matrix)
   
   #Remove NA values, which should have been coded correctly in the make_idealdata function
   
   remove_nas <- !is.na(Y)
   Y <- Y[remove_nas]
-  personpoints <- personpoints[remove_nas]
+  legispoints <- legispoints[remove_nas]
   billpoints <- billpoints[remove_nas]
   timepoints <- timepoints[remove_nas]
 
@@ -368,7 +356,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
                     hier_type=hier_type,
                     num_legis=num_legis,
                     num_bills=num_bills,
-                    ll=personpoints,
+                    ll=legispoints,
                     bb=billpoints,
                     num_fix_high=idealdata@restrict_num_high,
                     num_fix_low=idealdata@restrict_num_low,
@@ -377,7 +365,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
                     LX=dim(idealdata@person_cov)[1],
                     SRX=ncol(idealdata@item_cov),
                     SAX=ncol(idealdata@item_cov_miss),
-                    person_pred=idealdata@person_cov,
+                    legis_pred=idealdata@person_cov,
                     srx_pred=idealdata@item_cov,
                     sax_pred=idealdata@item_cov_miss,
                     time=timepoints,
@@ -385,10 +373,10 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
                     model_type=model_type,
                     pin_vals=pin_vals,
                     discrim_reg_sd=discrim_reg_sd,
-                    discrim_miss_sd=discrim_miss_sd,
+                    discrim_abs_sd=discrim_miss_sd,
                     diff_reg_sd=diff_reg_sd,
-                    diff_miss_sd=diff_miss_sd,
-                    person_sd=person_sd,
+                    diff_abs_sd=diff_miss_sd,
+                    legis_sd=person_sd,
                     restrict_sd=restrict_sd)
 
   outobj <- sample_model(object=idealdata,nchains=nchains,niters=niters,warmup=warmup,ncores=ncores,

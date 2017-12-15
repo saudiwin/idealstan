@@ -4,13 +4,13 @@
 \alias{id_sim_gen}
 \title{Simulate IRT ideal point data}
 \usage{
-id_sim_gen(num_legis = 20, num_bills = 50, absence_discrim_sd = 2,
+id_sim_gen(num_person = 20, num_bills = 50, absence_discrim_sd = 2,
   absence_diff_mean = 0.5, reg_discrim_sd = 2, diff_sd = 0.25,
   ideal_pts_sd = 1, prior_type = "gaussian", ordinal = TRUE,
   ordinal_outcomes = 3, graded_response = FALSE, absence = TRUE)
 }
 \arguments{
-\item{num_legis}{The number of persons/legislators}
+\item{num_person}{The number of persons/personlators}
 
 \item{num_bills}{The number of items/bills}
 
@@ -21,7 +21,7 @@ absences}
 
 \item{reg_discrim_sd}{The SD of the discrimination parameters for the non-inflated model}
 
-\item{ideal_pts_sd}{The SD for the person/legislator ideal points}
+\item{ideal_pts_sd}{The SD for the person/personlator ideal points}
 
 \item{prior_type}{The statistical distribution that generates the data. Currently only 
 'gaussian' is supported.}

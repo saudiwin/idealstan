@@ -5,14 +5,14 @@
 \title{Estimate an \code{idealstan} model}
 \usage{
 id_estimate(idealdata = NULL, model_type = 2, use_subset = FALSE,
-  sample_it = FALSE, subset_party = NULL, subset_legis = NULL,
+  sample_it = FALSE, subset_group = NULL, subset_person = NULL,
   sample_size = 20, nchains = 4, niters = 2000, use_vb = FALSE,
-  nfix = 1, restrict_params = "legis", pin_vals = NULL,
+  nfix = 1, restrict_params = "person", pin_vals = NULL,
   restrict_ind_high = NULL, restrict_ind_low = NULL,
   restrict_type = "constrain_oneway", fixtype = "vb",
   warmup = floor(niters/2), ncores = 4, auto_id = FALSE,
-  discrim_reg_sd = 2, discrim_abs_sd = 2, legis_sd = 1, diff_reg_sd = 5,
-  diff_abs_sd = 5, restrict_sd = 1, ...)
+  discrim_reg_sd = 2, discrim_miss_sd = 2, person_sd = 1,
+  diff_reg_sd = 5, diff_miss_sd = 5, restrict_sd = 1, ...)
 }
 \arguments{
 \item{model_type}{An integer reflecting the kind of model to be estimated. See above.}
@@ -21,11 +21,11 @@ id_estimate(idealdata = NULL, model_type = 2, use_subset = FALSE,
 
 \item{sample_it}{Whether or not to use a random subsample of the response matrix. Useful for testing.}
 
-\item{subset_party}{If legislative/person data was included in the \code{\link{id_make}} function, then you can subset by
-any value in the \code{$bloc} column of that data if \code{use_subset} is \code{TRUE}.}
+\item{subset_group}{If person/legislative data was included in the \code{\link{id_make}} function, then you can subset by
+any value in the \code{$group} column of that data if \code{use_subset} is \code{TRUE}.}
 
-\item{subset_legis}{A list of character values of names of legislators/persons to use to subset if \code{use_subset} is 
-\code{TRUE} and legislative/person data was included in the \code{\link{id_make}} function with the required \code{$legis.names}
+\item{subset_person}{A list of character values of names of persons/legislators to use to subset if \code{use_subset} is 
+\code{TRUE} and person/legislative data was included in the \code{\link{id_make}} function with the required \code{$person.names}
 column}
 
 \item{sample_size}{If \code{sample_it} is \code{TRUE}, this value reflects how many legislators/persons will be sampled from
@@ -39,9 +39,9 @@ the response matrix}
 Cons: it's not quite as accurate. See \code{\link[rstan]{vb}} for more info.}
 
 \item{restrict_params}{Determines which parameters in the model are used for identification. If \code{fixtype} is 'vb', can be
-either 'legis' (legislators/persons) or 'bills' (discrimination parameters for bills/items). Otherwise, the value must be one
-of the available classes of parameters: 'legis' for persons/legislators, 'discrim_abs' for the absence-inflated bill discrimination
-parameters, or 'discrim_reg' for the non-inflated bill discrimination parameters.}
+either 'person' (person/legislator ideal points) or 'items' (discrimination parameters for items/bills). Otherwise, the value must be one
+of the available classes of parameters: 'person' for persons/legislators, 'discrim_miss' for the missing-inflated item/bill discrimination
+parameters, or 'discrim_reg' for the non-inflated item/bill discrimination parameters.}
 
 \item{pin_vals}{If \code{fixtype} is set to 'pinned', then a vector of numeric values of which to pin the legislators/persons or 
 bills/items should be given.}
@@ -69,21 +69,17 @@ persons/legislators will be used to constrain and identify the model.}
 
 \item{discrim_reg_sd}{Set the prior standard deviation of the bimodal prior for the discrimination parameters for the non-inflated model.}
 
-\item{discrim_abs_sd}{Set the prior standard deviation of the bimodal prior for the discrimination parameters for the inflated model.}
+\item{discrim_miss_sd}{Set the prior standard deviation of the bimodal prior for the discrimination parameters for the inflated model.}
 
-\item{legis_sd}{Set the prior standard deviation for the legislators (persons) parameters}
+\item{person_sd}{Set the prior standard deviation for the legislators (persons) parameters}
 
 \item{diff_reg_sd}{Set the prior standard deviation for the bill (item) intercepts for the non-inflated model.}
 
-\item{diff_abs_sd}{Set the prior standard deviation for the bill (item) intercepts for the inflated model.}
+\item{diff_miss_sd}{Set the prior standard deviation for the bill (item) intercepts for the inflated model.}
 
 \item{restrict_sd}{Set the prior standard deviation for constrained parameters}
 
 \item{...}{Additional parameters passed on to Stan's sampling engine. See \code{\link[rstan]{stan}} for more information.}
-
-\item{auto_id}{If \code{fixtype} is set to "vb", the identification function will be re-run 
-with multiple \code{\link[rstan]{vb}} models until the different model estimates show underlying identification. Not perfect, but
-works pretty well.}
 }
 \value{
 A fitted \code{\link{idealstan}} object that contains posterior samples of all parameters either via full Bayesian infererence
@@ -112,7 +108,7 @@ As a result, more care must be taken to obtain estimates that are the same regar
 The parameter \code{fixtype} enables you to change the type of identification used. The default, 'vb', does not require any further
 information from you in order for the model to be fit. In this version of identification, an unidentified model is run using
 variational Bayesian inference (see \code{\link[rstan]{vb}}). If \code{restrict_type} is set to 'constrain_oneway', then the \code{nfix}
-highest legislators/persons (if \code{restrict_params} is 'legis') or bills/items (if \code{restrict_params} equals 'bills') 
+highest legislators/persons (if \code{restrict_params} is 'person') or bills/items (if \code{restrict_params} equals 'items') 
 are used to constrain and identify the model. If \code{restrict_type} is set to 'constrain_twoway', then \code{nfix} highest and lowest legislators/persons
 or bills/items are used to constrain and identify the model.
 In addition, if \code{fixtype='vb'} is used, \code{auto_id} can be set to \code{TRUE}. This will run additional varitional Bayesian models
@@ -124,8 +120,8 @@ bills/items. If \code{restrict_type} is 'constrain_oneway', then the indices of 
 should be included as the row or column indices of these parameters in the response matrix as a vector in \code{restrict_ind_high}.
 If \code{restrict_type} is 'constrain_twoway,' then the indices of high constrained parameters should go in 
 \code{restrict_ind_high} and the indices of low constrained parameters in \code{restrict_ind_low}. The numbers of high and low
-constrained parameters should be equal. To pick the parameter to constrain, set \code{restrict_params} to 'legis' for legislators/persons,
-'discrim_abs' for absence-inflated bill discrimination parameters, and 'discrim_reg' for non-inflated bill discrimination parameters.
+constrained parameters should be equal. To pick the parameter to constrain, set \code{restrict_params} to 'person' for legislators/persons,
+'discrim_miss' for absence-inflated bill discrimination parameters, and 'discrim_reg' for non-inflated bill discrimination parameters.
 If \code{fixtype} is set to 'pinned', then identification is achieved via pinning with very tight priors a set of legislators/persons or bills/items.
 The indices of legislators/persons (i.e. row indices in the response matrix) or bills/items (column indices in the response matrix) should be passed as a vector
 to \code{restrict_ind_high}, while \code{restrict_ind_low} should be left blank. The particular values to pin these parameters is passed as a 
