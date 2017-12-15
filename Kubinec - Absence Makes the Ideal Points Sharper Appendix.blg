@@ -1,9 +1,0 @@
-[0] Config.pm:354> INFO - This is Biber 2.7
-[0] Config.pm:357> INFO - Logfile is 'Kubinec - Absence Makes the Ideal Points Sharper Appendix.blg'
-[80] biber-MSWIN64:303> INFO - === 
-[271] Biber.pm:359> INFO - Reading 'Kubinec - Absence Makes the Ideal Points Sharper Appendix.bcf'
-[565] Biber.pm:835> INFO - Found 0 citekeys in bib section 0
-[588] Utils.pm:164> WARN - The file 'Kubinec - Absence Makes the Ideal Points Sharper Appendix.bcf' does not contain any citations!
-[607] bbl.pm:608> INFO - Writing 'Kubinec - Absence Makes the Ideal Points Sharper Appendix.bbl' with encoding 'ascii'
-[608] bbl.pm:712> INFO - Output to Kubinec - Absence Makes the Ideal Points Sharper Appendix.bbl
-[617] Biber.pm:109> INFO - WARNINGS: 1
