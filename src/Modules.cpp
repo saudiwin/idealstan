@@ -7,7 +7,7 @@ RCPP_MODULE(stan_fit4irt_standard_mod) {
 
     class_<rstan::stan_fit<model_irt_standard_namespace::model_irt_standard, boost::random::ecuyer1988> >("model_irt_standard")
 
-    .constructor<SEXP,SEXP>()
+    .constructor<SEXP,SEXP,SEXP>()
 
 
     .method("call_sampler", &rstan::stan_fit<model_irt_standard_namespace::model_irt_standard, boost::random::ecuyer1988> ::call_sampler)
@@ -36,7 +36,7 @@ RCPP_MODULE(stan_fit4irt_standard_noid_mod) {
 
     class_<rstan::stan_fit<model_irt_standard_noid_namespace::model_irt_standard_noid, boost::random::ecuyer1988> >("model_irt_standard_noid")
 
-    .constructor<SEXP,SEXP>()
+    .constructor<SEXP,SEXP,SEXP>()
 
 
     .method("call_sampler", &rstan::stan_fit<model_irt_standard_noid_namespace::model_irt_standard_noid, boost::random::ecuyer1988> ::call_sampler)
