@@ -215,7 +215,7 @@
   old_matrix <- object@score_matrix
   to_constrain_high <- restrict_ind_high
   to_constrain_low <- restrict_ind_low
-  if(restrict_ind_high==restrict_ind_low) {
+  if((!is.null(restrict_ind_high) && !is.null(restrict_ind_low)) && all(restrict_ind_high==restrict_ind_low)) {
     stop('You must specify separate bills or persons to constrain high or low.')
   }
 
