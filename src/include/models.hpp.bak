@@ -490,8 +490,8 @@ public:
         num_params_r__ += SRX;
         validate_non_negative_index("sigma_abs_x_cons", "SAX", SAX);
         num_params_r__ += SAX;
-        validate_non_negative_index("B_int_free", "(num_bills - 1)", (num_bills - 1));
-        num_params_r__ += (num_bills - 1);
+        validate_non_negative_index("B_int_free", "num_bills", num_bills);
+        num_params_r__ += num_bills;
         validate_non_negative_index("A_int_free", "num_bills", num_bills);
         num_params_r__ += num_bills;
         validate_non_negative_index("steps_votes", "(m - 1)", (m - 1));
@@ -723,11 +723,11 @@ public:
             throw std::runtime_error("variable B_int_free missing");
         vals_r__ = context__.vals_r("B_int_free");
         pos__ = 0U;
-        validate_non_negative_index("B_int_free", "(num_bills - 1)", (num_bills - 1));
-        context__.validate_dims("initialization", "B_int_free", "vector_d", context__.to_vec((num_bills - 1)));
+        validate_non_negative_index("B_int_free", "num_bills", num_bills);
+        context__.validate_dims("initialization", "B_int_free", "vector_d", context__.to_vec(num_bills));
         // generate_declaration B_int_free
-        vector_d B_int_free(static_cast<Eigen::VectorXd::Index>((num_bills - 1)));
-        for (int j1__ = 0U; j1__ < (num_bills - 1); ++j1__)
+        vector_d B_int_free(static_cast<Eigen::VectorXd::Index>(num_bills));
+        for (int j1__ = 0U; j1__ < num_bills; ++j1__)
             B_int_free(j1__) = vals_r__[pos__++];
         try {
             writer__.vector_unconstrain(B_int_free);
@@ -929,9 +929,9 @@ public:
         Eigen::Matrix<T__,Eigen::Dynamic,1>  B_int_free;
         (void) B_int_free;  // dummy to suppress unused var warning
         if (jacobian__)
-            B_int_free = in__.vector_constrain((num_bills - 1),lp__);
+            B_int_free = in__.vector_constrain(num_bills,lp__);
         else
-            B_int_free = in__.vector_constrain((num_bills - 1));
+            B_int_free = in__.vector_constrain(num_bills);
 
         Eigen::Matrix<T__,Eigen::Dynamic,1>  A_int_free;
         (void) A_int_free;  // dummy to suppress unused var warning
@@ -2872,7 +2872,7 @@ public:
         dims__.push_back(SAX);
         dimss__.push_back(dims__);
         dims__.resize(0);
-        dims__.push_back((num_bills - 1));
+        dims__.push_back(num_bills);
         dimss__.push_back(dims__);
         dims__.resize(0);
         dims__.push_back(num_bills);
@@ -2945,7 +2945,7 @@ public:
         vector_d legis_x_cons = in__.vector_constrain(LX);
         vector_d sigma_reg_x_cons = in__.vector_constrain(SRX);
         vector_d sigma_abs_x_cons = in__.vector_constrain(SAX);
-        vector_d B_int_free = in__.vector_constrain((num_bills - 1));
+        vector_d B_int_free = in__.vector_constrain(num_bills);
         vector_d A_int_free = in__.vector_constrain(num_bills);
         vector_d steps_votes = in__.ordered_constrain((m - 1));
         vector<vector_d> steps_votes_grm;
@@ -2998,7 +2998,7 @@ public:
         for (int k_0__ = 0; k_0__ < SAX; ++k_0__) {
             vars__.push_back(sigma_abs_x_cons[k_0__]);
         }
-        for (int k_0__ = 0; k_0__ < (num_bills - 1); ++k_0__) {
+        for (int k_0__ = 0; k_0__ < num_bills; ++k_0__) {
             vars__.push_back(B_int_free[k_0__]);
         }
         for (int k_0__ = 0; k_0__ < num_bills; ++k_0__) {
@@ -3287,7 +3287,7 @@ public:
             param_name_stream__ << "sigma_abs_x_cons" << '.' << k_0__;
             param_names__.push_back(param_name_stream__.str());
         }
-        for (int k_0__ = 1; k_0__ <= (num_bills - 1); ++k_0__) {
+        for (int k_0__ = 1; k_0__ <= num_bills; ++k_0__) {
             param_name_stream__.str(std::string());
             param_name_stream__ << "B_int_free" << '.' << k_0__;
             param_names__.push_back(param_name_stream__.str());
@@ -3418,7 +3418,7 @@ public:
             param_name_stream__ << "sigma_abs_x_cons" << '.' << k_0__;
             param_names__.push_back(param_name_stream__.str());
         }
-        for (int k_0__ = 1; k_0__ <= (num_bills - 1); ++k_0__) {
+        for (int k_0__ = 1; k_0__ <= num_bills; ++k_0__) {
             param_name_stream__.str(std::string());
             param_name_stream__ << "B_int_free" << '.' << k_0__;
             param_names__.push_back(param_name_stream__.str());
@@ -3842,8 +3842,8 @@ public:
         validate_non_negative_index("steps_votes_grm", "num_bills", num_bills);
         num_params_r__ += (m - 1) * num_bills;
         ++num_params_r__;
-        validate_non_negative_index("B_int_free", "(num_bills - 1)", (num_bills - 1));
-        num_params_r__ += (num_bills - 1);
+        validate_non_negative_index("B_int_free", "num_bills", num_bills);
+        num_params_r__ += num_bills;
         validate_non_negative_index("A_int_free", "num_bills", num_bills);
         num_params_r__ += num_bills;
     }
@@ -4061,11 +4061,11 @@ public:
             throw std::runtime_error("variable B_int_free missing");
         vals_r__ = context__.vals_r("B_int_free");
         pos__ = 0U;
-        validate_non_negative_index("B_int_free", "(num_bills - 1)", (num_bills - 1));
-        context__.validate_dims("initialization", "B_int_free", "vector_d", context__.to_vec((num_bills - 1)));
+        validate_non_negative_index("B_int_free", "num_bills", num_bills);
+        context__.validate_dims("initialization", "B_int_free", "vector_d", context__.to_vec(num_bills));
         // generate_declaration B_int_free
-        vector_d B_int_free(static_cast<Eigen::VectorXd::Index>((num_bills - 1)));
-        for (int j1__ = 0U; j1__ < (num_bills - 1); ++j1__)
+        vector_d B_int_free(static_cast<Eigen::VectorXd::Index>(num_bills));
+        for (int j1__ = 0U; j1__ < num_bills; ++j1__)
             B_int_free(j1__) = vals_r__[pos__++];
         try {
             writer__.vector_unconstrain(B_int_free);
@@ -4212,9 +4212,9 @@ public:
         Eigen::Matrix<T__,Eigen::Dynamic,1>  B_int_free;
         (void) B_int_free;  // dummy to suppress unused var warning
         if (jacobian__)
-            B_int_free = in__.vector_constrain((num_bills - 1),lp__);
+            B_int_free = in__.vector_constrain(num_bills,lp__);
         else
-            B_int_free = in__.vector_constrain((num_bills - 1));
+            B_int_free = in__.vector_constrain(num_bills);
 
         Eigen::Matrix<T__,Eigen::Dynamic,1>  A_int_free;
         (void) A_int_free;  // dummy to suppress unused var warning
@@ -4589,7 +4589,7 @@ public:
         dims__.resize(0);
         dimss__.push_back(dims__);
         dims__.resize(0);
-        dims__.push_back((num_bills - 1));
+        dims__.push_back(num_bills);
         dimss__.push_back(dims__);
         dims__.resize(0);
         dims__.push_back(num_bills);
@@ -4645,7 +4645,7 @@ public:
             steps_votes_grm.push_back(in__.ordered_constrain((m - 1)));
         }
         double avg_particip = in__.scalar_constrain();
-        vector_d B_int_free = in__.vector_constrain((num_bills - 1));
+        vector_d B_int_free = in__.vector_constrain(num_bills);
         vector_d A_int_free = in__.vector_constrain(num_bills);
         for (int k_0__ = 0; k_0__ < num_bills; ++k_0__) {
             vars__.push_back(sigma_abs_free[k_0__]);
@@ -4685,7 +4685,7 @@ public:
             }
         }
         vars__.push_back(avg_particip);
-        for (int k_0__ = 0; k_0__ < (num_bills - 1); ++k_0__) {
+        for (int k_0__ = 0; k_0__ < num_bills; ++k_0__) {
             vars__.push_back(B_int_free[k_0__]);
         }
         for (int k_0__ = 0; k_0__ < num_bills; ++k_0__) {
@@ -4875,7 +4875,7 @@ public:
         param_name_stream__.str(std::string());
         param_name_stream__ << "avg_particip";
         param_names__.push_back(param_name_stream__.str());
-        for (int k_0__ = 1; k_0__ <= (num_bills - 1); ++k_0__) {
+        for (int k_0__ = 1; k_0__ <= num_bills; ++k_0__) {
             param_name_stream__.str(std::string());
             param_name_stream__ << "B_int_free" << '.' << k_0__;
             param_names__.push_back(param_name_stream__.str());
@@ -4985,7 +4985,7 @@ public:
         param_name_stream__.str(std::string());
         param_name_stream__ << "avg_particip";
         param_names__.push_back(param_name_stream__.str());
-        for (int k_0__ = 1; k_0__ <= (num_bills - 1); ++k_0__) {
+        for (int k_0__ = 1; k_0__ <= num_bills; ++k_0__) {
             param_name_stream__.str(std::string());
             param_name_stream__ << "B_int_free" << '.' << k_0__;
             param_names__.push_back(param_name_stream__.str());
