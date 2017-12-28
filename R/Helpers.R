@@ -486,9 +486,20 @@ id_params_pin_unguided_inflate <- function(restrict_params=NULL,nfix=NULL,x=NULL
   }
 }
 
-#' @export
-extract_samples <- function(obj,...) {
-  rstan::extract(obj@stan_samples,...)
+.extract_samples <- function(obj=NULL,param=NULL,...) {
+  if(!is.null(param)) {
+    param <- switch(param,persons='legis_full',
+                    reg_discrim='sigma_reg_full',
+                    miss_discrim='sigma_abs_full',
+                    reg_diff='B_int_full',
+                    miss_diff='A_int_full',
+                    cutpoints='steps_votes')
+    rstan::extract(obj@stan_samples,pars=param,...)
+  } else {
+    rstan::extract(obj@stan_samples,...)
+  }
+
+
 }
 
 

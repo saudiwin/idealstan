@@ -228,3 +228,33 @@ setMethod(id_plot, signature(object='idealstan'),
             }
             
           })
+
+
+#' Extract \code{\link{rstan::stan}} joint posterior distribution from \code{idealstan} object
+#' 
+#' This convenience function allows you to extract the underlying \code{rstan} posterior estimates for the full parameters
+#'   estimates of the \code{idealstan} model object. See \code{\link{rstan::extract}} for the underlying function and more options.
+#'   
+#' You can use this function to access a matrix or array of the full posterior estimates of each of the parameters in an 
+#'  \code{idealstan} object. There are available options to pick certain parameters of the model, such as the person (legislator)
+#'  ideal points or item (bill) discrimination scores. Alternatively, you can leave the \code{extract_type} option blank and 
+#'  receive a list of all of the available parameters. Please note that the list of parameters do not have particularly
+#'  informative names. 
+#'  
+#'  All parameters are returned in the order in which they were input into the \code{\link{id_make}} function.
+#'  
+#' @param object A fitted \code{idealstan} object (see \code{\link(id_estimate)})
+#' @param extract_type Can be one of \code{'persons'} for person/legislator ideal points,
+#'  \code{'reg_discrim'} for non-inflated item (bill) discrimination scores,
+#'  \code{'reg_diff'} for non-inflated item (bill) difficulty scores,
+#'  \code{'miss_discrim'} for inflated item (bill) discrimination scores,
+#'  and \code{'miss_diff'} for inflated item (bill) difficulty scores.
+#' @param ... Any additional arguments passed on to the \code{\link{rstan::extract}} function.
+#' 
+#' @export
+setMethod(id_extract,signature(object='idealstan'),
+          function(object,extract_type='persons',...) {
+              
+            .extract_samples(obj=object,extract_type=extract_type)
+            
+          })
