@@ -5,8 +5,9 @@
 \title{Plot Legislator/Person and Bill/Item Ideal Points}
 \usage{
 id_plot_legis(object, return_data = FALSE, bill_plot = NULL,
-  text_size_label = 2, text_size_group = 2.5, hjust_length = -0.7,
-  person_labels = TRUE, person_ci_alpha = 0.1, abs_and_reg = "both",
+  text_size_label = 2, text_size_group = 2.5, point_size = 1,
+  hjust_length = -0.7, person_labels = TRUE, group_labels = T,
+  person_ci_alpha = 0.1, show_score = NULL, abs_and_reg = "both",
   show_true = FALSE, group_color = TRUE, hpd_limit = 10,
   group_overlap = FALSE, sample_persons = NULL, ...)
 }
@@ -19,11 +20,17 @@ id_plot_legis(object, return_data = FALSE, bill_plot = NULL,
 
 \item{text_size_group}{ggplot2 text size for group text used for points}
 
+\item{point_size}{If \code{person_labels} and \code{group_labels} are set to \code{FALSE}, controls the size of the points plotted.}
+
 \item{hjust_length}{horizontal adjustement of the legislator labels}
 
 \item{person_labels}{if \code{TRUE}, use the person.names column to plot labels for the person (legislator) ideal points}
 
+\item{group_labels}{if \code{TRUE}, use the group column to plot text markers for the group (parties) from the person/legislator data}
+
 \item{person_ci_alpha}{The transparency level of the dot plot and confidence bars for the person ideal points}
+
+\item{show_score}{Show only person/legislator ideal points that have a certain score/vote category from the outcome (character string)}
 
 \item{abs_and_reg}{Whether to show 'both' absence and regular bill midpoints if the model is absence-inflated, the default,
 or 'Absence Points' for only the absence midpoints or 'Vote Points' for only the non-inflated midpoints}

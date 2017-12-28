@@ -9,7 +9,7 @@ id_make(score_data = NULL, simul_data = NULL, person_cov = NULL,
   item_data = NULL, miss_val = NA, high_val = 3L, low_val = 1L,
   middle_val = 2L, ordinal = TRUE, time = NULL,
   outcome_label_type = "votes", exclude_level = NULL, inflate = TRUE,
-  simulation = FALSE)
+  simulation = FALSE, include_pres = FALSE)
 }
 \arguments{
 \item{score_data}{Your person-item (legislator-bill) matrix in which persons (legislators) are in rows and 
@@ -64,6 +64,8 @@ outcome. Used for visualization.}
 \item{inflate}{If \code{TRUE}, the score matrix is set up to enable modeling of missing data/absences (\code{miss_val}) as an inflation model in \code{\link{id_estimate}}}
 
 \item{simulation}{If \code{TRUE}, simulated values are saved in the \code{idealdata} object for later plotting with the \code{\link{id_plot_sim}} function}
+
+\item{include_pres}{If \code{FALSE} and \code{score_data} is a \code{rollcall} object, drop the first row which often represents tiebreaker votes cast by the Vice President in the US Senate.}
 }
 \value{
 A \code{\link{idealdata}} object that can then be used in the \code{\link{id_estimate}} function to fit a model.

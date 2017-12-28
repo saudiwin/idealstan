@@ -3,3 +3,4 @@ cleanup*
 ^.*\.Rproj$
 ^\.Rproj\.user$
 ^chunks$
+README*

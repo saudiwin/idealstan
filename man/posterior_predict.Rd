@@ -6,6 +6,14 @@
 \usage{
 posterior_predict(object, ...)
 }
+\arguments{
+\item{object}{A fitted \code{idealstan} object}
+
+\item{draws}{The number of draws to use from the total number of posterior draws (default is 100).}
+
+\item{sample_scores}{In addition to reducing the number of posterior draws used to calculate the posterior predictive distribution,
+you can sample from the scores/votes themselves. To do so, set \code{sample_scores} to the number of scores/votes to sample.}
+}
 \value{
 \code{posterior_predict} methods should return a \eqn{D} by \eqn{N}
   matrix, where \eqn{D} is the number of draws from the posterior predictive
@@ -13,25 +21,13 @@ posterior_predict(object, ...)
   draw.
 }
 \description{
-Draw from the posterior predictive distribution of the outcome. See
-\code{\link[rstanarm]{posterior_predict.stanreg}} in the
-\pkg{\link[rstanarm]{rstanarm}} package for an example.
+This function will draw from the posterior predictive distribution of the outcome, i.e., all the scores or 
+ votes that are used to create the \code{idealstan} model. You can then use functions such as 
+ \code{\link[bayesplot]{ppc_bars}} to see how well the model does returning the correct number of categories
+ in the score/vote matrix.
 }
 \examples{
-# Example using rstanarm package:
-# posterior_predict method for 'stanreg' objects
-\donttest{
-if (require("rstanarm")) {
-  fit <- stan_glm(mpg ~ wt + am, data = mtcars)
-  yrep <- posterior_predict(fit)
-  all.equal(ncol(yrep), nobs(fit))
 
-  nd <- data.frame(wt = mean(mtcars$wt), am = c(0, 1))
-  ytilde <- posterior_predict(fit, newdata = nd)
-  all.equal(ncol(ytilde), nrow(nd))
-}
-}
-
-# Also see help("posterior_predict", package = "rstanarm")
+Also see \\code{help("posterior_predict", package = "rstanarm")}
 
 }

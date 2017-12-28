@@ -229,6 +229,9 @@ setMethod(id_plot, signature(object='idealstan'),
             
           })
 
+setGeneric('id_extract',signature='object',
+           function(object,...) standardGeneric('id_extract'))
+
 
 #' Extract \code{\link{rstan::stan}} joint posterior distribution from \code{idealstan} object
 #' 
@@ -243,7 +246,7 @@ setMethod(id_plot, signature(object='idealstan'),
 #'  
 #'  All parameters are returned in the order in which they were input into the \code{\link{id_make}} function.
 #'  
-#' @param object A fitted \code{idealstan} object (see \code{\link(id_estimate)})
+#' @param object A fitted \code{idealstan} object (see \code{\link{id_estimate})
 #' @param extract_type Can be one of \code{'persons'} for person/legislator ideal points,
 #'  \code{'reg_discrim'} for non-inflated item (bill) discrimination scores,
 #'  \code{'reg_diff'} for non-inflated item (bill) difficulty scores,

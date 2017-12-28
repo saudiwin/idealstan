@@ -1,13 +1,8 @@
 ---
-output:
-  pdf_document: default
-  html_document: default
----
----
 title: "Introduction to R Package Idealstan"
-author: ""
-date: "June 22, 2017"
-output: pdf_document
+author: "Robert Kubinec"
+date: "January 5, 2018"
+output: github_document
 ---
 
 ```{r setup, include=FALSE}
@@ -17,7 +12,9 @@ require(dplyr)
 require(ggplot2)
 ```
 
-## R Package Idealstan (V0.1) README
+## R Package Idealstan (V0.2) README
+
+[![Travis-CI Build Status](https://travis-ci.org/saudiwin/idealstan.svg?branch=master)](https://travis-ci.org/saudiwin/idealstan)
 
 This package implements IRT (item response theory) ideal point models, which are models designed for situations in which actors make strategic choices that correlate with a unidimensional scale, such as the left-right axis in American politics. Compared to traditional IRT, ideal point models have un-constrained discrimination parameters to allow for the polarity in the ideal point space. This package offers standard IRT ideal point models, but goes farther in including models that account for strategic censoring in observations, particularly for legislatures in which legislators (persons) are strategically absent. The package also includes ordinal IRT models for situations in which legislators may vote to abstain (or any other kind of ordinal category). `idealstan` is based on the Stan package for Bayesian inference, which includes both MCMC full Bayesian estimation and a faster variational Bayesian approximation. The package also has plotting functions for model parameters, particularly the legislator (person) ideal points (ability parameters).
 
@@ -30,7 +27,7 @@ To begin with, we can simulate data from an ordinal ideal-point model in which t
 ```{r sim_data}
 
 ord_ideal_sim <- id_sim_gen()
-knitr::kable(as_data_frame(head(ord_ideal_sim@vote_matrix)))
+knitr::kable(as_data_frame(head(ord_ideal_sim@score_matrix)))
 ```
 
 The vote/score matrix has legislators/persons in the rows and bills/items in the columns. In this simulated data, yes votes are recorded as `3`, no votes as `1`, abstentions as `2`, and absences as `4`. 
@@ -40,7 +37,7 @@ The function `id_estimate` will take this processed data and run an IRT ideal po
 The package has options for identification that are similar to other IRT packages in which the row or column indices of legislators/persons or bills/items to constrain are specified to the `id_estimate` function. For example, we can use the true values of the simulated legislators to constrain two legislators with the highest ideal points and two legislators with the lowest ideal points:
 
 ```{r constrain_sim}
-true_legis <- ord_ideal_sim@simul_data$true_legis
+true_legis <- ord_ideal_sim@simul_data$true_person
 high_leg <- sort(true_legis,decreasing = T,index.return=T)
 low_leg <- sort(true_legis,index.return=T)
 
@@ -68,31 +65,13 @@ The main use of this package is for datasets that are set up in a rollcall votin
 ```{r use_senate}
 
 data('senate114')
-to_use <- senate114$votes
-to_use <- apply(to_use, 2, function(x) {
-  y <- recode(
-    x,
-    `1` = 2L,
-    `6` = 1L,
-    `9` = 3L
-  )
-  return(y)
-})
 
-rownames(to_use) <- rownames(senate114$legis.data)
-# Need to drop Obama
 senate_data <-
-  id_make(
-    vote_data = to_use[-1,],
-    legis_data = slice(senate114$legis.data,-1),
-    abs_vote = 3,
-    yes_vote = 2,
-    no_vote = 1,
+  id_make(score_data = senate114,
     ordinal = F,
-    exclude_level = c(3,7)
-  )
+    include_pres=F)
 
-hist(senate_data@vote_matrix)
+hist(senate_data@score_matrix)
 
 ```
 
@@ -108,25 +87,20 @@ sen_est <- id_estimate(senate_data,
                  use_vb = T,
                  ncores=4,
                  nfix=2,
-                 restrict_type='constrain_twoway',
-                 restrict_params='legis',
-                 restrict_ind_high = c(which(row.names(to_use)=='SASSE (R NE)'),
-                                       which(row.names(to_use)=='CRUZ (R TX)'),
-                                       which(row.names(to_use)=='RUBIO (R FL)')),
-                 restrict_ind_low=c(which(row.names(to_use)=='SANDERS (Indep VT)'),
-                                    which(row.names(to_use)=='REID (D NV)'),
-                                    which(row.names(to_use)=='WARREN (D MA)')),
+                 restrict_type='constrain_oneway',
+                 restrict_params='person',
+                 restrict_ind_high = which(row.names(senate114$votes[-1,])=='SASSE (R NE)'),
                  auto_id=F,
                  fixtype='constrained',
             seed=84520,
             refresh=500)
-id_plot(sen_est,legis_ci_alpha=0.7) + scale_colour_brewer(type='qual')
+id_plot(sen_est,person_ci_alpha=0.7) + scale_colour_brewer(type='qual')
 ```
 
 The `id_plot` function has many other options which are documented in the help files. One notable option, though, is to plot bill midpoints along with the legislator ideal points. The midpoints show the line of equiprobability, i.e., at what ideal point is a legislator indifferent to voting on a bill (or answering an item correctly). To plot a bill midpoint overlay, simply include the column index of bill in the response matrix as the `bill_plot` option:
 
 ```{r bill_plot}
-id_plot(sen_est,legis_ci_alpha=0.1,bill_plot=205,
+id_plot(sen_est,person_ci_alpha=0.1,item_plot=205,
         abs_and_reg='Non-inflated') + scale_colour_brewer(type='qual')
 ```
 
@@ -136,7 +110,7 @@ To look at the bill's absence midpoints, simply change the `abs_and_reg` paramat
 
 ```{r abs_bill_plot}
 
-id_plot(sen_est,legis_ci_alpha=0.1,bill_plot=205,
+id_plot(sen_est,person_ci_alpha=0.1,item_plot=205,
         abs_and_reg='Absence-inflated') + scale_colour_brewer(type='qual')
 ```
 

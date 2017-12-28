@@ -38,6 +38,7 @@
 #' @param exclude_level A vector of any values that should be treated as \code{NA} in the response matrix. Unlike the \code{middle_val} parameter, these values will be dropped from the data before estimation rather than modeled explicitly.
 #' @param inflate If \code{TRUE}, the score matrix is set up to enable modeling of missing data/absences (\code{miss_val}) as an inflation model in \code{\link{id_estimate}}
 #' @param simulation If \code{TRUE}, simulated values are saved in the \code{idealdata} object for later plotting with the \code{\link{id_plot_sim}} function
+#' @param include_pres If \code{FALSE} and \code{score_data} is a \code{rollcall} object, drop the first row which often represents tiebreaker votes cast by the Vice President in the US Senate.
 #' @return A \code{\link{idealdata}} object that can then be used in the \code{\link{id_estimate}} function to fit a model.
 #' @export
 #' @import rstan
@@ -55,7 +56,31 @@ id_make <- function(score_data=NULL,simul_data=NULL,
                            miss_val=NA,high_val=3L,low_val=1L,middle_val=2L,
                            ordinal=TRUE,time=NULL,
                            outcome_label_type='votes',
-                           exclude_level=NULL,inflate=TRUE,simulation=FALSE) {
+                           exclude_level=NULL,inflate=TRUE,simulation=FALSE,
+                    include_pres=FALSE) {
+  
+  
+  if(class(score_data)=='rollcall') {
+    miss_val <- 9
+    low_val <- 6
+    high_val <- 1
+    exclude_level <- c(3,7)
+    if(include_pres==F) {
+      person_data <- slice(score_data$legis.data,-1)
+    }
+    
+    person_data <-  mutate(person_data,group=party)
+    
+    if(include_pres==F) {
+      row_names <- row.names(slice(score_data$legis.data,-1))
+      score_data <- score_data$votes[-1,]
+    } else {
+      row_names <- row.names(score_data$legis.data)
+      score_data <- score_data$votes
+    }
+    
+    row.names(score_data) <- row_names
+  }
 
   if(ordinal==TRUE & inflate==TRUE) {
     votes <- c(low_val,middle_val,high_val,miss_val)
