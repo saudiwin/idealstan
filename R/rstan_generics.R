@@ -23,7 +23,7 @@
 #'
 #' @examples
 #'
-#' Also see \code{help("posterior_predict", package = "rstanarm")}
+#' #Also see \code{help("posterior_predict", package = "rstanarm")}
 #'
 posterior_predict <- function(object, ...) {
   UseMethod("posterior_predict")
