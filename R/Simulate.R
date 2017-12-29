@@ -432,7 +432,7 @@ id_sim_rmse <- function(obj,rep=1) {
   
   out_data <- list(`Ideal Points`=over_params(all_params$L_full,true_person),
                    `Absence Discrimination`=over_params(all_params$sigma_abs_full,true_sigma_abs),
-                   `Bill Discrimination`=over_params(all_params$sigma_reg_full,true_sigma_reg))
+                   `Item Discrimination`=over_params(all_params$sigma_reg_full,true_sigma_reg))
   
   return(out_data)
 
@@ -535,7 +535,7 @@ id_sim_resid <- function(obj,rep=1) {
   
   out_data <- list(`Ideal Points`=over_params(all_params$L_full,true_person),
                    `Absence Discrimination`=over_params(all_params$sigma_abs_full,true_sigma_abs),
-                   `Bill Discrimination`=over_params(all_params$sigma_reg_full,true_sigma_reg))
+                   `Item Discrimination`=over_params(all_params$sigma_reg_full,true_sigma_reg))
   
   return(out_data)
 
