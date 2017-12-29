@@ -7,7 +7,8 @@
 #' This function will draw from the posterior predictive distribution of the outcome, i.e., all the scores or 
 #'  votes that are used to create the \code{idealstan} model. You can then use functions such as 
 #'  \code{\link[bayesplot]{ppc_bars}} to see how well the model does returning the correct number of categories
-#'  in the score/vote matrix.
+#'  in the score/vote matrix. 
+#'  Also see \code{help("posterior_predict", package = "rstanarm")}
 #' 
 #' @param object A fitted \code{idealstan} object
 #' @param draws The number of draws to use from the total number of posterior draws (default is 100).
@@ -21,9 +22,7 @@
 #'   draw.
 #'
 #'
-#' @examples
 #'
-#' #Also see \code{help("posterior_predict", package = "rstanarm")}
 #'
 posterior_predict <- function(object, ...) {
   UseMethod("posterior_predict")
