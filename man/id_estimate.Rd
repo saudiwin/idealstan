@@ -11,11 +11,11 @@ id_estimate(idealdata = NULL, model_type = 2, use_subset = FALSE,
   restrict_ind_high = NULL, restrict_ind_low = NULL,
   restrict_type = "constrain_oneway", fixtype = "vb",
   warmup = floor(niters/2), ncores = 4, auto_id = FALSE,
-  discrim_reg_sd = 2, discrim_miss_sd = 2, person_sd = 1,
-  diff_reg_sd = 5, diff_miss_sd = 5, restrict_sd = 1, ...)
+  discrim_reg_sd = 3, discrim_miss_sd = 3, person_sd = 1,
+  diff_reg_sd = 3, diff_miss_sd = 3, restrict_sd = 3, ...)
 }
 \arguments{
-\item{model_type}{An integer reflecting the kind of model to be estimated. See above.}
+\item{model_type}{An integer reflecting the kind of model to be estimated. See below.}
 
 \item{use_subset}{Whether a subset of the legislators/persons should be used instead of the full response matrix}
 

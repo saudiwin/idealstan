@@ -24,10 +24,6 @@ you can sample from the scores/votes themselves. To do so, set \code{sample_scor
 This function will draw from the posterior predictive distribution of the outcome, i.e., all the scores or 
  votes that are used to create the \code{idealstan} model. You can then use functions such as 
  \code{\link[bayesplot]{ppc_bars}} to see how well the model does returning the correct number of categories
- in the score/vote matrix.
-}
-\examples{
-
-Also see \\code{help("posterior_predict", package = "rstanarm")}
-
+ in the score/vote matrix. 
+ Also see \code{help("posterior_predict", package = "rstanarm")}
 }

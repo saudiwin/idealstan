@@ -283,12 +283,12 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
                            restrict_type='constrain_oneway',
                            fixtype='vb',warmup=floor(niters/2),ncores=4,
                            auto_id=FALSE,
-                           discrim_reg_sd=2,
-                           discrim_miss_sd=2,
+                           discrim_reg_sd=3,
+                           discrim_miss_sd=3,
                            person_sd=1,
-                           diff_reg_sd=5,
-                           diff_miss_sd=5,
-                           restrict_sd=1,
+                           diff_reg_sd=3,
+                           diff_miss_sd=3,
+                           restrict_sd=3,
                            ...) {
   
   
