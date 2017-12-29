@@ -79,8 +79,7 @@ id_sim_gen <- function(num_person=20,num_bills=50,absence_discrim_sd=2,absence_d
   pr_absence <- sapply(1:length(person_points), function(n) {
     ideal_pts[person_points[n]]*absence_discrim[bill_points[n]] - absence_diff[bill_points[n]]}) %>% plogis
   
-  reg_diff <- prior_func(params=list(N=num_bills-1,mean=0,sd=diff_sd))
-  reg_diff <- c(0,reg_diff)
+  reg_diff <- prior_func(params=list(N=num_bills,mean=0,sd=diff_sd))
   #reg_discrim <- prior_func(params=list(N=num_bills,mean=1,sd=reg_discrim_sd)) * if_else(runif(num_bills-1)>0.5,1,-1)
   reg_discrim <- prior_func(params=list(N=num_bills,mean=0,sd=reg_discrim_sd))
   
@@ -480,11 +479,20 @@ id_sim_coverage <- function(obj,rep=1,quantiles=c(.95,.05)) {
     return(all_covs)
   }
 
-
+  total_iters <- obj@stan_samples@stan_args[[1]]$iter-obj@stan_samples@stan_args[[1]]$warmup
+  if(rep<total_iters) {
+    to_iters <- sample(1:total_iters,rep)
+  } else {
+    to_iters <- 1:total_iters
+  }
+  # Do this when we want to test asymptotic properties of the estimator
+  # person_points <- lapply(to_iters,over_params,
+  #                         est_param=all_params$L_full,
+  #                         true_param=true_person)
   
-  out_data <- list(item_cov=over_params(all_params$L_full,true_person),
-                         sigma_abs_cov=over_params(all_params$sigma_abs_full,true_sigma_abs),
-                         sigma_reg_cov=over_params(all_params$sigma_reg_full,true_sigma_reg))
+  out_data <- list(`Person Ideal Points`=over_params(all_params$L_full,true_person),
+                         `Absence Discriminations`=over_params(all_params$sigma_abs_full,true_sigma_abs),
+                         `Item Discrimations`=over_params(all_params$sigma_reg_full,true_sigma_reg))
   
   return(out_data)
 }
