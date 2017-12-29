@@ -280,6 +280,47 @@ id_sim_gen <- function(num_person=20,num_bills=50,absence_discrim_sd=2,absence_d
                                                true_reg_discrim=reg_discrim,
                                                true_abs_discrim=absence_discrim),
                                simulation=TRUE)
+  } else if(ordinal==F && graded_response==F && absence==T) {
+    #inflated IRT 2-PL model
+    
+    votes <- as.numeric(plogis(pr_vote)>runif(length(person_points)))
+    
+    
+    # now determine if the outcome. personlators only vote if they show up
+    # Absences are coded as category 3 for binary data
+    
+    combined <- if_else(pr_absence<runif(length(person_points)),votes,3)
+    
+    # Create a vote matrix
+    
+    combined <- matrix(combined,ncol=num_bills,nrow=num_person,byrow = F)
+    
+    #Got the vote matrix, run ideal_data
+    
+    colnames(combined) <- paste0('Vote_',1:ncol(combined))
+    row.names(combined) <- paste0('person_',1:nrow(combined))
+    
+    out_data <- id_make(score_data=combined,person_data=data_frame(person.names=paste0('person_',1:nrow(combined)),
+                                                                   party='L',
+                                                                   true_person=as.numeric(ideal_pts)),
+                        miss_val = NULL,
+                        high_val = 1,
+                        low_val = 0,
+                        middle_val = NULL,
+                        simul_data=list(num_person=num_person,
+                                        num_bills=num_bills,
+                                        absence_discrim_sd=absence_discrim_sd,
+                                        absence_diff_mean=absence_diff_mean,
+                                        reg_discrim_sd=reg_discrim_sd,
+                                        ideal_pts_sd=ideal_pts_sd,
+                                        prior_func=prior_func,
+                                        ordinal=ordinal,
+                                        ordinal_outcomes=ordinal_outcomes,
+                                        graded_response=graded_response,
+                                        true_person=ideal_pts,
+                                        true_reg_discrim=reg_discrim,
+                                        true_abs_discrim=absence_discrim),
+                        simulation=TRUE)
   }
   
   return(out_data)

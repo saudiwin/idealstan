@@ -227,7 +227,7 @@ id_make <- function(score_data=NULL,simul_data=NULL,
 #' The indices of legislators/persons (i.e. row indices in the response matrix) or bills/items (column indices in the response matrix) should be passed as a vector
 #' to \code{restrict_ind_high}, while \code{restrict_ind_low} should be left blank. The particular values to pin these parameters is passed as a 
 #' numeric vector to \code{pin_vals}.
-#' @param model_type An integer reflecting the kind of model to be estimated. See above.
+#' @param model_type An integer reflecting the kind of model to be estimated. See below.
 #' @param use_subset Whether a subset of the legislators/persons should be used instead of the full response matrix
 #' @param sample_it Whether or not to use a random subsample of the response matrix. Useful for testing.
 #' @param subset_group If person/legislative data was included in the \code{\link{id_make}} function, then you can subset by
