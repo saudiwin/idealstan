@@ -17,7 +17,10 @@ Imports:
     dplyr,
     magrittr,
     tidyr,
-    stringr
+    stringr,
+    bayesplot,
+    ggplot2,
+    lazyeval
 LinkingTo: StanHeaders (>= 2.13.1), rstan (>= 2.13.2), BH (>= 1.62.0.1), Rcpp
     (>= 0.12.7), RcppEigen (>= 0.3.2.9.0)
 RoxygenNote: 6.0.1
