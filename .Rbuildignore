@@ -4,3 +4,4 @@ cleanup*
 ^\.Rproj\.user$
 ^chunks$
 README*
+package*

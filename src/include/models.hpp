@@ -31,7 +31,7 @@ static int current_statement_begin__;
 stan::io::program_reader prog_reader__() {
     stan::io::program_reader reader;
     reader.add_event(0, 0, "start", "model_irt_standard");
-    reader.add_event(1356, 1356, "end", "model_irt_standard");
+    reader.add_event(1462, 1462, "end", "model_irt_standard");
     return reader;
 }
 
@@ -65,6 +65,10 @@ private:
     double diff_abs_sd;
     double diff_reg_sd;
     double restrict_sd;
+    double restrict_low_bar;
+    double restrict_high_bar;
+    double restrict_alpha;
+    double restrict_beta;
     int m;
     vector<int> absence;
     int num_constrain_l;
@@ -309,6 +313,26 @@ public:
         vals_r__ = context__.vals_r("restrict_sd");
         pos__ = 0;
         restrict_sd = vals_r__[pos__++];
+        context__.validate_dims("data initialization", "restrict_low_bar", "double", context__.to_vec());
+        restrict_low_bar = double(0);
+        vals_r__ = context__.vals_r("restrict_low_bar");
+        pos__ = 0;
+        restrict_low_bar = vals_r__[pos__++];
+        context__.validate_dims("data initialization", "restrict_high_bar", "double", context__.to_vec());
+        restrict_high_bar = double(0);
+        vals_r__ = context__.vals_r("restrict_high_bar");
+        pos__ = 0;
+        restrict_high_bar = vals_r__[pos__++];
+        context__.validate_dims("data initialization", "restrict_alpha", "double", context__.to_vec());
+        restrict_alpha = double(0);
+        vals_r__ = context__.vals_r("restrict_alpha");
+        pos__ = 0;
+        restrict_alpha = vals_r__[pos__++];
+        context__.validate_dims("data initialization", "restrict_beta", "double", context__.to_vec());
+        restrict_beta = double(0);
+        vals_r__ = context__.vals_r("restrict_beta");
+        pos__ = 0;
+        restrict_beta = vals_r__[pos__++];
 
         // validate, data variables
         check_greater_or_equal(function__,"num_legis",num_legis,1);
@@ -463,6 +487,9 @@ public:
         validate_non_negative_index("steps_votes_grm", "(m - 1)", (m - 1));
         validate_non_negative_index("steps_votes_grm", "num_bills", num_bills);
         num_params_r__ += (m - 1) * num_bills;
+        validate_non_negative_index("restrict_ord", "(num_fix_low + num_fix_high)", (num_fix_low + num_fix_high));
+        validate_non_negative_index("restrict_ord", "T", T);
+        num_params_r__ += (num_fix_low + num_fix_high) * T;
         ++num_params_r__;
     }
 
@@ -544,7 +571,7 @@ public:
                 restrict_low[i0__](j1__) = vals_r__[pos__++];
         for (int i0__ = 0U; i0__ < T; ++i0__)
             try {
-            writer__.vector_ub_unconstrain(0,restrict_low[i0__]);
+            writer__.vector_ub_unconstrain(restrict_low_bar,restrict_low[i0__]);
         } catch (const std::exception& e) { 
             throw std::runtime_error(std::string("Error transforming variable restrict_low: ") + e.what());
         }
@@ -563,7 +590,7 @@ public:
                 restrict_high[i0__](j1__) = vals_r__[pos__++];
         for (int i0__ = 0U; i0__ < T; ++i0__)
             try {
-            writer__.vector_lb_unconstrain(0,restrict_high[i0__]);
+            writer__.vector_lb_unconstrain(restrict_high_bar,restrict_high[i0__]);
         } catch (const std::exception& e) { 
             throw std::runtime_error(std::string("Error transforming variable restrict_high: ") + e.what());
         }
@@ -750,6 +777,25 @@ public:
             throw std::runtime_error(std::string("Error transforming variable steps_votes_grm: ") + e.what());
         }
 
+        if (!(context__.contains_r("restrict_ord")))
+            throw std::runtime_error("variable restrict_ord missing");
+        vals_r__ = context__.vals_r("restrict_ord");
+        pos__ = 0U;
+        validate_non_negative_index("restrict_ord", "T", T);
+        validate_non_negative_index("restrict_ord", "(num_fix_low + num_fix_high)", (num_fix_low + num_fix_high));
+        context__.validate_dims("initialization", "restrict_ord", "vector_d", context__.to_vec(T,(num_fix_low + num_fix_high)));
+        // generate_declaration restrict_ord
+        std::vector<vector_d> restrict_ord(T,vector_d(static_cast<Eigen::VectorXd::Index>((num_fix_low + num_fix_high))));
+        for (int j1__ = 0U; j1__ < (num_fix_low + num_fix_high); ++j1__)
+            for (int i0__ = 0U; i0__ < T; ++i0__)
+                restrict_ord[i0__](j1__) = vals_r__[pos__++];
+        for (int i0__ = 0U; i0__ < T; ++i0__)
+            try {
+            writer__.ordered_unconstrain(restrict_ord[i0__]);
+        } catch (const std::exception& e) { 
+            throw std::runtime_error(std::string("Error transforming variable restrict_ord: ") + e.what());
+        }
+
         if (!(context__.contains_r("avg_particip")))
             throw std::runtime_error("variable avg_particip missing");
         vals_r__ = context__.vals_r("avg_particip");
@@ -823,9 +869,9 @@ public:
         restrict_low.reserve(dim_restrict_low_0__);
         for (size_t k_0__ = 0; k_0__ < dim_restrict_low_0__; ++k_0__) {
             if (jacobian__)
-                restrict_low.push_back(in__.vector_ub_constrain(0,num_fix_low,lp__));
+                restrict_low.push_back(in__.vector_ub_constrain(restrict_low_bar,num_fix_low,lp__));
             else
-                restrict_low.push_back(in__.vector_ub_constrain(0,num_fix_low));
+                restrict_low.push_back(in__.vector_ub_constrain(restrict_low_bar,num_fix_low));
         }
 
         vector<Eigen::Matrix<T__,Eigen::Dynamic,1> > restrict_high;
@@ -833,9 +879,9 @@ public:
         restrict_high.reserve(dim_restrict_high_0__);
         for (size_t k_0__ = 0; k_0__ < dim_restrict_high_0__; ++k_0__) {
             if (jacobian__)
-                restrict_high.push_back(in__.vector_lb_constrain(0,num_fix_high,lp__));
+                restrict_high.push_back(in__.vector_lb_constrain(restrict_high_bar,num_fix_high,lp__));
             else
-                restrict_high.push_back(in__.vector_lb_constrain(0,num_fix_high));
+                restrict_high.push_back(in__.vector_lb_constrain(restrict_high_bar,num_fix_high));
         }
 
         vector<Eigen::Matrix<T__,Eigen::Dynamic,1> > pinned_pars;
@@ -919,6 +965,16 @@ public:
                 steps_votes_grm.push_back(in__.ordered_constrain((m - 1),lp__));
             else
                 steps_votes_grm.push_back(in__.ordered_constrain((m - 1)));
+        }
+
+        vector<Eigen::Matrix<T__,Eigen::Dynamic,1> > restrict_ord;
+        size_t dim_restrict_ord_0__ = T;
+        restrict_ord.reserve(dim_restrict_ord_0__);
+        for (size_t k_0__ = 0; k_0__ < dim_restrict_ord_0__; ++k_0__) {
+            if (jacobian__)
+                restrict_ord.push_back(in__.ordered_constrain((num_fix_low + num_fix_high),lp__));
+            else
+                restrict_ord.push_back(in__.ordered_constrain((num_fix_low + num_fix_high)));
         }
 
         T__ avg_particip;
@@ -1115,6 +1171,9 @@ public:
                 for (int b = 1; b <= num_bills; ++b) {
 
                     lp_accum__.add(normal_log<propto__>(get_base1(steps_votes_grm,b,"steps_votes_grm",1), 0, 5));
+                }
+                for (int t = 1; t <= T; ++t) {
+                    lp_accum__.add(normal_log<propto__>(get_base1(restrict_ord,t,"restrict_ord",1), 0, 5));
                 }
                 if (as_bool(logical_eq(constrain_par,1))) {
 
@@ -1878,6 +1937,107 @@ public:
                                 }
                             }
                         }
+                    } else if (as_bool(logical_eq(constraint_type,2))) {
+
+                        if (as_bool((primitive_value((primitive_value((primitive_value(logical_eq(hier_type,3)) || primitive_value(logical_eq(hier_type,5)))) || primitive_value(logical_eq(hier_type,6)))) || primitive_value(logical_eq(hier_type,7))))) {
+
+                            lp_accum__.add(normal_log<propto__>(sigma_reg_free, multiply(stan::model::rvalue(srx_pred, stan::model::cons_list(stan::model::index_uni((num_bills - num_constrain_sr)), stan::model::cons_list(stan::model::index_omni(), stan::model::nil_index_list())), "srx_pred"),sigma_reg_x), 10));
+                            lp_accum__.add(normal_log<propto__>(get_base1(restrict_high,1,"restrict_high",1), multiply(stan::model::rvalue(srx_pred, stan::model::cons_list(stan::model::index_min_max(((num_bills - num_constrain_sr) + 1), num_bills), stan::model::cons_list(stan::model::index_omni(), stan::model::nil_index_list())), "srx_pred"),sigma_reg_x_cons), restrict_sd));
+                            if (as_bool(logical_eq(hier_type,2))) {
+
+                                lp_accum__.add(normal_log<propto__>(sigma_abs_free, 0, discrim_abs_sd));
+                                lp_accum__.add(normal_log<propto__>(get_base1(L_free,1,"L_free",1), 0, legis_sd));
+                                if (as_bool(logical_gt(T,1))) {
+
+                                    for (int t = 2; t <= T; ++t) {
+
+                                        lp_accum__.add(normal_log<propto__>(get_base1(L_free,t,"L_free",1), get_base1(L_free,(t - 1),"L_free",1), legis_sd));
+                                    }
+                                }
+                            } else if (as_bool(logical_eq(hier_type,4))) {
+
+                                lp_accum__.add(normal_log<propto__>(get_base1(L_free,1,"L_free",1), multiply(stan::model::rvalue(legis_pred, stan::model::cons_list(stan::model::index_uni(1), stan::model::cons_list(stan::model::index_omni(), stan::model::cons_list(stan::model::index_omni(), stan::model::nil_index_list()))), "legis_pred"),legis_x), legis_sd));
+                                if (as_bool(logical_gt(T,1))) {
+
+                                    for (int t = 2; t <= T; ++t) {
+
+                                        lp_accum__.add(normal_log<propto__>(get_base1(L_free,t,"L_free",1), add(get_base1(L_free,(t - 1),"L_free",1),multiply(stan::model::rvalue(legis_pred, stan::model::cons_list(stan::model::index_uni(t), stan::model::cons_list(stan::model::index_omni(), stan::model::cons_list(stan::model::index_omni(), stan::model::nil_index_list()))), "legis_pred"),legis_x)), legis_sd));
+                                    }
+                                }
+                                lp_accum__.add(normal_log<propto__>(sigma_abs_free, 0, discrim_abs_sd));
+                            } else if (as_bool(logical_eq(hier_type,6))) {
+
+                                lp_accum__.add(normal_log<propto__>(sigma_abs_free, multiply(sax_pred,sigma_abs_x), 10));
+                                lp_accum__.add(normal_log<propto__>(get_base1(L_free,1,"L_free",1), 0, legis_sd));
+                                if (as_bool(logical_gt(T,1))) {
+
+                                    for (int t = 2; t <= T; ++t) {
+
+                                        lp_accum__.add(normal_log<propto__>(get_base1(L_free,t,"L_free",1), get_base1(L_free,(t - 1),"L_free",1), legis_sd));
+                                    }
+                                }
+                            } else if (as_bool(logical_eq(hier_type,7))) {
+
+                                lp_accum__.add(normal_log<propto__>(sigma_abs_free, multiply(sax_pred,sigma_abs_x), 10));
+                                lp_accum__.add(normal_log<propto__>(get_base1(L_free,1,"L_free",1), multiply(stan::model::rvalue(legis_pred, stan::model::cons_list(stan::model::index_uni(1), stan::model::cons_list(stan::model::index_omni(), stan::model::cons_list(stan::model::index_omni(), stan::model::nil_index_list()))), "legis_pred"),legis_x), legis_sd));
+                                if (as_bool(logical_gt(T,1))) {
+
+                                    for (int t = 2; t <= T; ++t) {
+
+                                        lp_accum__.add(normal_log<propto__>(get_base1(L_free,t,"L_free",1), add(get_base1(L_free,(t - 1),"L_free",1),multiply(stan::model::rvalue(legis_pred, stan::model::cons_list(stan::model::index_uni(t), stan::model::cons_list(stan::model::index_omni(), stan::model::cons_list(stan::model::index_omni(), stan::model::nil_index_list()))), "legis_pred"),legis_x)), legis_sd));
+                                    }
+                                }
+                            }
+                        } else {
+
+                            lp_accum__.add(normal_log<propto__>(get_base1(restrict_high,1,"restrict_high",1), 0, restrict_sd));
+                            lp_accum__.add(normal_log<propto__>(sigma_reg_free, 0, discrim_reg_sd));
+                            if (as_bool(logical_eq(hier_type,1))) {
+
+                                lp_accum__.add(normal_log<propto__>(get_base1(L_free,1,"L_free",1), multiply(stan::model::rvalue(legis_pred, stan::model::cons_list(stan::model::index_uni(1), stan::model::cons_list(stan::model::index_omni(), stan::model::cons_list(stan::model::index_omni(), stan::model::nil_index_list()))), "legis_pred"),legis_x), legis_sd));
+                                if (as_bool(logical_gt(T,1))) {
+
+                                    for (int t = 2; t <= T; ++t) {
+
+                                        lp_accum__.add(normal_log<propto__>(get_base1(L_free,t,"L_free",1), add(get_base1(L_free,(t - 1),"L_free",1),multiply(stan::model::rvalue(legis_pred, stan::model::cons_list(stan::model::index_uni(t), stan::model::cons_list(stan::model::index_omni(), stan::model::cons_list(stan::model::index_omni(), stan::model::nil_index_list()))), "legis_pred"),legis_x)), legis_sd));
+                                    }
+                                }
+                                lp_accum__.add(normal_log<propto__>(sigma_abs_free, 0, discrim_abs_sd));
+                            } else if (as_bool(logical_eq(hier_type,3))) {
+
+                                lp_accum__.add(normal_log<propto__>(sigma_abs_free, multiply(sax_pred,sigma_abs_x), 10));
+                                lp_accum__.add(normal_log<propto__>(get_base1(L_free,1,"L_free",1), 0, legis_sd));
+                                if (as_bool(logical_gt(T,1))) {
+
+                                    for (int t = 2; t <= T; ++t) {
+
+                                        lp_accum__.add(normal_log<propto__>(get_base1(L_free,t,"L_free",1), get_base1(L_free,(t - 1),"L_free",1), legis_sd));
+                                    }
+                                }
+                            } else if (as_bool(logical_eq(hier_type,5))) {
+
+                                lp_accum__.add(normal_log<propto__>(sigma_abs_free, 0, discrim_abs_sd));
+                                lp_accum__.add(normal_log<propto__>(get_base1(L_free,1,"L_free",1), multiply(stan::model::rvalue(legis_pred, stan::model::cons_list(stan::model::index_uni(1), stan::model::cons_list(stan::model::index_omni(), stan::model::cons_list(stan::model::index_omni(), stan::model::nil_index_list()))), "legis_pred"),legis_x), legis_sd));
+                                if (as_bool(logical_gt(T,1))) {
+
+                                    for (int t = 2; t <= T; ++t) {
+
+                                        lp_accum__.add(normal_log<propto__>(get_base1(L_free,t,"L_free",1), add(get_base1(L_free,(t - 1),"L_free",1),multiply(stan::model::rvalue(legis_pred, stan::model::cons_list(stan::model::index_uni(t), stan::model::cons_list(stan::model::index_omni(), stan::model::cons_list(stan::model::index_omni(), stan::model::nil_index_list()))), "legis_pred"),legis_x)), legis_sd));
+                                    }
+                                }
+                            } else if (as_bool(logical_eq(hier_type,8))) {
+
+                                lp_accum__.add(normal_log<propto__>(sigma_abs_free, 0, discrim_abs_sd));
+                                lp_accum__.add(normal_log<propto__>(get_base1(L_free,1,"L_free",1), 0, legis_sd));
+                                if (as_bool(logical_gt(T,1))) {
+
+                                    for (int t = 2; t <= T; ++t) {
+
+                                        lp_accum__.add(normal_log<propto__>(get_base1(L_free,t,"L_free",1), get_base1(L_free,(t - 1),"L_free",1), legis_sd));
+                                    }
+                                }
+                            }
+                        }
                     } else if (as_bool(logical_eq(constraint_type,3))) {
 
                         if (as_bool((primitive_value((primitive_value((primitive_value(logical_eq(hier_type,3)) || primitive_value(logical_eq(hier_type,5)))) || primitive_value(logical_eq(hier_type,6)))) || primitive_value(logical_eq(hier_type,7))))) {
@@ -2229,6 +2389,7 @@ public:
         names__.push_back("A_int_free");
         names__.push_back("steps_votes");
         names__.push_back("steps_votes_grm");
+        names__.push_back("restrict_ord");
         names__.push_back("avg_particip");
         names__.push_back("L_full");
         names__.push_back("sigma_abs_full");
@@ -2295,6 +2456,10 @@ public:
         dims__.push_back((m - 1));
         dimss__.push_back(dims__);
         dims__.resize(0);
+        dims__.push_back(T);
+        dims__.push_back((num_fix_low + num_fix_high));
+        dimss__.push_back(dims__);
+        dims__.resize(0);
         dimss__.push_back(dims__);
         dims__.resize(0);
         dims__.push_back(T);
@@ -2337,12 +2502,12 @@ public:
         vector<vector_d> restrict_low;
         size_t dim_restrict_low_0__ = T;
         for (size_t k_0__ = 0; k_0__ < dim_restrict_low_0__; ++k_0__) {
-            restrict_low.push_back(in__.vector_ub_constrain(0,num_fix_low));
+            restrict_low.push_back(in__.vector_ub_constrain(restrict_low_bar,num_fix_low));
         }
         vector<vector_d> restrict_high;
         size_t dim_restrict_high_0__ = T;
         for (size_t k_0__ = 0; k_0__ < dim_restrict_high_0__; ++k_0__) {
-            restrict_high.push_back(in__.vector_lb_constrain(0,num_fix_high));
+            restrict_high.push_back(in__.vector_lb_constrain(restrict_high_bar,num_fix_high));
         }
         vector<vector_d> pinned_pars;
         size_t dim_pinned_pars_0__ = T;
@@ -2362,6 +2527,11 @@ public:
         size_t dim_steps_votes_grm_0__ = num_bills;
         for (size_t k_0__ = 0; k_0__ < dim_steps_votes_grm_0__; ++k_0__) {
             steps_votes_grm.push_back(in__.ordered_constrain((m - 1)));
+        }
+        vector<vector_d> restrict_ord;
+        size_t dim_restrict_ord_0__ = T;
+        for (size_t k_0__ = 0; k_0__ < dim_restrict_ord_0__; ++k_0__) {
+            restrict_ord.push_back(in__.ordered_constrain((num_fix_low + num_fix_high)));
         }
         double avg_particip = in__.scalar_constrain();
         for (int k_0__ = 0; k_0__ < (num_bills - num_constrain_sa); ++k_0__) {
@@ -2420,6 +2590,11 @@ public:
         for (int k_1__ = 0; k_1__ < (m - 1); ++k_1__) {
             for (int k_0__ = 0; k_0__ < num_bills; ++k_0__) {
                 vars__.push_back(steps_votes_grm[k_0__][k_1__]);
+            }
+        }
+        for (int k_1__ = 0; k_1__ < (num_fix_low + num_fix_high); ++k_1__) {
+            for (int k_0__ = 0; k_0__ < T; ++k_0__) {
+                vars__.push_back(restrict_ord[k_0__][k_1__]);
             }
         }
         vars__.push_back(avg_particip);
@@ -2691,6 +2866,13 @@ public:
                 param_names__.push_back(param_name_stream__.str());
             }
         }
+        for (int k_1__ = 1; k_1__ <= (num_fix_low + num_fix_high); ++k_1__) {
+            for (int k_0__ = 1; k_0__ <= T; ++k_0__) {
+                param_name_stream__.str(std::string());
+                param_name_stream__ << "restrict_ord" << '.' << k_0__ << '.' << k_1__;
+                param_names__.push_back(param_name_stream__.str());
+            }
+        }
         param_name_stream__.str(std::string());
         param_name_stream__ << "avg_particip";
         param_names__.push_back(param_name_stream__.str());
@@ -2819,6 +3001,13 @@ public:
             for (int k_0__ = 1; k_0__ <= num_bills; ++k_0__) {
                 param_name_stream__.str(std::string());
                 param_name_stream__ << "steps_votes_grm" << '.' << k_0__ << '.' << k_1__;
+                param_names__.push_back(param_name_stream__.str());
+            }
+        }
+        for (int k_1__ = 1; k_1__ <= (num_fix_low + num_fix_high); ++k_1__) {
+            for (int k_0__ = 1; k_0__ <= T; ++k_0__) {
+                param_name_stream__.str(std::string());
+                param_name_stream__ << "restrict_ord" << '.' << k_0__ << '.' << k_1__;
                 param_names__.push_back(param_name_stream__.str());
             }
         }

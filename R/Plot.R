@@ -498,7 +498,7 @@ id_plot_sims <- function(sims,type='RMSE') {
                                                                      ncol=1) +
       theme(panel.grid = element_blank(),
             axis.text.x = element_blank()) + 
-      geom_hline(yintercept=0,linetype=3) 
+      geom_hline(aes(yintercept=(mean(avg))),linetype=3) 
   }
 
   

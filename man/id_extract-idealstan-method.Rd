@@ -8,6 +8,8 @@
 \S4method{id_extract}{idealstan}(object, extract_type = "persons", ...)
 }
 \arguments{
+\item{object}{A fitted \code{idealstan} object (see \code{\link{id_estimate}})}
+
 \item{extract_type}{Can be one of \code{'persons'} for person/legislator ideal points,
 \code{'reg_discrim'} for non-inflated item (bill) discrimination scores,
 \code{'reg_diff'} for non-inflated item (bill) difficulty scores,

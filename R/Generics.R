@@ -246,12 +246,12 @@ setGeneric('id_extract',signature='object',
 #'  
 #'  All parameters are returned in the order in which they were input into the \code{\link{id_make}} function.
 #'  
-#' @param object A fitted \code{idealstan} object (see \code{\link{id_estimate})
+#' @param object A fitted \code{idealstan} object (see \code{\link{id_estimate}})
 #' @param extract_type Can be one of \code{'persons'} for person/legislator ideal points,
-#'  \code{'reg_discrim'} for non-inflated item (bill) discrimination scores,
-#'  \code{'reg_diff'} for non-inflated item (bill) difficulty scores,
-#'  \code{'miss_discrim'} for inflated item (bill) discrimination scores,
-#'  and \code{'miss_diff'} for inflated item (bill) difficulty scores.
+#' \code{'reg_discrim'} for non-inflated item (bill) discrimination scores,
+#' \code{'reg_diff'} for non-inflated item (bill) difficulty scores,
+#' \code{'miss_discrim'} for inflated item (bill) discrimination scores,
+#' and \code{'miss_diff'} for inflated item (bill) difficulty scores.
 #' @param ... Any additional arguments passed on to the \code{\link{rstan::extract}} function.
 #' 
 #' @export
@@ -261,3 +261,21 @@ setMethod(id_extract,signature(object='idealstan'),
             .extract_samples(obj=object,extract_type=extract_type)
             
           })
+
+setGeneric('launch_shinystan',signature='object',
+           function(object,...) standardGeneric('launch_shinystan')) 
+
+#' @export
+setMethod(launch_shinystan,signature(object='idealstan'),
+          function(object,pars=c('L_free',
+                                 'sigma_reg_free',
+                                 'sigma_abs_free',
+                                 'restrict_high',
+                                 'restrict_low',
+                                 'restrict_ord',
+                                 'steps_votes',
+                                 'steps_votes_grm'),...) {
+            to_shiny <- shinystan::as.shinystan(object@stan_samples,pars=pars)
+            shinystan::launch_shinystan(to_shiny,...)
+          })
+

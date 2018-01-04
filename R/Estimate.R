@@ -267,6 +267,12 @@ id_make <- function(score_data=NULL,simul_data=NULL,
 #' @param diff_reg_sd Set the prior standard deviation for the bill (item) intercepts for the non-inflated model.
 #' @param diff_miss_sd Set the prior standard deviation for the bill (item) intercepts for the inflated model.
 #' @param restrict_sd Set the prior standard deviation for constrained parameters
+#' @param restrict_low_bar Set the constraint threshold for constrained parameters (parameter must be lower than this bar and no greater than zero)
+#' @param restrict_high_bar Set the constraint threshold for constrained parameters (parameter must be higher than this bar and no less than zero)
+#' @param restrict_alpha This is the scale (alpha) parameter passed to the gamma prior if exactly two item/person parameters are constrained, each high or low. The gamma prior pushes these two
+#' polar parameters apart. A higher value will push these two poles farther apart, which will help identification. 
+#' @param restrict_beta The beta (shape) parameter passed to the gamma prior if exactly two item/person parameters are constrained, each high or low. The gamma prior pushes these two
+#' polar parameters apart.
 #' @param ... Additional parameters passed on to Stan's sampling engine. See \code{\link[rstan]{stan}} for more information.
 #' @return A fitted \code{\link{idealstan}} object that contains posterior samples of all parameters either via full Bayesian infererence
 #' or a variational approximation if \code{use_vb} is set to \code{TRUE}. This object can then be passed to the plotting functions for further analysis.
@@ -289,6 +295,10 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
                            diff_reg_sd=3,
                            diff_miss_sd=3,
                            restrict_sd=3,
+                           restrict_low_bar=-0.5,
+                        restrict_high_bar=0.5,
+                        restrict_alpha=4,
+                        restrict_beta=1,
                            ...) {
   
   
@@ -342,7 +352,11 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
                     legis_sd=person_sd,
                     diff_reg_sd=diff_reg_sd,
                     diff_abs_sd=diff_miss_sd,
-                    restrict_sd=restrict_sd)
+                    restrict_sd=restrict_sd,
+                    restrict_low_bar=restrict_low_bar,
+                    restrict_high_bar=restrict_high_bar,
+                    restrict_alpha=restrict_alpha,
+                    restrict_beta=restrict_beta)
   
   idealdata <- id_model(object=idealdata,fixtype=fixtype,model_type=model_type,this_data=this_data,
                         nfix=nfix,restrict_params=restrict_params,restrict_ind_high=restrict_ind_high,
@@ -402,7 +416,11 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
                     diff_reg_sd=diff_reg_sd,
                     diff_abs_sd=diff_miss_sd,
                     legis_sd=person_sd,
-                    restrict_sd=restrict_sd)
+                    restrict_sd=restrict_sd,
+                    restrict_low_bar=restrict_low_bar,
+                    restrict_high_bar=restrict_high_bar,
+                    restrict_alpha=restrict_alpha,
+                    restrict_beta=restrict_beta)
 
   outobj <- sample_model(object=idealdata,nchains=nchains,niters=niters,warmup=warmup,ncores=ncores,
                          this_data=this_data,use_vb=use_vb,...)

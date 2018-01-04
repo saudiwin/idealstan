@@ -889,6 +889,11 @@ if (constrain_par == 1) {
     if (hier_type == 3 || hier_type == 5 || hier_type == 6 || hier_type == 7) {
       //all combinations where hier_type parameters in absences
       sigma_reg_free~normal(srx_pred[num_bills - num_constrain_sr, ] * sigma_reg_x, 10);
+      
+      //experimental way of doing  multiple parameter constraints
+      
+      //restrict_ord[1,2] - restrict_ord[1,1] ~ gamma(5,1);
+      
       restrict_high[1] ~normal(srx_pred[(num_bills - (2 * num_constrain_sr) + 1):(num_bills - num_constrain_sr), ] * sigma_reg_x_cons, restrict_sd);
       restrict_low[1] ~normal(srx_pred[(num_bills - num_constrain_sr + 1):num_bills, ] * sigma_reg_x_cons, restrict_sd);
       if (hier_type == 2) {
@@ -934,7 +939,7 @@ if (constrain_par == 1) {
       //all other hier_type combinations where absences d/n have hier_typearchical priors
       restrict_high[1] ~normal(0, restrict_sd);
       restrict_low[1] ~normal(0, restrict_sd);
-      
+      //restrict_ord[1,2] - restrict_ord[1,1] ~ gamma(restrict_alpha,restrict_beta);
         sigma_reg_free ~ normal(0,discrim_reg_sd);
 
       //run through remaining hier_type combinations--not 3,5,6 or 7 but rather 1,2,4,8

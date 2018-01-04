@@ -12,7 +12,8 @@ id_estimate(idealdata = NULL, model_type = 2, use_subset = FALSE,
   restrict_type = "constrain_oneway", fixtype = "vb",
   warmup = floor(niters/2), ncores = 4, auto_id = FALSE,
   discrim_reg_sd = 3, discrim_miss_sd = 3, person_sd = 1,
-  diff_reg_sd = 3, diff_miss_sd = 3, restrict_sd = 3, ...)
+  diff_reg_sd = 3, diff_miss_sd = 3, restrict_sd = 3,
+  restrict_low_bar = -0.5, restrict_high_bar = 0.5, ...)
 }
 \arguments{
 \item{model_type}{An integer reflecting the kind of model to be estimated. See below.}
@@ -78,6 +79,10 @@ persons/legislators will be used to constrain and identify the model.}
 \item{diff_miss_sd}{Set the prior standard deviation for the bill (item) intercepts for the inflated model.}
 
 \item{restrict_sd}{Set the prior standard deviation for constrained parameters}
+
+\item{restrict_low_bar}{Set the constraint threshold for constrained parameters (parameter must be lower than this bar and no greater than zero)}
+
+\item{restrict_high_bar}{Set the constraint threshold for constrained parameters (parameter must be higher than this bar and no less than zero)}
 
 \item{...}{Additional parameters passed on to Stan's sampling engine. See \code{\link[rstan]{stan}} for more information.}
 }

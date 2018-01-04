@@ -1,0 +1,231 @@
+---
+title: "Package Test"
+output:
+  html_document: default
+  html_notebook: default
+---
+
+
+```{r setup, include=FALSE}
+
+require(idealstan)
+require(ggplot2)
+require(dplyr)
+require(tidyr)
+require(rstan)
+
+knitr::opts_chunk$set(fig.align = 'center',warning = F,message = F)
+```
+
+
+##Introduction
+
+This Rmarkdown file has a series of simulations run on the models offered in `idealstan`. It simulates a large amount of data and then checks to see if the residuals relative to the true parameters sum to zero, as well as for credible interval coverage. In general, the credible intervals aren't going to be exactly where they should be because the constraints used in estimating the models and identifying the signs aren't themselves included in the simulated data. I.e., one of the ideal points actually follows a positive continuous distribution instead of a random normal distribution once it is constrained, which introduces a slight bias in the recovery of the true parameters. This is an artifact of virtually every latent variable model, and is not of great concern as long as the credible intervals reach close to 90 percent coverage. 
+
+```{r test_gamma,include=F}
+
+alpha <- 3
+beta <- .3
+
+stan_gamma <- '
+data {
+  int N;
+  real alpha;
+  real beta;
+}
+parameters {
+
+}
+model {
+
+}
+generated quantities {
+  vector[N] gamma_out;
+
+  for(n in 1:N)
+    gamma_out[n] = gamma_rng(alpha,beta);
+}
+
+'
+get_model <- stan_model(model_code = stan_gamma)
+get_samples <- sampling(get_model,iter=2,warmup=1,data=list(N=1000,alpha=alpha,beta=beta),algorithm="Fixed_param",chains=1)
+t(rstan::extract(get_samples,pars='gamma_out')$gamma_out) %>% as_data_frame %>% 
+  mutate(V2=rgamma(n=1000,scale=alpha,shape=beta)) %>% 
+  gather(key = dist_name,value=variate) %>% 
+  ggplot(aes(x=variate)) + geom_density(aes(fill=dist_name),alpha=0.5) + theme_minimal() +
+  geom_vline(aes(xintercept=mean(variate),linetype=dist_name))
+```
+
+
+First, the standard IRT 2-PL (for this one, the absence discriminations are not a part of the model):
+
+```{r irt_binary}
+bin_irt_2pl_sim <- id_sim_gen(num_person=100,num_bills=100,ordinal=F,absence=F)
+bin_irt_2pl_est <- id_estimate(idealdata=bin_irt_2pl_sim,
+                               model_type=1,
+                               restrict_ind_high = sort(bin_irt_2pl_sim@simul_data$true_reg_discrim,decreasing=T,
+                                                        index=T)$ix[1:3],
+                               restrict_ind_low = sort(bin_irt_2pl_sim@simul_data$true_reg_discrim,decreasing=F, 
+                                                        index=T)$ix[1:3],
+                               restrict_params = 'discrim_reg',
+                               restrict_type = 'constrain_twoway',
+                               fixtype='constrained',
+                           discrim_reg_sd = 4,
+                           discrim_miss_sd = 4,
+                           diff_reg_sd = 4,
+                           diff_miss_sd = 4,
+                           restrict_sd = 4,
+                           restrict_low_bar = -1,
+                           restrict_high_bar = 1)
+id_plot_rhats(bin_irt_2pl_est)
+```
+
+```{r cov_plot_irt_2pl}
+id_sim_coverage(bin_irt_2pl_est) %>% 
+  bind_rows(.id='Parameter') %>% 
+  ggplot(aes(y=avg,x=Parameter)) +
+  stat_summary(fun.args=list(mult=1.96)) + 
+  theme_minimal() 
+```
+
+```{r irt_2pl_resid}
+
+id_plot_sims(bin_irt_2pl_est,type='Residuals')
+
+```
+
+```{r irt_2pl_RMSE}
+
+id_plot_sims(bin_irt_2pl_est)
+
+```
+
+
+Next, inflated 2-PL IRT (binary):
+
+```{r irt_binary_inflate}
+bin_irt_2pl_abs_sim <- id_sim_gen(num_person=100,num_bills=100,ordinal=F,absence=T,
+                               absence_diff_mean=0)
+bin_irt_2pl_abs_est <- id_estimate(idealdata=bin_irt_2pl_abs_sim,
+                               model_type=2,
+                               restrict_ind_high = sort(bin_irt_2pl_abs_sim@simul_data$true_person,decreasing=T,
+                                                        index=T)$ix[1:3],
+                              restrict_ind_low = sort(bin_irt_2pl_abs_sim@simul_data$true_person,decreasing=F,
+                                                        index=T)$ix[1:3],
+                               restrict_type = 'constrain_twoway',
+                               fixtype='constrained',
+                           discrim_reg_sd = 4,
+                           discrim_miss_sd = 4,
+                           diff_reg_sd = 4,
+                           diff_miss_sd = 4,
+                           restrict_sd = 4,
+                          restrict_low_bar = -1,
+                           restrict_high_bar = 1)
+id_plot_rhats(bin_irt_2pl_abs_est)
+```
+
+```{r irt_2pl_abs_cov_plot}
+id_sim_coverage(bin_irt_2pl_abs_est) %>% 
+  bind_rows(.id='Parameter') %>% 
+  ggplot(aes(y=avg,x=Parameter)) +
+  stat_summary(fun.args=list(mult=1.96)) + 
+  theme_minimal() 
+```
+
+```{r irt_2pl_abs_resid}
+
+id_plot_sims(bin_irt_2pl_abs_est,type='Residuals')
+
+```
+
+```{r irt_2pl_abs_RMSE}
+
+id_plot_sims(bin_irt_2pl_abs_est)
+
+```
+
+Now we'll start with the ordinal models. First the uninflated ordinal model:
+
+```{r irt_ordinal}
+ord_irt_sim <- id_sim_gen(num_person=100,num_bills=100,ordinal=T,absence=F,
+                               absence_diff_mean=0)
+ord_irt_est <- id_estimate(idealdata=ord_irt_sim,
+                               model_type=3,
+                               restrict_ind_high = sort(ord_irt_sim@simul_data$true_person,decreasing=T,
+                                                        index=T)$ix[1:3],
+                              restrict_ind_low = sort(ord_irt_sim@simul_data$true_person,decreasing=F,
+                                                        index=T)$ix[1:3],
+                               restrict_type = 'constrain_twoway',
+                               fixtype='constrained',
+                           discrim_reg_sd = 4,
+                           discrim_miss_sd = 4,
+                           diff_reg_sd = 4,
+                           diff_miss_sd = 4,
+                           restrict_sd = 4,
+                          restrict_low_bar = -1,
+                           restrict_high_bar = 1)
+id_plot_rhats(ord_irt_est)
+```
+
+```{r irt_ord_cov_plot}
+id_sim_coverage(ord_irt_est) %>% 
+  bind_rows(.id='Parameter') %>% 
+  ggplot(aes(y=avg,x=Parameter)) +
+  stat_summary(fun.args=list(mult=1.96)) + 
+  theme_minimal() 
+```
+
+```{r ord_irt_resid}
+
+id_plot_sims(ord_irt_est,type='Residuals')
+
+```
+
+```{r ord_irt_RMSE}
+
+id_plot_sims(ord_irt_est)
+
+```
+
+And we will finish with the inflated ordinal model:
+
+```{r irt_ordinal_abs}
+ord_irt_abs_sim <- id_sim_gen(num_person=100,num_bills=100,ordinal=T,absence=T,
+                               absence_diff_mean=0)
+ord_irt_abs_est <- id_estimate(idealdata=ord_irt_abs_sim,
+                               model_type=4,
+                               restrict_ind_high = sort(ord_irt_abs_sim@simul_data$true_person,decreasing=T,
+                                                        index=T)$ix[1:3],
+                              restrict_ind_low = sort(ord_irt_abs_sim@simul_data$true_person,decreasing=F,
+                                                        index=T)$ix[1:3],
+                               restrict_type = 'constrain_twoway',
+                               fixtype='constrained',
+                           discrim_reg_sd = 4,
+                           discrim_miss_sd = 4,
+                           diff_reg_sd = 4,
+                           diff_miss_sd = 4,
+                           restrict_sd = 4,
+                          restrict_low_bar = -1,
+                           restrict_high_bar = 1)
+id_plot_rhats(ord_irt_abs_est)
+```
+
+```{r ord_irt_abs_cov_plot}
+id_sim_coverage(ord_irt_abs_est) %>% 
+  bind_rows(.id='Parameter') %>% 
+  ggplot(aes(y=avg,x=Parameter)) +
+  stat_summary(fun.args=list(mult=1.96)) + 
+  theme_minimal() 
+```
+
+```{r ord_irt_abs_resid}
+
+id_plot_sims(ord_irt_abs_est,type='Residuals')
+
+```
+
+```{r ord_irt_abs_RMSE}
+
+id_plot_sims(ord_irt_abs_est)
+
+```

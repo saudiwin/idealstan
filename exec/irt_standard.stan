@@ -46,6 +46,10 @@ data {
   real diff_abs_sd;
   real diff_reg_sd;
   real restrict_sd;
+  real restrict_low_bar;
+  real restrict_high_bar;
+  real restrict_alpha;
+  real restrict_beta;
 }
 
 transformed data {
@@ -89,8 +93,8 @@ parameters {
   vector[num_bills-num_constrain_sa] sigma_abs_free;
   vector[num_legis-num_constrain_l] L_free[T];
   vector[num_bills-num_constrain_sr] sigma_reg_free;
-  vector<upper=0>[num_fix_low] restrict_low[T];
-  vector<lower=0>[num_fix_high] restrict_high[T];
+  vector<upper=restrict_low_bar>[num_fix_low] restrict_low[T];
+  vector<lower=restrict_high_bar>[num_fix_high] restrict_high[T];
   vector[num_fix_high] pinned_pars[T];
   vector[LX] legis_x;
   vector[SRX] sigma_reg_x;
@@ -102,6 +106,7 @@ parameters {
   vector[num_bills] A_int_free;
   ordered[m-1] steps_votes;
   ordered[m-1] steps_votes_grm[num_bills];
+  ordered[num_fix_low+num_fix_high] restrict_ord[T];
   real avg_particip;
 }
 
@@ -154,9 +159,11 @@ model {
   for(b in 1:num_bills) {
   steps_votes_grm[b] ~ normal(0,5);
   }
+  for(t in 1:T)
+    restrict_ord[t] ~ normal(0,5);
   
   //priors for legislators and bill parameters
-  #include "modeling_statement_v5.stan"
+  #include "modeling_statement_v6.stan"
   
   //all model types
 
