@@ -168,7 +168,7 @@ setMethod('id_model',signature(object='idealdata'),
 
 #' Posterior Summaries for fitted \code{idealstan} object
 #' 
-#' This function produces quantiles and standard deviations for the posterior samples of \code{\link{idealstan}} objects.
+#' This function produces quantiles and standard deviations for the posterior samples of \code{idealstan} objects.
 #' 
 #' @param object An \code{idealstan} object fitted by \code{\link{id_estimate}}
 #' 
@@ -202,6 +202,7 @@ setMethod('summary',signature(object='idealstan'),
 #' This generic function will run all the plotting functions associated with fitted \code{idealstan} objects.
 #' 
 #' @param object An \code{idealstan} object
+#' @param ... Other options passed onto the underlying plot function
 #' 
 #' @export
 setGeneric('id_plot',
@@ -245,7 +246,7 @@ setGeneric('id_extract',signature='object',
            function(object,...) standardGeneric('id_extract'))
 
 
-#' Extract \code{\link{rstan::stan}} joint posterior distribution from \code{idealstan} object
+#' Extract \code{\link[rstan]{stan}} joint posterior distribution from \code{idealstan} object
 #' 
 #' This convenience function allows you to extract the underlying \code{\link[rstan]{rstan}} posterior estimates for the full parameters
 #'   estimates of the \code{idealstan} model object. See \code{\link[rstan]{extract}} for the underlying function and more options.
@@ -273,10 +274,24 @@ setMethod(id_extract,signature(object='idealstan'),
             .extract_samples(obj=object,extract_type=extract_type)
             
           })
-
+#' Generic Method to Use \code{shinystan} with \code{idealstan}
+#' 
+#' A generic function for launching \code{\link[shinystan]{launch_shinystan}}.
+#' 
+#' @param object A fitted \code{idealstan} object.
+#'  
+#' @export
 setGeneric('launch_shinystan',signature='object',
            function(object,...) standardGeneric('launch_shinystan')) 
 
+#' Function to Launch Shinystan with an \code{idealstan} Object
+#' 
+#' This wrapper will pull the \code{rstan} samples out of a fitted \code{idealstan} model and then launch
+#' \code{\link[shinystan]{launch_shinystan}}. This function is useful for examining convergence statistics of the 
+#' underlying MCMC sampling.
+#' 
+#' @seealso \code{\link[shinystan]{shinystan}}
+#' 
 #' @export
 setMethod(launch_shinystan,signature(object='idealstan'),
           function(object,pars=c('L_free',

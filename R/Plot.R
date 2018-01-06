@@ -1,6 +1,6 @@
 #' Plot Legislator/Person and Bill/Item Ideal Points
 #' 
-#' This function can be used on a fitted \code{\link{idealstan}} object to plot the relative positions and 
+#' This function can be used on a fitted \code{idealstan} object to plot the relative positions and 
 #' uncertainties of legislator/persons and bills/items.
 #' 
 #' This plot shows the distribution of ideal points for the legislators/persons in the model. It will plot them as a vertical
@@ -30,8 +30,10 @@
 #' @param hpd_limit The greatest absolute difference in high-posterior density interval shown for any point. Useful for excluding imprecisely estimated persons/legislators from the plot. Leave NULL if you don't want to exclude any.
 #' @param sample_persons If you don't want to use the full number of persons/legislators from the model, enter a proportion (between 0 and 1) to select
 #'  only a fraction of the persons/legislators.
+#' @param ... Other options passed on to plotting function, currently ignored
 #' @import ggplot2
 #' @import lazyeval
+#' @importFrom rlang parse_quosure
 #' @export
 id_plot_legis <- function(object,return_data=FALSE,bill_plot=NULL,
                        text_size_label=2,text_size_group=2.5,
@@ -356,6 +358,7 @@ id_plot_legis <- function(object,return_data=FALSE,bill_plot=NULL,
 #' @param model1 The first model to compare
 #' @param model2 The second model to compare
 #' @param return_data Whether to return the underlying data
+#' @param labels \code{TRUE} or \code{FALSE}, whether to use labels for points
 #' @param hjust The horizontal adjustment of point labels
 #' @param palette \code{colorbrewer} palette name
 #' @param color_direction Whether to reverse the color scale
@@ -423,6 +426,7 @@ id_plot_compare <- function(model1=NULL,model2=NULL,scale_flip=FALSE,return_data
 #' @param return_data Whether or not to return the plot as a ggplot2 object and the data together in a list instead of
 #'  plotting.
 #' @param func The function to use if \code{'dens_type'} is set to \code{'function'}.
+#' @param ... Other options passed on to the plotting function, currently ignored.
 #' @export
 id_plot_all_hist <- function(object,params='person',param_labels=NULL,dens_type='all',
                           return_data=FALSE,func=median,...) {

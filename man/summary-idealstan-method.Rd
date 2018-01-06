@@ -14,5 +14,5 @@
 A \code{\link[dplyr]{tibble}} data frame with parameters as rows and descriptive statistics as columns
 }
 \description{
-This function produces quantiles and standard deviations for the posterior samples of \code{\link{idealstan}} objects.
+This function produces quantiles and standard deviations for the posterior samples of \code{idealstan} objects.
 }

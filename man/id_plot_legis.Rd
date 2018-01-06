@@ -47,9 +47,11 @@ or 'Absence Points' for only the absence midpoints or 'Vote Points' for only the
 
 \item{sample_persons}{If you don't want to use the full number of persons/legislators from the model, enter a proportion (between 0 and 1) to select
 only a fraction of the persons/legislators.}
+
+\item{...}{Other options passed on to plotting function, currently ignored}
 }
 \description{
-This function can be used on a fitted \code{\link{idealstan}} object to plot the relative positions and 
+This function can be used on a fitted \code{idealstan} object to plot the relative positions and 
 uncertainties of legislator/persons and bills/items.
 }
 \details{

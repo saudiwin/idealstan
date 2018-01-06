@@ -48,7 +48,7 @@
 #' @import rstantools
 #' @import Rcpp
 #' @import methods
-#' @importFrom stats dbinom median plogis quantile reorder rexp rlnorm runif sd step
+#' @importFrom stats dbinom median plogis quantile reorder rexp rlnorm runif sd step rnorm
 #' @useDynLib idealstan, .registration = TRUE
 id_make <- function(score_data=NULL,simul_data=NULL,
                            person_cov=NULL,item_cov=NULL,
@@ -191,7 +191,7 @@ id_make <- function(score_data=NULL,simul_data=NULL,
 
 #' Estimate an \code{idealstan} model
 #' 
-#' This function will take a pre-processed \code{\link[=id_make]{idealdata}} vote/score matrix and run one of the available IRT models on the data using
+#' This function will take a pre-processed \code{idealdata} vote/score matrix and run one of the available IRT models on the data using
 #' Stan's MCMC engine.
 #' 
 #' To run an IRT ideal point model, you must first pre-process your data using the \code{\link{id_make}} function. Be sure to specify the correct options for the
@@ -242,6 +242,7 @@ id_make <- function(score_data=NULL,simul_data=NULL,
 #' @param niters The number of iterations to run Stan's sampler. Shouldn't be set much lower than 500. See \code{\link[rstan]{stan}} for more info.
 #' @param use_vb Whether or not to use Stan's variational Bayesian inference engine instead of full Bayesian inference. Pros: it's much faster.
 #' Cons: it's not quite as accurate. See \code{\link[rstan]{vb}} for more info.
+#' @param nfix An integer specifying the number of parameters to constrain (for both high and low) if \code{fixtype} is set to \code{'vb'}
 #' @param warmup The number of iterations to use to calibrate Stan's sampler on a given model. Shouldn't be less than 100. 
 #' See \code{\link[rstan]{stan}} for more info.
 #' @param ncores The number of cores in your computer to use for parallel processing in the Stan engine. 
@@ -281,6 +282,62 @@ id_make <- function(score_data=NULL,simul_data=NULL,
 #' \code{\link{id_plot_legis}} for plotting results,
 #' \code{\link{summary}} for obtaining posterior quantiles,
 #' \code{\link{posterior_predict}} for producing predictive replications.
+#' @examples
+#' # First we can simulate data for an IRT 2-PL model that is inflated for missing data
+#' library(ggplot2)
+#' library(dplyr)
+#' 
+#' bin_irt_2pl_abs_sim <- id_sim_gen(ordinal=F,absence=T,absence_diff_mean=0)
+#' 
+#' # Now we can put that directly into the id_estimate function to get full Bayesian posterior estimates
+#' # We will constrain discrimination parameters for identification purposes based on the true simulated values
+#' 
+#' bin_irt_2pl_abs_est <- id_estimate(bin_irt_2pl_abs_sim,
+#'                                    model_type=2,
+#'                                    restrict_ind_high = sort(bin_irt_2pl_abs_sim@simul_data$true_reg_discrim,
+#'                                    decreasing=T,index=T)$ix[1:3],
+#'                                    restrict_ind_low = sort(bin_irt_2pl_abs_sim@simul_data$true_reg_discrim,
+#'                                    decreasing=F,index=T)$ix[1:3],
+#'                                    restrict_params = 'discrim_reg', 
+#'                                    restrict_type = 'constrain_twoway',
+#'                                    fixtype='constrained')
+#'                                    
+#' # We can now see how well the model recovered the true parameters
+#' 
+#' id_sim_coverage(bin_irt_2pl_abs_est) %>% 
+#'          bind_rows(.id='Parameter') %>% 
+#'          ggplot(aes(y=avg,x=Parameter)) +
+#'            stat_summary(fun.args=list(mult=1.96)) + 
+#'            theme_minimal()
+#' 
+#' # In most cases, we will use pre-existing data and we will need to use the id_make function first
+#' # We will use the full rollcall voting data from the 114th Senate as a rollcall object
+#' 
+#' data('senate114')
+#' 
+#' to_idealstan <-   id_make(score_data = senate114,
+#'                           ordinal = F,
+#'                           include_pres=F)
+#' 
+#' # Running this model will take considerably longer, even using variational Bayesian inference (use_vb=T)
+#' 
+#' \dontrun{
+#' sen_est <- id_estimate(senate_data,
+#' model_type = 2,
+#' use_vb = T,
+#' restrict_type='constrain_oneway',
+#' restrict_params='person',
+#' restrict_ind_high = which(row.names(senate114$votes[-1,])=='SASSE (R NE)'),
+#' auto_id=F,
+#' fixtype='constrained')
+#' }
+#' 
+#' data('senate114_fit')
+#' 
+#' # After running the model, we can plot the results of the person/legislator ideal points
+#' 
+#' id_plot_legis(senate114_fit)
+#' 
 #' @export
 id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=FALSE,
                            subset_group=NULL,subset_person=NULL,sample_size=20,

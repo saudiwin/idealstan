@@ -8,9 +8,9 @@ Returns a data frame with RMSE plus quantiles.}
 id_sim_rmse(obj, rep = 1)
 }
 \arguments{
-\item{rep}{Over how many replicates to calculate RMSE? Currently can only be 1}
+\item{obj}{A fitted \code{idealstan} object with true data from \code{\link{id_sim_gen}}}
 
-\item{object}{A fitted \code{idealstan} object with true data from \code{\link{id_sim_gen}}}
+\item{rep}{Over how many replicates to calculate RMSE? Currently can only be 1}
 }
 \description{
 RMSE function for calculating individual RMSE values compared to true simulation scores

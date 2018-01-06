@@ -3,7 +3,7 @@
 \docType{methods}
 \name{id_extract,idealstan-method}
 \alias{id_extract,idealstan-method}
-\title{Extract \code{\link{rstan::stan}} joint posterior distribution from \code{idealstan} object}
+\title{Extract \code{\link[rstan]{stan}} joint posterior distribution from \code{idealstan} object}
 \usage{
 \S4method{id_extract}{idealstan}(object, extract_type = "persons", ...)
 }

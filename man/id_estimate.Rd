@@ -40,6 +40,8 @@ the response matrix}
 \item{use_vb}{Whether or not to use Stan's variational Bayesian inference engine instead of full Bayesian inference. Pros: it's much faster.
 Cons: it's not quite as accurate. See \code{\link[rstan]{vb}} for more info.}
 
+\item{nfix}{An integer specifying the number of parameters to constrain (for both high and low) if \code{fixtype} is set to \code{'vb'}}
+
 \item{restrict_params}{Determines which parameters in the model are used for identification. If \code{fixtype} is 'vb', can be
 either 'person' (person/legislator ideal points) or 'items' (discrimination parameters for items/bills). Otherwise, the value must be one
 of the available classes of parameters: 'person' for persons/legislators, 'discrim_miss' for the missing-inflated item/bill discrimination
@@ -98,7 +100,7 @@ A fitted \code{\link{idealstan}} object that contains posterior samples of all p
 or a variational approximation if \code{use_vb} is set to \code{TRUE}. This object can then be passed to the plotting functions for further analysis.
 }
 \description{
-This function will take a pre-processed \code{\link[=id_make]{idealdata}} vote/score matrix and run one of the available IRT models on the data using
+This function will take a pre-processed \code{idealdata} vote/score matrix and run one of the available IRT models on the data using
 Stan's MCMC engine.
 }
 \details{
@@ -140,6 +142,63 @@ to \code{restrict_ind_high}, while \code{restrict_ind_low} should be left blank.
 numeric vector to \code{pin_vals}.
 }
 
+\examples{
+# First we can simulate data for an IRT 2-PL model that is inflated for missing data
+library(ggplot2)
+library(dplyr)
+
+bin_irt_2pl_abs_sim <- id_sim_gen(ordinal=F,absence=T,absence_diff_mean=0)
+
+# Now we can put that directly into the id_estimate function to get full Bayesian posterior estimates
+# We will constrain discrimination parameters for identification purposes based on the true simulated values
+
+bin_irt_2pl_abs_est <- id_estimate(bin_irt_2pl_abs_sim,
+                                   model_type=2,
+                                   restrict_ind_high = sort(bin_irt_2pl_abs_sim@simul_data$true_reg_discrim,
+                                   decreasing=T,index=T)$ix[1:3],
+                                   restrict_ind_low = sort(bin_irt_2pl_abs_sim@simul_data$true_reg_discrim,
+                                   decreasing=F,index=T)$ix[1:3],
+                                   restrict_params = 'discrim_reg', 
+                                   restrict_type = 'constrain_twoway',
+                                   fixtype='constrained')
+                                   
+# We can now see how well the model recovered the true parameters
+
+id_sim_coverage(bin_irt_2pl_abs_est) \%>\% 
+         bind_rows(.id='Parameter') \%>\% 
+         ggplot(aes(y=avg,x=Parameter)) +
+           stat_summary(fun.args=list(mult=1.96)) + 
+           theme_minimal()
+
+# In most cases, we will use pre-existing data and we will need to use the id_make function first
+# We will use the full rollcall voting data from the 114th Senate as a rollcall object
+
+data('senate114')
+
+to_idealstan <-   id_make(score_data = senate114,
+                          ordinal = F,
+                          include_pres=F)
+
+# Running this model will take considerably longer, even using variational Bayesian inference (use_vb=T)
+
+\dontrun{
+sen_est <- id_estimate(senate_data,
+model_type = 2,
+use_vb = T,
+restrict_type='constrain_oneway',
+restrict_params='person',
+restrict_ind_high = which(row.names(senate114$votes[-1,])=='SASSE (R NE)'),
+auto_id=F,
+fixtype='constrained')
+}
+
+data('senate114_fit')
+
+# After running the model, we can plot the results of the person/legislator ideal points
+
+id_plot_legis(senate114_fit)
+
+}
 \seealso{
 \code{\link{id_make}} for pre-processing data,
 \code{\link{id_plot_legis}} for plotting results,

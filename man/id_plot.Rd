@@ -8,6 +8,8 @@ id_plot(object, ...)
 }
 \arguments{
 \item{object}{An \code{idealstan} object}
+
+\item{...}{Other options passed onto the underlying plot function}
 }
 \description{
 This generic function will run all the plotting functions associated with fitted \code{idealstan} objects.

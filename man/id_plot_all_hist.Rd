@@ -26,6 +26,8 @@ in \code{func} (median by default).}
 plotting.}
 
 \item{func}{The function to use if \code{'dens_type'} is set to \code{'function'}.}
+
+\item{...}{Other options passed on to the plotting function, currently ignored.}
 }
 \description{
 This function produces density plots of the different types of parameters in an \code{idealstan} model: item (bill) difficulty and discrimination

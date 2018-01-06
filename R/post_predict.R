@@ -41,7 +41,7 @@
   }
 
 #' Function to calculate log-likelihood of absence-inflated ordinal models
-.predict_abs_ord <-
+.predict_abs_ord_ll <-
   function(all_params = NULL,
            n_iters = NULL,
            sample_draws = NULL,

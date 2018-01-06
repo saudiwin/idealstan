@@ -18,6 +18,8 @@ id_plot_compare(model1 = NULL, model2 = NULL, scale_flip = FALSE,
 
 \item{return_data}{Whether to return the underlying data}
 
+\item{labels}{\code{TRUE} or \code{FALSE}, whether to use labels for points}
+
 \item{hjust}{The horizontal adjustment of point labels}
 
 \item{palette}{\code{colorbrewer} palette name}
