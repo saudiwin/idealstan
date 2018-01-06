@@ -8,6 +8,8 @@ id_plot_all_hist(object, params = "person", param_labels = NULL,
   dens_type = "all", return_data = FALSE, func = median, ...)
 }
 \arguments{
+\item{object}{A fitted \code{idealstan} object}
+
 \item{params}{Select the type of parameter from the model to plot. \code{'person'} for person/legislator ideal points,
 \code{'miss_diff'} and \code{'miss_discrim'} for difficulty and discrimination parameters from the missing/inflated item/bill parameters,
 and \code{'regular_diff'} and \code{'regular_discrim'} for difficulty and discrimination parameters from the non-missing/non-inflated 

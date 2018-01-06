@@ -16,11 +16,11 @@
 \code{'miss_discrim'} for inflated item (bill) discrimination scores,
 and \code{'miss_diff'} for inflated item (bill) difficulty scores.}
 
-\item{...}{Any additional arguments passed on to the \code{\link{rstan::extract}} function.}
+\item{...}{Any additional arguments passed on to the \code{\link[rstan]{extract}} function.}
 }
 \description{
-This convenience function allows you to extract the underlying \code{rstan} posterior estimates for the full parameters
-  estimates of the \code{idealstan} model object. See \code{\link{rstan::extract}} for the underlying function and more options.
+This convenience function allows you to extract the underlying \code{\link[rstan]{rstan}} posterior estimates for the full parameters
+  estimates of the \code{idealstan} model object. See \code{\link[rstan]{extract}} for the underlying function and more options.
   
 You can use this function to access a matrix or array of the full posterior estimates of each of the parameters in an 
  \code{idealstan} object. There are available options to pick certain parameters of the model, such as the person (legislator)

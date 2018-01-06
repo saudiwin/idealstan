@@ -4,32 +4,36 @@
 
 #' Generic function for drawing from the posterior predictive distribution
 #'
-#' This function will draw from the posterior predictive distribution of the outcome, i.e., all the scores or 
-#'  votes that are used to create the \code{idealstan} model. You can then use functions such as 
-#'  \code{\link[bayesplot]{ppc_bars}} to see how well the model does returning the correct number of categories
-#'  in the score/vote matrix. 
-#'  Also see \code{help("posterior_predict", package = "rstanarm")}
+#' This generic is provided for compability with \code{\link[rstan]{stan}}.
 #' 
 #' @param object A fitted \code{idealstan} object
-#' @param draws The number of draws to use from the total number of posterior draws (default is 100).
-#' @param sample_scores In addition to reducing the number of posterior draws used to calculate the posterior predictive distribution,
-#'  you can sample from the scores/votes themselves. To do so, set \code{sample_scores} to the number of scores/votes to sample.
-#'
+#' @param ... All other parameters passed on to the underlying function.
 #' @export
 #' @return \code{posterior_predict} methods should return a \eqn{D} by \eqn{N}
 #'   matrix, where \eqn{D} is the number of draws from the posterior predictive
 #'   distribution and \eqn{N} is the number of data points being predicted per
 #'   draw.
-#'
-#'
-#'
-#'
 posterior_predict <- function(object, ...) {
   UseMethod("posterior_predict")
 }
 
+#' Posterior Prediction for \code{idealstan} objects
+#' 
+#' This function will draw from the posterior predictive distribution of the outcome, i.e., all the scores or 
+#'  votes that are used to create the \code{idealstan} model. 
+#'  
+#'  You can then use functions such as 
+#'  \code{\link[bayesplot]{ppc_bars}} to see how well the model does returning the correct number of categories
+#'  in the score/vote matrix. 
+#'  Also see \code{help("posterior_predict", package = "rstanarm")}
+#'
+#' @param object A fitted \code{idealstan} object
+#' @param draws The number of draws to use from the total number of posterior draws (default is 100).
+#' @param sample_scores In addition to reducing the number of posterior draws used to calculate the posterior predictive distribution.
+#' @param ... Any other arguments passed on to posterior_predict (currently none available)
+#' 
 #' @export
-posterior_predict.idealstan <- function(object,draws=100,sample_scores=NULL) {
+posterior_predict.idealstan <- function(object,draws=100,sample_scores=NULL,...) {
 
   all_params <- rstan::extract(object@stan_samples)
   legis_points <- rep(1:dim(all_params$L_full)[3],times=ncol(all_params$sigma_reg_full))
@@ -67,6 +71,11 @@ posterior_predict.idealstan <- function(object,draws=100,sample_scores=NULL) {
   return(out_predict)
 }
 
+#' Generic Method for Extracting Log Likelihood from Stan Objects
+#' 
+#' This function is a generic that is used to match the functions used with \code{\link[loo]{loo}} to calculate
+#' Bayesian information criteria on models.
+#' 
 #' @export
 extract_log_lik <- function(object, ...) {
   UseMethod("extract_log_lik")
@@ -84,7 +93,7 @@ extract_log_lik <- function(object, ...) {
 #'  you can sample from the scores/votes themselves. To do so, set \code{sample_scores} to the number of scores/votes to sample.
 #'
 #' @export
-extract_log_lik.idealstan <- function(object,draws=100,sample_scores=NULL) {
+extract_log_lik.idealstan <- function(object,...,draws=100,sample_scores=NULL) {
   
   all_params <- rstan::extract(object@stan_samples)
   legis_points <- rep(1:dim(all_params$L_full)[3],times=ncol(all_params$sigma_reg_full))

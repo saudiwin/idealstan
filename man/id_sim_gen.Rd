@@ -21,6 +21,8 @@ absences}
 
 \item{reg_discrim_sd}{The SD of the discrimination parameters for the non-inflated model}
 
+\item{diff_sd}{The SD of the difficulty parameters (bill/item intercepts)}
+
 \item{ideal_pts_sd}{The SD for the person/personlator ideal points}
 
 \item{prior_type}{The statistical distribution that generates the data. Currently only 
@@ -35,7 +37,7 @@ absences}
 \item{absence}{If \code{TRUE}, an absence-inflated dataset is produced.}
 }
 \value{
-The results is a \code{\link{idealdata}} object that can be used in the 
+The results is a \code{idealdata} object that can be used in the 
 \code{\link{id_estimate}} function to run a model. It can also be used in the simulation
 plotting functions.
 }

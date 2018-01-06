@@ -4,7 +4,7 @@
 \alias{extract_log_lik.idealstan}
 \title{Extract Log-Likelihood of the Posterior}
 \usage{
-\method{extract_log_lik}{idealstan}(object, draws = 100,
+\method{extract_log_lik}{idealstan}(object, ..., draws = 100,
   sample_scores = NULL)
 }
 \arguments{

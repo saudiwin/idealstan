@@ -2,6 +2,7 @@
 #' 
 #' \code{idealdata} objects contain the relevant legislator/bill (person/item) matrix of data along with slots containing information
 #' about the kind of identification used in the estimation.
+#' 
 #' @seealso \code{\link{id_make}} to create an \code{idealdata} object suitable for estimation with \code{id_estimate}.
 #' @export
 setClass('idealdata',
@@ -196,7 +197,13 @@ setMethod('summary',signature(object='idealstan'),
             return(this_summary)
           })
 
-
+#' Generic Function for Plotting \code{idealstan} objects
+#' 
+#' This generic function will run all the plotting functions associated with fitted \code{idealstan} objects.
+#' 
+#' @param object An \code{idealstan} object
+#' 
+#' @export
 setGeneric('id_plot',
            signature='object',
            function(object,...) standardGeneric('id_plot'))
@@ -229,14 +236,19 @@ setMethod(id_plot, signature(object='idealstan'),
             
           })
 
+#' Generic Method for Extracing Posterior Samples
+#' 
+#' This generic will extract the full \code{\link[rstan]{stan}}} posterior samples from \code{idealstan} objects.
+#' 
+#' @export
 setGeneric('id_extract',signature='object',
            function(object,...) standardGeneric('id_extract'))
 
 
 #' Extract \code{\link{rstan::stan}} joint posterior distribution from \code{idealstan} object
 #' 
-#' This convenience function allows you to extract the underlying \code{rstan} posterior estimates for the full parameters
-#'   estimates of the \code{idealstan} model object. See \code{\link{rstan::extract}} for the underlying function and more options.
+#' This convenience function allows you to extract the underlying \code{\link[rstan]{rstan}} posterior estimates for the full parameters
+#'   estimates of the \code{idealstan} model object. See \code{\link[rstan]{extract}} for the underlying function and more options.
 #'   
 #' You can use this function to access a matrix or array of the full posterior estimates of each of the parameters in an 
 #'  \code{idealstan} object. There are available options to pick certain parameters of the model, such as the person (legislator)
@@ -252,7 +264,7 @@ setGeneric('id_extract',signature='object',
 #' \code{'reg_diff'} for non-inflated item (bill) difficulty scores,
 #' \code{'miss_discrim'} for inflated item (bill) discrimination scores,
 #' and \code{'miss_diff'} for inflated item (bill) difficulty scores.
-#' @param ... Any additional arguments passed on to the \code{\link{rstan::extract}} function.
+#' @param ... Any additional arguments passed on to the \code{\link[rstan]{extract}} function.
 #' 
 #' @export
 setMethod(id_extract,signature(object='idealstan'),

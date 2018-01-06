@@ -12,11 +12,9 @@ require(dplyr)
 require(ggplot2)
 ```
 
-## R Package Idealstan (V0.2) README
-
 [![Travis-CI Build Status](https://travis-ci.org/saudiwin/idealstan.svg?branch=master)](https://travis-ci.org/saudiwin/idealstan)
 
-This package implements IRT (item response theory) ideal point models, which are models designed for situations in which actors make strategic choices that correlate with a unidimensional scale, such as the left-right axis in American politics. Compared to traditional IRT, ideal point models examine the polarizing influence of a set of items on a set of persons, and has simlarities to models based on latent spaces, such as multi-dimensional scaling. For more information, I refer you to a paper presented at StanCon 2018. 
+This package implements IRT (item response theory) ideal point models, which are models designed for situations in which actors make strategic choices that correlate with a unidimensional scale, such as the left-right axis in American politics. Compared to traditional IRT, ideal point models examine the polarizing influence of a set of items on a set of persons, and has simlarities to models based on latent spaces, such as multi-dimensional scaling. For more information, I refer you to my paper presented at [StanCon 2018](http://mc-stan.org/events/stancon2018/).
 
 This package offers standard IRT ideal point models, but goes farther in including models that account for strategic censoring in observations. While this kind of missing data pattern can be found in many situations in which IRT data is not missing at random, it was developed to account for legislatures in which legislators (persons) are strategically absent for votes on bills (items). The package also includes ordinal ideal point models to handle situations in which a ranked outcome is polarizing, such as a legislator who can vote yes, no or to abstain. `idealstan` is based on the Stan package for Bayesian inference, which includes both MCMC full Bayesian estimation and a faster variational Bayesian approximation. The package also has plotting functions for model parameters, particularly the legislator (person) ideal points (ability parameters).
 
@@ -46,6 +44,7 @@ low_leg <- sort(true_legis,index.return=T)
 ord_ideal_est <- id_estimate(idealdata=ord_ideal_sim,
                              model_type=4,
                              fixtype='constrained',
+                             restrict_params='person',
                              restrict_type='constrain_twoway',
                              restrict_ind_high = high_leg$ix[1:2],
                              restrict_ind_low=low_leg$ix[1:2],

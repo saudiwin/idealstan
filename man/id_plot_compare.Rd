@@ -10,7 +10,24 @@ id_plot_compare(model1 = NULL, model2 = NULL, scale_flip = FALSE,
   color_direction = 1, text_size_label = 2, rescale = FALSE)
 }
 \arguments{
+\item{model1}{The first model to compare}
+
+\item{model2}{The second model to compare}
+
 \item{scale_flip}{This parameter is set to true if you have two models that are reflected around the ideal point axis. This can happen as a result of identification and is harmless.}
+
+\item{return_data}{Whether to return the underlying data}
+
+\item{hjust}{The horizontal adjustment of point labels}
+
+\item{palette}{\code{colorbrewer} palette name}
+
+\item{color_direction}{Whether to reverse the color scale}
+
+\item{text_size_label}{Size of point labels}
+
+\item{rescale}{Whether to rescale the estimates from two models so they will match regardless of arbitrary scale shifts in the 
+ideal points}
 }
 \description{
 Function to compare two fitted idealstan models by plotting ideal points. Assumes that underlying data

@@ -12,6 +12,8 @@ id_plot_legis(object, return_data = FALSE, bill_plot = NULL,
   group_overlap = FALSE, sample_persons = NULL, ...)
 }
 \arguments{
+\item{object}{A fitted \code{idealstan} object}
+
 \item{return_data}{If true, the calculated legislator/bill data is returned along with the plot in a list}
 
 \item{bill_plot}{The column index of the bill/item midpoint to overlay on the plot}

@@ -3,12 +3,9 @@ Introduction to R Package Idealstan
 Robert Kubinec
 January 5, 2018
 
-R Package Idealstan (V0.2) README
----------------------------------
-
 [![Travis-CI Build Status](https://travis-ci.org/saudiwin/idealstan.svg?branch=master)](https://travis-ci.org/saudiwin/idealstan)
 
-This package implements IRT (item response theory) ideal point models, which are models designed for situations in which actors make strategic choices that correlate with a unidimensional scale, such as the left-right axis in American politics. Compared to traditional IRT, ideal point models examine the polarizing influence of a set of items on a set of persons, and has simlarities to models based on latent spaces, such as multi-dimensional scaling. For more information, I refer you to a paper presented at StanCon 2018.
+This package implements IRT (item response theory) ideal point models, which are models designed for situations in which actors make strategic choices that correlate with a unidimensional scale, such as the left-right axis in American politics. Compared to traditional IRT, ideal point models examine the polarizing influence of a set of items on a set of persons, and has simlarities to models based on latent spaces, such as multi-dimensional scaling. For more information, I refer you to my paper presented at [StanCon 2018](http://mc-stan.org/events/stancon2018/).
 
 This package offers standard IRT ideal point models, but goes farther in including models that account for strategic censoring in observations. While this kind of missing data pattern can be found in many situations in which IRT data is not missing at random, it was developed to account for legislatures in which legislators (persons) are strategically absent for votes on bills (items). The package also includes ordinal ideal point models to handle situations in which a ranked outcome is polarizing, such as a legislator who can vote yes, no or to abstain. `idealstan` is based on the Stan package for Bayesian inference, which includes both MCMC full Bayesian estimation and a faster variational Bayesian approximation. The package also has plotting functions for model parameters, particularly the legislator (person) ideal points (ability parameters).
 
@@ -25,12 +22,12 @@ knitr::kable(as_data_frame(head(ord_ideal_sim@score_matrix)))
 
 |    1|    2|    3|    4|    5|    6|    7|    8|    9|   10|   11|   12|   13|   14|   15|   16|   17|   18|   19|   20|   21|   22|   23|   24|   25|   26|   27|   28|   29|   30|   31|   32|   33|   34|   35|   36|   37|   38|   39|   40|   41|   42|   43|   44|   45|   46|   47|   48|   49|   50|
 |----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|
-|    1|    4|    3|    4|    3|    3|    3|    1|    4|    3|    3|    4|    3|    1|    4|    4|    4|    1|    4|    3|    4|    1|    1|    4|    1|    3|    4|    3|    3|    4|    1|    1|    4|    1|    1|    3|    1|    1|    1|    3|    4|    4|    1|    1|    4|    3|    3|    3|    4|    3|
-|    1|    1|    3|    4|    3|    4|    3|    1|    4|    3|    4|    4|    4|    1|    1|    4|    4|    1|    4|    3|    4|    1|    3|    4|    3|    3|    4|    3|    3|    4|    4|    1|    4|    1|    1|    1|    4|    4|    1|    3|    4|    4|    1|    1|    1|    4|    3|    3|    4|    3|
-|    2|    4|    4|    1|    4|    4|    1|    4|    4|    4|    4|    1|    2|    4|    1|    4|    4|    4|    3|    4|    1|    4|    4|    3|    1|    4|    2|    4|    4|    3|    3|    3|    1|    3|    4|    4|    2|    2|    3|    4|    1|    3|    4|    3|    4|    3|    4|    4|    3|    4|
-|    3|    1|    3|    1|    4|    4|    4|    4|    4|    1|    4|    1|    2|    4|    3|    1|    4|    3|    1|    1|    4|    4|    4|    1|    4|    2|    4|    3|    4|    4|    3|    3|    3|    3|    3|    1|    3|    4|    4|    4|    4|    1|    1|    1|    4|    4|    1|    2|    2|    1|
-|    1|    4|    3|    4|    3|    4|    3|    4|    3|    2|    3|    4|    4|    4|    4|    4|    2|    1|    4|    3|    4|    1|    1|    4|    4|    3|    1|    3|    3|    4|    1|    4|    4|    1|    1|    1|    4|    4|    4|    3|    4|    4|    1|    3|    4|    3|    3|    3|    4|    3|
-|    3|    1|    4|    3|    4|    1|    4|    4|    4|    4|    4|    1|    3|    3|    1|    1|    3|    4|    1|    4|    1|    4|    4|    3|    1|    4|    3|    4|    4|    4|    3|    4|    1|    4|    4|    4|    3|    3|    3|    4|    1|    3|    4|    4|    3|    1|    4|    4|    3|    4|
+|    3|    4|    3|    4|    3|    4|    1|    4|    3|    4|    4|    1|    4|    4|    4|    1|    4|    4|    3|    1|    4|    3|    4|    4|    4|    1|    4|    4|    3|    1|    4|    3|    4|    3|    3|    3|    1|    1|    3|    3|    2|    4|    4|    4|    1|    4|    4|    1|    4|    3|
+|    2|    3|    2|    4|    3|    4|    4|    4|    3|    3|    4|    1|    4|    4|    4|    3|    4|    1|    4|    1|    1|    1|    4|    3|    4|    1|    1|    1|    4|    1|    4|    4|    4|    3|    2|    4|    1|    2|    4|    1|    4|    4|    3|    4|    4|    4|    4|    1|    4|    4|
+|    4|    3|    4|    1|    4|    1|    3|    4|    1|    4|    2|    4|    4|    3|    2|    3|    1|    4|    1|    1|    4|    2|    3|    3|    2|    2|    4|    4|    1|    1|    4|    3|    4|    2|    3|    4|    2|    3|    1|    1|    1|    4|    1|    3|    3|    4|    3|    1|    4|    2|
+|    1|    4|    4|    4|    2|    1|    1|    1|    4|    3|    2|    3|    3|    2|    1|    3|    2|    3|    1|    4|    2|    4|    3|    4|    1|    4|    3|    2|    3|    2|    1|    4|    4|    3|    1|    3|    2|    3|    4|    1|    4|    1|    1|    4|    4|    4|    3|    4|    1|    4|
+|    3|    3|    3|    4|    4|    4|    4|    4|    3|    1|    4|    3|    3|    4|    4|    3|    3|    4|    4|    1|    1|    3|    4|    1|    4|    1|    4|    1|    2|    3|    4|    1|    4|    2|    3|    4|    1|    2|    1|    3|    3|    4|    4|    4|    1|    4|    4|    4|    4|    4|
+|    2|    3|    1|    3|    1|    1|    3|    2|    4|    3|    3|    1|    1|    4|    4|    4|    3|    1|    1|    3|    2|    3|    1|    1|    3|    4|    1|    1|    4|    1|    4|    2|    3|    4|    4|    3|    1|    4|    1|    1|    4|    3|    4|    1|    4|    3|    4|    4|    2|    1|
 
 The vote/score matrix has legislators/persons in the rows and bills/items in the columns. In this simulated data, yes votes are recorded as `3`, no votes as `1`, abstentions as `2`, and absences as `4`.
 
@@ -46,6 +43,7 @@ low_leg <- sort(true_legis,index.return=T)
 ord_ideal_est <- id_estimate(idealdata=ord_ideal_sim,
                              model_type=4,
                              fixtype='constrained',
+                             restrict_params='person',
                              restrict_type='constrain_twoway',
                              restrict_ind_high = high_leg$ix[1:2],
                              restrict_ind_low=low_leg$ix[1:2],
@@ -108,8 +106,8 @@ sen_est <- id_estimate(senate_data,
     ## 
     ## 
     ## 
-    ## Gradient evaluation took 0.033 seconds
-    ## 1000 transitions using 10 leapfrog steps per transition would take 330 seconds.
+    ## Gradient evaluation took 0.032 seconds
+    ## 1000 transitions using 10 leapfrog steps per transition would take 320 seconds.
     ## Adjust your expectations accordingly!
     ## 
     ## 
@@ -124,10 +122,10 @@ sen_est <- id_estimate(senate_data,
     ## Begin stochastic gradient ascent.
     ##   iter       ELBO   delta_ELBO_mean   delta_ELBO_med   notes 
     ##    100    -2e+004             1.000            1.000
-    ##    200    -2e+004             0.506            1.000
-    ##    300    -2e+004             0.339            0.013
-    ##    400    -2e+004             0.254            0.013
-    ##    500    -2e+004             0.204            0.003   MEDIAN ELBO CONVERGED
+    ##    200    -2e+004             0.509            1.000
+    ##    300    -2e+004             0.341            0.019
+    ##    400    -2e+004             0.257            0.019
+    ##    500    -2e+004             0.205            0.005   MEDIAN ELBO CONVERGED
     ## 
     ## Drawing a sample of size 1000 from the approximate posterior... 
     ## COMPLETED.

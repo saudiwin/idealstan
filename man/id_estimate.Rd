@@ -7,13 +7,14 @@
 id_estimate(idealdata = NULL, model_type = 2, use_subset = FALSE,
   sample_it = FALSE, subset_group = NULL, subset_person = NULL,
   sample_size = 20, nchains = 4, niters = 2000, use_vb = FALSE,
-  nfix = 1, restrict_params = "person", pin_vals = NULL,
+  nfix = 3, restrict_params = "items", pin_vals = NULL,
   restrict_ind_high = NULL, restrict_ind_low = NULL,
-  restrict_type = "constrain_oneway", fixtype = "vb",
+  restrict_type = "constrain_twoway", fixtype = "vb",
   warmup = floor(niters/2), ncores = 4, auto_id = FALSE,
   discrim_reg_sd = 3, discrim_miss_sd = 3, person_sd = 1,
-  diff_reg_sd = 3, diff_miss_sd = 3, restrict_sd = 3,
-  restrict_low_bar = -0.5, restrict_high_bar = 0.5, ...)
+  diff_reg_sd = 4, diff_miss_sd = 4, restrict_sd = 4,
+  restrict_low_bar = -1, restrict_high_bar = 1, restrict_alpha = 4,
+  restrict_beta = 1, ...)
 }
 \arguments{
 \item{model_type}{An integer reflecting the kind of model to be estimated. See below.}
@@ -84,6 +85,12 @@ persons/legislators will be used to constrain and identify the model.}
 
 \item{restrict_high_bar}{Set the constraint threshold for constrained parameters (parameter must be higher than this bar and no less than zero)}
 
+\item{restrict_alpha}{This is the scale (alpha) parameter passed to the gamma prior if exactly two item/person parameters are constrained, each high or low. The gamma prior pushes these two
+polar parameters apart. A higher value will push these two poles farther apart, which will help identification.}
+
+\item{restrict_beta}{The beta (shape) parameter passed to the gamma prior if exactly two item/person parameters are constrained, each high or low. The gamma prior pushes these two
+polar parameters apart.}
+
 \item{...}{Additional parameters passed on to Stan's sampling engine. See \code{\link[rstan]{stan}} for more information.}
 }
 \value{
@@ -135,7 +142,7 @@ numeric vector to \code{pin_vals}.
 
 \seealso{
 \code{\link{id_make}} for pre-processing data,
-\code{\link{id_plot}} for plotting results,
+\code{\link{id_plot_legis}} for plotting results,
 \code{\link{summary}} for obtaining posterior quantiles,
 \code{\link{posterior_predict}} for producing predictive replications.
 }

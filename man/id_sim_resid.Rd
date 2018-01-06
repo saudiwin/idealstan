@@ -8,9 +8,9 @@ Returns a data frame with residuals plus quantiles.}
 id_sim_resid(obj, rep = 1)
 }
 \arguments{
-\item{est_param}{A matrix of posterior draws of a parameter}
+\item{rep}{Over how many replicates to calculate residuals? Currently can only be 1}
 
-\item{true_param}{A matrix (one column) of true parameter values}
+\item{object}{A fitted \code{idealstan} object with true data from \code{\link{id_sim_gen}}}
 }
 \description{
 Residual function for checking estimated samples compared to true simulation scores

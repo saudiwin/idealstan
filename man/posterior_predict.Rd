@@ -9,10 +9,7 @@ posterior_predict(object, ...)
 \arguments{
 \item{object}{A fitted \code{idealstan} object}
 
-\item{draws}{The number of draws to use from the total number of posterior draws (default is 100).}
-
-\item{sample_scores}{In addition to reducing the number of posterior draws used to calculate the posterior predictive distribution,
-you can sample from the scores/votes themselves. To do so, set \code{sample_scores} to the number of scores/votes to sample.}
+\item{...}{All other parameters passed on to the underlying function.}
 }
 \value{
 \code{posterior_predict} methods should return a \eqn{D} by \eqn{N}
@@ -21,9 +18,5 @@ you can sample from the scores/votes themselves. To do so, set \code{sample_scor
   draw.
 }
 \description{
-This function will draw from the posterior predictive distribution of the outcome, i.e., all the scores or 
- votes that are used to create the \code{idealstan} model. You can then use functions such as 
- \code{\link[bayesplot]{ppc_bars}} to see how well the model does returning the correct number of categories
- in the score/vote matrix. 
- Also see \code{help("posterior_predict", package = "rstanarm")}
+This generic is provided for compability with \code{\link[rstan]{stan}}.
 }
