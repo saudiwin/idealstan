@@ -35,6 +35,18 @@
 #' @import lazyeval
 #' @importFrom rlang parse_quosure
 #' @export
+#' @examples 
+#' 
+#' # To demonstrate, we load a fitted idealstan object based on the 114th Senate
+#' 
+#' data('senate114_fitted')
+#' 
+#' id_plot_legis(senate114_fitted)
+#' 
+#' # We can overlap the bill/item midpoints to show where the persons/legislators are indifferent to responding positively
+#' 
+#' id_plot_legis(senate114_fitted,bill_plot=5)
+#' 
 id_plot_legis <- function(object,return_data=FALSE,bill_plot=NULL,
                        text_size_label=2,text_size_group=2.5,
                        point_size=1,

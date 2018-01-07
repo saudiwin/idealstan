@@ -63,3 +63,16 @@ bill/item. Note that because this is an ideal point model, it is not possible to
 which side will be voting which way. For that reason, the legislators/persons are colored by their votes/scores to
 make it clear.
 }
+\examples{
+
+# To demonstrate, we load a fitted idealstan object based on the 114th Senate
+
+data('senate114_fitted')
+
+id_plot_legis(senate114_fitted)
+
+# We can overlap the bill/item midpoints to show where the persons/legislators are indifferent to responding positively
+
+id_plot_legis(senate114_fitted,bill_plot=5)
+
+}

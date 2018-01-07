@@ -50,6 +50,44 @@
 #' @import methods
 #' @importFrom stats dbinom median plogis quantile reorder rexp rlnorm runif sd step rnorm
 #' @useDynLib idealstan, .registration = TRUE
+#' @examples 
+#' # You can either use a pscl rollcall object or a vote/score matrix where persons/legislators are in the rows
+#' # and items/bills are in the columns
+#' 
+#' # First, using a rollcall object with the 114th Senate's rollcall votes:
+#' 
+#' data('senate114')
+#' 
+#' to_idealstan <-   id_make(score_data = senate114,
+#' ordinal = F,
+#' include_pres=F)
+#' 
+#' # Also we can put in a matrix object directly by specifying which votes/scores are which:
+#' 
+#' to_use <- senate114$votes
+#' to_use <- apply(to_use, 2, function(x) {
+#' y <- recode(
+#' x,
+#' `1` = 2L,
+#' `6` = 1L,
+#' `9` = 3L
+#' )
+#' return(y)
+#' })
+#' 
+#' rownames(to_use) <- rownames(senate114$legis.data)
+#' # Need to drop Obama
+#' senate_data <-
+#' id_make(
+#' vote_data = to_use[-1,],
+#' legis_data = slice(senate114$legis.data,-1),
+#' abs_vote = 3,
+#' yes_vote = 2,
+#' no_vote = 1,
+#' ordinal = F,
+#' exclude_level = c(3,7)
+#' )
+#' 
 id_make <- function(score_data=NULL,simul_data=NULL,
                            person_cov=NULL,item_cov=NULL,
                            item_cov_miss=NULL,
