@@ -1,17 +1,23 @@
 ---
-title: "Introduction to R Package Idealstan"
+title: "Introduction to Idealstan"
 author: "Robert Kubinec"
-date: "January 5, 2018"
-output: github_document
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
 ---
 
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE,warning=FALSE)
+knitr::opts_chunk$set(echo = TRUE,warning=FALSE,fig.align = 'center',fig.width = 7,fig.height=4)
 require(idealstan)
 require(dplyr)
 require(ggplot2)
 ```
+
+*Note: To report bugs with the package, please file an issue on the [Github page](https://github.com/saudiwin/idealstan/issues).*
 
 This package implements IRT (item response theory) ideal point models, which are models designed for situations in which actors make strategic choices that correlate with a unidimensional scale, such as the left-right axis in American politics. Compared to traditional IRT, ideal point models examine the polarizing influence of a set of items on a set of persons, and has simlarities to models based on latent spaces, such as multi-dimensional scaling. For more information, I refer you to my paper presented at [StanCon 2018](http://mc-stan.org/events/stancon2018/).
 
@@ -108,7 +114,7 @@ sen_est <- id_estimate(senate_data,
 id_plot(sen_est,person_ci_alpha=0.7) + scale_colour_brewer(type='qual')
 ```
 
-The `id_plot` function has many other options which are documented in the help files. One notable option, though, is to plot bill midpoints along with the legislator ideal points. The midpoints show the line of equiprobability, i.e., at what ideal point is a legislator indifferent to voting on a bill (or answering an item correctly). To plot a bill midpoint overlay, simply include the column index of bill in the response matrix as the `bill_plot` option:
+The `id_plot` function has many other options which are documented in the help files. One notable option, though, is to plot bill midpoints along with the legislator ideal points. The midpoints show the line of equiprobability, i.e., at what ideal point is a legislator indifferent to voting on a bill (or answering an item correctly). To plot a bill midpoint overlay, simply include the column index of bill in the response matrix as the `item_plot` option:
 
 ```{r bill_plot}
 id_plot(sen_est,person_ci_alpha=0.1,item_plot=205,

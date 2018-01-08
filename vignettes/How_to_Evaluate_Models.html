@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<meta name="author" content="Robert Kubinec" />
+
+<meta name="date" content="2018-01-08" />
+
+<title>How to Evaluate Models</title>
+
+
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+div.sourceCode { overflow-x: auto; }
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; line-height: 100%; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+td.sourceCode { padding-left: 5px; }
+code > span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code > span.dt { color: #902000; } /* DataType */
+code > span.dv { color: #40a070; } /* DecVal */
+code > span.bn { color: #40a070; } /* BaseN */
+code > span.fl { color: #40a070; } /* Float */
+code > span.ch { color: #4070a0; } /* Char */
+code > span.st { color: #4070a0; } /* String */
+code > span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code > span.ot { color: #007020; } /* Other */
+code > span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code > span.fu { color: #06287e; } /* Function */
+code > span.er { color: #ff0000; font-weight: bold; } /* Error */
+code > span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+code > span.cn { color: #880000; } /* Constant */
+code > span.sc { color: #4070a0; } /* SpecialChar */
+code > span.vs { color: #4070a0; } /* VerbatimString */
+code > span.ss { color: #bb6688; } /* SpecialString */
+code > span.im { } /* Import */
+code > span.va { color: #19177c; } /* Variable */
+code > span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code > span.op { color: #666666; } /* Operator */
+code > span.bu { } /* BuiltIn */
+code > span.ex { } /* Extension */
+code > span.pp { color: #bc7a00; } /* Preprocessor */
+code > span.at { color: #7d9029; } /* Attribute */
+code > span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code > span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code > span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+</style>
+
+
+
+<link href="data:text/css;charset=utf-8,body%20%7B%0Abackground%2Dcolor%3A%20%23fff%3B%0Amargin%3A%201em%20auto%3B%0Amax%2Dwidth%3A%20700px%3B%0Aoverflow%3A%20visible%3B%0Apadding%2Dleft%3A%202em%3B%0Apadding%2Dright%3A%202em%3B%0Afont%2Dfamily%3A%20%22Open%20Sans%22%2C%20%22Helvetica%20Neue%22%2C%20Helvetica%2C%20Arial%2C%20sans%2Dserif%3B%0Afont%2Dsize%3A%2014px%3B%0Aline%2Dheight%3A%201%2E35%3B%0A%7D%0A%23header%20%7B%0Atext%2Dalign%3A%20center%3B%0A%7D%0A%23TOC%20%7B%0Aclear%3A%20both%3B%0Amargin%3A%200%200%2010px%2010px%3B%0Apadding%3A%204px%3B%0Awidth%3A%20400px%3B%0Aborder%3A%201px%20solid%20%23CCCCCC%3B%0Aborder%2Dradius%3A%205px%3B%0Abackground%2Dcolor%3A%20%23f6f6f6%3B%0Afont%2Dsize%3A%2013px%3B%0Aline%2Dheight%3A%201%2E3%3B%0A%7D%0A%23TOC%20%2Etoctitle%20%7B%0Afont%2Dweight%3A%20bold%3B%0Afont%2Dsize%3A%2015px%3B%0Amargin%2Dleft%3A%205px%3B%0A%7D%0A%23TOC%20ul%20%7B%0Apadding%2Dleft%3A%2040px%3B%0Amargin%2Dleft%3A%20%2D1%2E5em%3B%0Amargin%2Dtop%3A%205px%3B%0Amargin%2Dbottom%3A%205px%3B%0A%7D%0A%23TOC%20ul%20ul%20%7B%0Amargin%2Dleft%3A%20%2D2em%3B%0A%7D%0A%23TOC%20li%20%7B%0Aline%2Dheight%3A%2016px%3B%0A%7D%0Atable%20%7B%0Amargin%3A%201em%20auto%3B%0Aborder%2Dwidth%3A%201px%3B%0Aborder%2Dcolor%3A%20%23DDDDDD%3B%0Aborder%2Dstyle%3A%20outset%3B%0Aborder%2Dcollapse%3A%20collapse%3B%0A%7D%0Atable%20th%20%7B%0Aborder%2Dwidth%3A%202px%3B%0Apadding%3A%205px%3B%0Aborder%2Dstyle%3A%20inset%3B%0A%7D%0Atable%20td%20%7B%0Aborder%2Dwidth%3A%201px%3B%0Aborder%2Dstyle%3A%20inset%3B%0Aline%2Dheight%3A%2018px%3B%0Apadding%3A%205px%205px%3B%0A%7D%0Atable%2C%20table%20th%2C%20table%20td%20%7B%0Aborder%2Dleft%2Dstyle%3A%20none%3B%0Aborder%2Dright%2Dstyle%3A%20none%3B%0A%7D%0Atable%20thead%2C%20table%20tr%2Eeven%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0Ap%20%7B%0Amargin%3A%200%2E5em%200%3B%0A%7D%0Ablockquote%20%7B%0Abackground%2Dcolor%3A%20%23f6f6f6%3B%0Apadding%3A%200%2E25em%200%2E75em%3B%0A%7D%0Ahr%20%7B%0Aborder%2Dstyle%3A%20solid%3B%0Aborder%3A%20none%3B%0Aborder%2Dtop%3A%201px%20solid%20%23777%3B%0Amargin%3A%2028px%200%3B%0A%7D%0Adl%20%7B%0Amargin%2Dleft%3A%200%3B%0A%7D%0Adl%20dd%20%7B%0Amargin%2Dbottom%3A%2013px%3B%0Amargin%2Dleft%3A%2013px%3B%0A%7D%0Adl%20dt%20%7B%0Afont%2Dweight%3A%20bold%3B%0A%7D%0Aul%20%7B%0Amargin%2Dtop%3A%200%3B%0A%7D%0Aul%20li%20%7B%0Alist%2Dstyle%3A%20circle%20outside%3B%0A%7D%0Aul%20ul%20%7B%0Amargin%2Dbottom%3A%200%3B%0A%7D%0Apre%2C%20code%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0Aborder%2Dradius%3A%203px%3B%0Acolor%3A%20%23333%3B%0Awhite%2Dspace%3A%20pre%2Dwrap%3B%20%0A%7D%0Apre%20%7B%0Aborder%2Dradius%3A%203px%3B%0Amargin%3A%205px%200px%2010px%200px%3B%0Apadding%3A%2010px%3B%0A%7D%0Apre%3Anot%28%5Bclass%5D%29%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0Acode%20%7B%0Afont%2Dfamily%3A%20Consolas%2C%20Monaco%2C%20%27Courier%20New%27%2C%20monospace%3B%0Afont%2Dsize%3A%2085%25%3B%0A%7D%0Ap%20%3E%20code%2C%20li%20%3E%20code%20%7B%0Apadding%3A%202px%200px%3B%0A%7D%0Adiv%2Efigure%20%7B%0Atext%2Dalign%3A%20center%3B%0A%7D%0Aimg%20%7B%0Abackground%2Dcolor%3A%20%23FFFFFF%3B%0Apadding%3A%202px%3B%0Aborder%3A%201px%20solid%20%23DDDDDD%3B%0Aborder%2Dradius%3A%203px%3B%0Aborder%3A%201px%20solid%20%23CCCCCC%3B%0Amargin%3A%200%205px%3B%0A%7D%0Ah1%20%7B%0Amargin%2Dtop%3A%200%3B%0Afont%2Dsize%3A%2035px%3B%0Aline%2Dheight%3A%2040px%3B%0A%7D%0Ah2%20%7B%0Aborder%2Dbottom%3A%204px%20solid%20%23f7f7f7%3B%0Apadding%2Dtop%3A%2010px%3B%0Apadding%2Dbottom%3A%202px%3B%0Afont%2Dsize%3A%20145%25%3B%0A%7D%0Ah3%20%7B%0Aborder%2Dbottom%3A%202px%20solid%20%23f7f7f7%3B%0Apadding%2Dtop%3A%2010px%3B%0Afont%2Dsize%3A%20120%25%3B%0A%7D%0Ah4%20%7B%0Aborder%2Dbottom%3A%201px%20solid%20%23f7f7f7%3B%0Amargin%2Dleft%3A%208px%3B%0Afont%2Dsize%3A%20105%25%3B%0A%7D%0Ah5%2C%20h6%20%7B%0Aborder%2Dbottom%3A%201px%20solid%20%23ccc%3B%0Afont%2Dsize%3A%20105%25%3B%0A%7D%0Aa%20%7B%0Acolor%3A%20%230033dd%3B%0Atext%2Ddecoration%3A%20none%3B%0A%7D%0Aa%3Ahover%20%7B%0Acolor%3A%20%236666ff%3B%20%7D%0Aa%3Avisited%20%7B%0Acolor%3A%20%23800080%3B%20%7D%0Aa%3Avisited%3Ahover%20%7B%0Acolor%3A%20%23BB00BB%3B%20%7D%0Aa%5Bhref%5E%3D%22http%3A%22%5D%20%7B%0Atext%2Ddecoration%3A%20underline%3B%20%7D%0Aa%5Bhref%5E%3D%22https%3A%22%5D%20%7B%0Atext%2Ddecoration%3A%20underline%3B%20%7D%0A%0Acode%20%3E%20span%2Ekw%20%7B%20color%3A%20%23555%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Edt%20%7B%20color%3A%20%23902000%3B%20%7D%20%0Acode%20%3E%20span%2Edv%20%7B%20color%3A%20%2340a070%3B%20%7D%20%0Acode%20%3E%20span%2Ebn%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Efl%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Ech%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Est%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Eco%20%7B%20color%3A%20%23888888%3B%20font%2Dstyle%3A%20italic%3B%20%7D%20%0Acode%20%3E%20span%2Eot%20%7B%20color%3A%20%23007020%3B%20%7D%20%0Acode%20%3E%20span%2Eal%20%7B%20color%3A%20%23ff0000%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Efu%20%7B%20color%3A%20%23900%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%20code%20%3E%20span%2Eer%20%7B%20color%3A%20%23a61717%3B%20background%2Dcolor%3A%20%23e3d2d2%3B%20%7D%20%0A" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">How to Evaluate Models</h1>
+<h4 class="author"><em>Robert Kubinec</em></h4>
+<h4 class="date"><em>2018-01-08</em></h4>
+
+
+
+<p>A big part of the purpose of <code>idealstan</code> is to give people different options in fitting ideal point models to diverse data. Along with that, <code>idealstan</code> makes use of Bayesian model evaluation a la <a href="https://cran.r-project.org/web/packages/loo/vignettes/loo-example.html">loo</a> and also can analyze the posterior predictive distribution using <a href="http://mc-stan.org/users/interfaces/bayesplot">bayesplot</a>. <code>loo</code> is an approximation of the predictive error of a Bayesian model via leave-one-out cross-validation (LOO-CV). True LOO-CV on Bayesian models is computationally prohibitive because it involves estimating a new model for each data point. For IRT models incorporating thousands or even millions of observations, this is practically infeasible.</p>
+<p><code>bayesplot</code> allows us to analyze the data we used to estimate the model compared to data produced by the model, or what is called the posterior predictive distribution. This is very useful as a general summary of model fit to see whether there are values of the outcome that we are over or under predicting.</p>
+<p><code>idealstan</code> implements functions for each ideal point model that calculate the log-posterior probability of the data, which is the necessary input to use <code>loo</code>’s model evaluation features. This vignette demonstrates the basic usage.</p>
+<p>We first begin by simulating data for a standard IRT 2-PL ideal point model but with strategically missing data:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">irt_2pl &lt;-<span class="st"> </span><span class="kw">id_sim_gen</span>(<span class="dt">ordinal=</span>F,<span class="dt">absence=</span>T)</code></pre></div>
+<p>We can then fit two ideal point models to the same data, one that uses constraints for identification and the other that pins two of the persons to arbitrary (and incorrect) values.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">irt_2pl_correct &lt;-<span class="st"> </span><span class="kw">id_estimate</span>(<span class="dt">idealdata=</span>irt_2pl,
+                               <span class="dt">model_type=</span><span class="dv">2</span>,
+                               <span class="dt">restrict_ind_high =</span> <span class="kw">sort</span>(irt_2pl<span class="op">@</span>simul_data<span class="op">$</span>true_reg_discrim,
+                                                        <span class="dt">decreasing=</span>T,
+                                                        <span class="dt">index=</span>T)<span class="op">$</span>ix[<span class="dv">1</span><span class="op">:</span><span class="dv">3</span>],
+                              <span class="dt">restrict_ind_low =</span> <span class="kw">sort</span>(irt_2pl<span class="op">@</span>simul_data<span class="op">$</span>true_reg_discrim,
+                                                      <span class="dt">decreasing=</span>F,
+                                                        <span class="dt">index=</span>T)<span class="op">$</span>ix[<span class="dv">1</span><span class="op">:</span><span class="dv">3</span>],
+                           <span class="dt">restrict_params =</span> <span class="st">'discrim_reg'</span>,
+                               <span class="dt">restrict_type =</span> <span class="st">'constrain_twoway'</span>,
+                               <span class="dt">fixtype=</span><span class="st">'constrained'</span>)
+
+irt_2pl_incorrect &lt;-<span class="st"> </span><span class="kw">id_estimate</span>(<span class="dt">idealdata=</span>irt_2pl,
+                               <span class="dt">model_type=</span><span class="dv">2</span>,
+                               <span class="dt">restrict_ind_high =</span> <span class="kw">c</span>(<span class="dv">1</span>,<span class="dv">2</span>),
+                           <span class="dt">restrict_params =</span> <span class="st">'person'</span>,
+                           <span class="dt">pin_vals=</span><span class="kw">c</span>(<span class="op">-</span><span class="dv">1</span>,<span class="fl">1.5</span>),
+                               <span class="dt">fixtype=</span><span class="st">'pinned'</span>)</code></pre></div>
+<p>The first thing we want to check with any MCMC model is convergence. An easy way to check is by looking at the Rhat distributions. If all these values are below 1.1, then we have good reason to believe that the model converged, and we can get these distributions with the <code>id_plot_rhats</code> function:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">id_plot_rhats</span>(irt_2pl_correct)</code></pre></div>
+<pre><code>## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.</code></pre>
+<p><img src="data:image/png;base64,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" style="display: block; margin: auto;" /></p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">id_plot_rhats</span>(irt_2pl_incorrect)</code></pre></div>
+<pre><code>## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.</code></pre>
+<p><img src="data:image/png;base64,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" style="display: block; margin: auto;" /></p>
+<p>Only the first model seems to have converged–at this point we should go back and see if the model is miss-specified or there is something wrong with the data. But for the sake of illustration, we will look at other diagnostics. We can also examine whether 1) the models are able to replicate the data they were fitted on accurately and 2) overall measures of model fit.</p>
+<p>We can first look at how well the model reproduces the data, which is called the posterior predictive distribution. We can obtain these distributions using the <code>id_post_pred</code> function:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">post_correct &lt;-<span class="st"> </span><span class="kw">id_post_pred</span>(irt_2pl_correct)</code></pre></div>
+<pre><code>## [1] &quot;Processing posterior replications for 1000 scores using 100 posterior samples out of a total of 4000 samples.&quot;</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">post_incorrect &lt;-<span class="st"> </span><span class="kw">id_post_pred</span>(irt_2pl_incorrect)</code></pre></div>
+<pre><code>## [1] &quot;Processing posterior replications for 1000 scores using 100 posterior samples out of a total of 4000 samples.&quot;</code></pre>
+<p>What we can do is the use a wrapper around the <code>bayesplot</code> package called <code>id_plot_ppc</code> to see how well these models replicate their own data:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">id_plot_ppc</span>(irt_2pl_correct,<span class="dt">ppc_pred=</span>post_correct)</code></pre></div>
+<p><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAASAAAAEgCAMAAAAjXV6yAAAA9lBMVEUAAAAAADoAAGYAOpAAZrYBH0szMzM6AAA6ADo6AGY6OmY6OpA6ZrY6kLw6kNtNTU1NTW5NTY5NbqtNjshmAABmADpmAGZmOpBmZrZmkNtmtv9uTU1uTY5ubqtuq+SOTU2OTW6OTY6ObquOq+SOyP+QOgCQOjqQOmaQZpCQkDqQkJCQkLaQkNuQ2/+rbk2rbo6rjk2rq8ir5P+zzeC2ZgC2Zjq2Zma2tma2///Ijk3Ijo7Iq6vI///R4ezbkDrbkGbbkJDb25Db/9vb///kq27kq47k////tmb/tpD/yI7/yKv/25D/5Kv//7b//8j//9v//+T////fOXdpAAAACXBIWXMAAA7DAAAOwwHHb6hkAAAH6ElEQVR4nO2daXvTRhSFHRLRHZellEIxBUxXoCV1W0LjdImJcWM7nv//Z6rRZs0iHUkeHlmacz4IM75H0bwZX83IuspAUKUatH0A+y4CAiIgIAICIiAgAgJqBsgjrAQEREBABAREQEAEBERAQAQEREBABAREQEAEBERAQB0CFARt/FQCAiIgIAICIiAgAgIiICACAiIgIAIC6g6gIGiFUGcABUE7hLoCKAhaItQRQEHQFiECAtpTQL9q2gLS33nfR7KvgKaqtoC0N9oGdDIWYvng8+N0W821u3RA0wI+bQNaPhiL9TfHy69P4201lwMZgKZ2Pm0D+vOXsVjcFpuX43hbzeVAJqCplU/LgBbj8CM2ux1+0kbxVjZeD9UGoKmNT7uANq9kDpqNIkCjFBByOVE3AP13TEClXT0ZhhrtSw7aQ0AiOs3L89fDi3hb0bW7ugRoP+ZB+wrIqauGCAiIgIAICIiAgAgIiICACAiIgIBsgKwiIAKyioCACAiIgIAICIiAgAgIiIAiFd+KQECRCAiIgIAICIiAgAgIiICACAiIgIAICIiAgAgIiICACKhcJZUFBCTKC5wICBQ4+QiocnmK7LOXgNSeFZanTAmIgKwiIKCiEjBrnwloWljgREAKoYI+E1BCqKjPBERAhggIiICACAioj4Bmw22l2M71YrX63A1Ay6ey5NlV3XwPAYVajJzVzfcS0OaVcFY330dA60fDkbOy8D4CCofPzVMCKtP68SlzUJkWt53VzfcQ0Gw4DFNzvXmQo+8CuwGoiYuAgIuAgIuAgIuAgIuAgIuAgIuAgIuAyl2u7onqKyBn90Q5B9T4KblOAbm7J6qfgMqfaUxABIRcewzIOKrJ4OCFEGeH57W6unout2f34c/rGiDLYa3u3BDi3ceva3U1BrS6W9Fl3H1Zdltmm4Bsv7irZ0dhV3+C3hyg+SDRUUVXvYc+twcosA7tSdjNv+FQUEfQ5VcVflwZoLKHPrcGKAishCaH51X6u0uSrvccrX0DdHb4r/yAre7+cPBiMjg8X939YzC4UQkQHni9AHTtx9cyFYVQ5jfE5LNnYWq5/MA4QamAzqIcdM0LQHN5no9PSbLbR9G56cwYQupZ7IvI48cImseDJQJ0P3mBAF19h7N69wDZz2JpgpZc5kdidU+OjmSEFAJKJkI9G0GWedD8k3+eJy9lfg43116v7gwGBwYfbQQ962MOEuZMen5gnuAL5sfqCPqrjzkoI1QeUglQVXUOEF7Nh58e68rVAqjC/LKHgMq7mkjmqVBVrwF0CVBjWVbzlVdw/gGKtfpyhxFU3Iv+ALr8aIezWL8BJTnIXNLaXR4Cel4UZnX5B6imy0dAcuGPr9n7C0hepxUT5iCjq4lW96J/dlmL9RxQnKR/JyC9q6nkaj76wqiSy0NA0QUhnIL8BVTPRUDA5RcgucyQyefqW/O6bIHLL0BinswQLz/EhLwE9FvK5fLTii6/ACWTRJH7dmzzsrws3DNA25V8OlF8eyxObl0Ul4X7Begqu5fo6vvtFcUQSnFJpl+AxLs0B81zM8Xlw4visnDPAKVLjEl+pbEoKwv3DFB6D17+ctD6yQUBlenNqSh5NAUBzcZi+bS4LNx7QCfDoZwIdXkeZNyQnN2V7AIQcnUBUAMPAREQAVXuLAERUJVdExDYdQNAzerFPALUrF7MJ0AN6sX8AtSoXswvQO3UixX3Yt8AJfViBFTkievFCKjQM7dUrhBQzjOvcCedz4CqFjD7CShXL0ZANo+tXoyAqnoIiIAIqHJn+a1Gy9+slrsICLgICLgICLgICLgICLgICLgICLgICLgICLgICLgICLgICLgICLgICLgICLgICLgICLgICLgICLgICLgICLgICLgICLgIKPo7z52uF9td5RWH8u+ssm6+RHIEsWa1RBIQ6+ZLFAFiWXixCIg5CAkDYt18sRbR31PnPKipi4CAi4CAi4CAi4CAi4CAi4CAi4CAi4CAi4CAi4CAi4CAi4CAi4CAi4CAi4CAi4CAi4CAi4CAi4CAi4CAi4CAi4CAi4CAi4CAi4CAi4CAi4CAi4CAi4CAi4CAi4CAi4CAi4CAi4CAi4CAi4CAi4CAi4CAi4CAi4CAi4CAi4CAi4CAi4CAi4CAi4DyYjlUuVgWDsSSTCCtLDxUtDFVq9nFPqLmPQCkVD1LXbcH1mp2sY+iZkciIKBmOUiKgBSpZeEeqdk8yCO9x/zfDxEQEAEBERBQA0BZul4/Gt483bZHDzwTRjpPm/PRm5fDJEYJ3jaru55Zo7fN2oE4VX1A22XrW+W0Fj3wTOjL2qxZiQ5fn9y6MIKzZnXXy6cJZTU6a9YOxK3qA8qmjOHvTZlaJ0erTymTZj067qkx/4yb9WCxGNl2nTQb0S5VH9B22RqO+JH2hvp+vlmPjqederBIZ6Nq8OaVdddJsx7tVA0A5VZl68dmDtJXbRkgNTr+5RtLvMXIEpwOES06N3KUXTvVboDEmzqA8tHrJxe24KRZ37WYRUnYwDnLcvOb/QGUTwSbn01ABTlIi046pAdv+6nsOhkhRg7KBo4a7VLNzmLpsnVhyUH6snYLKBc9G8uTkBGcNuu7lmgsu06ajWiXajoPWj4Yx084yxT9N2zWJitpsxJ9MhyGcxgjOGtWdz1LHqWmRWfN2oG4FWfSQAQEREBABAREQEAEBERAQP8DO81NQyjHem4AAAAASUVORK5CYII=" style="display: block; margin: auto;" /></p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">id_plot_ppc</span>(irt_2pl_incorrect,<span class="dt">ppc_pred=</span>post_incorrect)</code></pre></div>
+<p><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAASAAAAEgCAMAAAAjXV6yAAAA9lBMVEUAAAAAADoAAGYAOpAAZrYBH0szMzM6AAA6ADo6AGY6OmY6OpA6ZrY6kLw6kNtNTU1NTW5NTY5NbqtNjshmAABmADpmAGZmOpBmZrZmkNtmtv9uTU1uTY5ubqtuq+SOTU2OTW6OTY6ObquOq+SOyP+QOgCQOjqQOmaQZpCQkDqQkJCQkLaQkNuQ2/+rbk2rbo6rjk2rq8ir5P+zzeC2ZgC2Zjq2Zma2tma2///Ijk3Ijo7Iq6vI///R4ezbkDrbkGbbkJDb25Db/9vb///kq27kq47k////tmb/tpD/yI7/yKv/25D/5Kv//7b//8j//9v//+T////fOXdpAAAACXBIWXMAAA7DAAAOwwHHb6hkAAAIA0lEQVR4nO2deUMbRRyGQ2Hr3dhDrK1NbQmeLVqMWipQlZQ0koTM9/8y7p3MsfvuMbjHvM8fEYd5l8zTZXYmyW8ZCJLLoOkn0HYoCEBBAAoCUBCAggDVBDmklYIAFASgIAAFASgIQEEACgJQEICCABQEoCAABQE6JMjzmvipFASgIAAFASgIQEEACgJQEICCABQEoCAABQEoCEBBAAoCdEeQ5zViqDOCPK8ZQ10R5HkNGeqIIM9ryhAFASgI0FJBvypsBKnfueln0lZBZwqJH7W9aUEnYyEWjz8/Th6LpeqjCToz+2la0OLxWKy+OV58fRo9FktZQBd0ZvTTtKA/fxmL+X2xPhpHj8VSFjAIOjP5aVjQfOz/ik3v+79po+gxaLztQ0Eh61fBHDQdhYJGiSCUskI3BP17TEG5Qz0Z+ow4B+VxEl3FnlxGjwVT9emSoJasg1oqyGqqBBQEMAkyQkEUZISCABQEoCAABQEoCEBBAAoCUBCAggAUBKAgAAUBKCgk+512CgqhIAAFASgIQEEACgJQEICCABQEoCAABQEoCEBBAArKJ+eD8xQk8gucXBSUVV2gtofVBU4Kkke2qb4wjZmCKEiDggAUBFDHnOWHgmRD5jFTUGIoY8wUFBvKGjMFUZAGBQEoCNBHQdPhps6ndrVPDwUtDoKCVVtVzz0U5DMfWat67qWg9Sthreq5j4JWT4cja0W9pcbcEUH+6XP3lILyWD07vcE5qAeC5vetVT33UNB0OPSn5nLrIEtvdXVDUJUUBYEUBYEUBYEUBYEUBYFUWwVVvr8gBQEoCEBBAMuCbH0myrYg7aNIk8HOSyHOdy9KDXX5Ing8fwR/XpYga5+JsizIcB/Y5YM7Qrz/+HWpoUaClvvlUtrzMBtqUJDpTrnXh3v+UH+C2a2hzgYxe2VSpudhNNScIM/4xCb+MP+Cp4I81KuvCvw4LWV4IqbvNibI84yGJrsXRcZbZ5Iud0/jtgk63/0n+AVb7v+w83Iy2L1Y7v8xGNwpJAifeLEg5clmfiaqnYJu/fg6mIp8KbM7YvLZoT+1XH2gXaBkQefhHHSroqD8mz63TdAsuM5Hl6Rg2HvhtelcO4Xkq9gXYabqGZR/0+fWCYpOllDQo/gLJOj6Ozyr5wrKu+lzy65iyQQdeJntieXD4OyIz5BMQfFCqPoZlHc3yDatg2af/P0i/jKYn/2HW6+XDwaDHc2PcgYd1puD2ipIW0nPdvQLfMb6WD6D3tacg9oqSN+L6RQSVJTOCcK7ef+3x7hzNQgqsL7soaD8ocYE85RP0dcAuiSoMobdfOEdnHuCIpZf8gxShypx9VH/rmLVMc1B+pbWnCo3il4IepHVzZhyT1DJlIuCgo0/fs3eXUHB67RiwjlIG2rM8mH4nzp7sZ4Liibp3ylIHWpCsJsP3zAqlHJQUPiCEJ6C3BVULkVBIOWWoGCbEUw+19/qr8tmpNwSJGbxCvHqQ2zISUG/JV6uPi2YcktQvEgUhd4dc1LQZifPhaI2VJ/r9LNE19/XeEWxv4LE+2QOmiUrxfVRftWzY4KSLcYk3Wm8OxYn9y6zq54dE5R8Bk96OciXkl1x6JwgA4snl9lVzxQU1s1nF/VSkFg9v+y2IP0mjclHJu0IenMqcu680AVBFTIlBE3HYnGQXfXsvKDgr4X7i58ur4Nu+AwCKQqiIAqioIxMtXoxhwRVqxdzSVCFejG3BFWqF3NL0P9QL1ZqFG0TFNeLUVBWJqoXo6DMzMxQuUJBW5lZgU/SuSyoaAGzm4K26sUoyJQx1YtRUNEMBVEQBRUe7E2/q9F5QfWhoEJDrZaiIJCiIJCiIJCiIJCiIJCiIJCiIJCiIJCiIJCiIJCiIJCiIJCiIJCiIJCiIJCiIJCiIJCiIJCiIJCiIJCiIJCiIJCiIJCioPCP0Ha62qc++fViwR+BZNVzDsEZ1OmKw/pgQax6ziEU1OWi3vpQEIBzEAAL6nTVc31yBc3DP/bMdVDVFAWBFAWBFAWBFAWBFAWBFAWBFAWBFAWBFAWBFAWBFAWBFAWBFAWBFAWBFAWBFAWBFAWBFAWBFAWBFAWBFAWBFAWBFAWBFAWBFAWBFAWBFAWBFAWBFAWBFAWBFAWBFAWBFAWBFAWBFAWBFAWBFAWBFAWBFAWBFAWBFAWBFAWBFAWBFAWBFAVtw2qffFj1DGDFIUCpevYJH3RKNds4RtjcAkFSUW/AbXPHUs02jpHVbAkKAlSbgwIoSEKuenaIausgh7jB+b8fUBCAggAUBKggKJ2uV0+Hd0837eH9vIQ2nSfN273XR8O4j9R50ywfemrsvWlWnohVygvabFvfSZe18H5eQt3Wps1Sb//rk3uXWue0WT704iC2LPdOm5UnYpfygtIlo//vJi2t42erLinjZrV3NFJt/Rk1q53FfGQ6dNys9bZJeUGbbat/xo+Ub8jf325We0fLTrWzSFajcuf1K+Oh42a1t1UqCNrala2e6XOQumtLBcm9o398bYs3Hxk6J6eI0nvrzJEObZV6gsSbMoK2e6+eX5o6x83qocU0nIQ1ndN0bn7THkHbE8H6Z11Qxhyk9I4HpHbejFM6dHyGaHNQeuLIvW1S7SqWbFvnhjlI3dZuBG31no6Di5DWOWlWDx2oMRw6btZ626TqOmjxeBzdwCsl/F+/WVmsJM1S75Ph0F/DaJ3TZvnQ0/hOYUrvtFl5InbhShpAQQAKAlAQgIIAFASgIMB/iAp5Z8IY1qoAAAAASUVORK5CYII=" style="display: block; margin: auto;" /></p>
+<p>Even though the incorrect model didn’t converge, it can still replicate the posterior data quite well. We can also look at particular persons or items to see how well the models predict those persons or items. For example, let’s look at the first two persons in the simulated data for which we fixed that person’s value to an arbitrary numbe:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">id_plot_ppc</span>(irt_2pl_incorrect,<span class="dt">ppc_pred=</span>post_incorrect,<span class="dt">person=</span><span class="kw">c</span>(<span class="dv">1</span>,<span class="dv">2</span>))</code></pre></div>
+<p><img src="data:image/png;base64,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" style="display: block; margin: auto;" /></p>
+<p>Finally, we can turn to summary measures of model fit that also allow us to compare models directly to each other (if they were fit on the same data). To do so, I first employ the <code>id_log_lik</code> function to generate log-likelihood values for each of these models:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">log_lik_irt_2pl_correct &lt;-<span class="st"> </span><span class="kw">id_log_lik</span>(irt_2pl_correct)</code></pre></div>
+<pre><code>## [1] &quot;Processing posterior replications for 1000 scores using 100 posterior samples out of a total of 4000 samples.&quot;</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">log_like_irt_2pl_incorrect &lt;-<span class="st"> </span><span class="kw">id_log_lik</span>(irt_2pl_incorrect)</code></pre></div>
+<pre><code>## [1] &quot;Processing posterior replications for 1000 scores using 100 posterior samples out of a total of 4000 samples.&quot;</code></pre>
+<p>With this calculation can examine the models’ <code>loo</code> values, which shows the relative predictive performance of the model to the data. Overall, model performance seems quite good, as the Pareto k values show that there are only a few dozen observations in the dataset that aren’t well predicted. The LOO-IC, or the leave-one-out information criterion (think AIC or BIC), are also similar for the two models, although the correct model does have a lower (i.e., better) LOO-IC.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">loo</span>(log_lik_irt_2pl_correct)</code></pre></div>
+<pre><code>## Computed from 100 by 1000 log-likelihood matrix
+## 
+##          Estimate   SE
+## elpd_loo  -1136.1 21.8
+## p_loo       111.4  5.4
+## looic      2272.2 43.7
+## 
+## Pareto k diagnostic values:
+##                          Count  Pct 
+## (-Inf, 0.5]   (good)     834   83.4%
+##  (0.5, 0.7]   (ok)        97    9.7%
+##    (0.7, 1]   (bad)       55    5.5%
+##    (1, Inf)   (very bad)  14    1.4%
+## See help('pareto-k-diagnostic') for details.</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">loo</span>(log_like_irt_2pl_incorrect)</code></pre></div>
+<pre><code>## Computed from 100 by 1000 log-likelihood matrix
+## 
+##          Estimate   SE
+## elpd_loo  -1156.5 23.4
+## p_loo       147.3  8.4
+## looic      2312.9 46.8
+## 
+## Pareto k diagnostic values:
+##                          Count  Pct 
+## (-Inf, 0.5]   (good)     784   78.4%
+##  (0.5, 0.7]   (ok)       115   11.5%
+##    (0.7, 1]   (bad)       73    7.3%
+##    (1, Inf)   (very bad)  28    2.8%
+## See help('pareto-k-diagnostic') for details.</code></pre>
+<p>We can also compare the LOOIC of the two models explicitly using a second <code>loo</code> function that will even give us a confidence interval around the difference. If the difference is negative, then the first (correct) model has higher predictive accuracy:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">compare</span>(<span class="kw">loo</span>(log_lik_irt_2pl_correct),
+        <span class="kw">loo</span>(log_like_irt_2pl_incorrect))</code></pre></div>
+<pre><code>## elpd_diff        se 
+##     -20.4      32.0</code></pre>
+
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

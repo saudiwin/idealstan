@@ -417,6 +417,11 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
   timepoints <- idealdata@time[billpoints]
   avg_particip <- rep(1,num_legis)
   Y <- c(idealdata@score_matrix)
+  
+  # check to see if we need to recode missing values from the data if the model_type doesn't handle missing data
+  if(model_type %in% c(1,3) & !is.null(idealdata@miss_val)) {
+    Y <- na_if(Y,idealdata@miss_val)
+  }
 
   #Remove NA values, which should have been coded correctly in the make_idealdata function
   
@@ -470,6 +475,11 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
   timepoints <- idealdata@time[billpoints]
   
   Y <- c(idealdata@score_matrix)
+  
+  # check to see if we need to recode missing values from the data if the model_type doesn't handle missing data
+  if(model_type %in% c(1,3) & !is.null(idealdata@miss_val)) {
+    Y <- na_if(Y,idealdata@miss_val)
+  }
   
   #Remove NA values, which should have been coded correctly in the make_idealdata function
   

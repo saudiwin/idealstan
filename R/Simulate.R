@@ -290,7 +290,7 @@ id_sim_gen <- function(num_person=20,num_bills=50,absence_discrim_sd=2,absence_d
     # now determine if the outcome. personlators only vote if they show up
     # Absences are coded as category 3 for binary data
     
-    combined <- if_else(pr_absence<runif(length(person_points)),votes,3)
+    combined <- if_else(pr_absence<runif(length(person_points)),votes,2)
     
     # Create a vote matrix
     
@@ -304,7 +304,7 @@ id_sim_gen <- function(num_person=20,num_bills=50,absence_discrim_sd=2,absence_d
     out_data <- id_make(score_data=combined,person_data=data_frame(person.names=paste0('person_',1:nrow(combined)),
                                                                    party='L',
                                                                    true_person=as.numeric(ideal_pts)),
-                        miss_val = NULL,
+                        miss_val = 2,
                         high_val = 1,
                         low_val = 0,
                         middle_val = NULL,

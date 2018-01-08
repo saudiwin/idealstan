@@ -248,7 +248,7 @@
         pr_vote <-
           all_params$sigma_reg_full[s, bill_points[v]] * all_params$L_full[s, time_points[v], legis_points[v]] -
           all_params$B_int_full[s, bill_points[v]]
-        dens <- dbinom(y[v],1,plogis(pr_vote),log = T)
+        dens <- dbinom(y[v]-1,1,plogis(pr_vote),log = T)
         return(dens)
       })
     })
@@ -317,7 +317,7 @@
           dens <- dbinom(as.numeric(y[v]==abs_cat),1,plogis(pr_absence),log = T)
         } else {
           dens <- dbinom(as.numeric(y[v]==abs_cat),1,plogis(pr_absence),log = T) + 
-            dbinom(y[v],1,pr_vote,log = T)
+            dbinom(y[v]-1,1,pr_vote,log = T)
         }
         
         return(dens)

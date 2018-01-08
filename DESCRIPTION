@@ -5,6 +5,7 @@ Version: 0.2
 Date: 2018-01-05
 Author: Robert Kubinec
 Maintainer: Robert Kubinec <rmk7xy@virginia.edu>
+BugReports: https://github.com/saudiwin/idealstan/issues
 Description: This package offers ideal-point scaling/dimension reduction methods that incorporate additional response categories and missing/censored values, including absences and abstentions, for rollcall voting data (or any other kind of binary or ordinal item-response theory data). Full and approximate Bayesian inference is done via the Stan engine (www.mc-stan.org). 
 License: GPL
 Depends:
@@ -23,8 +24,11 @@ Imports:
     lazyeval
 Suggests:
     pscl,
-    loo
+    loo,
+    knitr,
+    rmarkdown
 LinkingTo: StanHeaders (>= 2.13.1), rstan (>= 2.13.2), BH (>= 1.62.0.1), Rcpp
     (>= 0.12.7), RcppEigen (>= 0.3.2.9.0)
 RoxygenNote: 6.0.1
 LazyData: false
+VignetteBuilder: knitr
