@@ -128,7 +128,7 @@ To look at the bill's absence midpoints, simply change the `abs_and_reg` paramat
 ```{r abs_bill_plot}
 
 id_plot_legis(sen_est,person_ci_alpha=0.1,item_plot=205,
-        abs_and_reg='Absence-inflated') + scale_colour_brewer(type='qual')
+        abs_and_reg='Absence Points') + scale_colour_brewer(type='qual')
 ```
 
 This absence midpoint shows that those who were most likely to be absent on this bill were Republicans who were pretty close to the far right (left) of the ideal point distribution. Of course, that does not mean absence always implies that one is far to the right, it is just how this particular bill absence midpoint happens to fall. In addition, the uncertainty around this midpoint is much higher than the vote midpoint.
