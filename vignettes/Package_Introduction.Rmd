@@ -111,23 +111,23 @@ sen_est <- id_estimate(senate_data,
                  fixtype='constrained',
             seed=84520,
             refresh=500)
-id_plot(sen_est,person_ci_alpha=0.7) + scale_colour_brewer(type='qual')
+id_plot_legis(sen_est,person_ci_alpha=0.7) + scale_colour_brewer(type='qual')
 ```
 
-The `id_plot` function has many other options which are documented in the help files. One notable option, though, is to plot bill midpoints along with the legislator ideal points. The midpoints show the line of equiprobability, i.e., at what ideal point is a legislator indifferent to voting on a bill (or answering an item correctly). To plot a bill midpoint overlay, simply include the column index of bill in the response matrix as the `item_plot` option:
+The `id_plot_legis` function has many other options which are documented in the help files. One notable option, though, is to plot bill midpoints along with the legislator ideal points. The midpoints show the line of equiprobability, i.e., at what ideal point is a legislator indifferent to voting on a bill (or answering an item correctly). To plot a bill midpoint overlay, simply include the column index of bill in the response matrix as the `item_plot` option:
 
 ```{r bill_plot}
-id_plot(sen_est,person_ci_alpha=0.1,item_plot=205,
+id_plot_legis(sen_est,person_ci_alpha=0.1,item_plot=205,
         abs_and_reg='Non-inflated') + scale_colour_brewer(type='qual')
 ```
 
 The 50th bill in the 114 Senate shows very high discrimination: the bill midpoint is right in the middle of the ideal point distribution, with most Democrats voting yes and most Repulicans voting no. The two rug lines at the bottom of the plot show the high density posterior interval for the bill midpoint, and as can be seen, the uncertainty only included those legislators near the very center of the distribution.
 
-To look at the bill's absence midpoints, simply change the `abs_and_reg` paramater to the `id_plot` function:
+To look at the bill's absence midpoints, simply change the `abs_and_reg` paramater to the `id_plot_legis` function:
 
 ```{r abs_bill_plot}
 
-id_plot(sen_est,person_ci_alpha=0.1,item_plot=205,
+id_plot_legis(sen_est,person_ci_alpha=0.1,item_plot=205,
         abs_and_reg='Absence-inflated') + scale_colour_brewer(type='qual')
 ```
 
