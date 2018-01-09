@@ -15,3 +15,10 @@ To get started, first look at how to pre-process your data with the \code{\link{
 with the \code{\link{id_estimate}} function. To report a bug, please go to \url{www.github.com/saudiwin/idealstan} and put in an
 issue in my Github page. You can email me at \email{rmk7xy@virginia.edu}.
 }
+\seealso{
+Useful links:
+\itemize{
+  \item Report bugs at \url{https://github.com/saudiwin/idealstan/issues}
+}
+
+}

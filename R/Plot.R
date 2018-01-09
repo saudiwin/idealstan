@@ -5,7 +5,7 @@
 #' 
 #' This plot shows the distribution of ideal points for the legislators/persons in the model. It will plot them as a vertical
 #' dot plot with associated high-density posterior interval (10\% to 90\%). In addition, if the column index for a 
-#' bill/item from the response matrix is passed to the \code{bill_plot} option, then a bill midpoint will be overlain
+#' bill/item from the response matrix is passed to the \code{item_plot} option, then a bill midpoint will be overlain
 #' on the ideal point plot, showing the point at which legislators/persons are indifferent to voting/answering on the 
 #' bill/item. Note that because this is an ideal point model, it is not possible to tell from the midpoint itself
 #' which side will be voting which way. For that reason, the legislators/persons are colored by their votes/scores to
@@ -13,7 +13,7 @@
 #' 
 #' @param object A fitted \code{idealstan} object
 #' @param return_data If true, the calculated legislator/bill data is returned along with the plot in a list
-#' @param bill_plot The column index of the bill/item midpoint to overlay on the plot
+#' @param item_plot The column index of the bill/item midpoint to overlay on the plot
 #' @param text_size_label ggplot2 text size for legislator labels
 #' @param text_size_group ggplot2 text size for group text used for points
 #' @param point_size If \code{person_labels} and \code{group_labels} are set to \code{FALSE}, controls the size of the points plotted.
@@ -45,9 +45,9 @@
 #' 
 #' # We can overlap the bill/item midpoints to show where the persons/legislators are indifferent to responding positively
 #' 
-#' id_plot_legis(senate114_fitted,bill_plot=5)
+#' id_plot_legis(senate114_fitted,item_plot=5)
 #' 
-id_plot_legis <- function(object,return_data=FALSE,bill_plot=NULL,
+id_plot_legis <- function(object,return_data=FALSE,item_plot=NULL,
                        text_size_label=2,text_size_group=2.5,
                        point_size=1,
                        hjust_length=-0.7,
@@ -159,9 +159,9 @@ id_plot_legis <- function(object,return_data=FALSE,bill_plot=NULL,
       theme(axis.text.y=element_blank(),panel.grid.major.y = element_blank()) + coord_flip() 
   
 
-  if(!is.null(bill_plot)) {
+  if(!is.null(item_plot)) {
 
-    bill_num <- which(colnames(object@score_data@score_matrix) %in% bill_plot)
+    bill_num <- which(colnames(object@score_data@score_matrix) %in% item_plot)
     bill_discrim_reg <- paste0('sigma_reg_full[',bill_num,']')
     bill_diff_reg <- paste0('B_int_full[',bill_num,']')
     
@@ -243,15 +243,20 @@ id_plot_legis <- function(object,return_data=FALSE,bill_plot=NULL,
     #Redo the legislator plot to make room for bill covariates
     
     # Pick up bills and put the labels back on
-    cols <- object@score_data@score_matrix[,bill_plot] %>% as_data_frame
+    cols <- object@score_data@score_matrix[,item_plot] %>% as_data_frame
     if(!is.null(sample_persons)) {
       cols <- slice(cols,to_sample)
     }
     cols <- lapply(cols,function(x) {
-      x <- factor(x,levels=object@score_data@vote_int,labels=object@score_data@vote_labels)
+      if(object@model_type %in% c(1,3) && is.na(object@score_data@miss_val)) {
+        x <- factor(x,levels=object@score_data@vote_int,labels=object@score_data@vote_labels,exclude=NULL)
+      } else {
+        x <- factor(x,levels=object@score_data@vote_int,labels=object@score_data@vote_labels)
+      }
+      
     }) %>% as_data_frame
 
-    if(length(bill_plot)>1) {
+    if(length(item_plot)>1) {
       person_params <- bind_cols(person_params,cols) %>% gather(bill_type,bill_vote,one_of(bill_num))
     } else {
       person_params <- bind_cols(person_params,cols) 
@@ -333,11 +338,11 @@ id_plot_legis <- function(object,return_data=FALSE,bill_plot=NULL,
      
     #Whether or not to add a facet_wrap
     
-    if(any(object@model_type %in% c(2,4,6)) & abs_and_reg=='both' & length(bill_plot)>1) {
+    if(any(object@model_type %in% c(2,4,6)) & abs_and_reg=='both' & length(item_plot)>1) {
       outplot <- outplot + facet_wrap(~param + bill_type,dir='v')
-    } else if(any(object@model_type %in% c(2,4,6)) & abs_and_reg %in% c('both','Absence-inflated') & length(bill_plot)==1) {
+    } else if(any(object@model_type %in% c(2,4,6)) & abs_and_reg %in% c('both','Absence-inflated') & length(item_plot)==1) {
       outplot <- outplot + facet_wrap(~param,dir='v') 
-    } else if(length(bill_plot)>1) {
+    } else if(length(item_plot)>1) {
       outplot <- outplot + facet_wrap(~bill_type,dir='v') 
     }
     
@@ -353,7 +358,7 @@ id_plot_legis <- function(object,return_data=FALSE,bill_plot=NULL,
   if(return_data==TRUE) {
     
     return_list <- list(outplot=outplot,plot_data=person_params)
-    if(!is.null(bill_plot)) {
+    if(!is.null(item_plot)) {
       return_list$bill_data <- bill_pos
     }
     return(return_list)

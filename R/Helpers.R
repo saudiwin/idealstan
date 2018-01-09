@@ -488,9 +488,9 @@
   }
 }
 
-.extract_samples <- function(obj=NULL,param=NULL,...) {
+.extract_samples <- function(obj=NULL,extract_type=NULL,...) {
   if(!is.null(param)) {
-    param <- switch(param,persons='legis_full',
+    param <- switch(extract_type,persons='legis_full',
                     reg_discrim='sigma_reg_full',
                     miss_discrim='sigma_abs_full',
                     reg_diff='B_int_full',

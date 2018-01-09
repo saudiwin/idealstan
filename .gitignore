@@ -8,3 +8,4 @@ src/*.dll
 *.rds
 package_test.nb.html
 inst/doc
+bfg-1.12.16.jar

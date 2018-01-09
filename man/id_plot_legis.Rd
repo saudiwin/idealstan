@@ -4,7 +4,7 @@
 \alias{id_plot_legis}
 \title{Plot Legislator/Person and Bill/Item Ideal Points}
 \usage{
-id_plot_legis(object, return_data = FALSE, bill_plot = NULL,
+id_plot_legis(object, return_data = FALSE, item_plot = NULL,
   text_size_label = 2, text_size_group = 2.5, point_size = 1,
   hjust_length = -0.7, person_labels = TRUE, group_labels = T,
   person_ci_alpha = 0.1, show_score = NULL, abs_and_reg = "both",
@@ -16,7 +16,7 @@ id_plot_legis(object, return_data = FALSE, bill_plot = NULL,
 
 \item{return_data}{If true, the calculated legislator/bill data is returned along with the plot in a list}
 
-\item{bill_plot}{The column index of the bill/item midpoint to overlay on the plot}
+\item{item_plot}{The column index of the bill/item midpoint to overlay on the plot}
 
 \item{text_size_label}{ggplot2 text size for legislator labels}
 
@@ -57,7 +57,7 @@ uncertainties of legislator/persons and bills/items.
 \details{
 This plot shows the distribution of ideal points for the legislators/persons in the model. It will plot them as a vertical
 dot plot with associated high-density posterior interval (10\% to 90\%). In addition, if the column index for a 
-bill/item from the response matrix is passed to the \code{bill_plot} option, then a bill midpoint will be overlain
+bill/item from the response matrix is passed to the \code{item_plot} option, then a bill midpoint will be overlain
 on the ideal point plot, showing the point at which legislators/persons are indifferent to voting/answering on the 
 bill/item. Note that because this is an ideal point model, it is not possible to tell from the midpoint itself
 which side will be voting which way. For that reason, the legislators/persons are colored by their votes/scores to
@@ -73,6 +73,6 @@ id_plot_legis(senate114_fitted)
 
 # We can overlap the bill/item midpoints to show where the persons/legislators are indifferent to responding positively
 
-id_plot_legis(senate114_fitted,bill_plot=5)
+id_plot_legis(senate114_fitted,item_plot=5)
 
 }
