@@ -248,7 +248,7 @@ id_plot_legis <- function(object,return_data=FALSE,item_plot=NULL,
       cols <- slice(cols,to_sample)
     }
     cols <- lapply(cols,function(x) {
-      if(object@model_type %in% c(1,3) && is.na(object@score_data@miss_val)) {
+      if(object@model_type %in% c(2,4) && is.na(object@score_data@miss_val)) {
         x <- factor(x,levels=object@score_data@vote_int,labels=object@score_data@vote_labels,exclude=NULL)
       } else {
         x <- factor(x,levels=object@score_data@vote_int,labels=object@score_data@vote_labels)
