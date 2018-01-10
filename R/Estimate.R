@@ -120,6 +120,26 @@ id_make <- function(score_data=NULL,simul_data=NULL,
     
     row.names(score_data) <- row_names
   }
+  
+  
+  # recode missing into something that works
+  if(is.na(miss_val) && inflate==TRUE) {
+    suppressWarnings(score_data <- apply(score_data,2,function(c) {
+      if(is.numeric(c)) {
+          max_c <- max(c,na.rm=T)
+          c[is.na(c)] <- max_c +1
+      } else {
+        c[is.na(c)] <- 'Missing'
+        }
+      return(c)
+      
+    }))
+    if(is.numeric(score_data[,1])) {
+      miss_val <- max(score_data)
+    } else {
+      miss_val <- 'Missing'
+    }
+  }
 
   if(ordinal==TRUE & inflate==TRUE) {
     votes <- c(low_val,middle_val,high_val,miss_val)

@@ -327,20 +327,31 @@ id_plot_legis <- function(object,return_data=FALSE,item_plot=NULL,
         theme(legend.position = 'bottom')
     
     # Add in annotations
-    if(!is.null(person_params$step) && max(person_params$step)>1) {
-      bill_data <- distinct(bill_pos,median_bill,step)
-      outplot <- outplot + annotate(geom='text',
-                                    x=person_params$person.names[which(abs(person_params$median_pt-quantile(person_params$median_pt,.8))==min(abs(person_params$median_pt-quantile(person_params$median_pt,.8))))][1:max(person_params$step)],
-                                    y=bill_data$median_bill + (min(bill_data$median_bill)-max(bill_data$median_bill))/(max(person_params$step)*3.5),
-                                    label=object@score_data@vote_labels[1:(length(object@score_data@vote_labels)-1)],
-                                    colour='dark green')
+    if(!is.null(person_params$step) && max(person_params$step)>1 && abs_and_reg!='both') {
+      if(object@model_type %in% c(2,4,6)) {
+        bill_data <- distinct(bill_pos,median_bill,step,param)
+        bill_data <- filter(bill_data,param==abs_and_reg)
+        outplot <- outplot + annotate(geom='text',
+                                      x=person_params$person.names[which(abs(person_params$median_pt-quantile(person_params$median_pt,.8))==min(abs(person_params$median_pt-quantile(person_params$median_pt,.8))))][1:max(person_params$step)],
+                                      y=bill_data$median_bill + (min(bill_data$median_bill)-max(bill_data$median_bill))/(max(person_params$step)*3.5),
+                                      label=object@score_data@vote_labels[1:(length(object@score_data@vote_labels)-2)],
+                                      colour='dark green')
+      } else {
+        bill_data <- distinct(bill_pos,median_bill,step)
+        outplot <- outplot + annotate(geom='text',
+                                      x=person_params$person.names[which(abs(person_params$median_pt-quantile(person_params$median_pt,.8))==min(abs(person_params$median_pt-quantile(person_params$median_pt,.8))))][1:max(person_params$step)],
+                                      y=bill_data$median_bill + (min(bill_data$median_bill)-max(bill_data$median_bill))/(max(person_params$step)*3.5),
+                                      label=object@score_data@vote_labels[1:(length(object@score_data@vote_labels)-1)],
+                                      colour='dark green')
+      }
+
     }
      
     #Whether or not to add a facet_wrap
     
     if(any(object@model_type %in% c(2,4,6)) & abs_and_reg=='both' & length(item_plot)>1) {
       outplot <- outplot + facet_wrap(~param + bill_type,dir='v')
-    } else if(any(object@model_type %in% c(2,4,6)) & abs_and_reg %in% c('both','Absence-inflated') & length(item_plot)==1) {
+    } else if(any(object@model_type %in% c(2,4,6)) & abs_and_reg %in% c('both','Absence Points') & length(item_plot)==1) {
       outplot <- outplot + facet_wrap(~param,dir='v') 
     } else if(length(item_plot)>1) {
       outplot <- outplot + facet_wrap(~bill_type,dir='v') 
