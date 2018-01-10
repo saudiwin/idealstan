@@ -210,8 +210,8 @@ id_plot_legis <- function(object,return_data=FALSE,item_plot=NULL,
         } else {
           #non-inflated Ordinal
           out_reg <- .calc_bill(bill_pos,
-                                int_reg=rlang::parse_quosure(bill_diff_reg[x]),
-                                sigma_reg=rlang::parse_quosure(bill_discrim_reg[x]),
+                                int_reg=parse_quosure(bill_diff_reg[x]),
+                                sigma_reg=parse_quosure(bill_discrim_reg[x]),
                                 steps_data=steps$steps_votes,
                                 step_num=ncol(steps$steps_votes),
                                 this_num=bill_num[x])
@@ -221,16 +221,16 @@ id_plot_legis <- function(object,return_data=FALSE,item_plot=NULL,
         #inflated binary
         if(object@model_type==2) {
           out_reg <- .calc_bill(bill_pos,
-                                int_reg=rlang::parse_quosure(bill_diff_reg[x]),
-                                sigma_reg=rlang::parse_quosure(bill_discrim_reg[x]),
-                                int_abs=rlang::parse_quosure(bill_diff_abs[x]),
-                                sigma_abs=rlang::parse_quosure(bill_discrim_abs[x]),
+                                int_reg=parse_quosure(bill_diff_reg[x]),
+                                sigma_reg=parse_quosure(bill_discrim_reg[x]),
+                                int_abs=parse_quosure(bill_diff_abs[x]),
+                                sigma_abs=parse_quosure(bill_discrim_abs[x]),
                                 this_num=bill_num[x])
         } else {
           #non-inflated binary
           out_reg <- .calc_bill(bill_pos,
-                                int_reg=rlang::parse_quosure(bill_diff_reg[x]),
-                                sigma_reg=rlang::parse_quosure(bill_discrim_reg[x]),
+                                int_reg=parse_quosure(bill_diff_reg[x]),
+                                sigma_reg=parse_quosure(bill_discrim_reg[x]),
                                 this_num=bill_num[x])
         }
       }
