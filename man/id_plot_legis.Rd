@@ -34,7 +34,7 @@ id_plot_legis(object, return_data = FALSE, item_plot = NULL,
 
 \item{show_score}{Show only person/legislator ideal points that have a certain score/vote category from the outcome (character string)}
 
-\item{abs_and_reg}{Whether to show 'both' absence and regular bill midpoints if the model is absence-inflated, the default,
+\item{abs_and_reg}{Whether to show 'both' absence and regular item/bill midpoints if the model is absence-inflated, the default,
 or 'Absence Points' for only the absence midpoints or 'Vote Points' for only the non-inflated midpoints}
 
 \item{show_true}{Whether to show the true values of the legislators (if model has been simulated)}
@@ -57,7 +57,7 @@ uncertainties of legislator/persons and bills/items.
 \details{
 This plot shows the distribution of ideal points for the legislators/persons in the model. It will plot them as a vertical
 dot plot with associated high-density posterior interval (10\% to 90\%). In addition, if the column index for a 
-bill/item from the response matrix is passed to the \code{item_plot} option, then a bill midpoint will be overlain
+bill/item from the response matrix is passed to the \code{item_plot} option, then an item/bill midpoint will be overlain
 on the ideal point plot, showing the point at which legislators/persons are indifferent to voting/answering on the 
 bill/item. Note that because this is an ideal point model, it is not possible to tell from the midpoint itself
 which side will be voting which way. For that reason, the legislators/persons are colored by their votes/scores to

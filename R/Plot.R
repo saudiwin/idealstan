@@ -5,7 +5,7 @@
 #' 
 #' This plot shows the distribution of ideal points for the legislators/persons in the model. It will plot them as a vertical
 #' dot plot with associated high-density posterior interval (10\% to 90\%). In addition, if the column index for a 
-#' bill/item from the response matrix is passed to the \code{item_plot} option, then a bill midpoint will be overlain
+#' bill/item from the response matrix is passed to the \code{item_plot} option, then an item/bill midpoint will be overlain
 #' on the ideal point plot, showing the point at which legislators/persons are indifferent to voting/answering on the 
 #' bill/item. Note that because this is an ideal point model, it is not possible to tell from the midpoint itself
 #' which side will be voting which way. For that reason, the legislators/persons are colored by their votes/scores to
@@ -22,7 +22,7 @@
 #' @param group_labels if \code{TRUE}, use the group column to plot text markers for the group (parties) from the person/legislator data
 #' @param person_ci_alpha The transparency level of the dot plot and confidence bars for the person ideal points
 #' @param show_score Show only person/legislator ideal points that have a certain score/vote category from the outcome (character string)
-#' @param abs_and_reg Whether to show 'both' absence and regular bill midpoints if the model is absence-inflated, the default,
+#' @param abs_and_reg Whether to show 'both' absence and regular item/bill midpoints if the model is absence-inflated, the default,
 #' or 'Absence Points' for only the absence midpoints or 'Vote Points' for only the non-inflated midpoints
 #' @param show_true Whether to show the true values of the legislators (if model has been simulated)
 #' @param group_color If \code{TRUE}, give each group/bloc a different color
@@ -322,12 +322,12 @@ id_plot_legis <- function(object,return_data=FALSE,item_plot=NULL,
     # Add in bill vertical line (50% equiprobability voting line)
       outplot <- outplot + geom_hline(aes(yintercept=median_bill),linetype=2,alpha=0.6) +
         geom_rug(aes(y=ci_value,linetype=ci_type)) +
-        guides(linetype=guide_legend('Bill\nMidpoint\nHPD'),
+        guides(linetype=guide_legend('Item\nMidpoint\nHPD'),
                colour=guide_legend('')) +
         theme(legend.position = 'bottom')
     
     # Add in annotations
-    if(!is.null(person_params$step) && max(person_params$step)>1 && abs_and_reg!='both') {
+    if(!is.null(person_params$step) && max(person_params$step)>1 && (abs_and_reg!='both' && object@model_type %in% c(2,4,6))) {
       if(object@model_type %in% c(2,4,6)) {
         bill_data <- distinct(bill_pos,median_bill,step,param)
         bill_data <- filter(bill_data,param==abs_and_reg)
