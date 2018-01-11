@@ -21,7 +21,8 @@ Imports:
     stringr,
     bayesplot,
     ggplot2,
-    lazyeval
+    lazyeval,
+    rlang
 Suggests:
     pscl,
     loo,
