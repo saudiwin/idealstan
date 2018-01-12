@@ -220,6 +220,8 @@ id_make <- function(score_data=NULL,simul_data=NULL,
   
   row.names(cleaned) <- as.character(1:nrow(cleaned))
   
+  if(is.null(person_data$group)) person_data$group <- rep('O',nrow(score_data))
+  
   # check what kind of vote labels to use
   
   if(outcome_label_type=='none') {
