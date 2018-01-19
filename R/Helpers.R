@@ -11,6 +11,7 @@
     }
   }
   
+  browser()
   
   to_use <- stanmodels[['irt_standard_noid']]
   post_modes <- rstan::vb(object=to_use,data =this_data,
@@ -51,6 +52,7 @@
            to_constrain_high <- to_constrain_high$ix[1:nfix]
            to_constrain_low <- NULL
          } else if(all_args$restrict_type=='constrain_twoway') {
+           fix_param <- 'sigma_abs'
            to_constrain_high <- sort(sigma_abs_std,index.return=TRUE,decreasing=TRUE)
            to_constrain_high <- to_constrain_high$ix[1:nfix]
            to_constrain_low <- sort(sigma_abs_std,index.return=TRUE)
