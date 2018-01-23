@@ -22,7 +22,8 @@ Imports:
     bayesplot,
     ggplot2,
     lazyeval,
-    rlang
+    rlang,
+    shinystan
 Suggests:
     pscl,
     loo,

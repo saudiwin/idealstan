@@ -27,6 +27,7 @@
 #' @param middle_val The value (numeric or character) that indicate values between the lowest and highest categories, such as abstention in voting data or "Neither Agree nor Disagree" in likert scales.
 #'  If there are multiple possible values, 
 #'  pass along a numeric or character vector of all such values in correct order (lower to higher values).
+#'  If there are no middle values (binary outcome), set to \code{NULL}.
 #' @param ordinal Whether or not the data contain ordinal responses. If \code{TRUE}, middle values/abstentions are used as a middle category in constructing the outcome.
 #'  Otherwise the response is assumed to be binary (yes/no) or (correct/incorrect).
 #' @param time An optional integer vector of length equal to the number of columns in the response matrix (i.e., the number of items or bills)
@@ -60,8 +61,8 @@
 #' data('senate114')
 #' 
 #' to_idealstan <-   id_make(score_data = senate114,
-#' ordinal = F,
-#' include_pres=F)
+#' ordinal = FALSE,
+#' include_pres=FALSE)
 #' 
 #' # Also we can put in a matrix object directly by specifying which votes/scores are which:
 #' 
@@ -85,7 +86,7 @@
 #' abs_vote = 3,
 #' yes_vote = 2,
 #' no_vote = 1,
-#' ordinal = F,
+#' ordinal = FALSE,
 #' exclude_level = c(3,7)
 #' )
 #' 
@@ -125,6 +126,7 @@ id_make <- function(score_data=NULL,simul_data=NULL,
   
   # recode missing into something that works
   if(is.na(miss_val) && inflate==TRUE) {
+    if(sum(is.na(score_data))==0) stop('To use missing-data model, you must have at least one missing value in the score matrix.')
     suppressWarnings(score_data <- apply(score_data,2,function(c) {
       if(is.numeric(c)) {
           max_c <- max(c,na.rm=T)
@@ -363,11 +365,11 @@ id_make <- function(score_data=NULL,simul_data=NULL,
 #'                        restrict_ind_high = 
 #'                        sort(bin_irt_2pl_abs_sim@simul_data$true_reg_discrim,
 #'                        decreasing=TRUE,
-#'                        index=T)$ix[1:3],
+#'                        index=TRUE)$ix[1:3],
 #'                        restrict_ind_low = 
 #'                        sort(bin_irt_2pl_abs_sim@simul_data$true_reg_discrim,
 #'                        decreasing=FALSE,
-#'                        index=T)$ix[1:3],
+#'                        index=TRUE)$ix[1:3],
 #'                        restrict_params = 'discrim_reg', 
 #'                        restrict_type = 'constrain_twoway',
 #'                        fixtype='constrained')

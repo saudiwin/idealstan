@@ -148,6 +148,7 @@ id_sim_gen <- function(num_person=20,num_bills=50,absence_discrim_sd=2,absence_d
                                high_val = ordinal_outcomes,
                                low_val = 1,
                                middle_val = 2:(ordinal_outcomes-1),
+                              inflate=absence,
                                simul_data=list(num_person=num_person,
                                               num_bills=num_bills,
                                               absence_discrim_sd=absence_discrim_sd,
@@ -164,7 +165,7 @@ id_sim_gen <- function(num_person=20,num_bills=50,absence_discrim_sd=2,absence_d
                                simulation=TRUE)
     
   } else if(ordinal==TRUE & graded_response==TRUE & absence==TRUE) {
-    
+    stop('Graded response model not currently implemented in idealstan.')
     reg_discrim <- prior_func(params=list(N=num_bills,mean=0,sd=reg_discrim_sd)) %>% as.matrix
     
     all_outcomes <- lapply((1-ordinal_outcomes),function(x) {
@@ -200,10 +201,11 @@ id_sim_gen <- function(num_person=20,num_bills=50,absence_discrim_sd=2,absence_d
     out_data <- id_make(score_data=combined,person_data=data_frame(person.names=paste0('person_',1:nrow(combined)),
                                                                         group='L',
                                                                         true_person=as.numeric(ideal_pts)),
-                               miss_val = NULL,
+                               miss_val = NA,
                                high_val = 1,
                                low_val = 0,
                                middle_val = NULL,
+                        inflate=absence,
                                simul_data=list(num_person=num_person,
                                                num_bills=num_bills,
                                                absence_discrim_sd=absence_discrim_sd,
@@ -266,6 +268,7 @@ id_sim_gen <- function(num_person=20,num_bills=50,absence_discrim_sd=2,absence_d
                                miss_val = ordinal_outcomes+1,
                                high_val = ordinal_outcomes,
                                low_val = 1,
+                               inflate=absence,
                                middle_val = 2:(ordinal_outcomes-1),
                                simul_data=list(num_person=num_person,
                                                num_bills=num_bills,
@@ -308,6 +311,7 @@ id_sim_gen <- function(num_person=20,num_bills=50,absence_discrim_sd=2,absence_d
                         high_val = 1,
                         low_val = 0,
                         middle_val = NULL,
+                        inflate=absence,
                         simul_data=list(num_person=num_person,
                                         num_bills=num_bills,
                                         absence_discrim_sd=absence_discrim_sd,

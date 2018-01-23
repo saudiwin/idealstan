@@ -5,3 +5,5 @@ cleanup*
 ^chunks$
 README*
 package*
+cran-comments.md
+NEWS.md

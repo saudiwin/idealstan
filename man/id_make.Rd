@@ -46,7 +46,8 @@ pass along a numeric or character vector of all such values.}
 
 \item{middle_val}{The value (numeric or character) that indicate values between the lowest and highest categories, such as abstention in voting data or "Neither Agree nor Disagree" in likert scales.
 If there are multiple possible values, 
-pass along a numeric or character vector of all such values in correct order (lower to higher values).}
+pass along a numeric or character vector of all such values in correct order (lower to higher values).
+If there are no middle values (binary outcome), set to \code{NULL}.}
 
 \item{ordinal}{Whether or not the data contain ordinal responses. If \code{TRUE}, middle values/abstentions are used as a middle category in constructing the outcome.
 Otherwise the response is assumed to be binary (yes/no) or (correct/incorrect).}
@@ -83,8 +84,8 @@ To run an IRT model using \code{idealstan}, you must first process your data usi
 data('senate114')
 
 to_idealstan <-   id_make(score_data = senate114,
-ordinal = F,
-include_pres=F)
+ordinal = FALSE,
+include_pres=FALSE)
 
 # Also we can put in a matrix object directly by specifying which votes/scores are which:
 
@@ -108,7 +109,7 @@ legis_data = slice(senate114$legis.data,-1),
 abs_vote = 3,
 yes_vote = 2,
 no_vote = 1,
-ordinal = F,
+ordinal = FALSE,
 exclude_level = c(3,7)
 )
 
