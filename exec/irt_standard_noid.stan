@@ -135,7 +135,7 @@ model {
   sigma_abs_x_cons ~ normal(0,5);
   
   avg_particip ~ normal(0,5);
-  if(model_type>3 && model_type<8) {
+  if(model_type>2 && model_type<8) {
     for(i in 1:(m-2)) {
     steps_votes[i+1] - steps_votes[i] ~ normal(0,5); 
     }

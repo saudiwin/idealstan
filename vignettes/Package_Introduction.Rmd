@@ -19,21 +19,23 @@ require(ggplot2)
 
 *Note: To report bugs with the package, please file an issue on the [Github page](https://github.com/saudiwin/idealstan/issues).*
 
-This package implements IRT (item response theory) ideal point models, which are models designed for situations in which actors make strategic choices that correlate with a unidimensional scale, such as the left-right axis in American politics. Compared to traditional IRT, ideal point models examine the polarizing influence of a set of items on a set of persons, and has simlarities to models based on latent spaces, such as multi-dimensional scaling. For more information, I refer you to my paper presented at [StanCon 2018](http://mc-stan.org/events/stancon2018/).
+This package implements IRT (item response theory) ideal point models, which are models designed for situations in which actors make strategic choices that correlate with a unidimensional scale, such as the left-right axis in American politics. Compared to traditional IRT, ideal point models examine the polarizing influence of a set of items on a set of persons, and has simlarities to models based on Euclidean latent spaces, such as multi-dimensional scaling. For more information, I refer you to my paper presented at [StanCon 2018](http://mc-stan.org/events/stancon2018/).
 
-The goal of `idealstan` is to offer both standard ideal point models and additional models for missing data and diverse outcomes, including count and ordinal data. In addition, `idealstan` uses the Stan estimation engine to offer full and variational Bayesian inference for all models so that every model is estimated with uncertainty. 
+The goal of `idealstan` is to offer both standard ideal point models and additional models for missing data and diverse outcomes, including count and ordinal data. In addition, `idealstan` uses the Stan estimation engine to offer full and variational Bayesian inference for all models so that every model is estimated with uncertainty. The package also exploits variational inference to automatically identify models instead of requiring users to pre-specify which persons or items in the data to constrain in advance.
 
-This approach to handling missing data in ideal point models in this package is to model directly strategic censoring in observations. While this kind of missing data pattern can be found in many situations in which data is not missing at random, this particular version was developed to account for legislatures in which legislators (persons) are strategically absent for votes on bills (items). This approach to missing data can be usefully applied to many contexts in which a missing outcome is a function of the person's ideal point. 
+The approach to handling missing data in this package is to model directly strategic censoring in observations. While this kind of missing data pattern can be found in many situations in which data is not missing at random, this particular version was developed to account for legislatures in which legislators (persons) are strategically absent for votes on bills (items). This approach to missing data can be usefully applied to many contexts in which a missing outcome is a function of the person's ideal point (i.e., people will tend to be present in the data when the item is far away or very close to their ideal point). 
 
 The package also includes ordinal ideal point models to handle situations in which a ranked outcome is polarizing, such as a legislator who can vote yes, no or to abstain. Because `idealstan` uses Bayesian inference, it can model any kind of ordinal data even if there aren't an even distribution of ordinal categories for each item.
 
 The package also has extensive plotting functions via `ggplot2` for model parameters, particularly the legislator (person) ideal points (ability parameters).
 
-This vignette demonstrates basic usage of the package in its first release to CRAN. Additional models incorporating dynamic IRT methods are planned for future releases (and in fact are already included but currently undocumented).
+This vignette demonstrates basic usage of the package in its first release to CRAN. Additional models incorporating dynamic IRT methods are planned for future releases (and in fact are already included but currently undocumented). In this README, I first simulate data using the package, document basic usage and then show an empirical example from the U.S. Senate.
 
-Missing data inference is accomplished using a hurdle model to separately account for the probability that a person/legislator (i.e., test-taker) will show up to vote. This absence-inflated model estimates additional bill (item) parameters to reflect the relative gain or loss a legislator/person has from showing up to vote. 
+# Simulation of Ordinal IRT with Missing Data
 
-To begin with, we can simulate data from an ordinal ideal-point model in which there are three possible responses corresponding to a legislator voting: yes, abstain and no. An additional category is also simulated that indicates whether a legislator shows up to vote or is absent. While traditional ideal point models tend to drop absences, this package can utilize absences via a hurdle model in which the censoring of the vote/score data is estimated as a function of individual bill intercepts and discrimination parameters for the decision to be absent or present.
+To begin with, we can simulate data from an ordinal ideal-point model in which there are three possible responses corresponding to a legislator voting: yes, abstain and no. An additional category is also simulated that indicates whether a legislator shows up to vote or is absent, which traditional IRT models would record as missing data and would drop from the estimation. This package can instead utilize missingdata via a hurdle model in which the censoring of the vote/score data is estimated as a function of individual item/bill intercepts and discrimination parameters for the decision to be absent or present. In other words, if the missing data is a reflection of the person's ideal point, such as more conservative legislators refusing to show up to vote, than the model will make use of this missing data to infer additional information about the legislators' ideal points.
+
+The function `id_sim_gen()` allows you to simulate data from any of the four models currently implemented in `idealstan`: binary IRT, binary IRT with missing data, ordinal IRT, and ordinal IRT with missing data. See the function documentation for further info.
 
 ```{r sim_data}
 
@@ -45,7 +47,7 @@ The vote/score matrix has legislators/persons in the rows and bills/items in the
 
 The function `id_estimate` will take this processed data and run an IRT ideal point model. Currently both inflated and non-inflated versions of the standard binary IRT 2-PL model and the ordinal IRT model (i.e., a rating-scale model) are supported. The package also includes models for hierarchical parameters for legislators/persons and bills/items, along with dynamic IRT models, but these have as yet not been fully tested.
 
-The package has options for identification that are similar to other IRT packages in which the row or column indices of legislators/persons or bills/items to constrain are specified to the `id_estimate` function. For example, we can use the true values of the simulated legislators to constrain two legislators with the highest ideal points and two legislators with the lowest ideal points:
+The package has options for identification that are similar to other IRT packages in which the row or column indices of legislators/persons or bills/items to constrain are specified to the `id_estimate` function. For example, we can use the true values of the simulated legislators to constrain three legislators with the highest ideal points and three legislators with the lowest ideal points. Generally speaking, it requires about six total constraints to identify a model in Stan using random values for the chains (i.e., no other constraints). In this example I pre-specify which parameters to constrain, but the package can also automatically identify parameters, which I show in the next section.
 
 ```{r constrain_sim}
 true_legis <- ord_ideal_sim@simul_data$true_person
@@ -57,8 +59,8 @@ ord_ideal_est <- id_estimate(idealdata=ord_ideal_sim,
                              fixtype='constrained',
                              restrict_params='person',
                              restrict_type='constrain_twoway',
-                             restrict_ind_high = high_leg$ix[1:2],
-                             restrict_ind_low=low_leg$ix[1:2],
+                             restrict_ind_high = high_leg$ix[1:3],
+                             restrict_ind_low=low_leg$ix[1:3],
                              refresh=500)
 ```
 
@@ -71,6 +73,26 @@ id_plot_sims(ord_ideal_est,type='Residuals')
 `Ideal Points` are the legislator/person ideal points, `Absence Discrimination` are the bill/item absence-inflated discrimination parameters, and `Item Discrimination` are the bill/item non-inflated discrimination parameters.
 
 Although the model does not do a perfect job of capturing the true values, it is reasonably close for most of the parameters.
+
+To automatically identify the model, simply specify which parameters to constrain `restrict_params`, the number of parameters to constrain `nfix`, and whether to constrain both high and low or just high parameters `restrict_type`. By default, the model constrains six person (ideal point) parameters, three high and three low. These defaults were chosen based on simulations, but may not identify all datasets as the appropriateness of an identification strategy depends on the nature of information in the spread of the ideal points. For these reasons, you may need to increase `nfix` or change `restrict_params` to achieve identification in your model. You can also have the package automatically increase `nfix` and test for identification by specifiying the `auto_id=TRUE` option.
+
+For example, using our simulated data and the default settings:
+
+```{r restrict_auto}
+ord_ideal_est <- id_estimate(idealdata=ord_ideal_sim,
+                             model_type=4,
+                             refresh=500)
+```
+
+We can see from the plot of the Rhats, which is an MCMC convergence diagnostic, that all the Rhats are below 1.1, which is a good (though not perfect) sign that the model is fully identified:
+
+```{r rhats}
+id_plot_rhats(ord_ideal_est)
+```
+
+In general, it is always a good idea to check the Rhats before proceeding with further analysis. If the model is not identified, it is generally a good idea to either increase `nfix` to constrain more parameters or change which parameters the model constrains with `restrict_params` in the function `id_estimate`.
+
+# Empirical Example: U.S. Senate
 
 This package was developed for datasets that are set up in a rollcall voting framework, although any dataset can be used if the responses are binary or ordinal. To show how the package functions empirically, I include in the package the complete voting record of the 114th Senate from the website (www.voteview.com). We can convert this data, which is currently in the form of a `rollcall` object from the `pscl` package, to an `idealdata` object suitable for estimation by using the `id_make` function. The `id_make` function can also accept a voter/score data as a matrix in which persons are the rows and items are the columns. The ordinal and/or binary values in the matrix must be specified to the `id_make` function.
 
@@ -111,23 +133,23 @@ sen_est <- id_estimate(senate_data,
                  fixtype='constrained',
             seed=84520,
             refresh=500)
-id_plot_legis(sen_est,person_ci_alpha=0.7) + scale_colour_brewer(type='qual')
+id_plot(sen_est,person_ci_alpha=0.7) + scale_colour_brewer(type='qual')
 ```
 
-The `id_plot_legis` function has many other options which are documented in the help files. One notable option, though, is to plot bill midpoints along with the legislator ideal points. The midpoints show the line of equiprobability, i.e., at what ideal point is a legislator indifferent to voting on a bill (or answering an item correctly). To plot a bill midpoint overlay, simply include the column index of bill in the response matrix as the `item_plot` option:
+The `id_plot` function has many other options which are documented in the help files. One notable option, though, is to plot bill midpoints along with the legislator ideal points. The midpoints show the line of equiprobability, i.e., at what ideal point is a legislator indifferent to voting on a bill (or answering an item correctly). To plot a bill midpoint overlay, simply include the column index of bill in the response matrix as the `bill_plot` option:
 
 ```{r bill_plot}
-id_plot_legis(sen_est,person_ci_alpha=0.1,item_plot=205,
-        abs_and_reg='Non-inflated') + scale_colour_brewer(type='qual')
+id_plot(sen_est,person_ci_alpha=0.1,item_plot=205,
+        abs_and_reg='Vote Points') + scale_colour_brewer(type='qual')
 ```
 
 The 50th bill in the 114 Senate shows very high discrimination: the bill midpoint is right in the middle of the ideal point distribution, with most Democrats voting yes and most Repulicans voting no. The two rug lines at the bottom of the plot show the high density posterior interval for the bill midpoint, and as can be seen, the uncertainty only included those legislators near the very center of the distribution.
 
-To look at the bill's absence midpoints, simply change the `abs_and_reg` paramater to the `id_plot_legis` function:
+To look at the bill's absence midpoints, simply change the `abs_and_reg` paramater to the `id_plot` function:
 
 ```{r abs_bill_plot}
 
-id_plot_legis(sen_est,person_ci_alpha=0.1,item_plot=205,
+id_plot(sen_est,person_ci_alpha=0.1,item_plot=205,
         abs_and_reg='Absence Points') + scale_colour_brewer(type='qual')
 ```
 

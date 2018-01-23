@@ -6,7 +6,7 @@
 \usage{
 id_plot_legis(object, return_data = FALSE, item_plot = NULL,
   text_size_label = 2, text_size_group = 2.5, point_size = 1,
-  hjust_length = -0.7, person_labels = TRUE, group_labels = T,
+  hjust_length = -0.7, person_labels = TRUE, group_labels = F,
   person_ci_alpha = 0.1, show_score = NULL, abs_and_reg = "both",
   show_true = FALSE, group_color = TRUE, hpd_limit = 10,
   group_overlap = FALSE, sample_persons = NULL, ...)

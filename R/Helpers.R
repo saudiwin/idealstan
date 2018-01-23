@@ -10,12 +10,14 @@
       ncores <- 1
     }
   }
-  
-  browser()
-  
+
   to_use <- stanmodels[['irt_standard_noid']]
   post_modes <- rstan::vb(object=to_use,data =this_data,
                           algorithm='meanfield')
+  
+  # Test whether there is a lot of missing data
+  
+  use_absence <- .det_missing(object=object,model_type=model_type)
   
   lookat_params <- rstan::extract(post_modes,permuted=FALSE)
   this_params <- lookat_params[,1,]
@@ -29,46 +31,44 @@
      if(all_args$restrict_params=='items') {
        # first we calculate the standardized discrimination parameters for the bills
        # we want to know which distribution has more spread/information
-       # we will identify the one that has the greater spread
-       sigma_reg <- apply(this_params[,grepl(pattern = 'sigma_reg_full',x=all_params)],2,mean)
-       sigma_reg_sd <- apply(this_params[,grepl(pattern = 'sigma_reg_full',x=all_params)],2,sd)
-       sigma_reg_std <- sigma_reg/sigma_reg_sd
-       
+       # we will identify the one that has the greater number of missing or non-missing values in the dataset
        
        #look at absences if it is an absence model
        
-       if(model_type %in% c(2,4,6)) {
-         sigma_abs <- apply(this_params[,grepl(pattern = 'sigma_abs_full',x=all_params)],2,mean)
-         sigma_abs_sd <- apply(this_params[,grepl(pattern = 'sigma_abs_full',x=all_params)],2,sd)
-         sigma_abs_std <- sigma_abs / sigma_abs_sd
-       }
-       
-       if((model_type %in% c(2,4,6)) && max(abs(sigma_reg_std))<max(abs(sigma_abs_std))) {
+       if(use_absence) {
          # use absence parameters if the model type support it and they have higher spread
          # Now get nfix number of reg discrim parameters to constrain/fix
+         sigma_abs <- apply(this_params[,grepl(pattern = 'sigma_abs_full',x=all_params)],2,mean)
+         sigma_abs_sd <- apply(this_params[,grepl(pattern = 'sigma_abs_full',x=all_params)],2,sd)
+         #sigma_abs_std <- sigma_abs / sigma_abs_sd
+         # not really necessary ^-
          if(all_args$restrict_type=='constrain_oneway') {
            fix_param <- 'sigma_abs'
-           to_constrain_high <- sort(abs(sigma_abs_std),index.return=TRUE,decreasing=TRUE)
+           to_constrain_high <- sort(abs(sigma_abs),index.return=TRUE,decreasing=TRUE)
            to_constrain_high <- to_constrain_high$ix[1:nfix]
            to_constrain_low <- NULL
          } else if(all_args$restrict_type=='constrain_twoway') {
            fix_param <- 'sigma_abs'
-           to_constrain_high <- sort(sigma_abs_std,index.return=TRUE,decreasing=TRUE)
+           to_constrain_high <- sort(sigma_abs,index.return=TRUE,decreasing=TRUE)
            to_constrain_high <- to_constrain_high$ix[1:nfix]
-           to_constrain_low <- sort(sigma_abs_std,index.return=TRUE)
+           to_constrain_low <- sort(sigma_abs,index.return=TRUE)
            to_constrain_low <- to_constrain_low$ix[1:nfix]
          }
        } else {
+         # use non-inflated discrimination
+         sigma_reg <- apply(this_params[,grepl(pattern = 'sigma_reg_full',x=all_params)],2,mean)
+         sigma_reg_sd <- apply(this_params[,grepl(pattern = 'sigma_reg_full',x=all_params)],2,sd)
+         #sigma_reg_std <- sigma_reg/sigma_reg_sd
          if(all_args$restrict_type=='constrain_oneway') {
            fix_param <- 'sigma_reg'
-           to_constrain_high <- sort(abs(sigma_reg_std),index.return=TRUE,decreasing=TRUE)
+           to_constrain_high <- sort(abs(sigma_reg),index.return=TRUE,decreasing=TRUE)
            to_constrain_high <- to_constrain_high$ix[1:nfix]
            to_constrain_low <- NULL
          } else if(all_args$restrict_type=='constrain_twoway') {
            fix_param <- 'sigma_reg'
-           to_constrain_high <- sort(sigma_reg_std,index.return=TRUE,decreasing=TRUE)
+           to_constrain_high <- sort(sigma_reg,index.return=TRUE,decreasing=TRUE)
            to_constrain_high <- to_constrain_high$ix[1:nfix]
-           to_constrain_low <- sort(sigma_reg_std,index.return=TRUE)
+           to_constrain_low <- sort(sigma_reg,index.return=TRUE)
            to_constrain_low <- to_constrain_low$ix[1:nfix]
          }
        }
@@ -78,6 +78,7 @@
                              to_constrain_low)]
        
      } else if(all_args$restrict_params=='person') {
+       # Or constrain persons instead of discriminations
        person <- apply(this_params[,grepl(pattern = 'L_full',x=all_params)],2,mean)
        fix_param <- "L_free"
        if(all_args$restrict_type=='constrain_oneway') {
@@ -149,11 +150,10 @@
      if(mean(equal_ratio)<0.9) {
        print(paste0('Model is not yet identified. Increasing constraint number to ',nfix+1))
        .vb_fix(object=object,this_params=this_params,this_data=this_data,nfix=nfix+1,auto_id=TRUE,ncores=ncores,
-               all_args=all_args)
+               all_args)
      } else {
        print(paste0('Automatic identification has occurred for ',all_args$restrict_type,
              ' identification with ',nfix,' constraints.'))
-       browser()
      }
    }
    
@@ -567,4 +567,15 @@
     
   }
   mutate(out_data,bill_num=this_num) %>% return()
+}
+
+#' Helper function that determines if there are more missing than non-missing
+#' observations
+.det_missing <- function(object,model_type=NULL) {
+  if(model_type %in% c(2,4,6)) {
+    all_data <- c(object@score_matrix)
+    return((sum(all_data==object@miss_val)/length(all_data))>.5)
+  } else {
+    return(FALSE)
+  }
 }

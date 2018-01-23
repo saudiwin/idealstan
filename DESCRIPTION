@@ -6,7 +6,7 @@ Date: 2018-01-05
 Author: Robert Kubinec
 Maintainer: Robert Kubinec <rmk7xy@virginia.edu>
 BugReports: https://github.com/saudiwin/idealstan/issues
-Description: This package offers ideal-point scaling/dimension reduction methods that incorporate additional response categories and missing/censored values, including absences and abstentions, for rollcall voting data (or any other kind of binary or ordinal item-response theory data). Full and approximate Bayesian inference is done via the Stan engine (www.mc-stan.org). 
+Description: This package offers item-response theory (IRT) ideal-point scaling/dimension reduction methods that incorporate additional response categories and missing/censored values, including absences and abstentions, for rollcall voting data (or any other kind of binary or ordinal item-response theory data). Full and approximate Bayesian inference is done via the Stan engine (www.mc-stan.org). 
 License: GPL
 Depends:
     R (>= 3.1),

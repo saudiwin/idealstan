@@ -7,13 +7,13 @@
 id_estimate(idealdata = NULL, model_type = 2, use_subset = FALSE,
   sample_it = FALSE, subset_group = NULL, subset_person = NULL,
   sample_size = 20, nchains = 4, niters = 2000, use_vb = FALSE,
-  nfix = 3, restrict_params = "items", pin_vals = NULL,
+  nfix = 3, restrict_params = "person", pin_vals = NULL,
   restrict_ind_high = NULL, restrict_ind_low = NULL,
   restrict_type = "constrain_twoway", fixtype = "vb",
   warmup = floor(niters/2), ncores = 4, auto_id = FALSE,
   discrim_reg_sd = 3, discrim_miss_sd = 3, person_sd = 1,
   diff_reg_sd = 4, diff_miss_sd = 4, restrict_sd = 4,
-  restrict_low_bar = -1, restrict_high_bar = 1, restrict_alpha = 4,
+  restrict_low_bar = 0, restrict_high_bar = 0, restrict_alpha = 4,
   restrict_beta = 1, ...)
 }
 \arguments{

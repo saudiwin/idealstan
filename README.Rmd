@@ -70,14 +70,13 @@ id_plot_sims(ord_ideal_est,type='Residuals')
 
 Although the model does not do a perfect job of capturing the true values, it is reasonably close for most of the parameters.
 
-To automatically identify the model, simply specify which parameters to constrain `restrict_params`, the number of parameters to constrain `nfix`, and whether to constrain both high and low or just high parameters `restrict_type`. By default, the model constrains six discrimination parameters for the non-inflated model, three high and three low. These defaults were chosen based on simulations, but may not identify all datasets as the appropriateness of an identification strategy depends on the nature of information in the spread of the ideal points. For these reasons, you may need to increase `nfix` or change `restrict_params` to achieve identification in your model. You can also have the package automatically increase `nfix` and test for identification by specifiying the `auto_id=TRUE` option.
+To automatically identify the model, simply specify which parameters to constrain `restrict_params`, the number of parameters to constrain `nfix`, and whether to constrain both high and low or just high parameters `restrict_type`. By default, the model constrains six person (ideal point) parameters, three high and three low. These defaults were chosen based on simulations, but may not identify all datasets as the appropriateness of an identification strategy depends on the nature of information in the spread of the ideal points. For these reasons, you may need to increase `nfix` or change `restrict_params` to achieve identification in your model. You can also have the package automatically increase `nfix` and test for identification by specifiying the `auto_id=TRUE` option.
 
 For example, using our simulated data and the default settings:
 
 ```{r restrict_auto}
 ord_ideal_est <- id_estimate(idealdata=ord_ideal_sim,
                              model_type=4,
-                             nfix=6,
                              refresh=500)
 ```
 
@@ -87,7 +86,7 @@ We can see from the plot of the Rhats, which is an MCMC convergence diagnostic, 
 id_plot_rhats(ord_ideal_est)
 ```
 
-In general, it is always a good idea to check the Rhats before proceeding with further analysis. If the model is not identified, it is generally a good idea to either increase `nfix` to constrain more parameters and change which parameters the model constrains with `restrict_params` in the function `id_estimate`.
+In general, it is always a good idea to check the Rhats before proceeding with further analysis. If the model is not identified, it is generally a good idea to either increase `nfix` to constrain more parameters or change which parameters the model constrains with `restrict_params` in the function `id_estimate`.
 
 # Empirical Example: U.S. Senate
 
@@ -137,7 +136,7 @@ The `id_plot` function has many other options which are documented in the help f
 
 ```{r bill_plot}
 id_plot(sen_est,person_ci_alpha=0.1,item_plot=205,
-        abs_and_reg='Non-inflated') + scale_colour_brewer(type='qual')
+        abs_and_reg='Vote Points') + scale_colour_brewer(type='qual')
 ```
 
 The 50th bill in the 114 Senate shows very high discrimination: the bill midpoint is right in the middle of the ideal point distribution, with most Democrats voting yes and most Repulicans voting no. The two rug lines at the bottom of the plot show the high density posterior interval for the bill midpoint, and as can be seen, the uncertainty only included those legislators near the very center of the distribution.
@@ -147,7 +146,7 @@ To look at the bill's absence midpoints, simply change the `abs_and_reg` paramat
 ```{r abs_bill_plot}
 
 id_plot(sen_est,person_ci_alpha=0.1,item_plot=205,
-        abs_and_reg='Absence-inflated') + scale_colour_brewer(type='qual')
+        abs_and_reg='Absence Points') + scale_colour_brewer(type='qual')
 ```
 
 This absence midpoint shows that those who were most likely to be absent on this bill were Republicans who were pretty close to the far right (left) of the ideal point distribution. Of course, that does not mean absence always implies that one is far to the right, it is just how this particular bill absence midpoint happens to fall. In addition, the uncertainty around this midpoint is much higher than the vote midpoint.
