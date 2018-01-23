@@ -9,6 +9,13 @@
   "sigma_reg_free", "sigma_abs_free", "restrict_high", "restrict_low",
   "restrict_ord", "steps_votes", "steps_votes_grm"), ...)
 }
+\arguments{
+\item{object}{A fitted \code{idealstan} object}
+
+\item{pars}{A character vector of parameters to select from the underlying \code{rstan} model object}
+
+\item{...}{Other parameters passed on to \code{\link[shinystan]{shinystan}}}
+}
 \description{
 This wrapper will pull the \code{rstan} samples out of a fitted \code{idealstan} model and then launch
 \code{\link[shinystan]{launch_shinystan}}. This function is useful for examining convergence statistics of the 

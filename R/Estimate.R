@@ -51,7 +51,8 @@
 #' @importFrom stats dbinom median plogis quantile reorder rexp rlnorm runif sd step rnorm
 #' @useDynLib idealstan, .registration = TRUE
 #' @examples 
-#' # You can either use a pscl rollcall object or a vote/score matrix where persons/legislators are in the rows
+#' # You can either use a pscl rollcall object or a vote/score matrix 
+#' # where persons/legislators are in the rows
 #' # and items/bills are in the columns
 #' 
 #' # First, using a rollcall object with the 114th Senate's rollcall votes:
@@ -220,7 +221,7 @@ id_make <- function(score_data=NULL,simul_data=NULL,
   
   row.names(cleaned) <- as.character(1:nrow(cleaned))
   
-  if(is.null(person_data$group)) person_data$group <- rep('O',nrow(score_data))
+  if("group" %in% names(person_data)) person_data$group <- rep('O',nrow(score_data))
   
   # check what kind of vote labels to use
   
@@ -288,6 +289,7 @@ id_make <- function(score_data=NULL,simul_data=NULL,
 #' The indices of legislators/persons (i.e. row indices in the response matrix) or bills/items (column indices in the response matrix) should be passed as a vector
 #' to \code{restrict_ind_high}, while \code{restrict_ind_low} should be left blank. The particular values to pin these parameters is passed as a 
 #' numeric vector to \code{pin_vals}.
+#' @param idealdata An object produced by the \code{\link{id_make}} containing a score/vote matrix for use for estimation & plotting
 #' @param model_type An integer reflecting the kind of model to be estimated. See below.
 #' @param use_subset Whether a subset of the legislators/persons should be used instead of the full response matrix
 #' @param sample_it Whether or not to use a random subsample of the response matrix. Useful for testing.
@@ -347,20 +349,28 @@ id_make <- function(score_data=NULL,simul_data=NULL,
 #' library(ggplot2)
 #' library(dplyr)
 #' 
-#' bin_irt_2pl_abs_sim <- id_sim_gen(ordinal=F,absence=T,absence_diff_mean=0)
+#' bin_irt_2pl_abs_sim <- id_sim_gen(ordinal=FALSE,
+#'                                   absence=TRUE,
+#'                                   absence_diff_mean=0)
 #' 
-#' # Now we can put that directly into the id_estimate function to get full Bayesian posterior estimates
-#' # We will constrain discrimination parameters for identification purposes based on the true simulated values
+#' # Now we can put that directly into the id_estimate function 
+#' # to get full Bayesian posterior estimates
+#' # We will constrain discrimination parameters 
+#' # for identification purposes based on the true simulated values
 #' 
 #' bin_irt_2pl_abs_est <- id_estimate(bin_irt_2pl_abs_sim,
-#'                                    model_type=2,
-#'                                    restrict_ind_high = sort(bin_irt_2pl_abs_sim@simul_data$true_reg_discrim,
-#'                                    decreasing=T,index=T)$ix[1:3],
-#'                                    restrict_ind_low = sort(bin_irt_2pl_abs_sim@simul_data$true_reg_discrim,
-#'                                    decreasing=F,index=T)$ix[1:3],
-#'                                    restrict_params = 'discrim_reg', 
-#'                                    restrict_type = 'constrain_twoway',
-#'                                    fixtype='constrained')
+#'                        model_type=2,
+#'                        restrict_ind_high = 
+#'                        sort(bin_irt_2pl_abs_sim@simul_data$true_reg_discrim,
+#'                        decreasing=TRUE,
+#'                        index=T)$ix[1:3],
+#'                        restrict_ind_low = 
+#'                        sort(bin_irt_2pl_abs_sim@simul_data$true_reg_discrim,
+#'                        decreasing=FALSE,
+#'                        index=T)$ix[1:3],
+#'                        restrict_params = 'discrim_reg', 
+#'                        restrict_type = 'constrain_twoway',
+#'                        fixtype='constrained')
 #'                                    
 #' # We can now see how well the model recovered the true parameters
 #' 
@@ -370,31 +380,35 @@ id_make <- function(score_data=NULL,simul_data=NULL,
 #'            stat_summary(fun.args=list(mult=1.96)) + 
 #'            theme_minimal()
 #' 
-#' # In most cases, we will use pre-existing data and we will need to use the id_make function first
-#' # We will use the full rollcall voting data from the 114th Senate as a rollcall object
+#' # In most cases, we will use pre-existing data 
+#' # and we will need to use the id_make function first
+#' # We will use the full rollcall voting data 
+#' # from the 114th Senate as a rollcall object
 #' 
 #' data('senate114')
 #' 
 #' to_idealstan <-   id_make(score_data = senate114,
-#'                           ordinal = F,
-#'                           include_pres=F)
+#'                           ordinal = FALSE,
+#'                           include_pres=FALSE)
 #' 
-#' # Running this model will take considerably longer, even using variational Bayesian inference (use_vb=T)
+#' # Running this model will take considerably longer, 
+#' # even using variational Bayesian inference (use_vb=T)
 #' 
 #' \dontrun{
 #' sen_est <- id_estimate(senate_data,
 #' model_type = 2,
-#' use_vb = T,
+#' use_vb = TRUE,
 #' restrict_type='constrain_oneway',
 #' restrict_params='person',
 #' restrict_ind_high = which(row.names(senate114$votes[-1,])=='SASSE (R NE)'),
-#' auto_id=F,
+#' auto_id=FALSE,
 #' fixtype='constrained')
 #' }
 #' 
 #' data('senate114_fit')
 #' 
-#' # After running the model, we can plot the results of the person/legislator ideal points
+#' # After running the model, we can plot 
+#' # the results of the person/legislator ideal points
 #' 
 #' id_plot_legis(senate114_fit)
 #' 

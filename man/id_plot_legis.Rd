@@ -71,7 +71,8 @@ data('senate114_fitted')
 
 id_plot_legis(senate114_fitted)
 
-# We can overlap the bill/item midpoints to show where the persons/legislators are indifferent to responding positively
+# We can overlap the bill/item midpoints to show 
+# where the persons/legislators are indifferent to responding positively
 
 id_plot_legis(senate114_fitted,item_plot=5)
 

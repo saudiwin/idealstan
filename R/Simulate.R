@@ -142,7 +142,7 @@ id_sim_gen <- function(num_person=20,num_bills=50,absence_discrim_sd=2,absence_d
     row.names(combined) <- paste0('person_',1:nrow(combined))
     
     out_data <- id_make(score_data=combined,person_data=data_frame(person.names=paste0('person_',1:nrow(combined)),
-                                                                        party='L',
+                                                                        group='L',
                                                                         true_person=as.numeric(ideal_pts)),
                                miss_val = ordinal_outcomes+1,
                                high_val = ordinal_outcomes,
@@ -198,7 +198,7 @@ id_sim_gen <- function(num_person=20,num_bills=50,absence_discrim_sd=2,absence_d
     row.names(combined) <- paste0('person_',1:nrow(combined))
     
     out_data <- id_make(score_data=combined,person_data=data_frame(person.names=paste0('person_',1:nrow(combined)),
-                                                                        party='L',
+                                                                        group='L',
                                                                         true_person=as.numeric(ideal_pts)),
                                miss_val = NULL,
                                high_val = 1,
@@ -261,7 +261,7 @@ id_sim_gen <- function(num_person=20,num_bills=50,absence_discrim_sd=2,absence_d
     row.names(combined) <- paste0('person_',1:nrow(combined))
     
     out_data <- id_make(score_data=combined,person_data=data_frame(person.names=paste0('person_',1:nrow(combined)),
-                                                                        party='L',
+                                                                        group='L',
                                                                         true_person=as.numeric(ideal_pts)),
                                miss_val = ordinal_outcomes+1,
                                high_val = ordinal_outcomes,
@@ -302,7 +302,7 @@ id_sim_gen <- function(num_person=20,num_bills=50,absence_discrim_sd=2,absence_d
     row.names(combined) <- paste0('person_',1:nrow(combined))
     
     out_data <- id_make(score_data=combined,person_data=data_frame(person.names=paste0('person_',1:nrow(combined)),
-                                                                   party='L',
+                                                                   group='L',
                                                                    true_person=as.numeric(ideal_pts)),
                         miss_val = 2,
                         high_val = 1,

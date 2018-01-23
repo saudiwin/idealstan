@@ -8,6 +8,8 @@
 \S4method{id_plot}{idealstan}(object, plot_type = "legislators", ...)
 }
 \arguments{
+\item{object}{A fitted \code{idealstan} object}
+
 \item{plot_type}{Specify the plot as a character string. Currently 'legislators' for legislator/person ideal point plot and 
 'histogram' for a histogram of model estimates for given parameters.}
 

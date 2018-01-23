@@ -11,10 +11,14 @@
 \arguments{
 \item{object}{A fitted \code{idealstan} object}
 
+\item{...}{Other arguments passed on to underlying function (currently unused)}
+
 \item{draws}{The number of draws to use from the total number of posterior draws (default is 100).}
 
-\item{sample_scores}{In addition to reducing the number of posterior draws used to calculate the posterior predictive distribution,
-you can sample from the scores/votes themselves. To do so, set \code{sample_scores} to the number of scores/votes to sample.}
+\item{sample_scores}{In addition to reducing the number of posterior draws 
+used to calculate the posterior predictive distribution,
+ you can sample from the scores/votes themselves. 
+ To do so, set \code{sample_scores} to the number of scores/votes to sample.}
 }
 \description{
 This function returns a matrix of an S by N matrix of the log density of posterior draws from a fitted idealstan model, where S is the size of the 

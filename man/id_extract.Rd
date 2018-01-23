@@ -6,3 +6,8 @@
 \usage{
 id_extract(object, ...)
 }
+\arguments{
+\item{object}{A fitted \code{idealstan} object}
+
+\item{...}{Other arguments passed on to underlying functions}
+}

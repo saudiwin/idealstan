@@ -216,6 +216,7 @@ setGeneric('id_plot',
 #' \code{id_plot} is a wrapper function that can access the various plotting functions available in the \code{idealstan} package. 
 #'    Currently, the options are limited to a plot of legislator/person ideal points with bills/item midpoints as an optional overlay.
 #'    Additional plots will be available in future versions of \code{idealstan}.
+#' @param object A fitted \code{idealstan} object
 #' @param plot_type Specify the plot as a character string. Currently 'legislators' for legislator/person ideal point plot and 
 #'    'histogram' for a histogram of model estimates for given parameters.
 #' @param ... Additional arguments passed on to the underlying functions. See individual function documentation for details.
@@ -240,7 +241,8 @@ setMethod(id_plot, signature(object='idealstan'),
 #' Generic Method for Extracing Posterior Samples
 #' 
 #' This generic will extract the full \code{\link[rstan]{stan}}} posterior samples from \code{idealstan} objects.
-#' 
+#' @param object A fitted \code{idealstan} object
+#' @param ... Other arguments passed on to underlying functions
 #' @export
 setGeneric('id_extract',signature='object',
            function(object,...) standardGeneric('id_extract'))
@@ -279,7 +281,7 @@ setMethod(id_extract,signature(object='idealstan'),
 #' A generic function for launching \code{\link[shinystan]{launch_shinystan}}.
 #' 
 #' @param object A fitted \code{idealstan} object.
-#'  
+#' @param ... Other arguments passed on to underlying function 
 #' @export
 setGeneric('launch_shinystan',signature='object',
            function(object,...) standardGeneric('launch_shinystan')) 
@@ -291,7 +293,9 @@ setGeneric('launch_shinystan',signature='object',
 #' underlying MCMC sampling.
 #' 
 #' @seealso \code{\link[shinystan]{shinystan}}
-#' 
+#' @param object A fitted \code{idealstan} object
+#' @param pars A character vector of parameters to select from the underlying \code{rstan} model object
+#' @param ... Other parameters passed on to \code{\link[shinystan]{shinystan}}
 #' @export
 setMethod(launch_shinystan,signature(object='idealstan'),
           function(object,pars=c('L_free',

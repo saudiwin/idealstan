@@ -8,6 +8,8 @@ launch_shinystan(object, ...)
 }
 \arguments{
 \item{object}{A fitted \code{idealstan} object.}
+
+\item{...}{Other arguments passed on to underlying function}
 }
 \description{
 A generic function for launching \code{\link[shinystan]{launch_shinystan}}.

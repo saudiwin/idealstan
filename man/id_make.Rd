@@ -74,7 +74,8 @@ A \code{idealdata} object that can then be used in the \code{\link{id_estimate}}
 To run an IRT model using \code{idealstan}, you must first process your data using the \code{id_make} function.
 }
 \examples{
-# You can either use a pscl rollcall object or a vote/score matrix where persons/legislators are in the rows
+# You can either use a pscl rollcall object or a vote/score matrix 
+# where persons/legislators are in the rows
 # and items/bills are in the columns
 
 # First, using a rollcall object with the 114th Senate's rollcall votes:

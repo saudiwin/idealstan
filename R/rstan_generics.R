@@ -87,7 +87,8 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
 #' 
 #' This function is a generic that is used to match the functions used with \code{\link[loo]{loo}} to calculate
 #' Bayesian information criteria on models.
-#' 
+#' @param object A fitted \code{idealstan} object
+#' @param ... Other arguments passed onto underlying functions 
 #' @export
 setGeneric('id_log_lik',signature='object',
            function(object,...) standardGeneric('id_log_lik'))
@@ -100,10 +101,12 @@ setGeneric('id_log_lik',signature='object',
 #' posterior sample and N is the total number of parameters in the idealstan model. This matrix can then be used to 
 #' fit an information criterion to assess model fit, see the \code{\link[loo]{loo}} package for details.
 #' @param object A fitted \code{idealstan} object
-#' 
 #' @param draws The number of draws to use from the total number of posterior draws (default is 100).
-#' @param sample_scores In addition to reducing the number of posterior draws used to calculate the posterior predictive distribution,
-#'  you can sample from the scores/votes themselves. To do so, set \code{sample_scores} to the number of scores/votes to sample.
+#' @param sample_scores In addition to reducing the number of posterior draws 
+#' used to calculate the posterior predictive distribution,
+#'  you can sample from the scores/votes themselves. 
+#'  To do so, set \code{sample_scores} to the number of scores/votes to sample.
+#' @param ... Other arguments passed on to underlying function (currently unused)
 #'
 #' @export
 setMethod('id_log_lik',signature(object='idealstan'),function(object,...,draws=100,sample_scores=NULL) {
@@ -164,6 +167,8 @@ setMethod('id_log_lik',signature(object='idealstan'),function(object,...,draws=1
 #' predictive distribution from \code{\link{id_post_pred}} against the original data and for the distribution for 
 #' individual persons/legislators and bills/items.
 #' 
+#' @param object A fitted \code{idealstan} object
+#' @param ... Other arguments passed on to underlying functions
 #' @export
 setGeneric('id_plot_ppc',signature='object',
            function(object,...) standardGeneric('id_plot_ppc'))

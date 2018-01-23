@@ -11,7 +11,7 @@ vignette: >
 
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE,warning=FALSE,fig.align = 'center')
+knitr::opts_chunk$set(echo = TRUE,warning=TRUE,fig.align = 'center')
 require(idealstan)
 require(dplyr)
 require(ggplot2)
@@ -28,7 +28,7 @@ A big part of the purpose of `idealstan` is to give people different options in 
 We first begin by simulating data for a standard IRT 2-PL ideal point model but with strategically missing data:
 
 ```{r sim_irt_2pl}
-irt_2pl <- id_sim_gen(ordinal=F,absence=T)
+irt_2pl <- id_sim_gen(ordinal=FALSE,absence=TRUE)
 ```
 
 We can then fit two ideal point models to the same data, one that uses constraints for identification and the other that pins two of the persons to arbitrary (and incorrect) values. 
@@ -38,11 +38,11 @@ We can then fit two ideal point models to the same data, one that uses constrain
 irt_2pl_correct <- id_estimate(idealdata=irt_2pl,
                                model_type=2,
                                restrict_ind_high = sort(irt_2pl@simul_data$true_reg_discrim,
-                                                        decreasing=T,
-                                                        index=T)$ix[1:3],
+                                                        decreasing=TRUE,
+                                                        index=TRUE)$ix[1:3],
                               restrict_ind_low = sort(irt_2pl@simul_data$true_reg_discrim,
-                                                      decreasing=F,
-                                                        index=T)$ix[1:3],
+                                                      decreasing=FALSE,
+                                                        index=TRUE)$ix[1:3],
                            restrict_params = 'discrim_reg',
                                restrict_type = 'constrain_twoway',
                                fixtype='constrained')

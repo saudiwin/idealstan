@@ -47,8 +47,8 @@ The package has options for identification that are similar to other IRT package
 
 ```{r constrain_sim}
 true_legis <- ord_ideal_sim@simul_data$true_person
-high_leg <- sort(true_legis,decreasing = T,index.return=T)
-low_leg <- sort(true_legis,index.return=T)
+high_leg <- sort(true_legis,decreasing = TRUE,index.return=TRUE)
+low_leg <- sort(true_legis,index.return=TRUE)
 
 ord_ideal_est <- id_estimate(idealdata=ord_ideal_sim,
                              model_type=4,
@@ -98,8 +98,8 @@ data('senate114')
 
 senate_data <-
   id_make(score_data = senate114,
-    ordinal = F,
-    include_pres=F)
+    ordinal = FALSE,
+    include_pres=FALSE)
 
 hist(senate_data@score_matrix)
 
@@ -114,7 +114,7 @@ Because this dataset is relatively large, we will use the `use_vb` option to use
 ```{r run_114_model}
 sen_est <- id_estimate(senate_data,
                 model_type = 2,
-                 use_vb = T,
+                 use_vb = TRUE,
                  ncores=4,
                  nfix=2,
                  restrict_type='constrain_oneway',
@@ -125,7 +125,7 @@ sen_est <- id_estimate(senate_data,
                  restrict_ind_low=c(which(row.names(senate114$votes[-1,])=='SANDERS (Indep VT)'),
                                                 which(row.names(senate114$votes[-1,])=='REID (D NV)'),
                                                 which(row.names(senate114$votes[-1,])=='WARREN (D MA)')),
-                 auto_id=F,
+                 auto_id=FALSE,
                  fixtype='constrained',
             seed=84520,
             refresh=500)

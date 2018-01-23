@@ -6,6 +6,11 @@
 \usage{
 id_log_lik(object, ...)
 }
+\arguments{
+\item{object}{A fitted \code{idealstan} object}
+
+\item{...}{Other arguments passed onto underlying functions}
+}
 \description{
 This function is a generic that is used to match the functions used with \code{\link[loo]{loo}} to calculate
 Bayesian information criteria on models.

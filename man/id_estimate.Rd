@@ -17,6 +17,8 @@ id_estimate(idealdata = NULL, model_type = 2, use_subset = FALSE,
   restrict_beta = 1, ...)
 }
 \arguments{
+\item{idealdata}{An object produced by the \code{\link{id_make}} containing a score/vote matrix for use for estimation & plotting}
+
 \item{model_type}{An integer reflecting the kind of model to be estimated. See below.}
 
 \item{use_subset}{Whether a subset of the legislators/persons should be used instead of the full response matrix}
@@ -147,20 +149,28 @@ numeric vector to \code{pin_vals}.
 library(ggplot2)
 library(dplyr)
 
-bin_irt_2pl_abs_sim <- id_sim_gen(ordinal=F,absence=T,absence_diff_mean=0)
+bin_irt_2pl_abs_sim <- id_sim_gen(ordinal=FALSE,
+                                  absence=TRUE,
+                                  absence_diff_mean=0)
 
-# Now we can put that directly into the id_estimate function to get full Bayesian posterior estimates
-# We will constrain discrimination parameters for identification purposes based on the true simulated values
+# Now we can put that directly into the id_estimate function 
+# to get full Bayesian posterior estimates
+# We will constrain discrimination parameters 
+# for identification purposes based on the true simulated values
 
 bin_irt_2pl_abs_est <- id_estimate(bin_irt_2pl_abs_sim,
-                                   model_type=2,
-                                   restrict_ind_high = sort(bin_irt_2pl_abs_sim@simul_data$true_reg_discrim,
-                                   decreasing=T,index=T)$ix[1:3],
-                                   restrict_ind_low = sort(bin_irt_2pl_abs_sim@simul_data$true_reg_discrim,
-                                   decreasing=F,index=T)$ix[1:3],
-                                   restrict_params = 'discrim_reg', 
-                                   restrict_type = 'constrain_twoway',
-                                   fixtype='constrained')
+                       model_type=2,
+                       restrict_ind_high = 
+                       sort(bin_irt_2pl_abs_sim@simul_data$true_reg_discrim,
+                       decreasing=TRUE,
+                       index=T)$ix[1:3],
+                       restrict_ind_low = 
+                       sort(bin_irt_2pl_abs_sim@simul_data$true_reg_discrim,
+                       decreasing=FALSE,
+                       index=T)$ix[1:3],
+                       restrict_params = 'discrim_reg', 
+                       restrict_type = 'constrain_twoway',
+                       fixtype='constrained')
                                    
 # We can now see how well the model recovered the true parameters
 
@@ -170,31 +180,35 @@ id_sim_coverage(bin_irt_2pl_abs_est) \%>\%
            stat_summary(fun.args=list(mult=1.96)) + 
            theme_minimal()
 
-# In most cases, we will use pre-existing data and we will need to use the id_make function first
-# We will use the full rollcall voting data from the 114th Senate as a rollcall object
+# In most cases, we will use pre-existing data 
+# and we will need to use the id_make function first
+# We will use the full rollcall voting data 
+# from the 114th Senate as a rollcall object
 
 data('senate114')
 
 to_idealstan <-   id_make(score_data = senate114,
-                          ordinal = F,
-                          include_pres=F)
+                          ordinal = FALSE,
+                          include_pres=FALSE)
 
-# Running this model will take considerably longer, even using variational Bayesian inference (use_vb=T)
+# Running this model will take considerably longer, 
+# even using variational Bayesian inference (use_vb=T)
 
 \dontrun{
 sen_est <- id_estimate(senate_data,
 model_type = 2,
-use_vb = T,
+use_vb = TRUE,
 restrict_type='constrain_oneway',
 restrict_params='person',
 restrict_ind_high = which(row.names(senate114$votes[-1,])=='SASSE (R NE)'),
-auto_id=F,
+auto_id=FALSE,
 fixtype='constrained')
 }
 
 data('senate114_fit')
 
-# After running the model, we can plot the results of the person/legislator ideal points
+# After running the model, we can plot 
+# the results of the person/legislator ideal points
 
 id_plot_legis(senate114_fit)
 

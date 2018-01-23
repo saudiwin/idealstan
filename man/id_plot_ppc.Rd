@@ -6,6 +6,11 @@
 \usage{
 id_plot_ppc(object, ...)
 }
+\arguments{
+\item{object}{A fitted \code{idealstan} object}
+
+\item{...}{Other arguments passed on to underlying functions}
+}
 \description{
 This function is a wrapper around \code{\link[bayesplot]{ppc_bars}} that enables the plotting of the posterior
 predictive distribution from \code{\link{id_post_pred}} against the original data and for the distribution for 
