@@ -132,9 +132,9 @@ sen_est <- id_estimate(senate_data,
 id_plot(sen_est,person_ci_alpha=0.7) + scale_colour_brewer(type='qual')
 ```
 
-The `id_plot` function has many other options which are documented in the help files. One notable option, though, is to plot bill midpoints along with the legislator ideal points. The midpoints show the line of equiprobability, i.e., at what ideal point is a legislator indifferent to voting on a bill (or answering an item correctly). To plot a bill midpoint overlay, simply include the column index of bill in the response matrix as the `bill_plot` option:
+The `id_plot` function has many other options which are documented in the help files. One notable option, though, is to plot bill midpoints along with the legislator ideal points. The midpoints show the line of equiprobability, i.e., at what ideal point is a legislator indifferent to voting on a bill (or answering an item correctly). To plot a bill midpoint overlay, simply include the column index of bill in the response matrix as the `item_plot` option:
 
-```{r bill_plot}
+```{r item_plot}
 id_plot(sen_est,person_ci_alpha=0.1,item_plot=205,
         abs_and_reg='Vote Points') + scale_colour_brewer(type='qual')
 ```
@@ -143,7 +143,7 @@ The 50th bill in the 114 Senate shows very high discrimination: the bill midpoin
 
 To look at the bill's absence midpoints, simply change the `abs_and_reg` paramater to the `id_plot` function:
 
-```{r abs_bill_plot}
+```{r abs_item_plot}
 
 id_plot(sen_est,person_ci_alpha=0.1,item_plot=205,
         abs_and_reg='Absence Points') + scale_colour_brewer(type='qual')

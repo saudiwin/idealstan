@@ -31,12 +31,12 @@ knitr::kable(as_data_frame(head(ord_ideal_sim@score_matrix)))
 
 |    1|    2|    3|    4|    5|    6|    7|    8|    9|   10|   11|   12|   13|   14|   15|   16|   17|   18|   19|   20|   21|   22|   23|   24|   25|   26|   27|   28|   29|   30|   31|   32|   33|   34|   35|   36|   37|   38|   39|   40|   41|   42|   43|   44|   45|   46|   47|   48|   49|   50|
 |----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|----:|
-|    1|    1|    4|    2|    2|    4|    4|    4|    4|    1|    4|    3|    4|    3|    4|    4|    4|    3|    4|    4|    4|    4|    4|    1|    3|    4|    3|    4|    4|    2|    3|    4|    4|    3|    2|    1|    4|    2|    1|    1|    2|    3|    4|    4|    4|    2|    1|    3|    4|    1|
-|    3|    1|    4|    4|    1|    4|    4|    3|    1|    1|    3|    3|    4|    4|    4|    2|    4|    3|    4|    4|    4|    4|    4|    4|    4|    1|    3|    4|    4|    4|    3|    4|    3|    4|    4|    1|    4|    4|    3|    1|    3|    3|    4|    4|    4|    1|    1|    2|    4|    4|
-|    1|    2|    2|    3|    3|    3|    4|    1|    4|    2|    3|    3|    4|    3|    4|    4|    4|    4|    4|    4|    2|    3|    4|    2|    4|    1|    2|    1|    4|    4|    4|    3|    4|    4|    4|    4|    2|    2|    4|    1|    3|    4|    4|    1|    4|    3|    1|    4|    4|    4|
-|    2|    4|    4|    1|    1|    4|    1|    1|    4|    1|    3|    3|    4|    4|    4|    1|    3|    4|    4|    4|    4|    4|    4|    1|    4|    3|    3|    3|    4|    4|    3|    2|    4|    4|    4|    4|    4|    4|    3|    1|    3|    3|    4|    4|    4|    1|    4|    3|    1|    1|
-|    2|    4|    4|    4|    4|    4|    4|    4|    1|    1|    2|    2|    4|    4|    4|    4|    4|    3|    4|    4|    4|    4|    1|    1|    4|    4|    3|    4|    4|    4|    3|    4|    1|    3|    1|    1|    3|    2|    3|    1|    3|    3|    4|    4|    4|    1|    1|    4|    4|    4|
-|    4|    2|    1|    3|    4|    1|    2|    1|    3|    4|    4|    4|    1|    1|    1|    1|    2|    4|    1|    2|    1|    4|    4|    3|    1|    1|    4|    1|    3|    1|    4|    1|    4|    1|    4|    4|    2|    1|    4|    4|    4|    4|    4|    3|    1|    4|    3|    4|    1|    3|
+|    1|    4|    1|    1|    4|    4|    4|    4|    1|    4|    2|    4|    4|    3|    4|    4|    4|    4|    4|    1|    4|    1|    1|    4|    4|    4|    4|    4|    1|    4|    3|    4|    3|    3|    1|    4|    4|    1|    1|    1|    1|    4|    3|    4|    1|    4|    1|    3|    4|    4|
+|    1|    4|    1|    4|    2|    4|    4|    3|    3|    4|    4|    4|    3|    1|    2|    4|    4|    4|    3|    1|    4|    4|    3|    3|    1|    1|    2|    4|    4|    4|    2|    4|    3|    1|    4|    4|    1|    3|    1|    2|    3|    1|    3|    1|    4|    1|    3|    3|    2|    1|
+|    1|    4|    1|    3|    4|    1|    4|    3|    3|    1|    3|    3|    1|    2|    4|    4|    4|    3|    4|    3|    3|    2|    1|    1|    4|    1|    2|    4|    2|    4|    4|    4|    3|    3|    3|    4|    3|    4|    3|    1|    1|    2|    3|    1|    1|    1|    4|    2|    3|    3|
+|    3|    1|    2|    3|    1|    4|    2|    4|    4|    4|    4|    3|    3|    4|    1|    1|    3|    3|    4|    4|    2|    4|    4|    2|    4|    4|    1|    2|    4|    1|    4|    3|    1|    4|    4|    1|    2|    3|    4|    3|    4|    1|    4|    4|    4|    3|    1|    4|    1|    3|
+|    3|    4|    3|    3|    3|    1|    1|    4|    4|    4|    4|    2|    1|    4|    4|    1|    3|    3|    4|    4|    3|    4|    4|    1|    1|    3|    1|    1|    4|    3|    4|    3|    4|    4|    4|    3|    3|    2|    4|    3|    4|    3|    4|    3|    3|    3|    4|    1|    2|    3|
+|    4|    4|    4|    2|    4|    3|    4|    1|    1|    3|    3|    1|    4|    3|    4|    4|    4|    4|    1|    1|    4|    1|    4|    4|    4|    1|    4|    4|    1|    2|    3|    4|    4|    3|    3|    4|    4|    4|    1|    4|    3|    4|    3|    4|    1|    4|    4|    3|    4|    4|
 
 The vote/score matrix has legislators/persons in the rows and bills/items in the columns. In this simulated data, yes votes are recorded as `3`, no votes as `1`, abstentions as `2`, and absences as `4`.
 
@@ -89,8 +89,8 @@ ord_ideal_est <- id_estimate(idealdata=ord_ideal_sim,
     ## 
     ## 
     ## 
-    ## Gradient evaluation took 0.000479 seconds
-    ## 1000 transitions using 10 leapfrog steps per transition would take 4.79 seconds.
+    ## Gradient evaluation took 0.000505 seconds
+    ## 1000 transitions using 10 leapfrog steps per transition would take 5.05 seconds.
     ## Adjust your expectations accordingly!
     ## 
     ## 
@@ -105,10 +105,10 @@ ord_ideal_est <- id_estimate(idealdata=ord_ideal_sim,
     ## Begin stochastic gradient ascent.
     ##   iter       ELBO   delta_ELBO_mean   delta_ELBO_med   notes 
     ##    100     -1e+03             1.000            1.000
-    ##    200     -1e+03             0.511            1.000
-    ##    300     -1e+03             0.342            0.022
-    ##    400     -1e+03             0.258            0.022
-    ##    500     -1e+03             0.207            0.008   MEDIAN ELBO CONVERGED
+    ##    200     -1e+03             0.510            1.000
+    ##    300     -1e+03             0.342            0.020
+    ##    400     -1e+03             0.257            0.020
+    ##    500     -1e+03             0.206            0.007   MEDIAN ELBO CONVERGED
     ## 
     ## Drawing a sample of size 1000 from the approximate posterior... 
     ## COMPLETED.
@@ -177,8 +177,8 @@ sen_est <- id_estimate(senate_data,
     ## 
     ## 
     ## 
-    ## Gradient evaluation took 0.029877 seconds
-    ## 1000 transitions using 10 leapfrog steps per transition would take 298.77 seconds.
+    ## Gradient evaluation took 0.028085 seconds
+    ## 1000 transitions using 10 leapfrog steps per transition would take 280.85 seconds.
     ## Adjust your expectations accordingly!
     ## 
     ## 
@@ -193,10 +193,10 @@ sen_est <- id_estimate(senate_data,
     ## Begin stochastic gradient ascent.
     ##   iter       ELBO   delta_ELBO_mean   delta_ELBO_med   notes 
     ##    100     -2e+04             1.000            1.000
-    ##    200     -2e+04             0.510            1.000
-    ##    300     -2e+04             0.341            0.020
-    ##    400     -2e+04             0.256            0.020
-    ##    500     -2e+04             0.205            0.003   MEDIAN ELBO CONVERGED
+    ##    200     -2e+04             0.506            1.000
+    ##    300     -2e+04             0.339            0.012
+    ##    400     -2e+04             0.255            0.012
+    ##    500     -2e+04             0.204            0.004   MEDIAN ELBO CONVERGED
     ## 
     ## Drawing a sample of size 1000 from the approximate posterior... 
     ## COMPLETED.
@@ -207,14 +207,14 @@ id_plot(sen_est,person_ci_alpha=0.7) + scale_colour_brewer(type='qual')
 
 ![](README_files/figure-markdown_github-ascii_identifiers/run_114_model-1.png)
 
-The `id_plot` function has many other options which are documented in the help files. One notable option, though, is to plot bill midpoints along with the legislator ideal points. The midpoints show the line of equiprobability, i.e., at what ideal point is a legislator indifferent to voting on a bill (or answering an item correctly). To plot a bill midpoint overlay, simply include the column index of bill in the response matrix as the `bill_plot` option:
+The `id_plot` function has many other options which are documented in the help files. One notable option, though, is to plot bill midpoints along with the legislator ideal points. The midpoints show the line of equiprobability, i.e., at what ideal point is a legislator indifferent to voting on a bill (or answering an item correctly). To plot a bill midpoint overlay, simply include the column index of bill in the response matrix as the `item_plot` option:
 
 ``` r
 id_plot(sen_est,person_ci_alpha=0.1,item_plot=205,
         abs_and_reg='Vote Points') + scale_colour_brewer(type='qual')
 ```
 
-![](README_files/figure-markdown_github-ascii_identifiers/bill_plot-1.png)
+![](README_files/figure-markdown_github-ascii_identifiers/item_plot-1.png)
 
 The 50th bill in the 114 Senate shows very high discrimination: the bill midpoint is right in the middle of the ideal point distribution, with most Democrats voting yes and most Repulicans voting no. The two rug lines at the bottom of the plot show the high density posterior interval for the bill midpoint, and as can be seen, the uncertainty only included those legislators near the very center of the distribution.
 
@@ -225,6 +225,6 @@ id_plot(sen_est,person_ci_alpha=0.1,item_plot=205,
         abs_and_reg='Absence Points') + scale_colour_brewer(type='qual')
 ```
 
-![](README_files/figure-markdown_github-ascii_identifiers/abs_bill_plot-1.png)
+![](README_files/figure-markdown_github-ascii_identifiers/abs_item_plot-1.png)
 
 This absence midpoint shows that those who were most likely to be absent on this bill were Republicans who were pretty close to the far right (left) of the ideal point distribution. Of course, that does not mean absence always implies that one is far to the right, it is just how this particular bill absence midpoint happens to fall. In addition, the uncertainty around this midpoint is much higher than the vote midpoint.
