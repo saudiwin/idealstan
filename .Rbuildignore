@@ -8,3 +8,5 @@ package_test*
 cran-comments.md
 NEWS.md
 LICENSE.txt
+^\.DS_Store
+
