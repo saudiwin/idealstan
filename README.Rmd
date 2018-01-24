@@ -13,6 +13,8 @@ require(dplyr)
 require(ggplot2)
 ```
 
+[![Build Status](https://travis-ci.org/saudiwin/idealstan.svg?branch=master)](https://travis-ci.org/saudiwin/idealstan)
+
 *Note: To report bugs with the package, please file an issue on the [Github page](https://github.com/saudiwin/idealstan/issues). You are currently reading the README file, which largely follows the introductory vignette in the package. To install this package, type the command `devtools::install_github('saudiwin/idealstan')` at the R console prompt. To include the package vignettes in the package install, which can be accessed by the command `vignette(package='idealstan)`, use instead the command `devtools::install_github('saudiwin/idealstan',build_vignette=TRUE)`. To install the unstable development branch `develop`, use this command: `devtools::install_github('saudiwin/idealstan',ref='develop')`.*
 
 This package implements IRT (item response theory) ideal point models, which are models designed for situations in which actors make strategic choices that correlate with a unidimensional scale, such as the left-right axis in American politics. Compared to traditional IRT, ideal point models examine the polarizing influence of a set of items on a set of persons, and has simlarities to models based on Euclidean latent spaces, such as multi-dimensional scaling. For more information, I refer you to my paper presented at [StanCon 2018](http://mc-stan.org/events/stancon2018/).
