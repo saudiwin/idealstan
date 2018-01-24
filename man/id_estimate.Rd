@@ -163,11 +163,11 @@ bin_irt_2pl_abs_est <- id_estimate(bin_irt_2pl_abs_sim,
                        restrict_ind_high = 
                        sort(bin_irt_2pl_abs_sim@simul_data$true_reg_discrim,
                        decreasing=TRUE,
-                       index=T)$ix[1:3],
+                       index=TRUE)$ix[1:3],
                        restrict_ind_low = 
                        sort(bin_irt_2pl_abs_sim@simul_data$true_reg_discrim,
                        decreasing=FALSE,
-                       index=T)$ix[1:3],
+                       index=TRUE)$ix[1:3],
                        restrict_params = 'discrim_reg', 
                        restrict_type = 'constrain_twoway',
                        fixtype='constrained')

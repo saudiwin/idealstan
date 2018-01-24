@@ -11,3 +11,6 @@ id_extract(object, ...)
 
 \item{...}{Other arguments passed on to underlying functions}
 }
+\details{
+See the corresponding method definition for more information about what you can acccess with this generic.
+}
