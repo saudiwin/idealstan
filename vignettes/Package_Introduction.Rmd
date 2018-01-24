@@ -61,7 +61,9 @@ ord_ideal_est <- id_estimate(idealdata=ord_ideal_sim,
                              restrict_type='constrain_twoway',
                              restrict_ind_high = high_leg$ix[1:3],
                              restrict_ind_low=low_leg$ix[1:3],
-                             refresh=500)
+                             refresh=500,
+                             ncores=2,
+                           nchains=2)
 ```
 
 We can then check and see how well the Stan estimation engine was able to capture the "true" values used in the simulation by looking at the residuals between the estimated and the true values:
@@ -81,7 +83,9 @@ For example, using our simulated data and the default settings:
 ```{r restrict_auto}
 ord_ideal_est <- id_estimate(idealdata=ord_ideal_sim,
                              model_type=4,
-                             refresh=500)
+                             refresh=500,
+                             ncores=2,
+                           nchains=2)
 ```
 
 We can see from the plot of the Rhats, which is an MCMC convergence diagnostic, that all the Rhats are below 1.1, which is a good (though not perfect) sign that the model is fully identified:
