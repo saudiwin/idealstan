@@ -372,7 +372,9 @@ id_make <- function(score_data=NULL,simul_data=NULL,
 #'                        index=TRUE)$ix[1:3],
 #'                        restrict_params = 'discrim_reg', 
 #'                        restrict_type = 'constrain_twoway',
-#'                        fixtype='constrained')
+#'                        fixtype='constrained',
+#'                        ncores=2,
+#'                        nchains=2)
 #'                                    
 #' # We can now see how well the model recovered the true parameters
 #' 

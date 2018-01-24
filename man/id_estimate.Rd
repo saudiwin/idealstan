@@ -170,7 +170,9 @@ bin_irt_2pl_abs_est <- id_estimate(bin_irt_2pl_abs_sim,
                        index=TRUE)$ix[1:3],
                        restrict_params = 'discrim_reg', 
                        restrict_type = 'constrain_twoway',
-                       fixtype='constrained')
+                       fixtype='constrained',
+                       ncores=2,
+                       nchains=2)
                                    
 # We can now see how well the model recovered the true parameters
 
