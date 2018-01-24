@@ -4,7 +4,7 @@ cleanup*
 ^\.Rproj\.user$
 ^chunks$
 README*
-package*
+package_test*
 cran-comments.md
 NEWS.md
 LICENSE.txt
