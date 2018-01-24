@@ -1,7 +1,7 @@
 Package: idealstan
 Type: Package
 Title: Bayesian IRT Ideal Point Models with Stan
-Version: 0.2.1
+Version: 0.2.2
 Date: 2018-01-05
 Author: Robert Kubinec
 Maintainer: Robert Kubinec <rmk7xy@virginia.edu>
