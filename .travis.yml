@@ -5,4 +5,5 @@ sudo: false
 cache: packages
 r:
   - 3.3.1
-install: travis_wait 25 mvn install
+r_build_args: --no-build-vignettes --no-manual --no-resave-data
+r_check_args: --no-build-vignettes --no-manual
