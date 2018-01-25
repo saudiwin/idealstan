@@ -299,6 +299,7 @@ setGeneric('launch_shinystan',signature='object',
 #' @param object A fitted \code{idealstan} object
 #' @param pars A character vector of parameters to select from the underlying \code{rstan} model object
 #' @param ... Other parameters passed on to \code{\link[shinystan]{shinystan}}
+#' @importFrom shinystan as.shinystan launch_shinystan
 #' @export
 setMethod(launch_shinystan,signature(object='idealstan'),
           function(object,pars=c('L_free',
@@ -309,7 +310,7 @@ setMethod(launch_shinystan,signature(object='idealstan'),
                                  'restrict_ord',
                                  'steps_votes',
                                  'steps_votes_grm'),...) {
-            to_shiny <- shinystan::as.shinystan(object@stan_samples,pars=pars)
-            shinystan::launch_shinystan(to_shiny,...)
+            to_shiny <- as.shinystan(object@stan_samples,pars=pars)
+            launch_shinystan(to_shiny,...)
           })
 

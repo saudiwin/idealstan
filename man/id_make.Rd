@@ -79,6 +79,8 @@ To run an IRT model using \code{idealstan}, you must first process your data usi
 # where persons/legislators are in the rows
 # and items/bills are in the columns
 
+library(dplyr)
+
 # First, using a rollcall object with the 114th Senate's rollcall votes:
 
 data('senate114')
