@@ -72,10 +72,9 @@
 #' to_use <- apply(to_use, 2, function(x) {
 #' y <- recode(
 #' x,
-#' `1` = 2L,
-#' `6` = 1L,
-#' `9` = 3L,
-#'.default=NA
+#' `1` = 2,
+#' `6` = 1,
+#' `9` = 3
 #' )
 #' return(y)
 #' })
