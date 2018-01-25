@@ -7,6 +7,7 @@
 #'
 #' @docType package
 #' @name idealstan
+#' @aliases idealstan-package
 NULL
 
 ## quiets concerns of R CMD check with dplyr and NSE

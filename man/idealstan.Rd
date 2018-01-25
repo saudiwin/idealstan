@@ -4,6 +4,7 @@
 \name{idealstan}
 \alias{idealstan}
 \alias{idealstan-package}
+\alias{idealstan-package}
 \title{\code{idealstan} package}
 \description{
 R Interface to Stan for Item-Response Theory Ideal Point Models
