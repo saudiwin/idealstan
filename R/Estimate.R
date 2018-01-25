@@ -68,28 +68,15 @@
 #' 
 #' # Also we can put in a matrix object directly by specifying which votes/scores are which:
 #' 
-#' to_use <- senate114$votes
-#' to_use <- apply(to_use, 2, function(x) {
-#' y <- recode(
-#' x,
-#' `1` = 2,
-#' `6` = 1,
-#' `9` = 3
-#' )
-#' return(y)
-#' })
 #' 
 #' rownames(to_use) <- rownames(senate114$legis.data)
 #' # Need to drop Obama
 #' senate_data <-
 #' id_make(
-#' score_data = to_use[-1,],
-#' person_data = slice(senate114$legis.data,-1),
-#' miss_val = 3,
-#' high_val = 2,
-#' low_val = 1,
+#' score_data=senate114,
 #' ordinal = FALSE,
-#' exclude_level = c(3,7)
+#' inflate=FALSE,
+#' include_pres=FALSE
 #' )
 #' 
 id_make <- function(score_data=NULL,simul_data=NULL,
