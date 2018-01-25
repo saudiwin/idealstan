@@ -97,7 +97,8 @@ y <- recode(
 x,
 `1` = 2L,
 `6` = 1L,
-`9` = 3L
+`9` = 3L,
+.default=NA
 )
 return(y)
 })
@@ -106,11 +107,11 @@ rownames(to_use) <- rownames(senate114$legis.data)
 # Need to drop Obama
 senate_data <-
 id_make(
-vote_data = to_use[-1,],
-legis_data = slice(senate114$legis.data,-1),
-abs_vote = 3,
-yes_vote = 2,
-no_vote = 1,
+score_data = to_use[-1,],
+person_data = slice(senate114$legis.data,-1),
+miss_val = 3,
+high_val = 2,
+low_val = 1,
 ordinal = FALSE,
 exclude_level = c(3,7)
 )

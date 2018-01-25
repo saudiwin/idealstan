@@ -17,6 +17,7 @@ require(dplyr)
 require(ggplot2)
 require(loo)
 require(bayesplot)
+options(mc.cores=2)
 ```
 
 A big part of the purpose of `idealstan` is to give people different options in fitting ideal point models to diverse data. Along with that, `idealstan` makes use of Bayesian model evaluation a la [loo](https://CRAN.R-project.org/package=loo/vignettes/loo-example.html) and also can analyze the posterior predictive distribution using [bayesplot](http://mc-stan.org/users/interfaces/bayesplot). `loo` is an approximation of the predictive error of a Bayesian model via leave-one-out cross-validation (LOO-CV). True LOO-CV on Bayesian models is computationally prohibitive because it involves estimating a new model for each data point. For IRT models incorporating thousands or even millions of observations, this is practically infeasible.
