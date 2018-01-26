@@ -98,7 +98,7 @@ polar parameters apart.}
 \item{...}{Additional parameters passed on to Stan's sampling engine. See \code{\link[rstan]{stan}} for more information.}
 }
 \value{
-A fitted \code{\link{idealstan}} object that contains posterior samples of all parameters either via full Bayesian infererence
+A fitted \code{\link{idealstan}} object that contains posterior samples of all parameters either via full Bayesian inference
 or a variational approximation if \code{use_vb} is set to \code{TRUE}. This object can then be passed to the plotting functions for further analysis.
 }
 \description{
@@ -127,7 +127,7 @@ variational Bayesian inference (see \code{\link[rstan]{vb}}). If \code{restrict_
 highest legislators/persons (if \code{restrict_params} is 'person') or bills/items (if \code{restrict_params} equals 'items') 
 are used to constrain and identify the model. If \code{restrict_type} is set to 'constrain_twoway', then \code{nfix} highest and lowest legislators/persons
 or bills/items are used to constrain and identify the model.
-In addition, if \code{fixtype='vb'} is used, \code{auto_id} can be set to \code{TRUE}. This will run additional varitional Bayesian models
+In addition, if \code{fixtype='vb'} is used, \code{auto_id} can be set to \code{TRUE}. This will run additional variational Bayesian models
 using the identification achieved and will see if the signs of the estimated parameters are at least 90 percent in the same direction. If so, 
 the model is considered identified. If not, the function will re-run and will increase \code{nfix} by one to see if that will identify the model, 
 ad infinitum.

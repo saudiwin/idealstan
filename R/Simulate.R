@@ -54,11 +54,11 @@ id_sim_gen <- function(num_person=20,num_bills=50,absence_discrim_sd=2,absence_d
     }
   }
   
-  #Fixed average participation value for each personlator
+  #Fixed average participation value for each person/legislator
   
   avg_particip <- rnorm(n=1,mean=0,sd=1)
   
-  # First simulate ideal points for personlators/bills
+  # First simulate ideal points for person/legislators/bills
   # Bill difficulty parameters are fixed because they are not entirely interesting (they represent intercepts)
   
   absence_diff <- prior_func(params=list(N=num_bills,mean=absence_diff_mean,sd=diff_sd)) 

@@ -252,7 +252,7 @@ id_make <- function(score_data=NULL,simul_data=NULL,
 #' highest legislators/persons (if \code{restrict_params} is 'person') or bills/items (if \code{restrict_params} equals 'items') 
 #' are used to constrain and identify the model. If \code{restrict_type} is set to 'constrain_twoway', then \code{nfix} highest and lowest legislators/persons
 #' or bills/items are used to constrain and identify the model.
-#' In addition, if \code{fixtype='vb'} is used, \code{auto_id} can be set to \code{TRUE}. This will run additional varitional Bayesian models
+#' In addition, if \code{fixtype='vb'} is used, \code{auto_id} can be set to \code{TRUE}. This will run additional variational Bayesian models
 #' using the identification achieved and will see if the signs of the estimated parameters are at least 90 percent in the same direction. If so, 
 #' the model is considered identified. If not, the function will re-run and will increase \code{nfix} by one to see if that will identify the model, 
 #' ad infinitum.
@@ -316,7 +316,7 @@ id_make <- function(score_data=NULL,simul_data=NULL,
 #' @param restrict_beta The beta (shape) parameter passed to the gamma prior if exactly two item/person parameters are constrained, each high or low. The gamma prior pushes these two
 #' polar parameters apart.
 #' @param ... Additional parameters passed on to Stan's sampling engine. See \code{\link[rstan]{stan}} for more information.
-#' @return A fitted \code{\link{idealstan}} object that contains posterior samples of all parameters either via full Bayesian infererence
+#' @return A fitted \code{\link{idealstan}} object that contains posterior samples of all parameters either via full Bayesian inference
 #' or a variational approximation if \code{use_vb} is set to \code{TRUE}. This object can then be passed to the plotting functions for further analysis.
 #' @seealso \code{\link{id_make}} for pre-processing data,
 #' \code{\link{id_plot_legis}} for plotting results,

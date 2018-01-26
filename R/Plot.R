@@ -17,7 +17,7 @@
 #' @param text_size_label ggplot2 text size for legislator labels
 #' @param text_size_group ggplot2 text size for group text used for points
 #' @param point_size If \code{person_labels} and \code{group_labels} are set to \code{FALSE}, controls the size of the points plotted.
-#' @param hjust_length horizontal adjustement of the legislator labels
+#' @param hjust_length horizontal adjustment of the legislator labels
 #' @param person_labels if \code{TRUE}, use the person.names column to plot labels for the person (legislator) ideal points
 #' @param group_labels if \code{TRUE}, use the group column to plot text markers for the group (parties) from the person/legislator data
 #' @param person_ci_alpha The transparency level of the dot plot and confidence bars for the person ideal points

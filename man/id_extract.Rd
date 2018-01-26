@@ -2,7 +2,7 @@
 % Please edit documentation in R/Generics.R
 \name{id_extract}
 \alias{id_extract}
-\title{Generic Method for Extracing Posterior Samples}
+\title{Generic Method for Extracting Posterior Samples}
 \usage{
 id_extract(object, ...)
 }

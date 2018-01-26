@@ -24,7 +24,7 @@ id_plot_legis(object, return_data = FALSE, item_plot = NULL,
 
 \item{point_size}{If \code{person_labels} and \code{group_labels} are set to \code{FALSE}, controls the size of the points plotted.}
 
-\item{hjust_length}{horizontal adjustement of the legislator labels}
+\item{hjust_length}{horizontal adjustment of the legislator labels}
 
 \item{person_labels}{if \code{TRUE}, use the person.names column to plot labels for the person (legislator) ideal points}
 
