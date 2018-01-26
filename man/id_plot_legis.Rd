@@ -67,13 +67,13 @@ make it clear.
 
 # To demonstrate, we load a fitted idealstan object based on the 114th Senate
 
-data('senate114_fitted')
+data('senate114_fit')
 
-id_plot_legis(senate114_fitted)
+id_plot_legis(senate114_fit)
 
 # We can overlap the bill/item midpoints to show 
 # where the persons/legislators are indifferent to responding positively
 
-id_plot_legis(senate114_fitted,item_plot=5)
+id_plot_legis(senate114_fit,item_plot=5)
 
 }

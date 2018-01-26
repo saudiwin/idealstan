@@ -46,7 +46,7 @@
 #' # We can overlap the bill/item midpoints to show 
 #' # where the persons/legislators are indifferent to responding positively
 #' 
-#' id_plot_legis(senate114_fitted,item_plot=5)
+#' id_plot_legis(senate114_fit,item_plot=5)
 #' 
 id_plot_legis <- function(object,return_data=FALSE,item_plot=NULL,
                        text_size_label=2,text_size_group=2.5,
