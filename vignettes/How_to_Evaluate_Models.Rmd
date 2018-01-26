@@ -106,14 +106,14 @@ log_like_irt_2pl_incorrect <- id_log_lik(irt_2pl_incorrect)
 With this calculation can examine the models' `loo` values, which shows the relative predictive performance of the model to the data. Overall, model performance seems quite good, as the Pareto k values show that there are only a few dozen observations in the dataset that aren't well predicted. The LOO-IC, or the leave-one-out information criterion (think AIC or BIC), are also similar for the two models, although the correct model does have a lower (i.e., better) LOO-IC.
 
 ```{r loo_show}
-loo(log_lik_irt_2pl_correct)
-loo(log_like_irt_2pl_incorrect)
+loo(log_lik_irt_2pl_correct,cores=2)
+loo(log_like_irt_2pl_incorrect,cores=2)
 ```
 
 We can also compare the LOOIC of the two models explicitly using a second `loo` function that will even give us a confidence interval around the difference. If the difference is negative, then the first (correct) model has higher predictive accuracy:
 
 ```{r loo_compare}
-compare(loo(log_lik_irt_2pl_correct),
-        loo(log_like_irt_2pl_incorrect))
+compare(loo(log_lik_irt_2pl_correct,cores=2),
+        loo(log_like_irt_2pl_incorrect,cores=2))
 ```
 

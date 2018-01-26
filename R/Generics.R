@@ -244,6 +244,8 @@ setMethod(id_plot, signature(object='idealstan'),
 #' 
 #' See the corresponding method definition for more information about what you can acccess with this generic.
 #' 
+#' This is a generic function used for accessing the underlying method.
+#' 
 #' @param object A fitted \code{idealstan} object
 #' @param ... Other arguments passed on to underlying functions
 #' @export
