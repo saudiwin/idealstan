@@ -66,19 +66,6 @@
 #' ordinal = FALSE,
 #' include_pres=FALSE)
 #' 
-#' # Also we can put in a matrix object directly by specifying which votes/scores are which:
-#' 
-#' 
-#' rownames(to_use) <- rownames(senate114$legis.data)
-#' # Need to drop Obama
-#' senate_data <-
-#' id_make(
-#' score_data=senate114,
-#' ordinal = FALSE,
-#' inflate=FALSE,
-#' include_pres=FALSE
-#' )
-#' 
 id_make <- function(score_data=NULL,simul_data=NULL,
                            person_cov=NULL,item_cov=NULL,
                            item_cov_miss=NULL,
