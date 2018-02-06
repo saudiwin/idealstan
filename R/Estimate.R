@@ -327,6 +327,8 @@ id_make <- function(score_data=NULL,simul_data=NULL,
 #' library(ggplot2)
 #' library(dplyr)
 #' 
+#' # This code will take at least a few minutes to run 
+#' \dontrun{
 #' bin_irt_2pl_abs_sim <- id_sim_gen(ordinal=FALSE,
 #'                                   absence=TRUE,
 #'                                   absence_diff_mean=0)
@@ -359,6 +361,7 @@ id_make <- function(score_data=NULL,simul_data=NULL,
 #'          ggplot(aes(y=avg,x=Parameter)) +
 #'            stat_summary(fun.args=list(mult=1.96)) + 
 #'            theme_minimal()
+#'  }
 #' 
 #' # In most cases, we will use pre-existing data 
 #' # and we will need to use the id_make function first
@@ -367,14 +370,14 @@ id_make <- function(score_data=NULL,simul_data=NULL,
 #' 
 #' data('senate114')
 #' 
+#' # Running this model will take at least a few minutes, even with 
+#' # variational inference (use_vb=T) turned on
+#' \dontrun{
+#' 
 #' to_idealstan <-   id_make(score_data = senate114,
 #'                           ordinal = FALSE,
 #'                           include_pres=FALSE)
 #' 
-#' # Running this model will take considerably longer, 
-#' # even using variational Bayesian inference (use_vb=T)
-#' 
-#' \dontrun{
 #' sen_est <- id_estimate(senate_data,
 #' model_type = 2,
 #' use_vb = TRUE,
@@ -383,14 +386,13 @@ id_make <- function(score_data=NULL,simul_data=NULL,
 #' restrict_ind_high = which(row.names(senate114$votes[-1,])=='SASSE (R NE)'),
 #' auto_id=FALSE,
 #' fixtype='constrained')
-#' }
-#' 
-#' data('senate114_fit')
 #' 
 #' # After running the model, we can plot 
 #' # the results of the person/legislator ideal points
 #' 
-#' id_plot_legis(senate114_fit)
+#' id_plot_legis(sen_est)
+#' }
+#' 
 #' 
 #' @export
 id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=FALSE,
