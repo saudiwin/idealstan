@@ -4,10 +4,7 @@
 \name{senate114}
 \alias{senate114}
 \title{Rollcall vote data for 114th Senate}
-\format{A rollcall vote object that is a list with \code{votes} as the legislator-bill rollcall vote matrix.}
-\source{
-\url{https://www.voteview.com}
-}
+\format{A roll call vote object that is a list with \code{votes} as the legislator-bill roll call vote matrix.}
 \usage{
 senate114
 }

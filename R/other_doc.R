@@ -3,8 +3,7 @@
 #' This rollcall vote object (see \code{\link[pscl]{rollcall}}) contains the full voting records for the 114th Senate in the US
 #' Congress. The data can be pre-processed via the \code{\link{id_make}} function for estimation. See package vignette for details.
 #'
-#' @format A rollcall vote object that is a list with \code{votes} as the legislator-bill rollcall vote matrix.
-#' @source \url{https://www.voteview.com}
+#' @format A roll call vote object that is a list with \code{votes} as the legislator-bill roll call vote matrix.
 "senate114"
 
 #' Fitted \code{idealstan} model for 114th Senate Data
