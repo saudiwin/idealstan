@@ -13,3 +13,9 @@ R Interface to Stan for Item-Response Theory Ideal Point Models
 See the README on
 \href{https://github.com/saudiwin/idealstan/blob/master/README.md}{GitHub}
 }
+\references{
+\enumerate{
+   \item Clinton, J., Jackman, S., & Rivers, D. (2004). The Statistical Analysis of Roll Call Data. \emph{The American Political Science Review}, 98(2), 355-370. doi:10.1017/S0003055404001194
+   \item Bafumi, J., Gelman, A., Park, D., & Kaplan, N. (2005). Practical Issues in Implementing and Understanding Bayesian Ideal Point Estimation. \emph{Political Analysis}, 13(2), 171-187. doi:10.1093/pan/mpi010
+}
+}

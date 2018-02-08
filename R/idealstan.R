@@ -8,6 +8,10 @@
 #' @docType package
 #' @name idealstan
 #' @aliases idealstan-package
+#' @references \enumerate{
+#'    \item Clinton, J., Jackman, S., & Rivers, D. (2004). The Statistical Analysis of Roll Call Data. \emph{The American Political Science Review}, 98(2), 355-370. doi:10.1017/S0003055404001194
+#'    \item Bafumi, J., Gelman, A., Park, D., & Kaplan, N. (2005). Practical Issues in Implementing and Understanding Bayesian Ideal Point Estimation. \emph{Political Analysis}, 13(2), 171-187. doi:10.1093/pan/mpi010
+#' }
 NULL
 
 ## quiets concerns of R CMD check with dplyr and NSE
