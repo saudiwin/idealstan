@@ -199,7 +199,7 @@ id_make <- function(score_data=NULL,simul_data=NULL,
   
   row.names(cleaned) <- as.character(1:nrow(cleaned))
   
-  if("group" %in% names(person_data)) person_data$group <- rep('O',nrow(score_data))
+  if(!("group" %in% names(person_data))) person_data$group <- rep('O',nrow(score_data))
   
   # check what kind of vote labels to use
   
