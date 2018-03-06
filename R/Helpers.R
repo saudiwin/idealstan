@@ -149,7 +149,9 @@
      print(paste0('The model currently has ',round(mean(equal_ratio),1),' correct signs identified.'))
      if(mean(equal_ratio)<0.9) {
        print(paste0('Model is not yet identified. Increasing constraint number to ',nfix+1))
-       .vb_fix(object=object,this_params=this_params,this_data=this_data,nfix=nfix+1,auto_id=TRUE,ncores=ncores,
+       .vb_fix(object=object,this_params=this_params,this_data=this_data,nfix=nfix+1,auto_id=TRUE,
+               model_type=model_type,
+               ncores=ncores,
                all_args)
      } else {
        print(paste0('Automatic identification has occurred for ',all_args$restrict_type,
