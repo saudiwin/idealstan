@@ -195,7 +195,8 @@ id_make <- function(score_data=NULL,simul_data=NULL,
     item_cov_miss <- matrix(rep(1,ncol(cleaned)),nrow=ncol(cleaned),ncol=1)
   }
   
-  person_data$person.names <- row.names(score_data)
+  #not sure why I ever had this in here
+  #person_data$person.names <- row.names(score_data)
   
   row.names(cleaned) <- as.character(1:nrow(cleaned))
   
