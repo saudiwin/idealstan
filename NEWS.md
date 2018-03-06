@@ -1,5 +1,5 @@
 #Release v0.2.9.1
-Fixed bug in `id_extract` function.
+Fixed bugs in `id_extract` and `id_make` functions.
 
 #Release v0.2.9
 Fixed a bug in the ideal point plot function, and also in the `auto_id` option in `id_estimate`.
