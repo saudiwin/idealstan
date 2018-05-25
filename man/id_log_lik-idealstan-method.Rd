@@ -6,7 +6,7 @@
 \title{Extract Log-Likelihood of the Posterior}
 \usage{
 \S4method{id_log_lik}{idealstan}(object, ..., draws = 100,
-  sample_scores = NULL)
+  sample_scores = NULL, r_eff = FALSE)
 }
 \arguments{
 \item{object}{A fitted \code{idealstan} object}
@@ -17,11 +17,22 @@
 
 \item{sample_scores}{In addition to reducing the number of posterior draws 
 used to calculate the posterior predictive distribution,
- you can sample from the scores/votes themselves. 
- To do so, set \code{sample_scores} to the number of scores/votes to sample.}
+you can sample from the scores/votes themselves. 
+To do so, set \code{sample_scores} to the number of scores/votes to sample.}
+
+\item{r_eff}{Whether to report a matrix used for calculation of effective samples (see \code{\link[loo]{relative_eff}})}
+}
+\value{
+This function returns an S by N matrix of the log density of posterior draws, 
+where S is the size of the 
+posterior sample and N is the total number of parameters,
+or an array of I by C by N,
+where I is the number of MCMC iterations per chain, C is the number of chains from the Stan model object, and N 
+is the size of the underlying data. The first matrix can be fed directly to `loo` while the second
+array is used for the calculation of effective samples by loo.
 }
 \description{
-This function returns a matrix of an S by N matrix of the log density of posterior draws from a fitted idealstan model, where S is the size of the 
-posterior sample and N is the total number of parameters in the idealstan model. This matrix can then be used to 
-fit an information criterion to assess model fit, see the \code{\link[loo]{loo}} package for details.
+This funciton can then be used to 
+fit an information criterion to assess model fit, 
+see the package vignettes and the \code{\link[loo]{loo}} package for details.
 }

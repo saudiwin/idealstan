@@ -3,7 +3,7 @@
                     this_data=NULL,nfix=NULL,auto_id=FALSE,
                     ncores=NULL,all_args=NULL,
                     model_type=NULL,...) {
-
+  browser()
   # check for windows 
   if(ncores>1) {
     if(.Platform$OS.type=='windows') {

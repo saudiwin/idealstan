@@ -96,24 +96,36 @@ id_plot_ppc(irt_2pl_incorrect,ppc_pred=post_incorrect,person=c(1,2))
 ```
 
 
-Finally, we can turn to summary measures of model fit that also allow us to compare models directly to each other (if they were fit on the same data). To do so, I first employ the `id_log_lik` function to generate log-likelihood values for each of these models:
+Finally, we can turn to summary measures of model fit that also allow us to compare models directly to each other (if they were fit on the same data). To do so, I first employ the `id_log_lik` function to generate log-likelihood values for each of these models. I also need to create exponentiated log-likelihood values (setting `r_eff=T`), which are necessary to calculate the effective number of samples in evaluating model fit.
 
 ```{r log_lik}
 log_lik_irt_2pl_correct <- id_log_lik(irt_2pl_correct)
 log_like_irt_2pl_incorrect <- id_log_lik(irt_2pl_incorrect)
+
+log_lik_irt_2pl_correct_reff <- id_log_lik(irt_2pl_correct,r_eff=T)
+log_like_irt_2pl_incorrect_reff <- id_log_lik(irt_2pl_incorrect,r_eff=T)
+
 ```
 
 With this calculation can examine the models' `loo` values, which shows the relative predictive performance of the model to the data. Overall, model performance seems quite good, as the Pareto k values show that there are only a few dozen observations in the dataset that aren't well predicted. The LOO-IC, or the leave-one-out information criterion (think AIC or BIC), are also similar for the two models, although the correct model does have a lower (i.e., better) LOO-IC.
 
 ```{r loo_show}
-loo(log_lik_irt_2pl_correct,cores=2)
-loo(log_like_irt_2pl_incorrect,cores=2)
+correct_loo <- loo(log_lik_irt_2pl_correct,
+                   cores=2,
+                   r_eff=relative_eff(log_lik_irt_2pl_correct_reff))
+
+incorrect_loo <- loo(log_like_irt_2pl_incorrect,
+                     cores=2,
+                     r_eff=relative_eff(log_like_irt_2pl_incorrect_reff))
+
+print(correct_loo)
+print(incorrect_loo)
 ```
 
 We can also compare the LOOIC of the two models explicitly using a second `loo` function that will even give us a confidence interval around the difference. If the difference is negative, then the first (correct) model has higher predictive accuracy:
 
-```{r loo_compare}
-compare(loo(log_lik_irt_2pl_correct,cores=2),
-        loo(log_like_irt_2pl_incorrect,cores=2))
+```{r loo_compare,warn=F,message=F}
+compare(correct_loo,
+        incorrect_loo)
 ```
 
