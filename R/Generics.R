@@ -172,19 +172,26 @@ setMethod('id_model',signature(object='idealdata'),
 #' This function produces quantiles and standard deviations for the posterior samples of \code{idealstan} objects.
 #' 
 #' @param object An \code{idealstan} object fitted by \code{\link{id_estimate}}
+#' @param pars A character string of the name of the parameter in the Stan model
 #' 
 #' @return A \code{\link[dplyr]{tibble}} data frame with parameters as rows and descriptive statistics as columns
 #' 
 #' @export
 setMethod('summary',signature(object='idealstan'),
-          function(object) {
+          function(object,pars=NULL) {
             
             options(tibble.print_max=1000,
                     tibble.print_min=100)
+            if(!is.null(pars)) {
+              sumobj <- rstan::summary(object@stan_samples,pars=pars)
+              this_summary <- sumobj[[1]] %>% as_data_frame
+            } else {
+              sumobj <- rstan::summary(object@stan_samples)
+              this_summary <- sumobj[[1]] %>% as_data_frame
+            }
             
-            this_summary <- rstan::summary(object@stan_samples)[[1]] %>% as_data_frame
             this_summary <- mutate(this_summary,
-                                   parameters=row.names(rstan::summary(object@stan_samples)[[1]]),
+                                   parameters=row.names(sumobj[[1]]),
                                    par_type=stringr::str_extract(parameters,'[A-Za-z_]+')) %>% 
               rename(posterior_mean=`mean`,
                      posterior_sd=`sd`,

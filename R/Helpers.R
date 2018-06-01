@@ -3,7 +3,7 @@
                     this_data=NULL,nfix=NULL,auto_id=FALSE,
                     ncores=NULL,all_args=NULL,
                     model_type=NULL,...) {
-  browser()
+  
   # check for windows 
   if(ncores>1) {
     if(.Platform$OS.type=='windows') {
@@ -79,7 +79,8 @@
        
      } else if(all_args$restrict_params=='person') {
        # Or constrain persons instead of discriminations
-       person <- apply(this_params[,grepl(pattern = 'L_full',x=all_params)],2,mean)
+       # adjust for which time point we are looking at -- use first time point person param
+       person <- apply(this_params[,grepl(pattern = 'L_full\\[1,',x=all_params)],2,mean)
        fix_param <- "L_free"
        if(all_args$restrict_type=='constrain_oneway') {
          to_constrain_high <- sort(abs(person),index.return=TRUE,decreasing=TRUE)
@@ -580,4 +581,46 @@
   } else {
     return(FALSE)
   }
+}
+
+#' Helper function for preparing person ideal point plot data
+.prepare_legis_data <- function(object) {
+  
+  person_data <- object@score_data@person_data
+  
+  # Apply any filters from the data processing stage so that the labels match
+  
+  if(length(object@score_data@subset_person)>0) {
+    person_data <- filter(person_data,person.names %in% object@score_data@subset_person)
+  } else if(length(object@score_data@subset_group)>0) {
+    person_data <- filter(person_data,group %in% object@score_data@subset_person)
+  }
+  
+  if(length(object@score_data@to_sample)>0) {
+    person_data <- slice(person_data,object@score_data@to_sample)
+  }
+  
+  # Reorder rows to match those rows that were switched for identification purposes
+  
+  person_data <- slice(person_data,as.numeric(row.names(object@score_data@score_matrix)))
+  
+  # need to apply true person names by time point
+  person_params <- as.data.frame(object@stan_samples,pars='L_full')
+  person_params <- person_params %>% gather(key = legis,value=ideal_pts) 
+  # get ids out 
+
+  person_ids <- data_frame(long_name=person_params$legis) %>% 
+    distinct
+  legis_nums <- stringr::str_extract_all(person_ids$long_name,'[0-9]+',simplify=T)
+  person_ids <-   mutate(person_ids,time_point=as.numeric(legis_nums[,1]),
+           legis_id=as.numeric(legis_nums[,2]))
+  # add in all data in the person_data object
+  person_data <- mutate(person_data,row_names=1:n())
+  person_ids <- left_join(person_ids,person_data,by=c(legis_id='row_names'))
+  
+  person_params <-  person_params %>% 
+    group_by(legis) %>% 
+    summarize(low_pt=quantile(ideal_pts,0.1),high_pt=quantile(ideal_pts,0.9),
+              median_pt=median(ideal_pts)) %>% 
+    left_join(person_ids,by=c(legis='long_name'))
 }
