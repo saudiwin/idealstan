@@ -5,10 +5,12 @@
 \alias{summary,idealstan-method}
 \title{Posterior Summaries for fitted \code{idealstan} object}
 \usage{
-\S4method{summary}{idealstan}(object)
+\S4method{summary}{idealstan}(object, pars = NULL)
 }
 \arguments{
 \item{object}{An \code{idealstan} object fitted by \code{\link{id_estimate}}}
+
+\item{pars}{A character string of the name of the parameter in the Stan model}
 }
 \value{
 A \code{\link[dplyr]{tibble}} data frame with parameters as rows and descriptive statistics as columns

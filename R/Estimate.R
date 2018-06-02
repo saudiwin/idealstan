@@ -541,7 +541,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
   }
   dim(pin_vals) <- idealdata@restrict_num_high
   this_data <- list(N=length(Y),
-                    T=max(idealdata@time),
+                    T=max(idealdata@time_vals),
                     Y=Y,
                     hier_type=hier_type,
                     num_legis=num_legis,
@@ -552,7 +552,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
                     num_fix_low=idealdata@restrict_num_low,
                     constrain_par=idealdata@param_fix,
                     constraint_type=idealdata@constraint_type,
-                    LX=dim(idealdata@person_cov)[1],
+                    LX=dim(idealdata@person_cov)[3],
                     SRX=ncol(idealdata@item_cov),
                     SAX=ncol(idealdata@item_cov_miss),
                     legis_pred=idealdata@person_cov,

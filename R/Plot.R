@@ -61,35 +61,7 @@ id_plot_legis <- function(object,return_data=FALSE,item_plot=NULL,
                        group_overlap=FALSE,
                        sample_persons=NULL,...) {
 
-  person_data <- object@score_data@person_data
-  
-  # Apply any filters from the data processing stage so that the labels match
-  
-  if(length(object@score_data@subset_person)>0) {
-    person_data <- filter(person_data,person.names %in% object@score_data@subset_person)
-  } else if(length(object@score_data@subset_group)>0) {
-    person_data <- filter(person_data,group %in% object@score_data@subset_person)
-  }
-  
-  if(length(object@score_data@to_sample)>0) {
-    person_data <- slice(person_data,object@score_data@to_sample)
-  }
-  
-  # Reorder rows to match those rows that were switched for identification purposes
-
-  person_data <- slice(person_data,as.numeric(row.names(object@score_data@score_matrix)))
-  
-  person_params <- rstan::extract(object@stan_samples,pars='L_full')[[1]] %>% 
-    as_data_frame 
-  names(person_params) <- as.character(1:length(person_params))
-  person_params <- person_params %>% gather(key = legis,value=ideal_pts) %>% 
-    mutate(legis=as.numeric(legis)) %>% 
-    group_by(legis) %>% 
-    summarize(low_pt=quantile(ideal_pts,0.1),high_pt=quantile(ideal_pts,0.9),
-              median_pt=median(ideal_pts))
-
-  person_params <- mutate(person_params,person.names=person_data$person.names,
-                          group=person_data$group)
+  person_params <- .prepare_legis_data(object)
   
   # sample for plot only
   
@@ -378,6 +350,101 @@ id_plot_legis <- function(object,return_data=FALSE,item_plot=NULL,
   } else (
     return(outplot)
   )
+  
+}
+
+#' Function to plot dynamic ideal point models
+#' 
+#' This function can be used on a fitted \code{idealstan} object to plot the relative positions and 
+#' uncertainties of legislator/persons and bills/items when the legislator/person ideal points
+#' are allowed to vary over time.
+#' 
+#' This plot shows the distribution of ideal points for the legislators/persons in the model,
+#' and also traces the path of these ideal points over time. It will plot them as a vertical
+#' line with associated high-density posterior interval (10\% to 90\%). In addition, if the column index for a 
+#' bill/item from the response matrix is passed to the \code{item_plot} option, then an item/bill midpoint will be overlain
+#' on the ideal point plot, showing the point at which legislators/persons are indifferent to voting/answering on the 
+#' bill/item. Note that because this is an ideal point model, it is not possible to tell from the midpoint itself
+#' which side will be voting which way. For that reason, the legislators/persons are colored by their votes/scores to
+#' make it clear.
+#' 
+#' @param object A fitted \code{idealstan} object
+#' @param return_data If true, the calculated legislator/bill data is returned along with the plot in a list
+#' @param item_plot The column index of the bill/item midpoint to overlay on the plot
+#' @param text_size_label ggplot2 text size for legislator labels
+#' @param text_size_group ggplot2 text size for group text used for points
+#' @param point_size If \code{person_labels} and \code{group_labels} are set to \code{FALSE}, controls the size of the points plotted.
+#' @param hjust_length horizontal adjustment of the legislator labels
+#' @param person_labels if \code{TRUE}, use the person.names column to plot labels for the person (legislator) ideal points
+#' @param group_labels if \code{TRUE}, use the group column to plot text markers for the group (parties) from the person/legislator data
+#' @param person_ci_alpha The transparency level of the dot plot and confidence bars for the person ideal points
+#' @param show_score Show only person/legislator ideal points that have a certain score/vote category from the outcome (character string)
+#' @param abs_and_reg Whether to show 'both' absence and regular item/bill midpoints if the model is absence-inflated, the default,
+#' or 'Absence Points' for only the absence midpoints or 'Vote Points' for only the non-inflated midpoints
+#' @param show_true Whether to show the true values of the legislators (if model has been simulated)
+#' @param group_color If \code{TRUE}, give each group/bloc a different color
+#' @param group_overlap Whether to prevent the text from overlapping itself (ggplot2 option)
+#' @param hpd_limit The greatest absolute difference in high-posterior density interval shown for any point. Useful for excluding imprecisely estimated persons/legislators from the plot. Leave NULL if you don't want to exclude any.
+#' @param sample_persons If you don't want to use the full number of persons/legislators from the model, enter a proportion (between 0 and 1) to select
+#'  only a fraction of the persons/legislators.
+#' @param ... Other options passed on to plotting function, currently ignored
+#' @export
+#' @examples 
+id_plot_legis_dyn <- function(object,return_data=FALSE,item_plot=NULL,
+                              text_size_label=2,text_size_group=2.5,
+                              point_size=1,
+                              hjust_length=-0.7,
+                              person_labels=NULL,
+                              group_labels=NULL,
+                              person_ci_alpha=0.1,
+                              show_score=NULL,
+                              abs_and_reg='both',show_true=FALSE,group_color=TRUE,
+                              hpd_limit=10,
+                              group_overlap=FALSE,
+                              sample_persons=NULL,...) {
+  
+  if(!is.null(person_labels)) {
+    person_labels <- quo(person.name)
+  } else if (person_labels=='none') {
+    person_labels <- quo(legis)
+  } else {
+    person_labels <- enquo(person_labels)
+  }
+  
+  if(!is.null(group_labels)) {
+    group_labels <- quo(group)
+  } else if(group_labels=='none') {
+    group_labels <- quo(group)
+    } else {
+    group_labels <- enquo(group_labels)
+  }
+  person_labels_string <- quo_name(person_labels)
+  person_params <- .prepare_legis_data(object) %>% 
+    mutate(!! person_labels_string :=reorder(factor(!!person_labels),median_pt))
+  
+  outplot <- person_params %>% ggplot() + 
+    geom_path(aes_(x=~time_point,y=~median_pt,group=person_labels,
+                   colour=~party),alpha=person_ci_alpha)
+  
+  if(group_labels!='none') {
+    outplot <- outplot +       
+      geom_text(aes(x=reorder(person.names,median_pt),y=median_pt,label=reorder(group,median_pt),color=bill_vote),size=text_size_group,
+                check_overlap = group_overlap,
+                fontface='bold') 
+  }
+  if(person_labels==TRUE) {
+    outplot <- outplot + 
+      geom_text(aes(x=reorder(person.names,median_pt),y=median_pt,label=reorder(person.names,median_pt),color=bill_vote),
+                check_overlap=TRUE,hjust=hjust_length,size=text_size_label)
+  }
+  if(group_labels==FALSE && person_labels==FALSE) {
+    outplot <- outplot +
+      geom_point(aes(x=reorder(person.names,median_pt),y=median_pt,color=bill_vote),size=point_size)
+  }
+  
+  outplot <- outplot +
+    theme_minimal() + ylab("") + xlab("") +
+    theme(axis.text.y=element_blank(),panel.grid= element_blank()) + coord_flip()
   
 }
 
