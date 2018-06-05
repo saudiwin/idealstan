@@ -585,7 +585,7 @@
 
 #' Helper function for preparing person ideal point plot data
 .prepare_legis_data <- function(object) {
-  
+
   person_data <- object@score_data@person_data
   
   # Apply any filters from the data processing stage so that the labels match
@@ -623,4 +623,11 @@
     summarize(low_pt=quantile(ideal_pts,0.1),high_pt=quantile(ideal_pts,0.9),
               median_pt=median(ideal_pts)) %>% 
     left_join(person_ids,by=c(legis='long_name'))
+  
+  # add in time points 
+  
+  time_data <- data_frame(time=object@score_data@time,
+                          time_point=object@score_data@time_vals) %>% distinct
+  
+  person_params %>% left_join(time_data,by='time_point')
 }

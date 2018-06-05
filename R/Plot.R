@@ -373,11 +373,13 @@ id_plot_legis <- function(object,return_data=FALSE,item_plot=NULL,
 #' @param item_plot The column index of the bill/item midpoint to overlay on the plot
 #' @param text_size_label ggplot2 text size for legislator labels
 #' @param text_size_group ggplot2 text size for group text used for points
-#' @param point_size If \code{person_labels} and \code{group_labels} are set to \code{FALSE}, controls the size of the points plotted.
-#' @param hjust_length horizontal adjustment of the legislator labels
+#' @param line_size Sets the size of the line of the time-varying ideal points.
 #' @param person_labels if \code{TRUE}, use the person.names column to plot labels for the person (legislator) ideal points
 #' @param group_labels if \code{TRUE}, use the group column to plot text markers for the group (parties) from the person/legislator data
-#' @param person_ci_alpha The transparency level of the dot plot and confidence bars for the person ideal points
+#' @param highlight A character referring to one of the persons in \code{person_labels} that the plot can highlight relative to other persons
+#' @param person_ci_alpha The transparency level of ribbon confidence interval around the time-varying ideal points
+#' @param person_line_alpha The transparency level of the time-varying ideal point line
+#' @param plot_text If \code{TRUE}, will plot \code{person_labels} over the lines.
 #' @param show_score Show only person/legislator ideal points that have a certain score/vote category from the outcome (character string)
 #' @param abs_and_reg Whether to show 'both' absence and regular item/bill midpoints if the model is absence-inflated, the default,
 #' or 'Absence Points' for only the absence midpoints or 'Vote Points' for only the non-inflated midpoints
@@ -392,59 +394,96 @@ id_plot_legis <- function(object,return_data=FALSE,item_plot=NULL,
 #' @examples 
 id_plot_legis_dyn <- function(object,return_data=FALSE,item_plot=NULL,
                               text_size_label=2,text_size_group=2.5,
-                              point_size=1,
-                              hjust_length=-0.7,
+                              line_size=1,
                               person_labels=NULL,
                               group_labels=NULL,
-                              person_ci_alpha=0.1,
+                              highlight=NULL,
+                              plot_text=TRUE,
+                              person_line_alpha=0.3,
+                              person_ci_alpha=0.8,
                               show_score=NULL,
                               abs_and_reg='both',show_true=FALSE,group_color=TRUE,
                               hpd_limit=10,
                               group_overlap=FALSE,
                               sample_persons=NULL,...) {
   
-  if(!is.null(person_labels)) {
+  if(is.null(person_labels)) {
     person_labels <- quo(person.name)
   } else if (person_labels=='none') {
     person_labels <- quo(legis)
   } else {
+    if(class(person_labels)=='character') person_labels <- as.name(person_labels)
     person_labels <- enquo(person_labels)
   }
   
-  if(!is.null(group_labels)) {
+  if(is.null(group_labels)) {
     group_labels <- quo(group)
   } else if(group_labels=='none') {
     group_labels <- quo(group)
     } else {
+    if(class(group_labels)=='character') group_labels <- as.name(group_labels)
     group_labels <- enquo(group_labels)
   }
   person_labels_string <- quo_name(person_labels)
   person_params <- .prepare_legis_data(object) %>% 
     mutate(!! person_labels_string :=reorder(factor(!!person_labels),median_pt))
-  
-  outplot <- person_params %>% ggplot() + 
-    geom_path(aes_(x=~time_point,y=~median_pt,group=person_labels,
-                   colour=~party),alpha=person_ci_alpha)
-  
+
   if(group_labels!='none') {
-    outplot <- outplot +       
-      geom_text(aes(x=reorder(person.names,median_pt),y=median_pt,label=reorder(group,median_pt),color=bill_vote),size=text_size_group,
-                check_overlap = group_overlap,
-                fontface='bold') 
+    
+    outplot <- person_params %>% ggplot() + 
+      geom_line(aes_(x=~time,y=~median_pt,group=person_labels,
+                     colour=group_labels),
+                alpha=person_ci_alpha,
+                size=line_size)
+  } else {
+    
+    outplot <- person_params %>% ggplot() + 
+      geom_line(aes_(x=~time,y=~median_pt,group=person_labels),
+                alpha=person_ci_alpha,
+                size=line_size)
   }
-  if(person_labels==TRUE) {
+
+  if(!is.null(highlight)) {
+    # give some of the persons a special color and make bigger
+    param_highlight <- filter(person_params, !!person_labels %in% highlight) 
+    
     outplot <- outplot + 
-      geom_text(aes(x=reorder(person.names,median_pt),y=median_pt,label=reorder(person.names,median_pt),color=bill_vote),
-                check_overlap=TRUE,hjust=hjust_length,size=text_size_label)
+      geom_line(aes_(x=~time,y=~median_pt,group=person_labels),colour='yellow',
+                                   size=line_size*2,
+                linetype=1,
+                data=param_highlight)
   }
-  if(group_labels==FALSE && person_labels==FALSE) {
-    outplot <- outplot +
-      geom_point(aes(x=reorder(person.names,median_pt),y=median_pt,color=bill_vote),size=point_size)
+  
+  if(plot_text==TRUE) {
+    
+    # need new data that scatters names around the plot
+    
+    sampled_data <- group_by(person_params,!!person_labels) %>% sample_n(1)
+    
+    if(!is.null(highlight)) sampled_data <- filter(sampled_data,!(!!person_labels %in% highlight))
+    
+    outplot <- outplot + 
+      geom_text(aes_(x=~time,y=~median_pt,label=person_labels),data=sampled_data,
+                check_overlap=TRUE,size=text_size_label)
+    
+    # make the highlight ones special
+    if(!is.null(highlight)) {
+      sampled_data <- group_by(person_params,!!person_labels) %>% sample_n(1) %>% 
+        filter(!!person_labels %in% highlight)
+      outplot <- outplot + 
+        geom_text(aes_(x=~time,y=~median_pt,label=person_labels),data=sampled_data,
+                  size=text_size_label*2,
+                  color='red',fontface='bold')
+    }
   }
+  
+  
   
   outplot <- outplot +
-    theme_minimal() + ylab("") + xlab("") +
-    theme(axis.text.y=element_blank(),panel.grid= element_blank()) + coord_flip()
+    theme_minimal() + ylab("Ideal Point Scale") + xlab("") +
+    theme(panel.grid= element_blank())
+  
+  return(outplot)
   
 }
 
