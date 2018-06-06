@@ -1,7 +1,7 @@
 Package: idealstan
 Type: Package
 Title: Bayesian IRT Ideal Point Models with 'Stan'
-Version: 0.2.9.1
+Version: 0.3.0
 Date: 2018-02-07
 Authors@R: c(person("Robert","Kubinec", role = c("aut","cre"),
                      email = "rmk7xy@virginia.edu"),
