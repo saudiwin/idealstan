@@ -116,6 +116,7 @@ parameters {
   ordered[m-1] steps_votes_grm[num_bills];
   ordered[num_fix_low+num_fix_high] restrict_ord[T];
   real exog_param;
+  vector[num_legis] L_ints; // constant parameters for time series
 }
 
 transformed parameters {
@@ -163,6 +164,7 @@ model {
 	
   B_int_free ~ normal(0,diff_reg_sd);
   A_int_free ~ normal(0,diff_abs_sd);
+  L_ints ~ normal(0,legis_sd);
   exog_param ~ normal(0,5);
   for(b in 1:num_bills) {
   steps_votes_grm[b] ~ normal(0,5);

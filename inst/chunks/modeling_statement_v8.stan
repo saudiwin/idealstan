@@ -52,7 +52,7 @@ if(constrain_par==1) {
   sigma_reg_free~normal(srx_pred[num_bills - num_constrain_sr, ] * sigma_reg_x, 10);
   
   //use either random walk or AR(1) prior
-  if(use_ar==1) {
+  if(use_ar==0) {
     #include l_hier_prior.stan
   } else {
     #include l_hier_ar1_prior.stan

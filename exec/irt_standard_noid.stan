@@ -104,6 +104,7 @@ parameters {
   vector[num_bills] B_int_free;
   vector[num_bills] A_int_free;
   real exog_param;
+  vector[num_legis] L_ints; // constant parameters for time series
 }
 
 transformed parameters {
@@ -130,15 +131,20 @@ model {
   vector[N] pi1;
   vector[N] pi2;
   
-  for(t in 1:T) {
-  L_free[t] ~ normal(0,legis_sd);
+  
+  L_free ~ normal(0,legis_sd);
+  
+  for(t in 1:(T-1)) {
+    L_tp1[t] ~ normal(0,legis_sd);
   }
+  
   sigma_abs_free ~ normal(0,discrim_abs_sd);
   sigma_reg_free ~ normal(0,discrim_reg_sd);
   legis_x ~ normal(0,5);
   sigma_reg_x ~ normal(0,5);
   sigma_abs_x ~ normal(0,5);
   legis_x_cons ~ normal(0,5);
+  L_ints ~ normal(0,legis_sd);
   sigma_reg_x_cons ~ normal(0,5);
   sigma_abs_x_cons ~ normal(0,5);
   L_AR1 ~ normal(0,1); // these parameters shouldn't get too big

@@ -31,7 +31,7 @@ static int current_statement_begin__;
 stan::io::program_reader prog_reader__() {
     stan::io::program_reader reader;
     reader.add_event(0, 0, "start", "model_irt_standard");
-    reader.add_event(578, 578, "end", "model_irt_standard");
+    reader.add_event(584, 584, "end", "model_irt_standard");
     return reader;
 }
 
@@ -502,6 +502,8 @@ public:
             validate_non_negative_index("restrict_ord", "T", T);
             num_params_r__ += (num_fix_low + num_fix_high) * T;
             ++num_params_r__;
+            validate_non_negative_index("L_ints", "num_legis", num_legis);
+            num_params_r__ += num_legis;
         } catch (const std::exception& e) {
             stan::lang::rethrow_located(e, current_statement_begin__, prog_reader__());
             // Next line prevents compiler griping about no return
@@ -829,6 +831,21 @@ public:
             throw std::runtime_error(std::string("Error transforming variable exog_param: ") + e.what());
         }
 
+        if (!(context__.contains_r("L_ints")))
+            throw std::runtime_error("variable L_ints missing");
+        vals_r__ = context__.vals_r("L_ints");
+        pos__ = 0U;
+        validate_non_negative_index("L_ints", "num_legis", num_legis);
+        context__.validate_dims("initialization", "L_ints", "vector_d", context__.to_vec(num_legis));
+        vector_d L_ints(static_cast<Eigen::VectorXd::Index>(num_legis));
+        for (int j1__ = 0U; j1__ < num_legis; ++j1__)
+            L_ints(j1__) = vals_r__[pos__++];
+        try {
+            writer__.vector_unconstrain(L_ints);
+        } catch (const std::exception& e) { 
+            throw std::runtime_error(std::string("Error transforming variable L_ints: ") + e.what());
+        }
+
         params_r__ = writer__.data_r();
         params_i__ = writer__.data_i();
     }
@@ -1009,6 +1026,13 @@ public:
             else
                 exog_param = in__.scalar_constrain();
 
+            Eigen::Matrix<T__,Eigen::Dynamic,1>  L_ints;
+            (void) L_ints;  // dummy to suppress unused var warning
+            if (jacobian__)
+                L_ints = in__.vector_constrain(num_legis,lp__);
+            else
+                L_ints = in__.vector_constrain(num_legis);
+
 
             // transformed parameters
             validate_non_negative_index("L_full", "num_legis", num_legis);
@@ -1173,6 +1197,7 @@ public:
             }
             lp_accum__.add(normal_log<propto__>(B_int_free, 0, diff_reg_sd));
             lp_accum__.add(normal_log<propto__>(A_int_free, 0, diff_abs_sd));
+            lp_accum__.add(normal_log<propto__>(L_ints, 0, legis_sd));
             lp_accum__.add(normal_log<propto__>(exog_param, 0, 5));
             for (int b = 1; b <= num_bills; ++b) {
 
@@ -1223,7 +1248,7 @@ public:
             }
             lp_accum__.add(normal_log<propto__>(sigma_abs_free, multiply(stan::model::rvalue(sax_pred, stan::model::cons_list(stan::model::index_uni((num_bills - num_constrain_sa)), stan::model::cons_list(stan::model::index_omni(), stan::model::nil_index_list())), "sax_pred"),sigma_abs_x), 10));
             lp_accum__.add(normal_log<propto__>(sigma_reg_free, multiply(stan::model::rvalue(srx_pred, stan::model::cons_list(stan::model::index_uni((num_bills - num_constrain_sr)), stan::model::cons_list(stan::model::index_omni(), stan::model::nil_index_list())), "srx_pred"),sigma_reg_x), 10));
-            if (as_bool(logical_eq(use_ar,1))) {
+            if (as_bool(logical_eq(use_ar,0))) {
 
                 for (int t = 1; t <= T; ++t) {
 
@@ -1232,10 +1257,10 @@ public:
                         lp_accum__.add(normal_log<propto__>(L_free, multiply(stan::model::rvalue(legis_pred, stan::model::cons_list(stan::model::index_uni(1), stan::model::cons_list(stan::model::index_min_max(1, (num_legis - num_constrain_l)), stan::model::cons_list(stan::model::index_omni(), stan::model::nil_index_list()))), "legis_pred"),legis_x), legis_sd));
                     } else if (as_bool(logical_eq(t,2))) {
 
-                        lp_accum__.add(normal_log<propto__>(get_base1(L_tp1,1,"L_tp1",1), add(L_full,multiply(stan::model::rvalue(legis_pred, stan::model::cons_list(stan::model::index_uni(t), stan::model::cons_list(stan::model::index_min_max(1, num_legis), stan::model::cons_list(stan::model::index_omni(), stan::model::nil_index_list()))), "legis_pred"),legis_x)), legis_sd));
+                        lp_accum__.add(normal_log<propto__>(get_base1(L_tp1,1,"L_tp1",1), add(add(L_ints,L_full),multiply(stan::model::rvalue(legis_pred, stan::model::cons_list(stan::model::index_uni(t), stan::model::cons_list(stan::model::index_min_max(1, num_legis), stan::model::cons_list(stan::model::index_omni(), stan::model::nil_index_list()))), "legis_pred"),legis_x)), legis_sd));
                     } else if (as_bool(logical_gt(t,2))) {
 
-                        lp_accum__.add(normal_log<propto__>(get_base1(L_tp1,(t - 1),"L_tp1",1), add(get_base1(L_tp1,(t - 2),"L_tp1",1),multiply(stan::model::rvalue(legis_pred, stan::model::cons_list(stan::model::index_uni(t), stan::model::cons_list(stan::model::index_min_max(1, num_legis), stan::model::cons_list(stan::model::index_omni(), stan::model::nil_index_list()))), "legis_pred"),legis_x)), legis_sd));
+                        lp_accum__.add(normal_log<propto__>(get_base1(L_tp1,(t - 1),"L_tp1",1), add(add(L_ints,get_base1(L_tp1,(t - 2),"L_tp1",1)),multiply(stan::model::rvalue(legis_pred, stan::model::cons_list(stan::model::index_uni(t), stan::model::cons_list(stan::model::index_min_max(1, num_legis), stan::model::cons_list(stan::model::index_omni(), stan::model::nil_index_list()))), "legis_pred"),legis_x)), legis_sd));
                     }
                 }
             } else {
@@ -1247,10 +1272,10 @@ public:
                         lp_accum__.add(normal_log<propto__>(L_free, multiply(stan::model::rvalue(legis_pred, stan::model::cons_list(stan::model::index_uni(1), stan::model::cons_list(stan::model::index_min_max(1, (num_legis - num_constrain_l)), stan::model::cons_list(stan::model::index_omni(), stan::model::nil_index_list()))), "legis_pred"),legis_x), legis_sd));
                     } else if (as_bool(logical_eq(t,2))) {
 
-                        lp_accum__.add(normal_log<propto__>(get_base1(L_tp1,1,"L_tp1",1), add(elt_multiply(L_AR1,L_full),multiply(stan::model::rvalue(legis_pred, stan::model::cons_list(stan::model::index_uni(t), stan::model::cons_list(stan::model::index_min_max(1, num_legis), stan::model::cons_list(stan::model::index_omni(), stan::model::nil_index_list()))), "legis_pred"),legis_x)), legis_sd));
+                        lp_accum__.add(normal_log<propto__>(get_base1(L_tp1,1,"L_tp1",1), add(add(L_ints,elt_multiply(L_AR1,L_full)),multiply(stan::model::rvalue(legis_pred, stan::model::cons_list(stan::model::index_uni(t), stan::model::cons_list(stan::model::index_min_max(1, num_legis), stan::model::cons_list(stan::model::index_omni(), stan::model::nil_index_list()))), "legis_pred"),legis_x)), legis_sd));
                     } else if (as_bool(logical_gt(t,2))) {
 
-                        lp_accum__.add(normal_log<propto__>(get_base1(L_tp1,(t - 1),"L_tp1",1), add(elt_multiply(L_AR1,get_base1(L_tp1,(t - 2),"L_tp1",1)),multiply(stan::model::rvalue(legis_pred, stan::model::cons_list(stan::model::index_uni(t), stan::model::cons_list(stan::model::index_min_max(1, num_legis), stan::model::cons_list(stan::model::index_omni(), stan::model::nil_index_list()))), "legis_pred"),legis_x)), legis_sd));
+                        lp_accum__.add(normal_log<propto__>(get_base1(L_tp1,(t - 1),"L_tp1",1), add(add(L_ints,elt_multiply(L_AR1,get_base1(L_tp1,(t - 2),"L_tp1",1))),multiply(stan::model::rvalue(legis_pred, stan::model::cons_list(stan::model::index_uni(t), stan::model::cons_list(stan::model::index_min_max(1, num_legis), stan::model::cons_list(stan::model::index_omni(), stan::model::nil_index_list()))), "legis_pred"),legis_x)), legis_sd));
                     }
                 }
             }
@@ -1504,6 +1529,7 @@ public:
         names__.push_back("steps_votes_grm");
         names__.push_back("restrict_ord");
         names__.push_back("exog_param");
+        names__.push_back("L_ints");
         names__.push_back("L_full");
         names__.push_back("sigma_abs_full");
         names__.push_back("sigma_reg_full");
@@ -1581,6 +1607,9 @@ public:
         dims__.push_back(num_legis);
         dimss__.push_back(dims__);
         dims__.resize(0);
+        dims__.push_back(num_legis);
+        dimss__.push_back(dims__);
+        dims__.resize(0);
         dims__.push_back(num_bills);
         dimss__.push_back(dims__);
         dims__.resize(0);
@@ -1639,6 +1668,7 @@ public:
             restrict_ord.push_back(in__.ordered_constrain((num_fix_low + num_fix_high)));
         }
         double exog_param = in__.scalar_constrain();
+        vector_d L_ints = in__.vector_constrain(num_legis);
             for (int k_0__ = 0; k_0__ < (num_bills - num_constrain_sa); ++k_0__) {
             vars__.push_back(sigma_abs_free[k_0__]);
             }
@@ -1703,6 +1733,9 @@ public:
                 }
             }
         vars__.push_back(exog_param);
+            for (int k_0__ = 0; k_0__ < num_legis; ++k_0__) {
+            vars__.push_back(L_ints[k_0__]);
+            }
 
         if (!include_tparams__) return;
         // declare and define transformed parameters
@@ -1966,6 +1999,11 @@ public:
         param_name_stream__.str(std::string());
         param_name_stream__ << "exog_param";
         param_names__.push_back(param_name_stream__.str());
+        for (int k_0__ = 1; k_0__ <= num_legis; ++k_0__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "L_ints" << '.' << k_0__;
+            param_names__.push_back(param_name_stream__.str());
+        }
 
         if (!include_gqs__ && !include_tparams__) return;
         for (int k_0__ = 1; k_0__ <= num_legis; ++k_0__) {
@@ -2106,6 +2144,11 @@ public:
         param_name_stream__.str(std::string());
         param_name_stream__ << "exog_param";
         param_names__.push_back(param_name_stream__.str());
+        for (int k_0__ = 1; k_0__ <= num_legis; ++k_0__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "L_ints" << '.' << k_0__;
+            param_names__.push_back(param_name_stream__.str());
+        }
 
         if (!include_gqs__ && !include_tparams__) return;
         for (int k_0__ = 1; k_0__ <= num_legis; ++k_0__) {
@@ -2168,7 +2211,7 @@ static int current_statement_begin__;
 stan::io::program_reader prog_reader__() {
     stan::io::program_reader reader;
     reader.add_event(0, 0, "start", "model_irt_standard_noid");
-    reader.add_event(358, 358, "end", "model_irt_standard_noid");
+    reader.add_event(364, 364, "end", "model_irt_standard_noid");
     return reader;
 }
 
@@ -2516,6 +2559,8 @@ public:
             validate_non_negative_index("A_int_free", "num_bills", num_bills);
             num_params_r__ += num_bills;
             ++num_params_r__;
+            validate_non_negative_index("L_ints", "num_legis", num_legis);
+            num_params_r__ += num_legis;
         } catch (const std::exception& e) {
             stan::lang::rethrow_located(e, current_statement_begin__, prog_reader__());
             // Next line prevents compiler griping about no return
@@ -2780,6 +2825,21 @@ public:
             throw std::runtime_error(std::string("Error transforming variable exog_param: ") + e.what());
         }
 
+        if (!(context__.contains_r("L_ints")))
+            throw std::runtime_error("variable L_ints missing");
+        vals_r__ = context__.vals_r("L_ints");
+        pos__ = 0U;
+        validate_non_negative_index("L_ints", "num_legis", num_legis);
+        context__.validate_dims("initialization", "L_ints", "vector_d", context__.to_vec(num_legis));
+        vector_d L_ints(static_cast<Eigen::VectorXd::Index>(num_legis));
+        for (int j1__ = 0U; j1__ < num_legis; ++j1__)
+            L_ints(j1__) = vals_r__[pos__++];
+        try {
+            writer__.vector_unconstrain(L_ints);
+        } catch (const std::exception& e) { 
+            throw std::runtime_error(std::string("Error transforming variable L_ints: ") + e.what());
+        }
+
         params_r__ = writer__.data_r();
         params_i__ = writer__.data_i();
     }
@@ -2929,6 +2989,13 @@ public:
             else
                 exog_param = in__.scalar_constrain();
 
+            Eigen::Matrix<T__,Eigen::Dynamic,1>  L_ints;
+            (void) L_ints;  // dummy to suppress unused var warning
+            if (jacobian__)
+                L_ints = in__.vector_constrain(num_legis,lp__);
+            else
+                L_ints = in__.vector_constrain(num_legis);
+
 
             // transformed parameters
             validate_non_negative_index("L_full", "num_legis", num_legis);
@@ -3025,9 +3092,10 @@ public:
             stan::math::fill(pi2,DUMMY_VAR__);
 
 
-            for (int t = 1; t <= T; ++t) {
+            lp_accum__.add(normal_log<propto__>(L_free, 0, legis_sd));
+            for (int t = 1; t <= (T - 1); ++t) {
 
-                lp_accum__.add(normal_log<propto__>(get_base1(L_free,t,"L_free",1), 0, legis_sd));
+                lp_accum__.add(normal_log<propto__>(get_base1(L_tp1,t,"L_tp1",1), 0, legis_sd));
             }
             lp_accum__.add(normal_log<propto__>(sigma_abs_free, 0, discrim_abs_sd));
             lp_accum__.add(normal_log<propto__>(sigma_reg_free, 0, discrim_reg_sd));
@@ -3035,6 +3103,7 @@ public:
             lp_accum__.add(normal_log<propto__>(sigma_reg_x, 0, 5));
             lp_accum__.add(normal_log<propto__>(sigma_abs_x, 0, 5));
             lp_accum__.add(normal_log<propto__>(legis_x_cons, 0, 5));
+            lp_accum__.add(normal_log<propto__>(L_ints, 0, legis_sd));
             lp_accum__.add(normal_log<propto__>(sigma_reg_x_cons, 0, 5));
             lp_accum__.add(normal_log<propto__>(sigma_abs_x_cons, 0, 5));
             lp_accum__.add(normal_log<propto__>(L_AR1, 0, 1));
@@ -3289,6 +3358,7 @@ public:
         names__.push_back("B_int_free");
         names__.push_back("A_int_free");
         names__.push_back("exog_param");
+        names__.push_back("L_ints");
         names__.push_back("L_full");
         names__.push_back("sigma_abs_full");
         names__.push_back("sigma_reg_full");
@@ -3353,6 +3423,9 @@ public:
         dims__.push_back(num_legis);
         dimss__.push_back(dims__);
         dims__.resize(0);
+        dims__.push_back(num_legis);
+        dimss__.push_back(dims__);
+        dims__.resize(0);
         dims__.push_back(num_bills);
         dimss__.push_back(dims__);
         dims__.resize(0);
@@ -3403,6 +3476,7 @@ public:
         vector_d B_int_free = in__.vector_constrain(num_bills);
         vector_d A_int_free = in__.vector_constrain(num_bills);
         double exog_param = in__.scalar_constrain();
+        vector_d L_ints = in__.vector_constrain(num_legis);
             for (int k_0__ = 0; k_0__ < num_bills; ++k_0__) {
             vars__.push_back(sigma_abs_free[k_0__]);
             }
@@ -3453,6 +3527,9 @@ public:
             vars__.push_back(A_int_free[k_0__]);
             }
         vars__.push_back(exog_param);
+            for (int k_0__ = 0; k_0__ < num_legis; ++k_0__) {
+            vars__.push_back(L_ints[k_0__]);
+            }
 
         if (!include_tparams__) return;
         // declare and define transformed parameters
@@ -3645,6 +3722,11 @@ public:
         param_name_stream__.str(std::string());
         param_name_stream__ << "exog_param";
         param_names__.push_back(param_name_stream__.str());
+        for (int k_0__ = 1; k_0__ <= num_legis; ++k_0__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "L_ints" << '.' << k_0__;
+            param_names__.push_back(param_name_stream__.str());
+        }
 
         if (!include_gqs__ && !include_tparams__) return;
         for (int k_0__ = 1; k_0__ <= num_legis; ++k_0__) {
@@ -3763,6 +3845,11 @@ public:
         param_name_stream__.str(std::string());
         param_name_stream__ << "exog_param";
         param_names__.push_back(param_name_stream__.str());
+        for (int k_0__ = 1; k_0__ <= num_legis; ++k_0__) {
+            param_name_stream__.str(std::string());
+            param_name_stream__ << "L_ints" << '.' << k_0__;
+            param_names__.push_back(param_name_stream__.str());
+        }
 
         if (!include_gqs__ && !include_tparams__) return;
         for (int k_0__ = 1; k_0__ <= num_legis; ++k_0__) {

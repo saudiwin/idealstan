@@ -90,6 +90,8 @@ id_make <- function(score_data=NULL,simul_data=NULL,
     if(include_pres==F) {
       person_data <- slice(score_data$legis.data,-1)
       row_names <- row_names[-1]
+    } else {
+      person_data <- score_data$legis.data
     }
     
     person_data <-  mutate(person_data,group=party,person.names=row_names)
@@ -202,7 +204,7 @@ id_make <- function(score_data=NULL,simul_data=NULL,
     if('data.frame' %in% class(person_cov)) {
       person_cov <- .create_array(input_matrix=person_cov,
                                   col_var_name=labels,
-                                  col_var_var_value=variables,
+                                  col_var_value=variables,
                                   third_dim_var=time_points)
       
     } else if('matrix' %in% class(person_cov)) {
@@ -531,8 +533,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
                         restrict_alpha=4,
                         restrict_beta=1,
                            ...) {
-  
-  browser()
+
   
   if(use_subset==TRUE || sample_it==TRUE) {
     idealdata <- subset_ideal(idealdata,use_subset=use_subset,sample_it=sample_it,subset_group=subset_group,
@@ -550,7 +551,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
   } else {
     num_legis <- 1:nrow(idealdata@score_matrix)
   }
-  
+
   num_bills <- ncol(idealdata@score_matrix)
   legispoints <- rep(num_legis,times=num_bills)
   billpoints <- rep(1:num_bills,each=length(num_legis))
@@ -575,7 +576,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
                     T=max(idealdata@time_vals),
                     Y=Y,
                     hier_type=hier_type,
-                    num_legis=length(unique(num_legis)),
+                    num_legis=max(legispoints),
                     num_bills=num_bills,
                     ll=legispoints,
                     bb=billpoints,
@@ -583,7 +584,12 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
                     LX=dim(idealdata@person_cov)[3],
                     SRX=ncol(idealdata@item_cov),
                     SAX=ncol(idealdata@item_cov_miss),
-                    legis_pred=idealdata@person_cov,
+                    # this handles the situation in which the data is fake and only 
+                    # groups are used as parameters
+                    legis_pred=array(idealdata@person_cov[,unique(num_legis),],
+                                     dim=c(max(timepoints),
+                                           max(unique(num_legis)),
+                                           dim(idealdata@person_cov)[3])),
                     srx_pred=idealdata@item_cov,
                     sax_pred=idealdata@item_cov_miss,
                     model_type=model_type,
@@ -630,7 +636,12 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
                     LX=dim(idealdata@person_cov)[3],
                     SRX=ncol(idealdata@item_cov),
                     SAX=ncol(idealdata@item_cov_miss),
-                    legis_pred=idealdata@person_cov,
+                    # this handles the situation in which the data is fake and only 
+                    # groups are used as parameters
+                    legis_pred=array(idealdata@person_cov[,unique(num_legis),],
+                                     dim=c(max(timepoints),
+                                           max(unique(num_legis)),
+                                           dim(idealdata@person_cov)[3])),
                     srx_pred=idealdata@item_cov,
                     sax_pred=idealdata@item_cov_miss,
                     exog_data=idealdata@exog_data[remove_nas],
