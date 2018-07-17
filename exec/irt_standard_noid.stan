@@ -21,7 +21,7 @@ data {
   int LX;
   int SRX;
   int SAX;
-  // int auto_reg;
+  int use_ar;
   // int ar_lag;
   // int ma_lag;
   // int i_lag;
@@ -31,10 +31,10 @@ data {
   int ll[N];
   int bb[N];
   int time[N];
-  vector[num_legis] particip;
   matrix[num_legis,LX] legis_pred[T];
   matrix[num_bills,SRX] srx_pred;
   matrix[num_bills,SAX] sax_pred;
+  vector[N] exog_data;
   real discrim_reg_sd;
   real discrim_abs_sd;
   real legis_sd;
@@ -62,15 +62,21 @@ transformed data {
 	}
 	
   for(n in 1:N) {
-      if(Y[n]>m) {
+      if(Y[n]>m || Y[n]==(-9998)) {
         absence[n]=1;
       } else {
         absence[n]=0;
       }
-      if(model_type==1||model_type==2) {
+      if(model_type==1) {
         //need to change outcome for binomial models
-        if(min(Y)>0) {
-          Y_new[n] = Y[n] - min(Y);
+        if(max(Y)==2) {
+          Y_new[n] = Y[n] - 1;
+        } else {
+          Y_new[n] = Y[n];
+        }
+      } else if(model_type==2) {
+         if(max(Y)==3) {
+          Y_new[n] = Y[n] - 1;
         } else {
           Y_new[n] = Y[n];
         }
@@ -83,7 +89,9 @@ transformed data {
 
 parameters {
   vector[num_bills] sigma_abs_free;
-  vector[num_legis] L_free[T];
+  vector[num_legis] L_free;
+  vector[num_legis] L_tp1[T-1]; // all other params can float
+  vector[num_legis] L_AR1; // AR-1 parameters for AR-1 model
   vector[num_bills] sigma_reg_free;
   vector[LX] legis_x;
   vector[SRX] sigma_reg_x;
@@ -93,14 +101,14 @@ parameters {
   vector[SAX] sigma_abs_x_cons;
   ordered[m-1] steps_votes;
   ordered[m-1] steps_votes_grm[num_bills];
-  real avg_particip;
   vector[num_bills] B_int_free;
   vector[num_bills] A_int_free;
+  real exog_param;
 }
 
 transformed parameters {
   
-  vector[num_legis] L_full[T];
+  vector[num_legis] L_full;
   vector[num_bills] sigma_abs_full;
   vector[num_bills] sigma_reg_full;
   vector[num_bills] B_int_full;
@@ -133,8 +141,8 @@ model {
   legis_x_cons ~ normal(0,5);
   sigma_reg_x_cons ~ normal(0,5);
   sigma_abs_x_cons ~ normal(0,5);
+  L_AR1 ~ normal(0,1); // these parameters shouldn't get too big
   
-  avg_particip ~ normal(0,5);
   if(model_type>2 && model_type<8) {
     for(i in 1:(m-2)) {
     steps_votes[i+1] - steps_votes[i] ~ normal(0,5); 
@@ -145,6 +153,7 @@ model {
 	
   B_int_free ~ normal(0,diff_reg_sd);
   A_int_free ~ normal(0,diff_abs_sd);
+  exog_param ~ normal(0,5);
   for(b in 1:num_bills) {
   steps_votes_grm[b] ~ normal(0,5);
   }

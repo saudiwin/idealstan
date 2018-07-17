@@ -631,3 +631,58 @@
   
   person_params %>% left_join(time_data,by='time_point')
 }
+
+#' Helper function to create arrays
+#' 
+#' Function takes a data.frame in long mode and converts it to an array. Function can also repeat a 
+#' single matrix to fill out an array.
+#' 
+#' @param input_matrix Either a data.frame in long mode or a single matrix
+#' @param arr_dim If \code{input_matrix} is a single matrix, \code{arr_dim} determines the length of the resulting array
+#' @param row_var Unquoted variable name that identifies the data.frame column corresponding to the rows (1st dimension) of the array (must be unique)
+#' @param col_var_name Unquoted variable name that identifies the data.frame column corresponding names of the columns (2nd dimension) of the array
+#' @param col_var_value Unquoted variable name that identifies the data.frame column corresponding to the values that populate the cells of the array
+#' @param third_dim_var Unquoted variable name that identifis the data.frame column corresponding to the dimension around which to stack the matrices (3rd dimension of array)
+.create_array <- function(input_matrix,arr_dim=2,row_var=NULL,
+                         col_var_name=NULL,
+                         col_var_value,third_dim_var=NULL) {
+  
+  if('matrix' %in% class(input_matrix)) {
+    
+    # if just a matrix, rep it to hit array dims
+    rep_matrix <- rep(c(input_matrix),arr_dim)
+    out_array <- array(rep_matrix,dim=c(dim(input_matrix),arr_dim))
+    
+  } else if('data.frame' %in% class(input_matrix)) {
+    
+    # assuming data is in long form, select and then spread the bugger
+    row_var <- enquo(row_var)
+    col_var_name <- enquo(col_var_name)
+    col_var_value <- enquo(col_var_value)
+    third_dim_var <- enquo(third_dim_var)
+    to_spread <- ungroup(input_matrix) %>% select(!!row_var,!!col_var_name,!!third_dim_var,!!col_var_value)
+    
+    # figure out how big this array should be
+    arr_dim <- length(unique(pull(to_spread,!!third_dim_var)))
+    
+    if(!(nrow(distinct(to_spread))==nrow(to_spread))) stop('Each row in the data must be uniquely identified given row_var, col_var and third_dim_var.')
+    
+    to_array <- lapply(split(to_spread,pull(to_spread,!!third_dim_var)), function(this_data) {
+      # spread and stuff into a list
+      spread_it <- spread(this_data,key=!!col_var_name,value=!!col_var_value) %>% 
+        select(-!!row_var,-!!third_dim_var) %>% as.matrix
+      row.names(spread_it) <- unique(pull(this_data,!!row_var))
+      return(spread_it)
+    })
+    # convert to a vector before array-ing it
+    long_vec <- c(do.call(c,to_array))
+    # BOOM
+    out_array <- array(long_vec,
+                       dim=c(dim(to_array[[1]]),arr_dim),
+                       dimnames=list(row.names=row.names(to_array[[1]]),
+                                     colnames=colnames(to_array[[1]]),
+                                     stack=unique(pull(to_spread,!!third_dim_var))))
+  }
+  
+  return(out_array)
+}

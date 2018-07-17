@@ -21,7 +21,7 @@ data {
   int LX;
   int SRX;
   int SAX;
-  // int auto_reg;
+  int use_ar;
   // int ar_lag;
   // int ma_lag;
   // int i_lag;
@@ -35,7 +35,7 @@ data {
   int ll[N];
   int bb[N];
   int time[N];
-  vector[num_legis] particip;
+  vector[N] exog_data;
   matrix[num_legis,LX] legis_pred[T];
   matrix[num_bills,SRX] srx_pred;
   matrix[num_bills,SAX] sax_pred;
@@ -70,15 +70,21 @@ transformed data {
 	}
 	
   for(n in 1:N) {
-      if(Y[n]>m) {
+      if(Y[n]>m || Y[n]==(-9998)) {
         absence[n]=1;
       } else {
         absence[n]=0;
       }
-      if(model_type==1||model_type==2) {
+      if(model_type==1) {
         //need to change outcome for binomial models
-        if(min(Y)>0) {
-          Y_new[n] = Y[n] - min(Y);
+        if(max(Y)==2) {
+          Y_new[n] = Y[n] - 1;
+        } else {
+          Y_new[n] = Y[n];
+        }
+      } else if(model_type==2) {
+         if(max(Y)==3) {
+          Y_new[n] = Y[n] - 1;
         } else {
           Y_new[n] = Y[n];
         }
@@ -91,11 +97,13 @@ transformed data {
 
 parameters {
   vector[num_bills-num_constrain_sa] sigma_abs_free;
-  vector[num_legis-num_constrain_l] L_free[T];
+  vector[num_legis-num_constrain_l] L_free; // first T=1 params to constrain
+  vector[num_legis] L_tp1[T-1]; // all other params can float
+  vector[num_legis] L_AR1; // AR-1 parameters for AR-1 model
   vector[num_bills-num_constrain_sr] sigma_reg_free;
-  vector<upper=restrict_low_bar>[num_fix_low] restrict_low[T];
-  vector<lower=restrict_high_bar>[num_fix_high] restrict_high[T];
-  vector[num_fix_high] pinned_pars[T];
+  vector<upper=restrict_low_bar>[num_fix_low] restrict_low;
+  vector<lower=restrict_high_bar>[num_fix_high] restrict_high;
+  vector[num_fix_high] pinned_pars;
   vector[LX] legis_x;
   vector[SRX] sigma_reg_x;
   vector[SAX] sigma_abs_x;
@@ -107,12 +115,12 @@ parameters {
   ordered[m-1] steps_votes;
   ordered[m-1] steps_votes_grm[num_bills];
   ordered[num_fix_low+num_fix_high] restrict_ord[T];
-  real avg_particip;
+  real exog_param;
 }
 
 transformed parameters {
   
-  vector[num_legis] L_full[T];
+  vector[num_legis] L_full;
   vector[num_bills] sigma_abs_full;
   vector[num_bills] sigma_reg_full;
   
@@ -120,7 +128,7 @@ transformed parameters {
   vector[num_bills] A_int_full;
   
   //add in a paramter to the intercepts to prevent additive aliasing
-
+  
   B_int_full = B_int_free;
   //B_int_full[1] = 0.0;
   A_int_full = A_int_free;
@@ -137,14 +145,13 @@ model {
   vector[N] pi1;
   vector[N] pi2;
   
-    legis_x ~ normal(0,5);
+  legis_x ~ normal(0,5);
   legis_x_cons ~ normal(0,5);
   sigma_abs_x ~ normal(0,5);
   sigma_reg_x ~ normal(0,5);
   sigma_abs_x_cons ~ normal(0,5);
   sigma_reg_x_cons ~ normal(0,5);
-
-  avg_particip ~ normal(0,5);
+  L_AR1 ~ normal(0,1); // these parameters shouldn't get too big
   if(model_type>2 && model_type<8) {
      for(i in 1:(m-2)) {
     steps_votes[i+1] - steps_votes[i] ~ normal(0,5); 
@@ -156,6 +163,7 @@ model {
 	
   B_int_free ~ normal(0,diff_reg_sd);
   A_int_free ~ normal(0,diff_abs_sd);
+  exog_param ~ normal(0,5);
   for(b in 1:num_bills) {
   steps_votes_grm[b] ~ normal(0,5);
   }
@@ -163,7 +171,7 @@ model {
     restrict_ord[t] ~ normal(0,5);
   
   //priors for legislators and bill parameters
-  #include "modeling_statement_v6.stan"
+  #include "modeling_statement_v8.stan"
   
   //all model types
 
