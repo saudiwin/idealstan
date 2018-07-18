@@ -13,6 +13,7 @@
 #' absences
 #' @param reg_discrim_sd The SD of the discrimination parameters for the non-inflated model
 #' @param diff_sd The SD of the difficulty parameters (bill/item intercepts)
+#' @param time_points The number of time points for time-varying legislator/person parameters
 #' @param ideal_pts_sd The SD for the person/personlator ideal points
 #' @param prior_type The statistical distribution that generates the data. Currently only 
 #' 'gaussian' is supported.
@@ -27,6 +28,7 @@
 #' @export
 id_sim_gen <- function(num_person=20,num_bills=50,absence_discrim_sd=2,absence_diff_mean=0.5,
                              reg_discrim_sd=2,diff_sd=.25,
+                            time_points=20,
                              ideal_pts_sd=1,prior_type='gaussian',ordinal=TRUE,ordinal_outcomes=3,
                              graded_response=FALSE,absence=TRUE) {
   
