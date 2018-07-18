@@ -30,9 +30,12 @@ setClass('idealdata',
                     unrestricted='matrix',
                     restrict_num_high='numeric',
                     restrict_num_low='numeric',
+                    restrict_ind_high='ANY',
+                    restrict_ind_low='ANY',
                     vote_int='numeric',
                     simul_data='list',
-                    simulation='logical'))
+                    simulation='logical',
+                    group_vals='numeric'))
 
 
 #' Results of \code{\link{id_estimate}} function
@@ -150,7 +153,8 @@ setMethod('id_model',signature(object='idealdata'),
                    restrict_params=NULL,restrict_type=NULL,restrict_ind_high=NULL,
                    restrict_ind_low=NULL,
                    auto_id=FALSE,
-                   ncores=NULL) {
+                   ncores=NULL,
+                   use_groups=NULL) {
 
             x <- object@score_matrix
             
@@ -162,7 +166,8 @@ setMethod('id_model',signature(object='idealdata'),
                    restrict_ind_low=restrict_ind_low,
                    auto_id=auto_id,
                    ncores=ncores,
-                   model_type=model_type)
+                   model_type=model_type,
+                   use_groups=use_groups)
             
 
             return(object)

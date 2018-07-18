@@ -92,10 +92,31 @@
          to_constrain_low <- sort(person,index.return=TRUE)
          to_constrain_low <- to_constrain_low$ix[1:nfix]
        }
+       # change to group parameters if index is for groups
+       
+       if(use_groups==T) {
+         if(!is.null(to_constrain_high)) {
+           to_constrain_high <- which(as.numeric(factor(object@person_data$group))==to_constrain_high)
+         }
+         if(!is.null(to_constrain_low)) {
+           to_constrain_low <- which(as.numeric(factor(object@person_data$group))==to_constrain_low)
+         }
+       }
+       
        object@score_matrix <- object@score_matrix[c((1:nrow(object@score_matrix))[-c(to_constrain_high,
-                                                                                  to_constrain_low)],
+                                                                                     to_constrain_low)],
+                                                    to_constrain_high,
+                                                    to_constrain_low),]
+       if(use_groups==T) {
+         # reorder group parameters
+         object@group_vals <- object@group_vals[c((1:nrow(object@score_matrix))[-c(to_constrain_high,
+                                                                                   to_constrain_low)],
                                                   to_constrain_high,
-                                                  to_constrain_low),]
+                                                  to_constrain_low)]
+         # recode group parameters
+         to_move <- c(to_constrain_high,to_constrain_low)
+         object@group_vals <- as.numeric(factor(object@group_vals,levels=c(sort(unique(object@group_vals))[-to_move],to_move)))
+       }
        
      }
   
@@ -193,13 +214,34 @@
 
     param_fix <- switch(restrict_params,discrim_reg='sigma_reg',discrim_abs='sigma_abs')
   } else if(restrict_params=='person') {
+    # change to group parameters if index is for groups
+    
+    if(use_groups==T) {
+      if(!is.null(to_constrain_high)) {
+        to_constrain_high <- which(as.numeric(factor(object@person_data$group))==to_constrain_high)
+      }
+      if(!is.null(to_constrain_low)) {
+        to_constrain_low <- which(as.numeric(factor(object@person_data$group))==to_constrain_low)
+      }
+    }
+    
     object@score_matrix <- object@score_matrix[c((1:nrow(object@score_matrix))[-c(to_constrain_high,
-                                                                               to_constrain_low)],
+                                                                                  to_constrain_low)],
+                                                 to_constrain_high,
+                                                 to_constrain_low),]
+    if(use_groups==T) {
+      # reorder group parameters
+      object@group_vals <- object@group_vals[c((1:nrow(object@score_matrix))[-c(to_constrain_high,
+                                                                                to_constrain_low)],
                                                to_constrain_high,
-                                               to_constrain_low),]
+                                               to_constrain_low)]
+      # recode group parameters
+      to_move <- c(to_constrain_high,to_constrain_low)
+      object@group_vals <- as.numeric(factor(object@group_vals,levels=c(sort(unique(object@group_vals))[-to_move],to_move)))
+    }
     param_fix <- 'L_free'
   }
-  object@restrict_num_high <- length(to_constrain_high)
+  object@restrict_num_high <- length(restrict_ind_high)
   object@restrict_num_low <- 1
   object@constraint_type <- 4
   object@param_fix <- switch(param_fix,L_free=1L,sigma_reg=3L,sigma_abs=2L)
@@ -211,7 +253,8 @@
 #' Function that constrains certain known parameters
 .constrain_fix <- function(object=NULL,restrict_params=NULL,
                            restrict_ind_high=NULL,
-                           restrict_ind_low=NULL,restrict_type=NULL,...) {
+                           restrict_ind_low=NULL,restrict_type=NULL,
+                           use_groups=NULL,...) {
   
   all_args <- list(...) 
   if(is.null(restrict_ind_high)) {
@@ -233,22 +276,47 @@
                                                 to_constrain_low)]
     param_fix <- switch(restrict_params,discrim_reg='sigma_reg',discrim_abs='sigma_abs')
   } else if(restrict_params=='person') {
+    
+    # change to group parameters if index is for groups
+
+    if(use_groups==T) {
+      if(!is.null(to_constrain_high)) {
+        to_constrain_high <- which(as.numeric(factor(object@person_data$group))==to_constrain_high)
+      }
+      if(!is.null(to_constrain_low)) {
+        to_constrain_low <- which(as.numeric(factor(object@person_data$group))==to_constrain_low)
+      }
+    }
+    
     object@score_matrix <- object@score_matrix[c((1:nrow(object@score_matrix))[-c(to_constrain_high,
                                                                                to_constrain_low)],
                                                to_constrain_high,
                                                to_constrain_low),]
+    if(use_groups==T) {
+      # reorder group parameters
+      object@group_vals <- object@group_vals[c((1:nrow(object@score_matrix))[-c(to_constrain_high,
+                                                                                to_constrain_low)],
+                                               to_constrain_high,
+                                               to_constrain_low)]
+      # recode group parameters
+      to_move <- c(to_constrain_high,to_constrain_low)
+      object@group_vals <- as.numeric(factor(object@group_vals,levels=c(sort(unique(object@group_vals))[-to_move],to_move)))
+    }
+    
     param_fix <- 'L_free'
   }
-  object@restrict_num_high <- length(to_constrain_high)
+  object@restrict_num_high <- length(restrict_ind_high)
   if(is.null(to_constrain_low)) {
     object@restrict_num_low <- 1
   } else {
-    object@restrict_num_low <- length(to_constrain_low)
+    object@restrict_num_low <- length(restrict_ind_low)
   }
   object@constraint_type <- switch(restrict_type,constrain_oneway=2L,
                                    constrain_twoway=3L)
   object@param_fix <- switch(param_fix,L_free=1L,sigma_reg=3L,sigma_abs=2L)
   object@unrestricted <- old_matrix
+  object@restrict_ind_high <- to_constrain_high
+  object@restrict_ind_low <- to_constrain_low
   return(object)
   
 }

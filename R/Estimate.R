@@ -308,6 +308,7 @@ id_make <- function(score_data=NULL,simul_data=NULL,
   
   if(!("group" %in% names(person_data))) person_data$group <- rep('O',nrow(score_matrix))
   
+  
   # check what kind of vote labels to use
   
   if(outcome_label_type=='none') {
@@ -328,7 +329,8 @@ id_make <- function(score_data=NULL,simul_data=NULL,
       vote_labels=vote_labels,
       vote_int=vote_int,
       vote_count=length(votes) - length(exclude_level),
-      miss_val=miss_val)
+      miss_val=miss_val,
+      group_vals=as.numeric(factor(person_data$group)))
   
   if(simulation==TRUE) {
     outobj@simul_data <- simul_data
@@ -547,7 +549,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
     #Using an un-identified model with variational inference, find those parameters that would be most useful for
     #constraining/pinning to have an identified model for full Bayesian inference
   if(use_groups==T) {
-    num_legis <- as.numeric(factor(idealdata@person_data$group))
+    num_legis <- idealdata@group_vals
   } else {
     num_legis <- 1:nrow(idealdata@score_matrix)
   }
@@ -611,7 +613,8 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
                         restrict_ind_low=restrict_ind_low,
                         restrict_type=restrict_type,
                         auto_id=auto_id,
-                        ncores=ncores)
+                        ncores=ncores,
+                        use_groups=use_groups)
   
   # now run an identified run
 
