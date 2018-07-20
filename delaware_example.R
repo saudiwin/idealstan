@@ -18,10 +18,12 @@ to_ideal <- id_make(st.rc,ordinal=F,inflate=T,time='separate',include_pres=T)
 # random walk prior
 
 estimate_all <- id_estimate(to_ideal,use_vb = T,
-                            use_groups = T,nfix = 1,restrict_type='constrain_oneway')
+                            use_groups = T,nfix = 1,restrict_type='constrain_twoway',
+                            restrict_ind_high = 2,
+                            fixtype='vb')
 
 # we can get all estimated parameters with summary. The legislator ideal points will be
-# L_full[t,n]
+# L_tp1[t,n]
 
 all_params <- summary(estimate_all,pars='L_tp1')
 
@@ -29,7 +31,7 @@ all_params <- summary(estimate_all,pars='L_tp1')
 
 all_params <- all_params %>% mutate(param_id=stringr::str_extract(parameters,'[0-9]\\]'),
                       param_id=as.numeric(stringr::str_extract(param_id,'[0-9]')),
-                      param_id=factor(param_id,labels=unique(to_ideal@person_data$group)),
+                      param_id=factor(param_id,labels=c('R','X','D')),
                       time=stringr::str_extract(parameters,'\\[[0-9]+'),
                       time=as.numeric(stringr::str_extract(time,'[0-9]+')))
 
@@ -51,7 +53,7 @@ estimate_all <- id_estimate(to_ideal,use_vb = T,
                             use_ar = T)
 
 # we can get all estimated parameters with summary. The legislator ideal points will be
-# L_full[t,n]
+# L_tp1[t,n]
 
 all_params <- summary(estimate_all,pars='L_tp1')
 
@@ -59,7 +61,7 @@ all_params <- summary(estimate_all,pars='L_tp1')
 
 all_params <- all_params %>% mutate(param_id=stringr::str_extract(parameters,'[0-9]\\]'),
                                     param_id=as.numeric(stringr::str_extract(param_id,'[0-9]')),
-                                    param_id=factor(param_id,labels=unique(to_ideal@person_data$group)),
+                                    param_id=factor(param_id,labels=c('R','X','D')),
                                     time=stringr::str_extract(parameters,'\\[[0-9]+'),
                                     time=as.numeric(stringr::str_extract(time,'[0-9]+')))
 
@@ -72,15 +74,3 @@ all_params %>%
                   colour=param_id),
               alpha=0.3)
 
-# however, it's not so helpful to look at the raw data, so let's plot the ideal points over time
-
-id_plot_legis_dyn(estimate_all,person_labels = 'fullname',group_labels = 'party',plot_text=T,
-                  person_ci_alpha = .3)
-
-# it's a bit of a spaghetti plot. Let's try highlighting some people
-
-id_plot_legis_dyn(estimate_all,person_labels = 'fullname',group_labels = 'party',plot_text=T,
-                  person_ci_alpha = .3,
-                  highlight=sample(unique(st.rc$legis.data$fullname),2))
-
-ggsave('test_graphic.png')

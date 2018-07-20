@@ -74,7 +74,7 @@ id_make <- function(score_data=NULL,simul_data=NULL,
                            miss_cov=NULL,
                            miss_exog_val=NULL,
                            item_cov_miss=NULL,
-                           person_data=NULL,item_data=NULL,
+                           person_data=data_frame(),item_data=NULL,
                            miss_val=NA,high_val=3L,low_val=1L,middle_val=2L,
                            ordinal=TRUE,time=NULL,
                            outcome_label_type='votes',
@@ -167,7 +167,7 @@ id_make <- function(score_data=NULL,simul_data=NULL,
   # save time vals as a numeric vector of time points and time as the original vector for
   # plotting
   if(!is.null(time)) {
-    if(time=='separate') {
+    if(time[1]=='separate') {
       all_coll <- colnames(score_matrix)
       just_year <- stringr::str_extract(all_coll,'\\_.*[0-9]+.*')
       just_year <- stringr::str_extract(just_year,'[0-9]+')
@@ -305,6 +305,10 @@ id_make <- function(score_data=NULL,simul_data=NULL,
   #person_data$person.names <- row.names(score_matrix)
   
   row.names(cleaned) <- as.character(1:nrow(cleaned))
+  
+  if(nrow(person_data)==0) {
+    person_data <- data_frame(person.names=as.character(1:nrow(cleaned)))
+  }
   
   if(!("group" %in% names(person_data))) person_data$group <- rep('O',nrow(score_matrix))
   
@@ -617,6 +621,32 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
                         use_groups=use_groups)
   
   # now run an identified run
+  # repeat data formation as positions of rows/columns may have shifted
+  if(use_groups==T) {
+    num_legis <- idealdata@group_vals
+  } else {
+    num_legis <- 1:nrow(idealdata@score_matrix)
+  }
+  
+  num_bills <- ncol(idealdata@score_matrix)
+  legispoints <- rep(num_legis,times=num_bills)
+  billpoints <- rep(1:num_bills,each=length(num_legis))
+  timepoints <- idealdata@time_vals[billpoints]
+  
+  Y <- c(idealdata@score_matrix)
+  
+  # check to see if we need to recode missing values from the data if the model_type doesn't handle missing data
+  if(model_type %in% c(1,3) & !is.null(idealdata@miss_val)) {
+    Y <- na_if(Y,idealdata@miss_val)
+  }
+  
+  #Remove NA values, which should have been coded correctly in the make_idealdata function
+  
+  remove_nas <- !is.na(Y)
+  Y <- Y[remove_nas]
+  legispoints <- legispoints[remove_nas]
+  billpoints <- billpoints[remove_nas]
+  timepoints <- timepoints[remove_nas]
 
   pin_vals <- if(any(is.null(pin_vals))) {
     rep(1,idealdata@restrict_num_high)

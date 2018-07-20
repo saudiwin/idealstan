@@ -90,7 +90,7 @@ transformed data {
 parameters {
   vector[num_bills] sigma_abs_free;
   vector[num_legis] L_free;
-  vector[num_legis] L_tp1[T-1]; // all other params can float
+  vector[num_legis] L_tp1[T]; // all other params can float
   vector[num_legis] L_AR1; // AR-1 parameters for AR-1 model
   vector[num_bills] sigma_reg_free;
   vector[LX] legis_x;
@@ -104,7 +104,6 @@ parameters {
   vector[num_bills] B_int_free;
   vector[num_bills] A_int_free;
   real exog_param;
-  vector[num_legis] L_ints; // constant parameters for time series
 }
 
 transformed parameters {
@@ -133,18 +132,22 @@ model {
   
   
   L_free ~ normal(0,legis_sd);
-  
-  for(t in 1:(T-1)) {
-    L_tp1[t] ~ normal(0,legis_sd);
+  L_tp1[1] ~ normal(legis_pred[1, 1:(num_legis), ] * legis_x,legis_sd);
+  if(T>1) {
+    if(use_ar==1) {
+       #include l_hier_ar1_prior.stan
+    } else {
+      #include l_hier_prior.stan
+    }
   }
+
   
   sigma_abs_free ~ normal(0,discrim_abs_sd);
   sigma_reg_free ~ normal(0,discrim_reg_sd);
   legis_x ~ normal(0,5);
-  sigma_reg_x ~ normal(0,5);
-  sigma_abs_x ~ normal(0,5);
-  legis_x_cons ~ normal(0,5);
-  L_ints ~ normal(0,legis_sd);
+  sigma_reg_x ~ normal(srx_pred[num_bills, ] * sigma_reg_x,5);
+  sigma_abs_x ~ normal(sax_pred[num_bills, ] * sigma_abs_x,5);
+  legis_x_cons ~ normal(0,5);;
   sigma_reg_x_cons ~ normal(0,5);
   sigma_abs_x_cons ~ normal(0,5);
   L_AR1 ~ normal(0,1); // these parameters shouldn't get too big

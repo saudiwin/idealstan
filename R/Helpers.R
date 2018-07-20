@@ -2,7 +2,8 @@
 .vb_fix <- function(object=NULL,
                     this_data=NULL,nfix=NULL,auto_id=FALSE,
                     ncores=NULL,all_args=NULL,
-                    model_type=NULL,...) {
+                    model_type=NULL,
+                    use_groups=NULL,...) {
 
   # check for windows 
   if(ncores>1) {
@@ -80,7 +81,7 @@
      } else if(all_args$restrict_params=='person') {
        # Or constrain persons instead of discriminations
        # adjust for which time point we are looking at -- use first time point person param
-       person <- apply(this_params[,grepl(pattern = 'L_full\\[1,',x=all_params)],2,mean)
+       person <- apply(this_params[,grepl(pattern = 'L_full',x=all_params)],2,mean)
        fix_param <- "L_free"
        if(all_args$restrict_type=='constrain_oneway') {
          to_constrain_high <- sort(abs(person),index.return=TRUE,decreasing=TRUE)
@@ -117,7 +118,7 @@
          to_move <- c(to_constrain_high,to_constrain_low)
          object@group_vals <- as.numeric(factor(object@group_vals,levels=c(sort(unique(object@group_vals))[-to_move],to_move)))
        }
-       
+       diff <- person[to_constrain_high[1]] - person[to_constrain_low[1]]
      }
   
    object@restrict_count <- c(to_constrain_high,to_constrain_low)
@@ -190,12 +191,14 @@
    object@constraint_type <- this_data$constraint_type
    object@param_fix <- this_data$constrain_par
    object@unrestricted <- old_matrix
+   object@diff <- diff
    return(object)
 }
   
 #' Function that pins certain parameters to fixed points
 .pinned_fix <- function(object=NULL,nfix=NULL,restrict_params=NULL,
-                        restrict_ind_high=NULL,...) {
+                        restrict_ind_high=NULL,
+                        use_groups=NULL,...) {
   all_args <- list(...) 
   if(is.null(restrict_ind_high)) {
     stop('You must specify indices for pinned paramters as restrict_ind_high.')

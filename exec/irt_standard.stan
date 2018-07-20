@@ -40,6 +40,7 @@ data {
   matrix[num_bills,SRX] srx_pred;
   matrix[num_bills,SAX] sax_pred;
   vector[num_fix_high] pin_vals;
+  real diff; // difference between high and low constrained parameters
   real discrim_reg_sd;
   real discrim_abs_sd;
   real legis_sd;
@@ -97,11 +98,10 @@ transformed data {
 
 parameters {
   vector[num_bills-num_constrain_sa] sigma_abs_free;
-  vector[num_legis-num_constrain_l] L_free; // first T=1 params to constrain
-  vector[num_legis] L_tp1[T-1]; // all other params can float
+  vector[num_legis-num_fix_high-num_fix_low] L_free; // first T=1 params to constrain
+  vector[num_legis] L_tp1[T]; // all other params can float
   vector[num_legis] L_AR1; // AR-1 parameters for AR-1 model
   vector[num_bills-num_constrain_sr] sigma_reg_free;
-  vector<upper=restrict_low_bar>[num_fix_low] restrict_low;
   vector<lower=restrict_high_bar>[num_fix_high] restrict_high;
   vector[num_fix_high] pinned_pars;
   vector[LX] legis_x;
@@ -116,7 +116,6 @@ parameters {
   ordered[m-1] steps_votes_grm[num_bills];
   ordered[num_fix_low+num_fix_high] restrict_ord[T];
   real exog_param;
-  vector[num_legis] L_ints; // constant parameters for time series
 }
 
 transformed parameters {
@@ -127,6 +126,9 @@ transformed parameters {
   
   vector[num_bills] B_int_full;
   vector[num_bills] A_int_full;
+  vector[1] restrict_low;
+  
+  restrict_low = restrict_high - diff;
   
   //add in a paramter to the intercepts to prevent additive aliasing
   
@@ -136,7 +138,7 @@ transformed parameters {
   //A_int_full[1]=0.0;
   //A_int_full[2:num_bills] = A_int_free;
   //combine constrained and unconstrained parameters
-  #include "build_params.stan"
+  #include "build_params_v2.stan"
   
   
 }
@@ -160,11 +162,11 @@ model {
   } else {
     steps_votes ~ normal(0,5);
   }
- 
-	
+  L_free ~normal(legis_pred[1, 1:(num_legis - num_fix_high-num_fix_low), ] * legis_x, legis_sd);
+	L_tp1[1] ~ normal(legis_pred[1, 1:(num_legis), ] * legis_x,legis_sd);
   B_int_free ~ normal(0,diff_reg_sd);
   A_int_free ~ normal(0,diff_abs_sd);
-  L_ints ~ normal(0,legis_sd);
+
   exog_param ~ normal(0,5);
   for(b in 1:num_bills) {
   steps_votes_grm[b] ~ normal(0,5);
@@ -173,7 +175,7 @@ model {
     restrict_ord[t] ~ normal(0,5);
   
   //priors for legislators and bill parameters
-  #include "modeling_statement_v8.stan"
+  #include "modeling_statement_v9.stan"
   
   //all model types
 

@@ -39,7 +39,7 @@ if(constrain_par==1) {
     sigma_reg_full = append_row(sigma_reg_free,restrict_high);
   } else if(constraint_type==3) {
     sigma_reg_full = append_row(sigma_reg_free,append_row(restrict_high,restrict_low));
-    //sigma_reg_full=append_row(sigma_reg_free,restrict_ord[1]);
+    
   } else if(constraint_type==4) {
     sigma_reg_full = append_row(sigma_reg_free,pinned_pars);
   }

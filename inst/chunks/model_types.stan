@@ -7,11 +7,7 @@ if(model_type==1) {
         pi1 = sigma_reg_full[bb] .*  L_full[ll] - B_int_full[bb];
       } else {
         for(n in 1:N) {
-          if(time[n]==1) {
-            pi1[n] = sigma_reg_full[bb[n]] *  L_full[ll[n]] - B_int_full[bb[n]];
-          } else {
-            pi1[n] = sigma_reg_full[bb[n]] *  L_tp1[time[n]-1,ll[n]] - B_int_full[bb[n]];
-          }
+            pi1[n] = sigma_reg_full[bb[n]] *  L_tp1[time[n],ll[n]] - B_int_full[bb[n]];
         }
       }
       
@@ -26,15 +22,9 @@ if(model_type==1) {
                   A_int_full[bb] + exog_data*exog_param;
       } else {
         for(n in 1:N) {
-          if(time[n]==1) {
-            pi1[n] = sigma_reg_full[bb[n]] *  L_full[ll[n]] - B_int_full[bb[n]];
-            pi2[n] = sigma_abs_full[bb[n]] * L_full[ll[n]] - 
+            pi1[n] = sigma_reg_full[bb[n]] *  L_tp1[time[n],ll[n]] - B_int_full[bb[n]];
+            pi2[n] = sigma_abs_full[bb[n]] * L_tp1[time[n],ll[n]] - 
                     A_int_full[bb[n]] + exog_data[n]*exog_param; 
-          } else {
-            pi1[n] = sigma_reg_full[bb[n]] *  L_tp1[time[n]-1,ll[n]] - B_int_full[bb[n]];
-            pi2[n] = sigma_abs_full[bb[n]] * L_tp1[time[n]-1,ll[n]] - 
-                    A_int_full[bb[n]] + exog_data[n]*exog_param; 
-          }
 
         }
       }
@@ -56,11 +46,7 @@ if(model_type==1) {
         pi1 = sigma_reg_full[bb] .*  L_full[ll] - B_int_full[bb];
       } else {
         for(n in 1:N) {
-          if(time[n]==1) {
-            pi1[n] = sigma_reg_full[bb[n]] *  L_full[ll[n]] - B_int_full[bb[n]];
-          } else {
-            pi1[n] = sigma_reg_full[bb[n]] *  L_tp1[time[n]-1,ll[n]] - B_int_full[bb[n]];
-          }
+            pi1[n] = sigma_reg_full[bb[n]] *  L_tp1[time[n],ll[n]] - B_int_full[bb[n]];
         }
       }
       
@@ -79,15 +65,9 @@ if(model_type==1) {
                   A_int_full[bb] + exog_data*exog_param;
       } else {
         for(n in 1:N) {
-          if(time[n]==1) {
-            pi1[n] = sigma_reg_full[bb[n]] *  L_full[ll[n]] - B_int_full[bb[n]];
-            pi2[n] = sigma_abs_full[bb[n]] * L_full[ll[n]] - 
+            pi1[n] = sigma_reg_full[bb[n]] *  L_tp1[time[n],ll[n]] - B_int_full[bb[n]];
+            pi2[n] = sigma_abs_full[bb[n]] * L_tp1[time[n],ll[n]] - 
                     A_int_full[bb[n]] + exog_data[n]*exog_param; 
-          } else {
-            pi1[n] = sigma_reg_full[bb[n]] *  L_tp1[time[n]-1,ll[n]] - B_int_full[bb[n]];
-            pi2[n] = sigma_abs_full[bb[n]] * L_tp1[time[n]-1,ll[n]] - 
-                    A_int_full[bb[n]] + exog_data[n]*exog_param; 
-          }
 
         }
       }
@@ -109,11 +89,7 @@ if(model_type==1) {
         pi1 = sigma_reg_full[bb] .*  L_full[ll] - B_int_full[bb];
       } else {
         for(n in 1:N) {
-          if(time[n]==1) {
-            pi1[n] = sigma_reg_full[bb[n]] *  L_full[ll[n]] - B_int_full[bb[n]];
-          } else {
-            pi1[n] = sigma_reg_full[bb[n]] *  L_tp1[time[n]-1,ll[n]] - B_int_full[bb[n]];
-          }
+            pi1[n] = sigma_reg_full[bb[n]] *  L_tp1[time[n],ll[n]] - B_int_full[bb[n]];
         }
       }
       
@@ -129,15 +105,9 @@ if(model_type==1) {
                   A_int_full[bb] + exog_data*exog_param;
       } else {
         for(n in 1:N) {
-          if(time[n]==1) {
-            pi1[n] = sigma_reg_full[bb[n]] *  L_full[ll[n]] - B_int_full[bb[n]];
-            pi2[n] = sigma_abs_full[bb[n]] * L_full[ll[n]] - 
+            pi1[n] = sigma_reg_full[bb[n]] *  L_tp1[time[n],ll[n]] - B_int_full[bb[n]];
+            pi2[n] = sigma_abs_full[bb[n]] * L_tp1[time[n],ll[n]] - 
                     A_int_full[bb[n]] + exog_data[n]*exog_param; 
-          } else {
-            pi1[n] = sigma_reg_full[bb[n]] *  L_tp1[time[n]-1,ll[n]] - B_int_full[bb[n]];
-            pi2[n] = sigma_abs_full[bb[n]] * L_tp1[time[n]-1,ll[n]] - 
-                    A_int_full[bb[n]] + exog_data[n]*exog_param; 
-          }
 
         }
       }
@@ -161,15 +131,9 @@ if(model_type==1) {
                   A_int_full[bb] + exog_data*exog_param;
       } else {
         for(n in 1:N) {
-          if(time[n]==1) {
-            pi1[n] = sigma_reg_full[bb[n]] *  L_full[ll[n]] - B_int_full[bb[n]];
-            pi2[n] = sigma_abs_full[bb[n]] * L_full[ll[n]] - 
+            pi1[n] = sigma_reg_full[bb[n]] *  L_tp1[time[n],ll[n]] - B_int_full[bb[n]];
+            pi2[n] = sigma_abs_full[bb[n]] * L_tp1[time[n],ll[n]] - 
                     A_int_full[bb[n]] + exog_data[n]*exog_param; 
-          } else {
-            pi1[n] = sigma_reg_full[bb[n]] *  L_tp1[time[n]-1,ll[n]] - B_int_full[bb[n]];
-            pi2[n] = sigma_abs_full[bb[n]] * L_tp1[time[n]-1,ll[n]] - 
-                    A_int_full[bb[n]] + exog_data[n]*exog_param; 
-          }
 
         }
       }
