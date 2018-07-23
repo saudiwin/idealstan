@@ -104,6 +104,7 @@ parameters {
   vector[num_bills] B_int_free;
   vector[num_bills] A_int_free;
   real exog_param;
+  real time_sd;
 }
 
 transformed parameters {
@@ -151,7 +152,7 @@ model {
   sigma_reg_x_cons ~ normal(0,5);
   sigma_abs_x_cons ~ normal(0,5);
   L_AR1 ~ normal(0,1); // these parameters shouldn't get too big
-  
+  time_sd ~ lognormal(1.7,.3);
   if(model_type>2 && model_type<8) {
     for(i in 1:(m-2)) {
     steps_votes[i+1] - steps_votes[i] ~ normal(0,5); 

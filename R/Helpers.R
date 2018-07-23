@@ -115,7 +115,7 @@
                                                   to_constrain_high,
                                                   to_constrain_low)]
          # recode group parameters
-         to_move <- c(to_constrain_high,to_constrain_low)
+         to_move <- c(restrict_ind_high,restrict_ind_low)
          object@group_vals <- as.numeric(factor(object@group_vals,levels=c(sort(unique(object@group_vals))[-to_move],to_move)))
        }
        diff <- person[to_constrain_high[1]] - person[to_constrain_low[1]]
@@ -302,10 +302,10 @@
                                                to_constrain_high,
                                                to_constrain_low)]
       # recode group parameters
-      to_move <- c(to_constrain_high,to_constrain_low)
+      to_move <- c(restrict_ind_high,restrict_ind_low)
       object@group_vals <- as.numeric(factor(object@group_vals,levels=c(sort(unique(object@group_vals))[-to_move],to_move)))
     }
-    
+    diff <- 4
     param_fix <- 'L_free'
   }
   object@restrict_num_high <- length(restrict_ind_high)
@@ -320,6 +320,7 @@
   object@unrestricted <- old_matrix
   object@restrict_ind_high <- to_constrain_high
   object@restrict_ind_low <- to_constrain_low
+  object@diff <- 4
   return(object)
   
 }

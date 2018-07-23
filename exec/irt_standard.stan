@@ -116,6 +116,7 @@ parameters {
   ordered[m-1] steps_votes_grm[num_bills];
   ordered[num_fix_low+num_fix_high] restrict_ord[T];
   real exog_param;
+  real<lower=0> time_sd;
 }
 
 transformed parameters {
@@ -154,6 +155,7 @@ model {
   sigma_reg_x ~ normal(0,5);
   sigma_abs_x_cons ~ normal(0,5);
   sigma_reg_x_cons ~ normal(0,5);
+  time_sd ~ lognormal(1.7,.3);
   L_AR1 ~ normal(0,1); // these parameters shouldn't get too big
   if(model_type>2 && model_type<8) {
      for(i in 1:(m-2)) {

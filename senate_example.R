@@ -6,8 +6,26 @@
 require(idealstan)
 require(ggplot2)
 require(dplyr)
+require(readr)
 
-load('DE 2018.Rdata')
+# let's use tunisia data 
+
+
+all_senate <- read_csv('../Sall_votes.csv')
+
+party_data <- read_csv('../Sall_parties.csv')
+
+ind_data <- read_csv('../Sall_members.csv')
+
+cong_data <- read_csv('../')
+
+# pick last fifteen years
+
+senate5yr <- filter(all_senate,date>lubridate::ymd('2003-01-01'))
+
+# need vote matrix 
+
+vote_matrix <- select(senate5yr, )
 
 # see if we can make idealstan data that works
 
