@@ -584,8 +584,7 @@
   person_ids <- data_frame(long_name=person_params$legis) %>% 
     distinct
   legis_nums <- stringr::str_extract_all(person_ids$long_name,'[0-9]+',simplify=T)
-  person_ids <-   mutate(person_ids,time_point=as.numeric(legis_nums[,1]),
-           legis_id=as.numeric(legis_nums[,2]))
+  person_ids <-   mutate(person_ids,legis_id=as.numeric(legis_nums))
   # add in all data in the person_data object
   person_data <- mutate(person_data,row_names=1:n())
   person_ids <- left_join(person_ids,person_data,by=c(legis_id='row_names'))
@@ -597,11 +596,15 @@
     left_join(person_ids,by=c(legis='long_name'))
   
   # add in time points 
+  if(max(object@score_data@time_vals)>1) {
+    # need to revise this
+    time_data <- data_frame(time=object@score_data@time,
+                            time_point=object@score_data@time_vals) %>% distinct
+    person_params <- left_join(person_params,time_data,by='time_point')
+  }
   
-  time_data <- data_frame(time=object@score_data@time,
-                          time_point=object@score_data@time_vals) %>% distinct
   
-  person_params %>% left_join(time_data,by='time_point')
+  person_params 
 }
 
 #' Helper function to create arrays

@@ -34,7 +34,6 @@ data {
   matrix[num_legis,LX] legis_pred[T];
   matrix[num_bills,SRX] srx_pred;
   matrix[num_bills,SAX] sax_pred;
-  vector[num_fix_high] pin_vals;
   real diff; // difference between high and low constrained parameters
   real discrim_reg_sd;
   real discrim_abs_sd;

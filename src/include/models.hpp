@@ -31,7 +31,7 @@ static int current_statement_begin__;
 stan::io::program_reader prog_reader__() {
     stan::io::program_reader reader;
     reader.add_event(0, 0, "start", "model_irt_standard");
-    reader.add_event(381, 381, "end", "model_irt_standard");
+    reader.add_event(380, 380, "end", "model_irt_standard");
     return reader;
 }
 
@@ -56,7 +56,6 @@ private:
     vector<matrix_d> legis_pred;
     matrix_d srx_pred;
     matrix_d sax_pred;
-    vector_d pin_vals;
     double diff;
     double discrim_reg_sd;
     double discrim_abs_sd;
@@ -258,16 +257,6 @@ public:
                 for (size_t m_mat__ = 0; m_mat__ < sax_pred_m_mat_lim__; ++m_mat__) {
                     sax_pred(m_mat__,n_mat__) = vals_r__[pos__++];
                 }
-            }
-            validate_non_negative_index("pin_vals", "num_fix_high", num_fix_high);
-            context__.validate_dims("data initialization", "pin_vals", "vector_d", context__.to_vec(num_fix_high));
-            validate_non_negative_index("pin_vals", "num_fix_high", num_fix_high);
-            pin_vals = vector_d(static_cast<Eigen::VectorXd::Index>(num_fix_high));
-            vals_r__ = context__.vals_r("pin_vals");
-            pos__ = 0;
-            size_t pin_vals_i_vec_lim__ = num_fix_high;
-            for (size_t i_vec__ = 0; i_vec__ < pin_vals_i_vec_lim__; ++i_vec__) {
-                pin_vals[i_vec__] = vals_r__[pos__++];
             }
             context__.validate_dims("data initialization", "diff", "double", context__.to_vec());
             diff = double(0);
@@ -2517,7 +2506,7 @@ public:
         double time_sd(0);
         time_sd = vals_r__[pos__++];
         try {
-            writer__.scalar_unconstrain(time_sd);
+            writer__.scalar_lb_unconstrain(0,time_sd);
         } catch (const std::exception& e) { 
             throw std::runtime_error(std::string("Error transforming variable time_sd: ") + e.what());
         }
@@ -2674,9 +2663,9 @@ public:
             T__ time_sd;
             (void) time_sd;  // dummy to suppress unused var warning
             if (jacobian__)
-                time_sd = in__.scalar_constrain(lp__);
+                time_sd = in__.scalar_lb_constrain(0,lp__);
             else
-                time_sd = in__.scalar_constrain();
+                time_sd = in__.scalar_lb_constrain(0);
 
 
             // transformed parameters
@@ -3124,7 +3113,7 @@ public:
         vector_d B_int_free = in__.vector_constrain(num_bills);
         vector_d A_int_free = in__.vector_constrain(num_bills);
         double exog_param = in__.scalar_constrain();
-        double time_sd = in__.scalar_constrain();
+        double time_sd = in__.scalar_lb_constrain(0);
             for (int k_0__ = 0; k_0__ < num_bills; ++k_0__) {
             vars__.push_back(sigma_abs_free[k_0__]);
             }

@@ -101,7 +101,7 @@ parameters {
   vector[num_bills] B_int_free;
   vector[num_bills] A_int_free;
   real exog_param;
-  real time_sd;
+  real<lower=0> time_sd;
 }
 
 transformed parameters {

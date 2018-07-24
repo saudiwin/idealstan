@@ -192,6 +192,8 @@ id_make <- function(score_data=NULL,simul_data=NULL,
     max_t <- max(time_vals)
   } else {
     time_vals <- rep(1,ncol(cleaned))
+    time <- rep(1,ncol(cleaned))
+    max_t <- max(time_vals)
   }
   colnames(cleaned) <- as.character(1:ncol(cleaned))
   
@@ -411,8 +413,6 @@ id_make <- function(score_data=NULL,simul_data=NULL,
 #'  will estimate a random-walk process for the ideal points.
 #' @param use_groups If \code{TRUE}, group parameters from the person/legis data given in \code{\link{id_make}} will be 
 #'  estimated instead of individual parameters. 
-#' @param pin_vals If \code{fixtype} is set to 'pinned', then a vector of numeric values of which to pin the legislators/persons or 
-#' bills/items should be given.
 #' @param restrict_ind_high If \code{fixtype} is not "vb", the particular indices of legislators/persons or bills/items to constrain high
 #' @param restrict_ind_low If \code{fixtype} is not "vb", the particular indices of legislators/persons or bills/items to constrain low. 
 #' (Note: not used if values are pinned).
@@ -556,6 +556,14 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
   if(model_type %in% c(1,3) & !is.null(idealdata@miss_val)) {
     Y <- na_if(Y,idealdata@miss_val)
   }
+  
+  # check to see if more values than there should be for the bernoulli model
+  
+  if(model_type==1 && length(unique(Y))>2) {
+    stop('Too many values in score matrix for a binary model. Choose a different model_type.')
+  } else if(model_type==2 && length(unique(Y))>3) {
+    stop("Too many values in score matrix for a binary model. Choose a different model_type.")
+  }
 
   #Remove NA values, which should have been coded correctly in the make_idealdata function
   
@@ -663,7 +671,8 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
                     restrict_sd=restrict_sd,
                     restrict_low_bar=restrict_low_bar,
                     restrict_high_bar=restrict_high_bar,
-                    use_ar=as.integer(use_ar))
+                    use_ar=as.integer(use_ar),
+                    diff=id_diff)
 
   outobj <- sample_model(object=idealdata,nchains=nchains,niters=niters,warmup=warmup,ncores=ncores,
                          this_data=this_data,use_vb=use_vb,...)
