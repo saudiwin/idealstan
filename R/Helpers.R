@@ -28,71 +28,17 @@
     
    all_params <- attributes(this_params)$dimnames$parameters
    old_matrix <- object@score_matrix
-
-     if(all_args$restrict_params=='items') {
-       # first we calculate the standardized discrimination parameters for the bills
-       # we want to know which distribution has more spread/information
-       # we will identify the one that has the greater number of missing or non-missing values in the dataset
-       
-       #look at absences if it is an absence model
-       
-       if(use_absence) {
-         # use absence parameters if the model type support it and they have higher spread
-         # Now get nfix number of reg discrim parameters to constrain/fix
-         sigma_abs <- apply(this_params[,grepl(pattern = 'sigma_abs_full',x=all_params)],2,mean)
-         sigma_abs_sd <- apply(this_params[,grepl(pattern = 'sigma_abs_full',x=all_params)],2,sd)
-         #sigma_abs_std <- sigma_abs / sigma_abs_sd
-         # not really necessary ^-
-         if(all_args$restrict_type=='constrain_oneway') {
-           fix_param <- 'sigma_abs'
-           to_constrain_high <- sort(abs(sigma_abs),index.return=TRUE,decreasing=TRUE)
-           to_constrain_high <- to_constrain_high$ix[1:nfix]
-           to_constrain_low <- NULL
-         } else if(all_args$restrict_type=='constrain_twoway') {
-           fix_param <- 'sigma_abs'
-           to_constrain_high <- sort(sigma_abs,index.return=TRUE,decreasing=TRUE)
-           to_constrain_high <- to_constrain_high$ix[1:nfix]
-           to_constrain_low <- sort(sigma_abs,index.return=TRUE)
-           to_constrain_low <- to_constrain_low$ix[1:nfix]
-         }
-       } else {
-         # use non-inflated discrimination
-         sigma_reg <- apply(this_params[,grepl(pattern = 'sigma_reg_full',x=all_params)],2,mean)
-         sigma_reg_sd <- apply(this_params[,grepl(pattern = 'sigma_reg_full',x=all_params)],2,sd)
-         #sigma_reg_std <- sigma_reg/sigma_reg_sd
-         if(all_args$restrict_type=='constrain_oneway') {
-           fix_param <- 'sigma_reg'
-           to_constrain_high <- sort(abs(sigma_reg),index.return=TRUE,decreasing=TRUE)
-           to_constrain_high <- to_constrain_high$ix[1:nfix]
-           to_constrain_low <- NULL
-         } else if(all_args$restrict_type=='constrain_twoway') {
-           fix_param <- 'sigma_reg'
-           to_constrain_high <- sort(sigma_reg,index.return=TRUE,decreasing=TRUE)
-           to_constrain_high <- to_constrain_high$ix[1:nfix]
-           to_constrain_low <- sort(sigma_reg,index.return=TRUE)
-           to_constrain_low <- to_constrain_low$ix[1:nfix]
-         }
-       }
-       object@score_matrix[,c((1:ncol(object@score_matrix))[-c(to_constrain_high,
-                                                             to_constrain_low)],
-                             to_constrain_high,
-                             to_constrain_low)]
-       
-     } else if(all_args$restrict_params=='person') {
+   
        # Or constrain persons instead of discriminations
        # adjust for which time point we are looking at -- use first time point person param
        person <- apply(this_params[,grepl(pattern = 'L_full',x=all_params)],2,mean)
        fix_param <- "L_free"
-       if(all_args$restrict_type=='constrain_oneway') {
-         to_constrain_high <- sort(abs(person),index.return=TRUE,decreasing=TRUE)
-         to_constrain_high <- to_constrain_high$ix[1:nfix]
-         to_constrain_low <- NULL
-       } else if(all_args$restrict_type=='constrain_twoway') {
-         to_constrain_high <- sort(person,index.return=TRUE,decreasing=TRUE)
-         to_constrain_high <- to_constrain_high$ix[1:nfix]
-         to_constrain_low <- sort(person,index.return=TRUE)
-         to_constrain_low <- to_constrain_low$ix[1:nfix]
-       }
+       
+        to_constrain_high <- sort(person,index.return=TRUE,decreasing=TRUE)
+        to_constrain_high <- to_constrain_high$ix[1:nfix]
+        to_constrain_low <- sort(person,index.return=TRUE)
+        to_constrain_low <- to_constrain_low$ix[1:nfix]
+         
        # change to group parameters if index is for groups
        
        if(use_groups==T) {
@@ -119,75 +65,46 @@
          object@group_vals <- as.numeric(factor(object@group_vals,levels=c(sort(unique(object@group_vals))[-to_move],to_move)))
        }
        diff <- person[to_constrain_high[1]] - person[to_constrain_low[1]]
-     }
+     
   
    object@restrict_count <- c(to_constrain_high,to_constrain_low)
    
-   if(all_args$restrict_params=='items') {
-     this_data$num_fix_high <- nfix
-     if(is.null(to_constrain_low)) {
-       this_data$num_fix_low <- 1
-       this_data$constraint_type <- 2
-     } else {
-       this_data$num_fix_low <- nfix
-       this_data$constraint_type <- 3
-     }
-   } else if(all_args$restrict_params=='person') {
-     this_data$num_fix_high <- nfix
-     if(is.null(to_constrain_low)) {
-       this_data$num_fix_low <- 1
-       this_data$constraint_type <- 2
-     } else {
-       this_data$num_fix_low <- nfix
-       this_data$constraint_type <- 3
-     }
-   }
+   this_data$num_fix_high <- 1
+   this_data$num_fix_low <- 1
+   this_data$constraint_type <- 3
    
-   if(fix_param=='sigma_abs') {
-     this_data$constrain_par <- 2
-   } else if(fix_param=='sigma_reg') {
-     this_data$constrain_par <- 3
-   } else if(fix_param=='L_free') {
-     this_data$constrain_par <- 1
-   }
+   this_data$constrain_par <- 1
    
-   this_data$pin_vals <- rep(1,nfix)
-   dim(this_data$pin_vals) <- nfix
+   # if(auto_id==TRUE) {
+   #   # Now re-run ID on 4 VB chains and see if the parameters are stable
+   #   print('Running automatic identification check.')
+   # 
+   #   all_vbs <- parallel::mclapply(1:4,function(i,this_data=NULL) {
+   #     vb_out <- vb(object=stanmodels[['irt_standard']],data=this_data,algorithm='meanfield')
+   #     lookat_params <- rstan::extract(vb_out,permuted=FALSE)
+   #     lookat_params <- lookat_params[,1,]
+   #    out_param <- apply(lookat_params,2,mean)
+   #   },this_data=this_data,mc.cores=ncores)
+   # 
+   #   signs <- sapply(all_vbs,sign)
+   #   equal_ratio <- apply(signs,1,function(r) {
+   #     all(r==r[1])
+   #   })
+   #   print(paste0('The model currently has ',round(mean(equal_ratio),1),' correct signs identified.'))
+   #   if(mean(equal_ratio)<0.9) {
+   #     print(paste0('Model is not yet identified. Increasing constraint number to ',nfix+1))
+   #     .vb_fix(object=object,this_params=this_params,this_data=this_data,nfix=nfix+1,auto_id=TRUE,
+   #             model_type=model_type,
+   #             ncores=ncores,
+   #             all_args)
+   #   } else {
+   #     print(paste0('Automatic identification has occurred for ',all_args$restrict_type,
+   #           ' identification with ',nfix,' constraints.'))
+   #   }
+   # }
    
-   if(auto_id==TRUE) {
-     # Now re-run ID on 4 VB chains and see if the parameters are stable
-     print('Running automatic identification check.')
-
-     all_vbs <- parallel::mclapply(1:4,function(i,this_data=NULL) {
-       vb_out <- vb(object=stanmodels[['irt_standard']],data=this_data,algorithm='meanfield')
-       lookat_params <- rstan::extract(vb_out,permuted=FALSE)
-       lookat_params <- lookat_params[,1,]
-      out_param <- apply(lookat_params,2,mean)
-     },this_data=this_data,mc.cores=ncores)
-
-     signs <- sapply(all_vbs,sign)
-     equal_ratio <- apply(signs,1,function(r) {
-       all(r==r[1])
-     })
-     print(paste0('The model currently has ',round(mean(equal_ratio),1),' correct signs identified.'))
-     if(mean(equal_ratio)<0.9) {
-       print(paste0('Model is not yet identified. Increasing constraint number to ',nfix+1))
-       .vb_fix(object=object,this_params=this_params,this_data=this_data,nfix=nfix+1,auto_id=TRUE,
-               model_type=model_type,
-               ncores=ncores,
-               all_args)
-     } else {
-       print(paste0('Automatic identification has occurred for ',all_args$restrict_type,
-             ' identification with ',nfix,' constraints.'))
-     }
-   }
-   
-   object@restrict_num_high <- nfix
-   if(is.null(to_constrain_low)) {
-     object@restrict_num_low <- 1
-   } else {
-     object@restrict_num_low <- nfix
-   }
+   object@restrict_num_high <- 1
+   object@restrict_num_low <- 1
    object@constraint_type <- this_data$constraint_type
    object@param_fix <- this_data$constrain_par
    object@unrestricted <- old_matrix
@@ -254,9 +171,9 @@
 }
 
 #' Function that constrains certain known parameters
-.constrain_fix <- function(object=NULL,restrict_params=NULL,
+.constrain_fix <- function(object=NULL,
                            restrict_ind_high=NULL,
-                           restrict_ind_low=NULL,restrict_type=NULL,
+                           restrict_ind_low=NULL,
                            use_groups=NULL,...) {
   
   all_args <- list(...) 
@@ -266,20 +183,7 @@
   old_matrix <- object@score_matrix
   to_constrain_high <- restrict_ind_high
   to_constrain_low <- restrict_ind_low
-  if((!is.null(restrict_ind_high) && !is.null(restrict_ind_low)) && all(restrict_ind_high==restrict_ind_low)) {
-    stop('You must specify separate bills or persons to constrain high or low.')
-  }
-  if(restrict_params=='items') {
-    stop('You cannot use items for restrict_params with fixtype set to vb. You must select use either discrim_reg or discrim_miss as the option for restrict_params. See help information for id_estimate.')
-  }
-  if(any(restrict_params %in% c('discrim_reg','discrim_miss'))) {
-    object@score_matrix <- object@score_matrix[,c((1:ncol(object@score_matrix))[-c(to_constrain_high,
-                                                                                to_constrain_low)],
-                                                to_constrain_high,
-                                                to_constrain_low)]
-    param_fix <- switch(restrict_params,discrim_reg='sigma_reg',discrim_abs='sigma_abs')
-  } else if(restrict_params=='person') {
-    
+  
     # change to group parameters if index is for groups
 
     if(use_groups==T) {
@@ -307,20 +211,16 @@
     }
     diff <- 4
     param_fix <- 'L_free'
-  }
+  
   object@restrict_num_high <- length(restrict_ind_high)
-  if(is.null(to_constrain_low)) {
-    object@restrict_num_low <- 1
-  } else {
-    object@restrict_num_low <- length(restrict_ind_low)
-  }
-  object@constraint_type <- switch(restrict_type,constrain_oneway=2L,
-                                   constrain_twoway=3L)
-  object@param_fix <- switch(param_fix,L_free=1L,sigma_reg=3L,sigma_abs=2L)
+
+  object@restrict_num_low <- 1
+  object@constraint_type <- 3L
+  object@param_fix <- 1L
   object@unrestricted <- old_matrix
   object@restrict_ind_high <- to_constrain_high
   object@restrict_ind_low <- to_constrain_low
-  object@diff <- 4
+
   return(object)
   
 }

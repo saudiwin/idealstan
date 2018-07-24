@@ -16,8 +16,6 @@ data {
   7= ZIP IRT
   */
   int model_type;
-  
-  int hier_type;
   int LX;
   int SRX;
   int SAX;
@@ -25,7 +23,6 @@ data {
   // int ar_lag;
   // int ma_lag;
   // int i_lag;
-  // int with_absence;
   int<lower=1> num_legis;
   int<lower=1> num_bills;
   int ll[N];

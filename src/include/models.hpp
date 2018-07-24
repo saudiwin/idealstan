@@ -31,7 +31,7 @@ static int current_statement_begin__;
 stan::io::program_reader prog_reader__() {
     stan::io::program_reader reader;
     reader.add_event(0, 0, "start", "model_irt_standard");
-    reader.add_event(431, 431, "end", "model_irt_standard");
+    reader.add_event(381, 381, "end", "model_irt_standard");
     return reader;
 }
 
@@ -41,15 +41,12 @@ private:
     int T;
     vector<int> Y;
     int model_type;
-    int hier_type;
     int LX;
     int SRX;
     int SAX;
     int use_ar;
     int num_legis;
     int num_bills;
-    int constrain_par;
-    int constraint_type;
     int num_fix_high;
     int num_fix_low;
     vector<int> ll;
@@ -69,13 +66,9 @@ private:
     double restrict_sd;
     double restrict_low_bar;
     double restrict_high_bar;
-    double restrict_alpha;
-    double restrict_beta;
     int m;
     vector<int> absence;
     int num_constrain_l;
-    int num_constrain_sa;
-    int num_constrain_sr;
     vector<int> Y_new;
 public:
     model_irt_standard(stan::io::var_context& context__,
@@ -136,11 +129,6 @@ public:
             vals_i__ = context__.vals_i("model_type");
             pos__ = 0;
             model_type = vals_i__[pos__++];
-            context__.validate_dims("data initialization", "hier_type", "int", context__.to_vec());
-            hier_type = int(0);
-            vals_i__ = context__.vals_i("hier_type");
-            pos__ = 0;
-            hier_type = vals_i__[pos__++];
             context__.validate_dims("data initialization", "LX", "int", context__.to_vec());
             LX = int(0);
             vals_i__ = context__.vals_i("LX");
@@ -171,16 +159,6 @@ public:
             vals_i__ = context__.vals_i("num_bills");
             pos__ = 0;
             num_bills = vals_i__[pos__++];
-            context__.validate_dims("data initialization", "constrain_par", "int", context__.to_vec());
-            constrain_par = int(0);
-            vals_i__ = context__.vals_i("constrain_par");
-            pos__ = 0;
-            constrain_par = vals_i__[pos__++];
-            context__.validate_dims("data initialization", "constraint_type", "int", context__.to_vec());
-            constraint_type = int(0);
-            vals_i__ = context__.vals_i("constraint_type");
-            pos__ = 0;
-            constraint_type = vals_i__[pos__++];
             context__.validate_dims("data initialization", "num_fix_high", "int", context__.to_vec());
             num_fix_high = int(0);
             vals_i__ = context__.vals_i("num_fix_high");
@@ -336,16 +314,6 @@ public:
             vals_r__ = context__.vals_r("restrict_high_bar");
             pos__ = 0;
             restrict_high_bar = vals_r__[pos__++];
-            context__.validate_dims("data initialization", "restrict_alpha", "double", context__.to_vec());
-            restrict_alpha = double(0);
-            vals_r__ = context__.vals_r("restrict_alpha");
-            pos__ = 0;
-            restrict_alpha = vals_r__[pos__++];
-            context__.validate_dims("data initialization", "restrict_beta", "double", context__.to_vec());
-            restrict_beta = double(0);
-            vals_r__ = context__.vals_r("restrict_beta");
-            pos__ = 0;
-            restrict_beta = vals_r__[pos__++];
 
             // validate, data variables
             check_greater_or_equal(function__,"num_legis",num_legis,1);
@@ -358,10 +326,6 @@ public:
             stan::math::fill(absence, std::numeric_limits<int>::min());
             num_constrain_l = int(0);
             stan::math::fill(num_constrain_l, std::numeric_limits<int>::min());
-            num_constrain_sa = int(0);
-            stan::math::fill(num_constrain_sa, std::numeric_limits<int>::min());
-            num_constrain_sr = int(0);
-            stan::math::fill(num_constrain_sr, std::numeric_limits<int>::min());
             validate_non_negative_index("Y_new", "N", N);
             Y_new = std::vector<int>(N,int(0));
             stan::math::fill(Y_new, std::numeric_limits<int>::min());
@@ -405,78 +369,24 @@ public:
                     }
                 }
             }
-            if (as_bool(logical_eq(constraint_type,1))) {
-
-                if (as_bool(logical_eq(constrain_par,1))) {
-
-                    stan::math::assign(num_constrain_l, num_fix_low);
-                    stan::math::assign(num_constrain_sr, 0);
-                    stan::math::assign(num_constrain_sa, 0);
-                } else if (as_bool(logical_eq(constrain_par,2))) {
-
-                    stan::math::assign(num_constrain_l, 0);
-                    stan::math::assign(num_constrain_sr, 0);
-                    stan::math::assign(num_constrain_sa, num_fix_low);
-                } else if (as_bool(logical_eq(constrain_par,3))) {
-
-                    stan::math::assign(num_constrain_l, 0);
-                    stan::math::assign(num_constrain_sr, num_fix_low);
-                    stan::math::assign(num_constrain_sa, 0);
-                }
-            } else if (as_bool((primitive_value(logical_eq(constraint_type,2)) || primitive_value(logical_eq(constraint_type,4))))) {
-
-                if (as_bool(logical_eq(constrain_par,1))) {
-
-                    stan::math::assign(num_constrain_l, num_fix_high);
-                    stan::math::assign(num_constrain_sr, 0);
-                    stan::math::assign(num_constrain_sa, 0);
-                } else if (as_bool(logical_eq(constrain_par,2))) {
-
-                    stan::math::assign(num_constrain_l, 0);
-                    stan::math::assign(num_constrain_sr, 0);
-                    stan::math::assign(num_constrain_sa, num_fix_high);
-                } else if (as_bool(logical_eq(constrain_par,3))) {
-
-                    stan::math::assign(num_constrain_l, 0);
-                    stan::math::assign(num_constrain_sr, num_fix_high);
-                    stan::math::assign(num_constrain_sa, 0);
-                }
-            } else if (as_bool(logical_eq(constraint_type,3))) {
-
-                if (as_bool(logical_eq(constrain_par,1))) {
-
-                    stan::math::assign(num_constrain_l, (num_fix_high + num_fix_low));
-                    stan::math::assign(num_constrain_sr, 0);
-                    stan::math::assign(num_constrain_sa, 0);
-                } else if (as_bool(logical_eq(constrain_par,2))) {
-
-                    stan::math::assign(num_constrain_l, 0);
-                    stan::math::assign(num_constrain_sr, 0);
-                    stan::math::assign(num_constrain_sa, (num_fix_high + num_fix_low));
-                } else if (as_bool(logical_eq(constrain_par,3))) {
-
-                    stan::math::assign(num_constrain_l, 0);
-                    stan::math::assign(num_constrain_sr, (num_fix_high + num_fix_low));
-                    stan::math::assign(num_constrain_sa, 0);
-                }
-            }
+            stan::math::assign(num_constrain_l, (num_fix_high + num_fix_low));
 
             // validate transformed data
 
             // validate, set parameter ranges
             num_params_r__ = 0U;
             param_ranges_i__.clear();
-            validate_non_negative_index("sigma_abs_free", "(num_bills - num_constrain_sa)", (num_bills - num_constrain_sa));
-            num_params_r__ += (num_bills - num_constrain_sa);
-            validate_non_negative_index("L_free", "((num_legis - num_fix_high) - num_fix_low)", ((num_legis - num_fix_high) - num_fix_low));
-            num_params_r__ += ((num_legis - num_fix_high) - num_fix_low);
+            validate_non_negative_index("sigma_abs_free", "num_bills", num_bills);
+            num_params_r__ += num_bills;
+            validate_non_negative_index("L_free", "(num_legis - num_constrain_l)", (num_legis - num_constrain_l));
+            num_params_r__ += (num_legis - num_constrain_l);
             validate_non_negative_index("L_tp1", "num_legis", num_legis);
             validate_non_negative_index("L_tp1", "T", T);
             num_params_r__ += num_legis * T;
             validate_non_negative_index("L_AR1", "num_legis", num_legis);
             num_params_r__ += num_legis;
-            validate_non_negative_index("sigma_reg_free", "(num_bills - num_constrain_sr)", (num_bills - num_constrain_sr));
-            num_params_r__ += (num_bills - num_constrain_sr);
+            validate_non_negative_index("sigma_reg_free", "num_bills", num_bills);
+            num_params_r__ += num_bills;
             validate_non_negative_index("restrict_high", "num_fix_high", num_fix_high);
             num_params_r__ += num_fix_high;
             validate_non_negative_index("pinned_pars", "num_fix_high", num_fix_high);
@@ -531,10 +441,10 @@ public:
             throw std::runtime_error("variable sigma_abs_free missing");
         vals_r__ = context__.vals_r("sigma_abs_free");
         pos__ = 0U;
-        validate_non_negative_index("sigma_abs_free", "(num_bills - num_constrain_sa)", (num_bills - num_constrain_sa));
-        context__.validate_dims("initialization", "sigma_abs_free", "vector_d", context__.to_vec((num_bills - num_constrain_sa)));
-        vector_d sigma_abs_free(static_cast<Eigen::VectorXd::Index>((num_bills - num_constrain_sa)));
-        for (int j1__ = 0U; j1__ < (num_bills - num_constrain_sa); ++j1__)
+        validate_non_negative_index("sigma_abs_free", "num_bills", num_bills);
+        context__.validate_dims("initialization", "sigma_abs_free", "vector_d", context__.to_vec(num_bills));
+        vector_d sigma_abs_free(static_cast<Eigen::VectorXd::Index>(num_bills));
+        for (int j1__ = 0U; j1__ < num_bills; ++j1__)
             sigma_abs_free(j1__) = vals_r__[pos__++];
         try {
             writer__.vector_unconstrain(sigma_abs_free);
@@ -546,10 +456,10 @@ public:
             throw std::runtime_error("variable L_free missing");
         vals_r__ = context__.vals_r("L_free");
         pos__ = 0U;
-        validate_non_negative_index("L_free", "((num_legis - num_fix_high) - num_fix_low)", ((num_legis - num_fix_high) - num_fix_low));
-        context__.validate_dims("initialization", "L_free", "vector_d", context__.to_vec(((num_legis - num_fix_high) - num_fix_low)));
-        vector_d L_free(static_cast<Eigen::VectorXd::Index>(((num_legis - num_fix_high) - num_fix_low)));
-        for (int j1__ = 0U; j1__ < ((num_legis - num_fix_high) - num_fix_low); ++j1__)
+        validate_non_negative_index("L_free", "(num_legis - num_constrain_l)", (num_legis - num_constrain_l));
+        context__.validate_dims("initialization", "L_free", "vector_d", context__.to_vec((num_legis - num_constrain_l)));
+        vector_d L_free(static_cast<Eigen::VectorXd::Index>((num_legis - num_constrain_l)));
+        for (int j1__ = 0U; j1__ < (num_legis - num_constrain_l); ++j1__)
             L_free(j1__) = vals_r__[pos__++];
         try {
             writer__.vector_unconstrain(L_free);
@@ -594,10 +504,10 @@ public:
             throw std::runtime_error("variable sigma_reg_free missing");
         vals_r__ = context__.vals_r("sigma_reg_free");
         pos__ = 0U;
-        validate_non_negative_index("sigma_reg_free", "(num_bills - num_constrain_sr)", (num_bills - num_constrain_sr));
-        context__.validate_dims("initialization", "sigma_reg_free", "vector_d", context__.to_vec((num_bills - num_constrain_sr)));
-        vector_d sigma_reg_free(static_cast<Eigen::VectorXd::Index>((num_bills - num_constrain_sr)));
-        for (int j1__ = 0U; j1__ < (num_bills - num_constrain_sr); ++j1__)
+        validate_non_negative_index("sigma_reg_free", "num_bills", num_bills);
+        context__.validate_dims("initialization", "sigma_reg_free", "vector_d", context__.to_vec(num_bills));
+        vector_d sigma_reg_free(static_cast<Eigen::VectorXd::Index>(num_bills));
+        for (int j1__ = 0U; j1__ < num_bills; ++j1__)
             sigma_reg_free(j1__) = vals_r__[pos__++];
         try {
             writer__.vector_unconstrain(sigma_reg_free);
@@ -866,16 +776,16 @@ public:
             Eigen::Matrix<T__,Eigen::Dynamic,1>  sigma_abs_free;
             (void) sigma_abs_free;  // dummy to suppress unused var warning
             if (jacobian__)
-                sigma_abs_free = in__.vector_constrain((num_bills - num_constrain_sa),lp__);
+                sigma_abs_free = in__.vector_constrain(num_bills,lp__);
             else
-                sigma_abs_free = in__.vector_constrain((num_bills - num_constrain_sa));
+                sigma_abs_free = in__.vector_constrain(num_bills);
 
             Eigen::Matrix<T__,Eigen::Dynamic,1>  L_free;
             (void) L_free;  // dummy to suppress unused var warning
             if (jacobian__)
-                L_free = in__.vector_constrain(((num_legis - num_fix_high) - num_fix_low),lp__);
+                L_free = in__.vector_constrain((num_legis - num_constrain_l),lp__);
             else
-                L_free = in__.vector_constrain(((num_legis - num_fix_high) - num_fix_low));
+                L_free = in__.vector_constrain((num_legis - num_constrain_l));
 
             vector<Eigen::Matrix<T__,Eigen::Dynamic,1> > L_tp1;
             size_t dim_L_tp1_0__ = T;
@@ -897,9 +807,9 @@ public:
             Eigen::Matrix<T__,Eigen::Dynamic,1>  sigma_reg_free;
             (void) sigma_reg_free;  // dummy to suppress unused var warning
             if (jacobian__)
-                sigma_reg_free = in__.vector_constrain((num_bills - num_constrain_sr),lp__);
+                sigma_reg_free = in__.vector_constrain(num_bills,lp__);
             else
-                sigma_reg_free = in__.vector_constrain((num_bills - num_constrain_sr));
+                sigma_reg_free = in__.vector_constrain(num_bills);
 
             Eigen::Matrix<T__,Eigen::Dynamic,1>  restrict_high;
             (void) restrict_high;  // dummy to suppress unused var warning
@@ -1373,10 +1283,10 @@ public:
         dimss__.resize(0);
         std::vector<size_t> dims__;
         dims__.resize(0);
-        dims__.push_back((num_bills - num_constrain_sa));
+        dims__.push_back(num_bills);
         dimss__.push_back(dims__);
         dims__.resize(0);
-        dims__.push_back(((num_legis - num_fix_high) - num_fix_low));
+        dims__.push_back((num_legis - num_constrain_l));
         dimss__.push_back(dims__);
         dims__.resize(0);
         dims__.push_back(T);
@@ -1386,7 +1296,7 @@ public:
         dims__.push_back(num_legis);
         dimss__.push_back(dims__);
         dims__.resize(0);
-        dims__.push_back((num_bills - num_constrain_sr));
+        dims__.push_back(num_bills);
         dimss__.push_back(dims__);
         dims__.resize(0);
         dims__.push_back(num_fix_high);
@@ -1466,15 +1376,15 @@ public:
         static const char* function__ = "model_irt_standard_namespace::write_array";
         (void) function__;  // dummy to suppress unused var warning
         // read-transform, write parameters
-        vector_d sigma_abs_free = in__.vector_constrain((num_bills - num_constrain_sa));
-        vector_d L_free = in__.vector_constrain(((num_legis - num_fix_high) - num_fix_low));
+        vector_d sigma_abs_free = in__.vector_constrain(num_bills);
+        vector_d L_free = in__.vector_constrain((num_legis - num_constrain_l));
         vector<vector_d> L_tp1;
         size_t dim_L_tp1_0__ = T;
         for (size_t k_0__ = 0; k_0__ < dim_L_tp1_0__; ++k_0__) {
             L_tp1.push_back(in__.vector_constrain(num_legis));
         }
         vector_d L_AR1 = in__.vector_constrain(num_legis);
-        vector_d sigma_reg_free = in__.vector_constrain((num_bills - num_constrain_sr));
+        vector_d sigma_reg_free = in__.vector_constrain(num_bills);
         vector_d restrict_high = in__.vector_lb_constrain(restrict_high_bar,num_fix_high);
         vector_d pinned_pars = in__.vector_constrain(num_fix_high);
         vector_d legis_x = in__.vector_constrain(LX);
@@ -1498,10 +1408,10 @@ public:
         }
         double exog_param = in__.scalar_constrain();
         double time_sd = in__.scalar_lb_constrain(0);
-            for (int k_0__ = 0; k_0__ < (num_bills - num_constrain_sa); ++k_0__) {
+            for (int k_0__ = 0; k_0__ < num_bills; ++k_0__) {
             vars__.push_back(sigma_abs_free[k_0__]);
             }
-            for (int k_0__ = 0; k_0__ < ((num_legis - num_fix_high) - num_fix_low); ++k_0__) {
+            for (int k_0__ = 0; k_0__ < (num_legis - num_constrain_l); ++k_0__) {
             vars__.push_back(L_free[k_0__]);
             }
             for (int k_1__ = 0; k_1__ < num_legis; ++k_1__) {
@@ -1512,7 +1422,7 @@ public:
             for (int k_0__ = 0; k_0__ < num_legis; ++k_0__) {
             vars__.push_back(L_AR1[k_0__]);
             }
-            for (int k_0__ = 0; k_0__ < (num_bills - num_constrain_sr); ++k_0__) {
+            for (int k_0__ = 0; k_0__ < num_bills; ++k_0__) {
             vars__.push_back(sigma_reg_free[k_0__]);
             }
             for (int k_0__ = 0; k_0__ < num_fix_high; ++k_0__) {
@@ -1680,12 +1590,12 @@ public:
                                  bool include_tparams__ = true,
                                  bool include_gqs__ = true) const {
         std::stringstream param_name_stream__;
-        for (int k_0__ = 1; k_0__ <= (num_bills - num_constrain_sa); ++k_0__) {
+        for (int k_0__ = 1; k_0__ <= num_bills; ++k_0__) {
             param_name_stream__.str(std::string());
             param_name_stream__ << "sigma_abs_free" << '.' << k_0__;
             param_names__.push_back(param_name_stream__.str());
         }
-        for (int k_0__ = 1; k_0__ <= ((num_legis - num_fix_high) - num_fix_low); ++k_0__) {
+        for (int k_0__ = 1; k_0__ <= (num_legis - num_constrain_l); ++k_0__) {
             param_name_stream__.str(std::string());
             param_name_stream__ << "L_free" << '.' << k_0__;
             param_names__.push_back(param_name_stream__.str());
@@ -1702,7 +1612,7 @@ public:
             param_name_stream__ << "L_AR1" << '.' << k_0__;
             param_names__.push_back(param_name_stream__.str());
         }
-        for (int k_0__ = 1; k_0__ <= (num_bills - num_constrain_sr); ++k_0__) {
+        for (int k_0__ = 1; k_0__ <= num_bills; ++k_0__) {
             param_name_stream__.str(std::string());
             param_name_stream__ << "sigma_reg_free" << '.' << k_0__;
             param_names__.push_back(param_name_stream__.str());
@@ -1823,12 +1733,12 @@ public:
                                    bool include_tparams__ = true,
                                    bool include_gqs__ = true) const {
         std::stringstream param_name_stream__;
-        for (int k_0__ = 1; k_0__ <= (num_bills - num_constrain_sa); ++k_0__) {
+        for (int k_0__ = 1; k_0__ <= num_bills; ++k_0__) {
             param_name_stream__.str(std::string());
             param_name_stream__ << "sigma_abs_free" << '.' << k_0__;
             param_names__.push_back(param_name_stream__.str());
         }
-        for (int k_0__ = 1; k_0__ <= ((num_legis - num_fix_high) - num_fix_low); ++k_0__) {
+        for (int k_0__ = 1; k_0__ <= (num_legis - num_constrain_l); ++k_0__) {
             param_name_stream__.str(std::string());
             param_name_stream__ << "L_free" << '.' << k_0__;
             param_names__.push_back(param_name_stream__.str());
@@ -1845,7 +1755,7 @@ public:
             param_name_stream__ << "L_AR1" << '.' << k_0__;
             param_names__.push_back(param_name_stream__.str());
         }
-        for (int k_0__ = 1; k_0__ <= (num_bills - num_constrain_sr); ++k_0__) {
+        for (int k_0__ = 1; k_0__ <= num_bills; ++k_0__) {
             param_name_stream__.str(std::string());
             param_name_stream__ << "sigma_reg_free" << '.' << k_0__;
             param_names__.push_back(param_name_stream__.str());
@@ -1992,7 +1902,7 @@ static int current_statement_begin__;
 stan::io::program_reader prog_reader__() {
     stan::io::program_reader reader;
     reader.add_event(0, 0, "start", "model_irt_standard_noid");
-    reader.add_event(348, 348, "end", "model_irt_standard_noid");
+    reader.add_event(345, 345, "end", "model_irt_standard_noid");
     return reader;
 }
 
@@ -2002,7 +1912,6 @@ private:
     int T;
     vector<int> Y;
     int model_type;
-    int hier_type;
     int LX;
     int SRX;
     int SAX;
@@ -2087,11 +1996,6 @@ public:
             vals_i__ = context__.vals_i("model_type");
             pos__ = 0;
             model_type = vals_i__[pos__++];
-            context__.validate_dims("data initialization", "hier_type", "int", context__.to_vec());
-            hier_type = int(0);
-            vals_i__ = context__.vals_i("hier_type");
-            pos__ = 0;
-            hier_type = vals_i__[pos__++];
             context__.validate_dims("data initialization", "LX", "int", context__.to_vec());
             LX = int(0);
             vals_i__ = context__.vals_i("LX");

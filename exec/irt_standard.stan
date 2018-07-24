@@ -16,8 +16,6 @@ data {
   7= ZIP IRT
   */
   int model_type;
-  
-  int hier_type;
   int LX;
   int SRX;
   int SAX;
@@ -25,11 +23,8 @@ data {
   // int ar_lag;
   // int ma_lag;
   // int i_lag;
-  // int with_absence;
   int<lower=1> num_legis;
   int<lower=1> num_bills;
-  int constrain_par;
-  int constraint_type;
   int num_fix_high;
   int num_fix_low;
   int ll[N];
@@ -49,16 +44,12 @@ data {
   real restrict_sd;
   real restrict_low_bar;
   real restrict_high_bar;
-  real restrict_alpha;
-  real restrict_beta;
 }
 
 transformed data {
 	int m;                         // # steps
 	int absence[N]; // need to create absence indicator
 	int num_constrain_l;
-	int num_constrain_sa;
-	int num_constrain_sr;
 	int Y_new[N];
 	if(model_type==4||model_type==6) {
 	  //count down one if model is inflated
@@ -97,11 +88,11 @@ transformed data {
 }
 
 parameters {
-  vector[num_bills-num_constrain_sa] sigma_abs_free;
-  vector[num_legis-num_fix_high-num_fix_low] L_free; // first T=1 params to constrain
+  vector[num_bills] sigma_abs_free;
+  vector[num_legis-num_constrain_l] L_free; // first T=1 params to constrain
   vector[num_legis] L_tp1[T]; // all other params can float
   vector[num_legis] L_AR1; // AR-1 parameters for AR-1 model
-  vector[num_bills-num_constrain_sr] sigma_reg_free;
+  vector[num_bills] sigma_reg_free;
   vector<lower=restrict_high_bar>[num_fix_high] restrict_high;
   vector[num_fix_high] pinned_pars;
   vector[LX] legis_x;

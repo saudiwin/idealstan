@@ -402,17 +402,10 @@ id_make <- function(score_data=NULL,simul_data=NULL,
 #' See \code{\link[rstan]{stan}} for more info.
 #' @param ncores The number of cores in your computer to use for parallel processing in the Stan engine. 
 #' See \code{\link[rstan]{stan}} for more info.
-#' @param fixtype Sets the particular kind of identification used on the model, could be one of 'vb','constrained' or 'pinned'.
+#' @param fixtype Sets the particular kind of identification used on the model, could be one of 'vb' or 'constrained'.
 #'  See details for more information.
-#' @param restrict_type Determines whether constraints will only be set on one direction 'constrain_oneway' or both high/low
-#' constrains 'constrain_twoway'. Ignored if \code{fixtype} is equal to 'pinned'.
-#' @param restrict_params Determines which parameters in the model are used for identification. If \code{fixtype} is 'vb', can be
-#' either 'person' (person/legislator ideal points) or 'items' (discrimination parameters for items/bills). Otherwise, the value must be one
-#' of the available classes of parameters: 'person' for persons/legislators, 'discrim_miss' for the missing-inflated item/bill discrimination
-#' parameters, or 'discrim_reg' for the non-inflated item/bill discrimination parameters.
-#' @param auto_id If \code{TRUE}, a variational Bayesian version of your model will be run using \code{\link[rstan]{vb}} in a 
-#' non-identified form. Depending on what is set via \code{restrict_type} and \code{restrict_params}, bills/items or 
-#' persons/legislators will be used to constrain and identify the model. 
+#' @param id_diff The difference between the constrained parameters (person/legislator ideal points) used to identify the model. 
+#' Set at 4 as a standard value but can be changed to any arbitrary number without affecting model results besides re-scaling.
 #' @param use_ar If \code{TRUE}, will estimate time-varying parameters for legislators/persons with an AR(1) prior (implying 
 #' the ideal points are stationary over time). Otherwise the model
 #'  will estimate a random-walk process for the ideal points.
@@ -431,10 +424,6 @@ id_make <- function(score_data=NULL,simul_data=NULL,
 #' @param restrict_sd Set the prior standard deviation for constrained parameters
 #' @param restrict_low_bar Set the constraint threshold for constrained parameters (parameter must be lower than this bar and no greater than zero)
 #' @param restrict_high_bar Set the constraint threshold for constrained parameters (parameter must be higher than this bar and no less than zero)
-#' @param restrict_alpha This is the scale (alpha) parameter passed to the gamma prior if exactly two item/person parameters are constrained, each high or low. The gamma prior pushes these two
-#' polar parameters apart. A higher value will push these two poles farther apart, which will help identification. 
-#' @param restrict_beta The beta (shape) parameter passed to the gamma prior if exactly two item/person parameters are constrained, each high or low. The gamma prior pushes these two
-#' polar parameters apart.
 #' @param ... Additional parameters passed on to Stan's sampling engine. See \code{\link[rstan]{stan}} for more information.
 #' @return A fitted \code{\link{idealstan}} object that contains posterior samples of all parameters either via full Bayesian inference
 #' or a variational approximation if \code{use_vb} is set to \code{TRUE}. This object can then be passed to the plotting functions for further analysis.
@@ -520,10 +509,10 @@ id_make <- function(score_data=NULL,simul_data=NULL,
 #' @export
 id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=FALSE,
                            subset_group=NULL,subset_person=NULL,sample_size=20,
-                           nchains=4,niters=2000,use_vb=FALSE,nfix=3,restrict_params='person',
-                           pin_vals=NULL,restrict_ind_high=NULL,
+                           nchains=4,niters=2000,use_vb=FALSE,nfix=3,
+                           restrict_ind_high=NULL,
+                          id_diff=4,
                            restrict_ind_low=NULL,
-                           restrict_type='constrain_twoway',
                            fixtype='vb',warmup=floor(niters/2),ncores=4,
                            auto_id=FALSE,
                           use_ar=FALSE,
@@ -536,8 +525,6 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
                            restrict_sd=4,
                            restrict_low_bar=0,
                         restrict_high_bar=0,
-                        restrict_alpha=4,
-                        restrict_beta=1,
                            ...) {
 
   
@@ -608,14 +595,11 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
                     restrict_sd=restrict_sd,
                     restrict_low_bar=restrict_low_bar,
                     restrict_high_bar=restrict_high_bar,
-                    restrict_alpha=restrict_alpha,
-                    restrict_beta=restrict_beta,
                     use_ar=as.integer(use_ar))
   
   idealdata <- id_model(object=idealdata,fixtype=fixtype,model_type=model_type,this_data=this_data,
-                        nfix=nfix,restrict_params=restrict_params,restrict_ind_high=restrict_ind_high,
+                        nfix=nfix,restrict_ind_high=restrict_ind_high,
                         restrict_ind_low=restrict_ind_low,
-                        restrict_type=restrict_type,
                         auto_id=auto_id,
                         ncores=ncores,
                         use_groups=use_groups)
@@ -648,24 +632,15 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
   billpoints <- billpoints[remove_nas]
   timepoints <- timepoints[remove_nas]
 
-  pin_vals <- if(any(is.null(pin_vals))) {
-    rep(1,idealdata@restrict_num_high)
-  } else {
-    pin_vals
-  }
-  dim(pin_vals) <- idealdata@restrict_num_high
   this_data <- list(N=length(Y),
                     T=max(idealdata@time_vals),
                     Y=Y,
-                    hier_type=hier_type,
                     num_legis=length(unique(num_legis)),
                     num_bills=num_bills,
                     ll=legispoints,
                     bb=billpoints,
                     num_fix_high=idealdata@restrict_num_high,
                     num_fix_low=idealdata@restrict_num_low,
-                    constrain_par=idealdata@param_fix,
-                    constraint_type=idealdata@constraint_type,
                     LX=dim(idealdata@person_cov)[3],
                     SRX=ncol(idealdata@item_cov),
                     SAX=ncol(idealdata@item_cov_miss),
@@ -680,7 +655,6 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
                     exog_data=idealdata@exog_data[remove_nas],
                     time=timepoints,
                     model_type=model_type,
-                    pin_vals=pin_vals,
                     discrim_reg_sd=discrim_reg_sd,
                     discrim_abs_sd=discrim_miss_sd,
                     diff_reg_sd=diff_reg_sd,
@@ -689,8 +663,6 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
                     restrict_sd=restrict_sd,
                     restrict_low_bar=restrict_low_bar,
                     restrict_high_bar=restrict_high_bar,
-                    restrict_alpha=restrict_alpha,
-                    restrict_beta=restrict_beta,
                     use_ar=as.integer(use_ar))
 
   outobj <- sample_model(object=idealdata,nchains=nchains,niters=niters,warmup=warmup,ncores=ncores,
