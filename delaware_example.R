@@ -17,16 +17,17 @@ to_ideal <- id_make(st.rc,ordinal=F,inflate=T,time='separate',include_pres=T)
 # now see if we can estimate something
 # random walk prior
 
-estimate_all <- id_estimate(to_ideal,use_vb = T,
+estimate_rw <- id_estimate(to_ideal,use_vb = T,model_type = 2,
                             use_groups = T,nfix = 1,restrict_type='constrain_twoway',
                             restrict_ind_high = 2,
                             restrict_ind_low=1,
+                            time_sd=15,
                             fixtype='vb')
 
 # we can get all estimated parameters with summary. The legislator ideal points will be
 # L_tp1[t,n]
 
-all_params <- summary(estimate_all,pars='L_tp1')
+all_params <- summary(estimate_rw,pars='L_tp1')
 
 # look at plot 
 
@@ -36,7 +37,12 @@ all_params <- all_params %>% mutate(param_id=stringr::str_extract(parameters,'[0
                       time=stringr::str_extract(parameters,'\\[[0-9]+'),
                       time=as.numeric(stringr::str_extract(time,'[0-9]+')))
 
-all_params %>% 
+all_params <- left_join(all_params,
+                        data_frame(time=unique(to_ideal@time_vals),
+                                   time_vals=unique(to_ideal@time)))
+
+
+rw_plot <- all_params %>% 
   filter(param_id!='X') %>% 
   ggplot(aes(y=posterior_median,x=time)) +
   geom_line(aes(colour=param_id),size=1) +
@@ -47,8 +53,9 @@ all_params %>%
 
 # now try with an AR(1) (stationary) model
 
-estimate_all <- id_estimate(to_ideal,use_vb = T,
+estimate_ar <- id_estimate(to_ideal,use_vb = T,
                             use_groups = T,nfix = 1,restrict_type='constrain_twoway',
+                            time_sd=10,
                             fixtype='constrained',
                             restrict_ind_high = 2,
                             restrict_ind_low=1,
@@ -57,7 +64,7 @@ estimate_all <- id_estimate(to_ideal,use_vb = T,
 # we can get all estimated parameters with summary. The legislator ideal points will be
 # L_tp1[t,n]
 
-all_params <- summary(estimate_all,pars='L_tp1')
+all_params <- summary(estimate_ar,pars='L_tp1')
 
 # look at plot 
 
@@ -67,12 +74,18 @@ all_params <- all_params %>% mutate(param_id=stringr::str_extract(parameters,'[0
                                     time=stringr::str_extract(parameters,'\\[[0-9]+'),
                                     time=as.numeric(stringr::str_extract(time,'[0-9]+')))
 
-all_params %>% 
+all_params <- left_join(all_params,
+                        data_frame(time=unique(to_ideal@time_vals),
+                                   time_vals=unique(to_ideal@time)))
+
+ar_plot <- all_params %>% 
   filter(param_id!='X') %>% 
-  ggplot(aes(y=posterior_median,x=time)) +
+  ggplot(aes(y=posterior_median,x=time_vals)) +
   geom_line(aes(colour=param_id),size=1) +
   geom_ribbon(aes(ymin=Prob.025,
                   ymax=Prob.975,
                   colour=param_id),
               alpha=0.3)
 
+gridExtra::grid.arrange(ar_plot,rw_plot)
+ggsave('ar_rw_comparison.png')

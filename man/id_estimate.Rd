@@ -10,7 +10,7 @@ id_estimate(idealdata = NULL, model_type = 2, use_subset = FALSE,
   nfix = 3, restrict_ind_high = NULL, id_diff = 4,
   restrict_ind_low = NULL, fixtype = "vb", warmup = floor(niters/2),
   ncores = 4, auto_id = FALSE, use_ar = FALSE, use_groups = FALSE,
-  discrim_reg_sd = 3, discrim_miss_sd = 3, person_sd = 1,
+  discrim_reg_sd = 3, discrim_miss_sd = 3, person_sd = 1, time_sd = 4,
   diff_reg_sd = 4, diff_miss_sd = 4, restrict_sd = 4,
   restrict_low_bar = 0, restrict_high_bar = 0, ...)
 }
@@ -71,6 +71,10 @@ estimated instead of individual parameters.}
 \item{discrim_miss_sd}{Set the prior standard deviation of the bimodal prior for the discrimination parameters for the inflated model.}
 
 \item{person_sd}{Set the prior standard deviation for the legislators (persons) parameters}
+
+\item{time_sd}{The precision (inverse variance) of the over-time component of the person/legislator
+parameters. A higher value will allow for less over-time variation (useful if estimates bounce too much). 
+Default is 4.}
 
 \item{diff_reg_sd}{Set the prior standard deviation for the bill (item) intercepts for the non-inflated model.}
 
