@@ -7,14 +7,12 @@
 id_estimate(idealdata = NULL, model_type = 2, use_subset = FALSE,
   sample_it = FALSE, subset_group = NULL, subset_person = NULL,
   sample_size = 20, nchains = 4, niters = 2000, use_vb = FALSE,
-  nfix = 3, restrict_params = "person", pin_vals = NULL,
-  restrict_ind_high = NULL, restrict_ind_low = NULL,
-  restrict_type = "constrain_twoway", fixtype = "vb",
-  warmup = floor(niters/2), ncores = 4, auto_id = FALSE,
+  nfix = 3, restrict_ind_high = NULL, id_diff = 4,
+  restrict_ind_low = NULL, fixtype = "vb", warmup = floor(niters/2),
+  ncores = 4, auto_id = FALSE, use_ar = FALSE, use_groups = FALSE,
   discrim_reg_sd = 3, discrim_miss_sd = 3, person_sd = 1,
   diff_reg_sd = 4, diff_miss_sd = 4, restrict_sd = 4,
-  restrict_low_bar = 0, restrict_high_bar = 0, restrict_alpha = 4,
-  restrict_beta = 1, ...)
+  restrict_low_bar = 0, restrict_high_bar = 0, ...)
 }
 \arguments{
 \item{idealdata}{An object produced by the \code{\link{id_make}} containing a score/vote matrix for use for estimation & plotting}
@@ -44,23 +42,15 @@ Cons: it's not quite as accurate. See \code{\link[rstan]{vb}} for more info.}
 
 \item{nfix}{An integer specifying the number of parameters to constrain (for both high and low) if \code{fixtype} is set to \code{'vb'}}
 
-\item{restrict_params}{Determines which parameters in the model are used for identification. If \code{fixtype} is 'vb', can be
-either 'person' (person/legislator ideal points) or 'items' (discrimination parameters for items/bills). Otherwise, the value must be one
-of the available classes of parameters: 'person' for persons/legislators, 'discrim_miss' for the missing-inflated item/bill discrimination
-parameters, or 'discrim_reg' for the non-inflated item/bill discrimination parameters.}
-
-\item{pin_vals}{If \code{fixtype} is set to 'pinned', then a vector of numeric values of which to pin the legislators/persons or 
-bills/items should be given.}
-
 \item{restrict_ind_high}{If \code{fixtype} is not "vb", the particular indices of legislators/persons or bills/items to constrain high}
+
+\item{id_diff}{The difference between the constrained parameters (person/legislator ideal points) used to identify the model. 
+Set at 4 as a standard value but can be changed to any arbitrary number without affecting model results besides re-scaling.}
 
 \item{restrict_ind_low}{If \code{fixtype} is not "vb", the particular indices of legislators/persons or bills/items to constrain low. 
 (Note: not used if values are pinned).}
 
-\item{restrict_type}{Determines whether constraints will only be set on one direction 'constrain_oneway' or both high/low
-constrains 'constrain_twoway'. Ignored if \code{fixtype} is equal to 'pinned'.}
-
-\item{fixtype}{Sets the particular kind of identification used on the model, could be one of 'vb','constrained' or 'pinned'.
+\item{fixtype}{Sets the particular kind of identification used on the model, could be one of 'vb' or 'constrained'.
 See details for more information.}
 
 \item{warmup}{The number of iterations to use to calibrate Stan's sampler on a given model. Shouldn't be less than 100. 
@@ -69,9 +59,12 @@ See \code{\link[rstan]{stan}} for more info.}
 \item{ncores}{The number of cores in your computer to use for parallel processing in the Stan engine. 
 See \code{\link[rstan]{stan}} for more info.}
 
-\item{auto_id}{If \code{TRUE}, a variational Bayesian version of your model will be run using \code{\link[rstan]{vb}} in a 
-non-identified form. Depending on what is set via \code{restrict_type} and \code{restrict_params}, bills/items or 
-persons/legislators will be used to constrain and identify the model.}
+\item{use_ar}{If \code{TRUE}, will estimate time-varying parameters for legislators/persons with an AR(1) prior (implying 
+the ideal points are stationary over time). Otherwise the model
+ will estimate a random-walk process for the ideal points.}
+
+\item{use_groups}{If \code{TRUE}, group parameters from the person/legis data given in \code{\link{id_make}} will be 
+estimated instead of individual parameters.}
 
 \item{discrim_reg_sd}{Set the prior standard deviation of the bimodal prior for the discrimination parameters for the non-inflated model.}
 
@@ -88,12 +81,6 @@ persons/legislators will be used to constrain and identify the model.}
 \item{restrict_low_bar}{Set the constraint threshold for constrained parameters (parameter must be lower than this bar and no greater than zero)}
 
 \item{restrict_high_bar}{Set the constraint threshold for constrained parameters (parameter must be higher than this bar and no less than zero)}
-
-\item{restrict_alpha}{This is the scale (alpha) parameter passed to the gamma prior if exactly two item/person parameters are constrained, each high or low. The gamma prior pushes these two
-polar parameters apart. A higher value will push these two poles farther apart, which will help identification.}
-
-\item{restrict_beta}{The beta (shape) parameter passed to the gamma prior if exactly two item/person parameters are constrained, each high or low. The gamma prior pushes these two
-polar parameters apart.}
 
 \item{...}{Additional parameters passed on to Stan's sampling engine. See \code{\link[rstan]{stan}} for more information.}
 }

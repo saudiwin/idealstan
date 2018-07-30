@@ -87,21 +87,38 @@ check_ideal <- group_by(to_ideal,law_unique,legis_names) %>%
   count %>% filter(n>1)
 
 vote_matrix <- dplyr::select(to_ideal_wide,-legis_names) %>% as.matrix
+
+# need to get time values 
+
+time <- lubridate::ymd(str_extract(colnames(vote_matrix),'[0-9]{4}-[0-9]{2}-[0-9]{2}'))
+# standardize dates by converting all days to first day of month
+day(time) <- 1
+time_vals <- as.numeric(factor(as.numeric(time)))
+
 row.names(vote_matrix) <- to_ideal_wide$legis_names
 colnames(vote_matrix) <- paste0('Bill_',1:ncol(vote_matrix))
 arp_ideal_data <- id_make(score_data = vote_matrix,
                           person_data=select(to_ideal_wide,legis_names),
-                          miss_val=4L)
+                          miss_val=4L,time=time) 
 
 # now see if we can estimate something
 # random walk prior
 
-estimate_all <- id_estimate(arp_ideal_data,use_vb = T,
+estimate_all <- id_estimate(arp_ideal_data,use_vb = F,
                             use_groups = F,nfix = 1,
                             restrict_ind_high = 2,
                             restrict_ind_low=1,
                             model_type=4,
+                            use_ar=T,
+                            id_diff=20,
+                            time_sd=20,
                             fixtype='vb')
+
+
+
+id_plot_legis_dyn(estimate_all,person_labels = 'legis_names',highlight = 'Rim Mahjoub')
+
+# plot the bugger
 
 # we can get all estimated parameters with summary. The legislator ideal points will be
 # L_tp1[t,n]

@@ -374,7 +374,8 @@ id_plot_legis <- function(object,return_data=FALSE,item_plot=NULL,
 #' @param text_size_label ggplot2 text size for legislator labels
 #' @param text_size_group ggplot2 text size for group text used for points
 #' @param line_size Sets the size of the line of the time-varying ideal points.
-#' @param person_labels if \code{TRUE}, use the person.names column to plot labels for the person (legislator) ideal points
+#' @param person_labels character string for the name of the column in the person/legislator data frame 
+#' with the names of the persons/legislators. Defaults to \code{"person.name"}
 #' @param group_labels if \code{TRUE}, use the group column to plot text markers for the group (parties) from the person/legislator data
 #' @param highlight A character referring to one of the persons in \code{person_labels} that the plot can highlight relative to other persons
 #' @param person_ci_alpha The transparency level of ribbon confidence interval around the time-varying ideal points

@@ -5,11 +5,12 @@
 \title{Create data to run IRT model}
 \usage{
 id_make(score_data = NULL, simul_data = NULL, person_cov = NULL,
-  item_cov = NULL, item_cov_miss = NULL, person_data = NULL,
-  item_data = NULL, miss_val = NA, high_val = 3L, low_val = 1L,
-  middle_val = 2L, ordinal = TRUE, time = NULL,
-  outcome_label_type = "votes", exclude_level = NULL, inflate = TRUE,
-  simulation = FALSE, include_pres = FALSE)
+  item_cov = NULL, miss_cov = NULL, miss_exog_val = NULL,
+  item_cov_miss = NULL, person_data = data_frame(), item_data = NULL,
+  miss_val = NA, high_val = 3L, low_val = 1L, middle_val = 2L,
+  ordinal = TRUE, time = NULL, outcome_label_type = "votes",
+  exclude_level = NULL, inflate = TRUE, simulation = FALSE,
+  include_pres = FALSE)
 }
 \arguments{
 \item{score_data}{Your person-item (legislator-bill) matrix in which persons (legislators) are in rows and 
@@ -23,9 +24,11 @@ ordinal outcomes and 2 for binary outcomes. Optionally, you can also just pass i
 \item{person_cov}{A matrix of person (legislator) covariates for hierarchical modeling. If multiple time points are used, then should be a 
 multi-column matrix with one column for each time point.}
 
-\item{item_cov}{A one-column matrix of item (bill) covariates for hierarchical modeling of item (bill) discrimination parameters in the non-inflated model, i.e., non-missing model}
+\item{item_cov}{A matrix with rows equal to the number of items (bills) with covariates for hierarchical modeling of item (bill) discrimination parameters in the non-inflated model, i.e., non-missing model}
 
-\item{item_cov_miss}{A one-column matrix of item (bill) covariates for hierarchical modeling of item (bill) discrimination parameters in the inflated model (missing data model)}
+\item{miss_exog_val}{An integer or string indicating values that should be treated as exogenous missing values in the score (rollcall) data. This value must be included in the list of missing values \code{miss_val}.}
+
+\item{item_cov_miss}{A matrix with rows equal to the number of items (bills) with covariates for hierarchical modeling of item (bill) discrimination parameters in the inflated model (missing data model)}
 
 \item{person_data}{An optional data frame of information about the persons (legislators). Should include a \code{person.names} column containing names of
 persons (legislators) and optionally a \code{group} column with names of any groupings of the persons (legislators), such as parties or blocs (used for visualization).}

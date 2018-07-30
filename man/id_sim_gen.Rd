@@ -4,8 +4,9 @@
 \alias{id_sim_gen}
 \title{Simulate IRT ideal point data}
 \usage{
-id_sim_gen(num_person = 20, num_bills = 50, absence_discrim_sd = 2,
-  absence_diff_mean = 0.5, reg_discrim_sd = 2, diff_sd = 0.25,
+id_sim_gen(num_person = 20, num_bills = 50, model_type = "binary",
+  absence_discrim_sd = 2, absence_diff_mean = 0.5, reg_discrim_sd = 2,
+  diff_sd = 0.25, time_points = 1, time_process = "random",
   ideal_pts_sd = 1, prior_type = "gaussian", ordinal = TRUE,
   ordinal_outcomes = 3, graded_response = FALSE, absence = TRUE)
 }
@@ -13,6 +14,8 @@ id_sim_gen(num_person = 20, num_bills = 50, absence_discrim_sd = 2,
 \item{num_person}{The number of persons/personlators}
 
 \item{num_bills}{The number of items/bills}
+
+\item{model_type}{One of \code{'binary'}, \code{'ordinal-rating'}, \code{'ordinal-grm'} or \code{'poisson'}}
 
 \item{absence_discrim_sd}{The SD of the discrimination parameters for the absence model}
 
@@ -23,16 +26,17 @@ absences}
 
 \item{diff_sd}{The SD of the difficulty parameters (bill/item intercepts)}
 
+\item{time_points}{The number of time points for time-varying legislator/person parameters}
+
+\item{time_process}{The process used to generate the ideal points: currently either \code{'random'} 
+for a random walk or \code{'AR'} for an AR1 process}
+
 \item{ideal_pts_sd}{The SD for the person/personlator ideal points}
 
 \item{prior_type}{The statistical distribution that generates the data. Currently only 
 'gaussian' is supported.}
 
-\item{ordinal}{Whether the data should have binary (\code{FALSE}) or ordinal (\code{TRUE}) responses}
-
-\item{ordinal_outcomes}{If \code{ordinal} is \code{TRUE}, an integer giving the total number of categories}
-
-\item{graded_response}{Not currently implemented}
+\item{ordinal_outcomes}{If \code{model} is \code{'ordinal'}, an integer giving the total number of categories}
 
 \item{absence}{If \code{TRUE}, an absence-inflated dataset is produced.}
 }

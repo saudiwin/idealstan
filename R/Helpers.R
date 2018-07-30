@@ -576,34 +576,54 @@
   
   person_data <- slice(person_data,as.numeric(row.names(object@score_data@score_matrix)))
   
-  # need to apply true person names by time point
-  person_params <- as.data.frame(object@stan_samples,pars='L_full')
-  person_params <- person_params %>% gather(key = legis,value=ideal_pts) 
-  # get ids out 
-
-  person_ids <- data_frame(long_name=person_params$legis) %>% 
-    distinct
-  legis_nums <- stringr::str_extract_all(person_ids$long_name,'[0-9]+',simplify=T)
-  person_ids <-   mutate(person_ids,legis_id=as.numeric(legis_nums))
-  # add in all data in the person_data object
-  person_data <- mutate(person_data,row_names=1:n())
-  person_ids <- left_join(person_ids,person_data,by=c(legis_id='row_names'))
-  
-  person_params <-  person_params %>% 
-    group_by(legis) %>% 
-    summarize(low_pt=quantile(ideal_pts,0.1),high_pt=quantile(ideal_pts,0.9),
-              median_pt=median(ideal_pts)) %>% 
-    left_join(person_ids,by=c(legis='long_name'))
-  
-  # add in time points 
   if(max(object@score_data@time_vals)>1) {
-    # need to revise this
+
+    
+    # need to apply true person names by time point
+    person_params <- as.data.frame(object@stan_samples,pars='L_tp1')
+    person_params <- person_params %>% gather(key = legis,value=ideal_pts) %>% 
+      mutate(param_id=stringr::str_extract(legis,'[0-9]+\\]'),
+    param_id=as.numeric(stringr::str_extract(param_id,'[0-9]+')),
+    time_point=stringr::str_extract(legis,'\\[[0-9]+'),
+    time_point=as.numeric(stringr::str_extract(time_point,'[0-9]+')))
+    # get ids out 
+    
+    person_ids <- data_frame(param_id=person_params$param_id) %>% 
+      distinct
+    person_data <- mutate(person_data,row_names=1:n())
+    person_ids <- left_join(person_ids,person_data,by=c(param_id='row_names'))
+    
+    person_params <-  person_params %>% 
+      group_by(param_id,time_point) %>% 
+      summarize(low_pt=quantile(ideal_pts,0.1),high_pt=quantile(ideal_pts,0.9),
+                median_pt=median(ideal_pts)) %>% 
+      left_join(person_ids,by='param_id')
+    
+    # add in time data
     time_data <- data_frame(time=object@score_data@time,
                             time_point=object@score_data@time_vals) %>% distinct
     person_params <- left_join(person_params,time_data,by='time_point')
+  } else {
+    # need to apply true person names by time point
+    person_params <- as.data.frame(object@stan_samples,pars='L_full')
+    person_params <- person_params %>% gather(key = legis,value=ideal_pts) 
+    # get ids out 
+    
+    person_ids <- data_frame(long_name=person_params$legis) %>% 
+      distinct
+    legis_nums <- stringr::str_extract_all(person_ids$long_name,'[0-9]+',simplify=T)
+    person_ids <-   mutate(person_ids,legis_id=as.numeric(legis_nums))
+    # add in all data in the person_data object
+    person_data <- mutate(person_data,row_names=1:n())
+    person_ids <- left_join(person_ids,person_data,by=c(legis_id='row_names'))
+    
+    person_params <-  person_params %>% 
+      group_by(legis) %>% 
+      summarize(low_pt=quantile(ideal_pts,0.1),high_pt=quantile(ideal_pts,0.9),
+                median_pt=median(ideal_pts)) %>% 
+      left_join(person_ids,by=c(legis='long_name'))
   }
-  
-  
+
   person_params 
 }
 

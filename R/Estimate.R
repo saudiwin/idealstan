@@ -167,25 +167,24 @@ id_make <- function(score_data=NULL,simul_data=NULL,
   # save time vals as a numeric vector of time points and time as the original vector for
   # plotting
   if(!is.null(time)) {
-    if(time[1]=='separate') {
+    if(as.character(time[1])=='separate') {
       all_coll <- colnames(score_matrix)
       just_year <- stringr::str_extract(all_coll,'\\_.*[0-9]+.*')
       just_year <- stringr::str_extract(just_year,'[0-9]+')
       just_year <- as.numeric(just_year)
       time_vals <- as.numeric(factor(just_year))
       time <- just_year
+    } else if(class(time) %in% c('Date',"POSIXct","POSIXt","POSIXlt")) {
+      if(length(time)!=ncol(cleaned)) {
+        stop('Time vector must be same length as the number of columns in the vote matrix.')
+      }
+      time_vals <- as.numeric(factor(as.numeric(time)))
     } else if(is.numeric(time) || is.character(time) || is.factor(time)) {
       if(length(time)!=ncol(cleaned)) {
         stop('Time vector must be same length as the number of columns in the vote matrix.')
       }
       time_vals <- as.numeric(factor(time))
-    } else if(class(time) %in% c('Date',"POSIXct","POSIXt","POSIXlt")) {
-      if(length(time)!=ncol(cleaned)) {
-        stop('Time vector must be same length as the number of columns in the vote matrix.')
-      }
-      time_vals <- time
-      time <- as.numeric(factor(as.numeric(time)))
-    }  else {
+    }   else {
       stop('You must pass in either a vector dates or integers for time values or the string "separate". See function help docs.')
     }
     
@@ -419,6 +418,9 @@ id_make <- function(score_data=NULL,simul_data=NULL,
 #' @param discrim_reg_sd Set the prior standard deviation of the bimodal prior for the discrimination parameters for the non-inflated model.
 #' @param discrim_miss_sd Set the prior standard deviation of the bimodal prior for the discrimination parameters for the inflated model.
 #' @param person_sd Set the prior standard deviation for the legislators (persons) parameters
+#' @param time_sd The precision (inverse variance) of the over-time component of the person/legislator
+#' parameters. A higher value will allow for less over-time variation (useful if estimates bounce too much). 
+#' Default is 4.
 #' @param diff_reg_sd Set the prior standard deviation for the bill (item) intercepts for the non-inflated model.
 #' @param diff_miss_sd Set the prior standard deviation for the bill (item) intercepts for the inflated model.
 #' @param restrict_sd Set the prior standard deviation for constrained parameters
@@ -520,6 +522,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
                            discrim_reg_sd=3,
                            discrim_miss_sd=3,
                            person_sd=1,
+                        time_sd=4,
                            diff_reg_sd=4,
                            diff_miss_sd=4,
                            restrict_sd=4,
@@ -603,7 +606,8 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
                     restrict_sd=restrict_sd,
                     restrict_low_bar=restrict_low_bar,
                     restrict_high_bar=restrict_high_bar,
-                    use_ar=as.integer(use_ar))
+                    use_ar=as.integer(use_ar),
+                    time_sd=time_sd)
   
   idealdata <- id_model(object=idealdata,fixtype=fixtype,model_type=model_type,this_data=this_data,
                         nfix=nfix,restrict_ind_high=restrict_ind_high,
@@ -672,7 +676,8 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
                     restrict_low_bar=restrict_low_bar,
                     restrict_high_bar=restrict_high_bar,
                     use_ar=as.integer(use_ar),
-                    diff=id_diff)
+                    diff=id_diff,
+                    time_sd=time_sd)
 
   outobj <- sample_model(object=idealdata,nchains=nchains,niters=niters,warmup=warmup,ncores=ncores,
                          this_data=this_data,use_vb=use_vb,...)
