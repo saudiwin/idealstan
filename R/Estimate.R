@@ -562,9 +562,9 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
   
   # check to see if more values than there should be for the bernoulli model
   
-  if(model_type==1 && length(unique(Y))>2) {
+  if(model_type==1 && length(table(Y))>2) {
     stop('Too many values in score matrix for a binary model. Choose a different model_type.')
-  } else if(model_type==2 && length(unique(Y))>3) {
+  } else if(model_type==2 && length(table(Y))>3) {
     stop("Too many values in score matrix for a binary model. Choose a different model_type.")
   }
 
@@ -608,7 +608,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
                     restrict_high_bar=restrict_high_bar,
                     use_ar=as.integer(use_ar),
                     time_sd=time_sd)
-  
+
   idealdata <- id_model(object=idealdata,fixtype=fixtype,model_type=model_type,this_data=this_data,
                         nfix=nfix,restrict_ind_high=restrict_ind_high,
                         restrict_ind_low=restrict_ind_low,
