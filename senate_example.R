@@ -104,13 +104,13 @@ arp_ideal_data <- id_make(score_data = vote_matrix,
 # now see if we can estimate something
 # random walk prior
 
-estimate_all <- id_estimate(arp_ideal_data,use_vb = F,
+estimate_all <- id_estimate(arp_ideal_data,use_vb = T,
                             use_groups = F,nfix = 1,
                             restrict_ind_high = 2,
                             restrict_ind_low=1,
                             model_type=4,
                             use_ar=T,
-                            id_diff=20,
+                            id_diff=4,
                             time_sd=20,
                             fixtype='vb')
 

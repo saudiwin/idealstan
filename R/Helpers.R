@@ -557,7 +557,7 @@
 
 #' Helper function for preparing person ideal point plot data
 .prepare_legis_data <- function(object) {
-
+  browser()
   person_data <- object@score_data@person_data
   
   # Apply any filters from the data processing stage so that the labels match

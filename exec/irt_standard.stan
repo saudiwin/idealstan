@@ -156,7 +156,7 @@ model {
     steps_votes ~ normal(0,5);
   }
   L_free ~normal(legis_pred[1, 1:(num_legis - num_fix_high-num_fix_low), ] * legis_x, legis_sd);
-	L_tp1[1] ~ normal(legis_pred[1, 1:(num_legis), ] * legis_x,legis_sd);
+	L_tp1[1] ~ normal(legis_pred[1, 1:(num_legis), ] * legis_x,legis_sd/time_sd);
   B_int_free ~ normal(0,diff_reg_sd);
   A_int_free ~ normal(0,diff_abs_sd);
 

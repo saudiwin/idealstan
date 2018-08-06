@@ -1024,7 +1024,7 @@ public:
                 lp_accum__.add(normal_log<propto__>(steps_votes, 0, 5));
             }
             lp_accum__.add(normal_log<propto__>(L_free, multiply(stan::model::rvalue(legis_pred, stan::model::cons_list(stan::model::index_uni(1), stan::model::cons_list(stan::model::index_min_max(1, ((num_legis - num_fix_high) - num_fix_low)), stan::model::cons_list(stan::model::index_omni(), stan::model::nil_index_list()))), "legis_pred"),legis_x), legis_sd));
-            lp_accum__.add(normal_log<propto__>(get_base1(L_tp1,1,"L_tp1",1), multiply(stan::model::rvalue(legis_pred, stan::model::cons_list(stan::model::index_uni(1), stan::model::cons_list(stan::model::index_min_max(1, num_legis), stan::model::cons_list(stan::model::index_omni(), stan::model::nil_index_list()))), "legis_pred"),legis_x), legis_sd));
+            lp_accum__.add(normal_log<propto__>(get_base1(L_tp1,1,"L_tp1",1), multiply(stan::model::rvalue(legis_pred, stan::model::cons_list(stan::model::index_uni(1), stan::model::cons_list(stan::model::index_min_max(1, num_legis), stan::model::cons_list(stan::model::index_omni(), stan::model::nil_index_list()))), "legis_pred"),legis_x), (legis_sd / time_sd)));
             lp_accum__.add(normal_log<propto__>(B_int_free, 0, diff_reg_sd));
             lp_accum__.add(normal_log<propto__>(A_int_free, 0, diff_abs_sd));
             lp_accum__.add(normal_log<propto__>(exog_param, 0, 5));
