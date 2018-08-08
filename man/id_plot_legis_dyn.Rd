@@ -7,10 +7,10 @@
 id_plot_legis_dyn(object, return_data = FALSE, item_plot = NULL,
   text_size_label = 2, text_size_group = 2.5, line_size = 1,
   person_labels = NULL, group_labels = NULL, highlight = NULL,
-  plot_text = TRUE, person_line_alpha = 0.3, person_ci_alpha = 0.8,
-  show_score = NULL, abs_and_reg = "both", show_true = FALSE,
-  group_color = TRUE, hpd_limit = 10, group_overlap = FALSE,
-  sample_persons = NULL, ...)
+  plot_text = TRUE, use_ci = TRUE, person_line_alpha = 0.3,
+  person_ci_alpha = 0.8, show_score = NULL, abs_and_reg = "both",
+  show_true = FALSE, group_color = TRUE, hpd_limit = 10,
+  group_overlap = FALSE, sample_persons = NULL, ...)
 }
 \arguments{
 \item{object}{A fitted \code{idealstan} object}
@@ -33,6 +33,9 @@ with the names of the persons/legislators. Defaults to \code{"person.name"}}
 \item{highlight}{A character referring to one of the persons in \code{person_labels} that the plot can highlight relative to other persons}
 
 \item{plot_text}{If \code{TRUE}, will plot \code{person_labels} over the lines.}
+
+\item{use_ci}{Whether or not high-posterior density intervals (credible intervals) should be
+plotted over the estimates (turn off if the plot is too busy)}
 
 \item{person_line_alpha}{The transparency level of the time-varying ideal point line}
 

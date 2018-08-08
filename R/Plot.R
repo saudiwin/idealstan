@@ -376,21 +376,24 @@ id_plot_legis <- function(object,return_data=FALSE,item_plot=NULL,
 #' @param line_size Sets the size of the line of the time-varying ideal points.
 #' @param person_labels character string for the name of the column in the person/legislator data frame 
 #' with the names of the persons/legislators. Defaults to \code{"person.name"}
-#' @param group_labels if \code{TRUE}, use the group column to plot text markers for the group (parties) from the person/legislator data
+#' @param group_color If \code{TRUE}, use the groups instead of individuals to plot colours
+#' @param group_labels the name of the column to plot text markers for the group (parties) from the person/legislator data (default=\code{'group'}).
 #' @param highlight A character referring to one of the persons in \code{person_labels} that the plot can highlight relative to other persons
 #' @param person_ci_alpha The transparency level of ribbon confidence interval around the time-varying ideal points
 #' @param person_line_alpha The transparency level of the time-varying ideal point line
 #' @param plot_text If \code{TRUE}, will plot \code{person_labels} over the lines.
+#' @param use_ci Whether or not high-posterior density intervals (credible intervals) should be
+#' plotted over the estimates (turn off if the plot is too busy)
 #' @param show_score Show only person/legislator ideal points that have a certain score/vote category from the outcome (character string)
 #' @param abs_and_reg Whether to show 'both' absence and regular item/bill midpoints if the model is absence-inflated, the default,
 #' or 'Absence Points' for only the absence midpoints or 'Vote Points' for only the non-inflated midpoints
 #' @param show_true Whether to show the true values of the legislators (if model has been simulated)
-#' @param group_color If \code{TRUE}, give each group/bloc a different color
 #' @param group_overlap Whether to prevent the text from overlapping itself (ggplot2 option)
 #' @param hpd_limit The greatest absolute difference in high-posterior density interval shown for any point. Useful for excluding imprecisely estimated persons/legislators from the plot. Leave NULL if you don't want to exclude any.
 #' @param sample_persons If you don't want to use the full number of persons/legislators from the model, enter a proportion (between 0 and 1) to select
 #'  only a fraction of the persons/legislators.
 #' @param ... Other options passed on to plotting function, currently ignored
+#' @importFrom gghighlight gghighlight
 #' @export
 #' @examples 
 id_plot_legis_dyn <- function(object,return_data=FALSE,item_plot=NULL,
@@ -400,6 +403,7 @@ id_plot_legis_dyn <- function(object,return_data=FALSE,item_plot=NULL,
                               group_labels=NULL,
                               highlight=NULL,
                               plot_text=TRUE,
+                              use_ci=TRUE,
                               person_line_alpha=0.3,
                               person_ci_alpha=0.8,
                               show_score=NULL,
@@ -408,52 +412,61 @@ id_plot_legis_dyn <- function(object,return_data=FALSE,item_plot=NULL,
                               group_overlap=FALSE,
                               sample_persons=NULL,...) {
   
+  # prepare data
+  
   if(is.null(person_labels)) {
     person_labels <- quo(person.name)
-  } else if (person_labels=='none') {
-    person_labels <- quo(legis)
-  } else {
-    if(class(person_labels)=='character') person_labels <- as.name(person_labels)
+  } else if(class(person_labels)=='character') {
+    person_labels <- as.name(person_labels)
     person_labels <- enquo(person_labels)
+  } else {
+    stop('Please do not enter a non-character value for person_labels.')
   }
   
   if(is.null(group_labels)) {
     group_labels <- quo(group)
   } else if(group_labels=='none') {
     group_labels <- quo(group)
-    } else {
-    if(class(group_labels)=='character') group_labels <- as.name(group_labels)
+  } else if(class(group_labels)=='character') {
+    group_labels <- as.name(group_labels)
     group_labels <- enquo(group_labels)
+  } else {
+    stop('Please do not enter a non-character value for group_labels.')
   }
+  
   person_labels_string <- quo_name(person_labels)
   person_params <- .prepare_legis_data(object) %>% 
     mutate(!! person_labels_string :=reorder(factor(!!person_labels),median_pt))
+  
+  # plot CIs first for background
+  
+  if(use_ci==T) {
+    outplot <- person_params %>% ggplot(aes_(x=~time)) + geom_ribbon(aes_(ymin=~low_pt,
+                                          ymax=~high_pt,
+                                          group=person_labels),
+                                     fill='grey80',
+                                     colour=NA,
+                                     alpha=person_ci_alpha)
+  } 
+  
+  # add time-varying ideal points
 
-  if(group_labels!='none') {
+  if(group_color) {
     
-    outplot <- person_params %>% ggplot() + 
-      geom_line(aes_(x=~time,y=~median_pt,group=person_labels,
+    outplot <- outplot + 
+      geom_line(aes_(y=~median_pt,group=person_labels,
                      colour=group_labels),
                 alpha=person_ci_alpha,
                 size=line_size)
   } else {
     
-    outplot <- person_params %>% ggplot() + 
-      geom_line(aes_(x=~time,y=~median_pt,group=person_labels),
+    outplot <- outplot + 
+      geom_line(aes_(y=~median_pt,colour=person_labels),
                 alpha=person_ci_alpha,
                 size=line_size)
   }
-
-  if(!is.null(highlight)) {
-    # give some of the persons a special color and make bigger
-    param_highlight <- filter(person_params, !!person_labels %in% highlight) 
-    
-    outplot <- outplot + 
-      geom_line(aes_(x=~time,y=~median_pt,group=person_labels),colour='yellow',
-                                   size=line_size*2,
-                linetype=1,
-                data=param_highlight)
-  }
+  
+  # plot random labels
   
   if(plot_text==TRUE) {
     
@@ -467,18 +480,24 @@ id_plot_legis_dyn <- function(object,return_data=FALSE,item_plot=NULL,
       geom_text(aes_(x=~time,y=~median_pt,label=person_labels),data=sampled_data,
                 check_overlap=TRUE,size=text_size_label)
     
-    # make the highlight ones special
-    if(!is.null(highlight)) {
-      sampled_data <- group_by(person_params,!!person_labels) %>% sample_n(1) %>% 
-        filter(!!person_labels %in% highlight)
-      outplot <- outplot + 
-        geom_text(aes_(x=~time,y=~median_pt,label=person_labels),data=sampled_data,
-                  size=text_size_label*2,
-                  color='red',fontface='bold')
-    }
   }
   
+  # select some special lines to highlight
   
+  if(!is.null(highlight)) {
+    # give some of the persons a special color and make bigger
+    
+    outplot <- outplot + 
+      gghighlight(!!person_labels %in% highlight,use_group_by = F)
+  }
+  
+  # only use a legend if groups are used or highlights
+  
+  if(group_color==F || (group_color==F && is.null(highlight))) {
+    output <- outplot + 
+      guides(color=FALSE,
+             fill=FALSE)
+  }
   
   outplot <- outplot +
     theme_minimal() + ylab("Ideal Point Scale") + xlab("") +

@@ -8,6 +8,9 @@
 setClass('idealdata',
          slots=list(score_matrix='matrix',
                     person_data='data.frame',
+                    group_vals='ANY',
+                    group_varying='logical',
+                    person_vals='ANY',
                     item_data='data.frame',
                     item_cov='matrix',
                     item_cov_miss='matrix',
@@ -35,7 +38,6 @@ setClass('idealdata',
                     vote_int='numeric',
                     simul_data='list',
                     simulation='logical',
-                    group_vals='numeric',
                     diff='numeric'))
 
 

@@ -1,5 +1,5 @@
 #' Function that does automatic identification of models using VB
-.vb_fix <- function(object=NULL,
+  .vb_fix <- function(object=NULL,
                     this_data=NULL,nfix=NULL,auto_id=FALSE,
                     ncores=NULL,all_args=NULL,
                     restrict_ind_high=NULL,
@@ -42,7 +42,7 @@
         to_constrain_low <- to_constrain_low$ix[1:nfix]
          
        # change to group parameters if index is for groups
-       
+       browser()
        if(use_groups==T) {
          if(!is.null(to_constrain_high)) {
            to_constrain_high <- which(as.numeric(factor(object@person_data$group))==to_constrain_high)
@@ -559,7 +559,7 @@
 
 #' Helper function for preparing person ideal point plot data
 .prepare_legis_data <- function(object) {
-  browser()
+
   person_data <- object@score_data@person_data
   
   # Apply any filters from the data processing stage so that the labels match
@@ -584,6 +584,9 @@
     # need to apply true person names by time point
     person_params <- as.data.frame(object@stan_samples,pars='L_tp1')
     person_params <- person_params %>% gather(key = legis,value=ideal_pts) %>% 
+      group_by(legis) %>% 
+      summarize(low_pt=quantile(ideal_pts,0.1),high_pt=quantile(ideal_pts,0.9),
+                median_pt=median(ideal_pts)) %>% 
       mutate(param_id=stringr::str_extract(legis,'[0-9]+\\]'),
     param_id=as.numeric(stringr::str_extract(param_id,'[0-9]+')),
     time_point=stringr::str_extract(legis,'\\[[0-9]+'),
@@ -596,9 +599,6 @@
     person_ids <- left_join(person_ids,person_data,by=c(param_id='row_names'))
     
     person_params <-  person_params %>% 
-      group_by(param_id,time_point) %>% 
-      summarize(low_pt=quantile(ideal_pts,0.1),high_pt=quantile(ideal_pts,0.9),
-                median_pt=median(ideal_pts)) %>% 
       left_join(person_ids,by='param_id')
     
     # add in time data

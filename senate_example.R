@@ -110,13 +110,18 @@ estimate_all <- id_estimate(arp_ideal_data,use_vb = T,
                             restrict_ind_low=1,
                             model_type=4,
                             use_ar=T,
-                            id_diff=4,
+                            id_diff=1,
                             time_sd=20,
                             fixtype='vb')
 
 
 
-id_plot_legis_dyn(estimate_all,person_labels = 'legis_names',highlight = 'Rim Mahjoub')
+id_plot_legis_dyn(estimate_all,person_labels = 'legis_names',highlight = c('Mondher Belhaj Ali',
+                                                                           'Salah Bargaoui',
+                                                                           'Souhail Alouini'),
+                  group_color=F) +
+  geom_vline(aes(xintercept=lubridate::ymd('2016-01-20')),
+             linetype=2)
 
 # plot the bugger
 
@@ -132,37 +137,6 @@ all_params <- all_params %>% mutate(param_id=stringr::str_extract(parameters,'[0
                       param_id=factor(param_id,labels=c('R','X','D')),
                       time=stringr::str_extract(parameters,'\\[[0-9]+'),
                       time=as.numeric(stringr::str_extract(time,'[0-9]+')))
-
-all_params %>% 
-  filter(param_id!='X') %>% 
-  ggplot(aes(y=posterior_median,x=time)) +
-  geom_line(aes(colour=param_id),size=1) +
-  geom_ribbon(aes(ymin=Prob.025,
-                  ymax=Prob.975,
-                  colour=param_id),
-              alpha=0.3)
-
-# now try with an AR(1) (stationary) model
-
-estimate_all <- id_estimate(to_ideal,use_vb = T,
-                            use_groups = T,nfix = 1,restrict_type='constrain_twoway',
-                            fixtype='constrained',
-                            restrict_ind_high = 2,
-                            restrict_ind_low=1,
-                            use_ar = T)
-
-# we can get all estimated parameters with summary. The legislator ideal points will be
-# L_tp1[t,n]
-
-all_params <- summary(estimate_all,pars='L_tp1')
-
-# look at plot 
-
-all_params <- all_params %>% mutate(param_id=stringr::str_extract(parameters,'[0-9]\\]'),
-                                    param_id=as.numeric(stringr::str_extract(param_id,'[0-9]')),
-                                    param_id=factor(param_id,labels=c('X','R','D')),
-                                    time=stringr::str_extract(parameters,'\\[[0-9]+'),
-                                    time=as.numeric(stringr::str_extract(time,'[0-9]+')))
 
 all_params %>% 
   filter(param_id!='X') %>% 
