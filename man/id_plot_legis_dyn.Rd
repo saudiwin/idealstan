@@ -6,11 +6,11 @@
 \usage{
 id_plot_legis_dyn(object, return_data = FALSE, item_plot = NULL,
   text_size_label = 2, text_size_group = 2.5, line_size = 1,
-  person_labels = NULL, group_labels = NULL, highlight = NULL,
-  plot_text = TRUE, use_ci = TRUE, person_line_alpha = 0.3,
-  person_ci_alpha = 0.8, show_score = NULL, abs_and_reg = "both",
-  show_true = FALSE, group_color = TRUE, hpd_limit = 10,
-  group_overlap = FALSE, sample_persons = NULL, ...)
+  person_plot = T, person_labels = NULL, group_labels = NULL,
+  highlight = NULL, plot_text = TRUE, use_ci = TRUE,
+  person_line_alpha = 0.3, person_ci_alpha = 0.8, show_score = NULL,
+  abs_and_reg = "both", show_true = FALSE, group_color = TRUE,
+  hpd_limit = 10, group_overlap = FALSE, sample_persons = NULL, ...)
 }
 \arguments{
 \item{object}{A fitted \code{idealstan} object}
@@ -25,10 +25,14 @@ id_plot_legis_dyn(object, return_data = FALSE, item_plot = NULL,
 
 \item{line_size}{Sets the size of the line of the time-varying ideal points.}
 
+\item{person_plot}{If \code{TRUE}, plots the individual person/legislator ideal points.
+If \code{FALSE}, plots the group-level estimates. Group-level estimates only exist if
+\code{use_groups=TRUE} was set in the \code{\link{id_estimate}} function.}
+
 \item{person_labels}{character string for the name of the column in the person/legislator data frame 
 with the names of the persons/legislators. Defaults to \code{"person.name"}}
 
-\item{group_labels}{if \code{TRUE}, use the group column to plot text markers for the group (parties) from the person/legislator data}
+\item{group_labels}{the name of the column to plot text markers for the group (parties) from the person/legislator data (default=\code{'group'}).}
 
 \item{highlight}{A character referring to one of the persons in \code{person_labels} that the plot can highlight relative to other persons}
 
@@ -48,7 +52,7 @@ or 'Absence Points' for only the absence midpoints or 'Vote Points' for only the
 
 \item{show_true}{Whether to show the true values of the legislators (if model has been simulated)}
 
-\item{group_color}{If \code{TRUE}, give each group/bloc a different color}
+\item{group_color}{If \code{TRUE}, use the groups instead of individuals to plot colours}
 
 \item{hpd_limit}{The greatest absolute difference in high-posterior density interval shown for any point. Useful for excluding imprecisely estimated persons/legislators from the plot. Leave NULL if you don't want to exclude any.}
 

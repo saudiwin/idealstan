@@ -20,7 +20,7 @@
   
   # Test whether there is a lot of missing data
   
-  use_absence <- .det_missing(object=object,model_type=model_type)
+  #use_absence <- .det_missing(object=object,model_type=model_type)
   
   lookat_params <- rstan::extract(post_modes,permuted=FALSE)
   this_params <- lookat_params[,1,]
@@ -36,37 +36,52 @@
        person <- apply(this_params[,grepl(pattern = 'L_full',x=all_params)],2,mean)
        fix_param <- "L_free"
        
+       # now we know which ones to constrain
+       
         to_constrain_high <- sort(person,index.return=TRUE,decreasing=TRUE)
         to_constrain_high <- to_constrain_high$ix[1:nfix]
         to_constrain_low <- sort(person,index.return=TRUE)
         to_constrain_low <- to_constrain_low$ix[1:nfix]
          
        # change to group parameters if index is for groups
-       browser()
-       if(use_groups==T) {
-         if(!is.null(to_constrain_high)) {
-           to_constrain_high <- which(as.numeric(factor(object@person_data$group))==to_constrain_high)
-         }
-         if(!is.null(to_constrain_low)) {
-           to_constrain_low <- which(as.numeric(factor(object@person_data$group))==to_constrain_low)
-         }
-       }
+
+       # if(use_groups==T) {
+       #   if(!is.null(to_constrain_high)) {
+       #     to_constrain_high <- which(as.numeric(factor(object@person_data$group))==to_constrain_high)
+       #   }
+       #   if(!is.null(to_constrain_low)) {
+       #     to_constrain_low <- which(as.numeric(factor(object@person_data$group))==to_constrain_low)
+       #   }
+       # }
        
-       object@score_matrix <- object@score_matrix[c((1:nrow(object@score_matrix))[-c(to_constrain_high,
-                                                                                     to_constrain_low)],
-                                                    to_constrain_high,
-                                                    to_constrain_low),]
+       # object@score_matrix <- object@score_matrix[c((1:nrow(object@score_matrix))[-c(to_constrain_high,
+       #                                                                               to_constrain_low)],
+       #                                              to_constrain_high,
+       #                                              to_constrain_low),]
+        
+      # now re-order the factors so that the indices will match  
+        
        if(use_groups==T) {
          # reorder group parameters
-         object@group_vals <- object@group_vals[c((1:nrow(object@score_matrix))[-c(to_constrain_high,
-                                                                                   to_constrain_low)],
-                                                  to_constrain_high,
-                                                  to_constrain_low)]
-         # recode group parameters
-         to_move <- c(restrict_ind_high,restrict_ind_low)
-         object@group_vals <- as.numeric(factor(object@group_vals,levels=c(sort(unique(object@group_vals))[-to_move],to_move)))
+         object@score_matrix <- mutate(ungroup(object@score_matrix), 
+                                       group_id=factor(!! quo(group_id)),
+                                       group_id= factor(!! quo(group_id),
+                                                                   levels=c(levels(group_id)[-c(to_constrain_high,
+                                                                                                to_constrain_low)],
+                                                                            levels(group_id)[c(to_constrain_high,
+                                                                                               to_constrain_low)])))
+      } else {
+        object@score_matrix <- mutate(ungroup(object@score_matrix), 
+                                      person_id=factor(!! quo(person_id)),
+                                      person_id= factor(!! quo(person_id),
+                                                        levels=c(levels(person_id)[-c(to_constrain_high,
+                                                                                      to_constrain_low)],
+                                                                 levels(person_id)[c(to_constrain_high,
+                                                                                     to_constrain_low)])))
        }
-       diff <- person[to_constrain_high[1]] - person[to_constrain_low[1]]
+       
+        # what to constrain the difference to given the priors
+        diff <- person[to_constrain_high[1]] - person[to_constrain_low[1]]
      
   
    object@restrict_count <- c(to_constrain_high,to_constrain_low)
@@ -109,7 +124,7 @@
    object@restrict_num_low <- 1
    object@constraint_type <- this_data$constraint_type
    object@param_fix <- this_data$constrain_par
-   object@unrestricted <- old_matrix
+   # object@unrestricted <- old_matrix
    object@diff <- diff
    return(object)
 }
@@ -182,35 +197,32 @@
   if(is.null(restrict_ind_high)) {
     stop('You must specify at least one bill or personlator to constrain high in restrict_ind_high.')
   }
-  old_matrix <- object@score_matrix
+  #old_matrix <- object@score_matrix
   to_constrain_high <- restrict_ind_high
   to_constrain_low <- restrict_ind_low
   
     # change to group parameters if index is for groups
 
-    if(use_groups==T) {
-      if(!is.null(to_constrain_high)) {
-        to_constrain_high <- which(as.numeric(factor(object@person_data$group))==to_constrain_high)
-      }
-      if(!is.null(to_constrain_low)) {
-        to_constrain_low <- which(as.numeric(factor(object@person_data$group))==to_constrain_low)
-      }
-    }
-    
-    object@score_matrix <- object@score_matrix[c((1:nrow(object@score_matrix))[-c(to_constrain_high,
-                                                                               to_constrain_low)],
-                                               to_constrain_high,
-                                               to_constrain_low),]
-    if(use_groups==T) {
-      # reorder group parameters
-      object@group_vals <- object@group_vals[c((1:nrow(object@score_matrix))[-c(to_constrain_high,
+  if(use_groups==T) {
+    # reorder group parameters
+    object@score_matrix <- mutate(ungroup(object@score_matrix), 
+                                  group_id=factor(!! quo(group_id)),
+                                  group_id= factor(!! quo(group_id),
+                                                   levels=c(levels(group_id)[-c(to_constrain_high,
                                                                                 to_constrain_low)],
-                                               to_constrain_high,
-                                               to_constrain_low)]
-      # recode group parameters
-      to_move <- c(restrict_ind_high,restrict_ind_low)
-      object@group_vals <- as.numeric(factor(object@group_vals,levels=c(sort(unique(object@group_vals))[-to_move],to_move)))
-    }
+                                                            levels(group_id)[c(to_constrain_high,
+                                                                               to_constrain_low)])))
+  } else {
+    object@score_matrix <- mutate(ungroup(object@score_matrix), 
+                                  person_id=factor(!! quo(person_id)),
+                                  person_id= factor(!! quo(person_id),
+                                                    levels=c(levels(person_id)[-c(to_constrain_high,
+                                                                                  to_constrain_low)],
+                                                             levels(person_id)[c(to_constrain_high,
+                                                                                 to_constrain_low)])))
+  }
+  
+  # what to constrain the difference to given the priors
     diff <- 4
     param_fix <- 'L_free'
   
@@ -219,7 +231,7 @@
   object@restrict_num_low <- 1
   object@constraint_type <- 3L
   object@param_fix <- 1L
-  object@unrestricted <- old_matrix
+  #object@unrestricted <- old_matrix
   object@restrict_ind_high <- to_constrain_high
   object@restrict_ind_low <- to_constrain_low
 
@@ -550,7 +562,7 @@
 #' observations
 .det_missing <- function(object,model_type=NULL) {
   if(model_type %in% c(2,4,6)) {
-    all_data <- c(object@score_matrix)
+    all_data <- object@score_matrix$outcome
     return((sum(all_data==object@miss_val)/length(all_data))>.5)
   } else {
     return(FALSE)
@@ -560,25 +572,25 @@
 #' Helper function for preparing person ideal point plot data
 .prepare_legis_data <- function(object) {
 
-  person_data <- object@score_data@person_data
-  
-  # Apply any filters from the data processing stage so that the labels match
-  
-  if(length(object@score_data@subset_person)>0) {
-    person_data <- filter(person_data,person.names %in% object@score_data@subset_person)
-  } else if(length(object@score_data@subset_group)>0) {
-    person_data <- filter(person_data,group %in% object@score_data@subset_person)
-  }
-  
-  if(length(object@score_data@to_sample)>0) {
-    person_data <- slice(person_data,object@score_data@to_sample)
-  }
-  
-  # Reorder rows to match those rows that were switched for identification purposes
-  
-  person_data <- slice(person_data,as.numeric(row.names(object@score_data@score_matrix)))
-  
-  if(max(object@score_data@time_vals)>1) {
+  # person_data <- object@score_data@person_data
+  # 
+  # # Apply any filters from the data processing stage so that the labels match
+  # 
+  # if(length(object@score_data@subset_person)>0) {
+  #   person_data <- filter(person_data,person.names %in% object@score_data@subset_person)
+  # } else if(length(object@score_data@subset_group)>0) {
+  #   person_data <- filter(person_data,group %in% object@score_data@subset_person)
+  # }
+  # 
+  # if(length(object@score_data@to_sample)>0) {
+  #   person_data <- slice(person_data,object@score_data@to_sample)
+  # }
+  # 
+  # # Reorder rows to match those rows that were switched for identification purposes
+  # 
+  # person_data <- slice(person_data,as.numeric(row.names(object@score_data@score_matrix)))
+  # 
+  if(length(unique(object@score_data@score_matrix$time_id))>1) {
 
     
     # need to apply true person names by time point
@@ -593,19 +605,29 @@
     time_point=as.numeric(stringr::str_extract(time_point,'[0-9]+')))
     # get ids out 
     
-    person_ids <- data_frame(param_id=person_params$param_id) %>% 
-      distinct
-    person_data <- mutate(person_data,row_names=1:n())
-    person_ids <- left_join(person_ids,person_data,by=c(param_id='row_names'))
+    person_ids <- select(object@score_data@score_matrix,
+                           !!quo(person_id),
+                           !!quo(time_id),
+                           !!quo(group_id)) %>% 
+      distinct %>% 
+      mutate(person_id_num=as.numeric(!!quo(person_id)),
+             time_id_num=as.numeric(factor(!!quo(time_id))),
+             group_id_num=as.numeric(!!quo(group_id)))
     
-    person_params <-  person_params %>% 
-      left_join(person_ids,by='param_id')
-    
-    # add in time data
-    time_data <- data_frame(time=object@score_data@time,
-                            time_point=object@score_data@time_vals) %>% distinct
-    person_params <- left_join(person_params,time_data,by='time_point')
+    if(object@use_groups) {
+      person_params <-  person_params %>% 
+        left_join(person_ids,by=c(param_id='group_id_num',
+                                  time_point='time_id_num'))
+    } else {
+      person_params <-  person_params %>% 
+        left_join(person_ids,by=c(param_id='person_id_num',
+                                  time_point='time_id_num'))
+    }
+
   } else {
+    
+    # NEED TO FIX WITH NEW DATA METHODS
+    
     # need to apply true person names by time point
     person_params <- as.data.frame(object@stan_samples,pars='L_full')
     person_params <- person_params %>% gather(key = legis,value=ideal_pts) 
@@ -682,4 +704,17 @@
   }
   
   return(out_array)
+}
+
+#' Simple function to test for what an input is
+#' Default_val should be quoted
+.check_quoted <- function(quoted=NULL,default_val) {
+  if(is.null(quoted)) {
+    quoted <- default_val
+  } else if(class(quoted)=='character') {
+    quoted <- as.name(quoted)
+    quoted <- enquo(quoted)
+  } else {
+    stop(paste0('Please do not enter a non-character value for ',as.character(default_val)[2]))
+  }
 }

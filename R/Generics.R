@@ -6,7 +6,7 @@
 #' @seealso \code{\link{id_make}} to create an \code{idealdata} object suitable for estimation with \code{id_estimate}.
 #' @export
 setClass('idealdata',
-         slots=list(score_matrix='matrix',
+         slots=list(score_matrix='data.frame',
                     person_data='data.frame',
                     group_vals='ANY',
                     group_varying='logical',
@@ -55,6 +55,7 @@ setClass('idealstan',
                     test_model_code='character',
                     stan_samples='stanfit',
                     use_vb='logical',
+                    use_groups='logical',
                     simulation='logical'))
 
 setGeneric('subset_ideal',signature='object',

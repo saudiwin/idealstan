@@ -374,6 +374,9 @@ id_plot_legis <- function(object,return_data=FALSE,item_plot=NULL,
 #' @param text_size_label ggplot2 text size for legislator labels
 #' @param text_size_group ggplot2 text size for group text used for points
 #' @param line_size Sets the size of the line of the time-varying ideal points.
+#' @param person_plot If \code{TRUE}, plots the individual person/legislator ideal points.
+#' If \code{FALSE}, plots the group-level estimates. Group-level estimates only exist if
+#' \code{use_groups=TRUE} was set in the \code{\link{id_estimate}} function.
 #' @param person_labels character string for the name of the column in the person/legislator data frame 
 #' with the names of the persons/legislators. Defaults to \code{"person.name"}
 #' @param group_color If \code{TRUE}, use the groups instead of individuals to plot colours
@@ -399,6 +402,7 @@ id_plot_legis <- function(object,return_data=FALSE,item_plot=NULL,
 id_plot_legis_dyn <- function(object,return_data=FALSE,item_plot=NULL,
                               text_size_label=2,text_size_group=2.5,
                               line_size=1,
+                              person_plot=T,
                               person_labels=NULL,
                               group_labels=NULL,
                               highlight=NULL,
@@ -414,36 +418,44 @@ id_plot_legis_dyn <- function(object,return_data=FALSE,item_plot=NULL,
   
   # prepare data
   
-  if(is.null(person_labels)) {
-    person_labels <- quo(person.name)
-  } else if(class(person_labels)=='character') {
-    person_labels <- as.name(person_labels)
-    person_labels <- enquo(person_labels)
-  } else {
-    stop('Please do not enter a non-character value for person_labels.')
-  }
+  person_labels <- quo(person_id)
+  group_labels <- quo(group_id)
   
-  if(is.null(group_labels)) {
-    group_labels <- quo(group)
-  } else if(group_labels=='none') {
-    group_labels <- quo(group)
-  } else if(class(group_labels)=='character') {
-    group_labels <- as.name(group_labels)
-    group_labels <- enquo(group_labels)
-  } else {
-    stop('Please do not enter a non-character value for group_labels.')
-  }
+  # if(is.null(person_labels)) {
+  #   person_labels <- quo(person.name)
+  # } else if(class(person_labels)=='character') {
+  #   person_labels <- as.name(person_labels)
+  #   person_labels <- enquo(person_labels)
+  # } else {
+  #   stop('Please do not enter a non-character value for person_labels.')
+  # }
+  # 
+  # if(is.null(group_labels)) {
+  #   group_labels <- quo(group)
+  # } else if(group_labels=='none') {
+  #   group_labels <- quo(group)
+  # } else if(class(group_labels)=='character') {
+  #   group_labels <- as.name(group_labels)
+  #   group_labels <- enquo(group_labels)
+  # } else {
+  #   stop('Please do not enter a non-character value for group_labels.')
+  # }
   
-  person_labels_string <- quo_name(person_labels)
-  person_params <- .prepare_legis_data(object) %>% 
-    mutate(!! person_labels_string :=reorder(factor(!!person_labels),median_pt))
+  #person_labels_string <- quo_name(person_labels)
+  person_params <- .prepare_legis_data(object) 
+  
+  if(person_plot) {
+    base_id <- ~person_id
+  } else {
+    base_id <- ~group_id
+  }
   
   # plot CIs first for background
   
   if(use_ci==T) {
-    outplot <- person_params %>% ggplot(aes_(x=~time)) + geom_ribbon(aes_(ymin=~low_pt,
+    outplot <- person_params %>% ggplot(aes_(x=~time_id)) + geom_ribbon(aes_(ymin=~low_pt,
                                           ymax=~high_pt,
-                                          group=person_labels),
+                                          group=base_id),
                                      fill='grey80',
                                      colour=NA,
                                      alpha=person_ci_alpha)
@@ -454,14 +466,14 @@ id_plot_legis_dyn <- function(object,return_data=FALSE,item_plot=NULL,
   if(group_color) {
     
     outplot <- outplot + 
-      geom_line(aes_(y=~median_pt,group=person_labels,
-                     colour=group_labels),
+      geom_line(aes_(y=~median_pt,group=base_id,
+                     colour=~group_id),
                 alpha=person_ci_alpha,
                 size=line_size)
   } else {
     
     outplot <- outplot + 
-      geom_line(aes_(y=~median_pt,colour=person_labels),
+      geom_line(aes_(y=~median_pt,colour=base_id),
                 alpha=person_ci_alpha,
                 size=line_size)
   }
@@ -472,12 +484,15 @@ id_plot_legis_dyn <- function(object,return_data=FALSE,item_plot=NULL,
     
     # need new data that scatters names around the plot
     
-    sampled_data <- group_by(person_params,!!person_labels) %>% sample_n(1)
+    sampled_data <- group_by(person_params,!!as_quosure(base_id)) %>% sample_n(1)
     
-    if(!is.null(highlight)) sampled_data <- filter(sampled_data,!(!!person_labels %in% highlight))
+    if(!is.null(highlight)) {
+      
+      sampled_data <- filter(sampled_data,!(!!as_quosure(base_id) %in% highlight))
+    }
     
     outplot <- outplot + 
-      geom_text(aes_(x=~time,y=~median_pt,label=person_labels),data=sampled_data,
+      geom_text(aes_(x=~time_id,y=~median_pt,label=base_id),data=sampled_data,
                 check_overlap=TRUE,size=text_size_label)
     
   }
@@ -488,7 +503,7 @@ id_plot_legis_dyn <- function(object,return_data=FALSE,item_plot=NULL,
     # give some of the persons a special color and make bigger
     
     outplot <- outplot + 
-      gghighlight(!!person_labels %in% highlight,use_group_by = F)
+      gghighlight(!!as_quosure(base_id) %in% highlight,use_group_by = F)
   }
   
   # only use a legend if groups are used or highlights

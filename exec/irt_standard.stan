@@ -30,7 +30,7 @@ data {
   int ll[N];
   int bb[N];
   int time[N];
-  vector[N] exog_data;
+  //vector[N] exog_data;
   matrix[num_legis,LX] legis_pred[T];
   matrix[num_bills,SRX] srx_pred;
   matrix[num_bills,SAX] sax_pred;
@@ -160,7 +160,7 @@ model {
   B_int_free ~ normal(0,diff_reg_sd);
   A_int_free ~ normal(0,diff_abs_sd);
 
-  exog_param ~ normal(0,5);
+  //exog_param ~ normal(0,5);
   for(b in 1:num_bills) {
   steps_votes_grm[b] ~ normal(0,5);
   }
