@@ -807,7 +807,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
                     restrict_low_bar=restrict_low_bar,
                     restrict_high_bar=restrict_high_bar,
                     use_ar=as.integer(use_ar),
-                    diff=id_diff,
+                    diff=idealdata@diff,
                     time_sd=time_sd)
 
   outobj <- sample_model(object=idealdata,nchains=nchains,niters=niters,warmup=warmup,ncores=ncores,
