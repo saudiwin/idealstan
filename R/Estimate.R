@@ -746,6 +746,10 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
                         ncores=ncores,
                         use_groups=use_groups)
   
+  # if diff hasn't been set yet, set it
+  
+  if(is.null(idealdata@diff)) idealdata@diff <- id_diff
+  
   # now run an identified run
   # repeat data formation as positions of rows/columns may have shifted
   if(use_groups==T) {
