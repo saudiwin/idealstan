@@ -125,7 +125,7 @@
    object@constraint_type <- this_data$constraint_type
    object@param_fix <- this_data$constrain_par
    # object@unrestricted <- old_matrix
-   object@diff <- diff
+   object@diff <- diff*2
    return(object)
 }
   
