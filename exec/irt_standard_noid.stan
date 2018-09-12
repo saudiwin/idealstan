@@ -100,7 +100,6 @@ parameters {
   ordered[m-1] steps_votes_grm[num_bills];
   vector[num_bills] B_int_free;
   vector[num_bills] A_int_free;
-  real exog_param;
   //real<lower=0> time_sd;
 }
 

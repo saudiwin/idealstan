@@ -94,7 +94,6 @@ parameters {
   vector[num_legis] L_AR1; // AR-1 parameters for AR-1 model
   vector[num_bills] sigma_reg_free;
   vector<lower=restrict_high_bar>[num_fix_high] restrict_high;
-  vector[num_fix_high] pinned_pars;
   vector[LX] legis_x;
   vector[SRX] sigma_reg_x;
   vector[SAX] sigma_abs_x;
@@ -106,7 +105,6 @@ parameters {
   ordered[m-1] steps_votes;
   ordered[m-1] steps_votes_grm[num_bills];
   ordered[num_fix_low+num_fix_high] restrict_ord[T];
-  real exog_param;
   //real<lower=0> time_sd;
 }
 

@@ -148,7 +148,9 @@ id_make <- function(score_data=NULL,
 
     personm <- model.matrix(person_cov,data=score_data)
     
-    # need to check for character -> dummify
+    # need to check for missing data and remove any missing from IDs
+    
+    score_rename <- slice(score_rename,as.numeric(attr(personm,'dimnames')[[1]]))
     
     person_cov <- bind_cols(as_data_frame(personm),
                             select(score_rename,!! time_id,
@@ -650,7 +652,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
                         time_sd=4,
                            diff_reg_sd=4,
                            diff_miss_sd=4,
-                           restrict_sd=4,
+                           restrict_sd=1,
                            restrict_low_bar=0,
                         restrict_high_bar=0,
                            ...) {

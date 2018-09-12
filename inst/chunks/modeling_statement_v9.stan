@@ -1,7 +1,7 @@
 
 // Version 9: only one kind of constraint  possible for discrimination
-
-    restrict_high ~normal(legis_pred[1, (num_legis - num_fix_high + 1):num_legis, ] * legis_x_cons, 
+// We include diff/2 as an offset as we want this parameter to be halfway past 0 
+    restrict_high ~normal(diff/2 + legis_pred[1, (num_legis - num_fix_high + 1):num_legis, ] * legis_x_cons, 
       restrict_sd);
 
 

@@ -31,7 +31,7 @@ static int current_statement_begin__;
 stan::io::program_reader prog_reader__() {
     stan::io::program_reader reader;
     reader.add_event(0, 0, "start", "model_irt_standard");
-    reader.add_event(398, 398, "end", "model_irt_standard");
+    reader.add_event(393, 393, "end", "model_irt_standard");
     return reader;
 }
 
@@ -379,8 +379,6 @@ public:
             num_params_r__ += num_bills;
             validate_non_negative_index("restrict_high", "num_fix_high", num_fix_high);
             num_params_r__ += num_fix_high;
-            validate_non_negative_index("pinned_pars", "num_fix_high", num_fix_high);
-            num_params_r__ += num_fix_high;
             validate_non_negative_index("legis_x", "LX", LX);
             num_params_r__ += LX;
             validate_non_negative_index("sigma_reg_x", "SRX", SRX);
@@ -405,7 +403,6 @@ public:
             validate_non_negative_index("restrict_ord", "(num_fix_low + num_fix_high)", (num_fix_low + num_fix_high));
             validate_non_negative_index("restrict_ord", "T", T);
             num_params_r__ += (num_fix_low + num_fix_high) * T;
-            ++num_params_r__;
         } catch (const std::exception& e) {
             stan::lang::rethrow_located(e, current_statement_begin__, prog_reader__());
             // Next line prevents compiler griping about no return
@@ -517,21 +514,6 @@ public:
             writer__.vector_lb_unconstrain(restrict_high_bar,restrict_high);
         } catch (const std::exception& e) { 
             throw std::runtime_error(std::string("Error transforming variable restrict_high: ") + e.what());
-        }
-
-        if (!(context__.contains_r("pinned_pars")))
-            throw std::runtime_error("variable pinned_pars missing");
-        vals_r__ = context__.vals_r("pinned_pars");
-        pos__ = 0U;
-        validate_non_negative_index("pinned_pars", "num_fix_high", num_fix_high);
-        context__.validate_dims("initialization", "pinned_pars", "vector_d", context__.to_vec(num_fix_high));
-        vector_d pinned_pars(static_cast<Eigen::VectorXd::Index>(num_fix_high));
-        for (int j1__ = 0U; j1__ < num_fix_high; ++j1__)
-            pinned_pars(j1__) = vals_r__[pos__++];
-        try {
-            writer__.vector_unconstrain(pinned_pars);
-        } catch (const std::exception& e) { 
-            throw std::runtime_error(std::string("Error transforming variable pinned_pars: ") + e.what());
         }
 
         if (!(context__.contains_r("legis_x")))
@@ -705,19 +687,6 @@ public:
             throw std::runtime_error(std::string("Error transforming variable restrict_ord: ") + e.what());
         }
 
-        if (!(context__.contains_r("exog_param")))
-            throw std::runtime_error("variable exog_param missing");
-        vals_r__ = context__.vals_r("exog_param");
-        pos__ = 0U;
-        context__.validate_dims("initialization", "exog_param", "double", context__.to_vec());
-        double exog_param(0);
-        exog_param = vals_r__[pos__++];
-        try {
-            writer__.scalar_unconstrain(exog_param);
-        } catch (const std::exception& e) { 
-            throw std::runtime_error(std::string("Error transforming variable exog_param: ") + e.what());
-        }
-
         params_r__ = writer__.data_r();
         params_i__ = writer__.data_i();
     }
@@ -793,13 +762,6 @@ public:
                 restrict_high = in__.vector_lb_constrain(restrict_high_bar,num_fix_high,lp__);
             else
                 restrict_high = in__.vector_lb_constrain(restrict_high_bar,num_fix_high);
-
-            Eigen::Matrix<T__,Eigen::Dynamic,1>  pinned_pars;
-            (void) pinned_pars;  // dummy to suppress unused var warning
-            if (jacobian__)
-                pinned_pars = in__.vector_constrain(num_fix_high,lp__);
-            else
-                pinned_pars = in__.vector_constrain(num_fix_high);
 
             Eigen::Matrix<T__,Eigen::Dynamic,1>  legis_x;
             (void) legis_x;  // dummy to suppress unused var warning
@@ -883,13 +845,6 @@ public:
                 else
                     restrict_ord.push_back(in__.ordered_constrain((num_fix_low + num_fix_high)));
             }
-
-            T__ exog_param;
-            (void) exog_param;  // dummy to suppress unused var warning
-            if (jacobian__)
-                exog_param = in__.scalar_constrain(lp__);
-            else
-                exog_param = in__.scalar_constrain();
 
 
             // transformed parameters
@@ -1041,7 +996,7 @@ public:
             for (int t = 1; t <= T; ++t) {
                 lp_accum__.add(normal_log<propto__>(get_base1(restrict_ord,t,"restrict_ord",1), 0, 5));
             }
-            lp_accum__.add(normal_log<propto__>(restrict_high, multiply(stan::model::rvalue(legis_pred, stan::model::cons_list(stan::model::index_uni(1), stan::model::cons_list(stan::model::index_min_max(((num_legis - num_fix_high) + 1), num_legis), stan::model::cons_list(stan::model::index_omni(), stan::model::nil_index_list()))), "legis_pred"),legis_x_cons), restrict_sd));
+            lp_accum__.add(normal_log<propto__>(restrict_high, add((diff / 2),multiply(stan::model::rvalue(legis_pred, stan::model::cons_list(stan::model::index_uni(1), stan::model::cons_list(stan::model::index_min_max(((num_legis - num_fix_high) + 1), num_legis), stan::model::cons_list(stan::model::index_omni(), stan::model::nil_index_list()))), "legis_pred"),legis_x_cons)), restrict_sd));
             lp_accum__.add(normal_log<propto__>(sigma_abs_free, multiply(stan::model::rvalue(sax_pred, stan::model::cons_list(stan::model::index_uni(num_bills), stan::model::cons_list(stan::model::index_omni(), stan::model::nil_index_list())), "sax_pred"),sigma_abs_x), 5));
             lp_accum__.add(normal_log<propto__>(sigma_reg_free, multiply(stan::model::rvalue(srx_pred, stan::model::cons_list(stan::model::index_uni(num_bills), stan::model::cons_list(stan::model::index_omni(), stan::model::nil_index_list())), "srx_pred"),sigma_reg_x), 5));
             if (as_bool(logical_eq(use_ar,0))) {
@@ -1235,7 +1190,6 @@ public:
         names__.push_back("L_AR1");
         names__.push_back("sigma_reg_free");
         names__.push_back("restrict_high");
-        names__.push_back("pinned_pars");
         names__.push_back("legis_x");
         names__.push_back("sigma_reg_x");
         names__.push_back("sigma_abs_x");
@@ -1247,7 +1201,6 @@ public:
         names__.push_back("steps_votes");
         names__.push_back("steps_votes_grm");
         names__.push_back("restrict_ord");
-        names__.push_back("exog_param");
         names__.push_back("L_full");
         names__.push_back("sigma_abs_full");
         names__.push_back("sigma_reg_full");
@@ -1275,9 +1228,6 @@ public:
         dimss__.push_back(dims__);
         dims__.resize(0);
         dims__.push_back(num_bills);
-        dimss__.push_back(dims__);
-        dims__.resize(0);
-        dims__.push_back(num_fix_high);
         dimss__.push_back(dims__);
         dims__.resize(0);
         dims__.push_back(num_fix_high);
@@ -1316,8 +1266,6 @@ public:
         dims__.resize(0);
         dims__.push_back(T);
         dims__.push_back((num_fix_low + num_fix_high));
-        dimss__.push_back(dims__);
-        dims__.resize(0);
         dimss__.push_back(dims__);
         dims__.resize(0);
         dims__.push_back(num_legis);
@@ -1362,7 +1310,6 @@ public:
         vector_d L_AR1 = in__.vector_constrain(num_legis);
         vector_d sigma_reg_free = in__.vector_constrain(num_bills);
         vector_d restrict_high = in__.vector_lb_constrain(restrict_high_bar,num_fix_high);
-        vector_d pinned_pars = in__.vector_constrain(num_fix_high);
         vector_d legis_x = in__.vector_constrain(LX);
         vector_d sigma_reg_x = in__.vector_constrain(SRX);
         vector_d sigma_abs_x = in__.vector_constrain(SAX);
@@ -1382,7 +1329,6 @@ public:
         for (size_t k_0__ = 0; k_0__ < dim_restrict_ord_0__; ++k_0__) {
             restrict_ord.push_back(in__.ordered_constrain((num_fix_low + num_fix_high)));
         }
-        double exog_param = in__.scalar_constrain();
             for (int k_0__ = 0; k_0__ < num_bills; ++k_0__) {
             vars__.push_back(sigma_abs_free[k_0__]);
             }
@@ -1402,9 +1348,6 @@ public:
             }
             for (int k_0__ = 0; k_0__ < num_fix_high; ++k_0__) {
             vars__.push_back(restrict_high[k_0__]);
-            }
-            for (int k_0__ = 0; k_0__ < num_fix_high; ++k_0__) {
-            vars__.push_back(pinned_pars[k_0__]);
             }
             for (int k_0__ = 0; k_0__ < LX; ++k_0__) {
             vars__.push_back(legis_x[k_0__]);
@@ -1443,7 +1386,6 @@ public:
                 vars__.push_back(restrict_ord[k_0__][k_1__]);
                 }
             }
-        vars__.push_back(exog_param);
 
         if (!include_tparams__) return;
         // declare and define transformed parameters
@@ -1602,11 +1544,6 @@ public:
             param_name_stream__ << "restrict_high" << '.' << k_0__;
             param_names__.push_back(param_name_stream__.str());
         }
-        for (int k_0__ = 1; k_0__ <= num_fix_high; ++k_0__) {
-            param_name_stream__.str(std::string());
-            param_name_stream__ << "pinned_pars" << '.' << k_0__;
-            param_names__.push_back(param_name_stream__.str());
-        }
         for (int k_0__ = 1; k_0__ <= LX; ++k_0__) {
             param_name_stream__.str(std::string());
             param_name_stream__ << "legis_x" << '.' << k_0__;
@@ -1666,9 +1603,6 @@ public:
                 param_names__.push_back(param_name_stream__.str());
             }
         }
-        param_name_stream__.str(std::string());
-        param_name_stream__ << "exog_param";
-        param_names__.push_back(param_name_stream__.str());
 
         if (!include_gqs__ && !include_tparams__) return;
         for (int k_0__ = 1; k_0__ <= num_legis; ++k_0__) {
@@ -1742,11 +1676,6 @@ public:
             param_name_stream__ << "restrict_high" << '.' << k_0__;
             param_names__.push_back(param_name_stream__.str());
         }
-        for (int k_0__ = 1; k_0__ <= num_fix_high; ++k_0__) {
-            param_name_stream__.str(std::string());
-            param_name_stream__ << "pinned_pars" << '.' << k_0__;
-            param_names__.push_back(param_name_stream__.str());
-        }
         for (int k_0__ = 1; k_0__ <= LX; ++k_0__) {
             param_name_stream__.str(std::string());
             param_name_stream__ << "legis_x" << '.' << k_0__;
@@ -1806,9 +1735,6 @@ public:
                 param_names__.push_back(param_name_stream__.str());
             }
         }
-        param_name_stream__.str(std::string());
-        param_name_stream__ << "exog_param";
-        param_names__.push_back(param_name_stream__.str());
 
         if (!include_gqs__ && !include_tparams__) return;
         for (int k_0__ = 1; k_0__ <= num_legis; ++k_0__) {
@@ -1876,7 +1802,7 @@ static int current_statement_begin__;
 stan::io::program_reader prog_reader__() {
     stan::io::program_reader reader;
     reader.add_event(0, 0, "start", "model_irt_standard_noid");
-    reader.add_event(349, 349, "end", "model_irt_standard_noid");
+    reader.add_event(348, 348, "end", "model_irt_standard_noid");
     return reader;
 }
 
@@ -2212,7 +2138,6 @@ public:
             num_params_r__ += num_bills;
             validate_non_negative_index("A_int_free", "num_bills", num_bills);
             num_params_r__ += num_bills;
-            ++num_params_r__;
         } catch (const std::exception& e) {
             stan::lang::rethrow_located(e, current_statement_begin__, prog_reader__());
             // Next line prevents compiler griping about no return
@@ -2464,19 +2389,6 @@ public:
             throw std::runtime_error(std::string("Error transforming variable A_int_free: ") + e.what());
         }
 
-        if (!(context__.contains_r("exog_param")))
-            throw std::runtime_error("variable exog_param missing");
-        vals_r__ = context__.vals_r("exog_param");
-        pos__ = 0U;
-        context__.validate_dims("initialization", "exog_param", "double", context__.to_vec());
-        double exog_param(0);
-        exog_param = vals_r__[pos__++];
-        try {
-            writer__.scalar_unconstrain(exog_param);
-        } catch (const std::exception& e) { 
-            throw std::runtime_error(std::string("Error transforming variable exog_param: ") + e.what());
-        }
-
         params_r__ = writer__.data_r();
         params_i__ = writer__.data_i();
     }
@@ -2618,13 +2530,6 @@ public:
                 A_int_free = in__.vector_constrain(num_bills,lp__);
             else
                 A_int_free = in__.vector_constrain(num_bills);
-
-            T__ exog_param;
-            (void) exog_param;  // dummy to suppress unused var warning
-            if (jacobian__)
-                exog_param = in__.scalar_constrain(lp__);
-            else
-                exog_param = in__.scalar_constrain();
 
 
             // transformed parameters
@@ -2958,7 +2863,6 @@ public:
         names__.push_back("steps_votes_grm");
         names__.push_back("B_int_free");
         names__.push_back("A_int_free");
-        names__.push_back("exog_param");
         names__.push_back("L_full");
         names__.push_back("sigma_abs_full");
         names__.push_back("sigma_reg_full");
@@ -3018,8 +2922,6 @@ public:
         dims__.push_back(num_bills);
         dimss__.push_back(dims__);
         dims__.resize(0);
-        dimss__.push_back(dims__);
-        dims__.resize(0);
         dims__.push_back(num_legis);
         dimss__.push_back(dims__);
         dims__.resize(0);
@@ -3072,7 +2974,6 @@ public:
         }
         vector_d B_int_free = in__.vector_constrain(num_bills);
         vector_d A_int_free = in__.vector_constrain(num_bills);
-        double exog_param = in__.scalar_constrain();
             for (int k_0__ = 0; k_0__ < num_bills; ++k_0__) {
             vars__.push_back(sigma_abs_free[k_0__]);
             }
@@ -3122,7 +3023,6 @@ public:
             for (int k_0__ = 0; k_0__ < num_bills; ++k_0__) {
             vars__.push_back(A_int_free[k_0__]);
             }
-        vars__.push_back(exog_param);
 
         if (!include_tparams__) return;
         // declare and define transformed parameters
@@ -3312,9 +3212,6 @@ public:
             param_name_stream__ << "A_int_free" << '.' << k_0__;
             param_names__.push_back(param_name_stream__.str());
         }
-        param_name_stream__.str(std::string());
-        param_name_stream__ << "exog_param";
-        param_names__.push_back(param_name_stream__.str());
 
         if (!include_gqs__ && !include_tparams__) return;
         for (int k_0__ = 1; k_0__ <= num_legis; ++k_0__) {
@@ -3430,9 +3327,6 @@ public:
             param_name_stream__ << "A_int_free" << '.' << k_0__;
             param_names__.push_back(param_name_stream__.str());
         }
-        param_name_stream__.str(std::string());
-        param_name_stream__ << "exog_param";
-        param_names__.push_back(param_name_stream__.str());
 
         if (!include_gqs__ && !include_tparams__) return;
         for (int k_0__ = 1; k_0__ <= num_legis; ++k_0__) {
