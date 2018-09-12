@@ -25,7 +25,8 @@ Imports:
     ggplot2,
     lazyeval,
     rlang,
-    shinystan
+    shinystan,
+    gghighlight
 Suggests:
     pscl,
     loo,

@@ -33,7 +33,7 @@
 #' @param ... Other options passed on to plotting function, currently ignored
 #' @import ggplot2
 #' @import lazyeval
-#' @importFrom rlang parse_quosure
+#' @importFrom rlang parse_quosure as_quosure
 #' @export
 #' @examples 
 #' 

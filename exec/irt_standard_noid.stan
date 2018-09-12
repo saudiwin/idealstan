@@ -129,7 +129,11 @@ model {
   vector[N] pi2;
   
   
-  L_free ~ normal(0,legis_sd);
+  if(T==1) {
+    L_free ~normal(legis_pred[1, 1:(num_legis - num_constrain_l), ] * legis_x, legis_sd);
+  } else {
+    L_free ~ normal(0,legis_sd);
+  }
   L_tp1[1] ~ normal(legis_pred[1, 1:(num_legis), ] * legis_x,legis_sd);
   if(T>1) {
     if(use_ar==1) {

@@ -1,12 +1,12 @@
 #' Function that does automatic identification of models using VB
-  .vb_fix <- function(object=NULL,
+.vb_fix <- function(object=NULL,
                     this_data=NULL,nfix=NULL,auto_id=FALSE,
                     ncores=NULL,all_args=NULL,
                     restrict_ind_high=NULL,
                     restrict_ind_low=NULL,
                     model_type=NULL,
                     use_groups=NULL,...) {
-
+  
   # check for windows 
   if(ncores>1) {
     if(.Platform$OS.type=='windows') {
@@ -27,108 +27,125 @@
   if(is.null(all_args)) {
     all_args <- list(...) 
   } 
+  
+  all_params <- attributes(this_params)$dimnames$parameters
+  old_matrix <- object@score_matrix
+  
+  # Or constrain persons instead of discriminations
+  # adjust for which time point we are looking at -- use first time point person param
+  person <- apply(this_params[,grepl(pattern = 'L_full',x=all_params)],2,mean)
+  fix_param <- "L_free"
+  
+  # now we know which ones to constrain
+  
+  to_constrain_high <- sort(person,index.return=TRUE,decreasing=TRUE)
+  to_constrain_high <- to_constrain_high$ix[1:nfix]
+  to_constrain_low <- sort(person,index.return=TRUE)
+  to_constrain_low <- to_constrain_low$ix[1:nfix]
+  
+  # change to group parameters if index is for groups
+  
+  # if(use_groups==T) {
+  #   if(!is.null(to_constrain_high)) {
+  #     to_constrain_high <- which(as.numeric(factor(object@person_data$group))==to_constrain_high)
+  #   }
+  #   if(!is.null(to_constrain_low)) {
+  #     to_constrain_low <- which(as.numeric(factor(object@person_data$group))==to_constrain_low)
+  #   }
+  # }
+  
+  # object@score_matrix <- object@score_matrix[c((1:nrow(object@score_matrix))[-c(to_constrain_high,
+  #                                                                               to_constrain_low)],
+  #                                              to_constrain_high,
+  #                                              to_constrain_low),]
+  
+  # now re-order the factors so that the indices will match  
+  
+  if(use_groups==T) {
+    # reorder group parameters
+    # check if there are more than 2
+    if(length(unique(object@score_matrix$group_id))>2) {
+      object@score_matrix <- mutate(ungroup(object@score_matrix), 
+                                    group_id=factor(!! quo(group_id)),
+                                    group_id= factor(!! quo(group_id),
+                                                     levels=c(levels(!! quo(group_id))[-c(to_constrain_high,
+                                                                                          to_constrain_low)],
+                                                              levels(!! quo(group_id))[c(to_constrain_high,
+                                                                                         to_constrain_low)])))
+    } else {
+      object@score_matrix <- mutate(ungroup(object@score_matrix), 
+                                    group_id=factor(!! quo(group_id)),
+                                    group_id= relevel(!! quo(group_id),
+                                                      levels(!! quo(group_id))[to_constrain_high]))
+    }
     
-   all_params <- attributes(this_params)$dimnames$parameters
-   old_matrix <- object@score_matrix
-   
-       # Or constrain persons instead of discriminations
-       # adjust for which time point we are looking at -- use first time point person param
-       person <- apply(this_params[,grepl(pattern = 'L_full',x=all_params)],2,mean)
-       fix_param <- "L_free"
-       
-       # now we know which ones to constrain
-       
-        to_constrain_high <- sort(person,index.return=TRUE,decreasing=TRUE)
-        to_constrain_high <- to_constrain_high$ix[1:nfix]
-        to_constrain_low <- sort(person,index.return=TRUE)
-        to_constrain_low <- to_constrain_low$ix[1:nfix]
-         
-       # change to group parameters if index is for groups
-
-       # if(use_groups==T) {
-       #   if(!is.null(to_constrain_high)) {
-       #     to_constrain_high <- which(as.numeric(factor(object@person_data$group))==to_constrain_high)
-       #   }
-       #   if(!is.null(to_constrain_low)) {
-       #     to_constrain_low <- which(as.numeric(factor(object@person_data$group))==to_constrain_low)
-       #   }
-       # }
-       
-       # object@score_matrix <- object@score_matrix[c((1:nrow(object@score_matrix))[-c(to_constrain_high,
-       #                                                                               to_constrain_low)],
-       #                                              to_constrain_high,
-       #                                              to_constrain_low),]
-        
-      # now re-order the factors so that the indices will match  
-        
-       if(use_groups==T) {
-         # reorder group parameters
-         object@score_matrix <- mutate(ungroup(object@score_matrix), 
-                                       group_id=factor(!! quo(group_id)),
-                                       group_id= factor(!! quo(group_id),
-                                                                   levels=c(levels(group_id)[-c(to_constrain_high,
-                                                                                                to_constrain_low)],
-                                                                            levels(group_id)[c(to_constrain_high,
-                                                                                               to_constrain_low)])))
-      } else {
-        object@score_matrix <- mutate(ungroup(object@score_matrix), 
-                                      person_id=factor(!! quo(person_id)),
-                                      person_id= factor(!! quo(person_id),
-                                                        levels=c(levels(person_id)[-c(to_constrain_high,
-                                                                                      to_constrain_low)],
-                                                                 levels(person_id)[c(to_constrain_high,
-                                                                                     to_constrain_low)])))
-       }
-       
-        # what to constrain the difference to given the priors
-        diff <- person[to_constrain_high[1]] - person[to_constrain_low[1]]
-     
+  } else {
+    if(length(unique(object@score_matrix$person_id))>2) {
+      object@score_matrix <- mutate(ungroup(object@score_matrix), 
+                                    person_id=factor(!! quo(person_id)),
+                                    person_id= factor(!! quo(person_id),
+                                                      levels=c(levels(person_id)[-c(to_constrain_high,
+                                                                                    to_constrain_low)],
+                                                               levels(person_id)[c(to_constrain_high,
+                                                                                   to_constrain_low)])))
+    } else {
+      object@score_matrix <- mutate(ungroup(object@score_matrix), 
+                                    person_id=factor(!! quo(person_id)),
+                                    person_id= relevel(!! quo(person_id),
+                                                       levels(!! quo(person_id))[to_constrain_high]))
+    }
+    
+  }
   
-   object@restrict_count <- c(to_constrain_high,to_constrain_low)
-   
-   this_data$num_fix_high <- 1
-   this_data$num_fix_low <- 1
-   this_data$constraint_type <- 3
-   
-   this_data$constrain_par <- 1
-   
-   # if(auto_id==TRUE) {
-   #   # Now re-run ID on 4 VB chains and see if the parameters are stable
-   #   print('Running automatic identification check.')
-   # 
-   #   all_vbs <- parallel::mclapply(1:4,function(i,this_data=NULL) {
-   #     vb_out <- vb(object=stanmodels[['irt_standard']],data=this_data,algorithm='meanfield')
-   #     lookat_params <- rstan::extract(vb_out,permuted=FALSE)
-   #     lookat_params <- lookat_params[,1,]
-   #    out_param <- apply(lookat_params,2,mean)
-   #   },this_data=this_data,mc.cores=ncores)
-   # 
-   #   signs <- sapply(all_vbs,sign)
-   #   equal_ratio <- apply(signs,1,function(r) {
-   #     all(r==r[1])
-   #   })
-   #   print(paste0('The model currently has ',round(mean(equal_ratio),1),' correct signs identified.'))
-   #   if(mean(equal_ratio)<0.9) {
-   #     print(paste0('Model is not yet identified. Increasing constraint number to ',nfix+1))
-   #     .vb_fix(object=object,this_params=this_params,this_data=this_data,nfix=nfix+1,auto_id=TRUE,
-   #             model_type=model_type,
-   #             ncores=ncores,
-   #             all_args)
-   #   } else {
-   #     print(paste0('Automatic identification has occurred for ',all_args$restrict_type,
-   #           ' identification with ',nfix,' constraints.'))
-   #   }
-   # }
-   
-   object@restrict_num_high <- 1
-   object@restrict_num_low <- 1
-   object@constraint_type <- this_data$constraint_type
-   object@param_fix <- this_data$constrain_par
-   # object@unrestricted <- old_matrix
-   object@diff <- diff*2
-   return(object)
+  # what to constrain the difference to given the priors
+  diff <- person[to_constrain_high[1]] - person[to_constrain_low[1]]
+  
+  
+  object@restrict_count <- c(to_constrain_high,to_constrain_low)
+  
+  this_data$num_fix_high <- 1
+  this_data$num_fix_low <- 1
+  this_data$constraint_type <- 3
+  
+  this_data$constrain_par <- 1
+  
+  # if(auto_id==TRUE) {
+  #   # Now re-run ID on 4 VB chains and see if the parameters are stable
+  #   print('Running automatic identification check.')
+  # 
+  #   all_vbs <- parallel::mclapply(1:4,function(i,this_data=NULL) {
+  #     vb_out <- vb(object=stanmodels[['irt_standard']],data=this_data,algorithm='meanfield')
+  #     lookat_params <- rstan::extract(vb_out,permuted=FALSE)
+  #     lookat_params <- lookat_params[,1,]
+  #    out_param <- apply(lookat_params,2,mean)
+  #   },this_data=this_data,mc.cores=ncores)
+  # 
+  #   signs <- sapply(all_vbs,sign)
+  #   equal_ratio <- apply(signs,1,function(r) {
+  #     all(r==r[1])
+  #   })
+  #   print(paste0('The model currently has ',round(mean(equal_ratio),1),' correct signs identified.'))
+  #   if(mean(equal_ratio)<0.9) {
+  #     print(paste0('Model is not yet identified. Increasing constraint number to ',nfix+1))
+  #     .vb_fix(object=object,this_params=this_params,this_data=this_data,nfix=nfix+1,auto_id=TRUE,
+  #             model_type=model_type,
+  #             ncores=ncores,
+  #             all_args)
+  #   } else {
+  #     print(paste0('Automatic identification has occurred for ',all_args$restrict_type,
+  #           ' identification with ',nfix,' constraints.'))
+  #   }
+  # }
+  
+  object@restrict_num_high <- 1
+  object@restrict_num_low <- 1
+  object@constraint_type <- this_data$constraint_type
+  object@param_fix <- this_data$constrain_par
+  # object@unrestricted <- old_matrix
+  object@diff <- diff*2
+  return(object)
 }
-  
+
 #' Function that pins certain parameters to fixed points
 .pinned_fix <- function(object=NULL,nfix=NULL,restrict_params=NULL,
                         restrict_ind_high=NULL,
@@ -137,18 +154,18 @@
   if(is.null(restrict_ind_high)) {
     stop('You must specify indices for pinned paramters as restrict_ind_high.')
   }
-
+  
   old_matrix <- object@score_matrix
   to_constrain_high <- restrict_ind_high
   to_constrain_low <- NULL
   
   if(any(restrict_params %in% c('discrim_reg','discrim_miss'))) {
-
+    
     object@score_matrix <- object@score_matrix[,c((1:ncol(object@score_matrix))[-c(to_constrain_high,
-                                                                                to_constrain_low)],
-                                                to_constrain_high,
-                                                to_constrain_low)]
-
+                                                                                   to_constrain_low)],
+                                                  to_constrain_high,
+                                                  to_constrain_low)]
+    
     param_fix <- switch(restrict_params,discrim_reg='sigma_reg',discrim_abs='sigma_abs')
   } else if(restrict_params=='person') {
     # change to group parameters if index is for groups
@@ -201,8 +218,8 @@
   to_constrain_high <- restrict_ind_high
   to_constrain_low <- restrict_ind_low
   
-    # change to group parameters if index is for groups
-
+  # change to group parameters if index is for groups
+  
   if(use_groups==T) {
     # reorder group parameters
     object@score_matrix <- mutate(ungroup(object@score_matrix), 
@@ -223,18 +240,18 @@
   }
   
   # what to constrain the difference to given the priors
-    diff <- 4
-    param_fix <- 'L_free'
+  diff <- 4
+  param_fix <- 'L_free'
   
   object@restrict_num_high <- length(restrict_ind_high)
-
+  
   object@restrict_num_low <- 1
   object@constraint_type <- 3L
   object@param_fix <- 1L
   #object@unrestricted <- old_matrix
   object@restrict_ind_high <- to_constrain_high
   object@restrict_ind_low <- to_constrain_low
-
+  
   return(object)
   
 }
@@ -457,7 +474,7 @@
 
 #' Function that figures out what kind of hierarchical model (if any) is being run
 .get_hier_type <- function(obj) {
-
+  
   if(all(obj@person_cov) && all(obj@item_cov) && all(obj@item_cov_miss)) {
     return(8)
   } else if(!all(obj@person_cov) && all(obj@item_cov) && all(obj@item_cov_miss)) {
@@ -491,8 +508,8 @@
   } else {
     rstan::extract(obj@stan_samples,...)
   }
-
-
+  
+  
 }
 
 
@@ -504,7 +521,7 @@
                        steps_data=NULL,
                        step_num=2,
                        this_num=NULL) {
-
+  
   if(is.null(steps_data)) {
     # non-ordinal
     # int_reg <- enenquo(int_reg)
@@ -515,16 +532,16 @@
                           high_bill=quantile((!!int_reg)/(!!sigma_reg),0.9),
                           low_bill=quantile((!!int_reg)/(!!sigma_reg),0.1)) %>% 
       mutate(param='Vote Points',
-                          step=1)
-      if(!is.null(int_abs)) {
-
-        out_data <- summarize(df,median_bill=median((!!int_abs)/(!!sigma_abs)),
-                              high_bill=quantile((!!int_abs)/(!!sigma_abs),0.9),
-                              low_bill=quantile((!!int_abs)/(!!sigma_abs),0.1)) %>% 
-          mutate(param='Absence Points',
-                              step=1) %>% 
-          bind_rows(out_data)
-      }
+             step=1)
+    if(!is.null(int_abs)) {
+      
+      out_data <- summarize(df,median_bill=median((!!int_abs)/(!!sigma_abs)),
+                            high_bill=quantile((!!int_abs)/(!!sigma_abs),0.9),
+                            low_bill=quantile((!!int_abs)/(!!sigma_abs),0.1)) %>% 
+        mutate(param='Absence Points',
+               step=1) %>% 
+        bind_rows(out_data)
+    }
     
   } else {
     #ordinal
@@ -534,24 +551,24 @@
     # sigma_abs <- enquo(sigma_abs)
     
     out_data <- lapply(1:step_num, function(s,steps_data=NULL) {
-
-    out_data <- summarize(df,median_bill=median(((!!int_reg)+steps_data[,s])/(!!sigma_reg)),
-                          high_bill=quantile(((!!int_reg)+steps_data[,s])/(!!sigma_reg),0.9),
-                          low_bill=quantile(((!!int_reg)+steps_data[,s])/(!!sigma_reg),0.1)) %>% 
-      mutate(param='Vote Points',
-                          step=s)
-    
-    if(!is.null(int_abs)) {
-
-      out_data <- summarize(df,median_bill=median(((!!int_abs)+steps_data[,s])/(!!sigma_abs)),
-                            high_bill=quantile(((!!int_abs)+steps_data[,s])/(!!sigma_abs),0.9),
-                            low_bill=quantile(((!!int_abs)+steps_data[,s])/(!!sigma_abs),0.1)) %>% 
-        mutate(param='Absence Points',
-                            step=s) %>% 
-        bind_rows(out_data)
       
-    }
-    return(out_data)
+      out_data <- summarize(df,median_bill=median(((!!int_reg)+steps_data[,s])/(!!sigma_reg)),
+                            high_bill=quantile(((!!int_reg)+steps_data[,s])/(!!sigma_reg),0.9),
+                            low_bill=quantile(((!!int_reg)+steps_data[,s])/(!!sigma_reg),0.1)) %>% 
+        mutate(param='Vote Points',
+               step=s)
+      
+      if(!is.null(int_abs)) {
+        
+        out_data <- summarize(df,median_bill=median(((!!int_abs)+steps_data[,s])/(!!sigma_abs)),
+                              high_bill=quantile(((!!int_abs)+steps_data[,s])/(!!sigma_abs),0.9),
+                              low_bill=quantile(((!!int_abs)+steps_data[,s])/(!!sigma_abs),0.1)) %>% 
+          mutate(param='Absence Points',
+                 step=s) %>% 
+          bind_rows(out_data)
+        
+      }
+      return(out_data)
     },steps_data=steps_data) %>% bind_rows
     
   }
@@ -571,7 +588,7 @@
 
 #' Helper function for preparing person ideal point plot data
 .prepare_legis_data <- function(object) {
-
+  
   # person_data <- object@score_data@person_data
   # 
   # # Apply any filters from the data processing stage so that the labels match
@@ -591,7 +608,7 @@
   # person_data <- slice(person_data,as.numeric(row.names(object@score_data@score_matrix)))
   # 
   if(length(unique(object@score_data@score_matrix$time_id))>1) {
-
+    
     
     # need to apply true person names by time point
     person_params <- as.data.frame(object@stan_samples,pars='L_tp1')
@@ -600,15 +617,15 @@
       summarize(low_pt=quantile(ideal_pts,0.1),high_pt=quantile(ideal_pts,0.9),
                 median_pt=median(ideal_pts)) %>% 
       mutate(param_id=stringr::str_extract(legis,'[0-9]+\\]'),
-    param_id=as.numeric(stringr::str_extract(param_id,'[0-9]+')),
-    time_point=stringr::str_extract(legis,'\\[[0-9]+'),
-    time_point=as.numeric(stringr::str_extract(time_point,'[0-9]+')))
+             param_id=as.numeric(stringr::str_extract(param_id,'[0-9]+')),
+             time_point=stringr::str_extract(legis,'\\[[0-9]+'),
+             time_point=as.numeric(stringr::str_extract(time_point,'[0-9]+')))
     # get ids out 
     
     person_ids <- select(object@score_data@score_matrix,
-                           !!quo(person_id),
-                           !!quo(time_id),
-                           !!quo(group_id)) %>% 
+                         !!quo(person_id),
+                         !!quo(time_id),
+                         !!quo(group_id)) %>% 
       distinct %>% 
       mutate(person_id_num=as.numeric(!!quo(person_id)),
              time_id_num=as.numeric(factor(!!quo(time_id))),
@@ -623,7 +640,7 @@
         left_join(person_ids,by=c(param_id='person_id_num',
                                   time_point='time_id_num'))
     }
-
+    
   } else {
     
     # NEED TO FIX WITH NEW DATA METHODS
@@ -647,7 +664,7 @@
                 median_pt=median(ideal_pts)) %>% 
       left_join(person_ids,by=c(legis='long_name'))
   }
-
+  
   person_params 
 }
 
@@ -663,8 +680,8 @@
 #' @param col_var_value Unquoted variable name that identifies the data.frame column corresponding to the values that populate the cells of the array
 #' @param third_dim_var Unquoted variable name that identifis the data.frame column corresponding to the dimension around which to stack the matrices (3rd dimension of array)
 .create_array <- function(input_matrix,arr_dim=2,row_var=NULL,
-                         col_var_name=NULL,
-                         col_var_value,third_dim_var=NULL) {
+                          col_var_name=NULL,
+                          col_var_value,third_dim_var=NULL) {
   
   if('matrix' %in% class(input_matrix)) {
     

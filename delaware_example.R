@@ -88,4 +88,6 @@ ar_plot <- all_params %>%
               alpha=0.3)
 
 gridExtra::grid.arrange(ar_plot,rw_plot)
-ggsave('ar_rw_comparison.png')
+rw_plot
+ggsave('ar_rw_comparison2.png')
+

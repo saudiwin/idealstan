@@ -7,9 +7,9 @@
                     pr_vote=NULL,
                     N=NULL,
                     absence=NULL,
-                    num_person=NULL,
-                    num_bills=NULL,
-                    time=NULL,
+                    person_points=NULL,
+                    item_points=NULL,
+                    time_points=NULL,
                     ...)
                     {
   
@@ -25,20 +25,18 @@
   
   combined <- if_else(pr_absence<runif(N),votes,2)
   
-  # Create a vote matrix
+  # Create a score dataset
   
-  combined <- matrix(combined,ncol=num_bills,nrow=num_person,byrow = F)
+  out_data <- data_frame(outcome=combined,
+                         person_id=person_points,
+                         time_id=time_points,
+                         item_id=item_points,
+                         group_id='G')
   
-  #Got the vote matrix, run ideal_data
-  
-  colnames(combined) <- paste0('Vote_',1:ncol(combined))
-  row.names(combined) <- paste0('person_',1:nrow(combined))
-  
-  out_data <- id_make(score_data=combined,
+  out_data <- id_make(score_data=out_data,
                       miss_val = 2,
                       high_val = 1,
                       low_val = 0,
-                      time = time,
                       middle_val = NULL,
                       inflate=absence)
   

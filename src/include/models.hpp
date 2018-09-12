@@ -31,7 +31,7 @@ static int current_statement_begin__;
 stan::io::program_reader prog_reader__() {
     stan::io::program_reader reader;
     reader.add_event(0, 0, "start", "model_irt_standard");
-    reader.add_event(381, 381, "end", "model_irt_standard");
+    reader.add_event(398, 398, "end", "model_irt_standard");
     return reader;
 }
 
@@ -353,7 +353,13 @@ public:
                     }
                 }
             }
-            stan::math::assign(num_constrain_l, (num_fix_high + num_fix_low));
+            if (as_bool(logical_eq(num_legis,2))) {
+
+                stan::math::assign(num_constrain_l, 1);
+            } else {
+
+                stan::math::assign(num_constrain_l, (num_fix_high + num_fix_low));
+            }
 
             // validate transformed data
 
@@ -928,7 +934,13 @@ public:
             stan::math::assign(restrict_low, subtract(restrict_high,diff));
             stan::math::assign(B_int_full, B_int_free);
             stan::math::assign(A_int_full, A_int_free);
-            stan::math::assign(L_full, append_row(L_free,append_row(restrict_high,restrict_low)));
+            if (as_bool(logical_eq(num_legis,2))) {
+
+                stan::math::assign(L_full, append_row(restrict_high,restrict_low));
+            } else {
+
+                stan::math::assign(L_full, append_row(L_free,append_row(restrict_high,restrict_low)));
+            }
             stan::math::assign(sigma_abs_full, sigma_abs_free);
             stan::math::assign(sigma_reg_full, sigma_reg_free);
 
@@ -1012,8 +1024,14 @@ public:
 
                 lp_accum__.add(normal_log<propto__>(steps_votes, 0, 5));
             }
-            lp_accum__.add(normal_log<propto__>(L_free, multiply(stan::model::rvalue(legis_pred, stan::model::cons_list(stan::model::index_uni(1), stan::model::cons_list(stan::model::index_min_max(1, ((num_legis - num_fix_high) - num_fix_low)), stan::model::cons_list(stan::model::index_omni(), stan::model::nil_index_list()))), "legis_pred"),legis_x), legis_sd));
-            lp_accum__.add(normal_log<propto__>(get_base1(L_tp1,1,"L_tp1",1), multiply(stan::model::rvalue(legis_pred, stan::model::cons_list(stan::model::index_uni(1), stan::model::cons_list(stan::model::index_min_max(1, num_legis), stan::model::cons_list(stan::model::index_omni(), stan::model::nil_index_list()))), "legis_pred"),legis_x), (legis_sd / time_sd)));
+            if (as_bool(logical_eq(T,1))) {
+
+                lp_accum__.add(normal_log<propto__>(L_free, multiply(stan::model::rvalue(legis_pred, stan::model::cons_list(stan::model::index_uni(1), stan::model::cons_list(stan::model::index_min_max(1, (num_legis - num_constrain_l)), stan::model::cons_list(stan::model::index_omni(), stan::model::nil_index_list()))), "legis_pred"),legis_x), legis_sd));
+            } else {
+
+                lp_accum__.add(normal_log<propto__>(L_free, 0, legis_sd));
+            }
+            lp_accum__.add(normal_log<propto__>(get_base1(L_tp1,1,"L_tp1",1), multiply(stan::model::rvalue(legis_pred, stan::model::cons_list(stan::model::index_uni(1), stan::model::cons_list(stan::model::index_min_max(1, num_legis), stan::model::cons_list(stan::model::index_omni(), stan::model::nil_index_list()))), "legis_pred"),legis_x), legis_sd));
             lp_accum__.add(normal_log<propto__>(B_int_free, 0, diff_reg_sd));
             lp_accum__.add(normal_log<propto__>(A_int_free, 0, diff_abs_sd));
             for (int b = 1; b <= num_bills; ++b) {
@@ -1478,7 +1496,13 @@ public:
             stan::math::assign(restrict_low, subtract(restrict_high,diff));
             stan::math::assign(B_int_full, B_int_free);
             stan::math::assign(A_int_full, A_int_free);
-            stan::math::assign(L_full, append_row(L_free,append_row(restrict_high,restrict_low)));
+            if (as_bool(logical_eq(num_legis,2))) {
+
+                stan::math::assign(L_full, append_row(restrict_high,restrict_low));
+            } else {
+
+                stan::math::assign(L_full, append_row(L_free,append_row(restrict_high,restrict_low)));
+            }
             stan::math::assign(sigma_abs_full, sigma_abs_free);
             stan::math::assign(sigma_reg_full, sigma_reg_free);
 
@@ -1852,7 +1876,7 @@ static int current_statement_begin__;
 stan::io::program_reader prog_reader__() {
     stan::io::program_reader reader;
     reader.add_event(0, 0, "start", "model_irt_standard_noid");
-    reader.add_event(345, 345, "end", "model_irt_standard_noid");
+    reader.add_event(349, 349, "end", "model_irt_standard_noid");
     return reader;
 }
 
@@ -2698,7 +2722,13 @@ public:
             stan::math::fill(pi2,DUMMY_VAR__);
 
 
-            lp_accum__.add(normal_log<propto__>(L_free, 0, legis_sd));
+            if (as_bool(logical_eq(T,1))) {
+
+                lp_accum__.add(normal_log<propto__>(L_free, multiply(stan::model::rvalue(legis_pred, stan::model::cons_list(stan::model::index_uni(1), stan::model::cons_list(stan::model::index_min_max(1, (num_legis - num_constrain_l)), stan::model::cons_list(stan::model::index_omni(), stan::model::nil_index_list()))), "legis_pred"),legis_x), legis_sd));
+            } else {
+
+                lp_accum__.add(normal_log<propto__>(L_free, 0, legis_sd));
+            }
             lp_accum__.add(normal_log<propto__>(get_base1(L_tp1,1,"L_tp1",1), multiply(stan::model::rvalue(legis_pred, stan::model::cons_list(stan::model::index_uni(1), stan::model::cons_list(stan::model::index_min_max(1, num_legis), stan::model::cons_list(stan::model::index_omni(), stan::model::nil_index_list()))), "legis_pred"),legis_x), legis_sd));
             if (as_bool(logical_gt(T,1))) {
 

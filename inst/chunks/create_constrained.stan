@@ -3,5 +3,11 @@
 //constraint_type 1 == low, 2==high, 3==high/low,4==pin
 //constrain_par 1==legis,2==sigma abs, 3==sigma reg
 
-num_constrain_l=num_fix_high + num_fix_low;
+
+if(num_legis==2) {
+  num_constrain_l=1;
+} else {
+  num_constrain_l=num_fix_high + num_fix_low;
+}
+
 

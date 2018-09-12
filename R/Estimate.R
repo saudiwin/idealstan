@@ -4,15 +4,15 @@
 #' 
 #' @param score_data A data frame in long form, i.e., one row in the data for each 
 #' measured score or vote in the data. 
-#' @param outcome Column name of the outcome in \code{score_data}, default is \code{"score"}
+#' @param outcome Column name of the outcome in \code{score_data}, default is \code{"outcome"}
 #' @param person_id Column name of the person/legislator ID index in \code{score_data}, 
 #' default is \code{'person_id'}
 #' @param item_id Column name of the item/bill ID index in \code{score_data}, 
 #' default is \code{'item_id'}
 #' @param time_id Column name of the time values in \code{score_data}: 
-#' optional, default is \code{'time'}
+#' optional, default is \code{'time_id'}
 #' @param group_id Optional column name of a person/legislator group IDs (i.e., parties) in \code{score_data}. 
-#' Optional, default is \code{'group'}
+#' Optional, default is \code{'group_id'}
 #' @param inflate If \code{TRUE}, the score matrix is set up to enable modeling of 
 #' missing data/absences (\code{miss_val}) as an inflation model in \code{\link{id_estimate}}
 #' @param person_cov A one-sided formula that specifies the covariates
@@ -60,7 +60,6 @@
 #' @import rstantools
 #' @import Rcpp
 #' @import methods
-#' @importFrom fastDummies dummy_cols
 #' @importFrom stats dbinom median plogis quantile reorder rexp rlnorm runif sd step rnorm
 #' @useDynLib idealstan, .registration = TRUE
 #' @examples 
@@ -79,11 +78,11 @@
 #' include_pres=FALSE)
 #' 
 id_make <- function(score_data=NULL,
-                    outcome='score',
+                    outcome='outcome',
                     person_id='person_id',
                     item_id='item_id',
-                    time_id='time',
-                    group_id='group',
+                    time_id='time_id',
+                    group_id='group_id',
                     simul_data=NULL,
                            person_cov=NULL,
                           varying_group_id=NULL,item_cov=NULL,
@@ -103,10 +102,10 @@ id_make <- function(score_data=NULL,
   
   # test for input and quote
   
-  outcome <- .check_quoted(outcome,quo(score))
+  outcome <- .check_quoted(outcome,quo(outcome))
   item_id <- .check_quoted(item_id,quo(item_id))
-  time_id <- .check_quoted(time_id,quo(time))
-  group_id <- .check_quoted(group_id,quo(group))
+  time_id <- .check_quoted(time_id,quo(time_id))
+  group_id <- .check_quoted(group_id,quo(group_id))
   person_id <- .check_quoted(person_id,quo(person_id))
   
   # rename data
@@ -139,7 +138,7 @@ id_make <- function(score_data=NULL,
   
   # see what the max time point is
   
-  max_t <- max(pull(score_rename,!!time_id))
+  max_t <- max(as.numeric(factor(pull(score_rename,!!time_id))))
   num_person <- max(as.numeric(factor(pull(score_rename,!!person_id))))
   num_item <- max(as.numeric(factor(pull(score_rename,!!item_id))))
   
@@ -171,6 +170,7 @@ id_make <- function(score_data=NULL,
     person_cov <- aperm(person_cov,c(3,1,2))
   } else {
     person_cov <- .create_array(matrix(rep(0,num_person),nrow=num_person,ncol=1),arr_dim=max_t)
+    person_cov <- aperm(person_cov,c(3,1,2))
     }
   if(!is.null(item_cov)) {
     
@@ -748,7 +748,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
   
   # if diff hasn't been set yet, set it
   
-  if(is.null(idealdata@diff)) idealdata@diff <- id_diff
+  if(length(idealdata@diff)==0) idealdata@diff <- id_diff
   
   # now run an identified run
   # repeat data formation as positions of rows/columns may have shifted

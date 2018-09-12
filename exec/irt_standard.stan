@@ -125,10 +125,7 @@ transformed parameters {
   //add in a paramter to the intercepts to prevent additive aliasing
   
   B_int_full = B_int_free;
-  //B_int_full[1] = 0.0;
   A_int_full = A_int_free;
-  //A_int_full[1]=0.0;
-  //A_int_full[2:num_bills] = A_int_free;
   //combine constrained and unconstrained parameters
   #include "build_params_v2.stan"
   
@@ -155,8 +152,13 @@ model {
   } else {
     steps_votes ~ normal(0,5);
   }
-  L_free ~normal(legis_pred[1, 1:(num_legis - num_fix_high-num_fix_low), ] * legis_x, legis_sd);
-	L_tp1[1] ~ normal(legis_pred[1, 1:(num_legis), ] * legis_x,legis_sd/time_sd);
+  if(T==1) {
+    L_free ~normal(legis_pred[1, 1:(num_legis - num_constrain_l), ] * legis_x, legis_sd);
+  } else {
+    L_free ~ normal(0,legis_sd);
+  }
+  
+	L_tp1[1] ~ normal(legis_pred[1, 1:(num_legis), ] * legis_x,legis_sd);
   B_int_free ~ normal(0,diff_reg_sd);
   A_int_free ~ normal(0,diff_abs_sd);
 
