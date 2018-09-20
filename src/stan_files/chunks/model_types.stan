@@ -51,7 +51,7 @@ if(model_type==1) {
       }
       
     for(n in 1:N) {
-      Y[n] ~ ordered_logistic(pi1[n],steps_votes);
+      Y_int[n] ~ ordered_logistic(pi1[n],steps_votes);
     }
         
         
@@ -78,7 +78,7 @@ if(model_type==1) {
   	      1 ~ bernoulli_logit(pi2[n]);
         } else {
           0 ~ bernoulli_logit(pi2[n]);
-          Y[n] ~ ordered_logistic(pi1[n],steps_votes);
+          Y_int[n] ~ ordered_logistic(pi1[n],steps_votes);
           }
         }
 
@@ -94,7 +94,7 @@ if(model_type==1) {
       }
       
     for(n in 1:N) 
-        Y[n] ~ ordered_logistic(pi1[n],steps_votes_grm[bb[n]]);
+        Y_int[n] ~ ordered_logistic(pi1[n],steps_votes_grm[bb[n]]);
 
 } else if(model_type==6) {
   //grm inflation
@@ -118,11 +118,28 @@ if(model_type==1) {
   	      1 ~ bernoulli_logit(pi2[n]);
         } else {
           0 ~ bernoulli_logit(pi2[n]);
-          Y[n] ~ ordered_logistic(pi1[n],steps_votes_grm[bb[n]]);
+          Y_int[n] ~ ordered_logistic(pi1[n],steps_votes_grm[bb[n]]);
           }
         }
 
 } else if(model_type==7) {
+  //poisson no inflation
+  
+      if(T==1) {
+        pi1 = sigma_reg_full[bb] .*  L_full[ll] - B_int_full[bb];
+      } else {
+        for(n in 1:N) {
+            pi1[n] = sigma_reg_full[bb[n]] *  L_tp1[time[n],ll[n]] - B_int_full[bb[n]];
+        }
+      }
+      
+    for(n in 1:N) {
+      Y_int[n] ~ poisson(exp(pi1[n]));
+    }
+        
+        
+
+} else if(model_type==8) {
   //hurdle poisson
   
       if(T==1) {
@@ -144,7 +161,91 @@ if(model_type==1) {
   	      1 ~ bernoulli_logit(pi2[n]);
         } else {
           0 ~ bernoulli_logit(pi2[n]);
-          Y[n] ~ poisson(pi1[n]);
+          Y_int[n] ~ poisson(exp(pi1[n]));
+          }
+        }
+
+} else if(model_type==9) {
+  //normal no inflation
+  
+      if(T==1) {
+        pi1 = sigma_reg_full[bb] .*  L_full[ll] - B_int_full[bb];
+      } else {
+        for(n in 1:N) {
+            pi1[n] = sigma_reg_full[bb[n]] *  L_tp1[time[n],ll[n]] - B_int_full[bb[n]];
+        }
+      }
+      
+    for(n in 1:N) {
+      Y_cont[n] ~ normal(pi1[n],extra_sd);
+    }
+        
+        
+
+} else if(model_type==10) {
+  //normal hurdle
+  
+      if(T==1) {
+        pi1 = sigma_reg_full[bb] .*  L_full[ll] - B_int_full[bb];
+        pi2 = sigma_abs_full[bb] .* L_full[ll] - 
+                  A_int_full[bb] ;
+      } else {
+        for(n in 1:N) {
+            pi1[n] = sigma_reg_full[bb[n]] *  L_tp1[time[n],ll[n]] - B_int_full[bb[n]];
+            pi2[n] = sigma_abs_full[bb[n]] * L_tp1[time[n],ll[n]] - 
+                    A_int_full[bb[n]] ; 
+
+        }
+      }
+
+      for(n in 1:N) {
+        
+        if(absence[n]==1) {
+  	      1 ~ bernoulli_logit(pi2[n]);
+        } else {
+          0 ~ bernoulli_logit(pi2[n]);
+          Y_cont[n] ~ normal(pi1[n],extra_sd);
+          }
+        }
+
+} else if(model_type==11) {
+  //lognormal no inflation
+  
+      if(T==1) {
+        pi1 = sigma_reg_full[bb] .*  L_full[ll] - B_int_full[bb];
+      } else {
+        for(n in 1:N) {
+            pi1[n] = sigma_reg_full[bb[n]] *  L_tp1[time[n],ll[n]] - B_int_full[bb[n]];
+        }
+      }
+      
+    for(n in 1:N) {
+      Y_cont[n] ~ lognormal(exp(pi1[n]),extra_sd);
+    }
+
+} else if(model_type==12) {
+  //hurdle lognormal
+  
+      if(T==1) {
+        pi1 = sigma_reg_full[bb] .*  L_full[ll] - B_int_full[bb];
+        pi2 = sigma_abs_full[bb] .* L_full[ll] - 
+                  A_int_full[bb] ;
+      } else {
+        for(n in 1:N) {
+            pi1[n] = sigma_reg_full[bb[n]] *  L_tp1[time[n],ll[n]] - B_int_full[bb[n]];
+            pi2[n] = sigma_abs_full[bb[n]] * L_tp1[time[n],ll[n]] - 
+                    A_int_full[bb[n]] ; 
+
+        }
+      }
+
+      for(n in 1:N) {
+        
+        if(absence[n]==1) {
+  	      1 ~ bernoulli_logit(pi2[n]);
+        } else {
+          0 ~ bernoulli_logit(pi2[n]);
+          Y_cont[n] ~ lognormal(exp(pi1[n]),extra_sd);
           }
         }
 

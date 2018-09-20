@@ -10,9 +10,10 @@ id_estimate(idealdata = NULL, model_type = 2, use_subset = FALSE,
   nfix = 3, restrict_ind_high = NULL, id_diff = 4,
   restrict_ind_low = NULL, fixtype = "vb", warmup = floor(niters/2),
   ncores = 4, auto_id = FALSE, use_ar = FALSE, use_groups = FALSE,
-  discrim_reg_sd = 3, discrim_miss_sd = 3, person_sd = 1, time_sd = 4,
-  diff_reg_sd = 4, diff_miss_sd = 4, restrict_sd = 4,
-  restrict_low_bar = 0, restrict_high_bar = 0, ...)
+  discrim_reg_sd = 3, discrim_miss_sd = 3, person_sd = 1,
+  time_sd = 4, diff_reg_sd = 4, diff_miss_sd = 4,
+  restrict_sd = 0.1, restrict_low_bar = 0, restrict_high_bar = 0,
+  ...)
 }
 \arguments{
 \item{idealdata}{An object produced by the \code{\link{id_make}} containing a score/vote matrix for use for estimation & plotting}

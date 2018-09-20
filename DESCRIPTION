@@ -11,13 +11,13 @@ Authors@R: c(person("Robert","Kubinec", role = c("aut","cre"),
 BugReports: https://github.com/saudiwin/idealstan/issues
 Description: Offers item-response theory (IRT) ideal-point scaling/dimension reduction methods that incorporate additional response categories and missing/censored values, including absences and abstentions, for roll call voting data (or any other kind of binary or ordinal item-response theory data). Full and approximate Bayesian inference is done via the 'Stan' engine (www.mc-stan.org). 
 License: GPL
-Depends:
-    R (>= 3.1),
-    Rcpp (>= 0.12.7)
-Imports:
-    rstan (>= 2.13.2),
-    rstantools (>= 1.1.0),
-    methods (>= 3.3.1),
+Depends: 
+    methods,
+    R (>= 3.4.0),
+    Rcpp (>= 0.12.18)
+Imports: 
+    rstan (>= 2.17.3),
+    rstantools (>= 1.5.1),
     dplyr,
     tidyr,
     stringr,
@@ -26,15 +26,21 @@ Imports:
     lazyeval,
     rlang,
     shinystan,
-    gghighlight
+    gghighlight,
+    forcats
 Suggests:
     pscl,
     loo,
     knitr,
     rmarkdown
-LinkingTo: StanHeaders (>= 2.13.1), rstan (>= 2.13.2), BH (>= 1.62.0.1), Rcpp
-    (>= 0.12.7), RcppEigen (>= 0.3.2.9.0)
-RoxygenNote: 6.0.1
+LinkingTo: 
+    BH (>= 1.66.0-1),
+    Rcpp (>= 0.12.18),
+    RcppEigen (>= 0.3.3.4.0),
+    rstan (>= 2.17.3),
+    StanHeaders (>= 2.17.2)
+Encoding: UTF-8
 LazyData: false
-VignetteBuilder: knitr
+NeedsCompilation: yes
 SystemRequirements: GNU make
+RoxygenNote: 6.1.0

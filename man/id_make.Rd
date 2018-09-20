@@ -4,13 +4,14 @@
 \alias{id_make}
 \title{Create data to run IRT model}
 \usage{
-id_make(score_data = NULL, outcome = "outcome", person_id = "person_id",
-  item_id = "item_id", time_id = "time_id", group_id = "group_id",
-  simul_data = NULL, person_cov = NULL, varying_group_id = NULL,
-  item_cov = NULL, miss_cov = NULL, miss_exog_val = NULL,
-  item_cov_miss = NULL, person_data = data_frame(), item_data = NULL,
-  miss_val = NA, high_val = 3L, low_val = 1L, middle_val = 2L,
-  ordinal = TRUE, time = NULL, outcome_label_type = "votes",
+id_make(score_data = NULL, outcome = "outcome",
+  person_id = "person_id", item_id = "item_id", time_id = "time_id",
+  group_id = "group_id", simul_data = NULL, person_cov = NULL,
+  group_cov = NULL, varying_group_id = NULL, item_cov = NULL,
+  miss_cov = NULL, miss_exog_val = NULL, item_cov_miss = NULL,
+  person_data = data_frame(), item_data = NULL, miss_val = NA,
+  high_val = 3L, low_val = 1L, middle_val = 2L, ordinal = FALSE,
+  continuous = FALSE, time = NULL, outcome_label_type = "votes",
   exclude_level = NULL, inflate = TRUE, simulation = FALSE,
   include_pres = FALSE)
 }
@@ -36,6 +37,9 @@ Optional, default is \code{'group_id'}}
 
 \item{person_cov}{A one-sided formula that specifies the covariates
 in \code{score_data} that will be used to hierarchically model the person/legislator ideal points}
+
+\item{group_cov}{A one-sided formula that specifies the covariates
+in \code{score_data} that will be used to hierarchically model the person/legislator ideal points at the group level}
 
 \item{item_cov}{A one-sided formula that specifies the covariates
 in \code{score_data} that will be used to hierarchically model the 
@@ -74,7 +78,8 @@ pass along a numeric or character vector of all such values in correct order (lo
 If there are no middle values (binary outcome), set to \code{NULL}.}
 
 \item{ordinal}{Whether or not the data contain ordinal responses. If \code{TRUE}, middle values/abstentions are used as a middle category in constructing the outcome.
-Otherwise the response is assumed to be binary (yes/no) or (correct/incorrect).}
+Otherwise the response is assumed to be binary (yes/no) or (correct/incorrect).
+@param continuous Whether or not the outcome/response is continuous. If it is, \code{miss_val} is recoded as the maximum of the outcome + 1.}
 
 \item{exclude_level}{A vector of any values that should be treated as \code{NA} in the response matrix. 
 Unlike the \code{middle_val} parameter, these values will be dropped from the data before estimation rather than modeled explicitly.}

@@ -133,9 +133,11 @@ id_sim_gen <- function(num_person=20,num_bills=50,
   # now pick a DGP function and run it
   
   run_func <- switch(model_type,binary=.binary,
-                     `ordinal-ratingscale`=.ord_rating,
-                     `ordinal-grm`=.ord_grm,
-                     `poisson`=.poisson)
+                     `ordinal_ratingscale`=.ordinal_ratingscale,
+                     `ordinal_grm`=.ordinal_grm,
+                     `poisson`=.poisson,
+                     normal=.normal,
+                     lognormal=.lognormal)
   
   outobj <- run_func(pr_absence=pr_absence,
            pr_vote=pr_vote,
@@ -279,9 +281,9 @@ id_sim_rmse <- function(obj,rep=1) {
   
   all_true <- obj@score_data@simul_data
   
-  true_person <- all_true$true_person[as.numeric(row.names(obj@score_data@score_matrix))]
-  true_sigma_reg <- all_true$true_reg_discrim[as.numeric(colnames(obj@score_data@score_matrix))]
-  true_sigma_abs <- all_true$true_abs_discrim[as.numeric(colnames(obj@score_data@score_matrix))]
+  true_person <- all_true$true_person[as.numeric(levels(obj@score_data@score_matrix$person_id))]
+  true_sigma_reg <- all_true$true_reg_discrim
+  true_sigma_abs <- all_true$true_abs_discrim
   
   over_params <- function(est_param,true_param) {
   
@@ -330,9 +332,9 @@ id_sim_coverage <- function(obj,rep=1,quantiles=c(.95,.05)) {
   
   all_true <- obj@score_data@simul_data
   
-  true_person <- all_true$true_person[as.numeric(row.names(obj@score_data@score_matrix))]
-  true_sigma_reg <- all_true$true_reg_discrim[as.numeric(colnames(obj@score_data@score_matrix))]
-  true_sigma_abs <- all_true$true_abs_discrim[as.numeric(colnames(obj@score_data@score_matrix))]
+  true_person <- all_true$true_person[as.numeric(levels(obj@score_data@score_matrix$person_id))]
+  true_sigma_reg <- all_true$true_reg_discrim
+  true_sigma_abs <- all_true$true_abs_discrim
   
   over_params <- function(est_param,true_param) {
 
@@ -390,9 +392,9 @@ id_sim_resid <- function(obj,rep=1) {
   
   all_true <- obj@score_data@simul_data
   
-  true_person <- all_true$true_person[as.numeric(row.names(obj@score_data@score_matrix))]
-  true_sigma_reg <- all_true$true_reg_discrim[as.numeric(colnames(obj@score_data@score_matrix))]
-  true_sigma_abs <- all_true$true_abs_discrim[as.numeric(colnames(obj@score_data@score_matrix))]
+  true_person <- all_true$true_person[as.numeric(levels(obj@score_data@score_matrix$person_id))]
+  true_sigma_reg <- all_true$true_reg_discrim
+  true_sigma_abs <- all_true$true_abs_discrim
   
   over_params <- function(est_param,true_param) {
 

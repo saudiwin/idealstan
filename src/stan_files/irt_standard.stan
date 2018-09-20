@@ -1,11 +1,11 @@
 
-#include "license.stan"
+#include /chunks/license.stan
 
 data {
   int N;
   int T;
-  int Y[N];
-  
+  real Y[N]; // outcome
+
   /* Use this to set the type of IRT Model to run
   1= basic IRT 2 Pl (no inflation)
   2= basic IRT 2 PL (with inflation)
@@ -47,44 +47,23 @@ data {
 }
 
 transformed data {
-	int m;                         // # steps
+	int m;                         // # missing value
+	int m_step; // number of ordinal categories
 	int absence[N]; // need to create absence indicator
 	int num_constrain_l;
+	int minimum; // need to know the least value of Y to convert to int
+	int Y_int[N];
+	real Y_cont[N];
 	int Y_new[N];
-	if(model_type==4||model_type==6) {
-	  //count down one if model is inflated
-	  m = max(Y) - 1;
-	} else if(model_type==1||model_type==2) {
-	  //binary models
-	  m = 2;
-	} else {
-	  m= max(Y);
-	}
 	
-  for(n in 1:N) {
-      if(Y[n]>m || Y[n]==(-9998)) {
-        absence[n]=1;
-      } else {
-        absence[n]=0;
-      }
-      if(model_type==1) {
-        //need to change outcome for binomial models
-        if(max(Y)==2) {
-          Y_new[n] = Y[n] - 1;
-        } else {
-          Y_new[n] = Y[n];
-        }
-      } else if(model_type==2) {
-         if(max(Y)==3) {
-          Y_new[n] = Y[n] - 1;
-        } else {
-          Y_new[n] = Y[n];
-        }
-      }
-  }
+	// need to assign a type of outcome to Y based on the model (discrete or continuous)
+	// to do this we need to trick Stan into assigning to an integer. 
+	
+	#include /chunks/create_outcome.stan
+  
   //determine how many and which parameters to constrain
-  #include "create_constrained.stan"
-
+  #include /chunks/create_constrained.stan
+  
 }
 
 parameters {
@@ -102,50 +81,49 @@ parameters {
   vector[SAX] sigma_abs_x_cons;
   vector[num_bills] B_int_free;
   vector[num_bills] A_int_free;
-  ordered[m-1] steps_votes;
-  ordered[m-1] steps_votes_grm[num_bills];
-  ordered[num_fix_low+num_fix_high] restrict_ord[T];
-  //real<lower=0> time_sd;
+  ordered[m_step-1] steps_votes;
+  ordered[m_step-1] steps_votes_grm[num_bills];
+  real<lower=0> extra_sd;
 }
 
 transformed parameters {
-  
+
   vector[num_legis] L_full;
   vector[num_bills] sigma_abs_full;
   vector[num_bills] sigma_reg_full;
-  
+
   vector[num_bills] B_int_full;
   vector[num_bills] A_int_full;
   vector[1] restrict_low;
-  
+
   restrict_low = restrict_high - diff;
-  
+
   //add in a paramter to the intercepts to prevent additive aliasing
-  
+
   B_int_full = B_int_free;
   A_int_full = A_int_free;
   //combine constrained and unconstrained parameters
-  #include "build_params_v2.stan"
-  
-  
+  #include /chunks/build_params_v2.stan
+
+
 }
 
-model {	
+model {
   //vectors to hold model calculations
   vector[N] pi1;
   vector[N] pi2;
-  
+
   legis_x ~ normal(0,5);
   legis_x_cons ~ normal(0,5);
   sigma_abs_x ~ normal(0,5);
   sigma_reg_x ~ normal(0,5);
   sigma_abs_x_cons ~ normal(0,5);
   sigma_reg_x_cons ~ normal(0,5);
-  //time_sd ~ lognormal(1.7,.3);
+  extra_sd ~ exponential(1);
   L_AR1 ~ normal(0,1); // these parameters shouldn't get too big
-  if(model_type>2 && model_type<8) {
-     for(i in 1:(m-2)) {
-    steps_votes[i+1] - steps_votes[i] ~ normal(0,5); 
+  if(model_type>2 && model_type<5) {
+     for(i in 1:(m_step-2)) {
+    steps_votes[i+1] - steps_votes[i] ~ normal(0,5);
   }
   } else {
     steps_votes ~ normal(0,5);
@@ -155,8 +133,17 @@ model {
   } else {
     L_free ~ normal(0,legis_sd);
   }
-  
+
 	L_tp1[1] ~ normal(legis_pred[1, 1:(num_legis), ] * legis_x,legis_sd);
+
+	if(T>1) {
+    if(use_ar==1) {
+       #include /chunks/l_hier_ar1_prior.stan
+    } else {
+      #include /chunks/l_hier_prior.stan
+    }
+  }
+
   B_int_free ~ normal(0,diff_reg_sd);
   A_int_free ~ normal(0,diff_abs_sd);
 
@@ -164,18 +151,16 @@ model {
   for(b in 1:num_bills) {
   steps_votes_grm[b] ~ normal(0,5);
   }
-  for(t in 1:T)
-    restrict_ord[t] ~ normal(0,5);
-  
+
   //priors for legislators and bill parameters
-  #include "modeling_statement_v9.stan"
-  
+  #include /chunks/modeling_statement_v9.stan
+
   //all model types
 
-  #include "model_types.stan"
+  #include chunks/model_types.stan
 
 /* This file sets up the various types of IRT models that can be run in idealstan */
 
-  
+
 }
 

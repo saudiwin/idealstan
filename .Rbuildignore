@@ -1,14 +1,3 @@
-cleanup*
-^\.travis\.yml$
-^.*\.Rproj$
+^idealstanv2\.Rproj$
 ^\.Rproj\.user$
-^chunks$
-README*
-package_test*
-cran-comments.md
-NEWS.md
-LICENSE.txt
-^\.DS_Store
-^\.Rmd
-bfg-1*
-
+^\.travis\.yml$

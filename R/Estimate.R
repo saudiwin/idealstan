@@ -17,6 +17,8 @@
 #' missing data/absences (\code{miss_val}) as an inflation model in \code{\link{id_estimate}}
 #' @param person_cov A one-sided formula that specifies the covariates
 #' in \code{score_data} that will be used to hierarchically model the person/legislator ideal points
+#' @param group_cov A one-sided formula that specifies the covariates
+#' in \code{score_data} that will be used to hierarchically model the person/legislator ideal points at the group level
 #' @param item_cov A one-sided formula that specifies the covariates
 #' in \code{score_data} that will be used to hierarchically model the 
 #' discrimination parameters for the regular model
@@ -47,6 +49,7 @@
 #'  If there are no middle values (binary outcome), set to \code{NULL}.
 #' @param ordinal Whether or not the data contain ordinal responses. If \code{TRUE}, middle values/abstentions are used as a middle category in constructing the outcome.
 #'  Otherwise the response is assumed to be binary (yes/no) or (correct/incorrect).
+#'  @param continuous Whether or not the outcome/response is continuous. If it is, \code{miss_val} is recoded as the maximum of the outcome + 1.
 #' @param exclude_level A vector of any values that should be treated as \code{NA} in the response matrix. 
 #' Unlike the \code{middle_val} parameter, these values will be dropped from the data before estimation rather than modeled explicitly.
 #' @param simulation If \code{TRUE}, simulated values are saved in the \code{idealdata} object for later plotting with the \code{\link{id_plot_sims}} function
@@ -85,13 +88,15 @@ id_make <- function(score_data=NULL,
                     group_id='group_id',
                     simul_data=NULL,
                            person_cov=NULL,
+                    group_cov=NULL,
                           varying_group_id=NULL,item_cov=NULL,
                            miss_cov=NULL,
                            miss_exog_val=NULL,
                            item_cov_miss=NULL,
                            person_data=data_frame(),item_data=NULL,
                            miss_val=NA,high_val=3L,low_val=1L,middle_val=2L,
-                           ordinal=TRUE,time=NULL,
+                           ordinal=FALSE,
+                    continuous=FALSE,time=NULL,
                            outcome_label_type='votes',
                            exclude_level=NULL,inflate=TRUE,simulation=FALSE,
                     include_pres=FALSE) {
@@ -140,6 +145,7 @@ id_make <- function(score_data=NULL,
   
   max_t <- max(as.numeric(factor(pull(score_rename,!!time_id))))
   num_person <- max(as.numeric(factor(pull(score_rename,!!person_id))))
+  num_group <- try(max(as.numeric(factor(pull(score_rename,!!group_id)))))
   num_item <- max(as.numeric(factor(pull(score_rename,!!item_id))))
   
   # create data frames for all hierachical parameters
@@ -173,7 +179,41 @@ id_make <- function(score_data=NULL,
   } else {
     person_cov <- .create_array(matrix(rep(0,num_person),nrow=num_person,ncol=1),arr_dim=max_t)
     person_cov <- aperm(person_cov,c(3,1,2))
-    }
+  }
+  
+  # separate parameters for group-level covariates
+  
+  if(!is.null(group_cov)) {
+    
+    groupm <- model.matrix(group_cov,data=score_data)
+    
+    # need to check for missing data and remove any missing from IDs
+    
+    score_rename <- slice(score_rename,as.numeric(attr(groupm,'dimnames')[[1]]))
+    
+    group_cov <- bind_cols(as_data_frame(groupm),
+                            select(score_rename,!! time_id,
+                                   !!group_id))
+    
+    # convert to long form for function
+    
+    group_cov <- gather(group_cov,key = !! quo(labels),value = !!quo(variables),
+                         -!!time_id,-!!group_id) %>% 
+      distinct
+    
+    group_cov <- .create_array(input_matrix=group_cov,
+                                row_var=group_id,
+                                col_var_name=labels,
+                                col_var_value=variables,
+                                third_dim_var=time_id)
+    
+    # reorder to fit stan
+    group_cov <- aperm(group_cov,c(3,1,2))
+  } else {
+    group_cov <- .create_array(matrix(rep(0,num_group),nrow=num_group,ncol=1),arr_dim=max_t)
+    group_cov <- aperm(group_cov,c(3,1,2))
+  }
+  
   if(!is.null(item_cov)) {
     
     itemm <- select(score_data, !!! all.vars(item_cov)) %>% 
@@ -222,8 +262,19 @@ id_make <- function(score_data=NULL,
     miss_val <- NA
   }
   
-  score_rename <- mutate(score_rename,!! quo_name(outcome) := as.integer(factor(!!outcome,
-                                                                levels=votes)))
+  if(continuous==FALSE) {
+    score_rename <- mutate(score_rename,!! quo_name(outcome) := as.integer(factor(!!outcome,
+                                                                                  levels=votes)))
+  } else if(continuous==TRUE & inflate==TRUE) {
+    max_val <- max(pull(score_rename,!!outcome))
+    if(is.na(miss_val)) {
+      score_rename <- mutate(score_rename,!! quo_name(outcome) := coalesce(is.na(!!outcome),max_val+1))
+    } else {
+      score_rename <- mutate(score_rename,!! quo_name(outcome) := ifelse(!!outcome==miss_val,max_val+1))
+    }
+    miss_val <- max_val+1
+  } 
+  
   
   
   # make roll calls a separate function
@@ -252,182 +303,6 @@ id_make <- function(score_data=NULL,
     row.names(score_matrix) <- row_names
   } 
   
-  
-  # recode missing into something that works
-  # if(is.na(miss_val) && inflate==TRUE) {
-  #   if(sum(is.na(score_matrix))==0) stop('To use missing-data model, you must have at least one missing value in the score matrix.')
-  #   suppressWarnings(score_matrix <- apply(score_matrix,2,function(c) {
-  #     if(is.numeric(c)) {
-  #         max_c <- max(c,na.rm=T)
-  #         c[is.na(c)] <- max_c +1
-  #     } else {
-  #       c[is.na(c)] <- 'Missing'
-  #       }
-  #     return(c)
-  #     
-  #   }))
-  #   if(is.numeric(score_matrix[,1])) {
-  #     miss_val <- max(score_matrix)
-  #   } else {
-  #     miss_val <- 'Missing'
-  #   }
-  # }
-
-
-  
-  # reformat time so that it fits into the idealdata object
-  # save time vals as a numeric vector of time points and time as the original vector for
-  # plotting
-  # if(!is.null(time_id)) {
-  #   
-  #   check_class <- class(pull(score_data,!!time_id))
-  #   
-  #   score_data <- mutate(score_data,
-  #                        !! quo_name(time_id) := stringr::str_extract(all_coll,'\\_.*[0-9]+.*'),
-  #                        !! quo_name(time_id) := 
-  #   
-  #   if(check_class=='character') {
-  #     all_coll <- colnames(score_matrix)
-  #     score_data <- mutate(score_data,
-  #                          !! quo_name(time_id) =)
-  #     just_year <- stringr::str_extract(all_coll,'\\_.*[0-9]+.*')
-  #     just_year <- stringr::str_extract(just_year,'[0-9]+')
-  #     just_year <- as.numeric(just_year)
-  #     time_vals <- as.numeric(factor(just_year))
-  #     time <- just_year
-  #   } else if(class(time) %in% c('Date',"POSIXct","POSIXt","POSIXlt")) {
-  #     if(length(time)!=ncol(cleaned)) {
-  #       stop('Time vector must be same length as the number of columns in the vote matrix.')
-  #     }
-  #     time_vals <- as.numeric(factor(as.numeric(time)))
-  #   } else if(is.numeric(time) || is.character(time) || is.factor(time)) {
-  #     if(length(time)!=ncol(cleaned)) {
-  #       stop('Time vector must be same length as the number of columns in the vote matrix.')
-  #     }
-  #     time_vals <- as.numeric(factor(time))
-  #   }   else {
-  #     stop('You must pass in either a vector dates or integers for time values or the string "separate". See function help docs.')
-  #   }
-  #   
-  #   max_t <- max(time_vals)
-  # } else {
-  #   time_vals <- rep(1,ncol(cleaned))
-  #   time <- rep(1,ncol(cleaned))
-  #   max_t <- max(time_vals)
-  # }
-  #colnames(cleaned) <- as.character(1:ncol(cleaned))
-  
-
-# Person Covariates -------------------------------------------------------
-  # 
-  # #before doing this, need to ensure that 1) all legislators in person_data have votes and 
-  # #2) the rows were correctly ordered to match score_matrix <-> person_data
-  # if(!is.null(person_cov)) {
-  #   if('data.frame' %in% class(person_cov)) {
-  #     person_cov <- .create_array(input_matrix=person_cov,
-  #                                 col_var_name=labels,
-  #                                 col_var_value=variables,
-  #                                 third_dim_var=time_points)
-  #     
-  #   } else if('matrix' %in% class(person_cov)) {
-  #     person_cov <- .create_array(person_cov,arr_dim=max_t)
-  #   }
-  # 
-  # } else {
-  #   # dummy variable of 1s
-  #   person_cov <- .create_array(matrix(rep(0,nrow(cleaned)),nrow=nrow(cleaned),ncol=1),arr_dim=max_t)
-  # }
-  # 
-  # # need to reorder indices to match what gets used in Stan
-  # 
-  # person_cov <- aperm(person_cov,c(3,1,2))
-  # 
-
-# Item Covariates ---------------------------------------------------------
-
-  
-  # if(!is.null(item_cov)) {
-  #   if(nrow(bill_cov)!=ncol(cleaned)) {
-  #     stop('Item/bill covariate data must be same length as the number of columns of score/vote matrix.')
-  #   }
-  # } else {
-  #   item_cov <- matrix(rep(0,ncol(cleaned)),nrow=ncol(cleaned),ncol=1)
-  # }
-  # if(!is.null(item_cov_miss)) {
-  #   if(nrow(item_cov_miss)!=ncol(cleaned)) {
-  #     stop('Item/bill covariate data must be same length as the number of columns of score/vote matrix.')
-  #   }
-  # } else {
-  #   item_cov_miss <- matrix(rep(0,ncol(cleaned)),nrow=ncol(cleaned),ncol=1)
-  # }
-  
-
-# Exogenous Missing Covariates --------------------------------------------
-
-  # first, if no missing covariates, create a matrix of zeroes
-  
-  # if(class(score_data)=='rollcall'&& !is.null(miss_exog_val)) {
-  #   
-  #   if(is.na(miss_exog_val)) {
-  #     
-  #     if(NA %in% miss_val) {
-  #       exog_data <- rep(0,length(c(cleaned)))
-  #     } else {
-  #       if(include_pres==F) {
-  #         exog_data <- as.numeric(is.na(c(score_data$votes[-1,])))
-  #       } else {
-  #         exog_data <- as.numeric(is.na(c(score_data$votes)))
-  #       }
-  #     }
-  #     
-  #   } else {
-  #     if(include_pres==F) {
-  #       exog_data <- as.numeric(c(score_data$votes[-1,])==miss_exog_val)
-  #     } else {
-  #       exog_data <- as.numeric(c(score_data$votes)==miss_exog_val)
-  #     }
-  #     
-  #   }
-  #   # recode
-  #   if(include_pres==F) {
-  #     if(!is.na(miss_exog_val)) {
-  #       cleaned <- sapply(1:ncol(cleaned),function(i) if_else(score_data$votes[-1,i]==miss_exog_val,-9998L,cleaned[,i]))
-  #     } else {
-  #       cleaned <- sapply(1:ncol(cleaned),function(i) if_else(is.na(score_data$votes[-1,i]),-9998L,cleaned[,i]))
-  #     }
-  #   } else {
-  #     if(!is.na(miss_exog_val)) {
-  #       cleaned <- sapply(1:ncol(cleaned),function(i) if_else(score_data$votes[,i]==miss_exog_val,-9998L,cleaned[,i]))
-  #     } else {
-  #       cleaned <- sapply(1:ncol(cleaned),function(i) if_else(is.na(score_data$votes[,i]),-9998L,cleaned[,i]))
-  #     }
-  #   }
-  # } else if(!is.null(miss_exog_val)) {
-  #   if(is.na(miss_exog_val)) {
-  #     exog_data <- as.numeric(is.na(c(score_data)))
-  #     if(NA %in% miss_val) {
-  #       exog_data <- as.numeric(is.na(c(score_data$votes)))
-  #     } else {
-  #       exog_data <- exog_data <- rep(0,length(c(score_data$votes)))
-  #     }
-  #   } else {
-  #     exog_data <- as.numeric(c(score_data$votes)==miss_exog_val)
-  #   }
-  #   # recode
-  #   if(!is.na(miss_exog_val)) {
-  #     cleaned <- sapply(1:ncol(cleaned),function(i) if_else(score_data$votes[,i]==miss_exog_val,-9998L,cleaned[,i]))
-  #   } else {
-  #     cleaned <- sapply(1:ncol(cleaned),function(i) if_else(is.na(score_data$votes[,i]),-9998L,cleaned[,i]))
-  #   }
-  # } else {
-  #   exog_data <- rep(0,length(c(cleaned)))
-  # }
-  
-  #not sure why I ever had this in here
-  #person_data$person.names <- row.names(score_matrix)
-  
-  # row.names(cleaned) <- as.character(1:nrow(cleaned))
-  
   if(nrow(person_data)==0) {
     person_data <- data_frame(person.names=as.character(1:num_person))
   }
@@ -442,21 +317,12 @@ id_make <- function(score_data=NULL,
   } else if(outcome_label_type!='votes') {
     vote_labels <- outcome_label_type
   }
-  
-  # # create ID variables for groups/legislators
-  # 
-  # person_vals <- as.numeric(factor(person_data$person.names))
-  # 
-  # if(is.null(varying_group_id)) {
-  #       group_vals <- as.numeric(factor(person_data$group))
-  #   } else {
-  #       group_vals <- as.numeric(factor(varying_group_id))
-  #   }
 
   outobj <- new('idealdata',
       score_matrix=score_rename,
       person_data=person_data,
       person_cov=person_cov,
+      group_cov=group_cov,
       item_cov=item_cov,
       item_cov_miss=item_cov_miss,
       vote_labels=vote_labels,
@@ -652,7 +518,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
                         time_sd=4,
                            diff_reg_sd=4,
                            diff_miss_sd=4,
-                           restrict_sd=1,
+                           restrict_sd=0.1,
                            restrict_low_bar=0,
                         restrict_high_bar=0,
                            ...) {
@@ -664,7 +530,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
   }
   
 
-    hier_type <- suppressWarnings(.get_hier_type(idealdata))
+    #hier_type <- suppressWarnings(.get_hier_type(idealdata))
     idealdata@stanmodel <- stanmodels[['irt_standard']]
    
     #Using an un-identified model with variational inference, find those parameters that would be most useful for
@@ -675,9 +541,13 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
   if(use_groups==T) {
     legispoints <- as.numeric(idealdata@score_matrix$group_id)
     num_legis <- max(legispoints)
+    # this handles the situation in which the data is fake and only 
+    # groups are used as parameters
+    legis_pred <- idealdata@group_cov
   } else {
     legispoints <- as.numeric(idealdata@score_matrix$person_id)
     num_legis <- max(legispoints)
+    legis_pred <- idealdata@person_cov
   }
 
   billpoints <- as.numeric(idealdata@score_matrix$item_id)
@@ -688,7 +558,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
   Y <- idealdata@score_matrix$outcome
   
   # check to see if we need to recode missing values from the data if the model_type doesn't handle missing data
-  if(model_type %in% c(1,3) & !is.null(idealdata@miss_val)) {
+  if(model_type %in% c(1,3,5,7,9,11) & !is.na(idealdata@miss_val)) {
     Y <- na_if(Y,idealdata@miss_val)
   }
   
@@ -712,7 +582,6 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
   this_data <- list(N=length(Y),
                     T=max(timepoints),
                     Y=Y,
-                    hier_type=hier_type,
                     num_legis=max(legispoints),
                     num_bills=num_bills,
                     ll=legispoints,
@@ -721,12 +590,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
                     LX=dim(idealdata@person_cov)[3],
                     SRX=ncol(idealdata@item_cov),
                     SAX=ncol(idealdata@item_cov_miss),
-                    # this handles the situation in which the data is fake and only 
-                    # groups are used as parameters
-                    legis_pred=array(idealdata@person_cov[,unique(legispoints),],
-                                     dim=c(max(timepoints),
-                                           max(unique(legispoints)),
-                                           dim(idealdata@person_cov)[3])),
+                    legis_pred=legis_pred,
                     srx_pred=idealdata@item_cov,
                     sax_pred=idealdata@item_cov_miss,
                     model_type=model_type,
@@ -770,7 +634,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
   Y <- idealdata@score_matrix$outcome
   
   # check to see if we need to recode missing values from the data if the model_type doesn't handle missing data
-  if(model_type %in% c(1,3) & !is.null(idealdata@miss_val)) {
+  if(model_type %in% c(1,3,5,7,9,11) & !is.na(idealdata@miss_val)) {
     Y <- na_if(Y,idealdata@miss_val)
   }
   
@@ -789,17 +653,13 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
                     num_bills=num_bills,
                     ll=legispoints,
                     bb=billpoints,
-                    num_fix_high=idealdata@restrict_num_high,
-                    num_fix_low=idealdata@restrict_num_low,
+                    num_fix_high=1,
+                    num_fix_low=1,
                     LX=dim(idealdata@person_cov)[3],
                     SRX=ncol(idealdata@item_cov),
                     SAX=ncol(idealdata@item_cov_miss),
-                    # this handles the situation in which the data is fake and only 
-                    # groups are used as parameters
-                    legis_pred=array(idealdata@person_cov[,unique(legispoints),],
-                                     dim=c(max(timepoints),
-                                           max(unique(legispoints)),
-                                           dim(idealdata@person_cov)[3])),
+                    legis_pred=legis_pred,
+                    group_pred=idealdata@group_cov,
                     srx_pred=idealdata@item_cov,
                     sax_pred=idealdata@item_cov_miss,
                     time=timepoints,

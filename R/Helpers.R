@@ -1,4 +1,5 @@
 #' Function that does automatic identification of models using VB
+#'@importFrom forcats fct_relevel
 .vb_fix <- function(object=NULL,
                     this_data=NULL,nfix=NULL,auto_id=FALSE,
                     ncores=NULL,all_args=NULL,
@@ -209,7 +210,7 @@
                            restrict_ind_high=NULL,
                            restrict_ind_low=NULL,
                            use_groups=NULL,...) {
-  
+
   all_args <- list(...) 
   if(is.null(restrict_ind_high)) {
     stop('You must specify at least one bill or personlator to constrain high in restrict_ind_high.')
@@ -224,19 +225,13 @@
     # reorder group parameters
     object@score_matrix <- mutate(ungroup(object@score_matrix), 
                                   group_id=factor(!! quo(group_id)),
-                                  group_id= factor(!! quo(group_id),
-                                                   levels=c(levels(group_id)[-c(to_constrain_high,
-                                                                                to_constrain_low)],
-                                                            levels(group_id)[c(to_constrain_high,
-                                                                               to_constrain_low)])))
+                                  group_id=fct_relevel(!!quo(group_id),c(to_constrain_high,to_constrain_low),
+                                                       after=length(levels(!!quo(group_id)))))
   } else {
     object@score_matrix <- mutate(ungroup(object@score_matrix), 
                                   person_id=factor(!! quo(person_id)),
-                                  person_id= factor(!! quo(person_id),
-                                                    levels=c(levels(person_id)[-c(to_constrain_high,
-                                                                                  to_constrain_low)],
-                                                             levels(person_id)[c(to_constrain_high,
-                                                                                 to_constrain_low)])))
+                                  person_id=fct_relevel(!!quo(person_id),c(to_constrain_high,to_constrain_low),
+                                                       after=length(levels(!!quo(person_id)))))
   }
   
   # what to constrain the difference to given the priors
