@@ -3,9 +3,11 @@
 
 data {
   int N;
+  int N_int; // if outcome is an integer
+  int N_cont; // if outcome is continuous
   int T;
-  real Y[N]; // outcome
-
+  int Y_int[N_int]; // integer outcome
+  real Y_cont[N_cont]; // continuous outcome
   /* Use this to set the type of IRT Model to run
   1= basic IRT 2 Pl (no inflation)
   2= basic IRT 2 PL (with inflation)
@@ -50,16 +52,12 @@ transformed data {
 	int m;                         // # missing value
 	int m_step; // number of ordinal categories
 	int absence[N]; // need to create absence indicator
-	int num_constrain_l;
-	int minimum; // need to know the least value of Y to convert to int
-	int Y_int[N];
-	real Y_cont[N];
 	int Y_new[N];
 	
 	// need to assign a type of outcome to Y based on the model (discrete or continuous)
 	// to do this we need to trick Stan into assigning to an integer. 
 	
-	#include /chunks/create_outcome.stan
+	#include /chunks/change_outcome.stan
 }
 
 parameters {
@@ -107,11 +105,11 @@ model {
 
 
   if(T==1) {
-    L_free ~normal(legis_pred[1, 1:(num_legis - num_constrain_l), ] * legis_x, legis_sd);
+    L_free ~normal(legis_pred[1, , ] * legis_x, legis_sd);
   } else {
     L_free ~ normal(0,legis_sd);
   }
-  L_tp1[1] ~ normal(legis_pred[1, 1:(num_legis), ] * legis_x,legis_sd);
+  L_tp1[1] ~ normal(legis_pred[1, , ] * legis_x,legis_sd);
   if(T>1) {
     if(use_ar==1) {
        #include /chunks/l_hier_ar1_prior.stan

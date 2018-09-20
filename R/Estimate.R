@@ -578,10 +578,25 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
     legispoints <- legispoints[remove_nas]
     billpoints <- billpoints[remove_nas]
     timepoints <- timepoints[remove_nas]
+    
+  if(model_type>8) {
+    N_cont <- length(Y)
+    N_int <- 1
+    Y_cont <- Y
+    Y_int <- 1
+  } else {
+    N_cont <- 1
+    N_int <- length(Y)
+    Y_cont <- 1
+    Y_int <- Y
+  }
 
   this_data <- list(N=length(Y),
+                    N_cont=N_cont,
+                    N_int=N_int,
+                    Y_int=Y_int,
+                    Y_cont=Y_cont,
                     T=max(timepoints),
-                    Y=Y,
                     num_legis=max(legispoints),
                     num_bills=num_bills,
                     ll=legispoints,
@@ -645,16 +660,31 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
   legispoints <- legispoints[remove_nas]
   billpoints <- billpoints[remove_nas]
   timepoints <- timepoints[remove_nas]
-
+  
+  if(model_type>8) {
+    N_cont <- length(Y)
+    N_int <- 1
+    Y_cont <- Y
+    Y_int <- array(1)
+  } else {
+    N_cont <- 1
+    N_int <- length(Y)
+    Y_cont <- array(1)
+    Y_int <- Y
+  }
+  
   this_data <- list(N=length(Y),
+                    N_cont=N_cont,
+                    N_int=N_int,
+                    Y_int=Y_int,
+                    Y_cont=Y_cont,
                     T=max(timepoints),
-                    Y=Y,
-                    num_legis=max(legispoints),
+                    num_legis=as.integer(max(legispoints)),
                     num_bills=num_bills,
                     ll=legispoints,
                     bb=billpoints,
-                    num_fix_high=1,
-                    num_fix_low=1,
+                    num_fix_high=as.integer(1),
+                    num_fix_low=as.integer(1),
                     LX=dim(idealdata@person_cov)[3],
                     SRX=ncol(idealdata@item_cov),
                     SAX=ncol(idealdata@item_cov_miss),

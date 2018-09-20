@@ -44,7 +44,7 @@ stan::io::program_reader prog_reader__() {
     reader.add_event(1, 0, "start", "/chunks/license.stan");
     reader.add_event(15, 14, "end", "/chunks/license.stan");
     reader.add_event(15, 2, "restart", "model_irt_standard");
-    reader.add_event(178, 165, "end", "model_irt_standard");
+    reader.add_event(180, 167, "end", "model_irt_standard");
     return reader;
 }
 
@@ -52,8 +52,11 @@ stan::io::program_reader prog_reader__() {
  class model_irt_standard : public prob_grad {
 private:
     int N;
+    int N_int;
+    int N_cont;
     int T;
-    vector<double> Y;
+    vector<int> Y_int;
+    vector<double> Y_cont;
     int model_type;
     int LX;
     int SRX;
@@ -83,9 +86,6 @@ private:
     int m_step;
     vector<int> absence;
     int num_constrain_l;
-    int minimum;
-    vector<int> Y_int;
-    vector<double> Y_cont;
     vector<int> Y_new;
 public:
     model_irt_standard(stan::io::var_context& context__,
@@ -128,77 +128,100 @@ public:
             pos__ = 0;
             N = vals_i__[pos__++];
             current_statement_begin__ = 19;
+            context__.validate_dims("data initialization", "N_int", "int", context__.to_vec());
+            N_int = int(0);
+            vals_i__ = context__.vals_i("N_int");
+            pos__ = 0;
+            N_int = vals_i__[pos__++];
+            current_statement_begin__ = 20;
+            context__.validate_dims("data initialization", "N_cont", "int", context__.to_vec());
+            N_cont = int(0);
+            vals_i__ = context__.vals_i("N_cont");
+            pos__ = 0;
+            N_cont = vals_i__[pos__++];
+            current_statement_begin__ = 21;
             context__.validate_dims("data initialization", "T", "int", context__.to_vec());
             T = int(0);
             vals_i__ = context__.vals_i("T");
             pos__ = 0;
             T = vals_i__[pos__++];
-            current_statement_begin__ = 20;
-            validate_non_negative_index("Y", "N", N);
-            context__.validate_dims("data initialization", "Y", "double", context__.to_vec(N));
-            validate_non_negative_index("Y", "N", N);
-            Y = std::vector<double>(N,double(0));
-            vals_r__ = context__.vals_r("Y");
+            current_statement_begin__ = 22;
+            validate_non_negative_index("Y_int", "N_int", N_int);
+            context__.validate_dims("data initialization", "Y_int", "int", context__.to_vec(N_int));
+            validate_non_negative_index("Y_int", "N_int", N_int);
+            Y_int = std::vector<int>(N_int,int(0));
+            vals_i__ = context__.vals_i("Y_int");
             pos__ = 0;
-            size_t Y_limit_0__ = N;
-            for (size_t i_0__ = 0; i_0__ < Y_limit_0__; ++i_0__) {
-                Y[i_0__] = vals_r__[pos__++];
+            size_t Y_int_limit_0__ = N_int;
+            for (size_t i_0__ = 0; i_0__ < Y_int_limit_0__; ++i_0__) {
+                Y_int[i_0__] = vals_i__[pos__++];
             }
-            current_statement_begin__ = 31;
+            current_statement_begin__ = 23;
+            validate_non_negative_index("Y_cont", "N_cont", N_cont);
+            context__.validate_dims("data initialization", "Y_cont", "double", context__.to_vec(N_cont));
+            validate_non_negative_index("Y_cont", "N_cont", N_cont);
+            Y_cont = std::vector<double>(N_cont,double(0));
+            vals_r__ = context__.vals_r("Y_cont");
+            pos__ = 0;
+            size_t Y_cont_limit_0__ = N_cont;
+            for (size_t i_0__ = 0; i_0__ < Y_cont_limit_0__; ++i_0__) {
+                Y_cont[i_0__] = vals_r__[pos__++];
+            }
+            current_statement_begin__ = 34;
             context__.validate_dims("data initialization", "model_type", "int", context__.to_vec());
             model_type = int(0);
             vals_i__ = context__.vals_i("model_type");
             pos__ = 0;
             model_type = vals_i__[pos__++];
-            current_statement_begin__ = 32;
+            current_statement_begin__ = 35;
             context__.validate_dims("data initialization", "LX", "int", context__.to_vec());
             LX = int(0);
             vals_i__ = context__.vals_i("LX");
             pos__ = 0;
             LX = vals_i__[pos__++];
-            current_statement_begin__ = 33;
+            current_statement_begin__ = 36;
             context__.validate_dims("data initialization", "SRX", "int", context__.to_vec());
             SRX = int(0);
             vals_i__ = context__.vals_i("SRX");
             pos__ = 0;
             SRX = vals_i__[pos__++];
-            current_statement_begin__ = 34;
+            current_statement_begin__ = 37;
             context__.validate_dims("data initialization", "SAX", "int", context__.to_vec());
             SAX = int(0);
             vals_i__ = context__.vals_i("SAX");
             pos__ = 0;
             SAX = vals_i__[pos__++];
-            current_statement_begin__ = 35;
+            current_statement_begin__ = 38;
             context__.validate_dims("data initialization", "use_ar", "int", context__.to_vec());
             use_ar = int(0);
             vals_i__ = context__.vals_i("use_ar");
             pos__ = 0;
             use_ar = vals_i__[pos__++];
-            current_statement_begin__ = 39;
+            current_statement_begin__ = 42;
             context__.validate_dims("data initialization", "num_legis", "int", context__.to_vec());
             num_legis = int(0);
             vals_i__ = context__.vals_i("num_legis");
             pos__ = 0;
             num_legis = vals_i__[pos__++];
-            current_statement_begin__ = 40;
+            current_statement_begin__ = 43;
             context__.validate_dims("data initialization", "num_bills", "int", context__.to_vec());
             num_bills = int(0);
             vals_i__ = context__.vals_i("num_bills");
             pos__ = 0;
             num_bills = vals_i__[pos__++];
-            current_statement_begin__ = 41;
+            current_statement_begin__ = 44;
             context__.validate_dims("data initialization", "num_fix_high", "int", context__.to_vec());
             num_fix_high = int(0);
             vals_i__ = context__.vals_i("num_fix_high");
             pos__ = 0;
             num_fix_high = vals_i__[pos__++];
-            current_statement_begin__ = 42;
+            current_statement_begin__ = 45;
             context__.validate_dims("data initialization", "num_fix_low", "int", context__.to_vec());
             num_fix_low = int(0);
             vals_i__ = context__.vals_i("num_fix_low");
             pos__ = 0;
             num_fix_low = vals_i__[pos__++];
-            current_statement_begin__ = 43;
+            current_statement_begin__ = 46;
             validate_non_negative_index("ll", "N", N);
             context__.validate_dims("data initialization", "ll", "int", context__.to_vec(N));
             validate_non_negative_index("ll", "N", N);
@@ -209,7 +232,7 @@ public:
             for (size_t i_0__ = 0; i_0__ < ll_limit_0__; ++i_0__) {
                 ll[i_0__] = vals_i__[pos__++];
             }
-            current_statement_begin__ = 44;
+            current_statement_begin__ = 47;
             validate_non_negative_index("bb", "N", N);
             context__.validate_dims("data initialization", "bb", "int", context__.to_vec(N));
             validate_non_negative_index("bb", "N", N);
@@ -220,7 +243,7 @@ public:
             for (size_t i_0__ = 0; i_0__ < bb_limit_0__; ++i_0__) {
                 bb[i_0__] = vals_i__[pos__++];
             }
-            current_statement_begin__ = 45;
+            current_statement_begin__ = 48;
             validate_non_negative_index("time", "N", N);
             context__.validate_dims("data initialization", "time", "int", context__.to_vec(N));
             validate_non_negative_index("time", "N", N);
@@ -231,7 +254,7 @@ public:
             for (size_t i_0__ = 0; i_0__ < time_limit_0__; ++i_0__) {
                 time[i_0__] = vals_i__[pos__++];
             }
-            current_statement_begin__ = 47;
+            current_statement_begin__ = 50;
             validate_non_negative_index("legis_pred", "T", T);
             validate_non_negative_index("legis_pred", "num_legis", num_legis);
             validate_non_negative_index("legis_pred", "LX", LX);
@@ -252,7 +275,7 @@ public:
             }
                 }
             }
-            current_statement_begin__ = 48;
+            current_statement_begin__ = 51;
             validate_non_negative_index("srx_pred", "num_bills", num_bills);
             validate_non_negative_index("srx_pred", "SRX", SRX);
             context__.validate_dims("data initialization", "srx_pred", "matrix_d", context__.to_vec(num_bills,SRX));
@@ -268,7 +291,7 @@ public:
                     srx_pred(m_mat__,n_mat__) = vals_r__[pos__++];
                 }
             }
-            current_statement_begin__ = 49;
+            current_statement_begin__ = 52;
             validate_non_negative_index("sax_pred", "num_bills", num_bills);
             validate_non_negative_index("sax_pred", "SAX", SAX);
             context__.validate_dims("data initialization", "sax_pred", "matrix_d", context__.to_vec(num_bills,SAX));
@@ -284,61 +307,61 @@ public:
                     sax_pred(m_mat__,n_mat__) = vals_r__[pos__++];
                 }
             }
-            current_statement_begin__ = 50;
+            current_statement_begin__ = 53;
             context__.validate_dims("data initialization", "diff", "double", context__.to_vec());
             diff = double(0);
             vals_r__ = context__.vals_r("diff");
             pos__ = 0;
             diff = vals_r__[pos__++];
-            current_statement_begin__ = 51;
+            current_statement_begin__ = 54;
             context__.validate_dims("data initialization", "discrim_reg_sd", "double", context__.to_vec());
             discrim_reg_sd = double(0);
             vals_r__ = context__.vals_r("discrim_reg_sd");
             pos__ = 0;
             discrim_reg_sd = vals_r__[pos__++];
-            current_statement_begin__ = 52;
+            current_statement_begin__ = 55;
             context__.validate_dims("data initialization", "discrim_abs_sd", "double", context__.to_vec());
             discrim_abs_sd = double(0);
             vals_r__ = context__.vals_r("discrim_abs_sd");
             pos__ = 0;
             discrim_abs_sd = vals_r__[pos__++];
-            current_statement_begin__ = 53;
+            current_statement_begin__ = 56;
             context__.validate_dims("data initialization", "legis_sd", "double", context__.to_vec());
             legis_sd = double(0);
             vals_r__ = context__.vals_r("legis_sd");
             pos__ = 0;
             legis_sd = vals_r__[pos__++];
-            current_statement_begin__ = 54;
+            current_statement_begin__ = 57;
             context__.validate_dims("data initialization", "diff_abs_sd", "double", context__.to_vec());
             diff_abs_sd = double(0);
             vals_r__ = context__.vals_r("diff_abs_sd");
             pos__ = 0;
             diff_abs_sd = vals_r__[pos__++];
-            current_statement_begin__ = 55;
+            current_statement_begin__ = 58;
             context__.validate_dims("data initialization", "diff_reg_sd", "double", context__.to_vec());
             diff_reg_sd = double(0);
             vals_r__ = context__.vals_r("diff_reg_sd");
             pos__ = 0;
             diff_reg_sd = vals_r__[pos__++];
-            current_statement_begin__ = 56;
+            current_statement_begin__ = 59;
             context__.validate_dims("data initialization", "restrict_sd", "double", context__.to_vec());
             restrict_sd = double(0);
             vals_r__ = context__.vals_r("restrict_sd");
             pos__ = 0;
             restrict_sd = vals_r__[pos__++];
-            current_statement_begin__ = 57;
+            current_statement_begin__ = 60;
             context__.validate_dims("data initialization", "restrict_low_bar", "double", context__.to_vec());
             restrict_low_bar = double(0);
             vals_r__ = context__.vals_r("restrict_low_bar");
             pos__ = 0;
             restrict_low_bar = vals_r__[pos__++];
-            current_statement_begin__ = 58;
+            current_statement_begin__ = 61;
             context__.validate_dims("data initialization", "restrict_high_bar", "double", context__.to_vec());
             restrict_high_bar = double(0);
             vals_r__ = context__.vals_r("restrict_high_bar");
             pos__ = 0;
             restrict_high_bar = vals_r__[pos__++];
-            current_statement_begin__ = 59;
+            current_statement_begin__ = 62;
             context__.validate_dims("data initialization", "time_sd", "double", context__.to_vec());
             time_sd = double(0);
             vals_r__ = context__.vals_r("time_sd");
@@ -349,23 +372,23 @@ public:
             current_statement_begin__ = 18;
             current_statement_begin__ = 19;
             current_statement_begin__ = 20;
-            current_statement_begin__ = 31;
-            current_statement_begin__ = 32;
-            current_statement_begin__ = 33;
+            current_statement_begin__ = 21;
+            current_statement_begin__ = 22;
+            current_statement_begin__ = 23;
             current_statement_begin__ = 34;
             current_statement_begin__ = 35;
-            current_statement_begin__ = 39;
-            check_greater_or_equal(function__,"num_legis",num_legis,1);
-            current_statement_begin__ = 40;
-            check_greater_or_equal(function__,"num_bills",num_bills,1);
-            current_statement_begin__ = 41;
+            current_statement_begin__ = 36;
+            current_statement_begin__ = 37;
+            current_statement_begin__ = 38;
             current_statement_begin__ = 42;
+            check_greater_or_equal(function__,"num_legis",num_legis,1);
             current_statement_begin__ = 43;
+            check_greater_or_equal(function__,"num_bills",num_bills,1);
             current_statement_begin__ = 44;
             current_statement_begin__ = 45;
+            current_statement_begin__ = 46;
             current_statement_begin__ = 47;
             current_statement_begin__ = 48;
-            current_statement_begin__ = 49;
             current_statement_begin__ = 50;
             current_statement_begin__ = 51;
             current_statement_begin__ = 52;
@@ -376,31 +399,23 @@ public:
             current_statement_begin__ = 57;
             current_statement_begin__ = 58;
             current_statement_begin__ = 59;
+            current_statement_begin__ = 60;
+            current_statement_begin__ = 61;
+            current_statement_begin__ = 62;
             // initialize data variables
-            current_statement_begin__ = 63;
+            current_statement_begin__ = 66;
             m = int(0);
             stan::math::fill(m, std::numeric_limits<int>::min());
-            current_statement_begin__ = 64;
+            current_statement_begin__ = 67;
             m_step = int(0);
             stan::math::fill(m_step, std::numeric_limits<int>::min());
-            current_statement_begin__ = 65;
+            current_statement_begin__ = 68;
             validate_non_negative_index("absence", "N", N);
             absence = std::vector<int>(N,int(0));
             stan::math::fill(absence, std::numeric_limits<int>::min());
-            current_statement_begin__ = 66;
+            current_statement_begin__ = 69;
             num_constrain_l = int(0);
             stan::math::fill(num_constrain_l, std::numeric_limits<int>::min());
-            current_statement_begin__ = 67;
-            minimum = int(0);
-            stan::math::fill(minimum, std::numeric_limits<int>::min());
-            current_statement_begin__ = 68;
-            validate_non_negative_index("Y_int", "N", N);
-            Y_int = std::vector<int>(N,int(0));
-            stan::math::fill(Y_int, std::numeric_limits<int>::min());
-            current_statement_begin__ = 69;
-            validate_non_negative_index("Y_cont", "N", N);
-            Y_cont = std::vector<double>(N,double(0));
-            stan::math::fill(Y_cont,DUMMY_VAR__);
             current_statement_begin__ = 70;
             validate_non_negative_index("Y_new", "N", N);
             Y_new = std::vector<int>(N,int(0));
@@ -408,9 +423,6 @@ public:
 
 
             // validate transformed data
-            current_statement_begin__ = 63;
-            current_statement_begin__ = 64;
-            current_statement_begin__ = 65;
             current_statement_begin__ = 66;
             current_statement_begin__ = 67;
             current_statement_begin__ = 68;
@@ -1092,6 +1104,11 @@ public:
 
                 current_statement_begin__ = 165;
                 lp_accum__.add(normal_log<propto__>(get_base1(steps_votes_grm,b,"steps_votes_grm",1), 0, 5));
+            }
+            current_statement_begin__ = 168;
+            if (pstream__) {
+                stan_print(pstream__,411);
+                *pstream__ << std::endl;
             }
             }
 

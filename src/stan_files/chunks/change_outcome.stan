@@ -1,17 +1,3 @@
-if(model_type<9) {
-  minimum = 0;
-  while (minimum<floor(Y))
-    minimum = minimum + 1;
-  for(n in 1:N) {
-    Y_int[n] = minimum;
-    while ((Y_int[n] + 1) < floor(Y[n])) 
-      Y_int[n] = Y_int[n] + 1;
-  }
-} else {
-  for(n in 1:N) Y_cont[n] = Y[n];
-}
-
-
 if(model_type==4||model_type==6||model_type==8) {
   //count down one if model is inflated
   m = max(Y_int) - 1;

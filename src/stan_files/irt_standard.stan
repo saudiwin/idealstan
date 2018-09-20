@@ -3,8 +3,11 @@
 
 data {
   int N;
+  int N_int; // if outcome is an integer
+  int N_cont; // if outcome is continuous
   int T;
-  real Y[N]; // outcome
+  int Y_int[N_int]; // integer outcome
+  real Y_cont[N_cont]; // continuous outcome
 
   /* Use this to set the type of IRT Model to run
   1= basic IRT 2 Pl (no inflation)
@@ -51,24 +54,21 @@ transformed data {
 	int m_step; // number of ordinal categories
 	int absence[N]; // need to create absence indicator
 	int num_constrain_l;
-	int minimum; // need to know the least value of Y to convert to int
-	int Y_int[N];
-	real Y_cont[N];
 	int Y_new[N];
 	
 	// need to assign a type of outcome to Y based on the model (discrete or continuous)
 	// to do this we need to trick Stan into assigning to an integer. 
 	
-	#include /chunks/create_outcome.stan
-  
+	#include /chunks/change_outcome.stan
+	
   //determine how many and which parameters to constrain
   #include /chunks/create_constrained.stan
-  
+
 }
 
 parameters {
   vector[num_bills] sigma_abs_free;
-  vector[num_legis-num_constrain_l] L_free; // first T=1 params to constrain
+  vector[num_legis - num_constrain_l] L_free; // first T=1 params to constrain
   vector[num_legis] L_tp1[T]; // all other params can float
   vector[num_legis] L_AR1; // AR-1 parameters for AR-1 model
   vector[num_bills] sigma_reg_free;
@@ -151,6 +151,8 @@ model {
   for(b in 1:num_bills) {
   steps_votes_grm[b] ~ normal(0,5);
   }
+  
+  print(411);
 
   //priors for legislators and bill parameters
   #include /chunks/modeling_statement_v9.stan
