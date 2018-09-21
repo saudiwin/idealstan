@@ -8,6 +8,7 @@ data {
   int T;
   int Y_int[N_int]; // integer outcome
   real Y_cont[N_cont]; // continuous outcome
+
   /* Use this to set the type of IRT Model to run
   1= basic IRT 2 Pl (no inflation)
   2= basic IRT 2 PL (with inflation)
@@ -49,53 +50,65 @@ data {
 }
 
 transformed data {
-	int m;                         // missing value
+	int m;                         // # missing value
 	int m_step; // number of ordinal categories
 	int absence[N]; // need to create absence indicator
+	int num_constrain_l;
 	int Y_new[N];
-	real m_cont;
 	
-	// need to assign a type of outcome to Y based on the model (discrete or continuous)
+		// need to assign a type of outcome to Y based on the model (discrete or continuous)
 	// to do this we need to trick Stan into assigning to an integer. 
 	
-#include /chunks/change_outcome.stan
+	#include /chunks/change_outcome.stan
+	
+  //determine how many and which parameters to constrain
+  if(num_legis==2) {
+    num_constrain_l=1;
+  } else {
+    num_constrain_l=num_fix_high + num_fix_low;
+  }
+
+
 }
 
 parameters {
   vector[num_bills] sigma_abs_free;
-  vector[num_legis] L_free;
+  vector[num_legis - num_constrain_l] L_free; // first T=1 params to constrain
   vector[num_legis] L_tp1[T]; // all other params can float
   vector[num_legis] L_AR1; // AR-1 parameters for AR-1 model
   vector[num_bills] sigma_reg_free;
+  vector<lower=restrict_high_bar>[num_fix_high] restrict_high;
   vector[LX] legis_x;
   vector[SRX] sigma_reg_x;
   vector[SAX] sigma_abs_x;
   vector[LX] legis_x_cons;
   vector[SRX] sigma_reg_x_cons;
   vector[SAX] sigma_abs_x_cons;
-  ordered[m_step-1] steps_votes;
-  ordered[m_step-1] steps_votes_grm[num_bills];
   vector[num_bills] B_int_free;
   vector[num_bills] A_int_free;
+  ordered[m_step-1] steps_votes;
+  ordered[m_step-1] steps_votes_grm[num_bills];
   real<lower=0> extra_sd;
 }
 
 transformed parameters {
-
+  
   vector[num_legis] L_full;
   vector[num_bills] sigma_abs_full;
   vector[num_bills] sigma_reg_full;
+
   vector[num_bills] B_int_full;
   vector[num_bills] A_int_full;
+  vector[1] restrict_low;
 
-  L_full=L_free;
-  sigma_abs_full=sigma_abs_free;
-  sigma_reg_full=sigma_reg_free;
+  restrict_low = restrict_high - diff;
+
+  //add in a paramter to the intercepts to prevent additive aliasing
 
   B_int_full = B_int_free;
-  //B_int_full[1] = 0.0;
-  A_int_full=A_int_free;
-  //B_int_full=B_int_free;
+  A_int_full = A_int_free;
+  //combine constrained and unconstrained parameters
+#include /chunks/build_params_v2.stan
 
 }
 
@@ -104,51 +117,15 @@ model {
   vector[N] pi1;
   vector[N] pi2;
 
-
-  if(T==1) {
-    L_free ~normal(legis_pred[1, , ] * legis_x, legis_sd);
-  } else {
-    L_free ~ normal(0,legis_sd);
-  }
-  L_tp1[1] ~ normal(legis_pred[1, , ] * legis_x,legis_sd);
-  if(T>1) {
-    if(use_ar==1) {
-#include /chunks/l_hier_ar1_prior.stan
-    } else {
-#include /chunks/l_hier_prior.stan
-    }
-  }
-
-
-  sigma_abs_free ~ normal(0,discrim_abs_sd);
-  sigma_reg_free ~ normal(0,discrim_reg_sd);
   legis_x ~ normal(0,5);
-  sigma_reg_x ~ normal(srx_pred[num_bills, ] * sigma_reg_x,5);
-  sigma_abs_x ~ normal(sax_pred[num_bills, ] * sigma_abs_x,5);
-  legis_x_cons ~ normal(0,5);;
-  sigma_reg_x_cons ~ normal(0,5);
+  legis_x_cons ~ normal(0,5);
+  sigma_abs_x ~ normal(0,5);
+  sigma_reg_x ~ normal(0,5);
   sigma_abs_x_cons ~ normal(0,5);
-  L_AR1 ~ normal(0,1); // these parameters shouldn't get too big
+  sigma_reg_x_cons ~ normal(0,5);
   extra_sd ~ exponential(1);
-  if(model_type>2 && model_type<5) {
-    for(i in 1:(m_step-2)) {
-    steps_votes[i+1] - steps_votes[i] ~ normal(0,5);
-    }
-  } else {
-    steps_votes ~ normal(0,5);
-  }
-
-  B_int_free ~ normal(0,diff_reg_sd);
-  A_int_free ~ normal(0,diff_abs_sd);
-  //exog_param ~ normal(0,5);
-  for(b in 1:num_bills) {
-  steps_votes_grm[b] ~ normal(0,5);
-  }
-  //model
-
-#include /chunks/model_types.stan
-
-
+  L_AR1 ~ normal(0,1); // these parameters shouldn't get too big
+  
 
 }
 

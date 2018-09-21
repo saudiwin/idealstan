@@ -206,6 +206,84 @@
   out_data <- id_make(score_data=out_data,
                       middle_val = NULL,
                       inflate=absence,
+                      continuous=F)
+  
+  return(out_data)                    
+}
+
+.normal <- function(pr_absence=NULL,
+                     pr_vote=NULL,
+                     N=NULL,
+                     absence=NULL,
+                     person_points=NULL,
+                     item_points=NULL,
+                     time_points=NULL,
+                    sigma_sd=NULL,
+                     ...)
+{
+  
+  #standard IRT 2-PL model
+  
+  votes <- rnorm(n = length(pr_vote),mean = pr_vote,sd = sigma_sd)
+  
+  # remove pr of absence if model is not inflated
+  
+  if(absence==F) {
+    pr_absence <- 0
+  }
+  
+  combined <- ifelse(pr_absence<runif(N),votes,max(votes)+1)
+  
+  # Create a score dataset
+  
+  out_data <- data_frame(outcome=combined,
+                         person_id=person_points,
+                         time_id=time_points,
+                         item_id=item_points,
+                         group_id='G')
+  
+  out_data <- id_make(score_data=out_data,
+                      middle_val = NULL,
+                      inflate=absence,
+                      continuous=T)
+  
+  return(out_data)                    
+}
+
+.lognormal <- function(pr_absence=NULL,
+                    pr_vote=NULL,
+                    N=NULL,
+                    absence=NULL,
+                    person_points=NULL,
+                    item_points=NULL,
+                    time_points=NULL,
+                    sigma_sd=NULL,
+                    ...)
+{
+  
+  #standard IRT 2-PL model
+  
+  votes <- rlnorm(n = length(pr_vote),meanlog = exp(pr_vote),sdlog = sigma_sd)
+  
+  # remove pr of absence if model is not inflated
+  
+  if(absence==F) {
+    pr_absence <- 0
+  }
+  
+  combined <- ifelse(pr_absence<runif(N),votes,max(votes)+1)
+  
+  # Create a score dataset
+  
+  out_data <- data_frame(outcome=combined,
+                         person_id=person_points,
+                         time_id=time_points,
+                         item_id=item_points,
+                         group_id='G')
+  
+  out_data <- id_make(score_data=out_data,
+                      middle_val = NULL,
+                      inflate=absence,
                       continuous=T)
   
   return(out_data)                    
@@ -224,7 +302,7 @@
       current_val$t1 <- t_11
       return(data_frame(t_11))
     } else {
-      t_11 <- alpha_int + adj_in*current_val$t1 + rnorm(n=1,sd=sigma/10)
+      t_11 <- alpha_int + adj_in*current_val$t1 + rnorm(n=1,sd=sigma)
     }
     current_val$t1 <- t_11
     return(data_frame(t_11))

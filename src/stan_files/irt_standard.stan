@@ -50,7 +50,8 @@ data {
 }
 
 transformed data {
-	int m;                         // # missing value
+	int m;                         // missing value
+	real m_cont; // missing value if continuous
 	int m_step; // number of ordinal categories
 	int absence[N]; // need to create absence indicator
 	int num_constrain_l;
@@ -59,10 +60,11 @@ transformed data {
 	// need to assign a type of outcome to Y based on the model (discrete or continuous)
 	// to do this we need to trick Stan into assigning to an integer. 
 	
-	#include /chunks/change_outcome.stan
+#include /chunks/change_outcome.stan
 	
   //determine how many and which parameters to constrain
-  #include /chunks/create_constrained.stan
+#include /chunks/create_constrained.stan
+
 
 }
 
@@ -103,7 +105,7 @@ transformed parameters {
   B_int_full = B_int_free;
   A_int_full = A_int_free;
   //combine constrained and unconstrained parameters
-  #include /chunks/build_params_v2.stan
+#include /chunks/build_params_v2.stan
 
 
 }
@@ -138,9 +140,9 @@ model {
 
 	if(T>1) {
     if(use_ar==1) {
-       #include /chunks/l_hier_ar1_prior.stan
+#include /chunks/l_hier_ar1_prior.stan
     } else {
-      #include /chunks/l_hier_prior.stan
+#include /chunks/l_hier_prior.stan
     }
   }
 
@@ -152,14 +154,13 @@ model {
   steps_votes_grm[b] ~ normal(0,5);
   }
   
-  print(411);
 
   //priors for legislators and bill parameters
-  #include /chunks/modeling_statement_v9.stan
+#include /chunks/modeling_statement_v9.stan
 
   //all model types
 
-  #include chunks/model_types.stan
+#include /chunks/model_types.stan
 
 /* This file sets up the various types of IRT models that can be run in idealstan */
 

@@ -17,11 +17,15 @@
 #' @param time_points The number of time points for time-varying legislator/person parameters
 #' @param time_process The process used to generate the ideal points: currently either \code{'random'} 
 #' for a random walk or \code{'AR'} for an AR1 process
+#' @param time_sd The standard deviation of the change in ideal points over time (should be low relative to 
+#' \code{ideal_pts_sd})
 #' @param ideal_pts_sd The SD for the person/personlator ideal points
 #' @param prior_type The statistical distribution that generates the data. Currently only 
 #' 'gaussian' is supported.
 #' @param ordinal_outcomes If \code{model} is \code{'ordinal'}, an integer giving the total number of categories
 #' @param absence If \code{TRUE}, an absence-inflated dataset is produced.
+#' @param sigma_sd If a normal or log-normal distribution is being fitted, this parameter gives the standard 
+#' deviation of the outcome (i.e. the square root of the variance).
 #' @return The results is a \code{idealdata} object that can be used in the 
 #' \code{\link{id_estimate}} function to run a model. It can also be used in the simulation
 #' plotting functions.
@@ -32,8 +36,10 @@ id_sim_gen <- function(num_person=20,num_bills=50,
                              reg_discrim_sd=2,diff_sd=.25,
                             time_points=1,
                             time_process='random',
+                          time_sd=.1,
                              ideal_pts_sd=1,prior_type='gaussian',ordinal=TRUE,ordinal_outcomes=3,
-                             graded_response=FALSE,absence=TRUE) {
+                             graded_response=FALSE,absence=TRUE,
+                       sigma_sd=1) {
   
   # Allow for different type of distributions for ideal points
 
@@ -84,7 +90,7 @@ id_sim_gen <- function(num_person=20,num_bills=50,
         this_person <- .gen_ts_data(t=time_points,
                                     adj_in=ar_adj[i],
                                     alpha_int=drift[i],
-                                    sigma=ideal_pts_sd,
+                                    sigma=time_sd,
                                     init_sides=ideal_t1[i])
         return(this_person)
       }) %>% bind_cols %>% as.matrix
@@ -96,7 +102,7 @@ id_sim_gen <- function(num_person=20,num_bills=50,
         this_person <- .gen_ts_data(t=time_points,
                                     adj_in=1,
                                     alpha_int=0,
-                                    sigma=ideal_pts_sd,
+                                    sigma=time_sd,
                                     init_sides=ideal_t1[i])
         return(this_person)
       }) %>% bind_cols %>% as.matrix
@@ -146,7 +152,8 @@ id_sim_gen <- function(num_person=20,num_bills=50,
            absence=absence,
            time_points=time_points,
            item_points=bill_points,
-           person_points=person_points)
+           person_points=person_points,
+           sigma_sd=sigma_sd)
   
   outobj@simul_data <- list(num_person=num_person,
                                        num_bills=num_bills,

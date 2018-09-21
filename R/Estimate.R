@@ -581,14 +581,14 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
     
   if(model_type>8) {
     N_cont <- length(Y)
-    N_int <- 1
+    N_int <- 1L
     Y_cont <- Y
-    Y_int <- 1
+    Y_int <- 1L
   } else {
-    N_cont <- 1
+    N_cont <- 1L
     N_int <- length(Y)
     Y_cont <- 1
-    Y_int <- Y
+    Y_int <- as.integer(Y)
   }
 
   this_data <- list(N=length(Y),
@@ -665,12 +665,12 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
     N_cont <- length(Y)
     N_int <- 1
     Y_cont <- Y
-    Y_int <- array(1)
+    Y_int <- array(1L)
   } else {
     N_cont <- 1
     N_int <- length(Y)
-    Y_cont <- array(1)
-    Y_int <- Y
+    Y_cont <- array(1L)
+    Y_int <- as.integer(Y)
   }
   
   this_data <- list(N=length(Y),
