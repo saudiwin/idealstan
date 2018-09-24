@@ -512,17 +512,17 @@ bin_time_irt_2pl_abs_sim <- id_sim_gen(num_person=20,num_bills=100,ordinal=F,abs
                                absence_diff_mean=0,time_process = 'random',time_points=20)
 bin_time_irt_2pl_abs_est <- id_estimate(idealdata=bin_time_irt_2pl_abs_sim,
                                model_type=2,
-                               restrict_ind_high = as.character(sort(bin_time_irt_2pl_abs_sim@simul_data$true_person,
+                               restrict_ind_high = as.character(sort(bin_time_irt_2pl_abs_sim@simul_data$drift,
                                                                      decreasing=T,
                                                         index=T)$ix[1]),
-                              restrict_ind_low = as.character(sort(bin_time_irt_2pl_abs_sim@simul_data$true_person,
+                              restrict_ind_low = as.character(sort(bin_time_irt_2pl_abs_sim@simul_data$drift,
                                                                    decreasing=F,
                                                         index=T)$ix[1]),
                                fixtype='constrained',
-                              id_diff = sort(bin_time_irt_2pl_abs_sim@simul_data$true_person,decreasing=T)[1] -
-                             sort(bin_time_irt_2pl_abs_sim@simul_data$true_person,decreasing=F)[1],
+                              id_diff = sort(bin_time_irt_2pl_abs_sim@simul_data$drift,decreasing=T)[1] -
+                             sort(bin_time_irt_2pl_abs_sim@simul_data$drift,decreasing=F)[1],
                              time_sd=10,
-                             restrict_sd = .01)
+                             restrict_sd = 1)
 id_plot_rhats(bin_time_irt_2pl_abs_est)
 ```
 
@@ -546,5 +546,49 @@ id_plot_sims(bin_time_irt_2pl_abs_est)
 
 ```
 
+And autocorrelation:
 
+```{r irt_binary_time_ar_inflate}
+bin_time_ar_irt_2pl_abs_sim <- id_sim_gen(num_person=20,num_bills=1000,ordinal=F,absence=T,
+                               absence_diff_mean=0,time_process = 'AR',time_points=20)
+bin_time_ar_irt_2pl_abs_est <- id_estimate(idealdata=bin_time_ar_irt_2pl_abs_sim,
+                               model_type=2,
+                               restrict_ind_high = as.character(sort(bin_time_ar_irt_2pl_abs_sim@simul_data$drift,
+                                                                     decreasing=T,
+                                                        index=T)$ix[1]),
+                              restrict_ind_low = as.character(sort(bin_time_ar_irt_2pl_abs_sim@simul_data$drift,
+                                                                   decreasing=F,
+                                                        index=T)$ix[1]),
+                               fixtype='constrained',
+                              id_diff = sort(bin_time_ar_irt_2pl_abs_sim@simul_data$drift,
+                                                  decreasing=T)[1] -
+                                sort(bin_time_ar_irt_2pl_abs_sim@simul_data$drift,
+                                               decreasing=F)[1],
+                              id_diff_high=sort(bin_time_ar_irt_2pl_abs_sim@simul_data$drift,
+                                                  decreasing=T)[1],
+                             time_sd=10,
+                             use_ar=T,
+                             person_sd = 1,
+                             restrict_sd=.01)
+id_plot_rhats(bin_time_ar_irt_2pl_abs_est)
+```
 
+```{r irt_2pl_abs_cov_plot}
+id_sim_coverage(bin_time_ar_irt_2pl_abs_est) %>% 
+  bind_rows(.id='Parameter') %>% 
+  ggplot(aes(y=avg,x=Parameter)) +
+  stat_summary(fun.args=list(mult=1.96)) + 
+  theme_minimal() 
+```
+
+```{r irt_2pl_abs_resid}
+
+id_plot_sims(bin_time_ar_irt_2pl_abs_est,type='Residuals')
+
+```
+
+```{r irt_2pl_abs_RMSE}
+
+id_plot_sims(bin_time_ar_irt_2pl_abs_est)
+
+```

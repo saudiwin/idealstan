@@ -39,7 +39,8 @@ setClass('idealdata',
                     vote_int='numeric',
                     simul_data='list',
                     simulation='logical',
-                    diff='numeric'))
+                    diff='numeric',
+                    diff_high='numeric'))
 
 
 #' Results of \code{\link{id_estimate}} function

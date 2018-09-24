@@ -96,12 +96,15 @@ id_sim_gen <- function(num_person=20,num_bills=50,
       }) %>% bind_cols %>% as.matrix
       ideal_pts <- t(ideal_pts)
     } else if(time_process=='random') {
+      ar_adj <- NA
+      drift <- prior_func(params=list(N=num_person,mean=0,sd=ideal_pts_sd))
+      
       ideal_t1 <- prior_func(params=list(N=num_person,mean=0,sd=ideal_pts_sd))
       
       ideal_pts <- lapply(1:num_person, function(i) {
         this_person <- .gen_ts_data(t=time_points,
                                     adj_in=1,
-                                    alpha_int=0,
+                                    alpha_int=drift[i],
                                     sigma=time_sd,
                                     init_sides=ideal_t1[i])
         return(this_person)
@@ -167,7 +170,9 @@ id_sim_gen <- function(num_person=20,num_bills=50,
                                        graded_response=graded_response,
                                        true_person=ideal_pts,
                                        true_reg_discrim=reg_discrim,
-                                       true_abs_discrim=absence_discrim)
+                                       true_abs_discrim=absence_discrim,
+                            drift=drift,
+                            ar_adj=ar_adj)
 
   outobj@person_data <- data_frame(person.names=paste0('person_',1:nrow(outobj@score_matrix)),
                                                group='L')

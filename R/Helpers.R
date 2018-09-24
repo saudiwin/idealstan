@@ -99,8 +99,8 @@
   }
   
   # what to constrain the difference to given the priors
-  diff <- person[to_constrain_high[1]] - person[to_constrain_low[1]]
-  
+  diff_high <- person[to_constrain_high[1]] 
+  diff <- person[to_constrain_high[1]]  - person[to_constrain_low[1]]
   
   object@restrict_count <- c(to_constrain_high,to_constrain_low)
   
@@ -143,7 +143,8 @@
   object@constraint_type <- this_data$constraint_type
   object@param_fix <- this_data$constrain_par
   # object@unrestricted <- old_matrix
-  object@diff <- diff*2
+  object@diff <- diff
+  object@diff_high <- diff_high
   return(object)
 }
 

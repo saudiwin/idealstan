@@ -398,8 +398,9 @@ id_make <- function(score_data=NULL,
 #' See \code{\link[rstan]{stan}} for more info.
 #' @param fixtype Sets the particular kind of identification used on the model, could be one of 'vb' or 'constrained'.
 #'  See details for more information.
-#' @param id_diff The difference between the constrained parameters (person/legislator ideal points) used to identify the model. 
+#' @param id_diff The fixed difference between the high/low person/legislator ideal points used to identify the model. 
 #' Set at 4 as a standard value but can be changed to any arbitrary number without affecting model results besides re-scaling.
+#' @param id_diff_high The fixed intercept of the high ideal point used to constrain the model. 
 #' @param use_ar If \code{TRUE}, will estimate time-varying parameters for legislators/persons with an AR(1) prior (implying 
 #' the ideal points are stationary over time). Otherwise the model
 #'  will estimate a random-walk process for the ideal points.
@@ -507,6 +508,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
                            nchains=4,niters=2000,use_vb=FALSE,nfix=3,
                            restrict_ind_high=NULL,
                           id_diff=4,
+                        id_diff_high=2,
                            restrict_ind_low=NULL,
                            fixtype='vb',warmup=floor(niters/2),ncores=4,
                            auto_id=FALSE,
@@ -629,7 +631,10 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
   
   # if diff hasn't been set yet, set it
   
-  if(length(idealdata@diff)==0) idealdata@diff <- id_diff
+  if(length(idealdata@diff_high)==0) {
+      idealdata@diff <- id_diff
+      idealdata@diff_high <- id_diff_high
+  }
   
   # now run an identified run
   # repeat data formation as positions of rows/columns may have shifted
@@ -704,6 +709,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
                     restrict_high_bar=restrict_high_bar,
                     use_ar=as.integer(use_ar),
                     diff=idealdata@diff,
+                    diff_high=idealdata@diff_high,
                     time_sd=time_sd)
 
   outobj <- sample_model(object=idealdata,nchains=nchains,niters=niters,warmup=warmup,ncores=ncores,

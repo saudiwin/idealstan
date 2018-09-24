@@ -128,7 +128,7 @@ model {
   legis_x_cons ~ normal(0,5);;
   sigma_reg_x_cons ~ normal(0,5);
   sigma_abs_x_cons ~ normal(0,5);
-  L_AR1 ~ normal(0,1); // these parameters shouldn't get too big
+  L_AR1 ~ normal(0,.5); // these parameters shouldn't get too big
   extra_sd ~ exponential(1);
   if(model_type>2 && model_type<5) {
     for(i in 1:(m_step-2)) {

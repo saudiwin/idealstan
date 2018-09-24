@@ -38,6 +38,7 @@ data {
   matrix[num_bills,SRX] srx_pred;
   matrix[num_bills,SAX] sax_pred;
   real diff; // difference between high and low constrained parameters
+  real diff_high;
   real discrim_reg_sd;
   real discrim_abs_sd;
   real legis_sd;
@@ -122,7 +123,7 @@ model {
   sigma_abs_x_cons ~ normal(0,5);
   sigma_reg_x_cons ~ normal(0,5);
   extra_sd ~ exponential(1);
-  L_AR1 ~ normal(0,1); // these parameters shouldn't get too big
+  L_AR1 ~ normal(0,.5); // these parameters shouldn't get too big
   if(model_type>2 && model_type<5) {
      for(i in 1:(m_step-2)) {
     steps_votes[i+1] - steps_votes[i] ~ normal(0,5);
