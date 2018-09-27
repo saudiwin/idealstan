@@ -4,10 +4,10 @@ if(model_type==1) {
   //2 PL no inflation
       
       if(T==1) {
-        pi1 = sigma_reg_full[bb] .*  L_full[ll] - B_int_full[bb];
+        pi1 = sigma_reg_free[bb] .*  L_full[ll] - B_int_free[bb];
       } else {
         for(n in 1:N) {
-            pi1[n] = sigma_reg_full[bb[n]] *  L_tp1[time[n],ll[n]] - B_int_full[bb[n]];
+            pi1[n] = sigma_reg_free[bb[n]] *  (L_tp1[time[n],ll[n]] + L_full[ll[n]]) - B_int_free[bb[n]];
         }
       }
       
@@ -17,14 +17,14 @@ if(model_type==1) {
   //2 PL inflation
   
       if(T==1) {
-        pi1 = sigma_reg_full[bb] .*  L_full[ll] - B_int_full[bb];
-        pi2 = sigma_abs_full[bb] .* L_full[ll] - 
-                  A_int_full[bb] ;
+        pi1 = sigma_reg_free[bb] .*  L_full[ll] - B_int_free[bb];
+        pi2 = sigma_abs_free[bb] .* L_full[ll] - 
+                  A_int_free[bb] ;
       } else {
         for(n in 1:N) {
-            pi1[n] = sigma_reg_full[bb[n]] *  L_tp1[time[n],ll[n]] - B_int_full[bb[n]];
-            pi2[n] = sigma_abs_full[bb[n]] * L_tp1[time[n],ll[n]] - 
-                    A_int_full[bb[n]] ; 
+            pi1[n] = sigma_reg_free[bb[n]] *  (L_tp1[time[n],ll[n]] + L_full[ll[n]]) - B_int_free[bb[n]];
+            pi2[n] = sigma_abs_free[bb[n]] * (L_tp1[time[n],ll[n]] + L_full[ll[n]]) - 
+                    A_int_free[bb[n]] ; 
 
         }
       }
@@ -43,10 +43,10 @@ if(model_type==1) {
   //ratingscale no inflation
   
       if(T==1) {
-        pi1 = sigma_reg_full[bb] .*  L_full[ll] - B_int_full[bb];
+        pi1 = sigma_reg_free[bb] .*  L_full[ll] - B_int_free[bb];
       } else {
         for(n in 1:N) {
-            pi1[n] = sigma_reg_full[bb[n]] *  L_tp1[time[n],ll[n]] - B_int_full[bb[n]];
+            pi1[n] = sigma_reg_free[bb[n]] *  (L_tp1[time[n],ll[n]] + L_full[ll[n]]) - B_int_free[bb[n]];
         }
       }
       
@@ -60,14 +60,14 @@ if(model_type==1) {
   //ratingscale inflation
 
       if(T==1) {
-        pi1 = sigma_reg_full[bb] .*  L_full[ll] - B_int_full[bb];
-        pi2 = sigma_abs_full[bb] .* L_full[ll] - 
-                  A_int_full[bb] ;
+        pi1 = sigma_reg_free[bb] .*  L_full[ll] - B_int_free[bb];
+        pi2 = sigma_abs_free[bb] .* L_full[ll] - 
+                  A_int_free[bb] ;
       } else {
         for(n in 1:N) {
-            pi1[n] = sigma_reg_full[bb[n]] *  L_tp1[time[n],ll[n]] - B_int_full[bb[n]];
-            pi2[n] = sigma_abs_full[bb[n]] * L_tp1[time[n],ll[n]] - 
-                    A_int_full[bb[n]] ; 
+            pi1[n] = sigma_reg_free[bb[n]] *  (L_tp1[time[n],ll[n]] + L_full[ll[n]]) - B_int_free[bb[n]];
+            pi2[n] = sigma_abs_free[bb[n]] * (L_tp1[time[n],ll[n]] + L_full[ll[n]]) - 
+                    A_int_free[bb[n]] ; 
 
         }
       }
@@ -86,10 +86,10 @@ if(model_type==1) {
   //grm no inflation
       
       if(T==1) {
-        pi1 = sigma_reg_full[bb] .*  L_full[ll] - B_int_full[bb];
+        pi1 = sigma_reg_free[bb] .*  L_full[ll] - B_int_free[bb];
       } else {
         for(n in 1:N) {
-            pi1[n] = sigma_reg_full[bb[n]] *  L_tp1[time[n],ll[n]] - B_int_full[bb[n]];
+            pi1[n] = sigma_reg_free[bb[n]] *  (L_tp1[time[n],ll[n]] + L_full[ll[n]]) - B_int_free[bb[n]];
         }
       }
       
@@ -100,14 +100,14 @@ if(model_type==1) {
   //grm inflation
 
       if(T==1) {
-        pi1 = sigma_reg_full[bb] .*  L_full[ll] - B_int_full[bb];
-        pi2 = sigma_abs_full[bb] .* L_full[ll] - 
-                  A_int_full[bb] ;
+        pi1 = sigma_reg_free[bb] .*  L_full[ll] - B_int_free[bb];
+        pi2 = sigma_abs_free[bb] .* L_full[ll] - 
+                  A_int_free[bb] ;
       } else {
         for(n in 1:N) {
-            pi1[n] = sigma_reg_full[bb[n]] *  L_tp1[time[n],ll[n]] - B_int_full[bb[n]];
-            pi2[n] = sigma_abs_full[bb[n]] * L_tp1[time[n],ll[n]] - 
-                    A_int_full[bb[n]] ; 
+            pi1[n] = sigma_reg_free[bb[n]] *  (L_tp1[time[n],ll[n]] + L_full[ll[n]]) - B_int_free[bb[n]];
+            pi2[n] = sigma_abs_free[bb[n]] * (L_tp1[time[n],ll[n]] + L_full[ll[n]]) - 
+                    A_int_free[bb[n]] ; 
 
         }
       }
@@ -126,10 +126,10 @@ if(model_type==1) {
   //poisson no inflation
   
       if(T==1) {
-        pi1 = sigma_reg_full[bb] .*  L_full[ll] - B_int_full[bb];
+        pi1 = sigma_reg_free[bb] .*  L_full[ll] - B_int_free[bb];
       } else {
         for(n in 1:N) {
-            pi1[n] = sigma_reg_full[bb[n]] *  L_tp1[time[n],ll[n]] - B_int_full[bb[n]];
+            pi1[n] = sigma_reg_free[bb[n]] *  (L_tp1[time[n],ll[n]] + L_full[ll[n]]) - B_int_free[bb[n]];
         }
       }
       
@@ -143,14 +143,14 @@ if(model_type==1) {
   //hurdle poisson
   
       if(T==1) {
-        pi1 = sigma_reg_full[bb] .*  L_full[ll] - B_int_full[bb];
-        pi2 = sigma_abs_full[bb] .* L_full[ll] - 
-                  A_int_full[bb] ;
+        pi1 = sigma_reg_free[bb] .*  L_full[ll] - B_int_free[bb];
+        pi2 = sigma_abs_free[bb] .* L_full[ll] - 
+                  A_int_free[bb] ;
       } else {
         for(n in 1:N) {
-            pi1[n] = sigma_reg_full[bb[n]] *  L_tp1[time[n],ll[n]] - B_int_full[bb[n]];
-            pi2[n] = sigma_abs_full[bb[n]] * L_tp1[time[n],ll[n]] - 
-                    A_int_full[bb[n]] ; 
+            pi1[n] = sigma_reg_free[bb[n]] *  (L_tp1[time[n],ll[n]] + L_full[ll[n]]) - B_int_free[bb[n]];
+            pi2[n] = sigma_abs_free[bb[n]] * (L_tp1[time[n],ll[n]] + L_full[ll[n]]) - 
+                    A_int_free[bb[n]] ; 
 
         }
       }
@@ -169,10 +169,10 @@ if(model_type==1) {
   //normal no inflation
   
       if(T==1) {
-        pi1 = sigma_reg_full[bb] .*  L_full[ll] - B_int_full[bb];
+        pi1 = sigma_reg_free[bb] .*  L_full[ll] - B_int_free[bb];
       } else {
         for(n in 1:N) {
-            pi1[n] = sigma_reg_full[bb[n]] *  L_tp1[time[n],ll[n]] - B_int_full[bb[n]];
+            pi1[n] = sigma_reg_free[bb[n]] *  (L_tp1[time[n],ll[n]] + L_full[ll[n]]) - B_int_free[bb[n]];
         }
       }
       
@@ -186,14 +186,14 @@ if(model_type==1) {
   //normal hurdle
   
       if(T==1) {
-        pi1 = sigma_reg_full[bb] .*  L_full[ll] - B_int_full[bb];
-        pi2 = sigma_abs_full[bb] .* L_full[ll] - 
-                  A_int_full[bb] ;
+        pi1 = sigma_reg_free[bb] .*  L_full[ll] - B_int_free[bb];
+        pi2 = sigma_abs_free[bb] .* L_full[ll] - 
+                  A_int_free[bb] ;
       } else {
         for(n in 1:N) {
-            pi1[n] = sigma_reg_full[bb[n]] *  L_tp1[time[n],ll[n]] - B_int_full[bb[n]];
-            pi2[n] = sigma_abs_full[bb[n]] * L_tp1[time[n],ll[n]] - 
-                    A_int_full[bb[n]] ; 
+            pi1[n] = sigma_reg_free[bb[n]] *  (L_tp1[time[n],ll[n]] + L_full[ll[n]]) - B_int_free[bb[n]];
+            pi2[n] = sigma_abs_free[bb[n]] * (L_tp1[time[n],ll[n]] + L_full[ll[n]]) - 
+                    A_int_free[bb[n]] ; 
 
         }
       }
@@ -212,10 +212,10 @@ if(model_type==1) {
   //lognormal no inflation
   
       if(T==1) {
-        pi1 = sigma_reg_full[bb] .*  L_full[ll] - B_int_full[bb];
+        pi1 = sigma_reg_free[bb] .*  L_full[ll] - B_int_free[bb];
       } else {
         for(n in 1:N) {
-            pi1[n] = sigma_reg_full[bb[n]] *  L_tp1[time[n],ll[n]] - B_int_full[bb[n]];
+            pi1[n] = sigma_reg_free[bb[n]] *  (L_tp1[time[n],ll[n]] + L_full[ll[n]]) - B_int_free[bb[n]];
         }
       }
       
@@ -227,14 +227,14 @@ if(model_type==1) {
   //hurdle lognormal
   
       if(T==1) {
-        pi1 = sigma_reg_full[bb] .*  L_full[ll] - B_int_full[bb];
-        pi2 = sigma_abs_full[bb] .* L_full[ll] - 
-                  A_int_full[bb] ;
+        pi1 = sigma_reg_free[bb] .*  L_full[ll] - B_int_free[bb];
+        pi2 = sigma_abs_free[bb] .* L_full[ll] - 
+                  A_int_free[bb] ;
       } else {
         for(n in 1:N) {
-            pi1[n] = sigma_reg_full[bb[n]] *  L_tp1[time[n],ll[n]] - B_int_full[bb[n]];
-            pi2[n] = sigma_abs_full[bb[n]] * L_tp1[time[n],ll[n]] - 
-                    A_int_full[bb[n]] ; 
+            pi1[n] = sigma_reg_free[bb[n]] *  (L_tp1[time[n],ll[n]] + L_full[ll[n]]) - B_int_free[bb[n]];
+            pi2[n] = sigma_abs_free[bb[n]] * (L_tp1[time[n],ll[n]] + L_full[ll[n]]) - 
+                    A_int_free[bb[n]] ; 
 
         }
       }

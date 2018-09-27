@@ -401,9 +401,17 @@ id_make <- function(score_data=NULL,
 #' @param id_diff The fixed difference between the high/low person/legislator ideal points used to identify the model. 
 #' Set at 4 as a standard value but can be changed to any arbitrary number without affecting model results besides re-scaling.
 #' @param id_diff_high The fixed intercept of the high ideal point used to constrain the model. 
-#' @param use_ar If \code{TRUE}, will estimate time-varying parameters for legislators/persons with an AR(1) prior (implying 
+#' @param use_ar If \code{TRUE}, will estimate time-varying parameters for legislators/persons with an AR(1) prior 
+#' (implying 
 #' the ideal points are stationary over time). Otherwise the model
 #'  will estimate a random-walk process for the ideal points.
+#' @param sample_stationary If \code{TRUE}, the AR(1) coefficients in a time-varying model will be 
+#' sampled from an unconstrained space and then mapped back to a stationary space. Leaving this \code{TRUE} is 
+#' slower but will work better when there is limited information to identify a model. If used, the
+#' \code{ar_sd} parameter should be increased to 5 to allow for wider sampling in the unconstrained space.
+#' @param ar_sd If an AR(1) model is used, this defines the prior scale of the Normal distribution. A lower number 
+#' can help 
+#' identify the model when there are few time points.
 #' @param use_groups If \code{TRUE}, group parameters from the person/legis data given in \code{\link{id_make}} will be 
 #'  estimated instead of individual parameters. 
 #' @param restrict_ind_high If \code{fixtype} is not "vb", the particular indices of legislators/persons or bills/items to constrain high
@@ -518,6 +526,8 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
                            discrim_miss_sd=3,
                            person_sd=1,
                         time_sd=4,
+                        sample_stationary=FALSE,
+                        ar_sd=2,
                            diff_reg_sd=4,
                            diff_miss_sd=4,
                            restrict_sd=0.1,
@@ -620,7 +630,8 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
                     restrict_low_bar=restrict_low_bar,
                     restrict_high_bar=restrict_high_bar,
                     use_ar=as.integer(use_ar),
-                    time_sd=time_sd)
+                    time_sd=time_sd,
+                    ar_sd=ar_sd)
 
   idealdata <- id_model(object=idealdata,fixtype=fixtype,model_type=model_type,this_data=this_data,
                         nfix=nfix,restrict_ind_high=restrict_ind_high,
@@ -710,7 +721,8 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
                     use_ar=as.integer(use_ar),
                     diff=idealdata@diff,
                     diff_high=idealdata@diff_high,
-                    time_sd=time_sd)
+                    time_sd=time_sd,
+                    ar_sd=ar_sd)
 
   outobj <- sample_model(object=idealdata,nchains=nchains,niters=niters,warmup=warmup,ncores=ncores,
                          this_data=this_data,use_vb=use_vb,...)

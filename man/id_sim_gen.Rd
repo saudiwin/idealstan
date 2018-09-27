@@ -7,9 +7,9 @@
 id_sim_gen(num_person = 20, num_bills = 50, model_type = "binary",
   absence_discrim_sd = 2, absence_diff_mean = 0.5,
   reg_discrim_sd = 2, diff_sd = 0.25, time_points = 1,
-  time_process = "random", ideal_pts_sd = 1, prior_type = "gaussian",
-  ordinal = TRUE, ordinal_outcomes = 3, graded_response = FALSE,
-  absence = TRUE)
+  time_process = "random", time_sd = 0.1, ideal_pts_sd = 1,
+  prior_type = "gaussian", ordinal = TRUE, ordinal_outcomes = 3,
+  graded_response = FALSE, absence = TRUE, sigma_sd = 1)
 }
 \arguments{
 \item{num_person}{The number of persons/personlators}
@@ -32,6 +32,9 @@ absences}
 \item{time_process}{The process used to generate the ideal points: currently either \code{'random'} 
 for a random walk or \code{'AR'} for an AR1 process}
 
+\item{time_sd}{The standard deviation of the change in ideal points over time (should be low relative to 
+\code{ideal_pts_sd})}
+
 \item{ideal_pts_sd}{The SD for the person/personlator ideal points}
 
 \item{prior_type}{The statistical distribution that generates the data. Currently only 
@@ -40,6 +43,9 @@ for a random walk or \code{'AR'} for an AR1 process}
 \item{ordinal_outcomes}{If \code{model} is \code{'ordinal'}, an integer giving the total number of categories}
 
 \item{absence}{If \code{TRUE}, an absence-inflated dataset is produced.}
+
+\item{sigma_sd}{If a normal or log-normal distribution is being fitted, this parameter gives the standard 
+deviation of the outcome (i.e. the square root of the variance).}
 }
 \value{
 The results is a \code{idealdata} object that can be used in the 

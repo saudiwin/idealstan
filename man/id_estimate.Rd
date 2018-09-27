@@ -8,12 +8,13 @@ id_estimate(idealdata = NULL, model_type = 2, use_subset = FALSE,
   sample_it = FALSE, subset_group = NULL, subset_person = NULL,
   sample_size = 20, nchains = 4, niters = 2000, use_vb = FALSE,
   nfix = 3, restrict_ind_high = NULL, id_diff = 4,
-  restrict_ind_low = NULL, fixtype = "vb", warmup = floor(niters/2),
-  ncores = 4, auto_id = FALSE, use_ar = FALSE, use_groups = FALSE,
-  discrim_reg_sd = 3, discrim_miss_sd = 3, person_sd = 1,
-  time_sd = 4, diff_reg_sd = 4, diff_miss_sd = 4,
-  restrict_sd = 0.1, restrict_low_bar = 0, restrict_high_bar = 0,
-  ...)
+  id_diff_high = 2, restrict_ind_low = NULL, fixtype = "vb",
+  warmup = floor(niters/2), ncores = 4, auto_id = FALSE,
+  use_ar = FALSE, use_groups = FALSE, discrim_reg_sd = 3,
+  discrim_miss_sd = 3, person_sd = 1, time_sd = 4,
+  sample_stationary = FALSE, ar_sd = 0.5, diff_reg_sd = 4,
+  diff_miss_sd = 4, restrict_sd = 0.1, restrict_low_bar = 0,
+  restrict_high_bar = 0, ...)
 }
 \arguments{
 \item{idealdata}{An object produced by the \code{\link{id_make}} containing a score/vote matrix for use for estimation & plotting}
@@ -45,8 +46,10 @@ Cons: it's not quite as accurate. See \code{\link[rstan]{vb}} for more info.}
 
 \item{restrict_ind_high}{If \code{fixtype} is not "vb", the particular indices of legislators/persons or bills/items to constrain high}
 
-\item{id_diff}{The difference between the constrained parameters (person/legislator ideal points) used to identify the model. 
+\item{id_diff}{The fixed difference between the high/low person/legislator ideal points used to identify the model. 
 Set at 4 as a standard value but can be changed to any arbitrary number without affecting model results besides re-scaling.}
+
+\item{id_diff_high}{The fixed intercept of the high ideal point used to constrain the model.}
 
 \item{restrict_ind_low}{If \code{fixtype} is not "vb", the particular indices of legislators/persons or bills/items to constrain low. 
 (Note: not used if values are pinned).}
@@ -60,7 +63,8 @@ See \code{\link[rstan]{stan}} for more info.}
 \item{ncores}{The number of cores in your computer to use for parallel processing in the Stan engine. 
 See \code{\link[rstan]{stan}} for more info.}
 
-\item{use_ar}{If \code{TRUE}, will estimate time-varying parameters for legislators/persons with an AR(1) prior (implying 
+\item{use_ar}{If \code{TRUE}, will estimate time-varying parameters for legislators/persons with an AR(1) prior 
+(implying 
 the ideal points are stationary over time). Otherwise the model
  will estimate a random-walk process for the ideal points.}
 
@@ -76,6 +80,15 @@ estimated instead of individual parameters.}
 \item{time_sd}{The precision (inverse variance) of the over-time component of the person/legislator
 parameters. A higher value will allow for less over-time variation (useful if estimates bounce too much). 
 Default is 4.}
+
+\item{sample_stationary}{If \code{TRUE}, the AR(1) coefficients in a time-varying model will be 
+sampled from an unconstrained space and then mapped back to a stationary space. Leaving this \code{TRUE} is 
+slower but will work better when there is limited information to identify a model. If used, the
+\code{ar_sd} parameter should be increased to 5 to allow for wider sampling in the unconstrained space.}
+
+\item{ar_sd}{If an AR(1) model is used, this defines the prior scale of the Normal distribution. A lower number 
+can help 
+identify the model when there are few time points.}
 
 \item{diff_reg_sd}{Set the prior standard deviation for the bill (item) intercepts for the non-inflated model.}
 

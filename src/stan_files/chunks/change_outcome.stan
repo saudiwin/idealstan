@@ -47,15 +47,9 @@ for(n in 1:N) {
       absence[n]=0;
     }
   }
-  if(model_type==1) {
+  if(model_type==1||model_type==2) {
     //need to change outcome for binomial models
-    if(max(Y_int)==2) {
-      Y_new[n] = Y_int[n] - 1;
-    } else {
-      Y_new[n] = Y_int[n];
-    }
-  } else if(model_type==2) {
-    if(max(Y_int)==3) {
+    if(min(Y_int)!=0) {
       Y_new[n] = Y_int[n] - 1;
     } else {
       Y_new[n] = Y_int[n];

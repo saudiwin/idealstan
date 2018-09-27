@@ -132,14 +132,26 @@ setMethod('sample_model',signature(object='idealdata'),
           function(object,nchains=4,niters=2000,warmup=floor(niters/2),ncores=NULL,
                    to_use=to_use,this_data=this_data,use_vb=FALSE,...) {
 
+            
+            init_vals <- lapply(1:nchains,.init_stan,
+                                num_legis=this_data$num_legis,
+                                restrict_sd=this_data$restrict_sd,
+                                person_sd=this_data$legis_sd,
+                                diff_high=this_data$diff_high,
+                                actual=TRUE)
+
             if(is.null(ncores)) {
               ncores <- 1
             }
             if(use_vb==FALSE) {
               out_model <- sampling(object@stanmodel,data=this_data,chains=nchains,iter=niters,cores=ncores,
-                                    warmup=warmup,...)
+                                    warmup=warmup,
+                                    init=init_vals,
+                                    ...)
             } else {
-              out_model <- vb(object@stanmodel,data=this_data)
+              out_model <- vb(object@stanmodel,data=this_data,
+                              init=init_vals,
+                              ...)
             }
             outobj <- new('idealstan',
                           score_data=object,

@@ -7,7 +7,12 @@
 if(num_legis==2) {
   num_constrain_l=1;
 } else {
-  num_constrain_l=num_fix_high + num_fix_low;
+  if(T==1) {
+    num_constrain_l=num_fix_high + num_fix_low;
+  } else {
+    num_constrain_l=num_fix_high;
+  }
+  
 }
 
 

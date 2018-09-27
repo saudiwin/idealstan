@@ -77,12 +77,17 @@ id_sim_gen <- function(num_person=20,num_bills=50,
 
   if(time_points==1) {
     ideal_pts <- as.matrix(prior_func(params=list(N=num_person,mean=0,sd=ideal_pts_sd)))
+    drift <- 0
+    ar_adj <- 0
   } else if(time_points>1) {
     # if more than 1 time point, generate via an AR or random walk process
+    ideal_t1 <- prior_func(params=list(N=num_person,mean=0,sd=ideal_pts_sd))
     if(time_process=='AR') {
-      ideal_t1 <- prior_func(params=list(N=num_person,mean=0,sd=ideal_pts_sd))
       # random AR parameters
       ar_adj <- runif(n = num_person,min = -0.5,max=0.5)
+    } else if(time_process=='random') {
+      ar_adj <- 1
+    }
       # drift parameters
       drift <- prior_func(params=list(N=num_person,mean=0,sd=ideal_pts_sd))
       
@@ -95,24 +100,8 @@ id_sim_gen <- function(num_person=20,num_bills=50,
         return(this_person)
       }) %>% bind_cols %>% as.matrix
       ideal_pts <- t(ideal_pts)
-    } else if(time_process=='random') {
-      ar_adj <- NA
-      drift <- prior_func(params=list(N=num_person,mean=0,sd=ideal_pts_sd))
-      
-      ideal_t1 <- prior_func(params=list(N=num_person,mean=0,sd=ideal_pts_sd))
-      
-      ideal_pts <- lapply(1:num_person, function(i) {
-        this_person <- .gen_ts_data(t=time_points,
-                                    adj_in=1,
-                                    alpha_int=drift[i],
-                                    sigma=time_sd,
-                                    init_sides=ideal_t1[i])
-        return(this_person)
-      }) %>% bind_cols %>% as.matrix
-      ideal_pts <- t(ideal_pts)
-    } else {
-      stop('Incorrect time process specified.')
-    }
+  } else {
+    stop('Incorrect time process specified.')
   }
   
   # First generate prob of absences

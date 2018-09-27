@@ -298,7 +298,7 @@
   out_vec <- lapply(1:t,function(t_1) {
     
     if(t_1==1) {
-      t_11 <- init_sides
+      t_11 <- alpha_int
       current_val$t1 <- t_11
       return(data_frame(t_11))
     } else {

@@ -14,10 +14,18 @@
       ncores <- 1
     }
   }
+  
+  init_vals <- lapply(1,.init_stan,
+                      num_legis=this_data$num_legis,
+                      restrict_sd=this_data$restrict_sd,
+                      person_sd=this_data$legis_sd,
+                      diff_high=this_data$diff_high,
+                      actual=FALSE)
 
   to_use <- stanmodels[['irt_standard_noid']]
   post_modes <- rstan::vb(object=to_use,data =this_data,
-                          algorithm='meanfield')
+                          algorithm='meanfield',
+                          init=init_vals)
   
   # Test whether there is a lot of missing data
   
@@ -730,4 +738,28 @@
   } else {
     stop(paste0('Please do not enter a non-character value for ',as.character(default_val)[2]))
   }
+}
+
+#' Simple function to provide initial values to Stan given current values of restrict_sd
+.init_stan <- function(chain_id=NULL,
+                       restrict_sd=NULL,
+                        person_sd=NULL,
+                       num_legis=NULL,
+                       diff_high=NULL,
+                       actual=TRUE) {
+
+  
+  if(actual==TRUE) {
+    # full run
+    return(list(restrict_high = array(rnorm(n=1,mean=diff_high,sd=restrict_sd)),
+         L_free = rnorm(n=num_legis-2,mean=0,sd=person_sd),
+         L_AR1 = runif(n = num_legis,min = -.5,max=.5)))
+  } else {
+    #identification run
+    return(list(L_free = rnorm(n=num_legis,mean=0,sd=person_sd),
+         L_AR1 = runif(n = num_legis,min = -.5,max=.5)))
+  }
+  
+  
+  
 }
