@@ -7,7 +7,16 @@ if(model_type==1) {
         pi1 = sigma_reg_free[bb] .*  L_full[ll] - B_int_free[bb];
       } else {
         for(n in 1:N) {
+          if(use_ar==0) {
+            if(time[n]==1) {
+              pi1[n] = sigma_reg_free[bb[n]] * L_full[ll[n]] - B_int_free[bb[n]];
+            } else {
+              pi1[n] = sigma_reg_free[bb[n]] * L_tp1[time[n],ll[n]] - B_int_free[bb[n]];
+            }
+          } else {
             pi1[n] = sigma_reg_free[bb[n]] *  (L_tp1[time[n],ll[n]] + L_full[ll[n]]) - B_int_free[bb[n]];
+          }
+
         }
       }
       
@@ -22,10 +31,19 @@ if(model_type==1) {
                   A_int_free[bb] ;
       } else {
         for(n in 1:N) {
+          if(use_ar==0) {
+            if(time[n]==1) {
+              pi1[n] = sigma_reg_free[bb[n]] *L_full[ll[n]] - B_int_free[bb[n]];
+              pi2[n] = sigma_abs_free[bb[n]] *L_full[ll[n]] - A_int_free[bb[n]] ; 
+            } else {
+              pi1[n] = sigma_reg_free[bb[n]] *L_tp1[time[n],ll[n]] - B_int_free[bb[n]];
+              pi2[n] = sigma_abs_free[bb[n]] *L_tp1[time[n],ll[n]] - A_int_free[bb[n]] ; 
+            }
+          } else {
             pi1[n] = sigma_reg_free[bb[n]] *  (L_tp1[time[n],ll[n]] + L_full[ll[n]]) - B_int_free[bb[n]];
             pi2[n] = sigma_abs_free[bb[n]] * (L_tp1[time[n],ll[n]] + L_full[ll[n]]) - 
                     A_int_free[bb[n]] ; 
-
+          }
         }
       }
 
@@ -46,7 +64,16 @@ if(model_type==1) {
         pi1 = sigma_reg_free[bb] .*  L_full[ll] - B_int_free[bb];
       } else {
         for(n in 1:N) {
+          if(use_ar==0) {
+            if(time[n]==1) {
+              pi1[n] = sigma_reg_free[bb[n]] * L_full[ll[n]] - B_int_free[bb[n]];
+            } else {
+              pi1[n] = sigma_reg_free[bb[n]] * L_tp1[time[n],ll[n]] - B_int_free[bb[n]];
+            }
+          } else {
             pi1[n] = sigma_reg_free[bb[n]] *  (L_tp1[time[n],ll[n]] + L_full[ll[n]]) - B_int_free[bb[n]];
+          }
+
         }
       }
       
@@ -65,10 +92,19 @@ if(model_type==1) {
                   A_int_free[bb] ;
       } else {
         for(n in 1:N) {
+          if(use_ar==0) {
+            if(time[n]==1) {
+              pi1[n] = sigma_reg_free[bb[n]] *L_full[ll[n]] - B_int_free[bb[n]];
+              pi2[n] = sigma_abs_free[bb[n]] *L_full[ll[n]] - A_int_free[bb[n]] ; 
+            } else {
+              pi1[n] = sigma_reg_free[bb[n]] *L_tp1[time[n],ll[n]] - B_int_free[bb[n]];
+              pi2[n] = sigma_abs_free[bb[n]] *L_tp1[time[n],ll[n]] - A_int_free[bb[n]] ; 
+            }
+          } else {
             pi1[n] = sigma_reg_free[bb[n]] *  (L_tp1[time[n],ll[n]] + L_full[ll[n]]) - B_int_free[bb[n]];
             pi2[n] = sigma_abs_free[bb[n]] * (L_tp1[time[n],ll[n]] + L_full[ll[n]]) - 
                     A_int_free[bb[n]] ; 
-
+          }
         }
       }
 
@@ -89,7 +125,16 @@ if(model_type==1) {
         pi1 = sigma_reg_free[bb] .*  L_full[ll] - B_int_free[bb];
       } else {
         for(n in 1:N) {
+          if(use_ar==0) {
+            if(time[n]==1) {
+              pi1[n] = sigma_reg_free[bb[n]] * L_full[ll[n]] - B_int_free[bb[n]];
+            } else {
+              pi1[n] = sigma_reg_free[bb[n]] * L_tp1[time[n],ll[n]] - B_int_free[bb[n]];
+            }
+          } else {
             pi1[n] = sigma_reg_free[bb[n]] *  (L_tp1[time[n],ll[n]] + L_full[ll[n]]) - B_int_free[bb[n]];
+          }
+
         }
       }
       
@@ -105,10 +150,19 @@ if(model_type==1) {
                   A_int_free[bb] ;
       } else {
         for(n in 1:N) {
+          if(use_ar==0) {
+            if(time[n]==1) {
+              pi1[n] = sigma_reg_free[bb[n]] *L_full[ll[n]] - B_int_free[bb[n]];
+              pi2[n] = sigma_abs_free[bb[n]] *L_full[ll[n]] - A_int_free[bb[n]] ; 
+            } else {
+              pi1[n] = sigma_reg_free[bb[n]] *L_tp1[time[n],ll[n]] - B_int_free[bb[n]];
+              pi2[n] = sigma_abs_free[bb[n]] *L_tp1[time[n],ll[n]] - A_int_free[bb[n]] ; 
+            }
+          } else {
             pi1[n] = sigma_reg_free[bb[n]] *  (L_tp1[time[n],ll[n]] + L_full[ll[n]]) - B_int_free[bb[n]];
             pi2[n] = sigma_abs_free[bb[n]] * (L_tp1[time[n],ll[n]] + L_full[ll[n]]) - 
                     A_int_free[bb[n]] ; 
-
+          }
         }
       }
 
@@ -129,7 +183,16 @@ if(model_type==1) {
         pi1 = sigma_reg_free[bb] .*  L_full[ll] - B_int_free[bb];
       } else {
         for(n in 1:N) {
+          if(use_ar==0) {
+            if(time[n]==1) {
+              pi1[n] = sigma_reg_free[bb[n]] * L_full[ll[n]] - B_int_free[bb[n]];
+            } else {
+              pi1[n] = sigma_reg_free[bb[n]] * L_tp1[time[n],ll[n]] - B_int_free[bb[n]];
+            }
+          } else {
             pi1[n] = sigma_reg_free[bb[n]] *  (L_tp1[time[n],ll[n]] + L_full[ll[n]]) - B_int_free[bb[n]];
+          }
+
         }
       }
       
@@ -148,10 +211,19 @@ if(model_type==1) {
                   A_int_free[bb] ;
       } else {
         for(n in 1:N) {
+          if(use_ar==0) {
+            if(time[n]==1) {
+              pi1[n] = sigma_reg_free[bb[n]] *L_full[ll[n]] - B_int_free[bb[n]];
+              pi2[n] = sigma_abs_free[bb[n]] *L_full[ll[n]] - A_int_free[bb[n]] ; 
+            } else {
+              pi1[n] = sigma_reg_free[bb[n]] *L_tp1[time[n],ll[n]] - B_int_free[bb[n]];
+              pi2[n] = sigma_abs_free[bb[n]] *L_tp1[time[n],ll[n]] - A_int_free[bb[n]] ; 
+            }
+          } else {
             pi1[n] = sigma_reg_free[bb[n]] *  (L_tp1[time[n],ll[n]] + L_full[ll[n]]) - B_int_free[bb[n]];
             pi2[n] = sigma_abs_free[bb[n]] * (L_tp1[time[n],ll[n]] + L_full[ll[n]]) - 
                     A_int_free[bb[n]] ; 
-
+          }
         }
       }
 
@@ -172,7 +244,16 @@ if(model_type==1) {
         pi1 = sigma_reg_free[bb] .*  L_full[ll] - B_int_free[bb];
       } else {
         for(n in 1:N) {
+          if(use_ar==0) {
+            if(time[n]==1) {
+              pi1[n] = sigma_reg_free[bb[n]] * L_full[ll[n]] - B_int_free[bb[n]];
+            } else {
+              pi1[n] = sigma_reg_free[bb[n]] * L_tp1[time[n],ll[n]] - B_int_free[bb[n]];
+            }
+          } else {
             pi1[n] = sigma_reg_free[bb[n]] *  (L_tp1[time[n],ll[n]] + L_full[ll[n]]) - B_int_free[bb[n]];
+          }
+
         }
       }
       
@@ -191,10 +272,19 @@ if(model_type==1) {
                   A_int_free[bb] ;
       } else {
         for(n in 1:N) {
+          if(use_ar==0) {
+            if(time[n]==1) {
+              pi1[n] = sigma_reg_free[bb[n]] *L_full[ll[n]] - B_int_free[bb[n]];
+              pi2[n] = sigma_abs_free[bb[n]] *L_full[ll[n]] - A_int_free[bb[n]] ; 
+            } else {
+              pi1[n] = sigma_reg_free[bb[n]] *L_tp1[time[n],ll[n]] - B_int_free[bb[n]];
+              pi2[n] = sigma_abs_free[bb[n]] *L_tp1[time[n],ll[n]] - A_int_free[bb[n]] ; 
+            }
+          } else {
             pi1[n] = sigma_reg_free[bb[n]] *  (L_tp1[time[n],ll[n]] + L_full[ll[n]]) - B_int_free[bb[n]];
             pi2[n] = sigma_abs_free[bb[n]] * (L_tp1[time[n],ll[n]] + L_full[ll[n]]) - 
                     A_int_free[bb[n]] ; 
-
+          }
         }
       }
 
@@ -215,7 +305,16 @@ if(model_type==1) {
         pi1 = sigma_reg_free[bb] .*  L_full[ll] - B_int_free[bb];
       } else {
         for(n in 1:N) {
+          if(use_ar==0) {
+            if(time[n]==1) {
+              pi1[n] = sigma_reg_free[bb[n]] * L_full[ll[n]] - B_int_free[bb[n]];
+            } else {
+              pi1[n] = sigma_reg_free[bb[n]] * L_tp1[time[n],ll[n]] - B_int_free[bb[n]];
+            }
+          } else {
             pi1[n] = sigma_reg_free[bb[n]] *  (L_tp1[time[n],ll[n]] + L_full[ll[n]]) - B_int_free[bb[n]];
+          }
+
         }
       }
       
@@ -232,10 +331,19 @@ if(model_type==1) {
                   A_int_free[bb] ;
       } else {
         for(n in 1:N) {
+          if(use_ar==0) {
+            if(time[n]==1) {
+              pi1[n] = sigma_reg_free[bb[n]] *L_full[ll[n]] - B_int_free[bb[n]];
+              pi2[n] = sigma_abs_free[bb[n]] *L_full[ll[n]] - A_int_free[bb[n]] ; 
+            } else {
+              pi1[n] = sigma_reg_free[bb[n]] *L_tp1[time[n],ll[n]] - B_int_free[bb[n]];
+              pi2[n] = sigma_abs_free[bb[n]] *L_tp1[time[n],ll[n]] - A_int_free[bb[n]] ; 
+            }
+          } else {
             pi1[n] = sigma_reg_free[bb[n]] *  (L_tp1[time[n],ll[n]] + L_full[ll[n]]) - B_int_free[bb[n]];
             pi2[n] = sigma_abs_free[bb[n]] * (L_tp1[time[n],ll[n]] + L_full[ll[n]]) - 
                     A_int_free[bb[n]] ; 
-
+          }
         }
       }
 

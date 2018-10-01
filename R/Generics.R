@@ -53,6 +53,7 @@ setClass('idealstan',
          slots=list(score_data='idealdata',
                     to_fix='list',
                     model_type='numeric',
+                    use_ar='logical',
                     model_code='character',
                     test_model_code='character',
                     stan_samples='stanfit',
@@ -139,6 +140,7 @@ setMethod('sample_model',signature(object='idealdata'),
                                 person_sd=this_data$legis_sd,
                                 diff_high=this_data$diff_high,
                                 T=this_data$T,
+                                use_ar=this_data$use_ar,
                                 actual=TRUE)
 
             if(is.null(ncores)) {

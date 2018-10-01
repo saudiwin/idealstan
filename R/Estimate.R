@@ -728,6 +728,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
                          this_data=this_data,use_vb=use_vb,...)
   
   outobj@model_type <- model_type
+  outobj@use_ar <- use_ar
   outobj@use_groups <- use_groups
   return(outobj)
   

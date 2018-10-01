@@ -505,11 +505,15 @@ id_plot_sims(ord_irt_lognormal_abs_est)
 
 # Testing for Time
 
-We won't test all the possible time auto-correlation settings, only a subset of them. I use an inflated binary model as it is a very common one. First random walks:
+We won't test all the possible time auto-correlation settings, only a subset of them. I use an inflated binary model as it is a very common one. 
+
+While these models are identified, it appears that sometimes given the amount of data, they are only weakly identified in the posterior and Rhat values higher than 1.1 are possible (but are not evidence of multi-modality).
+
+First random walks:
 
 ```{r irt_binary_time_inflate}
-bin_time_irt_2pl_abs_sim <- id_sim_gen(num_person=20,num_bills=100,ordinal=F,absence=T,
-                               absence_diff_mean=0,time_process = 'random',time_points=20)
+bin_time_irt_2pl_abs_sim <- id_sim_gen(num_person=20,num_bills=125,ordinal=F,absence=T,
+                               absence_diff_mean=0,time_process = 'random',time_points=25,ideal_pts_sd = 1)
 bin_time_irt_2pl_abs_est <- id_estimate(idealdata=bin_time_irt_2pl_abs_sim,
                                model_type=2,
                                restrict_ind_high = as.character(sort(bin_time_irt_2pl_abs_sim@simul_data$drift,
@@ -525,7 +529,10 @@ bin_time_irt_2pl_abs_est <- id_estimate(idealdata=bin_time_irt_2pl_abs_sim,
                              id_diff_high=sort(bin_time_irt_2pl_abs_sim@simul_data$drift,
                                                   decreasing=TRUE)[1],
                              time_sd=.1,
-                             restrict_sd = .1)
+                              person_sd=3,
+                             restrict_sd = .01,
+                             discrim_reg_sd=1,
+                             discrim_miss_sd=1)
 id_plot_rhats(bin_time_irt_2pl_abs_est)
 ```
 

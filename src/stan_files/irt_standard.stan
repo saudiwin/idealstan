@@ -159,9 +159,11 @@ model {
 
 	if(T>1) {
     if(use_ar==1) {
+      // in AR model, intercepts are constant over time
 #include /chunks/l_hier_ar1_prior.stan
   L_tp1[1] ~ normal(legis_pred[1, 1:(num_legis), ] * legis_x,legis_sd);
     } else {
+      // in RW model, intercepts are used for first time period
 #include /chunks/l_hier_prior.stan
   L_tp1[1] ~ normal(legis_pred[1, 1:(num_legis), ] * legis_x,legis_sd);
     }

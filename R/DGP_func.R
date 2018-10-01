@@ -302,7 +302,12 @@
       current_val$t1 <- t_11
       return(data_frame(t_11))
     } else {
-      t_11 <- alpha_int + adj_in*current_val$t1 + rnorm(n=1,sd=sigma)
+      if(adj_in==1) {
+        t_11 <- adj_in*current_val$t1 + rnorm(n=1,sd=sigma)
+      } else {
+        t_11 <- alpha_int + adj_in*current_val$t1 + rnorm(n=1,sd=sigma)
+      }
+      
     }
     current_val$t1 <- t_11
     return(data_frame(t_11))

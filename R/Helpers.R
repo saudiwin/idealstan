@@ -747,15 +747,23 @@
                        num_legis=NULL,
                        diff_high=NULL,
                        T=NULL,
-                       actual=TRUE) {
+                       actual=TRUE,
+                       use_ar=NULL) {
 
   
   if(actual==TRUE) {
     # full run
     if(T>1) {
-      return(list(restrict_high = array(rnorm(n=1,mean=diff_high,sd=restrict_sd)),
-                  L_free = rnorm(n=num_legis-1,mean=0,sd=person_sd),
-                  L_AR1 = runif(n = num_legis,min = -.5,max=.5)))
+      if(use_ar) {
+        return(list(restrict_high = array(rnorm(n=1,mean=diff_high,sd=restrict_sd)),
+                    L_free = rnorm(n=num_legis-1,mean=0,sd=person_sd),
+                    L_AR1 = runif(n = num_legis,min = -.5,max=.5)))
+      } else {
+        return(list(restrict_high = array(rnorm(n=1,mean=diff_high,sd=restrict_sd)),
+                    L_free = rnorm(n=num_legis-2,mean=0,sd=person_sd),
+                    L_AR1 = runif(n = num_legis,min = -.5,max=.5)))
+      }
+      
     } else {
       return(list(restrict_high = array(rnorm(n=1,mean=diff_high,sd=restrict_sd)),
                   L_free = rnorm(n=num_legis-2,mean=0,sd=person_sd),
@@ -770,4 +778,30 @@
   
   
   
+}
+
+#' used to calculate the true ideal points
+#' given that a non-centered parameterization is used.
+.calc_true_pts <- function(obj) {
+
+  
+  over_time <- rstan::extract(obj@stan_samples,'L_tp1')$L_tp1
+  drift <- rstan::extract(obj@stan_samples,'L_full')$L_full
+  
+  save_array <- environment()
+  save_array$array_slot <- array(data=NA,dim=dim(over_time))
+  
+  new_pts <- sapply(1:dim(over_time)[2], function(t) {
+    sapply(1:dim(over_time)[3], function(i) {
+      if(t==1) {
+        save_array$array_slot[,t,i] <- over_time[,t,i,drop=F] + drift[,i]
+      } else {
+        save_array$array_slot[,t,i] <- over_time[,t,i,drop=F] + drift[,i] + save_array$array_slot[,t-1,i,drop=F]
+      }
+      
+    })
+    
+  })
+
+  return(save_array$array_slot)
 }

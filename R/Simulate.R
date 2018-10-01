@@ -93,7 +93,7 @@ id_sim_gen <- function(num_person=20,num_bills=50,
       
       ideal_pts <- lapply(1:num_person, function(i) {
         this_person <- .gen_ts_data(t=time_points,
-                                    adj_in=ar_adj[i],
+                                    adj_in=ar_adj,
                                     alpha_int=drift[i],
                                     sigma=time_sd,
                                     init_sides=ideal_t1[i])
@@ -333,7 +333,14 @@ id_sim_coverage <- function(obj,rep=1,quantiles=c(.95,.05)) {
   
   all_true <- obj@score_data@simul_data
   
-  true_person <- all_true$true_person[as.numeric(levels(obj@score_data@score_matrix$person_id))]
+  if(length(unique(as.numeric(obj@score_data@score_matrix$time_id)))>1) {
+    true_person <- all_true$true_person[as.numeric(levels(obj@score_data@score_matrix$person_id)),]
+    person_est <- .calc_true_pts(obj)
+  } else {
+    true_person <- all_true$true_person[as.numeric(levels(obj@score_data@score_matrix$person_id))]
+    person_est <- all_params$L_full
+  }
+  
   true_sigma_reg <- all_true$true_reg_discrim
   true_sigma_abs <- all_true$true_abs_discrim
   
@@ -341,13 +348,17 @@ id_sim_coverage <- function(obj,rep=1,quantiles=c(.95,.05)) {
 
     if(class(est_param)=='array') {
       param_length <- dim(est_param)[3]
+      time <- dim(est_param)[2]
+      high <- apply(est_param,c(2,3), quantile,quantiles[1])
+      low <- apply(est_param,c(2,3), quantile,quantiles[2])
       all_covs <- sapply(1:param_length, function(i) {
-        high <- quantile(est_param[,,i],quantiles[1])
-        low <- quantile(est_param[,,i],quantiles[2])
-        this_sd <- sd(est_param[,,i])
-        #this_param <- (true_param[i] < (true_param[i]+1.96*this_sd)) && (true_param[i] > (true_param[i]-1.96*this_sd))
-        this_param <- (true_param[i] < high) && (true_param[i] >low)
+        over_time <- sapply(1:time,function(t) {
+          this_sd <- apply(est_param,c(2,3), sd)
+          #this_param <- (true_param[i] < (true_param[i]+1.96*this_sd)) && (true_param[i] > (true_param[i]-1.96*this_sd))
+          this_param <- (true_param[i,t] < high[t,i]) && (true_param[i,t] >low[t,i])
+        })
         
+        return(over_time)
       })
     } else if(class(est_param)=='matrix') {
       param_length <- ncol(est_param)
@@ -374,10 +385,12 @@ id_sim_coverage <- function(obj,rep=1,quantiles=c(.95,.05)) {
   # person_points <- lapply(to_iters,over_params,
   #                         est_param=all_params$L_full,
   #                         true_param=true_person)
-  
-  out_data <- list(`Person Ideal Points`=over_params(all_params$L_full,true_person),
-                         `Absence Discriminations`=over_params(all_params$sigma_abs_full,true_sigma_abs),
-                         `Item Discrimations`=over_params(all_params$sigma_reg_full,true_sigma_reg))
+
+    out_data <- list(`Person Ideal Points`=over_params(person_est,true_person),
+                     `Absence Discriminations`=over_params(all_params$sigma_abs_free,true_sigma_abs),
+                     `Item Discrimations`=over_params(all_params$sigma_reg_free,true_sigma_reg))
+
+
   
   return(out_data)
 }

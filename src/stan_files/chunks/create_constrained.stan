@@ -10,7 +10,12 @@ if(num_legis==2) {
   if(T==1) {
     num_constrain_l=num_fix_high + num_fix_low;
   } else {
-    num_constrain_l=num_fix_high;
+    if(use_ar==1) {
+      num_constrain_l=num_fix_high;
+    } else {
+      num_constrain_l=num_fix_high + num_fix_low;
+    }
+    
   }
   
 }
