@@ -54,6 +54,7 @@ data {
   //real time_sd;
   real ar_sd;
   int sample_stationary;
+  real time_sd;
 }
 
 transformed data {
@@ -92,7 +93,7 @@ parameters {
   ordered[m_step-1] steps_votes;
   ordered[m_step-1] steps_votes_grm[num_bills];
   real<lower=0> extra_sd;
-  real<lower=0> time_sd;
+  //real<lower=0> time_sd;
 }
 
 transformed parameters {
@@ -137,7 +138,7 @@ model {
   sigma_abs_x_cons ~ normal(0,5);
   sigma_reg_x_cons ~ normal(0,5);
   extra_sd ~ exponential(1);
-  time_sd ~ exponential(5);
+  //time_sd ~ exponential(5);
   //L_AR1_free ~ normal(0,ar_sd);
   L_AR1 ~ normal(0,ar_sd); // these parameters shouldn't get too big
   if(model_type>2 && model_type<5) {

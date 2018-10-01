@@ -746,14 +746,22 @@
                         person_sd=NULL,
                        num_legis=NULL,
                        diff_high=NULL,
+                       T=NULL,
                        actual=TRUE) {
 
   
   if(actual==TRUE) {
     # full run
-    return(list(restrict_high = array(rnorm(n=1,mean=diff_high,sd=restrict_sd)),
-         L_free = rnorm(n=num_legis-2,mean=0,sd=person_sd),
-         L_AR1 = runif(n = num_legis,min = -.5,max=.5)))
+    if(T>1) {
+      return(list(restrict_high = array(rnorm(n=1,mean=diff_high,sd=restrict_sd)),
+                  L_free = rnorm(n=num_legis-1,mean=0,sd=person_sd),
+                  L_AR1 = runif(n = num_legis,min = -.5,max=.5)))
+    } else {
+      return(list(restrict_high = array(rnorm(n=1,mean=diff_high,sd=restrict_sd)),
+                  L_free = rnorm(n=num_legis-2,mean=0,sd=person_sd),
+                  L_AR1 = runif(n = num_legis,min = -.5,max=.5)))
+    }
+
   } else {
     #identification run
     return(list(L_free = rnorm(n=num_legis,mean=0,sd=person_sd),

@@ -138,6 +138,7 @@ setMethod('sample_model',signature(object='idealdata'),
                                 restrict_sd=this_data$restrict_sd,
                                 person_sd=this_data$legis_sd,
                                 diff_high=this_data$diff_high,
+                                T=this_data$T,
                                 actual=TRUE)
 
             if(is.null(ncores)) {

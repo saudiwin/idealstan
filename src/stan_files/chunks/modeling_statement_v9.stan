@@ -4,11 +4,11 @@
 // need to adjust parameters to reflect the reality that we are sampling on the log scale
 if(T==1) {
       restrict_high ~normal((diff_high - restrict_high_bar) + 
-                  legis_pred[1, (num_legis - num_fix_high - num_fix_low):(num_legis - num_fix_low), ] * legis_x_cons, 
+                  legis_pred[1, (num_legis - num_fix_low), ] * legis_x_cons, 
                     restrict_sd);
 } else {
         restrict_high ~normal((diff_high - restrict_high_bar) + 
-                  legis_pred[1, (num_legis - num_fix_high):(num_legis), ] * legis_x_cons, 
+                  legis_pred[1, num_legis, ] * legis_x_cons, 
                     restrict_sd);
 }
 

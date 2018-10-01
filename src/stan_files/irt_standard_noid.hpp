@@ -451,6 +451,7 @@ private:
     double restrict_sd;
     double restrict_low_bar;
     double restrict_high_bar;
+    double time_sd;
     double ar_sd;
     int sample_stationary;
     int m;
@@ -732,6 +733,12 @@ public:
             vals_r__ = context__.vals_r("restrict_high_bar");
             pos__ = 0;
             restrict_high_bar = vals_r__[pos__++];
+            current_statement_begin__ = 188;
+            context__.validate_dims("data initialization", "time_sd", "double", context__.to_vec());
+            time_sd = double(0);
+            vals_r__ = context__.vals_r("time_sd");
+            pos__ = 0;
+            time_sd = vals_r__[pos__++];
             current_statement_begin__ = 189;
             context__.validate_dims("data initialization", "ar_sd", "double", context__.to_vec());
             ar_sd = double(0);
@@ -778,6 +785,7 @@ public:
             current_statement_begin__ = 185;
             current_statement_begin__ = 186;
             current_statement_begin__ = 187;
+            current_statement_begin__ = 188;
             current_statement_begin__ = 189;
             current_statement_begin__ = 190;
             // initialize data variables
@@ -948,8 +956,6 @@ public:
             validate_non_negative_index("A_int_free", "num_bills", num_bills);
             num_params_r__ += num_bills;
             current_statement_begin__ = 278;
-            ++num_params_r__;
-            current_statement_begin__ = 279;
             ++num_params_r__;
         } catch (const std::exception& e) {
             stan::lang::rethrow_located(e, current_statement_begin__, prog_reader__());
@@ -1215,19 +1221,6 @@ public:
             throw std::runtime_error(std::string("Error transforming variable extra_sd: ") + e.what());
         }
 
-        if (!(context__.contains_r("time_sd")))
-            throw std::runtime_error("variable time_sd missing");
-        vals_r__ = context__.vals_r("time_sd");
-        pos__ = 0U;
-        context__.validate_dims("initialization", "time_sd", "double", context__.to_vec());
-        double time_sd(0);
-        time_sd = vals_r__[pos__++];
-        try {
-            writer__.scalar_lb_unconstrain(0,time_sd);
-        } catch (const std::exception& e) { 
-            throw std::runtime_error(std::string("Error transforming variable time_sd: ") + e.what());
-        }
-
         params_r__ = writer__.data_r();
         params_i__ = writer__.data_i();
     }
@@ -1377,13 +1370,6 @@ public:
             else
                 extra_sd = in__.scalar_lb_constrain(0);
 
-            T__ time_sd;
-            (void) time_sd;  // dummy to suppress unused var warning
-            if (jacobian__)
-                time_sd = in__.scalar_lb_constrain(0,lp__);
-            else
-                time_sd = in__.scalar_lb_constrain(0);
-
 
             // transformed parameters
             current_statement_begin__ = 284;
@@ -1487,8 +1473,6 @@ public:
             lp_accum__.add(normal_log<propto__>(L_AR1, 0, ar_sd));
             current_statement_begin__ = 350;
             lp_accum__.add(exponential_log<propto__>(extra_sd, 1));
-            current_statement_begin__ = 351;
-            lp_accum__.add(exponential_log<propto__>(time_sd, 5));
             current_statement_begin__ = 352;
             if (as_bool((primitive_value(logical_gt(model_type,2)) && primitive_value(logical_lt(model_type,5))))) {
 
@@ -1901,7 +1885,6 @@ public:
         names__.push_back("B_int_free");
         names__.push_back("A_int_free");
         names__.push_back("extra_sd");
-        names__.push_back("time_sd");
         names__.push_back("L_full");
     }
 
@@ -1959,8 +1942,6 @@ public:
         dims__.resize(0);
         dimss__.push_back(dims__);
         dims__.resize(0);
-        dimss__.push_back(dims__);
-        dims__.resize(0);
         dims__.push_back(num_legis);
         dimss__.push_back(dims__);
     }
@@ -2002,7 +1983,6 @@ public:
         vector_d B_int_free = in__.vector_constrain(num_bills);
         vector_d A_int_free = in__.vector_constrain(num_bills);
         double extra_sd = in__.scalar_lb_constrain(0);
-        double time_sd = in__.scalar_lb_constrain(0);
             for (int k_0__ = 0; k_0__ < num_bills; ++k_0__) {
             vars__.push_back(sigma_abs_free[k_0__]);
             }
@@ -2053,7 +2033,6 @@ public:
             vars__.push_back(A_int_free[k_0__]);
             }
         vars__.push_back(extra_sd);
-        vars__.push_back(time_sd);
 
         if (!include_tparams__) return;
         // declare and define transformed parameters
@@ -2209,9 +2188,6 @@ public:
         param_name_stream__.str(std::string());
         param_name_stream__ << "extra_sd";
         param_names__.push_back(param_name_stream__.str());
-        param_name_stream__.str(std::string());
-        param_name_stream__ << "time_sd";
-        param_names__.push_back(param_name_stream__.str());
 
         if (!include_gqs__ && !include_tparams__) return;
         for (int k_0__ = 1; k_0__ <= num_legis; ++k_0__) {
@@ -2309,9 +2285,6 @@ public:
         }
         param_name_stream__.str(std::string());
         param_name_stream__ << "extra_sd";
-        param_names__.push_back(param_name_stream__.str());
-        param_name_stream__.str(std::string());
-        param_name_stream__ << "time_sd";
         param_names__.push_back(param_name_stream__.str());
 
         if (!include_gqs__ && !include_tparams__) return;

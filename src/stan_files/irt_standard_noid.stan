@@ -49,7 +49,7 @@ data {
   real restrict_sd;
   real restrict_low_bar;
   real restrict_high_bar;
-  //real time_sd;
+  real time_sd;
   real ar_sd;
   int sample_stationary;
 }
@@ -84,7 +84,7 @@ parameters {
   vector[num_bills] B_int_free;
   vector[num_bills] A_int_free;
   real<lower=0> extra_sd;
-  real<lower=0> time_sd;
+  //real<lower=0> time_sd;
 }
 
 transformed parameters {
@@ -142,7 +142,7 @@ model {
   sigma_abs_x_cons ~ normal(0,5);
   L_AR1 ~ normal(0,ar_sd); // these parameters shouldn't get too big
   extra_sd ~ exponential(1);
-  time_sd ~ exponential(5);
+  //time_sd ~ exponential(5);
   if(model_type>2 && model_type<5) {
     for(i in 1:(m_step-2)) {
     steps_votes[i+1] - steps_votes[i] ~ normal(0,5);
