@@ -54,20 +54,6 @@
   
   # change to group parameters if index is for groups
   
-  # if(use_groups==T) {
-  #   if(!is.null(to_constrain_high)) {
-  #     to_constrain_high <- which(as.numeric(factor(object@person_data$group))==to_constrain_high)
-  #   }
-  #   if(!is.null(to_constrain_low)) {
-  #     to_constrain_low <- which(as.numeric(factor(object@person_data$group))==to_constrain_low)
-  #   }
-  # }
-  
-  # object@score_matrix <- object@score_matrix[c((1:nrow(object@score_matrix))[-c(to_constrain_high,
-  #                                                                               to_constrain_low)],
-  #                                              to_constrain_high,
-  #                                              to_constrain_low),]
-  
   # now re-order the factors so that the indices will match  
   
   if(use_groups==T) {
@@ -77,10 +63,10 @@
       object@score_matrix <- mutate(ungroup(object@score_matrix), 
                                     group_id=factor(!! quo(group_id)),
                                     group_id= factor(!! quo(group_id),
-                                                     levels=c(levels(!! quo(group_id))[-c(to_constrain_high,
-                                                                                          to_constrain_low)],
-                                                              levels(!! quo(group_id))[c(to_constrain_high,
-                                                                                         to_constrain_low)])))
+                                                     levels=c(levels(!! quo(group_id))[-c(to_constrain_low,
+                                                                                          to_constrain_high)],
+                                                              levels(!! quo(group_id))[c(to_constrain_low,
+                                                                                         to_constrain_high)])))
     } else {
       object@score_matrix <- mutate(ungroup(object@score_matrix), 
                                     group_id=factor(!! quo(group_id)),
@@ -93,10 +79,10 @@
       object@score_matrix <- mutate(ungroup(object@score_matrix), 
                                     person_id=factor(!! quo(person_id)),
                                     person_id= factor(!! quo(person_id),
-                                                      levels=c(levels(person_id)[-c(to_constrain_high,
-                                                                                    to_constrain_low)],
-                                                               levels(person_id)[c(to_constrain_high,
-                                                                                   to_constrain_low)])))
+                                                      levels=c(levels(person_id)[-c(to_constrain_low,
+                                                                                    to_constrain_high)],
+                                                               levels(person_id)[c(to_constrain_low,
+                                                                                   to_constrain_high)])))
     } else {
       object@score_matrix <- mutate(ungroup(object@score_matrix), 
                                     person_id=factor(!! quo(person_id)),
@@ -118,39 +104,10 @@
   
   this_data$constrain_par <- 1
   
-  # if(auto_id==TRUE) {
-  #   # Now re-run ID on 4 VB chains and see if the parameters are stable
-  #   print('Running automatic identification check.')
-  # 
-  #   all_vbs <- parallel::mclapply(1:4,function(i,this_data=NULL) {
-  #     vb_out <- vb(object=stanmodels[['irt_standard']],data=this_data,algorithm='meanfield')
-  #     lookat_params <- rstan::extract(vb_out,permuted=FALSE)
-  #     lookat_params <- lookat_params[,1,]
-  #    out_param <- apply(lookat_params,2,mean)
-  #   },this_data=this_data,mc.cores=ncores)
-  # 
-  #   signs <- sapply(all_vbs,sign)
-  #   equal_ratio <- apply(signs,1,function(r) {
-  #     all(r==r[1])
-  #   })
-  #   print(paste0('The model currently has ',round(mean(equal_ratio),1),' correct signs identified.'))
-  #   if(mean(equal_ratio)<0.9) {
-  #     print(paste0('Model is not yet identified. Increasing constraint number to ',nfix+1))
-  #     .vb_fix(object=object,this_params=this_params,this_data=this_data,nfix=nfix+1,auto_id=TRUE,
-  #             model_type=model_type,
-  #             ncores=ncores,
-  #             all_args)
-  #   } else {
-  #     print(paste0('Automatic identification has occurred for ',all_args$restrict_type,
-  #           ' identification with ',nfix,' constraints.'))
-  #   }
-  # }
-  
   object@restrict_num_high <- 1
   object@restrict_num_low <- 1
   object@constraint_type <- this_data$constraint_type
   object@param_fix <- this_data$constrain_par
-  # object@unrestricted <- old_matrix
   object@diff <- diff
   object@diff_high <- diff_high
   return(object)
@@ -234,12 +191,12 @@
     # reorder group parameters
     object@score_matrix <- mutate(ungroup(object@score_matrix), 
                                   group_id=factor(!! quo(group_id)),
-                                  group_id=fct_relevel(!!quo(group_id),c(to_constrain_high,to_constrain_low),
+                                  group_id=fct_relevel(!!quo(group_id),to_constrain_low,to_constrain_high,
                                                        after=length(levels(!!quo(group_id)))))
   } else {
     object@score_matrix <- mutate(ungroup(object@score_matrix), 
                                   person_id=factor(!! quo(person_id)),
-                                  person_id=fct_relevel(!!quo(person_id),c(to_constrain_high,to_constrain_low),
+                                  person_id=fct_relevel(!!quo(person_id),to_constrain_low,to_constrain_high,
                                                        after=length(levels(!!quo(person_id)))))
   }
   
@@ -606,16 +563,23 @@
   # if(length(object@score_data@to_sample)>0) {
   #   person_data <- slice(person_data,object@score_data@to_sample)
   # }
-  # 
-  # # Reorder rows to match those rows that were switched for identification purposes
-  # 
-  # person_data <- slice(person_data,as.numeric(row.names(object@score_data@score_matrix)))
+
   # 
   if(length(unique(object@score_data@score_matrix$time_id))>1) {
     
+    # first need to convert to time-varying ideal points from model output
+    
+    ideal_pts <- as.data.frame(.calc_true_pts(object))
     
     # need to apply true person names by time point
+    
+    
     person_params <- as.data.frame(object@stan_samples,pars='L_tp1')
+    
+    names(ideal_pts) <- names(person_params)
+    
+    person_params <- ideal_pts
+    
     person_params <- person_params %>% gather(key = legis,value=ideal_pts) %>% 
       group_by(legis) %>% 
       summarize(low_pt=quantile(ideal_pts,0.1),high_pt=quantile(ideal_pts,0.9),
@@ -784,24 +748,30 @@
 #' given that a non-centered parameterization is used.
 .calc_true_pts <- function(obj) {
 
-  
+
   over_time <- rstan::extract(obj@stan_samples,'L_tp1')$L_tp1
   drift <- rstan::extract(obj@stan_samples,'L_full')$L_full
   
   save_array <- environment()
   save_array$array_slot <- array(data=NA,dim=dim(over_time))
-  
-  new_pts <- sapply(1:dim(over_time)[2], function(t) {
-    sapply(1:dim(over_time)[3], function(i) {
-      if(t==1) {
-        save_array$array_slot[,t,i] <- over_time[,t,i,drop=F] + drift[,i]
-      } else {
-        save_array$array_slot[,t,i] <- over_time[,t,i,drop=F] + drift[,i] + save_array$array_slot[,t-1,i,drop=F]
-      }
+  if(obj@use_ar) {
+    new_pts <- sapply(1:dim(over_time)[2], function(t) {
+      sapply(1:dim(over_time)[3], function(i) {
+        if(t==1) {
+          save_array$array_slot[,t,i] <- drift[,i]
+        } else {
+          save_array$array_slot[,t,i] <- over_time[,t,i,drop=F] + drift[,i]
+        }
+        
+      })
       
     })
-    
-  })
+    new_pts <- save_array$array_slot
+  } else {
+    over_time[,1,] <- drift
+    new_pts <- over_time
+  }
 
-  return(save_array$array_slot)
+
+  return(new_pts)
 }

@@ -395,6 +395,8 @@ id_plot_legis <- function(object,return_data=FALSE,item_plot=NULL,
 #' @param hpd_limit The greatest absolute difference in high-posterior density interval shown for any point. Useful for excluding imprecisely estimated persons/legislators from the plot. Leave NULL if you don't want to exclude any.
 #' @param sample_persons If you don't want to use the full number of persons/legislators from the model, enter a proportion (between 0 and 1) to select
 #'  only a fraction of the persons/legislators.
+#' @param plot_sim Whether to plot the true values of parameters if a simulation was used to generate data 
+#' (see \code{\link{id_sim_gen}})
 #' @param ... Other options passed on to plotting function, currently ignored
 #' @importFrom gghighlight gghighlight
 #' @export
@@ -414,34 +416,13 @@ id_plot_legis_dyn <- function(object,return_data=FALSE,item_plot=NULL,
                               abs_and_reg='both',show_true=FALSE,group_color=TRUE,
                               hpd_limit=10,
                               group_overlap=FALSE,
-                              sample_persons=NULL,...) {
+                              sample_persons=NULL,
+                              plot_sim=FALSE,...) {
   
   # prepare data
   
   person_labels <- quo(person_id)
   group_labels <- quo(group_id)
-  
-  # if(is.null(person_labels)) {
-  #   person_labels <- quo(person.name)
-  # } else if(class(person_labels)=='character') {
-  #   person_labels <- as.name(person_labels)
-  #   person_labels <- enquo(person_labels)
-  # } else {
-  #   stop('Please do not enter a non-character value for person_labels.')
-  # }
-  # 
-  # if(is.null(group_labels)) {
-  #   group_labels <- quo(group)
-  # } else if(group_labels=='none') {
-  #   group_labels <- quo(group)
-  # } else if(class(group_labels)=='character') {
-  #   group_labels <- as.name(group_labels)
-  #   group_labels <- enquo(group_labels)
-  # } else {
-  #   stop('Please do not enter a non-character value for group_labels.')
-  # }
-  
-  #person_labels_string <- quo_name(person_labels)
   person_params <- .prepare_legis_data(object) 
   
   if(person_plot) {
@@ -449,6 +430,24 @@ id_plot_legis_dyn <- function(object,return_data=FALSE,item_plot=NULL,
   } else {
     base_id <- ~group_id
   }
+  
+  # allow the option of plotting "true" ideal points instead of estimated ones as lines
+  if(!is.null(object@score_data@simul_data) && plot_sim==T) {
+    
+    true_pts <- object@score_data@simul_data$true_person
+    colnames(true_pts) <- c(as.character(1:ncol(true_pts)))
+    true_pts <- as_data_frame(true_pts) %>% mutate(person_id=1:20) %>% 
+      gather(key = time_id,value=true_pt,-person_id) %>% 
+      # need to flip for identification
+      mutate(time_id=as.numeric(time_id),
+             person_id=factor(person_id),
+             person_id=fct_relevel(person_id,object@score_data@restrict_ind_high,
+                                   object@score_data@restrict_ind_low,
+                                   after=length(levels(person_id))))
+    person_params <- left_join(person_params,true_pts,by=c("person_id","time_id"))
+    
+  }
+  
   
   # plot CIs first for background
   
@@ -459,24 +458,35 @@ id_plot_legis_dyn <- function(object,return_data=FALSE,item_plot=NULL,
                                      fill='grey80',
                                      colour=NA,
                                      alpha=person_ci_alpha)
+  } else {
+    outplot <- person_params %>% ggplot(aes_(x=~time_id))
   } 
   
-  # add time-varying ideal points
-
-  if(group_color) {
+  # add time-varying ideal points\
+  if(!is.null(object@score_data@simul_data) && plot_sim==T) {
     
     outplot <- outplot + 
-      geom_line(aes_(y=~median_pt,group=base_id,
-                     colour=~group_id),
+      geom_line(aes_(y=~true_pt,colour=base_id),
                 alpha=person_ci_alpha,
                 size=line_size)
+    
   } else {
-    
-    outplot <- outplot + 
-      geom_line(aes_(y=~median_pt,colour=base_id),
-                alpha=person_ci_alpha,
-                size=line_size)
+    if(group_color) {
+      
+      outplot <- outplot + 
+        geom_line(aes_(y=~median_pt,group=base_id,
+                       colour=~group_id),
+                  alpha=person_ci_alpha,
+                  size=line_size)
+    } else {
+      
+      outplot <- outplot + 
+        geom_line(aes_(y=~median_pt,colour=base_id),
+                  alpha=person_ci_alpha,
+                  size=line_size)
+    }
   }
+
   
   # plot random labels
   

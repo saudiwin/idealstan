@@ -4,10 +4,10 @@
         if(use_ar==1) {
           L_full = append_row(L_free,restrict_high);
         } else {
-          L_full = append_row(restrict_high,restrict_low);
+          L_full = append_row(restrict_low,restrict_high);
         }
       } else {
-        L_full = append_row(restrict_high,restrict_low);
+        L_full = append_row(restrict_low,restrict_high);
         
       }
       
@@ -16,12 +16,12 @@
         if(use_ar==1) {
           L_full = append_row(L_free,restrict_high);
         } else {
-          L_full = append_row(L_free,append_row(restrict_high,restrict_low));
+          L_full = append_row(L_free,append_row(restrict_low,restrict_high));
         }
         
         
       } else {
-        L_full = append_row(L_free,append_row(restrict_high,restrict_low));
+        L_full = append_row(L_free,append_row(restrict_low,restrict_high));
       }
       
     }

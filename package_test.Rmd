@@ -529,10 +529,7 @@ bin_time_irt_2pl_abs_est <- id_estimate(idealdata=bin_time_irt_2pl_abs_sim,
                              id_diff_high=sort(bin_time_irt_2pl_abs_sim@simul_data$drift,
                                                   decreasing=TRUE)[1],
                              time_sd=.1,
-                              person_sd=3,
-                             restrict_sd = .01,
-                             discrim_reg_sd=1,
-                             discrim_miss_sd=1)
+                             restrict_sd = .01)
 id_plot_rhats(bin_time_irt_2pl_abs_est)
 ```
 
@@ -580,7 +577,7 @@ bin_time_ar_irt_2pl_abs_est <- id_estimate(idealdata=bin_time_ar_irt_2pl_abs_sim
                              use_ar=T,
                              person_sd = 1,
                              restrict_sd=.01,
-                             ar_sd=.5)
+                             ar_sd=1)
 id_plot_rhats(bin_time_ar_irt_2pl_abs_est)
 ```
 
@@ -591,6 +588,13 @@ id_sim_coverage(bin_time_ar_irt_2pl_abs_est) %>%
   stat_summary(fun.args=list(mult=1.96)) + 
   theme_minimal() 
 ```
+
+Let's do a time-varying ideal point plot with true point overlay:
+
+```{r irt_2pl_abs_time_ar_true_pt}
+id_plot_legis_dyn(bin_time_ar_irt_2pl_abs_est,plot_sim = T) 
+```
+
 
 ```{r irt_2pl_time_ar_abs_resid}
 

@@ -78,8 +78,9 @@ transformed data {
 parameters {
   vector[num_bills] sigma_abs_free;
   vector[num_legis - num_constrain_l] L_free; // first T=1 params to constrain
-  vector[num_legis] L_tp1[T]; // all other params can float
-  vector<lower=-1,upper=1>[num_legis] L_AR1; // AR-1 parameters for AR-1 model
+  //vector[num_legis] L_tp1_free[T]; // all other params can float
+  vector[T-1] L_tp1_var; // non-centered variance
+  vector<lower=-1,upper=1>[num_legis-1] L_AR1_free; // AR-1 parameters for AR-1 model
   vector[num_bills] sigma_reg_free;
   vector<lower=restrict_high_bar>[num_fix_high] restrict_high;
   vector[LX] legis_x;
@@ -93,20 +94,32 @@ parameters {
   ordered[m_step-1] steps_votes;
   ordered[m_step-1] steps_votes_grm[num_bills];
   real<lower=0> extra_sd;
-  //real<lower=0> time_sd;
+  real<lower=-.8,upper=.8> ar_fix;
 }
 
 transformed parameters {
 
   vector[num_legis] L_full;
-  //vector[num_legis] L_AR1;
+  vector[num_legis] L_AR1;
+  vector[num_legis] L_tp1[T]; // all other params can float
   //vector[num_legis] L_AR1_r;
   vector[1] restrict_low;
   
 
   restrict_low = restrict_high - diff;
 
+  L_AR1 = append_row(L_AR1_free,ar_fix);
   
+  if(T>1) {
+    if(use_ar==1) {
+      // in AR model, intercepts are constant over time
+#include /chunks/l_hier_ar1_prior.stan
+
+    } else {
+      // in RW model, intercepts are used for first time period
+#include /chunks/l_hier_prior.stan
+    }
+  }
   
   //convert unconstrained parameters to only sample in the constrained stationary space 
   //code from Jeffrey Arnold 
@@ -138,9 +151,10 @@ model {
   sigma_abs_x_cons ~ normal(0,5);
   sigma_reg_x_cons ~ normal(0,5);
   extra_sd ~ exponential(1);
-  //time_sd ~ exponential(5);
-  //L_AR1_free ~ normal(0,ar_sd);
-  L_AR1 ~ normal(0,ar_sd); // these parameters shouldn't get too big
+  ar_fix ~ normal(0,1);
+  L_tp1_var ~ normal(0,1);
+  L_AR1_free ~ normal(0,ar_sd);
+  //L_AR1 ~ normal(0,ar_sd); // these parameters shouldn't get too big
   if(model_type>2 && model_type<5) {
      for(i in 1:(m_step-2)) {
     steps_votes[i+1] - steps_votes[i] ~ normal(0,5);
@@ -155,17 +169,14 @@ model {
     L_free ~ normal(0,legis_sd);
   }
 
-	
 
 	if(T>1) {
     if(use_ar==1) {
-      // in AR model, intercepts are constant over time
-#include /chunks/l_hier_ar1_prior.stan
-  L_tp1[1] ~ normal(legis_pred[1, 1:(num_legis), ] * legis_x,legis_sd);
+
     } else {
-      // in RW model, intercepts are used for first time period
-#include /chunks/l_hier_prior.stan
-  L_tp1[1] ~ normal(legis_pred[1, 1:(num_legis), ] * legis_x,legis_sd);
+  // need to constrain the mean of some parameters to be positive
+  // use the highest positive values
+  mean(L_tp1[,num_legis-1]) ~ normal(diff_high,time_sd);
     }
   }
   /* if(sample_stationary==1) {

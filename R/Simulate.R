@@ -86,14 +86,14 @@ id_sim_gen <- function(num_person=20,num_bills=50,
       # random AR parameters
       ar_adj <- runif(n = num_person,min = -0.5,max=0.5)
     } else if(time_process=='random') {
-      ar_adj <- 1
+      ar_adj <- rep(1,num_person)
     }
       # drift parameters
       drift <- prior_func(params=list(N=num_person,mean=0,sd=ideal_pts_sd))
       
       ideal_pts <- lapply(1:num_person, function(i) {
         this_person <- .gen_ts_data(t=time_points,
-                                    adj_in=ar_adj,
+                                    adj_in=ar_adj[i],
                                     alpha_int=drift[i],
                                     sigma=time_sd,
                                     init_sides=ideal_t1[i])

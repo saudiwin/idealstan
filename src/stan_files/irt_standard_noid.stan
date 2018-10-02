@@ -70,7 +70,8 @@ transformed data {
 parameters {
   vector[num_bills] sigma_abs_free;
   vector[num_legis] L_free;
-  vector[num_legis] L_tp1[T]; // all other params can float
+  //vector[num_legis] L_tp1_free[T]; // all other params can float
+  vector[T-1] L_tp1_var; // non-centered variance
   vector<lower=-1,upper=1>[num_legis] L_AR1; // AR-1 parameters for AR-1 model
   vector[num_bills] sigma_reg_free;
   vector[LX] legis_x;
@@ -90,20 +91,19 @@ parameters {
 transformed parameters {
 
   vector[num_legis] L_full;
-  /* vector[num_legis] L_AR1;
-  vector[num_legis] L_AR1_r;
+  vector[num_legis] L_tp1[T]; // all other params can float
   
-  //convert unconstrained parameters to only sample in the constrained stationary space 
-  //code from Jeffrey Arnold 
-  //https://github.com/stan-dev/math/issues/309
-  if(sample_stationary==1) {
-    L_AR1_r = constrain_stationary(L_AR1_free);
-    L_AR1 = pacf_to_acf(L_AR1_r);
-    
-  } else {
-    L_AR1 = L_AR1_free;
-  } */
- 
+  if(T>1) {
+    if(use_ar==1) {
+      // in AR model, intercepts are constant over time
+#include /chunks/l_hier_ar1_prior.stan
+
+    } else {
+      // in RW model, intercepts are used for first time period
+#include /chunks/l_hier_prior.stan
+    }
+  }
+  
   L_full=L_free;
 
 }
@@ -119,16 +119,6 @@ model {
     L_tp1[1] ~normal(0,1);
   } else {
     L_free ~ normal(0,legis_sd);
-  }
-
-	if(T>1) {
-    if(use_ar==1) {
-#include /chunks/l_hier_ar1_prior.stan
-  L_tp1[1] ~ normal(legis_pred[1, 1:(num_legis), ] * legis_x,legis_sd);
-    } else {
-#include /chunks/l_hier_prior.stan
-  L_tp1[1] ~ normal(legis_pred[1, 1:(num_legis), ] * legis_x,legis_sd);
-    }
   }
 
 
