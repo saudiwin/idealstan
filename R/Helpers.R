@@ -567,18 +567,7 @@
   # 
   if(length(unique(object@score_data@score_matrix$time_id))>1) {
     
-    # first need to convert to time-varying ideal points from model output
-    
-    ideal_pts <- as.data.frame(.calc_true_pts(object))
-    
-    # need to apply true person names by time point
-    
-    
     person_params <- as.data.frame(object@stan_samples,pars='L_tp1')
-    
-    names(ideal_pts) <- names(person_params)
-    
-    person_params <- ideal_pts
     
     person_params <- person_params %>% gather(key = legis,value=ideal_pts) %>% 
       group_by(legis) %>% 

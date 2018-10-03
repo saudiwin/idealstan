@@ -556,7 +556,7 @@ id_plot_sims(bin_time_irt_2pl_abs_est)
 And autocorrelation:
 
 ```{r irt_binary_time_ar_inflate}
-bin_time_ar_irt_2pl_abs_sim <- id_sim_gen(num_person=20,num_bills=200,ordinal=F,absence=T,
+bin_time_ar_irt_2pl_abs_sim <- id_sim_gen(num_person=20,num_bills=100,ordinal=F,absence=T,
                                absence_diff_mean=0,time_process = 'AR',time_points=20)
 bin_time_ar_irt_2pl_abs_est <- id_estimate(idealdata=bin_time_ar_irt_2pl_abs_sim,
                                model_type=2,
@@ -592,7 +592,7 @@ id_sim_coverage(bin_time_ar_irt_2pl_abs_est) %>%
 Let's do a time-varying ideal point plot with true point overlay:
 
 ```{r irt_2pl_abs_time_ar_true_pt}
-id_plot_legis_dyn(bin_time_ar_irt_2pl_abs_est,plot_sim = T) 
+id_plot_legis_dyn(bin_time_ar_irt_2pl_abs_est,plot_sim = T) + facet_wrap(~person_id)
 ```
 
 

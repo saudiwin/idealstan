@@ -93,6 +93,8 @@ transformed parameters {
   vector[num_legis] L_full;
   vector[num_legis] L_tp1[T]; // all other params can float
   
+  L_full=L_free;
+  
   if(T>1) {
     if(use_ar==1) {
       // in AR model, intercepts are constant over time
@@ -104,7 +106,7 @@ transformed parameters {
     }
   }
   
-  L_full=L_free;
+  L_tp1[1] = L_full;
 
 }
 
@@ -116,7 +118,6 @@ model {
 
   if(T==1) {
     L_free ~normal(legis_pred[1, 1:(num_legis), ] * legis_x, legis_sd);
-    L_tp1[1] ~normal(0,1);
   } else {
     L_free ~ normal(0,legis_sd);
   }

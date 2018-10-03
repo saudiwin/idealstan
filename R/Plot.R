@@ -436,13 +436,14 @@ id_plot_legis_dyn <- function(object,return_data=FALSE,item_plot=NULL,
     
     true_pts <- object@score_data@simul_data$true_person
     colnames(true_pts) <- c(as.character(1:ncol(true_pts)))
-    true_pts <- as_data_frame(true_pts) %>% mutate(person_id=1:20) %>% 
+    true_pts <- as_data_frame(true_pts) %>% mutate(person_id=1:n()) %>% 
       gather(key = time_id,value=true_pt,-person_id) %>% 
       # need to flip for identification
       mutate(time_id=as.numeric(time_id),
              person_id=factor(person_id),
-             person_id=fct_relevel(person_id,object@score_data@restrict_ind_high,
-                                   object@score_data@restrict_ind_low,
+             person_id=fct_relevel(person_id,object@score_data@restrict_ind_low,
+                                   object@score_data@restrict_ind_high,
+                                   
                                    after=length(levels(person_id))))
     person_params <- left_join(person_params,true_pts,by=c("person_id","time_id"))
     

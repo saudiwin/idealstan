@@ -335,7 +335,7 @@ id_sim_coverage <- function(obj,rep=1,quantiles=c(.95,.05)) {
   
   if(length(unique(as.numeric(obj@score_data@score_matrix$time_id)))>1) {
     true_person <- all_true$true_person[as.numeric(levels(obj@score_data@score_matrix$person_id)),]
-    person_est <- .calc_true_pts(obj)
+    person_est <- all_params$L_tp1
   } else {
     true_person <- all_true$true_person[as.numeric(levels(obj@score_data@score_matrix$person_id))]
     person_est <- all_params$L_full

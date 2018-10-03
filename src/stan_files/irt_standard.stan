@@ -110,6 +110,10 @@ transformed parameters {
 
   L_AR1 = append_row(L_AR1_free,ar_fix);
   
+    //combine constrained and unconstrained parameters
+#include /chunks/build_params_v2.stan
+
+  
   if(T>1) {
     if(use_ar==1) {
       // in AR model, intercepts are constant over time
@@ -121,6 +125,8 @@ transformed parameters {
     }
   }
   
+  L_tp1[1] = L_full;
+  
   //convert unconstrained parameters to only sample in the constrained stationary space 
   //code from Jeffrey Arnold 
   //https://github.com/stan-dev/math/issues/309
@@ -131,11 +137,6 @@ transformed parameters {
   } else {
     L_AR1 = L_AR1_free;
   } */
-  
-  
-  //combine constrained and unconstrained parameters
-#include /chunks/build_params_v2.stan
-
 
 }
 
@@ -164,7 +165,6 @@ model {
   }
   if(T==1) {
     L_free ~normal(legis_pred[1, 1:(num_legis - num_constrain_l), ] * legis_x, legis_sd);
-    L_tp1[1] ~normal(0,1);
   } else {
     L_free ~ normal(0,legis_sd);
   }
