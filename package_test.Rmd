@@ -26,7 +26,10 @@ This Rmarkdown file has a series of simulations run on the models offered in `id
 First, the standard IRT 2-PL (for this one, the absence discriminations are not a part of the model):
 
 ```{r irt_binary}
-bin_irt_2pl_sim <- id_sim_gen(num_person=20,num_bills=100,ordinal=F,absence=F)
+bin_irt_2pl_sim <- id_sim_gen(num_person=20,num_bills=200,ordinal=F,absence=F,
+                              diff_sd=1,
+                              reg_discrim_sd = 1,
+                              absence_discrim_sd = 1)
 bin_irt_2pl_est <- id_estimate(idealdata=bin_irt_2pl_sim,
                                model_type=1,
                                restrict_ind_high = as.character(sort(bin_irt_2pl_sim@simul_data$true_person,
@@ -38,6 +41,15 @@ bin_irt_2pl_est <- id_estimate(idealdata=bin_irt_2pl_sim,
                                fixtype='constrained',
                            id_diff = sort(bin_irt_2pl_sim@simul_data$true_person,decreasing=T)[1] -
                              sort(bin_irt_2pl_sim@simul_data$true_person,decreasing=F)[1],
+                           id_diff_high=sort(bin_irt_2pl_sim@simul_data$true_person,
+                                                                     decreasing=T,
+                                                        index=T)$x[1],
+                           person_sd = 3,
+                           discrim_miss_sd = 1,
+                           discrim_reg_sd = 1,
+                           diff_reg_sd = 1,
+                           diff_miss_sd = 1,
+                           restrict_sd=0.01,
                            nchains=4,ncores=4)
 id_plot_rhats(bin_irt_2pl_est)
 ```
@@ -49,6 +61,13 @@ id_sim_coverage(bin_irt_2pl_est) %>%
   stat_summary(fun.args=list(mult=1.96)) + 
   theme_minimal() 
 ```
+
+Plot true versus observed values:
+
+```{r irt_2pl_plot}
+id_plot_legis(bin_irt_2pl_est,show_true = T)
+```
+
 
 ```{r irt_2pl_resid}
 
@@ -513,7 +532,10 @@ First random walks:
 
 ```{r irt_binary_time_inflate}
 bin_time_irt_2pl_abs_sim <- id_sim_gen(num_person=20,num_bills=125,ordinal=F,absence=T,
-                               absence_diff_mean=0,time_process = 'random',time_points=25,ideal_pts_sd = 1)
+                               absence_diff_mean=0,time_process = 'random',time_points=25,ideal_pts_sd = 1,
+diff_sd = 1,
+                               absence_discrim_sd = 1,
+                               reg_discrim_sd = 1)
 bin_time_irt_2pl_abs_est <- id_estimate(idealdata=bin_time_irt_2pl_abs_sim,
                                model_type=2,
                                restrict_ind_high = as.character(sort(bin_time_irt_2pl_abs_sim@simul_data$drift,
@@ -529,7 +551,13 @@ bin_time_irt_2pl_abs_est <- id_estimate(idealdata=bin_time_irt_2pl_abs_sim,
                              id_diff_high=sort(bin_time_irt_2pl_abs_sim@simul_data$drift,
                                                   decreasing=TRUE)[1],
                              time_sd=.1,
-                             restrict_sd = .01)
+                             person_sd = 3,
+                             restrict_sd=.01,
+                             ar_sd=.5,
+                             diff_reg_sd = 1,
+                             diff_miss_sd = 1,
+                             discrim_miss_sd = 1,
+                             discrim_reg_sd = 1)
 id_plot_rhats(bin_time_irt_2pl_abs_est)
 ```
 
@@ -539,6 +567,12 @@ id_sim_coverage(bin_time_irt_2pl_abs_est) %>%
   ggplot(aes(y=avg,x=Parameter)) +
   stat_summary(fun.args=list(mult=1.96)) + 
   theme_minimal() 
+```
+
+Let's do a time-varying ideal point plot with true point overlay:
+
+```{r irt_2pl_abs_time_true_pt}
+id_plot_legis_dyn(bin_time_irt_2pl_abs_est,plot_sim = T) + facet_wrap(~person_id)
 ```
 
 ```{r irt_2pl_time_abs_resid}
@@ -556,8 +590,10 @@ id_plot_sims(bin_time_irt_2pl_abs_est)
 And autocorrelation:
 
 ```{r irt_binary_time_ar_inflate}
-bin_time_ar_irt_2pl_abs_sim <- id_sim_gen(num_person=20,num_bills=100,ordinal=F,absence=T,
-                               absence_diff_mean=0,time_process = 'AR',time_points=20)
+bin_time_ar_irt_2pl_abs_sim <- id_sim_gen(num_person=20,num_bills=200,ordinal=F,absence=T,
+                               absence_diff_mean=0,time_process = 'AR',time_points=50,time_sd = .5,diff_sd = 1,
+                               absence_discrim_sd = 1,
+                               reg_discrim_sd = 1)
 bin_time_ar_irt_2pl_abs_est <- id_estimate(idealdata=bin_time_ar_irt_2pl_abs_sim,
                                model_type=2,
                                restrict_ind_high = as.character(sort(bin_time_ar_irt_2pl_abs_sim@simul_data$drift,
@@ -573,11 +609,15 @@ bin_time_ar_irt_2pl_abs_est <- id_estimate(idealdata=bin_time_ar_irt_2pl_abs_sim
                                                decreasing=F)[1],
                               id_diff_high=sort(bin_time_ar_irt_2pl_abs_sim@simul_data$drift,
                                                   decreasing=TRUE)[1],
-                             time_sd=.1,
+                             time_sd=.5,
                              use_ar=T,
-                             person_sd = 1,
+                             person_sd = 3,
                              restrict_sd=.01,
-                             ar_sd=1)
+                             ar_sd=1,
+                             diff_reg_sd = 1,
+                             diff_miss_sd = 1,
+                             discrim_miss_sd = 1,
+                             discrim_reg_sd = 1)
 id_plot_rhats(bin_time_ar_irt_2pl_abs_est)
 ```
 
@@ -592,7 +632,7 @@ id_sim_coverage(bin_time_ar_irt_2pl_abs_est) %>%
 Let's do a time-varying ideal point plot with true point overlay:
 
 ```{r irt_2pl_abs_time_ar_true_pt}
-id_plot_legis_dyn(bin_time_ar_irt_2pl_abs_est,plot_sim = T) + facet_wrap(~person_id)
+id_plot_legis_dyn(bin_time_ar_irt_2pl_abs_est,plot_sim = T) +facet_wrap(~person_id)
 ```
 
 

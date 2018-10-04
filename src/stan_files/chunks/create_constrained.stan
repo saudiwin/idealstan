@@ -11,7 +11,7 @@ if(num_legis==2) {
     num_constrain_l=num_fix_high + num_fix_low;
   } else {
     if(use_ar==1) {
-      num_constrain_l=num_fix_high;
+      num_constrain_l=num_fix_high +  num_fix_low;
     } else {
       num_constrain_l=num_fix_high + num_fix_low;
     }

@@ -56,27 +56,27 @@ stan::io::program_reader prog_reader__() {
     reader.add_event(266, 0, "start", "/chunks/create_constrained.stan");
     reader.add_event(289, 23, "end", "/chunks/create_constrained.stan");
     reader.add_event(289, 74, "restart", "model_irt_standard");
-    reader.add_event(328, 113, "include", "/chunks/build_params_v2.stan");
-    reader.add_event(328, 0, "start", "/chunks/build_params_v2.stan");
-    reader.add_event(355, 27, "end", "/chunks/build_params_v2.stan");
-    reader.add_event(355, 114, "restart", "model_irt_standard");
-    reader.add_event(360, 119, "include", "/chunks/l_hier_ar1_prior.stan");
-    reader.add_event(360, 0, "start", "/chunks/l_hier_ar1_prior.stan");
-    reader.add_event(373, 13, "end", "/chunks/l_hier_ar1_prior.stan");
-    reader.add_event(373, 120, "restart", "model_irt_standard");
-    reader.add_event(376, 123, "include", "/chunks/l_hier_prior.stan");
-    reader.add_event(376, 0, "start", "/chunks/l_hier_prior.stan");
-    reader.add_event(387, 11, "end", "/chunks/l_hier_prior.stan");
-    reader.add_event(387, 124, "restart", "model_irt_standard");
-    reader.add_event(458, 195, "include", "/chunks/modeling_statement_v9.stan");
-    reader.add_event(458, 0, "start", "/chunks/modeling_statement_v9.stan");
-    reader.add_event(479, 21, "end", "/chunks/modeling_statement_v9.stan");
-    reader.add_event(479, 196, "restart", "model_irt_standard");
-    reader.add_event(482, 199, "include", "/chunks/model_types.stan");
-    reader.add_event(482, 0, "start", "/chunks/model_types.stan");
-    reader.add_event(903, 421, "end", "/chunks/model_types.stan");
-    reader.add_event(903, 200, "restart", "model_irt_standard");
-    reader.add_event(908, 205, "end", "model_irt_standard");
+    reader.add_event(327, 112, "include", "/chunks/build_params_v2.stan");
+    reader.add_event(327, 0, "start", "/chunks/build_params_v2.stan");
+    reader.add_event(354, 27, "end", "/chunks/build_params_v2.stan");
+    reader.add_event(354, 113, "restart", "model_irt_standard");
+    reader.add_event(359, 118, "include", "/chunks/l_hier_ar1_prior.stan");
+    reader.add_event(359, 0, "start", "/chunks/l_hier_ar1_prior.stan");
+    reader.add_event(372, 13, "end", "/chunks/l_hier_ar1_prior.stan");
+    reader.add_event(372, 119, "restart", "model_irt_standard");
+    reader.add_event(375, 122, "include", "/chunks/l_hier_prior.stan");
+    reader.add_event(375, 0, "start", "/chunks/l_hier_prior.stan");
+    reader.add_event(386, 11, "end", "/chunks/l_hier_prior.stan");
+    reader.add_event(386, 123, "restart", "model_irt_standard");
+    reader.add_event(463, 200, "include", "/chunks/modeling_statement_v9.stan");
+    reader.add_event(463, 0, "start", "/chunks/modeling_statement_v9.stan");
+    reader.add_event(484, 21, "end", "/chunks/modeling_statement_v9.stan");
+    reader.add_event(484, 201, "restart", "model_irt_standard");
+    reader.add_event(487, 204, "include", "/chunks/model_types.stan");
+    reader.add_event(487, 0, "start", "/chunks/model_types.stan");
+    reader.add_event(757, 270, "end", "/chunks/model_types.stan");
+    reader.add_event(757, 205, "restart", "model_irt_standard");
+    reader.add_event(762, 210, "end", "model_irt_standard");
     return reader;
 }
 
@@ -939,7 +939,7 @@ public:
                     if (as_bool(logical_eq(use_ar,1))) {
 
                         current_statement_begin__ = 279;
-                        stan::math::assign(num_constrain_l, num_fix_high);
+                        stan::math::assign(num_constrain_l, (num_fix_high + num_fix_low));
                     } else {
 
                         current_statement_begin__ = 281;
@@ -965,49 +965,52 @@ public:
             current_statement_begin__ = 294;
             validate_non_negative_index("L_free", "(num_legis - num_constrain_l)", (num_legis - num_constrain_l));
             num_params_r__ += (num_legis - num_constrain_l);
-            current_statement_begin__ = 296;
+            current_statement_begin__ = 295;
+            validate_non_negative_index("L_tp1_var", "num_legis", num_legis);
             validate_non_negative_index("L_tp1_var", "(T - 1)", (T - 1));
-            num_params_r__ += (T - 1);
-            current_statement_begin__ = 297;
+            num_params_r__ += num_legis * (T - 1);
+            current_statement_begin__ = 296;
             validate_non_negative_index("L_AR1_free", "(num_legis - 1)", (num_legis - 1));
             num_params_r__ += (num_legis - 1);
-            current_statement_begin__ = 298;
+            current_statement_begin__ = 297;
             validate_non_negative_index("sigma_reg_free", "num_bills", num_bills);
             num_params_r__ += num_bills;
-            current_statement_begin__ = 299;
+            current_statement_begin__ = 298;
             validate_non_negative_index("restrict_high", "num_fix_high", num_fix_high);
             num_params_r__ += num_fix_high;
-            current_statement_begin__ = 300;
+            current_statement_begin__ = 299;
             validate_non_negative_index("legis_x", "LX", LX);
             num_params_r__ += LX;
-            current_statement_begin__ = 301;
+            current_statement_begin__ = 300;
             validate_non_negative_index("sigma_reg_x", "SRX", SRX);
             num_params_r__ += SRX;
-            current_statement_begin__ = 302;
+            current_statement_begin__ = 301;
             validate_non_negative_index("sigma_abs_x", "SAX", SAX);
             num_params_r__ += SAX;
-            current_statement_begin__ = 303;
+            current_statement_begin__ = 302;
             validate_non_negative_index("legis_x_cons", "LX", LX);
             num_params_r__ += LX;
-            current_statement_begin__ = 304;
+            current_statement_begin__ = 303;
             validate_non_negative_index("sigma_reg_x_cons", "SRX", SRX);
             num_params_r__ += SRX;
-            current_statement_begin__ = 305;
+            current_statement_begin__ = 304;
             validate_non_negative_index("sigma_abs_x_cons", "SAX", SAX);
             num_params_r__ += SAX;
-            current_statement_begin__ = 306;
+            current_statement_begin__ = 305;
             validate_non_negative_index("B_int_free", "num_bills", num_bills);
             num_params_r__ += num_bills;
-            current_statement_begin__ = 307;
+            current_statement_begin__ = 306;
             validate_non_negative_index("A_int_free", "num_bills", num_bills);
             num_params_r__ += num_bills;
-            current_statement_begin__ = 308;
+            current_statement_begin__ = 307;
             validate_non_negative_index("steps_votes", "(m_step - 1)", (m_step - 1));
             num_params_r__ += (m_step - 1);
-            current_statement_begin__ = 309;
+            current_statement_begin__ = 308;
             validate_non_negative_index("steps_votes_grm", "(m_step - 1)", (m_step - 1));
             validate_non_negative_index("steps_votes_grm", "num_bills", num_bills);
             num_params_r__ += (m_step - 1) * num_bills;
+            current_statement_begin__ = 309;
+            ++num_params_r__;
             current_statement_begin__ = 310;
             ++num_params_r__;
             current_statement_begin__ = 311;
@@ -1067,12 +1070,15 @@ public:
         vals_r__ = context__.vals_r("L_tp1_var");
         pos__ = 0U;
         validate_non_negative_index("L_tp1_var", "(T - 1)", (T - 1));
-        context__.validate_dims("initialization", "L_tp1_var", "vector_d", context__.to_vec((T - 1)));
-        vector_d L_tp1_var(static_cast<Eigen::VectorXd::Index>((T - 1)));
-        for (int j1__ = 0U; j1__ < (T - 1); ++j1__)
-            L_tp1_var(j1__) = vals_r__[pos__++];
-        try {
-            writer__.vector_unconstrain(L_tp1_var);
+        validate_non_negative_index("L_tp1_var", "num_legis", num_legis);
+        context__.validate_dims("initialization", "L_tp1_var", "vector_d", context__.to_vec((T - 1),num_legis));
+        std::vector<vector_d> L_tp1_var((T - 1),vector_d(static_cast<Eigen::VectorXd::Index>(num_legis)));
+        for (int j1__ = 0U; j1__ < num_legis; ++j1__)
+            for (int i0__ = 0U; i0__ < (T - 1); ++i0__)
+                L_tp1_var[i0__](j1__) = vals_r__[pos__++];
+        for (int i0__ = 0U; i0__ < (T - 1); ++i0__)
+            try {
+            writer__.vector_unconstrain(L_tp1_var[i0__]);
         } catch (const std::exception& e) { 
             throw std::runtime_error(std::string("Error transforming variable L_tp1_var: ") + e.what());
         }
@@ -1087,7 +1093,7 @@ public:
         for (int j1__ = 0U; j1__ < (num_legis - 1); ++j1__)
             L_AR1_free(j1__) = vals_r__[pos__++];
         try {
-            writer__.vector_lub_unconstrain(-(1),1,L_AR1_free);
+            writer__.vector_lub_unconstrain(-(0.98999999999999999),0.98999999999999999,L_AR1_free);
         } catch (const std::exception& e) { 
             throw std::runtime_error(std::string("Error transforming variable L_AR1_free: ") + e.what());
         }
@@ -1288,6 +1294,19 @@ public:
             throw std::runtime_error(std::string("Error transforming variable extra_sd: ") + e.what());
         }
 
+        if (!(context__.contains_r("time_var")))
+            throw std::runtime_error("variable time_var missing");
+        vals_r__ = context__.vals_r("time_var");
+        pos__ = 0U;
+        context__.validate_dims("initialization", "time_var", "double", context__.to_vec());
+        double time_var(0);
+        time_var = vals_r__[pos__++];
+        try {
+            writer__.scalar_lb_unconstrain(0,time_var);
+        } catch (const std::exception& e) { 
+            throw std::runtime_error(std::string("Error transforming variable time_var: ") + e.what());
+        }
+
         if (!(context__.contains_r("ar_fix")))
             throw std::runtime_error("variable ar_fix missing");
         vals_r__ = context__.vals_r("ar_fix");
@@ -1296,7 +1315,7 @@ public:
         double ar_fix(0);
         ar_fix = vals_r__[pos__++];
         try {
-            writer__.scalar_lub_unconstrain(-(0.80000000000000004),0.80000000000000004,ar_fix);
+            writer__.scalar_lub_unconstrain(-(0.90000000000000002),0.90000000000000002,ar_fix);
         } catch (const std::exception& e) { 
             throw std::runtime_error(std::string("Error transforming variable ar_fix: ") + e.what());
         }
@@ -1346,19 +1365,22 @@ public:
             else
                 L_free = in__.vector_constrain((num_legis - num_constrain_l));
 
-            Eigen::Matrix<T__,Eigen::Dynamic,1>  L_tp1_var;
-            (void) L_tp1_var;  // dummy to suppress unused var warning
-            if (jacobian__)
-                L_tp1_var = in__.vector_constrain((T - 1),lp__);
-            else
-                L_tp1_var = in__.vector_constrain((T - 1));
+            vector<Eigen::Matrix<T__,Eigen::Dynamic,1> > L_tp1_var;
+            size_t dim_L_tp1_var_0__ = (T - 1);
+            L_tp1_var.reserve(dim_L_tp1_var_0__);
+            for (size_t k_0__ = 0; k_0__ < dim_L_tp1_var_0__; ++k_0__) {
+                if (jacobian__)
+                    L_tp1_var.push_back(in__.vector_constrain(num_legis,lp__));
+                else
+                    L_tp1_var.push_back(in__.vector_constrain(num_legis));
+            }
 
             Eigen::Matrix<T__,Eigen::Dynamic,1>  L_AR1_free;
             (void) L_AR1_free;  // dummy to suppress unused var warning
             if (jacobian__)
-                L_AR1_free = in__.vector_lub_constrain(-(1),1,(num_legis - 1),lp__);
+                L_AR1_free = in__.vector_lub_constrain(-(0.98999999999999999),0.98999999999999999,(num_legis - 1),lp__);
             else
-                L_AR1_free = in__.vector_lub_constrain(-(1),1,(num_legis - 1));
+                L_AR1_free = in__.vector_lub_constrain(-(0.98999999999999999),0.98999999999999999,(num_legis - 1));
 
             Eigen::Matrix<T__,Eigen::Dynamic,1>  sigma_reg_free;
             (void) sigma_reg_free;  // dummy to suppress unused var warning
@@ -1454,12 +1476,19 @@ public:
             else
                 extra_sd = in__.scalar_lb_constrain(0);
 
+            T__ time_var;
+            (void) time_var;  // dummy to suppress unused var warning
+            if (jacobian__)
+                time_var = in__.scalar_lb_constrain(0,lp__);
+            else
+                time_var = in__.scalar_lb_constrain(0);
+
             T__ ar_fix;
             (void) ar_fix;  // dummy to suppress unused var warning
             if (jacobian__)
-                ar_fix = in__.scalar_lub_constrain(-(0.80000000000000004),0.80000000000000004,lp__);
+                ar_fix = in__.scalar_lub_constrain(-(0.90000000000000002),0.90000000000000002,lp__);
             else
-                ar_fix = in__.scalar_lub_constrain(-(0.80000000000000004),0.80000000000000004);
+                ar_fix = in__.scalar_lub_constrain(-(0.90000000000000002),0.90000000000000002);
 
 
             // transformed parameters
@@ -1483,7 +1512,7 @@ public:
             vector<Eigen::Matrix<T__,Eigen::Dynamic,1> > L_tp1(T, (Eigen::Matrix<T__,Eigen::Dynamic,1> (static_cast<Eigen::VectorXd::Index>(num_legis))));
             stan::math::initialize(L_tp1, DUMMY_VAR__);
             stan::math::fill(L_tp1,DUMMY_VAR__);
-            current_statement_begin__ = 320;
+            current_statement_begin__ = 319;
             validate_non_negative_index("restrict_low", "1", 1);
             Eigen::Matrix<T__,Eigen::Dynamic,1>  restrict_low(static_cast<Eigen::VectorXd::Index>(1));
             (void) restrict_low;  // dummy to suppress unused var warning
@@ -1492,92 +1521,94 @@ public:
             stan::math::fill(restrict_low,DUMMY_VAR__);
 
 
-            current_statement_begin__ = 323;
+            current_statement_begin__ = 322;
             stan::math::assign(restrict_low, subtract(restrict_high,diff));
-            current_statement_begin__ = 325;
+            current_statement_begin__ = 324;
             stan::math::assign(L_AR1, append_row(L_AR1_free,ar_fix));
-            current_statement_begin__ = 329;
+            current_statement_begin__ = 328;
             if (as_bool(logical_eq(num_legis,2))) {
 
-                current_statement_begin__ = 330;
+                current_statement_begin__ = 329;
                 if (as_bool(logical_gt(T,1))) {
 
-                    current_statement_begin__ = 331;
+                    current_statement_begin__ = 330;
                     if (as_bool(logical_eq(use_ar,1))) {
 
-                        current_statement_begin__ = 332;
+                        current_statement_begin__ = 331;
                         stan::math::assign(L_full, append_row(L_free,restrict_high));
                     } else {
 
-                        current_statement_begin__ = 334;
+                        current_statement_begin__ = 333;
                         stan::math::assign(L_full, append_row(restrict_low,restrict_high));
                     }
                 } else {
 
-                    current_statement_begin__ = 337;
+                    current_statement_begin__ = 336;
                     stan::math::assign(L_full, append_row(restrict_low,restrict_high));
                 }
             } else {
 
-                current_statement_begin__ = 342;
+                current_statement_begin__ = 341;
                 if (as_bool(logical_gt(T,1))) {
 
-                    current_statement_begin__ = 343;
+                    current_statement_begin__ = 342;
                     if (as_bool(logical_eq(use_ar,1))) {
 
-                        current_statement_begin__ = 344;
-                        stan::math::assign(L_full, append_row(L_free,restrict_high));
+                        current_statement_begin__ = 343;
+                        stan::math::assign(L_full, append_row(L_free,append_row(restrict_low,restrict_high)));
                     } else {
 
-                        current_statement_begin__ = 346;
+                        current_statement_begin__ = 345;
                         stan::math::assign(L_full, append_row(L_free,append_row(restrict_low,restrict_high)));
                     }
                 } else {
 
-                    current_statement_begin__ = 351;
+                    current_statement_begin__ = 350;
                     stan::math::assign(L_full, append_row(L_free,append_row(restrict_low,restrict_high)));
                 }
             }
-            current_statement_begin__ = 357;
+            current_statement_begin__ = 356;
             if (as_bool(logical_gt(T,1))) {
 
-                current_statement_begin__ = 358;
+                current_statement_begin__ = 357;
                 if (as_bool(logical_eq(use_ar,1))) {
 
-                    current_statement_begin__ = 363;
-                    for (int t = 2; t <= T; ++t) {
+                    current_statement_begin__ = 362;
+                    for (int t = 1; t <= T; ++t) {
 
-                        current_statement_begin__ = 365;
-                        if (as_bool(logical_eq(t,2))) {
+                        current_statement_begin__ = 364;
+                        if (as_bool(logical_eq(t,1))) {
 
-                            current_statement_begin__ = 366;
-                            stan::math::assign(get_base1_lhs(L_tp1,t,"L_tp1",1), add(add(elt_multiply(L_AR1,L_full),multiply(stan::model::rvalue(legis_pred, stan::model::cons_list(stan::model::index_uni(t), stan::model::cons_list(stan::model::index_min_max(1, num_legis), stan::model::cons_list(stan::model::index_omni(), stan::model::nil_index_list()))), "legis_pred"),legis_x)),(time_sd * get_base1(L_tp1_var,(t - 1),"L_tp1_var",1))));
+                            current_statement_begin__ = 365;
+                            stan::math::assign(get_base1_lhs(L_tp1,t,"L_tp1",1), add(L_full,multiply(stan::model::rvalue(legis_pred, stan::model::cons_list(stan::model::index_uni(t), stan::model::cons_list(stan::model::index_min_max(1, num_legis), stan::model::cons_list(stan::model::index_omni(), stan::model::nil_index_list()))), "legis_pred"),legis_x)));
                         } else {
 
-                            current_statement_begin__ = 368;
-                            stan::math::assign(get_base1_lhs(L_tp1,t,"L_tp1",1), add(add(add(L_full,elt_multiply(L_AR1,get_base1(L_tp1,(t - 1),"L_tp1",1))),multiply(stan::model::rvalue(legis_pred, stan::model::cons_list(stan::model::index_uni(t), stan::model::cons_list(stan::model::index_min_max(1, num_legis), stan::model::cons_list(stan::model::index_omni(), stan::model::nil_index_list()))), "legis_pred"),legis_x)),(time_sd * get_base1(L_tp1_var,(t - 1),"L_tp1_var",1))));
+                            current_statement_begin__ = 367;
+                            stan::math::assign(get_base1_lhs(L_tp1,t,"L_tp1",1), add(add(add(L_full,elt_multiply(L_AR1,get_base1(L_tp1,(t - 1),"L_tp1",1))),multiply(stan::model::rvalue(legis_pred, stan::model::cons_list(stan::model::index_uni(t), stan::model::cons_list(stan::model::index_min_max(1, num_legis), stan::model::cons_list(stan::model::index_omni(), stan::model::nil_index_list()))), "legis_pred"),legis_x)),multiply(time_var,get_base1(L_tp1_var,(t - 1),"L_tp1_var",1))));
                         }
                     }
                 } else {
 
-                    current_statement_begin__ = 379;
-                    for (int t = 2; t <= T; ++t) {
+                    current_statement_begin__ = 378;
+                    for (int t = 1; t <= T; ++t) {
 
-                        current_statement_begin__ = 380;
-                        if (as_bool(logical_eq(t,2))) {
+                        current_statement_begin__ = 379;
+                        if (as_bool(logical_eq(t,1))) {
 
-                            current_statement_begin__ = 381;
-                            stan::math::assign(get_base1_lhs(L_tp1,t,"L_tp1",1), add(add(L_full,multiply(stan::model::rvalue(legis_pred, stan::model::cons_list(stan::model::index_uni(t), stan::model::cons_list(stan::model::index_min_max(1, num_legis), stan::model::cons_list(stan::model::index_omni(), stan::model::nil_index_list()))), "legis_pred"),legis_x)),(time_sd * get_base1(L_tp1_var,(t - 1),"L_tp1_var",1))));
+                            current_statement_begin__ = 380;
+                            stan::math::assign(get_base1_lhs(L_tp1,t,"L_tp1",1), add(L_full,multiply(stan::model::rvalue(legis_pred, stan::model::cons_list(stan::model::index_uni(t), stan::model::cons_list(stan::model::index_min_max(1, num_legis), stan::model::cons_list(stan::model::index_omni(), stan::model::nil_index_list()))), "legis_pred"),legis_x)));
                         } else {
 
-                            current_statement_begin__ = 383;
-                            stan::math::assign(get_base1_lhs(L_tp1,t,"L_tp1",1), add(add(get_base1(L_tp1,(t - 1),"L_tp1",1),multiply(stan::model::rvalue(legis_pred, stan::model::cons_list(stan::model::index_uni(t), stan::model::cons_list(stan::model::index_min_max(1, num_legis), stan::model::cons_list(stan::model::index_omni(), stan::model::nil_index_list()))), "legis_pred"),legis_x)),(time_sd * get_base1(L_tp1_var,(t - 1),"L_tp1_var",1))));
+                            current_statement_begin__ = 382;
+                            stan::math::assign(get_base1_lhs(L_tp1,t,"L_tp1",1), add(add(get_base1(L_tp1,(t - 1),"L_tp1",1),multiply(stan::model::rvalue(legis_pred, stan::model::cons_list(stan::model::index_uni(t), stan::model::cons_list(stan::model::index_min_max(1, num_legis), stan::model::cons_list(stan::model::index_omni(), stan::model::nil_index_list()))), "legis_pred"),legis_x)),multiply(time_var,get_base1(L_tp1_var,(t - 1),"L_tp1_var",1))));
                         }
                     }
                 }
+            } else {
+
+                current_statement_begin__ = 388;
+                stan::math::assign(get_base1_lhs(L_tp1,1,"L_tp1",1), L_full);
             }
-            current_statement_begin__ = 390;
-            stan::math::assign(get_base1_lhs(L_tp1,1,"L_tp1",1), L_full);
 
             // validate transformed parameters
             for (int i0__ = 0; i0__ < num_legis; ++i0__) {
@@ -1616,18 +1647,18 @@ public:
             current_statement_begin__ = 316;
             current_statement_begin__ = 317;
             current_statement_begin__ = 318;
-            current_statement_begin__ = 320;
+            current_statement_begin__ = 319;
 
             // model body
             {
-            current_statement_begin__ = 407;
+            current_statement_begin__ = 406;
             validate_non_negative_index("pi1", "N", N);
             Eigen::Matrix<T__,Eigen::Dynamic,1>  pi1(static_cast<Eigen::VectorXd::Index>(N));
             (void) pi1;  // dummy to suppress unused var warning
 
             stan::math::initialize(pi1, DUMMY_VAR__);
             stan::math::fill(pi1,DUMMY_VAR__);
-            current_statement_begin__ = 408;
+            current_statement_begin__ = 407;
             validate_non_negative_index("pi2", "N", N);
             Eigen::Matrix<T__,Eigen::Dynamic,1>  pi2(static_cast<Eigen::VectorXd::Index>(N));
             (void) pi2;  // dummy to suppress unused var warning
@@ -1636,9 +1667,9 @@ public:
             stan::math::fill(pi2,DUMMY_VAR__);
 
 
-            current_statement_begin__ = 410;
+            current_statement_begin__ = 409;
             lp_accum__.add(normal_log<propto__>(legis_x, 0, 5));
-            current_statement_begin__ = 411;
+            current_statement_begin__ = 410;
             lp_accum__.add(normal_log<propto__>(legis_x_cons, 0, 5));
             current_statement_begin__ = 412;
             lp_accum__.add(normal_log<propto__>(sigma_abs_x, 0, 5));
@@ -1651,9 +1682,9 @@ public:
             current_statement_begin__ = 416;
             lp_accum__.add(exponential_log<propto__>(extra_sd, 1));
             current_statement_begin__ = 417;
-            lp_accum__.add(normal_log<propto__>(ar_fix, 0, 1));
+            lp_accum__.add(exponential_log<propto__>(time_var, (1 / time_sd)));
             current_statement_begin__ = 418;
-            lp_accum__.add(normal_log<propto__>(L_tp1_var, 0, 1));
+            lp_accum__.add(normal_log<propto__>(ar_fix, 0, 1));
             current_statement_begin__ = 419;
             lp_accum__.add(normal_log<propto__>(L_AR1_free, 0, ar_sd));
             current_statement_begin__ = 421;
@@ -1680,707 +1711,377 @@ public:
                 current_statement_begin__ = 431;
                 lp_accum__.add(normal_log<propto__>(L_free, 0, legis_sd));
             }
-            current_statement_begin__ = 435;
-            if (as_bool(logical_gt(T,1))) {
+            current_statement_begin__ = 434;
+            for (int t = 1; t <= (T - 1); ++t) {
 
-                current_statement_begin__ = 436;
-                if (as_bool(logical_eq(use_ar,1))) {
-
-                } else {
-
-                    current_statement_begin__ = 441;
-                    lp_accum__.add(normal_log<propto__>(mean(stan::model::rvalue(L_tp1, stan::model::cons_list(stan::model::index_omni(), stan::model::cons_list(stan::model::index_uni((num_legis - 1)), stan::model::nil_index_list())), "L_tp1")), diff_high, time_sd));
-                }
+                current_statement_begin__ = 435;
+                lp_accum__.add(normal_log<propto__>(get_base1(L_tp1_var,t,"L_tp1_var",1), 0, 1));
             }
-            current_statement_begin__ = 448;
+            current_statement_begin__ = 453;
             lp_accum__.add(normal_log<propto__>(B_int_free, 0, diff_reg_sd));
-            current_statement_begin__ = 449;
+            current_statement_begin__ = 454;
             lp_accum__.add(normal_log<propto__>(A_int_free, 0, diff_abs_sd));
-            current_statement_begin__ = 452;
+            current_statement_begin__ = 457;
             for (int b = 1; b <= num_bills; ++b) {
 
-                current_statement_begin__ = 453;
+                current_statement_begin__ = 458;
                 lp_accum__.add(normal_log<propto__>(get_base1(steps_votes_grm,b,"steps_votes_grm",1), 0, 5));
             }
-            current_statement_begin__ = 462;
+            current_statement_begin__ = 467;
             if (as_bool(logical_eq(T,1))) {
 
-                current_statement_begin__ = 463;
-                lp_accum__.add(normal_log<propto__>(restrict_high, ((diff_high - restrict_high_bar) + multiply(stan::model::rvalue(legis_pred, stan::model::cons_list(stan::model::index_uni(1), stan::model::cons_list(stan::model::index_uni((num_legis - num_fix_low)), stan::model::cons_list(stan::model::index_omni(), stan::model::nil_index_list()))), "legis_pred"),legis_x_cons)), restrict_sd));
+                current_statement_begin__ = 468;
+                lp_accum__.add(normal_log<propto__>(restrict_high, ((diff_high - restrict_high_bar) + multiply(stan::model::rvalue(legis_pred, stan::model::cons_list(stan::model::index_uni(1), stan::model::cons_list(stan::model::index_uni(num_legis), stan::model::cons_list(stan::model::index_omni(), stan::model::nil_index_list()))), "legis_pred"),legis_x_cons)), restrict_sd));
             } else {
 
-                current_statement_begin__ = 467;
+                current_statement_begin__ = 472;
                 lp_accum__.add(normal_log<propto__>(restrict_high, ((diff_high - restrict_high_bar) + multiply(stan::model::rvalue(legis_pred, stan::model::cons_list(stan::model::index_uni(1), stan::model::cons_list(stan::model::index_uni(num_legis), stan::model::cons_list(stan::model::index_omni(), stan::model::nil_index_list()))), "legis_pred"),legis_x_cons)), restrict_sd));
             }
-            current_statement_begin__ = 474;
-            lp_accum__.add(normal_log<propto__>(sigma_abs_free, multiply(stan::model::rvalue(sax_pred, stan::model::cons_list(stan::model::index_uni(num_bills), stan::model::cons_list(stan::model::index_omni(), stan::model::nil_index_list())), "sax_pred"),sigma_abs_x), 5));
-            current_statement_begin__ = 475;
-            lp_accum__.add(normal_log<propto__>(sigma_reg_free, multiply(stan::model::rvalue(srx_pred, stan::model::cons_list(stan::model::index_uni(num_bills), stan::model::cons_list(stan::model::index_omni(), stan::model::nil_index_list())), "srx_pred"),sigma_reg_x), 5));
-            current_statement_begin__ = 484;
+            current_statement_begin__ = 479;
+            lp_accum__.add(normal_log<propto__>(sigma_abs_free, multiply(stan::model::rvalue(sax_pred, stan::model::cons_list(stan::model::index_uni(num_bills), stan::model::cons_list(stan::model::index_omni(), stan::model::nil_index_list())), "sax_pred"),sigma_abs_x), discrim_abs_sd));
+            current_statement_begin__ = 480;
+            lp_accum__.add(normal_log<propto__>(sigma_reg_free, multiply(stan::model::rvalue(srx_pred, stan::model::cons_list(stan::model::index_uni(num_bills), stan::model::cons_list(stan::model::index_omni(), stan::model::nil_index_list())), "srx_pred"),sigma_reg_x), discrim_reg_sd));
+            current_statement_begin__ = 489;
             if (as_bool(logical_eq(model_type,1))) {
 
-                current_statement_begin__ = 487;
+                current_statement_begin__ = 492;
                 if (as_bool(logical_eq(T,1))) {
 
-                    current_statement_begin__ = 488;
+                    current_statement_begin__ = 493;
                     stan::math::assign(pi1, subtract(elt_multiply(stan::model::rvalue(sigma_reg_free, stan::model::cons_list(stan::model::index_multi(bb), stan::model::nil_index_list()), "sigma_reg_free"),stan::model::rvalue(L_full, stan::model::cons_list(stan::model::index_multi(ll), stan::model::nil_index_list()), "L_full")),stan::model::rvalue(B_int_free, stan::model::cons_list(stan::model::index_multi(bb), stan::model::nil_index_list()), "B_int_free")));
                 } else {
 
-                    current_statement_begin__ = 490;
+                    current_statement_begin__ = 495;
                     for (int n = 1; n <= N; ++n) {
 
-                        current_statement_begin__ = 491;
-                        if (as_bool(logical_eq(use_ar,0))) {
-
-                            current_statement_begin__ = 492;
-                            if (as_bool(logical_eq(get_base1(time,n,"time",1),1))) {
-
-                                current_statement_begin__ = 493;
-                                stan::math::assign(get_base1_lhs(pi1,n,"pi1",1), ((get_base1(sigma_reg_free,get_base1(bb,n,"bb",1),"sigma_reg_free",1) * get_base1(L_full,get_base1(ll,n,"ll",1),"L_full",1)) - get_base1(B_int_free,get_base1(bb,n,"bb",1),"B_int_free",1)));
-                            } else {
-
-                                current_statement_begin__ = 495;
-                                stan::math::assign(get_base1_lhs(pi1,n,"pi1",1), ((get_base1(sigma_reg_free,get_base1(bb,n,"bb",1),"sigma_reg_free",1) * get_base1(get_base1(L_tp1,get_base1(time,n,"time",1),"L_tp1",1),get_base1(ll,n,"ll",1),"L_tp1",2)) - get_base1(B_int_free,get_base1(bb,n,"bb",1),"B_int_free",1)));
-                            }
-                        } else {
-
-                            current_statement_begin__ = 498;
-                            if (as_bool(logical_eq(get_base1(time,n,"time",1),1))) {
-
-                                current_statement_begin__ = 499;
-                                stan::math::assign(get_base1_lhs(pi1,n,"pi1",1), ((get_base1(sigma_reg_free,get_base1(bb,n,"bb",1),"sigma_reg_free",1) * get_base1(L_full,get_base1(ll,n,"ll",1),"L_full",1)) - get_base1(B_int_free,get_base1(bb,n,"bb",1),"B_int_free",1)));
-                            } else {
-
-                                current_statement_begin__ = 501;
-                                stan::math::assign(get_base1_lhs(pi1,n,"pi1",1), ((get_base1(sigma_reg_free,get_base1(bb,n,"bb",1),"sigma_reg_free",1) * get_base1(get_base1(L_tp1,get_base1(time,n,"time",1),"L_tp1",1),get_base1(ll,n,"ll",1),"L_tp1",2)) - get_base1(B_int_free,get_base1(bb,n,"bb",1),"B_int_free",1)));
-                            }
-                        }
+                        current_statement_begin__ = 497;
+                        stan::math::assign(get_base1_lhs(pi1,n,"pi1",1), ((get_base1(sigma_reg_free,get_base1(bb,n,"bb",1),"sigma_reg_free",1) * get_base1(get_base1(L_tp1,get_base1(time,n,"time",1),"L_tp1",1),get_base1(ll,n,"ll",1),"L_tp1",2)) - get_base1(B_int_free,get_base1(bb,n,"bb",1),"B_int_free",1)));
                     }
                 }
-                current_statement_begin__ = 508;
+                current_statement_begin__ = 502;
                 lp_accum__.add(bernoulli_logit_log<propto__>(Y_new, pi1));
             } else if (as_bool(logical_eq(model_type,2))) {
 
-                current_statement_begin__ = 513;
+                current_statement_begin__ = 507;
                 if (as_bool(logical_eq(T,1))) {
 
-                    current_statement_begin__ = 514;
+                    current_statement_begin__ = 508;
                     stan::math::assign(pi1, subtract(elt_multiply(stan::model::rvalue(sigma_reg_free, stan::model::cons_list(stan::model::index_multi(bb), stan::model::nil_index_list()), "sigma_reg_free"),stan::model::rvalue(L_full, stan::model::cons_list(stan::model::index_multi(ll), stan::model::nil_index_list()), "L_full")),stan::model::rvalue(B_int_free, stan::model::cons_list(stan::model::index_multi(bb), stan::model::nil_index_list()), "B_int_free")));
-                    current_statement_begin__ = 515;
+                    current_statement_begin__ = 509;
                     stan::math::assign(pi2, subtract(elt_multiply(stan::model::rvalue(sigma_abs_free, stan::model::cons_list(stan::model::index_multi(bb), stan::model::nil_index_list()), "sigma_abs_free"),stan::model::rvalue(L_full, stan::model::cons_list(stan::model::index_multi(ll), stan::model::nil_index_list()), "L_full")),stan::model::rvalue(A_int_free, stan::model::cons_list(stan::model::index_multi(bb), stan::model::nil_index_list()), "A_int_free")));
                 } else {
 
-                    current_statement_begin__ = 518;
+                    current_statement_begin__ = 512;
                     for (int n = 1; n <= N; ++n) {
 
-                        current_statement_begin__ = 519;
-                        if (as_bool(logical_eq(use_ar,0))) {
-
-                            current_statement_begin__ = 520;
-                            if (as_bool(logical_eq(get_base1(time,n,"time",1),1))) {
-
-                                current_statement_begin__ = 521;
-                                stan::math::assign(get_base1_lhs(pi1,n,"pi1",1), ((get_base1(sigma_reg_free,get_base1(bb,n,"bb",1),"sigma_reg_free",1) * get_base1(L_full,get_base1(ll,n,"ll",1),"L_full",1)) - get_base1(B_int_free,get_base1(bb,n,"bb",1),"B_int_free",1)));
-                                current_statement_begin__ = 522;
-                                stan::math::assign(get_base1_lhs(pi2,n,"pi2",1), ((get_base1(sigma_abs_free,get_base1(bb,n,"bb",1),"sigma_abs_free",1) * get_base1(L_full,get_base1(ll,n,"ll",1),"L_full",1)) - get_base1(A_int_free,get_base1(bb,n,"bb",1),"A_int_free",1)));
-                            } else {
-
-                                current_statement_begin__ = 524;
-                                stan::math::assign(get_base1_lhs(pi1,n,"pi1",1), ((get_base1(sigma_reg_free,get_base1(bb,n,"bb",1),"sigma_reg_free",1) * get_base1(get_base1(L_tp1,get_base1(time,n,"time",1),"L_tp1",1),get_base1(ll,n,"ll",1),"L_tp1",2)) - get_base1(B_int_free,get_base1(bb,n,"bb",1),"B_int_free",1)));
-                                current_statement_begin__ = 525;
-                                stan::math::assign(get_base1_lhs(pi2,n,"pi2",1), ((get_base1(sigma_abs_free,get_base1(bb,n,"bb",1),"sigma_abs_free",1) * get_base1(get_base1(L_tp1,get_base1(time,n,"time",1),"L_tp1",1),get_base1(ll,n,"ll",1),"L_tp1",2)) - get_base1(A_int_free,get_base1(bb,n,"bb",1),"A_int_free",1)));
-                            }
-                        } else {
-
-                            current_statement_begin__ = 528;
-                            if (as_bool(logical_eq(get_base1(time,n,"time",1),1))) {
-
-                                current_statement_begin__ = 529;
-                                stan::math::assign(get_base1_lhs(pi1,n,"pi1",1), ((get_base1(sigma_reg_free,get_base1(bb,n,"bb",1),"sigma_reg_free",1) * get_base1(L_full,get_base1(ll,n,"ll",1),"L_full",1)) - get_base1(B_int_free,get_base1(bb,n,"bb",1),"B_int_free",1)));
-                                current_statement_begin__ = 530;
-                                stan::math::assign(get_base1_lhs(pi2,n,"pi2",1), ((get_base1(sigma_abs_free,get_base1(bb,n,"bb",1),"sigma_abs_free",1) * get_base1(L_full,get_base1(ll,n,"ll",1),"L_full",1)) - get_base1(A_int_free,get_base1(bb,n,"bb",1),"A_int_free",1)));
-                            } else {
-
-                                current_statement_begin__ = 533;
-                                stan::math::assign(get_base1_lhs(pi1,n,"pi1",1), ((get_base1(sigma_reg_free,get_base1(bb,n,"bb",1),"sigma_reg_free",1) * get_base1(get_base1(L_tp1,get_base1(time,n,"time",1),"L_tp1",1),get_base1(ll,n,"ll",1),"L_tp1",2)) - get_base1(B_int_free,get_base1(bb,n,"bb",1),"B_int_free",1)));
-                                current_statement_begin__ = 534;
-                                stan::math::assign(get_base1_lhs(pi2,n,"pi2",1), ((get_base1(sigma_abs_free,get_base1(bb,n,"bb",1),"sigma_abs_free",1) * get_base1(get_base1(L_tp1,get_base1(time,n,"time",1),"L_tp1",1),get_base1(ll,n,"ll",1),"L_tp1",2)) - get_base1(A_int_free,get_base1(bb,n,"bb",1),"A_int_free",1)));
-                            }
-                        }
+                        current_statement_begin__ = 514;
+                        stan::math::assign(get_base1_lhs(pi1,n,"pi1",1), ((get_base1(sigma_reg_free,get_base1(bb,n,"bb",1),"sigma_reg_free",1) * get_base1(get_base1(L_tp1,get_base1(time,n,"time",1),"L_tp1",1),get_base1(ll,n,"ll",1),"L_tp1",2)) - get_base1(B_int_free,get_base1(bb,n,"bb",1),"B_int_free",1)));
+                        current_statement_begin__ = 515;
+                        stan::math::assign(get_base1_lhs(pi2,n,"pi2",1), ((get_base1(sigma_abs_free,get_base1(bb,n,"bb",1),"sigma_abs_free",1) * get_base1(get_base1(L_tp1,get_base1(time,n,"time",1),"L_tp1",1),get_base1(ll,n,"ll",1),"L_tp1",2)) - get_base1(A_int_free,get_base1(bb,n,"bb",1),"A_int_free",1)));
                     }
                 }
-                current_statement_begin__ = 542;
+                current_statement_begin__ = 521;
                 for (int n = 1; n <= N; ++n) {
 
-                    current_statement_begin__ = 544;
+                    current_statement_begin__ = 523;
                     if (as_bool(logical_eq(get_base1(absence,n,"absence",1),1))) {
 
-                        current_statement_begin__ = 545;
+                        current_statement_begin__ = 524;
                         lp_accum__.add(bernoulli_logit_log<propto__>(1, get_base1(pi2,n,"pi2",1)));
                     } else {
 
-                        current_statement_begin__ = 547;
+                        current_statement_begin__ = 526;
                         lp_accum__.add(bernoulli_logit_log<propto__>(0, get_base1(pi2,n,"pi2",1)));
-                        current_statement_begin__ = 548;
+                        current_statement_begin__ = 527;
                         lp_accum__.add(bernoulli_logit_log<propto__>(get_base1(Y_new,n,"Y_new",1), get_base1(pi1,n,"pi1",1)));
                     }
                 }
             } else if (as_bool(logical_eq(model_type,3))) {
 
-                current_statement_begin__ = 555;
+                current_statement_begin__ = 534;
                 if (as_bool(logical_eq(T,1))) {
 
-                    current_statement_begin__ = 556;
+                    current_statement_begin__ = 535;
                     stan::math::assign(pi1, subtract(elt_multiply(stan::model::rvalue(sigma_reg_free, stan::model::cons_list(stan::model::index_multi(bb), stan::model::nil_index_list()), "sigma_reg_free"),stan::model::rvalue(L_full, stan::model::cons_list(stan::model::index_multi(ll), stan::model::nil_index_list()), "L_full")),stan::model::rvalue(B_int_free, stan::model::cons_list(stan::model::index_multi(bb), stan::model::nil_index_list()), "B_int_free")));
+                } else {
+
+                    current_statement_begin__ = 537;
+                    for (int n = 1; n <= N; ++n) {
+
+                        current_statement_begin__ = 539;
+                        stan::math::assign(get_base1_lhs(pi1,n,"pi1",1), ((get_base1(sigma_reg_free,get_base1(bb,n,"bb",1),"sigma_reg_free",1) * get_base1(get_base1(L_tp1,get_base1(time,n,"time",1),"L_tp1",1),get_base1(ll,n,"ll",1),"L_tp1",2)) - get_base1(B_int_free,get_base1(bb,n,"bb",1),"B_int_free",1)));
+                    }
+                }
+                current_statement_begin__ = 544;
+                for (int n = 1; n <= N; ++n) {
+
+                    current_statement_begin__ = 545;
+                    lp_accum__.add(ordered_logistic_log<propto__>(get_base1(Y_int,n,"Y_int",1), get_base1(pi1,n,"pi1",1), steps_votes));
+                }
+            } else if (as_bool(logical_eq(model_type,4))) {
+
+                current_statement_begin__ = 553;
+                if (as_bool(logical_eq(T,1))) {
+
+                    current_statement_begin__ = 554;
+                    stan::math::assign(pi1, subtract(elt_multiply(stan::model::rvalue(sigma_reg_free, stan::model::cons_list(stan::model::index_multi(bb), stan::model::nil_index_list()), "sigma_reg_free"),stan::model::rvalue(L_full, stan::model::cons_list(stan::model::index_multi(ll), stan::model::nil_index_list()), "L_full")),stan::model::rvalue(B_int_free, stan::model::cons_list(stan::model::index_multi(bb), stan::model::nil_index_list()), "B_int_free")));
+                    current_statement_begin__ = 555;
+                    stan::math::assign(pi2, subtract(elt_multiply(stan::model::rvalue(sigma_abs_free, stan::model::cons_list(stan::model::index_multi(bb), stan::model::nil_index_list()), "sigma_abs_free"),stan::model::rvalue(L_full, stan::model::cons_list(stan::model::index_multi(ll), stan::model::nil_index_list()), "L_full")),stan::model::rvalue(A_int_free, stan::model::cons_list(stan::model::index_multi(bb), stan::model::nil_index_list()), "A_int_free")));
                 } else {
 
                     current_statement_begin__ = 558;
                     for (int n = 1; n <= N; ++n) {
 
-                        current_statement_begin__ = 559;
-                        if (as_bool(logical_eq(use_ar,0))) {
-
-                            current_statement_begin__ = 560;
-                            if (as_bool(logical_eq(get_base1(time,n,"time",1),1))) {
-
-                                current_statement_begin__ = 561;
-                                stan::math::assign(get_base1_lhs(pi1,n,"pi1",1), ((get_base1(sigma_reg_free,get_base1(bb,n,"bb",1),"sigma_reg_free",1) * get_base1(L_full,get_base1(ll,n,"ll",1),"L_full",1)) - get_base1(B_int_free,get_base1(bb,n,"bb",1),"B_int_free",1)));
-                            } else {
-
-                                current_statement_begin__ = 563;
-                                stan::math::assign(get_base1_lhs(pi1,n,"pi1",1), ((get_base1(sigma_reg_free,get_base1(bb,n,"bb",1),"sigma_reg_free",1) * get_base1(get_base1(L_tp1,get_base1(time,n,"time",1),"L_tp1",1),get_base1(ll,n,"ll",1),"L_tp1",2)) - get_base1(B_int_free,get_base1(bb,n,"bb",1),"B_int_free",1)));
-                            }
-                        } else {
-
-                            current_statement_begin__ = 566;
-                            if (as_bool(logical_eq(get_base1(time,n,"time",1),1))) {
-
-                                current_statement_begin__ = 567;
-                                stan::math::assign(get_base1_lhs(pi1,n,"pi1",1), ((get_base1(sigma_reg_free,get_base1(bb,n,"bb",1),"sigma_reg_free",1) * get_base1(L_full,get_base1(ll,n,"ll",1),"L_full",1)) - get_base1(B_int_free,get_base1(bb,n,"bb",1),"B_int_free",1)));
-                            } else {
-
-                                current_statement_begin__ = 569;
-                                stan::math::assign(get_base1_lhs(pi1,n,"pi1",1), ((get_base1(sigma_reg_free,get_base1(bb,n,"bb",1),"sigma_reg_free",1) * get_base1(get_base1(L_tp1,get_base1(time,n,"time",1),"L_tp1",1),get_base1(ll,n,"ll",1),"L_tp1",2)) - get_base1(B_int_free,get_base1(bb,n,"bb",1),"B_int_free",1)));
-                            }
-                        }
+                        current_statement_begin__ = 560;
+                        stan::math::assign(get_base1_lhs(pi1,n,"pi1",1), ((get_base1(sigma_reg_free,get_base1(bb,n,"bb",1),"sigma_reg_free",1) * get_base1(get_base1(L_tp1,get_base1(time,n,"time",1),"L_tp1",1),get_base1(ll,n,"ll",1),"L_tp1",2)) - get_base1(B_int_free,get_base1(bb,n,"bb",1),"B_int_free",1)));
+                        current_statement_begin__ = 561;
+                        stan::math::assign(get_base1_lhs(pi2,n,"pi2",1), ((get_base1(sigma_abs_free,get_base1(bb,n,"bb",1),"sigma_abs_free",1) * get_base1(get_base1(L_tp1,get_base1(time,n,"time",1),"L_tp1",1),get_base1(ll,n,"ll",1),"L_tp1",2)) - get_base1(A_int_free,get_base1(bb,n,"bb",1),"A_int_free",1)));
                     }
                 }
-                current_statement_begin__ = 576;
+                current_statement_begin__ = 567;
                 for (int n = 1; n <= N; ++n) {
 
-                    current_statement_begin__ = 577;
-                    lp_accum__.add(ordered_logistic_log<propto__>(get_base1(Y_int,n,"Y_int",1), get_base1(pi1,n,"pi1",1), steps_votes));
-                }
-            } else if (as_bool(logical_eq(model_type,4))) {
-
-                current_statement_begin__ = 585;
-                if (as_bool(logical_eq(T,1))) {
-
-                    current_statement_begin__ = 586;
-                    stan::math::assign(pi1, subtract(elt_multiply(stan::model::rvalue(sigma_reg_free, stan::model::cons_list(stan::model::index_multi(bb), stan::model::nil_index_list()), "sigma_reg_free"),stan::model::rvalue(L_full, stan::model::cons_list(stan::model::index_multi(ll), stan::model::nil_index_list()), "L_full")),stan::model::rvalue(B_int_free, stan::model::cons_list(stan::model::index_multi(bb), stan::model::nil_index_list()), "B_int_free")));
-                    current_statement_begin__ = 587;
-                    stan::math::assign(pi2, subtract(elt_multiply(stan::model::rvalue(sigma_abs_free, stan::model::cons_list(stan::model::index_multi(bb), stan::model::nil_index_list()), "sigma_abs_free"),stan::model::rvalue(L_full, stan::model::cons_list(stan::model::index_multi(ll), stan::model::nil_index_list()), "L_full")),stan::model::rvalue(A_int_free, stan::model::cons_list(stan::model::index_multi(bb), stan::model::nil_index_list()), "A_int_free")));
-                } else {
-
-                    current_statement_begin__ = 590;
-                    for (int n = 1; n <= N; ++n) {
-
-                        current_statement_begin__ = 591;
-                        if (as_bool(logical_eq(use_ar,0))) {
-
-                            current_statement_begin__ = 592;
-                            if (as_bool(logical_eq(get_base1(time,n,"time",1),1))) {
-
-                                current_statement_begin__ = 593;
-                                stan::math::assign(get_base1_lhs(pi1,n,"pi1",1), ((get_base1(sigma_reg_free,get_base1(bb,n,"bb",1),"sigma_reg_free",1) * get_base1(L_full,get_base1(ll,n,"ll",1),"L_full",1)) - get_base1(B_int_free,get_base1(bb,n,"bb",1),"B_int_free",1)));
-                                current_statement_begin__ = 594;
-                                stan::math::assign(get_base1_lhs(pi2,n,"pi2",1), ((get_base1(sigma_abs_free,get_base1(bb,n,"bb",1),"sigma_abs_free",1) * get_base1(L_full,get_base1(ll,n,"ll",1),"L_full",1)) - get_base1(A_int_free,get_base1(bb,n,"bb",1),"A_int_free",1)));
-                            } else {
-
-                                current_statement_begin__ = 596;
-                                stan::math::assign(get_base1_lhs(pi1,n,"pi1",1), ((get_base1(sigma_reg_free,get_base1(bb,n,"bb",1),"sigma_reg_free",1) * get_base1(get_base1(L_tp1,get_base1(time,n,"time",1),"L_tp1",1),get_base1(ll,n,"ll",1),"L_tp1",2)) - get_base1(B_int_free,get_base1(bb,n,"bb",1),"B_int_free",1)));
-                                current_statement_begin__ = 597;
-                                stan::math::assign(get_base1_lhs(pi2,n,"pi2",1), ((get_base1(sigma_abs_free,get_base1(bb,n,"bb",1),"sigma_abs_free",1) * get_base1(get_base1(L_tp1,get_base1(time,n,"time",1),"L_tp1",1),get_base1(ll,n,"ll",1),"L_tp1",2)) - get_base1(A_int_free,get_base1(bb,n,"bb",1),"A_int_free",1)));
-                            }
-                        } else {
-
-                            current_statement_begin__ = 600;
-                            if (as_bool(logical_eq(get_base1(time,n,"time",1),1))) {
-
-                                current_statement_begin__ = 601;
-                                stan::math::assign(get_base1_lhs(pi1,n,"pi1",1), ((get_base1(sigma_reg_free,get_base1(bb,n,"bb",1),"sigma_reg_free",1) * get_base1(L_full,get_base1(ll,n,"ll",1),"L_full",1)) - get_base1(B_int_free,get_base1(bb,n,"bb",1),"B_int_free",1)));
-                                current_statement_begin__ = 602;
-                                stan::math::assign(get_base1_lhs(pi2,n,"pi2",1), ((get_base1(sigma_abs_free,get_base1(bb,n,"bb",1),"sigma_abs_free",1) * get_base1(L_full,get_base1(ll,n,"ll",1),"L_full",1)) - get_base1(A_int_free,get_base1(bb,n,"bb",1),"A_int_free",1)));
-                            } else {
-
-                                current_statement_begin__ = 605;
-                                stan::math::assign(get_base1_lhs(pi1,n,"pi1",1), ((get_base1(sigma_reg_free,get_base1(bb,n,"bb",1),"sigma_reg_free",1) * get_base1(get_base1(L_tp1,get_base1(time,n,"time",1),"L_tp1",1),get_base1(ll,n,"ll",1),"L_tp1",2)) - get_base1(B_int_free,get_base1(bb,n,"bb",1),"B_int_free",1)));
-                                current_statement_begin__ = 606;
-                                stan::math::assign(get_base1_lhs(pi2,n,"pi2",1), ((get_base1(sigma_abs_free,get_base1(bb,n,"bb",1),"sigma_abs_free",1) * get_base1(get_base1(L_tp1,get_base1(time,n,"time",1),"L_tp1",1),get_base1(ll,n,"ll",1),"L_tp1",2)) - get_base1(A_int_free,get_base1(bb,n,"bb",1),"A_int_free",1)));
-                            }
-                        }
-                    }
-                }
-                current_statement_begin__ = 613;
-                for (int n = 1; n <= N; ++n) {
-
-                    current_statement_begin__ = 615;
+                    current_statement_begin__ = 569;
                     if (as_bool(logical_eq(get_base1(absence,n,"absence",1),1))) {
 
-                        current_statement_begin__ = 616;
+                        current_statement_begin__ = 570;
                         lp_accum__.add(bernoulli_logit_log<propto__>(1, get_base1(pi2,n,"pi2",1)));
                     } else {
 
-                        current_statement_begin__ = 618;
+                        current_statement_begin__ = 572;
                         lp_accum__.add(bernoulli_logit_log<propto__>(0, get_base1(pi2,n,"pi2",1)));
-                        current_statement_begin__ = 619;
+                        current_statement_begin__ = 573;
                         lp_accum__.add(ordered_logistic_log<propto__>(get_base1(Y_int,n,"Y_int",1), get_base1(pi1,n,"pi1",1), steps_votes));
                     }
                 }
             } else if (as_bool(logical_eq(model_type,5))) {
 
-                current_statement_begin__ = 626;
+                current_statement_begin__ = 580;
                 if (as_bool(logical_eq(T,1))) {
 
-                    current_statement_begin__ = 627;
+                    current_statement_begin__ = 581;
                     stan::math::assign(pi1, subtract(elt_multiply(stan::model::rvalue(sigma_reg_free, stan::model::cons_list(stan::model::index_multi(bb), stan::model::nil_index_list()), "sigma_reg_free"),stan::model::rvalue(L_full, stan::model::cons_list(stan::model::index_multi(ll), stan::model::nil_index_list()), "L_full")),stan::model::rvalue(B_int_free, stan::model::cons_list(stan::model::index_multi(bb), stan::model::nil_index_list()), "B_int_free")));
                 } else {
 
-                    current_statement_begin__ = 629;
+                    current_statement_begin__ = 583;
                     for (int n = 1; n <= N; ++n) {
 
-                        current_statement_begin__ = 630;
-                        if (as_bool(logical_eq(use_ar,0))) {
-
-                            current_statement_begin__ = 631;
-                            if (as_bool(logical_eq(get_base1(time,n,"time",1),1))) {
-
-                                current_statement_begin__ = 632;
-                                stan::math::assign(get_base1_lhs(pi1,n,"pi1",1), ((get_base1(sigma_reg_free,get_base1(bb,n,"bb",1),"sigma_reg_free",1) * get_base1(L_full,get_base1(ll,n,"ll",1),"L_full",1)) - get_base1(B_int_free,get_base1(bb,n,"bb",1),"B_int_free",1)));
-                            } else {
-
-                                current_statement_begin__ = 634;
-                                stan::math::assign(get_base1_lhs(pi1,n,"pi1",1), ((get_base1(sigma_reg_free,get_base1(bb,n,"bb",1),"sigma_reg_free",1) * get_base1(get_base1(L_tp1,get_base1(time,n,"time",1),"L_tp1",1),get_base1(ll,n,"ll",1),"L_tp1",2)) - get_base1(B_int_free,get_base1(bb,n,"bb",1),"B_int_free",1)));
-                            }
-                        } else {
-
-                            current_statement_begin__ = 637;
-                            if (as_bool(logical_eq(get_base1(time,n,"time",1),1))) {
-
-                                current_statement_begin__ = 638;
-                                stan::math::assign(get_base1_lhs(pi1,n,"pi1",1), ((get_base1(sigma_reg_free,get_base1(bb,n,"bb",1),"sigma_reg_free",1) * get_base1(L_full,get_base1(ll,n,"ll",1),"L_full",1)) - get_base1(B_int_free,get_base1(bb,n,"bb",1),"B_int_free",1)));
-                            } else {
-
-                                current_statement_begin__ = 640;
-                                stan::math::assign(get_base1_lhs(pi1,n,"pi1",1), ((get_base1(sigma_reg_free,get_base1(bb,n,"bb",1),"sigma_reg_free",1) * get_base1(get_base1(L_tp1,get_base1(time,n,"time",1),"L_tp1",1),get_base1(ll,n,"ll",1),"L_tp1",2)) - get_base1(B_int_free,get_base1(bb,n,"bb",1),"B_int_free",1)));
-                            }
-                        }
+                        current_statement_begin__ = 585;
+                        stan::math::assign(get_base1_lhs(pi1,n,"pi1",1), ((get_base1(sigma_reg_free,get_base1(bb,n,"bb",1),"sigma_reg_free",1) * get_base1(get_base1(L_tp1,get_base1(time,n,"time",1),"L_tp1",1),get_base1(ll,n,"ll",1),"L_tp1",2)) - get_base1(B_int_free,get_base1(bb,n,"bb",1),"B_int_free",1)));
                     }
                 }
-                current_statement_begin__ = 647;
+                current_statement_begin__ = 590;
                 for (int n = 1; n <= N; ++n) {
-                    current_statement_begin__ = 648;
+                    current_statement_begin__ = 591;
                     lp_accum__.add(ordered_logistic_log<propto__>(get_base1(Y_int,n,"Y_int",1), get_base1(pi1,n,"pi1",1), get_base1(steps_votes_grm,get_base1(bb,n,"bb",1),"steps_votes_grm",1)));
                 }
             } else if (as_bool(logical_eq(model_type,6))) {
 
-                current_statement_begin__ = 653;
+                current_statement_begin__ = 596;
                 if (as_bool(logical_eq(T,1))) {
 
-                    current_statement_begin__ = 654;
+                    current_statement_begin__ = 597;
                     stan::math::assign(pi1, subtract(elt_multiply(stan::model::rvalue(sigma_reg_free, stan::model::cons_list(stan::model::index_multi(bb), stan::model::nil_index_list()), "sigma_reg_free"),stan::model::rvalue(L_full, stan::model::cons_list(stan::model::index_multi(ll), stan::model::nil_index_list()), "L_full")),stan::model::rvalue(B_int_free, stan::model::cons_list(stan::model::index_multi(bb), stan::model::nil_index_list()), "B_int_free")));
-                    current_statement_begin__ = 655;
+                    current_statement_begin__ = 598;
                     stan::math::assign(pi2, subtract(elt_multiply(stan::model::rvalue(sigma_abs_free, stan::model::cons_list(stan::model::index_multi(bb), stan::model::nil_index_list()), "sigma_abs_free"),stan::model::rvalue(L_full, stan::model::cons_list(stan::model::index_multi(ll), stan::model::nil_index_list()), "L_full")),stan::model::rvalue(A_int_free, stan::model::cons_list(stan::model::index_multi(bb), stan::model::nil_index_list()), "A_int_free")));
                 } else {
 
-                    current_statement_begin__ = 658;
+                    current_statement_begin__ = 601;
                     for (int n = 1; n <= N; ++n) {
 
-                        current_statement_begin__ = 659;
-                        if (as_bool(logical_eq(use_ar,0))) {
-
-                            current_statement_begin__ = 660;
-                            if (as_bool(logical_eq(get_base1(time,n,"time",1),1))) {
-
-                                current_statement_begin__ = 661;
-                                stan::math::assign(get_base1_lhs(pi1,n,"pi1",1), ((get_base1(sigma_reg_free,get_base1(bb,n,"bb",1),"sigma_reg_free",1) * get_base1(L_full,get_base1(ll,n,"ll",1),"L_full",1)) - get_base1(B_int_free,get_base1(bb,n,"bb",1),"B_int_free",1)));
-                                current_statement_begin__ = 662;
-                                stan::math::assign(get_base1_lhs(pi2,n,"pi2",1), ((get_base1(sigma_abs_free,get_base1(bb,n,"bb",1),"sigma_abs_free",1) * get_base1(L_full,get_base1(ll,n,"ll",1),"L_full",1)) - get_base1(A_int_free,get_base1(bb,n,"bb",1),"A_int_free",1)));
-                            } else {
-
-                                current_statement_begin__ = 664;
-                                stan::math::assign(get_base1_lhs(pi1,n,"pi1",1), ((get_base1(sigma_reg_free,get_base1(bb,n,"bb",1),"sigma_reg_free",1) * get_base1(get_base1(L_tp1,get_base1(time,n,"time",1),"L_tp1",1),get_base1(ll,n,"ll",1),"L_tp1",2)) - get_base1(B_int_free,get_base1(bb,n,"bb",1),"B_int_free",1)));
-                                current_statement_begin__ = 665;
-                                stan::math::assign(get_base1_lhs(pi2,n,"pi2",1), ((get_base1(sigma_abs_free,get_base1(bb,n,"bb",1),"sigma_abs_free",1) * get_base1(get_base1(L_tp1,get_base1(time,n,"time",1),"L_tp1",1),get_base1(ll,n,"ll",1),"L_tp1",2)) - get_base1(A_int_free,get_base1(bb,n,"bb",1),"A_int_free",1)));
-                            }
-                        } else {
-
-                            current_statement_begin__ = 668;
-                            if (as_bool(logical_eq(get_base1(time,n,"time",1),1))) {
-
-                                current_statement_begin__ = 669;
-                                stan::math::assign(get_base1_lhs(pi1,n,"pi1",1), ((get_base1(sigma_reg_free,get_base1(bb,n,"bb",1),"sigma_reg_free",1) * get_base1(L_full,get_base1(ll,n,"ll",1),"L_full",1)) - get_base1(B_int_free,get_base1(bb,n,"bb",1),"B_int_free",1)));
-                                current_statement_begin__ = 670;
-                                stan::math::assign(get_base1_lhs(pi2,n,"pi2",1), ((get_base1(sigma_abs_free,get_base1(bb,n,"bb",1),"sigma_abs_free",1) * get_base1(L_full,get_base1(ll,n,"ll",1),"L_full",1)) - get_base1(A_int_free,get_base1(bb,n,"bb",1),"A_int_free",1)));
-                            } else {
-
-                                current_statement_begin__ = 673;
-                                stan::math::assign(get_base1_lhs(pi1,n,"pi1",1), ((get_base1(sigma_reg_free,get_base1(bb,n,"bb",1),"sigma_reg_free",1) * get_base1(get_base1(L_tp1,get_base1(time,n,"time",1),"L_tp1",1),get_base1(ll,n,"ll",1),"L_tp1",2)) - get_base1(B_int_free,get_base1(bb,n,"bb",1),"B_int_free",1)));
-                                current_statement_begin__ = 674;
-                                stan::math::assign(get_base1_lhs(pi2,n,"pi2",1), ((get_base1(sigma_abs_free,get_base1(bb,n,"bb",1),"sigma_abs_free",1) * get_base1(get_base1(L_tp1,get_base1(time,n,"time",1),"L_tp1",1),get_base1(ll,n,"ll",1),"L_tp1",2)) - get_base1(A_int_free,get_base1(bb,n,"bb",1),"A_int_free",1)));
-                            }
-                        }
+                        current_statement_begin__ = 603;
+                        stan::math::assign(get_base1_lhs(pi1,n,"pi1",1), ((get_base1(sigma_reg_free,get_base1(bb,n,"bb",1),"sigma_reg_free",1) * get_base1(get_base1(L_tp1,get_base1(time,n,"time",1),"L_tp1",1),get_base1(ll,n,"ll",1),"L_tp1",2)) - get_base1(B_int_free,get_base1(bb,n,"bb",1),"B_int_free",1)));
+                        current_statement_begin__ = 604;
+                        stan::math::assign(get_base1_lhs(pi2,n,"pi2",1), ((get_base1(sigma_abs_free,get_base1(bb,n,"bb",1),"sigma_abs_free",1) * get_base1(get_base1(L_tp1,get_base1(time,n,"time",1),"L_tp1",1),get_base1(ll,n,"ll",1),"L_tp1",2)) - get_base1(A_int_free,get_base1(bb,n,"bb",1),"A_int_free",1)));
                     }
                 }
-                current_statement_begin__ = 681;
+                current_statement_begin__ = 610;
                 for (int n = 1; n <= N; ++n) {
 
-                    current_statement_begin__ = 683;
+                    current_statement_begin__ = 612;
                     if (as_bool(logical_eq(get_base1(absence,n,"absence",1),1))) {
 
-                        current_statement_begin__ = 684;
+                        current_statement_begin__ = 613;
                         lp_accum__.add(bernoulli_logit_log<propto__>(1, get_base1(pi2,n,"pi2",1)));
                     } else {
 
-                        current_statement_begin__ = 686;
+                        current_statement_begin__ = 615;
                         lp_accum__.add(bernoulli_logit_log<propto__>(0, get_base1(pi2,n,"pi2",1)));
-                        current_statement_begin__ = 687;
+                        current_statement_begin__ = 616;
                         lp_accum__.add(ordered_logistic_log<propto__>(get_base1(Y_int,n,"Y_int",1), get_base1(pi1,n,"pi1",1), get_base1(steps_votes_grm,get_base1(bb,n,"bb",1),"steps_votes_grm",1)));
                     }
                 }
             } else if (as_bool(logical_eq(model_type,7))) {
 
-                current_statement_begin__ = 694;
+                current_statement_begin__ = 623;
                 if (as_bool(logical_eq(T,1))) {
 
-                    current_statement_begin__ = 695;
+                    current_statement_begin__ = 624;
                     stan::math::assign(pi1, subtract(elt_multiply(stan::model::rvalue(sigma_reg_free, stan::model::cons_list(stan::model::index_multi(bb), stan::model::nil_index_list()), "sigma_reg_free"),stan::model::rvalue(L_full, stan::model::cons_list(stan::model::index_multi(ll), stan::model::nil_index_list()), "L_full")),stan::model::rvalue(B_int_free, stan::model::cons_list(stan::model::index_multi(bb), stan::model::nil_index_list()), "B_int_free")));
                 } else {
 
-                    current_statement_begin__ = 697;
+                    current_statement_begin__ = 626;
                     for (int n = 1; n <= N; ++n) {
 
-                        current_statement_begin__ = 698;
-                        if (as_bool(logical_eq(use_ar,0))) {
-
-                            current_statement_begin__ = 699;
-                            if (as_bool(logical_eq(get_base1(time,n,"time",1),1))) {
-
-                                current_statement_begin__ = 700;
-                                stan::math::assign(get_base1_lhs(pi1,n,"pi1",1), ((get_base1(sigma_reg_free,get_base1(bb,n,"bb",1),"sigma_reg_free",1) * get_base1(L_full,get_base1(ll,n,"ll",1),"L_full",1)) - get_base1(B_int_free,get_base1(bb,n,"bb",1),"B_int_free",1)));
-                            } else {
-
-                                current_statement_begin__ = 702;
-                                stan::math::assign(get_base1_lhs(pi1,n,"pi1",1), ((get_base1(sigma_reg_free,get_base1(bb,n,"bb",1),"sigma_reg_free",1) * get_base1(get_base1(L_tp1,get_base1(time,n,"time",1),"L_tp1",1),get_base1(ll,n,"ll",1),"L_tp1",2)) - get_base1(B_int_free,get_base1(bb,n,"bb",1),"B_int_free",1)));
-                            }
-                        } else {
-
-                            current_statement_begin__ = 705;
-                            if (as_bool(logical_eq(get_base1(time,n,"time",1),1))) {
-
-                                current_statement_begin__ = 706;
-                                stan::math::assign(get_base1_lhs(pi1,n,"pi1",1), ((get_base1(sigma_reg_free,get_base1(bb,n,"bb",1),"sigma_reg_free",1) * get_base1(L_full,get_base1(ll,n,"ll",1),"L_full",1)) - get_base1(B_int_free,get_base1(bb,n,"bb",1),"B_int_free",1)));
-                            } else {
-
-                                current_statement_begin__ = 708;
-                                stan::math::assign(get_base1_lhs(pi1,n,"pi1",1), ((get_base1(sigma_reg_free,get_base1(bb,n,"bb",1),"sigma_reg_free",1) * get_base1(get_base1(L_tp1,get_base1(time,n,"time",1),"L_tp1",1),get_base1(ll,n,"ll",1),"L_tp1",2)) - get_base1(B_int_free,get_base1(bb,n,"bb",1),"B_int_free",1)));
-                            }
-                        }
+                        current_statement_begin__ = 628;
+                        stan::math::assign(get_base1_lhs(pi1,n,"pi1",1), ((get_base1(sigma_reg_free,get_base1(bb,n,"bb",1),"sigma_reg_free",1) * get_base1(get_base1(L_tp1,get_base1(time,n,"time",1),"L_tp1",1),get_base1(ll,n,"ll",1),"L_tp1",2)) - get_base1(B_int_free,get_base1(bb,n,"bb",1),"B_int_free",1)));
                     }
                 }
-                current_statement_begin__ = 715;
+                current_statement_begin__ = 633;
                 for (int n = 1; n <= N; ++n) {
 
-                    current_statement_begin__ = 716;
+                    current_statement_begin__ = 634;
                     lp_accum__.add(poisson_log<propto__>(get_base1(Y_int,n,"Y_int",1), exp(get_base1(pi1,n,"pi1",1))));
                 }
             } else if (as_bool(logical_eq(model_type,8))) {
 
-                current_statement_begin__ = 724;
+                current_statement_begin__ = 642;
                 if (as_bool(logical_eq(T,1))) {
 
-                    current_statement_begin__ = 725;
+                    current_statement_begin__ = 643;
                     stan::math::assign(pi1, subtract(elt_multiply(stan::model::rvalue(sigma_reg_free, stan::model::cons_list(stan::model::index_multi(bb), stan::model::nil_index_list()), "sigma_reg_free"),stan::model::rvalue(L_full, stan::model::cons_list(stan::model::index_multi(ll), stan::model::nil_index_list()), "L_full")),stan::model::rvalue(B_int_free, stan::model::cons_list(stan::model::index_multi(bb), stan::model::nil_index_list()), "B_int_free")));
-                    current_statement_begin__ = 726;
+                    current_statement_begin__ = 644;
                     stan::math::assign(pi2, subtract(elt_multiply(stan::model::rvalue(sigma_abs_free, stan::model::cons_list(stan::model::index_multi(bb), stan::model::nil_index_list()), "sigma_abs_free"),stan::model::rvalue(L_full, stan::model::cons_list(stan::model::index_multi(ll), stan::model::nil_index_list()), "L_full")),stan::model::rvalue(A_int_free, stan::model::cons_list(stan::model::index_multi(bb), stan::model::nil_index_list()), "A_int_free")));
                 } else {
 
-                    current_statement_begin__ = 729;
+                    current_statement_begin__ = 647;
                     for (int n = 1; n <= N; ++n) {
 
-                        current_statement_begin__ = 730;
-                        if (as_bool(logical_eq(use_ar,0))) {
-
-                            current_statement_begin__ = 731;
-                            if (as_bool(logical_eq(get_base1(time,n,"time",1),1))) {
-
-                                current_statement_begin__ = 732;
-                                stan::math::assign(get_base1_lhs(pi1,n,"pi1",1), ((get_base1(sigma_reg_free,get_base1(bb,n,"bb",1),"sigma_reg_free",1) * get_base1(L_full,get_base1(ll,n,"ll",1),"L_full",1)) - get_base1(B_int_free,get_base1(bb,n,"bb",1),"B_int_free",1)));
-                                current_statement_begin__ = 733;
-                                stan::math::assign(get_base1_lhs(pi2,n,"pi2",1), ((get_base1(sigma_abs_free,get_base1(bb,n,"bb",1),"sigma_abs_free",1) * get_base1(L_full,get_base1(ll,n,"ll",1),"L_full",1)) - get_base1(A_int_free,get_base1(bb,n,"bb",1),"A_int_free",1)));
-                            } else {
-
-                                current_statement_begin__ = 735;
-                                stan::math::assign(get_base1_lhs(pi1,n,"pi1",1), ((get_base1(sigma_reg_free,get_base1(bb,n,"bb",1),"sigma_reg_free",1) * get_base1(get_base1(L_tp1,get_base1(time,n,"time",1),"L_tp1",1),get_base1(ll,n,"ll",1),"L_tp1",2)) - get_base1(B_int_free,get_base1(bb,n,"bb",1),"B_int_free",1)));
-                                current_statement_begin__ = 736;
-                                stan::math::assign(get_base1_lhs(pi2,n,"pi2",1), ((get_base1(sigma_abs_free,get_base1(bb,n,"bb",1),"sigma_abs_free",1) * get_base1(get_base1(L_tp1,get_base1(time,n,"time",1),"L_tp1",1),get_base1(ll,n,"ll",1),"L_tp1",2)) - get_base1(A_int_free,get_base1(bb,n,"bb",1),"A_int_free",1)));
-                            }
-                        } else {
-
-                            current_statement_begin__ = 739;
-                            if (as_bool(logical_eq(get_base1(time,n,"time",1),1))) {
-
-                                current_statement_begin__ = 740;
-                                stan::math::assign(get_base1_lhs(pi1,n,"pi1",1), ((get_base1(sigma_reg_free,get_base1(bb,n,"bb",1),"sigma_reg_free",1) * get_base1(L_full,get_base1(ll,n,"ll",1),"L_full",1)) - get_base1(B_int_free,get_base1(bb,n,"bb",1),"B_int_free",1)));
-                                current_statement_begin__ = 741;
-                                stan::math::assign(get_base1_lhs(pi2,n,"pi2",1), ((get_base1(sigma_abs_free,get_base1(bb,n,"bb",1),"sigma_abs_free",1) * get_base1(L_full,get_base1(ll,n,"ll",1),"L_full",1)) - get_base1(A_int_free,get_base1(bb,n,"bb",1),"A_int_free",1)));
-                            } else {
-
-                                current_statement_begin__ = 744;
-                                stan::math::assign(get_base1_lhs(pi1,n,"pi1",1), ((get_base1(sigma_reg_free,get_base1(bb,n,"bb",1),"sigma_reg_free",1) * get_base1(get_base1(L_tp1,get_base1(time,n,"time",1),"L_tp1",1),get_base1(ll,n,"ll",1),"L_tp1",2)) - get_base1(B_int_free,get_base1(bb,n,"bb",1),"B_int_free",1)));
-                                current_statement_begin__ = 745;
-                                stan::math::assign(get_base1_lhs(pi2,n,"pi2",1), ((get_base1(sigma_abs_free,get_base1(bb,n,"bb",1),"sigma_abs_free",1) * get_base1(get_base1(L_tp1,get_base1(time,n,"time",1),"L_tp1",1),get_base1(ll,n,"ll",1),"L_tp1",2)) - get_base1(A_int_free,get_base1(bb,n,"bb",1),"A_int_free",1)));
-                            }
-                        }
+                        current_statement_begin__ = 649;
+                        stan::math::assign(get_base1_lhs(pi1,n,"pi1",1), ((get_base1(sigma_reg_free,get_base1(bb,n,"bb",1),"sigma_reg_free",1) * get_base1(get_base1(L_tp1,get_base1(time,n,"time",1),"L_tp1",1),get_base1(ll,n,"ll",1),"L_tp1",2)) - get_base1(B_int_free,get_base1(bb,n,"bb",1),"B_int_free",1)));
+                        current_statement_begin__ = 650;
+                        stan::math::assign(get_base1_lhs(pi2,n,"pi2",1), ((get_base1(sigma_abs_free,get_base1(bb,n,"bb",1),"sigma_abs_free",1) * get_base1(get_base1(L_tp1,get_base1(time,n,"time",1),"L_tp1",1),get_base1(ll,n,"ll",1),"L_tp1",2)) - get_base1(A_int_free,get_base1(bb,n,"bb",1),"A_int_free",1)));
                     }
                 }
-                current_statement_begin__ = 752;
+                current_statement_begin__ = 656;
                 for (int n = 1; n <= N; ++n) {
 
-                    current_statement_begin__ = 754;
+                    current_statement_begin__ = 658;
                     if (as_bool(logical_eq(get_base1(absence,n,"absence",1),1))) {
 
-                        current_statement_begin__ = 755;
+                        current_statement_begin__ = 659;
                         lp_accum__.add(bernoulli_logit_log<propto__>(1, get_base1(pi2,n,"pi2",1)));
                     } else {
 
-                        current_statement_begin__ = 757;
+                        current_statement_begin__ = 661;
                         lp_accum__.add(bernoulli_logit_log<propto__>(0, get_base1(pi2,n,"pi2",1)));
-                        current_statement_begin__ = 758;
+                        current_statement_begin__ = 662;
                         lp_accum__.add(poisson_log<propto__>(get_base1(Y_int,n,"Y_int",1), exp(get_base1(pi1,n,"pi1",1))));
                     }
                 }
             } else if (as_bool(logical_eq(model_type,9))) {
 
-                current_statement_begin__ = 765;
+                current_statement_begin__ = 669;
                 if (as_bool(logical_eq(T,1))) {
 
-                    current_statement_begin__ = 766;
+                    current_statement_begin__ = 670;
                     stan::math::assign(pi1, subtract(elt_multiply(stan::model::rvalue(sigma_reg_free, stan::model::cons_list(stan::model::index_multi(bb), stan::model::nil_index_list()), "sigma_reg_free"),stan::model::rvalue(L_full, stan::model::cons_list(stan::model::index_multi(ll), stan::model::nil_index_list()), "L_full")),stan::model::rvalue(B_int_free, stan::model::cons_list(stan::model::index_multi(bb), stan::model::nil_index_list()), "B_int_free")));
                 } else {
 
-                    current_statement_begin__ = 768;
+                    current_statement_begin__ = 672;
                     for (int n = 1; n <= N; ++n) {
 
-                        current_statement_begin__ = 769;
-                        if (as_bool(logical_eq(use_ar,0))) {
-
-                            current_statement_begin__ = 770;
-                            if (as_bool(logical_eq(get_base1(time,n,"time",1),1))) {
-
-                                current_statement_begin__ = 771;
-                                stan::math::assign(get_base1_lhs(pi1,n,"pi1",1), ((get_base1(sigma_reg_free,get_base1(bb,n,"bb",1),"sigma_reg_free",1) * get_base1(L_full,get_base1(ll,n,"ll",1),"L_full",1)) - get_base1(B_int_free,get_base1(bb,n,"bb",1),"B_int_free",1)));
-                            } else {
-
-                                current_statement_begin__ = 773;
-                                stan::math::assign(get_base1_lhs(pi1,n,"pi1",1), ((get_base1(sigma_reg_free,get_base1(bb,n,"bb",1),"sigma_reg_free",1) * get_base1(get_base1(L_tp1,get_base1(time,n,"time",1),"L_tp1",1),get_base1(ll,n,"ll",1),"L_tp1",2)) - get_base1(B_int_free,get_base1(bb,n,"bb",1),"B_int_free",1)));
-                            }
-                        } else {
-
-                            current_statement_begin__ = 776;
-                            if (as_bool(logical_eq(get_base1(time,n,"time",1),1))) {
-
-                                current_statement_begin__ = 777;
-                                stan::math::assign(get_base1_lhs(pi1,n,"pi1",1), ((get_base1(sigma_reg_free,get_base1(bb,n,"bb",1),"sigma_reg_free",1) * get_base1(L_full,get_base1(ll,n,"ll",1),"L_full",1)) - get_base1(B_int_free,get_base1(bb,n,"bb",1),"B_int_free",1)));
-                            } else {
-
-                                current_statement_begin__ = 779;
-                                stan::math::assign(get_base1_lhs(pi1,n,"pi1",1), ((get_base1(sigma_reg_free,get_base1(bb,n,"bb",1),"sigma_reg_free",1) * get_base1(get_base1(L_tp1,get_base1(time,n,"time",1),"L_tp1",1),get_base1(ll,n,"ll",1),"L_tp1",2)) - get_base1(B_int_free,get_base1(bb,n,"bb",1),"B_int_free",1)));
-                            }
-                        }
+                        current_statement_begin__ = 674;
+                        stan::math::assign(get_base1_lhs(pi1,n,"pi1",1), ((get_base1(sigma_reg_free,get_base1(bb,n,"bb",1),"sigma_reg_free",1) * get_base1(get_base1(L_tp1,get_base1(time,n,"time",1),"L_tp1",1),get_base1(ll,n,"ll",1),"L_tp1",2)) - get_base1(B_int_free,get_base1(bb,n,"bb",1),"B_int_free",1)));
                     }
                 }
-                current_statement_begin__ = 786;
+                current_statement_begin__ = 679;
                 for (int n = 1; n <= N; ++n) {
 
-                    current_statement_begin__ = 787;
+                    current_statement_begin__ = 680;
                     lp_accum__.add(normal_log<propto__>(get_base1(Y_cont,n,"Y_cont",1), get_base1(pi1,n,"pi1",1), extra_sd));
                 }
             } else if (as_bool(logical_eq(model_type,10))) {
 
-                current_statement_begin__ = 795;
+                current_statement_begin__ = 688;
                 if (as_bool(logical_eq(T,1))) {
 
-                    current_statement_begin__ = 796;
+                    current_statement_begin__ = 689;
                     stan::math::assign(pi1, subtract(elt_multiply(stan::model::rvalue(sigma_reg_free, stan::model::cons_list(stan::model::index_multi(bb), stan::model::nil_index_list()), "sigma_reg_free"),stan::model::rvalue(L_full, stan::model::cons_list(stan::model::index_multi(ll), stan::model::nil_index_list()), "L_full")),stan::model::rvalue(B_int_free, stan::model::cons_list(stan::model::index_multi(bb), stan::model::nil_index_list()), "B_int_free")));
-                    current_statement_begin__ = 797;
+                    current_statement_begin__ = 690;
                     stan::math::assign(pi2, subtract(elt_multiply(stan::model::rvalue(sigma_abs_free, stan::model::cons_list(stan::model::index_multi(bb), stan::model::nil_index_list()), "sigma_abs_free"),stan::model::rvalue(L_full, stan::model::cons_list(stan::model::index_multi(ll), stan::model::nil_index_list()), "L_full")),stan::model::rvalue(A_int_free, stan::model::cons_list(stan::model::index_multi(bb), stan::model::nil_index_list()), "A_int_free")));
                 } else {
 
-                    current_statement_begin__ = 800;
+                    current_statement_begin__ = 693;
                     for (int n = 1; n <= N; ++n) {
 
-                        current_statement_begin__ = 801;
-                        if (as_bool(logical_eq(use_ar,0))) {
-
-                            current_statement_begin__ = 802;
-                            if (as_bool(logical_eq(get_base1(time,n,"time",1),1))) {
-
-                                current_statement_begin__ = 803;
-                                stan::math::assign(get_base1_lhs(pi1,n,"pi1",1), ((get_base1(sigma_reg_free,get_base1(bb,n,"bb",1),"sigma_reg_free",1) * get_base1(L_full,get_base1(ll,n,"ll",1),"L_full",1)) - get_base1(B_int_free,get_base1(bb,n,"bb",1),"B_int_free",1)));
-                                current_statement_begin__ = 804;
-                                stan::math::assign(get_base1_lhs(pi2,n,"pi2",1), ((get_base1(sigma_abs_free,get_base1(bb,n,"bb",1),"sigma_abs_free",1) * get_base1(L_full,get_base1(ll,n,"ll",1),"L_full",1)) - get_base1(A_int_free,get_base1(bb,n,"bb",1),"A_int_free",1)));
-                            } else {
-
-                                current_statement_begin__ = 806;
-                                stan::math::assign(get_base1_lhs(pi1,n,"pi1",1), ((get_base1(sigma_reg_free,get_base1(bb,n,"bb",1),"sigma_reg_free",1) * get_base1(get_base1(L_tp1,get_base1(time,n,"time",1),"L_tp1",1),get_base1(ll,n,"ll",1),"L_tp1",2)) - get_base1(B_int_free,get_base1(bb,n,"bb",1),"B_int_free",1)));
-                                current_statement_begin__ = 807;
-                                stan::math::assign(get_base1_lhs(pi2,n,"pi2",1), ((get_base1(sigma_abs_free,get_base1(bb,n,"bb",1),"sigma_abs_free",1) * get_base1(get_base1(L_tp1,get_base1(time,n,"time",1),"L_tp1",1),get_base1(ll,n,"ll",1),"L_tp1",2)) - get_base1(A_int_free,get_base1(bb,n,"bb",1),"A_int_free",1)));
-                            }
-                        } else {
-
-                            current_statement_begin__ = 810;
-                            if (as_bool(logical_eq(get_base1(time,n,"time",1),1))) {
-
-                                current_statement_begin__ = 811;
-                                stan::math::assign(get_base1_lhs(pi1,n,"pi1",1), ((get_base1(sigma_reg_free,get_base1(bb,n,"bb",1),"sigma_reg_free",1) * get_base1(L_full,get_base1(ll,n,"ll",1),"L_full",1)) - get_base1(B_int_free,get_base1(bb,n,"bb",1),"B_int_free",1)));
-                                current_statement_begin__ = 812;
-                                stan::math::assign(get_base1_lhs(pi2,n,"pi2",1), ((get_base1(sigma_abs_free,get_base1(bb,n,"bb",1),"sigma_abs_free",1) * get_base1(L_full,get_base1(ll,n,"ll",1),"L_full",1)) - get_base1(A_int_free,get_base1(bb,n,"bb",1),"A_int_free",1)));
-                            } else {
-
-                                current_statement_begin__ = 815;
-                                stan::math::assign(get_base1_lhs(pi1,n,"pi1",1), ((get_base1(sigma_reg_free,get_base1(bb,n,"bb",1),"sigma_reg_free",1) * get_base1(get_base1(L_tp1,get_base1(time,n,"time",1),"L_tp1",1),get_base1(ll,n,"ll",1),"L_tp1",2)) - get_base1(B_int_free,get_base1(bb,n,"bb",1),"B_int_free",1)));
-                                current_statement_begin__ = 816;
-                                stan::math::assign(get_base1_lhs(pi2,n,"pi2",1), ((get_base1(sigma_abs_free,get_base1(bb,n,"bb",1),"sigma_abs_free",1) * get_base1(get_base1(L_tp1,get_base1(time,n,"time",1),"L_tp1",1),get_base1(ll,n,"ll",1),"L_tp1",2)) - get_base1(A_int_free,get_base1(bb,n,"bb",1),"A_int_free",1)));
-                            }
-                        }
+                        current_statement_begin__ = 695;
+                        stan::math::assign(get_base1_lhs(pi1,n,"pi1",1), ((get_base1(sigma_reg_free,get_base1(bb,n,"bb",1),"sigma_reg_free",1) * get_base1(get_base1(L_tp1,get_base1(time,n,"time",1),"L_tp1",1),get_base1(ll,n,"ll",1),"L_tp1",2)) - get_base1(B_int_free,get_base1(bb,n,"bb",1),"B_int_free",1)));
+                        current_statement_begin__ = 696;
+                        stan::math::assign(get_base1_lhs(pi2,n,"pi2",1), ((get_base1(sigma_abs_free,get_base1(bb,n,"bb",1),"sigma_abs_free",1) * get_base1(get_base1(L_tp1,get_base1(time,n,"time",1),"L_tp1",1),get_base1(ll,n,"ll",1),"L_tp1",2)) - get_base1(A_int_free,get_base1(bb,n,"bb",1),"A_int_free",1)));
                     }
                 }
-                current_statement_begin__ = 823;
+                current_statement_begin__ = 702;
                 for (int n = 1; n <= N; ++n) {
 
-                    current_statement_begin__ = 825;
+                    current_statement_begin__ = 704;
                     if (as_bool(logical_eq(get_base1(absence,n,"absence",1),1))) {
 
-                        current_statement_begin__ = 826;
+                        current_statement_begin__ = 705;
                         lp_accum__.add(bernoulli_logit_log<propto__>(1, get_base1(pi2,n,"pi2",1)));
                     } else {
 
-                        current_statement_begin__ = 828;
+                        current_statement_begin__ = 707;
                         lp_accum__.add(bernoulli_logit_log<propto__>(0, get_base1(pi2,n,"pi2",1)));
-                        current_statement_begin__ = 829;
+                        current_statement_begin__ = 708;
                         lp_accum__.add(normal_log<propto__>(get_base1(Y_cont,n,"Y_cont",1), get_base1(pi1,n,"pi1",1), extra_sd));
                     }
                 }
             } else if (as_bool(logical_eq(model_type,11))) {
 
-                current_statement_begin__ = 836;
+                current_statement_begin__ = 715;
                 if (as_bool(logical_eq(T,1))) {
 
-                    current_statement_begin__ = 837;
+                    current_statement_begin__ = 716;
                     stan::math::assign(pi1, subtract(elt_multiply(stan::model::rvalue(sigma_reg_free, stan::model::cons_list(stan::model::index_multi(bb), stan::model::nil_index_list()), "sigma_reg_free"),stan::model::rvalue(L_full, stan::model::cons_list(stan::model::index_multi(ll), stan::model::nil_index_list()), "L_full")),stan::model::rvalue(B_int_free, stan::model::cons_list(stan::model::index_multi(bb), stan::model::nil_index_list()), "B_int_free")));
                 } else {
 
-                    current_statement_begin__ = 839;
+                    current_statement_begin__ = 718;
                     for (int n = 1; n <= N; ++n) {
 
-                        current_statement_begin__ = 840;
-                        if (as_bool(logical_eq(use_ar,0))) {
-
-                            current_statement_begin__ = 841;
-                            if (as_bool(logical_eq(get_base1(time,n,"time",1),1))) {
-
-                                current_statement_begin__ = 842;
-                                stan::math::assign(get_base1_lhs(pi1,n,"pi1",1), ((get_base1(sigma_reg_free,get_base1(bb,n,"bb",1),"sigma_reg_free",1) * get_base1(L_full,get_base1(ll,n,"ll",1),"L_full",1)) - get_base1(B_int_free,get_base1(bb,n,"bb",1),"B_int_free",1)));
-                            } else {
-
-                                current_statement_begin__ = 844;
-                                stan::math::assign(get_base1_lhs(pi1,n,"pi1",1), ((get_base1(sigma_reg_free,get_base1(bb,n,"bb",1),"sigma_reg_free",1) * get_base1(get_base1(L_tp1,get_base1(time,n,"time",1),"L_tp1",1),get_base1(ll,n,"ll",1),"L_tp1",2)) - get_base1(B_int_free,get_base1(bb,n,"bb",1),"B_int_free",1)));
-                            }
-                        } else {
-
-                            current_statement_begin__ = 847;
-                            if (as_bool(logical_eq(get_base1(time,n,"time",1),1))) {
-
-                                current_statement_begin__ = 848;
-                                stan::math::assign(get_base1_lhs(pi1,n,"pi1",1), ((get_base1(sigma_reg_free,get_base1(bb,n,"bb",1),"sigma_reg_free",1) * get_base1(L_full,get_base1(ll,n,"ll",1),"L_full",1)) - get_base1(B_int_free,get_base1(bb,n,"bb",1),"B_int_free",1)));
-                            } else {
-
-                                current_statement_begin__ = 850;
-                                stan::math::assign(get_base1_lhs(pi1,n,"pi1",1), ((get_base1(sigma_reg_free,get_base1(bb,n,"bb",1),"sigma_reg_free",1) * get_base1(get_base1(L_tp1,get_base1(time,n,"time",1),"L_tp1",1),get_base1(ll,n,"ll",1),"L_tp1",2)) - get_base1(B_int_free,get_base1(bb,n,"bb",1),"B_int_free",1)));
-                            }
-                        }
+                        current_statement_begin__ = 720;
+                        stan::math::assign(get_base1_lhs(pi1,n,"pi1",1), ((get_base1(sigma_reg_free,get_base1(bb,n,"bb",1),"sigma_reg_free",1) * get_base1(get_base1(L_tp1,get_base1(time,n,"time",1),"L_tp1",1),get_base1(ll,n,"ll",1),"L_tp1",2)) - get_base1(B_int_free,get_base1(bb,n,"bb",1),"B_int_free",1)));
                     }
                 }
-                current_statement_begin__ = 857;
+                current_statement_begin__ = 725;
                 for (int n = 1; n <= N; ++n) {
 
-                    current_statement_begin__ = 858;
+                    current_statement_begin__ = 726;
                     lp_accum__.add(lognormal_log<propto__>(get_base1(Y_cont,n,"Y_cont",1), exp(get_base1(pi1,n,"pi1",1)), extra_sd));
                 }
             } else if (as_bool(logical_eq(model_type,12))) {
 
-                current_statement_begin__ = 864;
+                current_statement_begin__ = 732;
                 if (as_bool(logical_eq(T,1))) {
 
-                    current_statement_begin__ = 865;
+                    current_statement_begin__ = 733;
                     stan::math::assign(pi1, subtract(elt_multiply(stan::model::rvalue(sigma_reg_free, stan::model::cons_list(stan::model::index_multi(bb), stan::model::nil_index_list()), "sigma_reg_free"),stan::model::rvalue(L_full, stan::model::cons_list(stan::model::index_multi(ll), stan::model::nil_index_list()), "L_full")),stan::model::rvalue(B_int_free, stan::model::cons_list(stan::model::index_multi(bb), stan::model::nil_index_list()), "B_int_free")));
-                    current_statement_begin__ = 866;
+                    current_statement_begin__ = 734;
                     stan::math::assign(pi2, subtract(elt_multiply(stan::model::rvalue(sigma_abs_free, stan::model::cons_list(stan::model::index_multi(bb), stan::model::nil_index_list()), "sigma_abs_free"),stan::model::rvalue(L_full, stan::model::cons_list(stan::model::index_multi(ll), stan::model::nil_index_list()), "L_full")),stan::model::rvalue(A_int_free, stan::model::cons_list(stan::model::index_multi(bb), stan::model::nil_index_list()), "A_int_free")));
                 } else {
 
-                    current_statement_begin__ = 869;
+                    current_statement_begin__ = 737;
                     for (int n = 1; n <= N; ++n) {
 
-                        current_statement_begin__ = 870;
-                        if (as_bool(logical_eq(use_ar,0))) {
-
-                            current_statement_begin__ = 871;
-                            if (as_bool(logical_eq(get_base1(time,n,"time",1),1))) {
-
-                                current_statement_begin__ = 872;
-                                stan::math::assign(get_base1_lhs(pi1,n,"pi1",1), ((get_base1(sigma_reg_free,get_base1(bb,n,"bb",1),"sigma_reg_free",1) * get_base1(L_full,get_base1(ll,n,"ll",1),"L_full",1)) - get_base1(B_int_free,get_base1(bb,n,"bb",1),"B_int_free",1)));
-                                current_statement_begin__ = 873;
-                                stan::math::assign(get_base1_lhs(pi2,n,"pi2",1), ((get_base1(sigma_abs_free,get_base1(bb,n,"bb",1),"sigma_abs_free",1) * get_base1(L_full,get_base1(ll,n,"ll",1),"L_full",1)) - get_base1(A_int_free,get_base1(bb,n,"bb",1),"A_int_free",1)));
-                            } else {
-
-                                current_statement_begin__ = 875;
-                                stan::math::assign(get_base1_lhs(pi1,n,"pi1",1), ((get_base1(sigma_reg_free,get_base1(bb,n,"bb",1),"sigma_reg_free",1) * get_base1(get_base1(L_tp1,get_base1(time,n,"time",1),"L_tp1",1),get_base1(ll,n,"ll",1),"L_tp1",2)) - get_base1(B_int_free,get_base1(bb,n,"bb",1),"B_int_free",1)));
-                                current_statement_begin__ = 876;
-                                stan::math::assign(get_base1_lhs(pi2,n,"pi2",1), ((get_base1(sigma_abs_free,get_base1(bb,n,"bb",1),"sigma_abs_free",1) * get_base1(get_base1(L_tp1,get_base1(time,n,"time",1),"L_tp1",1),get_base1(ll,n,"ll",1),"L_tp1",2)) - get_base1(A_int_free,get_base1(bb,n,"bb",1),"A_int_free",1)));
-                            }
-                        } else {
-
-                            current_statement_begin__ = 879;
-                            if (as_bool(logical_eq(get_base1(time,n,"time",1),1))) {
-
-                                current_statement_begin__ = 880;
-                                stan::math::assign(get_base1_lhs(pi1,n,"pi1",1), ((get_base1(sigma_reg_free,get_base1(bb,n,"bb",1),"sigma_reg_free",1) * get_base1(L_full,get_base1(ll,n,"ll",1),"L_full",1)) - get_base1(B_int_free,get_base1(bb,n,"bb",1),"B_int_free",1)));
-                                current_statement_begin__ = 881;
-                                stan::math::assign(get_base1_lhs(pi2,n,"pi2",1), ((get_base1(sigma_abs_free,get_base1(bb,n,"bb",1),"sigma_abs_free",1) * get_base1(L_full,get_base1(ll,n,"ll",1),"L_full",1)) - get_base1(A_int_free,get_base1(bb,n,"bb",1),"A_int_free",1)));
-                            } else {
-
-                                current_statement_begin__ = 884;
-                                stan::math::assign(get_base1_lhs(pi1,n,"pi1",1), ((get_base1(sigma_reg_free,get_base1(bb,n,"bb",1),"sigma_reg_free",1) * get_base1(get_base1(L_tp1,get_base1(time,n,"time",1),"L_tp1",1),get_base1(ll,n,"ll",1),"L_tp1",2)) - get_base1(B_int_free,get_base1(bb,n,"bb",1),"B_int_free",1)));
-                                current_statement_begin__ = 885;
-                                stan::math::assign(get_base1_lhs(pi2,n,"pi2",1), ((get_base1(sigma_abs_free,get_base1(bb,n,"bb",1),"sigma_abs_free",1) * get_base1(get_base1(L_tp1,get_base1(time,n,"time",1),"L_tp1",1),get_base1(ll,n,"ll",1),"L_tp1",2)) - get_base1(A_int_free,get_base1(bb,n,"bb",1),"A_int_free",1)));
-                            }
-                        }
+                        current_statement_begin__ = 739;
+                        stan::math::assign(get_base1_lhs(pi1,n,"pi1",1), ((get_base1(sigma_reg_free,get_base1(bb,n,"bb",1),"sigma_reg_free",1) * get_base1(get_base1(L_tp1,get_base1(time,n,"time",1),"L_tp1",1),get_base1(ll,n,"ll",1),"L_tp1",2)) - get_base1(B_int_free,get_base1(bb,n,"bb",1),"B_int_free",1)));
+                        current_statement_begin__ = 740;
+                        stan::math::assign(get_base1_lhs(pi2,n,"pi2",1), ((get_base1(sigma_abs_free,get_base1(bb,n,"bb",1),"sigma_abs_free",1) * get_base1(get_base1(L_tp1,get_base1(time,n,"time",1),"L_tp1",1),get_base1(ll,n,"ll",1),"L_tp1",2)) - get_base1(A_int_free,get_base1(bb,n,"bb",1),"A_int_free",1)));
                     }
                 }
-                current_statement_begin__ = 892;
+                current_statement_begin__ = 746;
                 for (int n = 1; n <= N; ++n) {
 
-                    current_statement_begin__ = 894;
+                    current_statement_begin__ = 748;
                     if (as_bool(logical_eq(get_base1(absence,n,"absence",1),1))) {
 
-                        current_statement_begin__ = 895;
+                        current_statement_begin__ = 749;
                         lp_accum__.add(bernoulli_logit_log<propto__>(1, get_base1(pi2,n,"pi2",1)));
                     } else {
 
-                        current_statement_begin__ = 897;
+                        current_statement_begin__ = 751;
                         lp_accum__.add(bernoulli_logit_log<propto__>(0, get_base1(pi2,n,"pi2",1)));
-                        current_statement_begin__ = 898;
+                        current_statement_begin__ = 752;
                         lp_accum__.add(lognormal_log<propto__>(get_base1(Y_cont,n,"Y_cont",1), exp(get_base1(pi1,n,"pi1",1)), extra_sd));
                     }
                 }
@@ -2429,6 +2130,7 @@ public:
         names__.push_back("steps_votes");
         names__.push_back("steps_votes_grm");
         names__.push_back("extra_sd");
+        names__.push_back("time_var");
         names__.push_back("ar_fix");
         names__.push_back("L_full");
         names__.push_back("L_AR1");
@@ -2448,6 +2150,7 @@ public:
         dimss__.push_back(dims__);
         dims__.resize(0);
         dims__.push_back((T - 1));
+        dims__.push_back(num_legis);
         dimss__.push_back(dims__);
         dims__.resize(0);
         dims__.push_back((num_legis - 1));
@@ -2494,6 +2197,8 @@ public:
         dims__.resize(0);
         dimss__.push_back(dims__);
         dims__.resize(0);
+        dimss__.push_back(dims__);
+        dims__.resize(0);
         dims__.push_back(num_legis);
         dimss__.push_back(dims__);
         dims__.resize(0);
@@ -2523,8 +2228,12 @@ public:
         // read-transform, write parameters
         vector_d sigma_abs_free = in__.vector_constrain(num_bills);
         vector_d L_free = in__.vector_constrain((num_legis - num_constrain_l));
-        vector_d L_tp1_var = in__.vector_constrain((T - 1));
-        vector_d L_AR1_free = in__.vector_lub_constrain(-(1),1,(num_legis - 1));
+        vector<vector_d> L_tp1_var;
+        size_t dim_L_tp1_var_0__ = (T - 1);
+        for (size_t k_0__ = 0; k_0__ < dim_L_tp1_var_0__; ++k_0__) {
+            L_tp1_var.push_back(in__.vector_constrain(num_legis));
+        }
+        vector_d L_AR1_free = in__.vector_lub_constrain(-(0.98999999999999999),0.98999999999999999,(num_legis - 1));
         vector_d sigma_reg_free = in__.vector_constrain(num_bills);
         vector_d restrict_high = in__.vector_lb_constrain(restrict_high_bar,num_fix_high);
         vector_d legis_x = in__.vector_constrain(LX);
@@ -2542,15 +2251,18 @@ public:
             steps_votes_grm.push_back(in__.ordered_constrain((m_step - 1)));
         }
         double extra_sd = in__.scalar_lb_constrain(0);
-        double ar_fix = in__.scalar_lub_constrain(-(0.80000000000000004),0.80000000000000004);
+        double time_var = in__.scalar_lb_constrain(0);
+        double ar_fix = in__.scalar_lub_constrain(-(0.90000000000000002),0.90000000000000002);
             for (int k_0__ = 0; k_0__ < num_bills; ++k_0__) {
             vars__.push_back(sigma_abs_free[k_0__]);
             }
             for (int k_0__ = 0; k_0__ < (num_legis - num_constrain_l); ++k_0__) {
             vars__.push_back(L_free[k_0__]);
             }
-            for (int k_0__ = 0; k_0__ < (T - 1); ++k_0__) {
-            vars__.push_back(L_tp1_var[k_0__]);
+            for (int k_1__ = 0; k_1__ < num_legis; ++k_1__) {
+                for (int k_0__ = 0; k_0__ < (T - 1); ++k_0__) {
+                vars__.push_back(L_tp1_var[k_0__][k_1__]);
+                }
             }
             for (int k_0__ = 0; k_0__ < (num_legis - 1); ++k_0__) {
             vars__.push_back(L_AR1_free[k_0__]);
@@ -2594,6 +2306,7 @@ public:
                 }
             }
         vars__.push_back(extra_sd);
+        vars__.push_back(time_var);
         vars__.push_back(ar_fix);
 
         if (!include_tparams__) return;
@@ -2626,7 +2339,7 @@ public:
             vector<vector_d> L_tp1(T, (vector_d(static_cast<Eigen::VectorXd::Index>(num_legis))));
             stan::math::initialize(L_tp1, std::numeric_limits<double>::quiet_NaN());
             stan::math::fill(L_tp1,DUMMY_VAR__);
-            current_statement_begin__ = 320;
+            current_statement_begin__ = 319;
             validate_non_negative_index("restrict_low", "1", 1);
             vector_d restrict_low(static_cast<Eigen::VectorXd::Index>(1));
             (void) restrict_low;  // dummy to suppress unused var warning
@@ -2635,98 +2348,100 @@ public:
             stan::math::fill(restrict_low,DUMMY_VAR__);
 
 
-            current_statement_begin__ = 323;
+            current_statement_begin__ = 322;
             stan::math::assign(restrict_low, subtract(restrict_high,diff));
-            current_statement_begin__ = 325;
+            current_statement_begin__ = 324;
             stan::math::assign(L_AR1, append_row(L_AR1_free,ar_fix));
-            current_statement_begin__ = 329;
+            current_statement_begin__ = 328;
             if (as_bool(logical_eq(num_legis,2))) {
 
-                current_statement_begin__ = 330;
+                current_statement_begin__ = 329;
                 if (as_bool(logical_gt(T,1))) {
 
-                    current_statement_begin__ = 331;
+                    current_statement_begin__ = 330;
                     if (as_bool(logical_eq(use_ar,1))) {
 
-                        current_statement_begin__ = 332;
+                        current_statement_begin__ = 331;
                         stan::math::assign(L_full, append_row(L_free,restrict_high));
                     } else {
 
-                        current_statement_begin__ = 334;
+                        current_statement_begin__ = 333;
                         stan::math::assign(L_full, append_row(restrict_low,restrict_high));
                     }
                 } else {
 
-                    current_statement_begin__ = 337;
+                    current_statement_begin__ = 336;
                     stan::math::assign(L_full, append_row(restrict_low,restrict_high));
                 }
             } else {
 
-                current_statement_begin__ = 342;
+                current_statement_begin__ = 341;
                 if (as_bool(logical_gt(T,1))) {
 
-                    current_statement_begin__ = 343;
+                    current_statement_begin__ = 342;
                     if (as_bool(logical_eq(use_ar,1))) {
 
-                        current_statement_begin__ = 344;
-                        stan::math::assign(L_full, append_row(L_free,restrict_high));
+                        current_statement_begin__ = 343;
+                        stan::math::assign(L_full, append_row(L_free,append_row(restrict_low,restrict_high)));
                     } else {
 
-                        current_statement_begin__ = 346;
+                        current_statement_begin__ = 345;
                         stan::math::assign(L_full, append_row(L_free,append_row(restrict_low,restrict_high)));
                     }
                 } else {
 
-                    current_statement_begin__ = 351;
+                    current_statement_begin__ = 350;
                     stan::math::assign(L_full, append_row(L_free,append_row(restrict_low,restrict_high)));
                 }
             }
-            current_statement_begin__ = 357;
+            current_statement_begin__ = 356;
             if (as_bool(logical_gt(T,1))) {
 
-                current_statement_begin__ = 358;
+                current_statement_begin__ = 357;
                 if (as_bool(logical_eq(use_ar,1))) {
 
-                    current_statement_begin__ = 363;
-                    for (int t = 2; t <= T; ++t) {
+                    current_statement_begin__ = 362;
+                    for (int t = 1; t <= T; ++t) {
 
-                        current_statement_begin__ = 365;
-                        if (as_bool(logical_eq(t,2))) {
+                        current_statement_begin__ = 364;
+                        if (as_bool(logical_eq(t,1))) {
 
-                            current_statement_begin__ = 366;
-                            stan::math::assign(get_base1_lhs(L_tp1,t,"L_tp1",1), add(add(elt_multiply(L_AR1,L_full),multiply(stan::model::rvalue(legis_pred, stan::model::cons_list(stan::model::index_uni(t), stan::model::cons_list(stan::model::index_min_max(1, num_legis), stan::model::cons_list(stan::model::index_omni(), stan::model::nil_index_list()))), "legis_pred"),legis_x)),(time_sd * get_base1(L_tp1_var,(t - 1),"L_tp1_var",1))));
+                            current_statement_begin__ = 365;
+                            stan::math::assign(get_base1_lhs(L_tp1,t,"L_tp1",1), add(L_full,multiply(stan::model::rvalue(legis_pred, stan::model::cons_list(stan::model::index_uni(t), stan::model::cons_list(stan::model::index_min_max(1, num_legis), stan::model::cons_list(stan::model::index_omni(), stan::model::nil_index_list()))), "legis_pred"),legis_x)));
                         } else {
 
-                            current_statement_begin__ = 368;
-                            stan::math::assign(get_base1_lhs(L_tp1,t,"L_tp1",1), add(add(add(L_full,elt_multiply(L_AR1,get_base1(L_tp1,(t - 1),"L_tp1",1))),multiply(stan::model::rvalue(legis_pred, stan::model::cons_list(stan::model::index_uni(t), stan::model::cons_list(stan::model::index_min_max(1, num_legis), stan::model::cons_list(stan::model::index_omni(), stan::model::nil_index_list()))), "legis_pred"),legis_x)),(time_sd * get_base1(L_tp1_var,(t - 1),"L_tp1_var",1))));
+                            current_statement_begin__ = 367;
+                            stan::math::assign(get_base1_lhs(L_tp1,t,"L_tp1",1), add(add(add(L_full,elt_multiply(L_AR1,get_base1(L_tp1,(t - 1),"L_tp1",1))),multiply(stan::model::rvalue(legis_pred, stan::model::cons_list(stan::model::index_uni(t), stan::model::cons_list(stan::model::index_min_max(1, num_legis), stan::model::cons_list(stan::model::index_omni(), stan::model::nil_index_list()))), "legis_pred"),legis_x)),multiply(time_var,get_base1(L_tp1_var,(t - 1),"L_tp1_var",1))));
                         }
                     }
                 } else {
 
-                    current_statement_begin__ = 379;
-                    for (int t = 2; t <= T; ++t) {
+                    current_statement_begin__ = 378;
+                    for (int t = 1; t <= T; ++t) {
 
-                        current_statement_begin__ = 380;
-                        if (as_bool(logical_eq(t,2))) {
+                        current_statement_begin__ = 379;
+                        if (as_bool(logical_eq(t,1))) {
 
-                            current_statement_begin__ = 381;
-                            stan::math::assign(get_base1_lhs(L_tp1,t,"L_tp1",1), add(add(L_full,multiply(stan::model::rvalue(legis_pred, stan::model::cons_list(stan::model::index_uni(t), stan::model::cons_list(stan::model::index_min_max(1, num_legis), stan::model::cons_list(stan::model::index_omni(), stan::model::nil_index_list()))), "legis_pred"),legis_x)),(time_sd * get_base1(L_tp1_var,(t - 1),"L_tp1_var",1))));
+                            current_statement_begin__ = 380;
+                            stan::math::assign(get_base1_lhs(L_tp1,t,"L_tp1",1), add(L_full,multiply(stan::model::rvalue(legis_pred, stan::model::cons_list(stan::model::index_uni(t), stan::model::cons_list(stan::model::index_min_max(1, num_legis), stan::model::cons_list(stan::model::index_omni(), stan::model::nil_index_list()))), "legis_pred"),legis_x)));
                         } else {
 
-                            current_statement_begin__ = 383;
-                            stan::math::assign(get_base1_lhs(L_tp1,t,"L_tp1",1), add(add(get_base1(L_tp1,(t - 1),"L_tp1",1),multiply(stan::model::rvalue(legis_pred, stan::model::cons_list(stan::model::index_uni(t), stan::model::cons_list(stan::model::index_min_max(1, num_legis), stan::model::cons_list(stan::model::index_omni(), stan::model::nil_index_list()))), "legis_pred"),legis_x)),(time_sd * get_base1(L_tp1_var,(t - 1),"L_tp1_var",1))));
+                            current_statement_begin__ = 382;
+                            stan::math::assign(get_base1_lhs(L_tp1,t,"L_tp1",1), add(add(get_base1(L_tp1,(t - 1),"L_tp1",1),multiply(stan::model::rvalue(legis_pred, stan::model::cons_list(stan::model::index_uni(t), stan::model::cons_list(stan::model::index_min_max(1, num_legis), stan::model::cons_list(stan::model::index_omni(), stan::model::nil_index_list()))), "legis_pred"),legis_x)),multiply(time_var,get_base1(L_tp1_var,(t - 1),"L_tp1_var",1))));
                         }
                     }
                 }
+            } else {
+
+                current_statement_begin__ = 388;
+                stan::math::assign(get_base1_lhs(L_tp1,1,"L_tp1",1), L_full);
             }
-            current_statement_begin__ = 390;
-            stan::math::assign(get_base1_lhs(L_tp1,1,"L_tp1",1), L_full);
 
             // validate transformed parameters
             current_statement_begin__ = 316;
             current_statement_begin__ = 317;
             current_statement_begin__ = 318;
-            current_statement_begin__ = 320;
+            current_statement_begin__ = 319;
 
             // write transformed parameters
             for (int k_0__ = 0; k_0__ < num_legis; ++k_0__) {
@@ -2796,10 +2511,12 @@ public:
             param_name_stream__ << "L_free" << '.' << k_0__;
             param_names__.push_back(param_name_stream__.str());
         }
-        for (int k_0__ = 1; k_0__ <= (T - 1); ++k_0__) {
-            param_name_stream__.str(std::string());
-            param_name_stream__ << "L_tp1_var" << '.' << k_0__;
-            param_names__.push_back(param_name_stream__.str());
+        for (int k_1__ = 1; k_1__ <= num_legis; ++k_1__) {
+            for (int k_0__ = 1; k_0__ <= (T - 1); ++k_0__) {
+                param_name_stream__.str(std::string());
+                param_name_stream__ << "L_tp1_var" << '.' << k_0__ << '.' << k_1__;
+                param_names__.push_back(param_name_stream__.str());
+            }
         }
         for (int k_0__ = 1; k_0__ <= (num_legis - 1); ++k_0__) {
             param_name_stream__.str(std::string());
@@ -2870,6 +2587,9 @@ public:
         }
         param_name_stream__.str(std::string());
         param_name_stream__ << "extra_sd";
+        param_names__.push_back(param_name_stream__.str());
+        param_name_stream__.str(std::string());
+        param_name_stream__ << "time_var";
         param_names__.push_back(param_name_stream__.str());
         param_name_stream__.str(std::string());
         param_name_stream__ << "ar_fix";
@@ -2917,10 +2637,12 @@ public:
             param_name_stream__ << "L_free" << '.' << k_0__;
             param_names__.push_back(param_name_stream__.str());
         }
-        for (int k_0__ = 1; k_0__ <= (T - 1); ++k_0__) {
-            param_name_stream__.str(std::string());
-            param_name_stream__ << "L_tp1_var" << '.' << k_0__;
-            param_names__.push_back(param_name_stream__.str());
+        for (int k_1__ = 1; k_1__ <= num_legis; ++k_1__) {
+            for (int k_0__ = 1; k_0__ <= (T - 1); ++k_0__) {
+                param_name_stream__.str(std::string());
+                param_name_stream__ << "L_tp1_var" << '.' << k_0__ << '.' << k_1__;
+                param_names__.push_back(param_name_stream__.str());
+            }
         }
         for (int k_0__ = 1; k_0__ <= (num_legis - 1); ++k_0__) {
             param_name_stream__.str(std::string());
@@ -2991,6 +2713,9 @@ public:
         }
         param_name_stream__.str(std::string());
         param_name_stream__ << "extra_sd";
+        param_names__.push_back(param_name_stream__.str());
+        param_name_stream__.str(std::string());
+        param_name_stream__ << "time_var";
         param_names__.push_back(param_name_stream__.str());
         param_name_stream__.str(std::string());
         param_name_stream__ << "ar_fix";

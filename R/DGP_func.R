@@ -20,7 +20,7 @@
   # remove pr of absence if model is not inflated
   
   if(absence==F) {
-    pr_absence <- 0
+    pr_absence <- -1
   }
   
   combined <- if_else(pr_absence<runif(N),votes,2)

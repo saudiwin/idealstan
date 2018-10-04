@@ -71,8 +71,8 @@ parameters {
   vector[num_bills] sigma_abs_free;
   vector[num_legis] L_free;
   //vector[num_legis] L_tp1_free[T]; // all other params can float
-  vector[T-1] L_tp1_var; // non-centered variance
-  vector<lower=-1,upper=1>[num_legis] L_AR1; // AR-1 parameters for AR-1 model
+  vector[num_legis] L_tp1_var[T-1]; // non-centered variance
+  vector[num_legis] L_AR1; // AR-1 parameters for AR-1 model
   vector[num_bills] sigma_reg_free;
   vector[LX] legis_x;
   vector[SRX] sigma_reg_x;
@@ -85,6 +85,8 @@ parameters {
   vector[num_bills] B_int_free;
   vector[num_bills] A_int_free;
   real<lower=0> extra_sd;
+  real<lower=0> time_var;
+  //vector[num_legis] L_start; // starting values for time series
   //real<lower=0> time_sd;
 }
 
@@ -104,9 +106,9 @@ transformed parameters {
       // in RW model, intercepts are used for first time period
 #include /chunks/l_hier_prior.stan
     }
+  } else {
+    L_tp1[1] = L_full;
   }
-  
-  L_tp1[1] = L_full;
 
 }
 
@@ -121,11 +123,16 @@ model {
   } else {
     L_free ~ normal(0,legis_sd);
   }
+  
+  for(t in 1:(T-1)) {
+    L_tp1_var[t] ~ normal(0,1);
+  }
 
 
   sigma_abs_free ~ normal(0,discrim_abs_sd);
   sigma_reg_free ~ normal(0,discrim_reg_sd);
   legis_x ~ normal(0,5);
+  //L_start ~ normal(0,1);
   sigma_reg_x ~ normal(srx_pred[num_bills, ] * sigma_reg_x,5);
   sigma_abs_x ~ normal(sax_pred[num_bills, ] * sigma_abs_x,5);
   legis_x_cons ~ normal(0,5);;
@@ -133,6 +140,7 @@ model {
   sigma_abs_x_cons ~ normal(0,5);
   L_AR1 ~ normal(0,ar_sd); // these parameters shouldn't get too big
   extra_sd ~ exponential(1);
+  time_var ~ exponential(1/time_sd);
   //time_sd ~ exponential(5);
   if(model_type>2 && model_type<5) {
     for(i in 1:(m_step-2)) {

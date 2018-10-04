@@ -10,7 +10,7 @@ alpha_int <- rnorm(num_person)
 sigma <- 0.1
 adj_in <- runif(num_person,-.8,.8)
 
-t <- 40
+t <- 100
 
 
 .gen_ts_data <- function(t,adj_in,alpha_int,sigma,init_sides) {
@@ -98,11 +98,12 @@ real id_diff_high;
 } 
 parameters {
 vector[L-1] alpha_free;
-vector[L-1] adj_in_free;
-vector[L] Y[T];
+vector<lower=-0.8,upper=0.8>[L-1] adj_in_free;
+vector[L] Y_start;
+vector[T-1] Y_var;
 vector[B] discrim;
 vector[B] diff;
-vector<lower=0>[L] sigma;
+real<lower=0> sigma;
 vector[1] high;
 vector<lower=-0.8,upper=0.8>[1] adj_high;
 }
@@ -110,30 +111,35 @@ transformed parameters {
 vector[L] alpha;
 vector[L] adj_in;
 vector[1] low;
+vector[L] Y[T];
 
 low = high - id_diff;
-//low[1] = alpha_free[19];
+
 alpha=append_row(alpha_free,high);
 adj_in=append_row(adj_in_free,adj_high);
-//alpha=alpha_free;
+
+for(t in 1:T) {
+  if(t==1) {
+    Y[1] = Y_start;
+  } else {
+    Y[t] = alpha + adj_in .* Y[t-1] + sigma*Y_var[t-1];
+  }
+}
+
 }
 model {
 diff ~ normal(0,3);
 discrim ~ normal(0,3);
 alpha_free ~ normal(0,1);
-adj_in_free ~ normal(0,.5);
+adj_in_free ~ normal(0,2);
 adj_high ~ normal(0,1);
-sigma ~ exponential(1);
+sigma ~ exponential(1/.1);
 high ~ normal(id_diff_high,.01);
-
-Y[1] ~ normal(0,1);
-for(t in 2:T) {
-
-    Y[t] ~normal(adj_in .* Y[t - 1],.1);
-}
+Y_var ~ normal(0,1);
+Y_start ~ normal(0,1);
 
 for(n in 1:N) {
-  outcome[n] ~ bernoulli_logit(discrim[bb[n]] * (Y[tt[n],ll[n]] + alpha[ll[n]]) - diff[bb[n]]);
+  outcome[n] ~ bernoulli_logit(discrim[bb[n]] * (Y[tt[n],ll[n]]) - diff[bb[n]]);
 }
 
 }

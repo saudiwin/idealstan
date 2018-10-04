@@ -550,19 +550,6 @@
 #' Helper function for preparing person ideal point plot data
 .prepare_legis_data <- function(object) {
   
-  # person_data <- object@score_data@person_data
-  # 
-  # # Apply any filters from the data processing stage so that the labels match
-  # 
-  # if(length(object@score_data@subset_person)>0) {
-  #   person_data <- filter(person_data,person.names %in% object@score_data@subset_person)
-  # } else if(length(object@score_data@subset_group)>0) {
-  #   person_data <- filter(person_data,group %in% object@score_data@subset_person)
-  # }
-  # 
-  # if(length(object@score_data@to_sample)>0) {
-  #   person_data <- slice(person_data,object@score_data@to_sample)
-  # }
 
   # 
   if(length(unique(object@score_data@score_matrix$time_id))>1) {
@@ -599,10 +586,7 @@
     }
     
   } else {
-    
-    # NEED TO FIX WITH NEW DATA METHODS
-    
-    # need to apply true person names by time point
+    # need to match estimated parameters to original IDs
     person_params <- as.data.frame(object@stan_samples,pars='L_full')
     person_params <- person_params %>% gather(key = legis,value=ideal_pts) 
     # get ids out 
@@ -610,16 +594,28 @@
     person_ids <- data_frame(long_name=person_params$legis) %>% 
       distinct
     legis_nums <- stringr::str_extract_all(person_ids$long_name,'[0-9]+',simplify=T)
-    person_ids <-   mutate(person_ids,legis_id=as.numeric(legis_nums))
+    person_ids <-   mutate(person_ids,id_num=as.numeric(legis_nums))
+    
+    person_data <- distinct(select(object@score_data@score_matrix,
+                                   person_id,group_id))
+    
+    
     # add in all data in the person_data object
-    person_data <- mutate(person_data,row_names=1:n())
-    person_ids <- left_join(person_ids,person_data,by=c(legis_id='row_names'))
+    if(object@use_groups) {
+      person_data <- mutate(person_data,id_num=as.numeric(group_id))
+
+    } else {
+      person_data <- mutate(person_data,id_num=as.numeric(person_id))
+    }
+    
+    person_ids <- left_join(person_ids,person_data)
     
     person_params <-  person_params %>% 
       group_by(legis) %>% 
       summarize(low_pt=quantile(ideal_pts,0.1),high_pt=quantile(ideal_pts,0.9),
                 median_pt=median(ideal_pts)) %>% 
       left_join(person_ids,by=c(legis='long_name'))
+    
   }
   
   person_params 
@@ -709,18 +705,18 @@
     if(T>1) {
       if(use_ar) {
         return(list(restrict_high = array(rnorm(n=1,mean=diff_high,sd=restrict_sd)),
-                    L_free = rnorm(n=num_legis-1,mean=0,sd=person_sd),
-                    L_AR1 = runif(n = num_legis,min = -.5,max=.5)))
+                    L_free = array(rnorm(n=num_legis-2,mean=0,sd=person_sd)),
+                    L_AR1 = array(runif(n = num_legis,min = -.5,max=.5))))
       } else {
         return(list(restrict_high = array(rnorm(n=1,mean=diff_high,sd=restrict_sd)),
-                    L_free = rnorm(n=num_legis-2,mean=0,sd=person_sd),
-                    L_AR1 = runif(n = num_legis,min = -.5,max=.5)))
+                    L_free = array(rnorm(n=num_legis-2,mean=0,sd=person_sd)),
+                    L_AR1 = array(runif(n = num_legis,min = -.5,max=.5))))
       }
       
     } else {
       return(list(restrict_high = array(rnorm(n=1,mean=diff_high,sd=restrict_sd)),
-                  L_free = rnorm(n=num_legis-2,mean=0,sd=person_sd),
-                  L_AR1 = runif(n = num_legis,min = -.5,max=.5)))
+                  L_free = array(rnorm(n=num_legis-2,mean=0,sd=person_sd)),
+                  L_AR1 = array(runif(n = num_legis,min = -.5,max=.5))))
     }
 
   } else {
