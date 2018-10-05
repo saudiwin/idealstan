@@ -15,22 +15,25 @@
     }
   }
   
-  init_vals <- lapply(1,.init_stan,
-                      num_legis=this_data$num_legis,
-                      restrict_sd=this_data$restrict_sd,
-                      person_sd=this_data$legis_sd,
-                      diff_high=this_data$diff_high,
-                      actual=FALSE)
+  # init_vals <- lapply(1,.init_stan,
+  #                     num_legis=this_data$num_legis,
+  #                     restrict_sd=this_data$restrict_sd,
+  #                     person_sd=this_data$legis_sd,
+  #                     diff_high=this_data$diff_high,
+  #                     T=this_data$T,
+  #                     use_ar=this_data$use_ar,
+  #                     actual=FALSE)
+  
+
 
   to_use <- stanmodels[['irt_standard_noid']]
   post_modes <- rstan::vb(object=to_use,data =this_data,
-                          algorithm='meanfield',
-                          init=init_vals)
+                          algorithm='meanfield')
   
   # Test whether there is a lot of missing data
   
   #use_absence <- .det_missing(object=object,model_type=model_type)
-  
+
   lookat_params <- rstan::extract(post_modes,permuted=FALSE)
   this_params <- lookat_params[,1,]
   if(is.null(all_args)) {
@@ -760,3 +763,38 @@
 
   return(new_pts)
 }
+
+#' Pre-process rollcall objects
+.prepare_rollcall <- function(rc_obj=NULL,item_id=NULL,time_id=NULL) {
+  
+  # make the outcome
+
+  score_data <- as_data_frame(rc_obj$votes) %>% 
+    mutate(person_id=row.names(rc_obj$votes))  %>% 
+    gather(key = item_id,value = outcome,-person_id)
+  
+   # merge in other data
+  if(is.null(rc_obj$legis.data$legis.names)) {
+    rc_obj$legis.data$legis.names <- row.names(rc_obj$legis.data)
+  }
+  
+  score_data <- left_join(score_data,rc_obj$legis.data,by=c(person_id='legis.names'))
+  
+  score_data <- mutate(score_data,group_id=party)
+  
+  # extract time from bill labels if it exists
+  if(!is.null(time_id)) {
+
+    score_data <- left_join(score_data,as_data_frame(st.rc$vote.data),by=c(item_id=item_id))
+  } else {
+    score_data$time_id <- 1
+    time_id <- 'time_id'
+  }
+  
+  item_id <- 'item_id'
+  
+  return(list(score_data=score_data,
+              time_id=time_id,
+              item_id=item_id))
+  
+} 

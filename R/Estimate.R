@@ -105,13 +105,31 @@ id_make <- function(score_data=NULL,
   # make sure to ungroup it if it's a tidy data frame
   if('tbl' %in% class(score_data)) score_data <- ungroup(score_data)
   
-  # test for input and quote
+  # if object is a rollcall, pre-process data into long form
+  if('rollcall' %in% class(score_data)) {
+    score_data <- .prepare_rollcall(score_data,item_id=item_id,
+                                    time_id=time_id)
+    
+    time_id <- score_data$time_id
+    item_id <- score_data$item_id
+    score_data <- score_data$score_data
+    
+    miss_val <- 9
+    low_val <- 6
+    high_val <- 1
+    exclude_level <- c(3,7)
+
+  } 
   
-  outcome <- .check_quoted(outcome,quo(outcome))
-  item_id <- .check_quoted(item_id,quo(item_id))
-  time_id <- .check_quoted(time_id,quo(time_id))
-  group_id <- .check_quoted(group_id,quo(group_id))
-  person_id <- .check_quoted(person_id,quo(person_id))
+    # data is already in long form
+    # test for input and quote
+    outcome <- .check_quoted(outcome,quo(outcome))
+    item_id <- .check_quoted(item_id,quo(item_id))
+    time_id <- .check_quoted(time_id,quo(time_id))
+    group_id <- .check_quoted(group_id,quo(group_id))
+    person_id <- .check_quoted(person_id,quo(person_id))
+
+  
   
   # rename data
   # IDs are made factors now so we can re-arrange indices when need be
@@ -143,10 +161,10 @@ id_make <- function(score_data=NULL,
   
   # see what the max time point is
   
-  max_t <- max(as.numeric(factor(pull(score_rename,!!time_id))))
-  num_person <- max(as.numeric(factor(pull(score_rename,!!person_id))))
+  max_t <- max(as.numeric(factor(pull(score_rename,!!time_id))),na.rm=T)
+  num_person <- max(as.numeric(factor(pull(score_rename,!!person_id))),na.rm=T)
   num_group <- try(max(as.numeric(factor(pull(score_rename,!!group_id)))))
-  num_item <- max(as.numeric(factor(pull(score_rename,!!item_id))))
+  num_item <- max(as.numeric(factor(pull(score_rename,!!item_id))),na.rm=T)
   
   # create data frames for all hierachical parameters
   
@@ -279,30 +297,6 @@ id_make <- function(score_data=NULL,
   
   # make roll calls a separate function
   
-  if(class(score_data)=='rollcall') {
-    miss_val <- 9
-    low_val <- 6
-    high_val <- 1
-    exclude_level <- c(3,7)
-    row_names <- row.names(score_data$legis.data)
-    if(include_pres==F) {
-      person_data <- slice(score_data$legis.data,-1)
-      row_names <- row_names[-1]
-    } else {
-      person_data <- score_data$legis.data
-    }
-    
-    person_data <-  mutate(person_data,group=party,person.names=row_names)
-    
-    if(include_pres==F) {
-      score_matrix <- score_data$votes[-1,]
-    } else {
-      score_matrix <- score_data$votes
-    }
-    
-    row.names(score_matrix) <- row_names
-  } 
-  
   if(nrow(person_data)==0) {
     person_data <- data_frame(person.names=as.character(1:num_person))
   }
@@ -391,7 +385,6 @@ id_make <- function(score_data=NULL,
 #' @param niters The number of iterations to run Stan's sampler. Shouldn't be set much lower than 500. See \code{\link[rstan]{stan}} for more info.
 #' @param use_vb Whether or not to use Stan's variational Bayesian inference engine instead of full Bayesian inference. Pros: it's much faster.
 #' Cons: it's not quite as accurate. See \code{\link[rstan]{vb}} for more info.
-#' @param nfix An integer specifying the number of parameters to constrain (for both high and low) if \code{fixtype} is set to \code{'vb'}
 #' @param warmup The number of iterations to use to calibrate Stan's sampler on a given model. Shouldn't be less than 100. 
 #' See \code{\link[rstan]{stan}} for more info.
 #' @param ncores The number of cores in your computer to use for parallel processing in the Stan engine. 
@@ -513,7 +506,7 @@ id_make <- function(score_data=NULL,
 #' @export
 id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=FALSE,
                            subset_group=NULL,subset_person=NULL,sample_size=20,
-                           nchains=4,niters=2000,use_vb=FALSE,nfix=3,
+                           nchains=4,niters=2000,use_vb=FALSE,
                            restrict_ind_high=NULL,
                           id_diff=4,
                         id_diff_high=2,
@@ -544,6 +537,10 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
 
     #hier_type <- suppressWarnings(.get_hier_type(idealdata))
     idealdata@stanmodel <- stanmodels[['irt_standard']]
+    
+  # currently fixed at one param, can change in future versions
+    
+  nfix <- 1
    
     #Using an un-identified model with variational inference, find those parameters that would be most useful for
     #constraining/pinning to have an identified model for full Bayesian inference
@@ -595,11 +592,11 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
     N_cont <- length(Y)
     N_int <- 1L
     Y_cont <- Y
-    Y_int <- 1L
+    Y_int <- array(1L)
   } else {
     N_cont <- 1L
     N_int <- length(Y)
-    Y_cont <- 1
+    Y_cont <- array(1)
     Y_int <- as.integer(Y)
   }
 

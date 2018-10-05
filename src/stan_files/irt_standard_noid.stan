@@ -31,8 +31,6 @@ data {
   // int i_lag;
   int<lower=1> num_legis;
   int<lower=1> num_bills;
-  int num_fix_high;
-  int num_fix_low;
   int ll[N];
   int bb[N];
   int time[N];
@@ -40,7 +38,6 @@ data {
   matrix[num_legis,LX] legis_pred[T];
   matrix[num_bills,SRX] srx_pred;
   matrix[num_bills,SAX] sax_pred;
-  real diff; // difference between high and low constrained parameters
   real discrim_reg_sd;
   real discrim_abs_sd;
   real legis_sd;

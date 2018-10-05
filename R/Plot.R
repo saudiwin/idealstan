@@ -422,10 +422,10 @@ id_plot_legis_dyn <- function(object,return_data=FALSE,item_plot=NULL,
   group_labels <- quo(group_id)
   person_params <- .prepare_legis_data(object) 
   
-  if(person_plot) {
-    base_id <- ~person_id
-  } else {
+  if(object@use_groups) {
     base_id <- ~group_id
+  } else {
+    base_id <- ~person_id
   }
   
   # allow the option of plotting "true" ideal points instead of estimated ones as lines
@@ -474,13 +474,13 @@ id_plot_legis_dyn <- function(object,return_data=FALSE,item_plot=NULL,
       outplot <- outplot + 
         geom_line(aes_(y=~median_pt,group=base_id,
                        colour=~group_id),
-                  alpha=person_ci_alpha,
+                  #alpha=person_ci_alpha,
                   size=line_size)
     } else {
       
       outplot <- outplot + 
         geom_line(aes_(y=~median_pt,colour=base_id),
-                  alpha=person_ci_alpha,
+                  #alpha=person_ci_alpha,
                   size=line_size)
     }
   }

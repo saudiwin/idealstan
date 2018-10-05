@@ -153,7 +153,6 @@ setMethod('sample_model',signature(object='idealdata'),
                                     ...)
             } else {
               out_model <- vb(object@stanmodel,data=this_data,
-                              init=init_vals,
                               ...)
             }
             outobj <- new('idealstan',

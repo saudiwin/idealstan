@@ -26,7 +26,7 @@ id_plot_legis(object, return_data = FALSE, item_plot = NULL,
 
 \item{hjust_length}{horizontal adjustment of the legislator labels}
 
-\item{person_labels}{if \code{TRUE}, use the person.names column to plot labels for the person (legislator) ideal points}
+\item{person_labels}{if \code{TRUE}, use the person_id column to plot labels for the person (legislator) ideal points}
 
 \item{group_labels}{if \code{TRUE}, use the group column to plot text markers for the group (parties) from the person/legislator data}
 

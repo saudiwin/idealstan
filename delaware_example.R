@@ -6,23 +6,48 @@
 require(idealstan)
 require(ggplot2)
 require(dplyr)
+require(stringr)
 
 load('DE 2018.Rdata')
 
 # see if we can make idealstan data that works
+# convert st.rc vote.data to contain dates
+# we need to the column labels to be unique, which they currently aren't
 
-to_ideal <- id_make(st.rc,ordinal=F,inflate=T,time='separate',include_pres=T)
+vote_labels <- colnames(st.rc$votes)
+years <- str_extract(vote_labels,'\\_[a-z][0-9]+') %>% 
+  str_replace_all('\\_|[a-z]',"") 
+# make years a date by adding month/day
+years <- paste0(years,'-01-01')
+years <- lubridate::ymd(years)
+vote_labels <- as.character(1:ncol(st.rc$votes))
+st.rc$vote.data <- data_frame(vote_labels=vote_labels,
+                              years=years)
+colnames(st.rc$votes) <- vote_labels
+
+to_ideal <- id_make(st.rc,ordinal=F,inflate=T,time='separate',include_pres=T,
+                    item_id="vote_labels",
+                    time_id='years')
+
+# look at distribution of outcome
+
+table(to_ideal@score_matrix$outcome)
+
+# Values of 3 indicate missing (absent from vote)
+
+# values coded as NA, though, indicate missing from legislature
+
+sum(is.na(to_ideal@score_matrix$outcome))
+
+# approximately half of the values are NA and will be dropped from the estimation (i.e. considered ignorable)
 
 
 # now see if we can estimate something
 # random walk prior
 
 estimate_rw <- id_estimate(to_ideal,use_vb = T,model_type = 2,
-                            use_groups = T,nfix = 1,restrict_type='constrain_twoway',
-                            restrict_ind_high = 2,
-                            restrict_ind_low=1,
-                            time_sd=15,
-                            fixtype='vb')
+                            use_groups = T,
+                            time_sd=.1)
 
 # we can get all estimated parameters with summary. The legislator ideal points will be
 # L_tp1[t,n]
@@ -31,63 +56,27 @@ all_params <- summary(estimate_rw,pars='L_tp1')
 
 # look at plot 
 
-all_params <- all_params %>% mutate(param_id=stringr::str_extract(parameters,'[0-9]\\]'),
-                      param_id=as.numeric(stringr::str_extract(param_id,'[0-9]')),
-                      param_id=factor(param_id,labels=c('R','X','D')),
-                      time=stringr::str_extract(parameters,'\\[[0-9]+'),
-                      time=as.numeric(stringr::str_extract(time,'[0-9]+')))
-
-all_params <- left_join(all_params,
-                        data_frame(time=unique(to_ideal@time_vals),
-                                   time_vals=unique(to_ideal@time)))
-
-
-rw_plot <- all_params %>% 
-  filter(param_id!='X') %>% 
-  ggplot(aes(y=posterior_median,x=time)) +
-  geom_line(aes(colour=param_id),size=1) +
-  geom_ribbon(aes(ymin=Prob.025,
-                  ymax=Prob.975,
-                  colour=param_id),
-              alpha=0.3)
+id_plot_legis_dyn(estimate_rw,text_size_label = 6)
 
 # now try with an AR(1) (stationary) model
+# we allow for more over-time variance because the time series are stationary and can bounce more
 
 estimate_ar <- id_estimate(to_ideal,use_vb = T,
-                            use_groups = T,nfix = 1,restrict_type='constrain_twoway',
-                            time_sd=10,
-                            fixtype='constrained',
-                            restrict_ind_high = 2,
-                            restrict_ind_low=1,
-                            use_ar = T)
+                           model_type = 2,
+                           use_groups = T,
+                           time_sd=.5)
 
-# we can get all estimated parameters with summary. The legislator ideal points will be
-# L_tp1[t,n]
+id_plot_legis_dyn(estimate_ar,text_size_label = 6)
 
-all_params <- summary(estimate_ar,pars='L_tp1')
+# the scales might flip, but the gap is essentially the same. Interestingly, this model shows Republicans
+# and independents much closer to each other
 
-# look at plot 
 
-all_params <- all_params %>% mutate(param_id=stringr::str_extract(parameters,'[0-9]\\]'),
-                                    param_id=as.numeric(stringr::str_extract(param_id,'[0-9]')),
-                                    param_id=factor(param_id,labels=c('X','R','D')),
-                                    time=stringr::str_extract(parameters,'\\[[0-9]+'),
-                                    time=as.numeric(stringr::str_extract(time,'[0-9]+')))
+# Now let's do full Bayesian inference
 
-all_params <- left_join(all_params,
-                        data_frame(time=unique(to_ideal@time_vals),
-                                   time_vals=unique(to_ideal@time)))
+estimate_ar_full <- id_estimate(to_ideal,use_vb = F,
+                           model_type = 2,
+                           use_groups = T,
+                           time_sd=.5)
 
-ar_plot <- all_params %>% 
-  filter(param_id!='X') %>% 
-  ggplot(aes(y=posterior_median,x=time_vals)) +
-  geom_line(aes(colour=param_id),size=1) +
-  geom_ribbon(aes(ymin=Prob.025,
-                  ymax=Prob.975,
-                  colour=param_id),
-              alpha=0.3)
-
-gridExtra::grid.arrange(ar_plot,rw_plot)
-rw_plot
-ggsave('ar_rw_comparison2.png')
-
+id_plot_legis_dyn(estimate_ar_full,text_size_label = 6)

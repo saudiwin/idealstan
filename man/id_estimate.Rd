@@ -7,14 +7,13 @@
 id_estimate(idealdata = NULL, model_type = 2, use_subset = FALSE,
   sample_it = FALSE, subset_group = NULL, subset_person = NULL,
   sample_size = 20, nchains = 4, niters = 2000, use_vb = FALSE,
-  nfix = 3, restrict_ind_high = NULL, id_diff = 4,
-  id_diff_high = 2, restrict_ind_low = NULL, fixtype = "vb",
-  warmup = floor(niters/2), ncores = 4, auto_id = FALSE,
-  use_ar = FALSE, use_groups = FALSE, discrim_reg_sd = 3,
-  discrim_miss_sd = 3, person_sd = 1, time_sd = 4,
-  sample_stationary = FALSE, ar_sd = 0.5, diff_reg_sd = 4,
-  diff_miss_sd = 4, restrict_sd = 0.1, restrict_low_bar = 0,
-  restrict_high_bar = 0, ...)
+  restrict_ind_high = NULL, id_diff = 4, id_diff_high = 2,
+  restrict_ind_low = NULL, fixtype = "vb", warmup = floor(niters/2),
+  ncores = 4, auto_id = FALSE, use_ar = FALSE, use_groups = FALSE,
+  discrim_reg_sd = 1, discrim_miss_sd = 1, person_sd = 3,
+  time_sd = 4, sample_stationary = FALSE, ar_sd = 2,
+  diff_reg_sd = 1, diff_miss_sd = 1, restrict_sd = 0.1,
+  restrict_low_bar = 0, restrict_high_bar = 0, ...)
 }
 \arguments{
 \item{idealdata}{An object produced by the \code{\link{id_make}} containing a score/vote matrix for use for estimation & plotting}
@@ -41,8 +40,6 @@ the response matrix}
 
 \item{use_vb}{Whether or not to use Stan's variational Bayesian inference engine instead of full Bayesian inference. Pros: it's much faster.
 Cons: it's not quite as accurate. See \code{\link[rstan]{vb}} for more info.}
-
-\item{nfix}{An integer specifying the number of parameters to constrain (for both high and low) if \code{fixtype} is set to \code{'vb'}}
 
 \item{restrict_ind_high}{If \code{fixtype} is not "vb", the particular indices of legislators/persons or bills/items to constrain high}
 

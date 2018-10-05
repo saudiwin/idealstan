@@ -10,7 +10,8 @@ id_plot_legis_dyn(object, return_data = FALSE, item_plot = NULL,
   highlight = NULL, plot_text = TRUE, use_ci = TRUE,
   person_line_alpha = 0.3, person_ci_alpha = 0.8, show_score = NULL,
   abs_and_reg = "both", show_true = FALSE, group_color = TRUE,
-  hpd_limit = 10, group_overlap = FALSE, sample_persons = NULL, ...)
+  hpd_limit = 10, group_overlap = FALSE, sample_persons = NULL,
+  plot_sim = FALSE, ...)
 }
 \arguments{
 \item{object}{A fitted \code{idealstan} object}
@@ -60,6 +61,9 @@ or 'Absence Points' for only the absence midpoints or 'Vote Points' for only the
 
 \item{sample_persons}{If you don't want to use the full number of persons/legislators from the model, enter a proportion (between 0 and 1) to select
 only a fraction of the persons/legislators.}
+
+\item{plot_sim}{Whether to plot the true values of parameters if a simulation was used to generate data 
+(see \code{\link{id_sim_gen}})}
 
 \item{...}{Other options passed on to plotting function, currently ignored}
 }

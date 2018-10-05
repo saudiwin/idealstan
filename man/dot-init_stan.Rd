@@ -5,7 +5,8 @@
 \title{Simple function to provide initial values to Stan given current values of restrict_sd}
 \usage{
 .init_stan(chain_id = NULL, restrict_sd = NULL, person_sd = NULL,
-  num_legis = NULL, diff_high = NULL, actual = TRUE)
+  num_legis = NULL, diff_high = NULL, T = NULL, actual = TRUE,
+  use_ar = NULL)
 }
 \description{
 Simple function to provide initial values to Stan given current values of restrict_sd
