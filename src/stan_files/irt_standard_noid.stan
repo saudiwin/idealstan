@@ -44,11 +44,10 @@ data {
   real diff_abs_sd;
   real diff_reg_sd;
   real restrict_sd;
-  real restrict_low_bar;
-  real restrict_high_bar;
   real time_sd;
   real ar_sd;
-  int sample_stationary;
+  int restrict_var;
+  real restrict_var_high;
 }
 
 transformed data {
@@ -82,7 +81,9 @@ parameters {
   vector[num_bills] B_int_free;
   vector[num_bills] A_int_free;
   real<lower=0> extra_sd;
-  real<lower=0> time_var;
+  vector<lower=0>[num_legis] time_var;
+  vector<lower=0,upper=restrict_var_high>[num_legis] time_var_restrict;
+  
   //vector[num_legis] L_start; // starting values for time series
   //real<lower=0> time_sd;
 }
@@ -137,7 +138,6 @@ model {
   sigma_abs_x_cons ~ normal(0,5);
   L_AR1 ~ normal(0,ar_sd); // these parameters shouldn't get too big
   extra_sd ~ exponential(1);
-  time_var ~ exponential(1/time_sd);
   //time_sd ~ exponential(5);
   if(model_type>2 && model_type<5) {
     for(i in 1:(m_step-2)) {

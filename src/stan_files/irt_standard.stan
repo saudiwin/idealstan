@@ -27,9 +27,6 @@ data {
   int SRX;
   int SAX;
   int use_ar;
-  // int ar_lag;
-  // int ma_lag;
-  // int i_lag;
   int<lower=1> num_legis;
   int<lower=1> num_bills;
   int num_fix_high;
@@ -37,7 +34,6 @@ data {
   int ll[N];
   int bb[N];
   int time[N];
-  //vector[N] exog_data;
   matrix[num_legis,LX] legis_pred[T];
   matrix[num_bills,SRX] srx_pred;
   matrix[num_bills,SAX] sax_pred;
@@ -49,12 +45,11 @@ data {
   real diff_abs_sd;
   real diff_reg_sd;
   real restrict_sd;
-  real restrict_low_bar;
-  real restrict_high_bar;
-  //real time_sd;
   real ar_sd;
   int sample_stationary;
   real time_sd;
+  int restrict_var;
+  real restrict_var_high;
 }
 
 transformed data {
@@ -64,6 +59,8 @@ transformed data {
 	int absence[N]; // need to create absence indicator
 	int num_constrain_l;
 	int Y_new[N];
+	int num_var_free; // whether to restrict variance parameters
+	int num_var_restrict;
 	
 	// need to assign a type of outcome to Y based on the model (discrete or continuous)
 	// to do this we need to trick Stan into assigning to an integer. 
@@ -81,7 +78,7 @@ parameters {
   vector[num_legis] L_tp1_var[T-1]; // non-centered variance
   vector<lower=-.99,upper=.99>[num_legis-1] L_AR1_free; // AR-1 parameters for AR-1 model
   vector[num_bills] sigma_reg_free;
-  vector<lower=restrict_high_bar>[num_fix_high] restrict_high;
+  vector[num_fix_high] restrict_high;
   vector[LX] legis_x;
   vector[SRX] sigma_reg_x;
   vector[SAX] sigma_abs_x;
@@ -93,8 +90,10 @@ parameters {
   ordered[m_step-1] steps_votes;
   ordered[m_step-1] steps_votes_grm[num_bills];
   real<lower=0> extra_sd;
-  real<lower=0> time_var;
   real<lower=-.9,upper=.9> ar_fix;
+  vector<lower=0>[num_var_free] time_var;
+  vector<lower=0,upper=restrict_var_high>[num_var_restrict] time_var_restrict;
+  
 }
 
 transformed parameters {
@@ -152,7 +151,6 @@ model {
   sigma_abs_x_cons ~ normal(0,5);
   sigma_reg_x_cons ~ normal(0,5);
   extra_sd ~ exponential(1);
-  time_var ~ exponential(1/time_sd);
   ar_fix ~ normal(0,1);
   L_AR1_free ~ normal(0,ar_sd);
 
@@ -172,21 +170,6 @@ model {
   for(t in 1:(T-1)) {
     L_tp1_var[t] ~ normal(0,1);
   }
-
-/*
-	if(T>1) {
-    if(use_ar==1) {
-
-    } else {
-  // need to constrain the mean of some parameters to be positive
-  // use the highest positive values
-  mean(L_tp1[,num_legis-1]) ~ normal(diff_high,time_sd);
-    }
-  }
-  */
-  /* if(sample_stationary==1) {
-    target += jacobian_stationary(L_AR1_r);
-  } */
 
   B_int_free ~ normal(0,diff_reg_sd);
   A_int_free ~ normal(0,diff_abs_sd);

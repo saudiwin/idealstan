@@ -20,4 +20,14 @@ if(num_legis==2) {
   
 }
 
+// determine whether to restrict variance or not
+
+if(restrict_var==1) {
+  num_var_restrict=num_legis;
+  num_var_free=0;
+} else {
+  num_var_restrict=0;
+  num_var_free=num_legis;
+}
+
 

@@ -140,15 +140,20 @@ id_make <- function(score_data=NULL,
     mutate(item_id=factor(!! quo(item_id)),
            person_id=factor(!! quo(person_id)))
   
-  if(!is.null(group_id)) {
-    score_rename$group_id <- factor(pull(score_data,!!group_id))
+  # if time or group IDs don't exist, make dummies
+  
+  test_group <- try(factor(pull(score_data,!!group_id)))
+  test_time <- try(pull(score_data,!!time_id))
+  
+  if(any('try-error' %in% class(test_group))) {
+    score_rename$group_id <- factor("G")
   } else {
-      score_rename$group_id <- factor("G")
-    }
-  if(!is.null(time_id)) {
-    score_rename$time_id <- pull(score_data,!!time_id)
-  } else {
+    score_rename$group_id <- test_group
+  }
+  if(any('try-error' %in% class(test_time))) {
     score_rename$time_id <- 1
+  } else {
+    score_rename$time_id <- test_time
   }
   
   # now we can make these all quosures again to use in NSE
@@ -419,8 +424,10 @@ id_make <- function(score_data=NULL,
 #' @param diff_reg_sd Set the prior standard deviation for the bill (item) intercepts for the non-inflated model.
 #' @param diff_miss_sd Set the prior standard deviation for the bill (item) intercepts for the inflated model.
 #' @param restrict_sd Set the prior standard deviation for constrained parameters
-#' @param restrict_low_bar Set the constraint threshold for constrained parameters (parameter must be lower than this bar and no greater than zero)
-#' @param restrict_high_bar Set the constraint threshold for constrained parameters (parameter must be higher than this bar and no less than zero)
+#' @param restrict_var Whether to limit variance to no higher than 0.5 for random-walk time series models.
+#' @param restrict_var_high The upper limit for the variance parameter (if \code{restrict_var=TRUE} & 
+#' model is a random-walk time-series)
+#' Set to \code{TRUE} as default because random-walk models are difficult to identify otherwise.
 #' @param ... Additional parameters passed on to Stan's sampling engine. See \code{\link[rstan]{stan}} for more information.
 #' @return A fitted \code{\link{idealstan}} object that contains posterior samples of all parameters either via full Bayesian inference
 #' or a variational approximation if \code{use_vb} is set to \code{TRUE}. This object can then be passed to the plotting functions for further analysis.
@@ -511,21 +518,21 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
                           id_diff=4,
                         id_diff_high=2,
                            restrict_ind_low=NULL,
-                           fixtype='vb',warmup=floor(niters/2),ncores=4,
+                           fixtype='vb_full',warmup=floor(niters/2),ncores=4,
                            auto_id=FALSE,
                           use_ar=FALSE,
                         use_groups=FALSE,
                            discrim_reg_sd=1,
                            discrim_miss_sd=1,
                            person_sd=3,
-                        time_sd=4,
+                        time_sd=.1,
                         sample_stationary=FALSE,
-                        ar_sd=2,
+                        ar_sd=1,
                            diff_reg_sd=1,
                            diff_miss_sd=1,
-                           restrict_sd=0.1,
-                           restrict_low_bar=0,
-                        restrict_high_bar=0,
+                           restrict_sd=0.01,
+                        restrict_var=TRUE,
+                        restrict_var_high=0.15,
                            ...) {
 
   
@@ -606,29 +613,34 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
                     Y_int=Y_int,
                     Y_cont=Y_cont,
                     T=max(timepoints),
-                    num_legis=max(legispoints),
+                    num_legis=as.integer(max(legispoints)),
                     num_bills=num_bills,
                     ll=legispoints,
                     bb=billpoints,
-                    time=timepoints,
+                    num_fix_high=as.integer(1),
+                    num_fix_low=as.integer(1),
                     LX=dim(idealdata@person_cov)[3],
                     SRX=ncol(idealdata@item_cov),
                     SAX=ncol(idealdata@item_cov_miss),
                     legis_pred=legis_pred,
+                    group_pred=idealdata@group_cov,
                     srx_pred=idealdata@item_cov,
                     sax_pred=idealdata@item_cov_miss,
+                    time=timepoints,
                     model_type=model_type,
                     discrim_reg_sd=discrim_reg_sd,
                     discrim_abs_sd=discrim_miss_sd,
-                    legis_sd=person_sd,
                     diff_reg_sd=diff_reg_sd,
                     diff_abs_sd=diff_miss_sd,
+                    legis_sd=person_sd,
                     restrict_sd=restrict_sd,
-                    restrict_low_bar=restrict_low_bar,
-                    restrict_high_bar=restrict_high_bar,
                     use_ar=as.integer(use_ar),
+                    diff=idealdata@diff,
+                    diff_high=idealdata@diff_high,
                     time_sd=time_sd,
-                    ar_sd=ar_sd)
+                    ar_sd=ar_sd,
+                    restrict_var=restrict_var,
+                    restrict_var_high=restrict_var_high)
 
   idealdata <- id_model(object=idealdata,fixtype=fixtype,model_type=model_type,this_data=this_data,
                         nfix=nfix,restrict_ind_high=restrict_ind_high,
@@ -713,13 +725,13 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
                     diff_abs_sd=diff_miss_sd,
                     legis_sd=person_sd,
                     restrict_sd=restrict_sd,
-                    restrict_low_bar=restrict_low_bar,
-                    restrict_high_bar=restrict_high_bar,
                     use_ar=as.integer(use_ar),
                     diff=idealdata@diff,
                     diff_high=idealdata@diff_high,
                     time_sd=time_sd,
-                    ar_sd=ar_sd)
+                    ar_sd=ar_sd,
+                    restrict_var=restrict_var,
+                    restrict_var_high=restrict_var_high)
 
   outobj <- sample_model(object=idealdata,nchains=nchains,niters=niters,warmup=warmup,ncores=ncores,
                          this_data=this_data,use_vb=use_vb,...)

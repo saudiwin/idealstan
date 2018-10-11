@@ -267,4 +267,44 @@ if(model_type==1) {
           }
         }
 
+} else if(model_type==13) {
+  //latent space non-inflated (normal parameterization)
+  if(T==1) {
+        pi1 = sigma_reg_free[bb]  + sigma_abs_free[bb] -  A_int_free[1]*square( L_full[ll] - B_int_free[bb]);
+  } else {
+      for(n in 1:N) {
+
+        pi1[n] = sigma_reg_free[bb[n]] + sigma_abs_free[bb[n]] -
+                  A_int_free[1]*square(L_tp1[time[n],ll[n]] - B_int_free[bb[n]]);
+
+      }
+    }
+      
+  Y_new ~ bernoulli_logit(pi1);
+  
+} else if(model_type==14) {
+  //latent space inflated (idealstan parameterization)
+    if(T==1) {
+        pi1 = sigma_reg_free[1] *  square(L_full[ll] - B_int_free[bb]);
+        pi2 = sigma_abs_free[1] * square(L_full[ll] - A_int_free[bb]) ;
+    } else {
+        for(n in 1:N) {
+          
+              pi1[n] = sigma_reg_free[1] *  square(L_tp1[time[n],ll[n]] - B_int_free[bb[n]]);
+              pi2[n] = sigma_abs_free[1] * square(L_tp1[time[n],ll[n]] - A_int_free[bb[n]]); 
+
+        }
+    }
+
+    for(n in 1:N) {
+        
+        if(absence[n]==1) {
+  	      1 ~ bernoulli_logit(pi2[n]);
+        } else {
+          0 ~ bernoulli_logit(pi2[n]);
+          Y_new[n] ~ bernoulli_logit(pi1[n]);
+          }
+    }
+  
 }
+

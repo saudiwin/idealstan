@@ -6,27 +6,20 @@
                     restrict_ind_high=NULL,
                     restrict_ind_low=NULL,
                     model_type=NULL,
-                    use_groups=NULL,...) {
-  
+                    use_groups=NULL,
+                    fixtype=NULL,...) {
+
   # check for windows 
   if(ncores>1) {
     if(.Platform$OS.type=='windows') {
       ncores <- 1
     }
   }
-  
-  # init_vals <- lapply(1,.init_stan,
-  #                     num_legis=this_data$num_legis,
-  #                     restrict_sd=this_data$restrict_sd,
-  #                     person_sd=this_data$legis_sd,
-  #                     diff_high=this_data$diff_high,
-  #                     T=this_data$T,
-  #                     use_ar=this_data$use_ar,
-  #                     actual=FALSE)
-  
 
 
   to_use <- stanmodels[['irt_standard_noid']]
+
+  
   post_modes <- rstan::vb(object=to_use,data =this_data,
                           algorithm='meanfield')
   
@@ -41,65 +34,85 @@
   } 
   
   all_params <- attributes(this_params)$dimnames$parameters
-  old_matrix <- object@score_matrix
   
   # Or constrain persons instead of discriminations
   # adjust for which time point we are looking at -- use first time point person param
   person <- apply(this_params[,grepl(pattern = 'L_full',x=all_params)],2,mean)
-  fix_param <- "L_free"
   
-  # now we know which ones to constrain
   
-  to_constrain_high <- sort(person,index.return=TRUE,decreasing=TRUE)
-  to_constrain_high <- to_constrain_high$ix[1:nfix]
-  to_constrain_low <- sort(person,index.return=TRUE)
-  to_constrain_low <- to_constrain_low$ix[1:nfix]
-  
-  # change to group parameters if index is for groups
-  
-  # now re-order the factors so that the indices will match  
-  
-  if(use_groups==T) {
-    # reorder group parameters
-    # check if there are more than 2
-    if(length(unique(object@score_matrix$group_id))>2) {
-      object@score_matrix <- mutate(ungroup(object@score_matrix), 
-                                    group_id=factor(!! quo(group_id)),
-                                    group_id= factor(!! quo(group_id),
-                                                     levels=c(levels(!! quo(group_id))[-c(to_constrain_low,
-                                                                                          to_constrain_high)],
-                                                              levels(!! quo(group_id))[c(to_constrain_low,
-                                                                                         to_constrain_high)])))
+  if(fixtype=='vb_full') {
+    
+    # now we know which ones to constrain
+    
+    to_constrain_high <- sort(person,index.return=TRUE,decreasing=TRUE)
+    to_constrain_high <- to_constrain_high$ix[1:nfix]
+    to_constrain_low <- sort(person,index.return=TRUE)
+    to_constrain_low <- to_constrain_low$ix[1:nfix]
+    
+    # change to group parameters if index is for groups
+    
+    # now re-order the factors so that the indices will match  
+    
+    if(use_groups==T) {
+      # reorder group parameters
+      # check if there are more than 2
+      if(length(unique(object@score_matrix$group_id))>2) {
+        object@score_matrix <- mutate(ungroup(object@score_matrix), 
+                                      group_id=factor(!! quo(group_id)),
+                                      group_id= factor(!! quo(group_id),
+                                                       levels=c(levels(!! quo(group_id))[-c(to_constrain_low,
+                                                                                            to_constrain_high)],
+                                                                levels(!! quo(group_id))[c(to_constrain_low,
+                                                                                           to_constrain_high)])))
+      } else {
+        object@score_matrix <- mutate(ungroup(object@score_matrix), 
+                                      group_id=factor(!! quo(group_id)),
+                                      group_id= relevel(!! quo(group_id),
+                                                        levels(!! quo(group_id))[to_constrain_high]))
+      }
+      
     } else {
-      object@score_matrix <- mutate(ungroup(object@score_matrix), 
-                                    group_id=factor(!! quo(group_id)),
-                                    group_id= relevel(!! quo(group_id),
-                                                      levels(!! quo(group_id))[to_constrain_high]))
+      if(length(unique(object@score_matrix$person_id))>2) {
+        object@score_matrix <- mutate(ungroup(object@score_matrix), 
+                                      person_id=factor(!! quo(person_id)),
+                                      person_id= factor(!! quo(person_id),
+                                                        levels=c(levels(person_id)[-c(to_constrain_low,
+                                                                                      to_constrain_high)],
+                                                                 levels(person_id)[c(to_constrain_low,
+                                                                                     to_constrain_high)])))
+      } else {
+        object@score_matrix <- mutate(ungroup(object@score_matrix), 
+                                      person_id=factor(!! quo(person_id)),
+                                      person_id= relevel(!! quo(person_id),
+                                                         levels(!! quo(person_id))[to_constrain_high]))
+      }
+      
     }
+    
+    # what to constrain the difference to given the priors
+    diff_high <- person[to_constrain_high[1]] 
+    diff <- person[to_constrain_high[1]]  - person[to_constrain_low[1]]
     
   } else {
-    if(length(unique(object@score_matrix$person_id))>2) {
-      object@score_matrix <- mutate(ungroup(object@score_matrix), 
-                                    person_id=factor(!! quo(person_id)),
-                                    person_id= factor(!! quo(person_id),
-                                                      levels=c(levels(person_id)[-c(to_constrain_low,
-                                                                                    to_constrain_high)],
-                                                               levels(person_id)[c(to_constrain_low,
-                                                                                   to_constrain_high)])))
+    # use partial ID (we already know which ones to constrain, just figure out diff)
+    if(use_groups) {
+      to_constrain_high <- which(levels(object@score_matrix$group_id)==restrict_ind_high)
+      to_constrain_low <- which(levels(object@score_matrix$group_id)==restrict_ind_low)
     } else {
-      object@score_matrix <- mutate(ungroup(object@score_matrix), 
-                                    person_id=factor(!! quo(person_id)),
-                                    person_id= relevel(!! quo(person_id),
-                                                       levels(!! quo(person_id))[to_constrain_high]))
+      to_constrain_high <- which(levels(object@score_matrix$person_id)==restrict_ind_high)
+      to_constrain_low <- which(levels(object@score_matrix$person_id)==restrict_ind_low)
     }
     
+    
+    diff_high <- abs(person[to_constrain_high])
+    diff <- diff_high - sign(person[to_constrain_high])*person[to_constrain_low]
+    
+    # next we are going to re-order the person IDs around the constraints
+    
+    object <- .constrain_fix(object=object,restrict_ind_high = restrict_ind_high,
+                             restrict_ind_low=restrict_ind_low,
+                             use_groups=use_groups)
   }
-  
-  # what to constrain the difference to given the priors
-  diff_high <- person[to_constrain_high[1]] 
-  diff <- person[to_constrain_high[1]]  - person[to_constrain_low[1]]
-  
-  object@restrict_count <- c(to_constrain_high,to_constrain_low)
   
   this_data$num_fix_high <- 1
   this_data$num_fix_low <- 1
@@ -107,10 +120,9 @@
   
   this_data$constrain_par <- 1
   
-  object@restrict_num_high <- 1
-  object@restrict_num_low <- 1
+  object@restrict_num_high <- to_constrain_high
+  object@restrict_num_low <- to_constrain_low
   object@constraint_type <- this_data$constraint_type
-  object@param_fix <- this_data$constrain_par
   object@diff <- diff
   object@diff_high <- diff_high
   return(object)
@@ -699,6 +711,8 @@
                        num_legis=NULL,
                        diff_high=NULL,
                        T=NULL,
+                       time_sd=NULL,
+                       restrict_var=NULL,
                        actual=TRUE,
                        use_ar=NULL) {
 
@@ -706,14 +720,16 @@
   if(actual==TRUE) {
     # full run
     if(T>1) {
-      if(use_ar) {
+      if(restrict_var) {
         return(list(restrict_high = array(rnorm(n=1,mean=diff_high,sd=restrict_sd)),
                     L_free = array(rnorm(n=num_legis-2,mean=0,sd=person_sd)),
-                    L_AR1 = array(runif(n = num_legis,min = -.5,max=.5))))
+                    L_AR1 = array(runif(n = num_legis,min = -.5,max=.5)),
+                    time_var_restrict = rep(time_sd,num_legis)))
       } else {
         return(list(restrict_high = array(rnorm(n=1,mean=diff_high,sd=restrict_sd)),
                     L_free = array(rnorm(n=num_legis-2,mean=0,sd=person_sd)),
-                    L_AR1 = array(runif(n = num_legis,min = -.5,max=.5))))
+                    L_AR1 = array(runif(n = num_legis,min = -.5,max=.5)),
+                    time_var = rep(time_sd,num_legis)))
       }
       
     } else {

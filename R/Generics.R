@@ -140,6 +140,8 @@ setMethod('sample_model',signature(object='idealdata'),
                                 person_sd=this_data$legis_sd,
                                 diff_high=this_data$diff_high,
                                 T=this_data$T,
+                                restrict_var=this_data$restrict_var,
+                                time_sd=this_data$time_sd,
                                 use_ar=this_data$use_ar,
                                 actual=TRUE)
 
@@ -178,7 +180,7 @@ setMethod('id_model',signature(object='idealdata'),
 
             x <- object@score_matrix
             
-            run_id <- switch(fixtype,vb=.vb_fix,constrained=.constrain_fix)
+            run_id <- switch(fixtype,vb_full=.vb_fix,vb_partial=.vb_fix,constrained=.constrain_fix)
 
             object <- run_id(object=object,this_data=this_data,nfix=nfix,
                    restrict_ind_high=restrict_ind_high,
@@ -186,7 +188,8 @@ setMethod('id_model',signature(object='idealdata'),
                    auto_id=auto_id,
                    ncores=ncores,
                    model_type=model_type,
-                   use_groups=use_groups)
+                   use_groups=use_groups,
+                   fixtype=fixtype)
             
 
             return(object)
