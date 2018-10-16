@@ -48,7 +48,7 @@ data {
   int sample_stationary;
   real time_sd;
   int restrict_var;
-  real restrict_var_high;
+  real restrict_var_high[2];
   real restrict_high_mean;
   int restrict_high_mean_ind;
 }

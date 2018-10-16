@@ -15,7 +15,8 @@
       ncores <- 1
     }
   }
-
+  
+  browser()
 
   to_use <- stanmodels[['irt_standard_noid']]
 
