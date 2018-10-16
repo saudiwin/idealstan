@@ -52,14 +52,14 @@ stan::io::program_reader prog_reader__() {
     reader.add_event(141, 0, "start", "/chunks/jacobians.stan");
     reader.add_event(181, 40, "end", "/chunks/jacobians.stan");
     reader.add_event(181, 6, "restart", "model_irt_standard");
-    reader.add_event(244, 69, "include", "/chunks/change_outcome.stan");
-    reader.add_event(244, 0, "start", "/chunks/change_outcome.stan");
-    reader.add_event(302, 58, "end", "/chunks/change_outcome.stan");
-    reader.add_event(302, 70, "restart", "model_irt_standard");
-    reader.add_event(304, 72, "include", "/chunks/create_constrained.stan");
-    reader.add_event(304, 0, "start", "/chunks/create_constrained.stan");
-    reader.add_event(327, 23, "end", "/chunks/create_constrained.stan");
-    reader.add_event(327, 73, "restart", "model_irt_standard");
+    reader.add_event(245, 70, "include", "/chunks/change_outcome.stan");
+    reader.add_event(245, 0, "start", "/chunks/change_outcome.stan");
+    reader.add_event(303, 58, "end", "/chunks/change_outcome.stan");
+    reader.add_event(303, 71, "restart", "model_irt_standard");
+    reader.add_event(305, 73, "include", "/chunks/create_constrained.stan");
+    reader.add_event(305, 0, "start", "/chunks/create_constrained.stan");
+    reader.add_event(328, 23, "end", "/chunks/create_constrained.stan");
+    reader.add_event(328, 74, "restart", "model_irt_standard");
     reader.add_event(384, 130, "include", "/chunks/build_params_v2.stan");
     reader.add_event(384, 0, "start", "/chunks/build_params_v2.stan");
     reader.add_event(411, 27, "end", "/chunks/build_params_v2.stan");
@@ -557,8 +557,9 @@ private:
     double time_sd;
     int restrict_var;
     double restrict_var_high;
-    double restrict_high_mean;
-    int restrict_high_mean_ind;
+    double restrict_mean_val;
+    int restrict_mean_ind;
+    int restrict_mean;
     int m;
     double m_cont;
     int m_step;
@@ -855,17 +856,23 @@ public:
             pos__ = 0;
             restrict_var_high = vals_r__[pos__++];
             current_statement_begin__ = 226;
-            context__.validate_dims("data initialization", "restrict_high_mean", "double", context__.to_vec());
-            restrict_high_mean = double(0);
-            vals_r__ = context__.vals_r("restrict_high_mean");
+            context__.validate_dims("data initialization", "restrict_mean_val", "double", context__.to_vec());
+            restrict_mean_val = double(0);
+            vals_r__ = context__.vals_r("restrict_mean_val");
             pos__ = 0;
-            restrict_high_mean = vals_r__[pos__++];
+            restrict_mean_val = vals_r__[pos__++];
             current_statement_begin__ = 227;
-            context__.validate_dims("data initialization", "restrict_high_mean_ind", "int", context__.to_vec());
-            restrict_high_mean_ind = int(0);
-            vals_i__ = context__.vals_i("restrict_high_mean_ind");
+            context__.validate_dims("data initialization", "restrict_mean_ind", "int", context__.to_vec());
+            restrict_mean_ind = int(0);
+            vals_i__ = context__.vals_i("restrict_mean_ind");
             pos__ = 0;
-            restrict_high_mean_ind = vals_i__[pos__++];
+            restrict_mean_ind = vals_i__[pos__++];
+            current_statement_begin__ = 228;
+            context__.validate_dims("data initialization", "restrict_mean", "int", context__.to_vec());
+            restrict_mean = int(0);
+            vals_i__ = context__.vals_i("restrict_mean");
+            pos__ = 0;
+            restrict_mean = vals_i__[pos__++];
 
             // validate, data variables
             current_statement_begin__ = 184;
@@ -904,185 +911,180 @@ public:
             current_statement_begin__ = 225;
             current_statement_begin__ = 226;
             current_statement_begin__ = 227;
+            current_statement_begin__ = 228;
             // initialize data variables
-            current_statement_begin__ = 231;
+            current_statement_begin__ = 232;
             m = int(0);
             stan::math::fill(m, std::numeric_limits<int>::min());
-            current_statement_begin__ = 232;
+            current_statement_begin__ = 233;
             m_cont = double(0);
             stan::math::fill(m_cont,DUMMY_VAR__);
-            current_statement_begin__ = 233;
+            current_statement_begin__ = 234;
             m_step = int(0);
             stan::math::fill(m_step, std::numeric_limits<int>::min());
-            current_statement_begin__ = 234;
+            current_statement_begin__ = 235;
             validate_non_negative_index("absence", "N", N);
             absence = std::vector<int>(N,int(0));
             stan::math::fill(absence, std::numeric_limits<int>::min());
-            current_statement_begin__ = 235;
+            current_statement_begin__ = 236;
             num_constrain_l = int(0);
             stan::math::fill(num_constrain_l, std::numeric_limits<int>::min());
-            current_statement_begin__ = 236;
+            current_statement_begin__ = 237;
             validate_non_negative_index("Y_new", "N", N);
             Y_new = std::vector<int>(N,int(0));
             stan::math::fill(Y_new, std::numeric_limits<int>::min());
-            current_statement_begin__ = 237;
+            current_statement_begin__ = 238;
             num_var_free = int(0);
             stan::math::fill(num_var_free, std::numeric_limits<int>::min());
-            current_statement_begin__ = 238;
+            current_statement_begin__ = 239;
             num_var_restrict = int(0);
             stan::math::fill(num_var_restrict, std::numeric_limits<int>::min());
-            current_statement_begin__ = 239;
+            current_statement_begin__ = 240;
             jacob_mean_correct = double(0);
             stan::math::fill(jacob_mean_correct,DUMMY_VAR__);
 
-            current_statement_begin__ = 247;
-            stan::math::assign(m_cont, max(Y_cont));
             current_statement_begin__ = 248;
+            stan::math::assign(m_cont, max(Y_cont));
+            current_statement_begin__ = 249;
             stan::math::assign(m, max(Y_int));
-            current_statement_begin__ = 250;
+            current_statement_begin__ = 251;
             if (as_bool((primitive_value((primitive_value(logical_eq(model_type,4)) || primitive_value(logical_eq(model_type,6)))) || primitive_value(logical_eq(model_type,8))))) {
 
-                current_statement_begin__ = 252;
+                current_statement_begin__ = 253;
                 stan::math::assign(m, (max(Y_int) - 1));
-                current_statement_begin__ = 254;
+                current_statement_begin__ = 255;
                 if (as_bool(logical_lt(model_type,7))) {
 
-                    current_statement_begin__ = 255;
+                    current_statement_begin__ = 256;
                     stan::math::assign(m_step, m);
                 } else {
 
-                    current_statement_begin__ = 257;
+                    current_statement_begin__ = 258;
                     stan::math::assign(m_step, 2);
                 }
             } else if (as_bool((primitive_value(logical_eq(model_type,10)) || primitive_value(logical_eq(model_type,12))))) {
 
-                current_statement_begin__ = 261;
-                stan::math::assign(m_cont, (max(Y_cont) - 1));
                 current_statement_begin__ = 262;
-                stan::math::assign(m_step, 2);
+                stan::math::assign(m_cont, (max(Y_cont) - 1));
                 current_statement_begin__ = 263;
+                stan::math::assign(m_step, 2);
+                current_statement_begin__ = 264;
                 stan::math::assign(m, 2);
             } else if (as_bool((primitive_value(logical_eq(model_type,3)) || primitive_value(logical_eq(model_type,5))))) {
 
-                current_statement_begin__ = 266;
-                stan::math::assign(m, max(Y_int));
                 current_statement_begin__ = 267;
+                stan::math::assign(m, max(Y_int));
+                current_statement_begin__ = 268;
                 stan::math::assign(m_step, m);
             } else if (as_bool((primitive_value((primitive_value((primitive_value((primitive_value(logical_eq(model_type,1)) || primitive_value(logical_eq(model_type,2)))) || primitive_value(logical_eq(model_type,7)))) || primitive_value(logical_eq(model_type,9)))) || primitive_value(logical_eq(model_type,11))))) {
 
-                current_statement_begin__ = 271;
-                stan::math::assign(m, 2);
                 current_statement_begin__ = 272;
+                stan::math::assign(m, 2);
+                current_statement_begin__ = 273;
                 stan::math::assign(m_step, 2);
             } else {
 
-                current_statement_begin__ = 274;
-                stan::math::assign(m, 2);
                 current_statement_begin__ = 275;
+                stan::math::assign(m, 2);
+                current_statement_begin__ = 276;
                 stan::math::assign(m_step, 2);
             }
-            current_statement_begin__ = 278;
+            current_statement_begin__ = 279;
             for (int n = 1; n <= N; ++n) {
 
-                current_statement_begin__ = 280;
+                current_statement_begin__ = 281;
                 if (as_bool(logical_lt(model_type,9))) {
 
-                    current_statement_begin__ = 281;
+                    current_statement_begin__ = 282;
                     if (as_bool(logical_gt(get_base1(Y_int,n,"Y_int",1),m))) {
 
-                        current_statement_begin__ = 282;
+                        current_statement_begin__ = 283;
                         stan::math::assign(get_base1_lhs(absence,n,"absence",1), 1);
                     } else {
 
-                        current_statement_begin__ = 284;
+                        current_statement_begin__ = 285;
                         stan::math::assign(get_base1_lhs(absence,n,"absence",1), 0);
                     }
                 } else {
 
-                    current_statement_begin__ = 287;
+                    current_statement_begin__ = 288;
                     if (as_bool(logical_gt(get_base1(Y_cont,n,"Y_cont",1),m_cont))) {
 
-                        current_statement_begin__ = 288;
+                        current_statement_begin__ = 289;
                         stan::math::assign(get_base1_lhs(absence,n,"absence",1), 1);
                     } else {
 
-                        current_statement_begin__ = 290;
+                        current_statement_begin__ = 291;
                         stan::math::assign(get_base1_lhs(absence,n,"absence",1), 0);
                     }
                 }
-                current_statement_begin__ = 293;
+                current_statement_begin__ = 294;
                 if (as_bool((primitive_value(logical_eq(model_type,1)) || primitive_value(logical_eq(model_type,2))))) {
 
-                    current_statement_begin__ = 295;
+                    current_statement_begin__ = 296;
                     if (as_bool(logical_neq(min(Y_int),0))) {
 
-                        current_statement_begin__ = 296;
+                        current_statement_begin__ = 297;
                         stan::math::assign(get_base1_lhs(Y_new,n,"Y_new",1), (get_base1(Y_int,n,"Y_int",1) - 1));
                     } else {
 
-                        current_statement_begin__ = 298;
+                        current_statement_begin__ = 299;
                         stan::math::assign(get_base1_lhs(Y_new,n,"Y_new",1), get_base1(Y_int,n,"Y_int",1));
                     }
                 }
             }
-            current_statement_begin__ = 309;
+            current_statement_begin__ = 310;
             if (as_bool(logical_eq(num_legis,2))) {
 
-                current_statement_begin__ = 310;
+                current_statement_begin__ = 311;
                 stan::math::assign(num_constrain_l, 1);
             } else {
 
-                current_statement_begin__ = 312;
+                current_statement_begin__ = 313;
                 if (as_bool(logical_eq(T,1))) {
 
-                    current_statement_begin__ = 313;
+                    current_statement_begin__ = 314;
                     stan::math::assign(num_constrain_l, 2);
                 } else {
 
-                    current_statement_begin__ = 315;
+                    current_statement_begin__ = 316;
                     if (as_bool(logical_eq(use_ar,1))) {
 
-                        current_statement_begin__ = 316;
+                        current_statement_begin__ = 317;
                         stan::math::assign(num_constrain_l, 2);
                     } else {
 
-                        current_statement_begin__ = 318;
+                        current_statement_begin__ = 319;
                         stan::math::assign(num_constrain_l, 2);
                     }
                 }
             }
-            current_statement_begin__ = 329;
+            current_statement_begin__ = 330;
             if (as_bool(logical_eq(restrict_var,1))) {
 
-                current_statement_begin__ = 330;
-                stan::math::assign(num_var_restrict, num_legis);
                 current_statement_begin__ = 331;
+                stan::math::assign(num_var_restrict, num_legis);
+                current_statement_begin__ = 332;
                 stan::math::assign(num_var_free, 0);
             } else {
 
-                current_statement_begin__ = 333;
-                stan::math::assign(num_var_restrict, 0);
                 current_statement_begin__ = 334;
+                stan::math::assign(num_var_restrict, 0);
+                current_statement_begin__ = 335;
                 stan::math::assign(num_var_free, num_legis);
             }
-            current_statement_begin__ = 336;
+            current_statement_begin__ = 337;
             if (as_bool(logical_gt(T,1))) {
 
-                current_statement_begin__ = 337;
+                current_statement_begin__ = 338;
                 stan::math::assign(jacob_mean_correct, jacob_mean(T,T, pstream__));
             } else {
 
-                current_statement_begin__ = 339;
+                current_statement_begin__ = 340;
                 stan::math::assign(jacob_mean_correct, 1);
-            }
-            current_statement_begin__ = 342;
-            if (pstream__) {
-                stan_print(pstream__,jacob_mean_correct);
-                *pstream__ << std::endl;
             }
 
             // validate transformed data
-            current_statement_begin__ = 231;
             current_statement_begin__ = 232;
             current_statement_begin__ = 233;
             current_statement_begin__ = 234;
@@ -1091,6 +1093,7 @@ public:
             current_statement_begin__ = 237;
             current_statement_begin__ = 238;
             current_statement_begin__ = 239;
+            current_statement_begin__ = 240;
 
             // validate, set parameter ranges
             num_params_r__ = 0U;
@@ -1902,10 +1905,10 @@ public:
             current_statement_begin__ = 498;
             lp_accum__.add(exponential_log<propto__>(time_var, (1 / time_sd)));
             current_statement_begin__ = 502;
-            if (as_bool((primitive_value(logical_gt(T,1)) && primitive_value(logical_eq(use_ar,0))))) {
+            if (as_bool((primitive_value(logical_gt(T,1)) && primitive_value(logical_eq(restrict_mean,1))))) {
 
                 current_statement_begin__ = 503;
-                lp_accum__.add(normal_log<propto__>(mean(stan::model::rvalue(L_tp1, stan::model::cons_list(stan::model::index_omni(), stan::model::cons_list(stan::model::index_uni(restrict_high_mean_ind), stan::model::nil_index_list())), "L_tp1")), restrict_high_mean, 0.10000000000000001));
+                lp_accum__.add(normal_log<propto__>(mean(stan::model::rvalue(L_tp1, stan::model::cons_list(stan::model::index_omni(), stan::model::cons_list(stan::model::index_uni(restrict_mean_ind), stan::model::nil_index_list())), "L_tp1")), restrict_mean_val, 0.01));
                 current_statement_begin__ = 504;
                 lp_accum__.add(jacob_mean_correct);
             }

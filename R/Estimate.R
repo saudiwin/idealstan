@@ -394,8 +394,19 @@ id_make <- function(score_data=NULL,
 #' See \code{\link[rstan]{stan}} for more info.
 #' @param ncores The number of cores in your computer to use for parallel processing in the Stan engine. 
 #' See \code{\link[rstan]{stan}} for more info.
-#' @param fixtype Sets the particular kind of identification used on the model, could be one of 'vb' or 'constrained'.
+#' @param fixtype Sets the particular kind of identification used on the model, could be one of 'vb_full' 
+#' (identification provided exclusively by running a variational identification model with no prior info), 
+#' 'vb_partial' (two indices of ideal points to fix are provided but the values to fix are determined by the
+#' identification model), 
+#' 'constrain' (two indices of ideal points to fix are provided--only sufficient for model if \code{restrict_var} is 
+#' \code{FALSE}, 
+#' and 'prior_fit' (a previous identified \code{idealstan} fit is passed to the \code{prior_fit} option and used
+#' as the basis for identification).
 #'  See details for more information.
+#' @param prior_fit If a previous \code{idealstan} model was fit \emph{with the same} data, then the same
+#' identification constraints can be recycled from the prior fit if the \code{idealstan} object is passed 
+#' to this option. Note that means that all identification options, like \code{restrict_var}, will also 
+#' be the same
 #' @param id_diff The fixed difference between the high/low person/legislator ideal points used to identify the model. 
 #' Set at 4 as a standard value but can be changed to any arbitrary number without affecting model results besides re-scaling.
 #' @param id_diff_high The fixed intercept of the high ideal point used to constrain the model. 
@@ -425,9 +436,21 @@ id_make <- function(score_data=NULL,
 #' @param diff_miss_sd Set the prior standard deviation for the bill (item) intercepts for the inflated model.
 #' @param restrict_sd Set the prior standard deviation for constrained parameters
 #' @param restrict_var Whether to limit variance to no higher than 0.5 for random-walk time series models.
+#' If left blank (the default), will be set to \code{TRUE} for random-walk models and \code{FALSE} for 
+#' AR(1) models if identification is still a challenge (note: using this for AR(1) models is 
+#' probably overkill).
 #' @param restrict_var_high The upper limit for the variance parameter (if \code{restrict_var=TRUE} & 
-#' model is a random-walk time-series)
-#' Set to \code{TRUE} as default because random-walk models are difficult to identify otherwise.
+#' model is a random-walk time-series). If left blank, either defaults to 0.1 or is set by 
+#' identification model.
+#' @param restrict_mean Whether or not to restrict the over-time mean of an ideal point 
+#' (additional identification measure when standard fixes don't work). \code{TRUE} by 
+#' default for random-walk models.
+#' @param restrict_mean_val For random-walk models, the mean of a time-series ideal point to constrain.
+#' Should not be set a priori (leave blank) unless you are absolutely sure. Otherwise it is set by 
+#' the identification model.
+#' @param restrict_mean_ind For random-walk models, the ID of the person/group whose over-time
+#' mean to constrain. Should be left blank (will be set by identification model) unless you are 
+#' really sure.
 #' @param ... Additional parameters passed on to Stan's sampling engine. See \code{\link[rstan]{stan}} for more information.
 #' @return A fitted \code{\link{idealstan}} object that contains posterior samples of all parameters either via full Bayesian inference
 #' or a variational approximation if \code{use_vb} is set to \code{TRUE}. This object can then be passed to the plotting functions for further analysis.
@@ -518,7 +541,9 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
                           id_diff=4,
                         id_diff_high=2,
                            restrict_ind_low=NULL,
-                           fixtype='vb_full',warmup=floor(niters/2),ncores=4,
+                           fixtype='vb_full',
+                        prior_fit=NULL,
+                        warmup=floor(niters/2),ncores=4,
                            auto_id=FALSE,
                           use_ar=FALSE,
                         use_groups=FALSE,
@@ -531,8 +556,11 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
                            diff_reg_sd=1,
                            diff_miss_sd=1,
                            restrict_sd=0.01,
-                        restrict_var=TRUE,
-                        restrict_var_high=0.15,
+                        restrict_mean=NULL,
+                        restrict_var=NULL,
+                        restrict_mean_val=NULL,
+                        restrict_mean_ind=NULL,
+                        restrict_var_high=0.1,
                            ...) {
 
   
@@ -542,7 +570,6 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
   }
   
 
-    #hier_type <- suppressWarnings(.get_hier_type(idealdata))
     idealdata@stanmodel <- stanmodels[['irt_standard']]
     
   # currently fixed at one param, can change in future versions
@@ -606,7 +633,64 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
     Y_cont <- array(1)
     Y_int <- as.integer(Y)
   }
+    
+  # set identification options
+    
+  if(length(idealdata@restrict_var)==0 && is.null(prior_fit)) {
+      if(use_ar) {
+        idealdata@restrict_var <- FALSE
+      } else {
+        idealdata@restrict_var <- TRUE
+      }
+  } else if(length(idealdata@restrict_var)>0 && !is.null(prior_fit)) {
+    # reset if a prior fit is being used for ID
+    if(!is.null(restrict_var)) {
+      idealdata@restrict_var <- restrict_var
+    } else {
+      if(use_ar) {
+        idealdata@restrict_var <- FALSE
+      } else {
+        idealdata@restrict_var <- TRUE
+      } 
+    }
+  } else if(length(idealdata@restrict_var)==0 && !is.null(restrict_var)) {
+    idealdata@restrict_var <- restrict_var
+  }
 
+  # add in restrictions if they weren't identified by VB
+    
+  if(length(idealdata@restrict_var_high)==0 && !is.null(restrict_var_high)) {
+      idealdata@restrict_var_high <- restrict_var_high
+  }
+    
+  if(length(idealdata@restrict_mean_val)==0 && !is.null(restrict_mean_val)) {
+      idealdata@restrict_mean_val <- restrict_mean_val
+  }
+    
+  if(length(idealdata@restrict_mean_ind)==0 && !is.null(restrict_mean_ind)) {
+      idealdata@restrict_mean_ind <- restrict_mean_ind
+  }
+    
+  if(length(idealdata@restrict_mean)>0 && use_ar==T && !is.null(prior_fit)) {
+    
+    # reset if a prior time-varying fit is being used
+    if(is.null(restrict_mean)) {
+      idealdata@restrict_mean <- FALSE
+    } else {
+      idealdata@restrict_mean <- restrict_mean
+    }
+    
+  } else if(length(idealdata@restrict_mean)==0 && !is.null(restrict_mean)) {
+    idealdata@restrict_mean <- restrict_mean
+      
+  } else if(length(idealdata@restrict_mean)==0 && is.null(restrict_mean)) {
+    if(use_ar) {
+      idealdata@restrict_mean <- FALSE
+    } else {
+      idealdata@restrict_mean <- TRUE
+    }
+  }
+    
   this_data <- list(N=length(Y),
                     N_cont=N_cont,
                     N_int=N_int,
@@ -639,15 +723,19 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
                     diff_high=idealdata@diff_high,
                     time_sd=time_sd,
                     ar_sd=ar_sd,
-                    restrict_var=as.numeric(restrict_var),
-                    restrict_var_high=0.5)
+                    restrict_var=idealdata@restrict_var,
+                    restrict_var_high=idealdata@restrict_var_high,
+                    restrict_mean=idealdata@restrict_mean,
+                    restrict_mean_val=idealdata@restrict_mean_val,
+                    restrict_mean_val_ind=idealdata@restrict_mean_val)
 
   idealdata <- id_model(object=idealdata,fixtype=fixtype,model_type=model_type,this_data=this_data,
                         nfix=nfix,restrict_ind_high=restrict_ind_high,
                         restrict_ind_low=restrict_ind_low,
                         auto_id=auto_id,
                         ncores=ncores,
-                        use_groups=use_groups)
+                        use_groups=use_groups,
+                        prior_fit=prior_fit)
   
   # if diff hasn't been set yet, set it
   
@@ -730,10 +818,11 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
                     diff_high=idealdata@diff_high,
                     time_sd=time_sd,
                     ar_sd=ar_sd,
-                    restrict_var=as.numeric(restrict_var),
-                    restrict_var_high=restrict_var_high,
-                    restrict_high_mean=idealdata@restrict_high_mean,
-                    restrict_high_mean_ind=idealdata@restrict_high_mean_ind)
+                    restrict_var=as.numeric(idealdata@restrict_var),
+                    restrict_var_high=idealdata@restrict_var_high,
+                    restrict_mean_val=idealdata@restrict_mean_val,
+                    restrict_mean_ind=idealdata@restrict_mean_ind,
+                    restrict_mean=idealdata@restrict_mean)
 
   outobj <- sample_model(object=idealdata,nchains=nchains,niters=niters,warmup=warmup,ncores=ncores,
                          this_data=this_data,use_vb=use_vb,...)

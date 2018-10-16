@@ -8,13 +8,7 @@
                     model_type=NULL,
                     use_groups=NULL,
                     fixtype=NULL,...) {
-
-  # check for windows 
-  if(ncores>1) {
-    if(.Platform$OS.type=='windows') {
-      ncores <- 1
-    }
-  }
+  
   
   to_use <- stanmodels[['irt_standard_noid']]
 
@@ -107,12 +101,12 @@
     diff <- diff_high - sign(person[to_constrain_high])*person[to_constrain_low]
     
     # next we are going to re-order the person IDs around the constraints
-    
+
     object <- .constrain_fix(object=object,restrict_ind_high = restrict_ind_high,
                              restrict_ind_low=restrict_ind_low,
                              use_groups=use_groups)
   }
-  
+
   if(this_data$T>1 && this_data$use_ar==0) {
     # do some additional model identification if necessary for time-varying ideal pt models
     
@@ -125,7 +119,7 @@
                                to_constrain_high)])
 
     # figure out upper limit of estimated variances
-    time_var_restrict <-  apply(this_params[,grepl(pattern = 'time_var_restrict',x=all_params)],2,quantile,.95)[new_order]
+    time_var_restrict <-  max(apply(this_params[,grepl(pattern = 'time_var_restrict',x=all_params)],2,quantile,.95)[new_order])
     # constrain any ideal points that are always positive or always negative
     ideal_pts_low <- rstan::extract(post_modes,'L_tp1')[[1]] %>% apply(3,quantile,.05) %>% .[new_order]
     ideal_pts_high <- rstan::extract(post_modes,'L_tp1')[[1]] %>% apply(3,quantile,.95) %>% .[new_order]
@@ -137,7 +131,6 @@
     }
     
     restrict_mean <- ideal_pts_mean[constrain_mean]
-
   }
   
   
@@ -148,73 +141,51 @@
   
   this_data$constrain_par <- 1
   
-  object@restrict_num_high <- to_constrain_high
-  object@restrict_num_low <- to_constrain_low
+  object@restrict_num_high <- 1
+  object@restrict_num_low <- 1
+  object@restrict_ind_high <- to_constrain_high
+  object@restrict_ind_low <- to_constrain_low
   object@constraint_type <- this_data$constraint_type
   object@diff <- diff
   object@diff_high <- diff_high
-  object@restrict_high_mean <- restrict_mean
-  object@restrict_high_mean_ind <- constrain_mean
+  object@restrict_mean_val <- restrict_mean
+  object@restrict_mean_ind <- constrain_mean
   object@restrict_var_high <- time_var_restrict
   return(object)
 }
 
-#' Function that pins certain parameters to fixed points
-.pinned_fix <- function(object=NULL,nfix=NULL,restrict_params=NULL,
-                        restrict_ind_high=NULL,
-                        use_groups=NULL,...) {
-  all_args <- list(...) 
-  if(is.null(restrict_ind_high)) {
-    stop('You must specify indices for pinned paramters as restrict_ind_high.')
+#' Function that uses a previously-identified model to maintain comparability across model types
+.prior_fit <- function(object=NULL,
+                       prior_fit=NULL,
+                       use_groups=NULL,...) {
+  
+  if(is.null(prior_fit)) {
+    stop('If using "prior_fit" as the identification method, a fitted idealstan object must be passed to the prior_fit option.')
   }
   
-  old_matrix <- object@score_matrix
-  to_constrain_high <- restrict_ind_high
-  to_constrain_low <- NULL
-  
-  if(any(restrict_params %in% c('discrim_reg','discrim_miss'))) {
-    
-    object@score_matrix <- object@score_matrix[,c((1:ncol(object@score_matrix))[-c(to_constrain_high,
-                                                                                   to_constrain_low)],
-                                                  to_constrain_high,
-                                                  to_constrain_low)]
-    
-    param_fix <- switch(restrict_params,discrim_reg='sigma_reg',discrim_abs='sigma_abs')
-  } else if(restrict_params=='person') {
-    # change to group parameters if index is for groups
-    
-    if(use_groups==T) {
-      if(!is.null(to_constrain_high)) {
-        to_constrain_high <- which(as.numeric(factor(object@person_data$group))==to_constrain_high)
-      }
-      if(!is.null(to_constrain_low)) {
-        to_constrain_low <- which(as.numeric(factor(object@person_data$group))==to_constrain_low)
-      }
-    }
-    
-    object@score_matrix <- object@score_matrix[c((1:nrow(object@score_matrix))[-c(to_constrain_high,
-                                                                                  to_constrain_low)],
-                                                 to_constrain_high,
-                                                 to_constrain_low),]
-    if(use_groups==T) {
-      # reorder group parameters
-      object@group_vals <- object@group_vals[c((1:nrow(object@score_matrix))[-c(to_constrain_high,
-                                                                                to_constrain_low)],
-                                               to_constrain_high,
-                                               to_constrain_low)]
-      # recode group parameters
-      to_move <- c(to_constrain_high,to_constrain_low)
-      object@group_vals <- as.numeric(factor(object@group_vals,levels=c(sort(unique(object@group_vals))[-to_move],to_move)))
-    }
-    param_fix <- 'L_free'
+  if(!(use_groups==prior_fit@use_groups)) {
+    stop('If groups were used (or not used) in the prior fit used for identification, the same must be true of the current model.')
   }
-  object@restrict_num_high <- length(restrict_ind_high)
-  object@restrict_num_low <- 1
-  object@constraint_type <- 4
-  object@param_fix <- switch(param_fix,L_free=1L,sigma_reg=3L,sigma_abs=2L)
-  object@unrestricted <- old_matrix
+  
+  # simply copy over all of the identification, including data
+  # assumes data is the same, so first check on that
+  if(use_groups) {
+    old_levels <- levels(prior_fit@score_data@score_matrix$group_id)
+    new_levels <- levels(object@score_matrix$group_id)
+  } else {
+    old_levels <- levels(prior_fit@score_data@score_matrix$person_id)
+    new_levels <- levels(object@score_matrix$person_id)
+  }
+  
+  if(!all(old_levels %in% new_levels)) {
+    stop('To use "prior_fit" as an identification option, the prior fitted idealstan object must have the *same* data as the current model being estimated.')
+  }
+  
+  # now just copy everything over & re-arrange data
+
+  object <- prior_fit@score_data
+      
   return(object)
-  
 }
 
 #' Function that constrains certain known parameters
@@ -227,7 +198,7 @@
   if(is.null(restrict_ind_high)) {
     stop('You must specify at least one bill or personlator to constrain high in restrict_ind_high.')
   }
-  #old_matrix <- object@score_matrix
+
   to_constrain_high <- restrict_ind_high
   to_constrain_low <- restrict_ind_low
   
@@ -246,16 +217,12 @@
                                                        after=length(levels(!!quo(person_id)))))
   }
   
-  # what to constrain the difference to given the priors
-  diff <- 4
-  param_fix <- 'L_free'
   
   object@restrict_num_high <- length(restrict_ind_high)
   
   object@restrict_num_low <- 1
   object@constraint_type <- 3L
   object@param_fix <- 1L
-  #object@unrestricted <- old_matrix
   object@restrict_ind_high <- to_constrain_high
   object@restrict_ind_low <- to_constrain_low
   

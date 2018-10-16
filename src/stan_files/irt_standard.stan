@@ -49,8 +49,9 @@ data {
   real time_sd;
   int restrict_var;
   real restrict_var_high;
-  real restrict_high_mean;
-  int restrict_high_mean_ind;
+  real restrict_mean_val;
+  int restrict_mean_ind;
+  int restrict_mean;
 }
 
 transformed data {
@@ -191,10 +192,10 @@ model {
 
     time_var ~ exponential(1/time_sd);
 
-// add correction for random-walk models
+// add correction for time-series models
 
-if(T>1 && use_ar==0) {
-  mean(L_tp1[,restrict_high_mean_ind]) ~ normal(restrict_high_mean,.01);
+if(T>1 && restrict_mean==1) {
+  mean(L_tp1[,restrict_mean_ind]) ~ normal(restrict_mean_val,.01);
   target += jacob_mean_correct; // this is a constant as it only varies with the count of the parameters
 }
   

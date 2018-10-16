@@ -41,9 +41,11 @@ setClass('idealdata',
                     simulation='logical',
                     diff='numeric',
                     diff_high='numeric',
+                    restrict_var='logical',
                     restrict_var_high='numeric',
-                    restrict_high_mean='numeric',
-                    restrict_high_mean_ind='numeric'))
+                    restrict_mean_val='numeric',
+                    restrict_mean_ind='numeric',
+                    restrict_mean='logical'))
 
 
 #' Results of \code{\link{id_estimate}} function
@@ -176,6 +178,7 @@ setGeneric('id_model',
 
 setMethod('id_model',signature(object='idealdata'),
           function(object,fixtype='vb',model_type=NULL,this_data=NULL,nfix=10,
+                   prior_fit=NULL,
                    restrict_ind_high=NULL,
                    restrict_ind_low=NULL,
                    auto_id=FALSE,
@@ -184,7 +187,8 @@ setMethod('id_model',signature(object='idealdata'),
 
             x <- object@score_matrix
             
-            run_id <- switch(fixtype,vb_full=.vb_fix,vb_partial=.vb_fix,constrained=.constrain_fix)
+            run_id <- switch(fixtype,vb_full=.vb_fix,vb_partial=.vb_fix,constrained=.constrain_fix,
+                             prior_fit=.prior_fit)
 
             object <- run_id(object=object,this_data=this_data,nfix=nfix,
                    restrict_ind_high=restrict_ind_high,
@@ -193,7 +197,8 @@ setMethod('id_model',signature(object='idealdata'),
                    ncores=ncores,
                    model_type=model_type,
                    use_groups=use_groups,
-                   fixtype=fixtype)
+                   fixtype=fixtype,
+                   prior_fit=prior_fit)
             
 
             return(object)

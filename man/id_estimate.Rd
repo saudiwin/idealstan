@@ -8,12 +8,13 @@ id_estimate(idealdata = NULL, model_type = 2, use_subset = FALSE,
   sample_it = FALSE, subset_group = NULL, subset_person = NULL,
   sample_size = 20, nchains = 4, niters = 2000, use_vb = FALSE,
   restrict_ind_high = NULL, id_diff = 4, id_diff_high = 2,
-  restrict_ind_low = NULL, fixtype = "vb", warmup = floor(niters/2),
-  ncores = 4, auto_id = FALSE, use_ar = FALSE, use_groups = FALSE,
-  discrim_reg_sd = 1, discrim_miss_sd = 1, person_sd = 3,
-  time_sd = 4, sample_stationary = FALSE, ar_sd = 2,
-  diff_reg_sd = 1, diff_miss_sd = 1, restrict_sd = 0.1,
-  restrict_low_bar = 0, restrict_high_bar = 0, ...)
+  restrict_ind_low = NULL, fixtype = "vb_full", prior_fit = NULL,
+  warmup = floor(niters/2), ncores = 4, auto_id = FALSE,
+  use_ar = FALSE, use_groups = FALSE, discrim_reg_sd = 1,
+  discrim_miss_sd = 1, person_sd = 3, time_sd = 0.1,
+  sample_stationary = FALSE, ar_sd = 1, diff_reg_sd = 1,
+  diff_miss_sd = 1, restrict_sd = 0.01, restrict_mean = NULL,
+  restrict_var = NULL, restrict_var_high = 0.15, ...)
 }
 \arguments{
 \item{idealdata}{An object produced by the \code{\link{id_make}} containing a score/vote matrix for use for estimation & plotting}
@@ -51,8 +52,20 @@ Set at 4 as a standard value but can be changed to any arbitrary number without 
 \item{restrict_ind_low}{If \code{fixtype} is not "vb", the particular indices of legislators/persons or bills/items to constrain low. 
 (Note: not used if values are pinned).}
 
-\item{fixtype}{Sets the particular kind of identification used on the model, could be one of 'vb' or 'constrained'.
-See details for more information.}
+\item{fixtype}{Sets the particular kind of identification used on the model, could be one of 'vb_full' 
+(identification provided exclusively by running a variational identification model with no prior info), 
+'vb_partial' (two indices of ideal points to fix are provided but the values to fix are determined by the
+identification model), 
+'constrain' (two indices of ideal points to fix are provided--only sufficient for model if \code{restrict_var} is 
+\code{FALSE}, 
+and 'prior_fit' (a previous identified \code{idealstan} fit is passed to the \code{prior_fit} option and used
+as the basis for identification).
+ See details for more information.}
+
+\item{prior_fit}{If a previous \code{idealstan} model was fit \emph{with the same} data, then the same
+identification constraints can be recycled from the prior fit if the \code{idealstan} object is passed 
+to this option. Note that means that all identification options, like \code{restrict_var}, will also 
+be the same}
 
 \item{warmup}{The number of iterations to use to calibrate Stan's sampler on a given model. Shouldn't be less than 100. 
 See \code{\link[rstan]{stan}} for more info.}
@@ -93,11 +106,28 @@ identify the model when there are few time points.}
 
 \item{restrict_sd}{Set the prior standard deviation for constrained parameters}
 
-\item{restrict_low_bar}{Set the constraint threshold for constrained parameters (parameter must be lower than this bar and no greater than zero)}
+\item{restrict_mean}{Whether or not to restrict the over-time mean of an ideal point 
+(additional identification measure when standard fixes don't work). \code{TRUE} by 
+default for random-walk models.}
 
-\item{restrict_high_bar}{Set the constraint threshold for constrained parameters (parameter must be higher than this bar and no less than zero)}
+\item{restrict_var}{Whether to limit variance to no higher than 0.5 for random-walk time series models.
+If left blank (the default), will be set to \code{TRUE} for random-walk models and \code{FALSE} for 
+AR(1) models if identification is still a challenge (note: using this for AR(1) models is 
+probably overkill).}
+
+\item{restrict_var_high}{The upper limit for the variance parameter (if \code{restrict_var=TRUE} & 
+model is a random-walk time-series). If left blank, either defaults to 0.1 or is set by 
+identification model.}
 
 \item{...}{Additional parameters passed on to Stan's sampling engine. See \code{\link[rstan]{stan}} for more information.}
+
+\item{restrict_high_mean}{For random-walk models, the mean of a time-series ideal point to constrain.
+Should not be set a priori (leave blank) unless you are absolutely sure. Otherwise it is set by 
+the identification model.}
+
+\item{restrict_high_mean_ind}{For random-walk models, the ID of the person/group whose over-time
+mean to constrain. Should be left blank (will be set by identification model) unless you are 
+really sure.}
 }
 \value{
 A fitted \code{\link{idealstan}} object that contains posterior samples of all parameters either via full Bayesian inference

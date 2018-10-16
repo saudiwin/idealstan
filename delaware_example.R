@@ -152,6 +152,27 @@ estimate_rw_indiv_veryveryhighvar <- id_estimate(to_ideal,use_vb = T,
 
 id_plot_legis_dyn(estimate_rw_indiv_veryveryhighvar,text_size_label = 2,use_ci = F)
 
+# let's try an AR(1) individual legislator model
+# probably overkill with the small number of time points that are spread far apart
+# we'll also use the prior fit for identification
+# make sure to turn off the mean restriction (that will screw with the AR(1) model)
+
+estimate_ar_indiv <- id_estimate(to_ideal,use_vb = T,
+                                                 model_type = 2,
+                                                 use_groups = F,
+                                                 restrict_sd = .01,
+                                                use_ar = T,
+                                                 time_sd=1,
+                                                restrict_mean=FALSE,
+                                                 fixtype = 'prior_fit',
+                                                  prior_fit=estimate_rw_indiv_veryveryhighvar)
+
+id_plot_legis_dyn(estimate_ar_indiv,text_size_label = 2,use_ci = F)
+
+# it would seem the AR(1) model is generally more constrained than the random-walk model,
+# but doesn't fit the data as well.
+
+
 
 
 
