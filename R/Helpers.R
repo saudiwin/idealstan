@@ -114,6 +114,35 @@
                              use_groups=use_groups)
   }
   
+  if(this_data$T>1 && this_data$use_ar==0) {
+    # do some additional model identification if necessary for time-varying ideal pt models
+    
+    # need new order of variables
+    
+    new_order <- c(1:length(person))
+    new_order <- c(new_order[-c(to_constrain_low,
+                                to_constrain_high)],
+                   new_order[c(to_constrain_low,
+                               to_constrain_high)])
+
+    # figure out upper limit of estimated variances
+    time_var_restrict <-  apply(this_params[,grepl(pattern = 'time_var_restrict',x=all_params)],2,quantile,.95)[new_order]
+    # constrain any ideal points that are always positive or always negative
+    ideal_pts_low <- rstan::extract(post_modes,'L_tp1')[[1]] %>% apply(3,quantile,.05) %>% .[new_order]
+    ideal_pts_high <- rstan::extract(post_modes,'L_tp1')[[1]] %>% apply(3,quantile,.95) %>% .[new_order]
+    ideal_pts_mean <- rstan::extract(post_modes,'L_tp1')[[1]] %>% apply(3,mean) %>% .[new_order]
+    sign_match <- sign(ideal_pts_low) == sign(ideal_pts_high)
+    constrain_mean <- which(sign_match)
+    if(length(constrain_mean)>1) {
+      constrain_mean <- constrain_mean[abs(ideal_pts_mean[constrain_mean])==max(abs(ideal_pts_mean[constrain_mean]))]
+    }
+    
+    restrict_mean <- ideal_pts_mean[constrain_mean]
+
+  }
+  
+  
+  
   this_data$num_fix_high <- 1
   this_data$num_fix_low <- 1
   this_data$constraint_type <- 3
@@ -125,6 +154,9 @@
   object@constraint_type <- this_data$constraint_type
   object@diff <- diff
   object@diff_high <- diff_high
+  object@restrict_high_mean <- restrict_mean
+  object@restrict_high_mean_ind <- constrain_mean
+  object@restrict_var_high <- time_var_restrict
   return(object)
 }
 
@@ -711,6 +743,7 @@
                        num_legis=NULL,
                        diff_high=NULL,
                        T=NULL,
+                       restrict_var_high=NULL,
                        time_sd=NULL,
                        restrict_var=NULL,
                        actual=TRUE,
@@ -724,7 +757,7 @@
         return(list(restrict_high = array(rnorm(n=1,mean=diff_high,sd=restrict_sd)),
                     L_free = array(rnorm(n=num_legis-2,mean=0,sd=person_sd)),
                     L_AR1 = array(runif(n = num_legis,min = -.5,max=.5)),
-                    time_var_restrict = rep(time_sd,num_legis)))
+                    time_var_restrict = rep(restrict_var_high/2,num_legis)))
       } else {
         return(list(restrict_high = array(rnorm(n=1,mean=diff_high,sd=restrict_sd)),
                     L_free = array(rnorm(n=num_legis-2,mean=0,sd=person_sd)),

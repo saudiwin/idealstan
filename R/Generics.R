@@ -40,7 +40,10 @@ setClass('idealdata',
                     simul_data='list',
                     simulation='logical',
                     diff='numeric',
-                    diff_high='numeric'))
+                    diff_high='numeric',
+                    restrict_var_high='numeric',
+                    restrict_high_mean='numeric',
+                    restrict_high_mean_ind='numeric'))
 
 
 #' Results of \code{\link{id_estimate}} function
@@ -141,6 +144,7 @@ setMethod('sample_model',signature(object='idealdata'),
                                 diff_high=this_data$diff_high,
                                 T=this_data$T,
                                 restrict_var=this_data$restrict_var,
+                                restrict_var_high=this_data$restrict_var_high,
                                 time_sd=this_data$time_sd,
                                 use_ar=this_data$use_ar,
                                 actual=TRUE)

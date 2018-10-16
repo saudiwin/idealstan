@@ -22,11 +22,6 @@ if(T==1) {
   
   
   
-  if(restrict_var==1) {
-    time_var_restrict ~ exponential(1);
-  } else {
-    time_var ~ exponential(1/time_sd);
-  }
-  
+
 
 

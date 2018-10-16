@@ -114,3 +114,12 @@ discrim_est <- all_res$summary[grepl(x=row.names(all_res$summary),
                                pattern='discrim\\['),
                          'mean']
 cor(discrim_est,absence_discrim)
+
+# check the jacobian determinant of transforming by mean
+
+N <- 100
+
+vec1 <- rep(1/N,N)
+vec2 <- rep(1/N,N)
+r <- vec1 %*% vec2
+

@@ -3,6 +3,7 @@
 
 functions {
 #include /chunks/stationary_functions.stan
+#include /chunks/jacobians.stan
 }
 
 data {
@@ -29,8 +30,6 @@ data {
   int use_ar;
   int<lower=1> num_legis;
   int<lower=1> num_bills;
-  int num_fix_high;
-  int num_fix_low;
   int ll[N];
   int bb[N];
   int time[N];
@@ -50,6 +49,8 @@ data {
   real time_sd;
   int restrict_var;
   real restrict_var_high;
+  real restrict_high_mean;
+  int restrict_high_mean_ind;
 }
 
 transformed data {
@@ -61,6 +62,7 @@ transformed data {
 	int Y_new[N];
 	int num_var_free; // whether to restrict variance parameters
 	int num_var_restrict;
+	real jacob_mean_correct; // log absolute determinant of the Jacobian of the pinned mean (if used for time-series)
 	
 	// need to assign a type of outcome to Y based on the model (discrete or continuous)
 	// to do this we need to trick Stan into assigning to an integer. 
@@ -70,15 +72,31 @@ transformed data {
   //determine how many and which parameters to constrain
 #include /chunks/create_constrained.stan
 
+// determine whether to restrict variance or not
+
+if(restrict_var==1) {
+  num_var_restrict=num_legis;
+  num_var_free=0;
+} else {
+  num_var_restrict=0;
+  num_var_free=num_legis;
+}
+  if(T>1) {
+    jacob_mean_correct = jacob_mean(T,T);
+  } else {
+    jacob_mean_correct = 1;
+  }
+
+  
 }
 
 parameters {
   vector[num_bills] sigma_abs_free;
-  vector[num_legis - num_constrain_l] L_free; // first T=1 params to constrain
+  vector[num_legis - 2] L_free; // first T=1 params to constrain
   vector[num_legis] L_tp1_var[T-1]; // non-centered variance
   vector<lower=-.99,upper=.99>[num_legis-1] L_AR1_free; // AR-1 parameters for AR-1 model
   vector[num_bills] sigma_reg_free;
-  vector[num_fix_high] restrict_high;
+  vector[1] restrict_high;
   vector[LX] legis_x;
   vector[SRX] sigma_reg_x;
   vector[SAX] sigma_abs_x;
@@ -91,8 +109,8 @@ parameters {
   ordered[m_step-1] steps_votes_grm[num_bills];
   real<lower=0> extra_sd;
   real<lower=-.9,upper=.9> ar_fix;
-  vector<lower=0>[num_var_free] time_var;
-  vector<lower=0,upper=restrict_var_high>[num_var_restrict] time_var_restrict;
+  vector<lower=0>[num_legis] time_var;
+  vector<lower=0,upper=restrict_var_high>[num_legis] time_var_restrict;
   
 }
 
@@ -124,17 +142,6 @@ transformed parameters {
   } else {
     L_tp1[1] = L_full;
   }
-  
-  //convert unconstrained parameters to only sample in the constrained stationary space 
-  //code from Jeffrey Arnold 
-  //https://github.com/stan-dev/math/issues/309
-  /*if(sample_stationary==1) {
-    L_AR1_r = constrain_stationary(L_AR1_free);
-    L_AR1 = pacf_to_acf(L_AR1_r);
-    
-  } else {
-    L_AR1 = L_AR1_free;
-  } */
 
 }
 
@@ -180,6 +187,18 @@ model {
   }
   
 
+    time_var_restrict ~ exponential(1/time_sd);
+
+    time_var ~ exponential(1/time_sd);
+
+// add correction for random-walk models
+
+if(T>1 && use_ar==0) {
+  mean(L_tp1[,restrict_high_mean_ind]) ~ normal(restrict_high_mean,.1);
+  target += jacob_mean_correct; // this is a constant as it only varies with the count of the parameters
+}
+  
+
   //priors for legislators and bill parameters
 #include /chunks/modeling_statement_v9.stan
 
@@ -187,7 +206,7 @@ model {
 
 #include /chunks/model_types.stan
 
-/* This file sets up the various types of IRT models that can be run in idealstan */
+
 
 
 }

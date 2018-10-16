@@ -639,8 +639,8 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
                     diff_high=idealdata@diff_high,
                     time_sd=time_sd,
                     ar_sd=ar_sd,
-                    restrict_var=restrict_var,
-                    restrict_var_high=restrict_var_high)
+                    restrict_var=as.numeric(restrict_var),
+                    restrict_var_high=0.5)
 
   idealdata <- id_model(object=idealdata,fixtype=fixtype,model_type=model_type,this_data=this_data,
                         nfix=nfix,restrict_ind_high=restrict_ind_high,
@@ -730,8 +730,10 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
                     diff_high=idealdata@diff_high,
                     time_sd=time_sd,
                     ar_sd=ar_sd,
-                    restrict_var=restrict_var,
-                    restrict_var_high=restrict_var_high)
+                    restrict_var=as.numeric(restrict_var),
+                    restrict_var_high=restrict_var_high,
+                    restrict_high_mean=idealdata@restrict_high_mean,
+                    restrict_high_mean_ind=idealdata@restrict_high_mean_ind)
 
   outobj <- sample_model(object=idealdata,nchains=nchains,niters=niters,warmup=warmup,ncores=ncores,
                          this_data=this_data,use_vb=use_vb,...)

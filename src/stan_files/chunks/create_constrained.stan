@@ -8,26 +8,16 @@ if(num_legis==2) {
   num_constrain_l=1;
 } else {
   if(T==1) {
-    num_constrain_l=num_fix_high + num_fix_low;
+    num_constrain_l=2;
   } else {
     if(use_ar==1) {
-      num_constrain_l=num_fix_high +  num_fix_low;
+      num_constrain_l=2;
     } else {
-      num_constrain_l=num_fix_high + num_fix_low;
+      num_constrain_l=2;
     }
     
   }
   
-}
-
-// determine whether to restrict variance or not
-
-if(restrict_var==1) {
-  num_var_restrict=num_legis;
-  num_var_free=0;
-} else {
-  num_var_restrict=0;
-  num_var_free=num_legis;
 }
 
 

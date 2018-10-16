@@ -47,7 +47,7 @@ sum(is.na(to_ideal@score_matrix$outcome))
 
 estimate_rw <- id_estimate(to_ideal,use_vb = T,model_type = 2,
                             use_groups = T,
-                           restrict_sd=.01,
+                           restrict_sd=.01,restrict_var_high = .25,
                             time_sd=.1,fixtype = 'vb_partial',restrict_ind_high = 'R',
                            restrict_ind_low = 'D')
 
@@ -78,12 +78,12 @@ id_plot_legis_dyn(estimate_ar,text_size_label = 6)
 # Having compared models, let's use the random walk model and
 # do full Bayesian inference
 
-estimate_rw_full <- id_estimate(to_ideal,use_vb = T,
+estimate_rw_full <- id_estimate(to_ideal,use_vb = F,
                            model_type = 2,
                            use_groups = T,
                            restrict_sd = .01,
-                           restrict_var_high = .1,
-                           time_sd=.05,fixtype = 'vb_partial',restrict_ind_high = 'R',
+                           restrict_var_high = .15,
+                           time_sd=1,fixtype = 'vb_partial',restrict_ind_high = 'R',
                            restrict_ind_low = 'D')
 
 id_plot_legis_dyn(estimate_rw_full,text_size_label = 6)

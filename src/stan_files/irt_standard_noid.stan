@@ -26,15 +26,11 @@ data {
   int SRX;
   int SAX;
   int use_ar;
-  // int ar_lag;
-  // int ma_lag;
-  // int i_lag;
   int<lower=1> num_legis;
   int<lower=1> num_bills;
   int ll[N];
   int bb[N];
   int time[N];
-  //vector[N] exog_data;
   matrix[num_legis,LX] legis_pred[T];
   matrix[num_bills,SRX] srx_pred;
   matrix[num_bills,SAX] sax_pred;
@@ -56,11 +52,23 @@ transformed data {
 	int absence[N]; // need to create absence indicator
 	int Y_new[N];
 	real m_cont;
+	int num_var_restrict;
+	int num_var_free;
 	
 	// need to assign a type of outcome to Y based on the model (discrete or continuous)
 	// to do this we need to trick Stan into assigning to an integer. 
 	
 #include /chunks/change_outcome.stan
+
+// determine whether to restrict variance or not
+
+if(restrict_var==1) {
+  num_var_restrict=num_legis;
+  num_var_free=0;
+} else {
+  num_var_restrict=0;
+  num_var_free=num_legis;
+}
 }
 
 parameters {
@@ -156,6 +164,13 @@ model {
   for(b in 1:num_bills) {
   steps_votes_grm[b] ~ normal(0,5);
   }
+  
+
+    time_var_restrict ~ exponential(1/time_sd);
+
+    time_var ~ exponential(1/time_sd);
+
+  
   //model
 
 #include /chunks/model_types.stan
