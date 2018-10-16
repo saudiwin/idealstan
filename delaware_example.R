@@ -82,8 +82,76 @@ estimate_rw_full <- id_estimate(to_ideal,use_vb = F,
                            model_type = 2,
                            use_groups = T,
                            restrict_sd = .01,
-                           restrict_var_high = .15,
+                           restrict_var_high = .1,
                            time_sd=1,fixtype = 'vb_partial',restrict_ind_high = 'R',
                            restrict_ind_low = 'D')
 
 id_plot_legis_dyn(estimate_rw_full,text_size_label = 6)
+
+# now we can also look at individual legislator ideal points
+# this lets the function select which legislators to contrain 
+# it will pick those two that have starting values farthest apart (i.e. at t=1)
+
+estimate_rw_indiv <- id_estimate(to_ideal,use_vb = T,
+                                model_type = 2,
+                                use_groups = F,
+                                restrict_sd = .01,
+                                restrict_var_high = .15,
+                                time_sd=1,
+                                fixtype = 'vb_full')
+
+# turn off CI plots (too many lines) and make text labels smaller
+
+id_plot_legis_dyn(estimate_rw_indiv,text_size_label = 2,use_ci = F)
+
+# not a lot of movement in the lines (which isn't necessarily surprising)
+# we can increase the upper limit of variance a bit and re-fit
+
+estimate_rw_indiv_highvar <- id_estimate(to_ideal,use_vb = T,
+                                 model_type = 2,
+                                 use_groups = F,
+                                 restrict_sd = .01,
+                                 restrict_var_high = .3,
+                                 time_sd=1,
+                                 fixtype = 'vb_full')
+
+# increasing allows *some* greater movement, but not a ton
+# however Democrats and Republicans now seem to be clustered more on the correct side
+
+id_plot_legis_dyn(estimate_rw_indiv_highvar,text_size_label = 2,use_ci = F)
+
+# let's increase variance even further
+
+estimate_rw_indiv_veryhighvar <- id_estimate(to_ideal,use_vb = T,
+                                         model_type = 2,
+                                         use_groups = F,
+                                         restrict_sd = .01,
+                                         restrict_var_high = .6,
+                                         time_sd=1,
+                                         fixtype = 'vb_full')
+
+# even more interesting variation with higher variance
+# it looks like when the number of persons/groups is high, it's OK to unconstrain the variance parameter
+
+id_plot_legis_dyn(estimate_rw_indiv_veryhighvar,text_size_label = 2,use_ci = F)
+
+# let's try one more fit with high variance
+
+# let's increase variance even further
+
+estimate_rw_indiv_veryveryhighvar <- id_estimate(to_ideal,use_vb = T,
+                                             model_type = 2,
+                                             use_groups = F,
+                                             restrict_sd = .01,
+                                             restrict_var_high = 1,
+                                             time_sd=1,
+                                             fixtype = 'vb_full')
+
+# We probably don't want to allow much more variance than this
+# ideal points are on the whole still quite stable
+
+id_plot_legis_dyn(estimate_rw_indiv_veryveryhighvar,text_size_label = 2,use_ci = F)
+
+
+
+

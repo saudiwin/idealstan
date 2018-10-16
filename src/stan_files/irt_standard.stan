@@ -48,7 +48,7 @@ data {
   int sample_stationary;
   real time_sd;
   int restrict_var;
-  real restrict_var_high[2];
+  real restrict_var_high;
   real restrict_high_mean;
   int restrict_high_mean_ind;
 }
@@ -194,7 +194,7 @@ model {
 // add correction for random-walk models
 
 if(T>1 && use_ar==0) {
-  mean(L_tp1[,restrict_high_mean_ind]) ~ normal(restrict_high_mean,.1);
+  mean(L_tp1[,restrict_high_mean_ind]) ~ normal(restrict_high_mean,.01);
   target += jacob_mean_correct; // this is a constant as it only varies with the count of the parameters
 }
   
