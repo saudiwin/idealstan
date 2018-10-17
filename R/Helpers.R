@@ -15,7 +15,7 @@
   
   post_modes <- rstan::vb(object=to_use,data =this_data,
                           algorithm='meanfield')
-  
+
   # Test whether there is a lot of missing data
   
   #use_absence <- .det_missing(object=object,model_type=model_type)
@@ -107,7 +107,7 @@
                              use_groups=use_groups)
   }
 
-  if(this_data$T>1 && this_data$use_ar==0) {
+  if(this_data$T>1) {
     # do some additional model identification if necessary for time-varying ideal pt models
     
     # need new order of variables
@@ -131,6 +131,10 @@
     }
     
     restrict_mean <- ideal_pts_mean[constrain_mean]
+    
+    object@restrict_mean_val <- restrict_mean
+    object@restrict_mean_ind <- constrain_mean
+    object@restrict_var_high <- time_var_restrict
   }
   
   
@@ -138,9 +142,7 @@
   this_data$num_fix_high <- 1
   this_data$num_fix_low <- 1
   this_data$constraint_type <- 3
-  
   this_data$constrain_par <- 1
-  
   object@restrict_num_high <- 1
   object@restrict_num_low <- 1
   object@restrict_ind_high <- to_constrain_high
@@ -148,9 +150,6 @@
   object@constraint_type <- this_data$constraint_type
   object@diff <- diff
   object@diff_high <- diff_high
-  object@restrict_mean_val <- restrict_mean
-  object@restrict_mean_ind <- constrain_mean
-  object@restrict_var_high <- time_var_restrict
   return(object)
 }
 

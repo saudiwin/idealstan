@@ -661,14 +661,20 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
     
   if(length(idealdata@restrict_var_high)==0 && !is.null(restrict_var_high)) {
       idealdata@restrict_var_high <- restrict_var_high
+  } else if(length(idealdata@restrict_var_high)==0 && is.null(restrict_var_high)) {
+      idealdata@restrict_var_high <- 1
   }
     
   if(length(idealdata@restrict_mean_val)==0 && !is.null(restrict_mean_val)) {
       idealdata@restrict_mean_val <- restrict_mean_val
+  } else if(length(idealdata@restrict_mean_val)==0 && is.null(restrict_mean_val)) {
+    idealdata@restrict_mean_val <- 1
   }
     
   if(length(idealdata@restrict_mean_ind)==0 && !is.null(restrict_mean_ind)) {
       idealdata@restrict_mean_ind <- restrict_mean_ind
+  } else if(length(idealdata@restrict_mean_ind)==0 && is.null(restrict_mean_ind)) {
+    idealdata@restrict_mean_ind <- 1
   }
     
   if(length(idealdata@restrict_mean)>0 && use_ar==T && !is.null(prior_fit)) {
@@ -727,7 +733,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
                     restrict_var_high=idealdata@restrict_var_high,
                     restrict_mean=idealdata@restrict_mean,
                     restrict_mean_val=idealdata@restrict_mean_val,
-                    restrict_mean_val_ind=idealdata@restrict_mean_val)
+                    restrict_mean_ind=idealdata@restrict_mean_ind)
 
   idealdata <- id_model(object=idealdata,fixtype=fixtype,model_type=model_type,this_data=this_data,
                         nfix=nfix,restrict_ind_high=restrict_ind_high,
@@ -736,7 +742,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
                         ncores=ncores,
                         use_groups=use_groups,
                         prior_fit=prior_fit)
-  
+
   # if diff hasn't been set yet, set it
   
   if(length(idealdata@diff_high)==0) {
@@ -818,7 +824,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
                     diff_high=idealdata@diff_high,
                     time_sd=time_sd,
                     ar_sd=ar_sd,
-                    restrict_var=as.numeric(idealdata@restrict_var),
+                    restrict_var=idealdata@restrict_var,
                     restrict_var_high=idealdata@restrict_var_high,
                     restrict_mean_val=idealdata@restrict_mean_val,
                     restrict_mean_ind=idealdata@restrict_mean_ind,
