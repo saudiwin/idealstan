@@ -712,3 +712,35 @@ id_plot_rhats <- function(obj) {
     ggplot(aes(x=Rhats)) + theme_minimal() + geom_histogram() +
     ylab('Parameters') +theme(panel.grid=element_blank())
 }
+
+#' Display Coefficient Plot of Hierarchical Covariates
+#' 
+#' This function will pull the estimates of the hierarchical covariates (whether at the person or 
+#' item-discrimination level) and then plot them on a vertical coefficient plot. Names of 
+#' the parameters are taken from the levels of the factor if a categorical variable and the
+#' column names otherwise. 
+#' 
+#' @param object A fitted \code{idealstan} object
+#' @param cov_type Either 'person_cov' for person-level hierarchical parameters,
+#' 'discrim_reg' for bill/item discrimination parameters from regular (non-inflated) model, and 
+#' 'discrim_abs' for bill/item discrimination parameters from inflated model.
+#' @return A \code{ggplot2} plot that can be further customized with \code{ggplot2} functions if need be.
+id_plot_cov <- function(object,
+                        cov_type) {
+  
+  param_name <- switch(cov_type,person_cov='legis_x',
+                       discrim_reg='sigma_reg_x',
+                       discrim_abs='sigma_abs_x')
+  
+  to_plot <- as.array(object@stan_samples,
+                   pars=param_name)
+  
+  # reset names of parameters
+  new_names <- switch(cov_type,person_cov=attributes(object@score_data@person_cov)$dimnames$colnames,
+                      discrim_reg=attributes(object@score_data@item_cov)$dimnames$colnames,
+                      discrim_abs=attributes(object@score_data@item_cov_miss)$dimnames$colnames)
+
+  attributes(to_plot)$dimnames$parameters <- new_names
+  
+  mcmc_intervals(to_plot) + xlab('Ideal Point Score')
+}

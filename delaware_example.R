@@ -227,16 +227,11 @@ estimate_rw <- id_estimate(to_ideal,use_vb = T,model_type = 2,
                            restrict_sd=.01,restrict_var_high = 1,
                            time_sd=1)
 
-# plot the covariates (wll make a proper function soon)
+# plot the covariates
 
-rstan::stan_plot(estimate_rw@stan_samples,'legis_x')
+id_plot_cov(estimate_rw,cov_type = 'person_cov')
 
-# we can see that #1 and #2 are far apart, while #3 is to the right of #2
-# to figure out what labels match, we can get the names of the covariates
-
-attributes(estimate_rw@score_data@person_cov)$dimnames$colnames
-
-# so legis_x[1] (intercept) == Democrats, legis_x[2] == Republicans, and legis_x[3] == X (libertarian?)
+# plot combined ideal point distributions (party intercepts + time-varying parameters)
 
 id_plot_legis_dyn(estimate_rw,text_size_label = 2,use_ci = F) + scale_color_manual(values=c('X'='green',
                                                                                                   'D'='blue',
