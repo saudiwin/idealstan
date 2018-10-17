@@ -188,6 +188,7 @@ setMethod('id_model',signature(object='idealdata'),
             x <- object@score_matrix
             
             run_id <- switch(fixtype,vb_full=.vb_fix,vb_partial=.vb_fix,constrained=.constrain_fix,
+                             constrain=.constrain_fix,
                              prior_fit=.prior_fit)
 
             object <- run_id(object=object,this_data=this_data,nfix=nfix,

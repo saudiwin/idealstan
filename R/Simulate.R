@@ -282,7 +282,13 @@ id_sim_rmse <- function(obj,rep=1) {
   
   all_true <- obj@score_data@simul_data
   
-  true_person <- all_true$true_person[as.numeric(levels(obj@score_data@score_matrix$person_id))]
+  if(length(unique(as.numeric(obj@score_data@score_matrix$time_id)))>1) {
+    true_person <- all_true$true_person[as.numeric(levels(obj@score_data@score_matrix$person_id)),]
+    person_est <- all_params$L_tp1
+  } else {
+    true_person <- all_true$true_person[as.numeric(levels(obj@score_data@score_matrix$person_id))]
+    person_est <- all_params$L_full
+  }
   true_sigma_reg <- all_true$true_reg_discrim
   true_sigma_abs <- all_true$true_abs_discrim
   
@@ -313,9 +319,9 @@ id_sim_rmse <- function(obj,rep=1) {
   }
   
   
-  out_data <- list(`Ideal Points`=over_params(all_params$L_full,true_person),
-                   `Absence Discrimination`=over_params(all_params$sigma_abs_full,true_sigma_abs),
-                   `Item Discrimination`=over_params(all_params$sigma_reg_full,true_sigma_reg))
+  out_data <- list(`Ideal Points`=over_params(person_est,true_person),
+                   `Absence Discrimination`=over_params(all_params$sigma_abs_free,true_sigma_abs),
+                   `Item Discrimination`=over_params(all_params$sigma_reg_free,true_sigma_reg))
   
   return(out_data)
 
@@ -406,7 +412,14 @@ id_sim_resid <- function(obj,rep=1) {
   
   all_true <- obj@score_data@simul_data
   
-  true_person <- all_true$true_person[as.numeric(levels(obj@score_data@score_matrix$person_id))]
+  if(length(unique(as.numeric(obj@score_data@score_matrix$time_id)))>1) {
+    true_person <- all_true$true_person[as.numeric(levels(obj@score_data@score_matrix$person_id)),]
+    person_est <- all_params$L_tp1
+  } else {
+    true_person <- all_true$true_person[as.numeric(levels(obj@score_data@score_matrix$person_id))]
+    person_est <- all_params$L_full
+  }
+  
   true_sigma_reg <- all_true$true_reg_discrim
   true_sigma_abs <- all_true$true_abs_discrim
   
@@ -439,9 +452,9 @@ id_sim_resid <- function(obj,rep=1) {
     return(out_data1)
   }
   
-  out_data <- list(`Ideal Points`=over_params(all_params$L_full,true_person),
-                   `Absence Discrimination`=over_params(all_params$sigma_abs_full,true_sigma_abs),
-                   `Item Discrimination`=over_params(all_params$sigma_reg_full,true_sigma_reg))
+  out_data <- list(`Ideal Points`=over_params(person_est,true_person),
+                   `Absence Discrimination`=over_params(all_params$sigma_abs_free,true_sigma_abs),
+                   `Item Discrimination`=over_params(all_params$sigma_reg_free,true_sigma_reg))
   
   return(out_data)
 

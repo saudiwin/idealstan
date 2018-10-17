@@ -1,0 +1,8 @@
+citHeader("If you use idealstan, please cite:")
+
+citEntry(entry = "Misc", 
+         title = "Generalized Ideal Point Models for Time-Varying and Missing-Data Inference",
+         author = "Robert Kubinec",
+         note = "Working Paper",
+         year = 2018
+)

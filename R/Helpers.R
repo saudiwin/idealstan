@@ -799,7 +799,7 @@
   # extract time from bill labels if it exists
   if(!is.null(time_id)) {
 
-    score_data <- left_join(score_data,as_data_frame(st.rc$vote.data),by=c(item_id=item_id))
+    score_data <- left_join(score_data,as_data_frame(rc_obj$vote.data),by=c(item_id=item_id))
   } else {
     score_data$time_id <- 1
     time_id <- 'time_id'
