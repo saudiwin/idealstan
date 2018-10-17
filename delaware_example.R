@@ -45,7 +45,7 @@ sum(is.na(to_ideal@score_matrix$outcome))
 # now see if we can estimate something
 # random walk prior
 # set a hard limit on the over-time ideal point variance restrict_var_high=.5 to prevent too much bounciness
-# a hard limit of 0.5 is still fairly high
+# a hard limit of 0.25 is still fairly high
 # we use the "vb_partial" option that will figure out optimal values to pin the Rs and Ds to in the 
 # first time point. We only need to specify which to constrain high or low, i.e. restrict_ind_high and 
 # restrict_ind_low
@@ -53,7 +53,7 @@ sum(is.na(to_ideal@score_matrix$outcome))
 
 estimate_rw <- id_estimate(to_ideal,use_vb = T,model_type = 2,
                             use_groups = T,
-                           restrict_sd=.01,restrict_var_high = .5,
+                           restrict_sd=.01,restrict_var_high = .25,
                             time_sd=1,fixtype = 'vb_partial',restrict_ind_high = 'R',
                            restrict_ind_low = 'D')
 
@@ -103,7 +103,7 @@ estimate_rw_full <- id_estimate(to_ideal,use_vb = F,
                            model_type = 2,
                            use_groups = T,
                            restrict_sd = .01,
-                           restrict_var_high = .5,
+                           restrict_var_high = .25,
                            time_sd=1,fixtype = 'vb_partial',restrict_ind_high = 'R',
                            restrict_ind_low = 'D')
 

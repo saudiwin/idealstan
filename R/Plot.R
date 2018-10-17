@@ -79,9 +79,8 @@ id_plot_legis <- function(object,return_data=FALSE,item_plot=NULL,
   if(show_true==TRUE) {
     
     true_vals <- data_frame(true_vals=object@score_data@simul_data$true_person[,1]) %>% 
-      mutate(person_num_old=1:n())
-
-    person_params <- mutate(person_params,person_num_old=as.numeric(person_id))
+      slice(as.numeric(levels(person_params$person_id))) %>% 
+      mutate(id_num=1:n())
     
     person_params <- left_join(person_params,true_vals)
   }
