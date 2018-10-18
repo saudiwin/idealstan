@@ -1,5 +1,5 @@
 language: r
-sudo: false
+sudo: true
 r: devel
 cache: packages
 r_binary_packages:
