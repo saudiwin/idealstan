@@ -25,7 +25,7 @@ st.rc$vote.data <- data_frame(vote_labels=vote_labels,
                               years=years)
 colnames(st.rc$votes) <- vote_labels
 
-to_ideal <- id_make(st.rc,ordinal=F,inflate=T,include_pres=T,
+to_ideal <- id_make(st.rc,ordinal=F,inflate=T,
                     item_id="vote_labels",
                     time_id='years')
 
@@ -53,7 +53,7 @@ sum(is.na(to_ideal@score_matrix$outcome))
 
 estimate_rw <- id_estimate(to_ideal,use_vb = T,model_type = 2,
                             use_groups = T,
-                           restrict_sd=.01,restrict_var_high = .25,
+                           restrict_sd=.01,restrict_var_high = .2,
                             time_sd=1,fixtype = 'vb_partial',restrict_ind_high = 'R',
                            restrict_ind_low = 'D')
 
@@ -98,12 +98,13 @@ id_plot_legis_dyn(estimate_ar,text_size_label = 6) + scale_color_manual(values=c
 # considerable trouble identifying this model because of the low number of groups (i.e., 3 parties)
 # to identify it I added a default option for random-walk models that also constrains the 
 # over-time mean of one of the parties (Democrats), not just fixing an initial value
+# even so, the variance has to be restricted to .1
 
 estimate_rw_full <- id_estimate(to_ideal,use_vb = F,
                            model_type = 2,
                            use_groups = T,
                            restrict_sd = .01,
-                           restrict_var_high = .25,
+                           restrict_var_high = .1,
                            time_sd=1,fixtype = 'vb_partial',restrict_ind_high = 'R',
                            restrict_ind_low = 'D')
 

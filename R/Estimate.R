@@ -316,33 +316,13 @@ id_make <- function(score_data=NULL,
     miss_val <- max_val+1
   } 
   
-  
-  
-  # make roll calls a separate function
-  
-  if(nrow(person_data)==0) {
-    person_data <- data_frame(person.names=as.character(1:num_person))
-  }
-  
-  if(!("group" %in% names(person_data))) person_data$group <- rep('O',num_person)
-  
-  
-  # check what kind of vote labels to use
-  
-  if(outcome_label_type=='none') {
-    vote_labels <- as.character(vote_int)
-  } else if(outcome_label_type!='votes') {
-    vote_labels <- outcome_label_type
-  }
 
   outobj <- new('idealdata',
       score_matrix=score_rename,
-      person_data=person_data,
       person_cov=person_cov,
       group_cov=group_cov,
       item_cov=item_cov,
       item_cov_miss=item_cov_miss,
-      vote_labels=vote_labels,
       vote_int=vote_int,
       vote_count=length(votes) - length(exclude_level),
       miss_val=miss_val)
