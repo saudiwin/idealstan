@@ -22,10 +22,11 @@ matrix:
           packages:
             - llvm-5.0-dev
       env:
-        - CXX_OLEVEL=2 CXX=clang++
+        - MATRIX_EVAL="CXX_OLEVEL=2 && CXX=clang++""
 
 
 before_install:
+  - eval "${MATRIX_EVAL}"
   - sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
   - sudo apt-get update -q
   - mkdir -p ~/.R/
