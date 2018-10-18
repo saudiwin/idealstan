@@ -9,11 +9,12 @@ id_estimate(idealdata = NULL, model_type = 2, use_subset = FALSE,
   sample_size = 20, nchains = 4, niters = 2000, use_vb = FALSE,
   restrict_ind_high = NULL, id_diff = 4, id_diff_high = 2,
   restrict_ind_low = NULL, fixtype = "vb_full", prior_fit = NULL,
-  warmup = floor(niters/2), ncores = 4, auto_id = FALSE, use_ar = FALSE,
-  use_groups = FALSE, discrim_reg_sd = 1, discrim_miss_sd = 1,
-  person_sd = 3, time_sd = 0.1, sample_stationary = FALSE, ar_sd = 1,
-  diff_reg_sd = 1, diff_miss_sd = 1, restrict_sd = 0.01,
-  restrict_mean = NULL, restrict_var = NULL, restrict_mean_val = NULL,
+  warmup = floor(niters/2), ncores = 4, auto_id = FALSE,
+  use_ar = FALSE, use_groups = FALSE, discrim_reg_sd = 1,
+  discrim_miss_sd = 1, person_sd = 1, time_sd = 0.1,
+  sample_stationary = FALSE, ar_sd = 1, diff_reg_sd = 1,
+  diff_miss_sd = 1, restrict_sd = 0.01, restrict_mean = NULL,
+  restrict_var = NULL, restrict_mean_val = NULL,
   restrict_mean_ind = NULL, restrict_var_high = 0.1, ...)
 }
 \arguments{

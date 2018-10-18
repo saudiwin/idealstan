@@ -5,8 +5,8 @@
 \alias{id_plot_ppc,idealstan-method}
 \title{Plot Posterior Predictive Distribution for \code{idealstan} Objects}
 \usage{
-\S4method{id_plot_ppc}{idealstan}(object, ppc_pred = NULL, person = NULL,
-  item = NULL, ...)
+\S4method{id_plot_ppc}{idealstan}(object, ppc_pred = NULL,
+  person = NULL, item = NULL, ...)
 }
 \arguments{
 \item{object}{A fitted idealstan object}

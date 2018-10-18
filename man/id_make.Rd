@@ -4,13 +4,13 @@
 \alias{id_make}
 \title{Create data to run IRT model}
 \usage{
-id_make(score_data = NULL, outcome = "outcome", person_id = "person_id",
-  item_id = "item_id", time_id = "time_id", group_id = "group_id",
-  simul_data = NULL, person_cov = NULL, group_cov = NULL,
-  item_cov = NULL, miss_cov = NULL, item_cov_miss = NULL, miss_val = NA,
-  high_val = 3L, low_val = 1L, middle_val = 2L, ordinal = FALSE,
-  continuous = FALSE, exclude_level = NULL, inflate = TRUE,
-  simulation = FALSE)
+id_make(score_data = NULL, outcome = "outcome",
+  person_id = "person_id", item_id = "item_id", time_id = "time_id",
+  group_id = "group_id", simul_data = NULL, person_cov = NULL,
+  group_cov = NULL, item_cov = NULL, miss_cov = NULL,
+  item_cov_miss = NULL, miss_val = NA, high_val = 3L, low_val = 1L,
+  middle_val = 2L, ordinal = FALSE, continuous = FALSE,
+  exclude_level = NULL, inflate = TRUE, simulation = FALSE)
 }
 \arguments{
 \item{score_data}{A data frame in long form, i.e., one row in the data for each 
