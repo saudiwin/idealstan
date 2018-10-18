@@ -38,7 +38,7 @@ before_install:
 script: 
   - |
     travis_wait 42 R CMD build .
-    travis_wait 59 R CMD check idealstanv2*tar.gz
+    travis_wait 59 R CMD check idealstan*tar.gz
 
 after_script:
   - tar -ztvf idealstan_*.tar.gz
