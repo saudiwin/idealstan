@@ -1,46 +1,28 @@
 language: r
-sudo: true
+sudo: false
 r: devel
 cache: packages
 r_binary_packages:
-  - Rcpp
-  - glue
-  - httr
-  - bayesplot
+  - devtools
+  - rstan
+  - rstantools
   - dplyr
-  - assertthat
-  - BH
-  - bindr
-  - fansi
-  - utf8
-  - purrr
-  - lazyeval
-  - stringi
+  - tidyr
   - stringr
-  - bindrcpp
-  - plyr
-  - reshape2
+  - bayesplot
   - ggplot2
-  - scales
-  - ggrepel
-  - mime
-  - curl
-  - openssl
-  - R6
-  - memoise
-  - whisker
-  - digest
-  - git2r
-  - withr
-  - jsonlite
-  - rstudioapi
+  - lazyeval
+  - rlang
+  - shinystan
+  - gghighlight
+  - forcats
+  - Rcpp
+  - BH
+  - RccpEigen
+  - StanHeaders
+
 
 latex: true
-
-
-env:
-  matrix: 
-    - CXX_OLEVEL=2 CXX=clang++
 
 matrix:
   include:
@@ -56,7 +38,6 @@ matrix:
             - clang-5.0
       env:
         - MATRIX_EVAL="CXX_OLEVEL=2 && CC=clang && CXX=clang++"
-        - COMPILER=clang
 
 
 before_install:
@@ -70,7 +51,6 @@ before_install:
   - if [[ $CXX = "clang++" ]] ;  then export CLANG_EXTRA_ARG=" -Qunused-arguments -fcolor-diagnostics " ; fi
   - sed -i.bak "s/ g++/ ${CXX}${CLANG_EXTRA_ARG}/" ~/.R/Makevars
   - sed -i.bak "s/O[0-3]/O$CXX_OLEVEL/" ~/.R/Makevars
-  - sudo apt-get install -y --allow-unauthenticated r-cran-matrix
 
 script: 
   - |
