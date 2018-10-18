@@ -2,6 +2,9 @@ language: r
 sudo: true
 r: devel
 cache: packages
+# list here all package dependencies of the package you are testing
+# includes anything in "Linking To", "Depends" and "Imports"
+# putting them here will prevent having to install them by source 
 r_binary_packages:
   - devtools
   - rstan
@@ -14,11 +17,10 @@ r_binary_packages:
   - lazyeval
   - rlang
   - shinystan
-  - gghighlight
   - forcats
   - Rcpp
   - BH
-  - RccpEigen
+  - RcppEigen
   - StanHeaders
 
 

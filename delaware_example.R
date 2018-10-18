@@ -44,8 +44,7 @@ sum(is.na(to_ideal@score_matrix$outcome))
 
 # now see if we can estimate something
 # random walk prior
-# set a hard limit on the over-time ideal point variance restrict_var_high=.5 to prevent too much bounciness
-# a hard limit of 0.25 is still fairly high
+# set a hard limit on the over-time ideal point variance restrict_var_high=.1 to prevent too much bounciness
 # we use the "vb_partial" option that will figure out optimal values to pin the Rs and Ds to in the 
 # first time point. We only need to specify which to constrain high or low, i.e. restrict_ind_high and 
 # restrict_ind_low
@@ -53,7 +52,7 @@ sum(is.na(to_ideal@score_matrix$outcome))
 
 estimate_rw <- id_estimate(to_ideal,use_vb = T,model_type = 2,
                             use_groups = T,
-                           restrict_sd=.01,restrict_var_high = .2,
+                           restrict_sd=.01,restrict_var_high = .1,
                             time_sd=1,fixtype = 'vb_partial',restrict_ind_high = 'R',
                            restrict_ind_low = 'D')
 
@@ -89,7 +88,7 @@ id_plot_legis_dyn(estimate_ar,text_size_label = 6) + scale_color_manual(values=c
 # The AR(1) model doesn't fit this data as well because
 # the Democrats are clearly not stationary over this time period, so that violates the model assumptions
 # to fit the AR(1) model better to this data we need more dis-aggregated time points (by month, for example)
-# the AR(1) does show more movement in the Repupblicans ideal points, 
+# the AR(1) does show more movement in the Republicans ideal points, 
 # which makes sense because if the Republicans are stationary over this time period than the AR(1)
 # model will pick up on time-varying shocks that the random walk model ignores
 
@@ -99,6 +98,7 @@ id_plot_legis_dyn(estimate_ar,text_size_label = 6) + scale_color_manual(values=c
 # to identify it I added a default option for random-walk models that also constrains the 
 # over-time mean of one of the parties (Democrats), not just fixing an initial value
 # even so, the variance has to be restricted to .1
+# note how close this is to the variational inference (very, very close)
 
 estimate_rw_full <- id_estimate(to_ideal,use_vb = F,
                            model_type = 2,
