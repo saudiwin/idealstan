@@ -17,12 +17,12 @@ matrix:
       addons:
         apt:
           sources: 
-            - sourceline: 'deb http://apt.llvm.org/trusty/ llvm-toolchain-trusty-5.0 main'
-              key_url: 'https://apt.llvm.org/llvm-snapshot.gpg.key'
+            - llvm-toolchain-trusty-5.0
           packages:
             - llvm-5.0-dev
+            - clang-5.0
       env:
-        - MATRIX_EVAL="CXX_OLEVEL=2 && CXX=clang++""
+        - MATRIX_EVAL="CXX_OLEVEL=2 && CC=clang-5.0 && CXX=clang++-5.0""
 
 
 before_install:
