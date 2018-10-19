@@ -17,5 +17,5 @@ matrix:
         
 before_install:
   - mkdir -p ~/.R/
-  - echo "CXX14 = g++-7" >> ~/.R/Makevars
+  - echo "CXX14 = g++-7 -fPIC" >> ~/.R/Makevars
   - echo "CXXFLAGS = -O3" >> ~/.R/Makevars
