@@ -101,7 +101,8 @@
                       high_val = ordinal_outcomes,
                       low_val = 1,
                       middle_val = 2:(ordinal_outcomes-1),
-                      inflate=inflate)
+                      inflate=inflate,
+                      ordinal=T)
   
   return(out_data)                    
 }
@@ -116,7 +117,7 @@
                                  ordinal_outcomes=NULL,
                                  ...)
 {
-  
+
   # need one set of cutpoints for each item
   
   all_cuts <- sapply(1:max(item_points), function(i) {
@@ -168,7 +169,8 @@
                       high_val = ordinal_outcomes,
                       low_val = 1,
                       middle_val = 2:(ordinal_outcomes-1),
-                      inflate=inflate)
+                      inflate=inflate,
+                      ordinal=T)
   
   return(out_data)                    
 }

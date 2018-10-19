@@ -4,8 +4,9 @@
 #' uncertainties of legislator/persons and bills/items.
 #' 
 #' This plot shows the distribution of ideal points for the legislators/persons in the model. It will plot them as a vertical
-#' dot plot with associated high-density posterior interval (10\% to 90\%). In addition, if the column index for a 
-#' bill/item from the response matrix is passed to the \code{item_plot} option, then an item/bill midpoint will be overlain
+#' dot plot with associated high-density posterior interval (can be changed 
+#' with \code{high_limit} and \code{low_limit} options). In addition, if item/bill IDs
+#' as a character vector is passed to the \code{item_plot} option, then an item/bill midpoint will be overlain
 #' on the ideal point plot, showing the point at which legislators/persons are indifferent to voting/answering on the 
 #' bill/item. Note that because this is an ideal point model, it is not possible to tell from the midpoint itself
 #' which side will be voting which way. For that reason, the legislators/persons are colored by their votes/scores to
@@ -13,7 +14,9 @@
 #' 
 #' @param object A fitted \code{idealstan} object
 #' @param return_data If true, the calculated legislator/bill data is returned along with the plot in a list
-#' @param item_plot The column index of the bill/item midpoint to overlay on the plot
+#' @param high_limit The quantile (number between 0 and 1) for the high end of posterior uncertainty to show in plot
+#' @param low_limit The quantile (number between 0 and 1) for the low end of posterior uncertainty to show in plot
+#' @param item_plot The IDs (character vector) of the bill/item midpoints to overlay on the plot
 #' @param text_size_label ggplot2 text size for legislator labels
 #' @param text_size_group ggplot2 text size for group text used for points
 #' @param point_size If \code{person_labels} and \code{group_labels} are set to \code{FALSE}, controls the size of the points plotted.
@@ -21,9 +24,10 @@
 #' @param person_labels if \code{TRUE}, use the person_id column to plot labels for the person (legislator) ideal points
 #' @param group_labels if \code{TRUE}, use the group column to plot text markers for the group (parties) from the person/legislator data
 #' @param person_ci_alpha The transparency level of the dot plot and confidence bars for the person ideal points
-#' @param show_score Show only person/legislator ideal points that have a certain score/vote category from the outcome (character string)
-#' @param abs_and_reg Whether to show 'both' absence and regular item/bill midpoints if the model is absence-inflated, the default,
-#' or 'Absence Points' for only the absence midpoints or 'Vote Points' for only the non-inflated midpoints
+#' @param item_plot_type Whether to show the \code{'non-inflated'} item/bill midpoints, 
+#' the \code{'inflated'} item/bill midpoints, or produce plots for \code{'both'} kinds of models. 
+#' Defaults to \code{'non-inflated'} and will only display an item/bill midpoint if one has been 
+#' specified in \code{item_plot}.
 #' @param show_true Whether to show the true values of the legislators (if model has been simulated)
 #' @param group_color If \code{TRUE}, give each group/bloc a different color
 #' @param group_overlap Whether to prevent the text from overlapping itself (ggplot2 option)
@@ -48,20 +52,25 @@
 #' 
 #' id_plot_legis(senate114_fit,item_plot=5)
 #' 
-id_plot_legis <- function(object,return_data=FALSE,item_plot=NULL,
+id_plot_legis <- function(object,return_data=FALSE,
+                          high_limit=.95,
+                          low_limit=.05,
+                          item_plot=NULL,
+                          item_plot_type='non-inflated',
                        text_size_label=2,text_size_group=2.5,
                        point_size=1,
                        hjust_length=-0.7,
                        person_labels=TRUE,
                        group_labels=F,
                        person_ci_alpha=0.1,
-                       show_score=NULL,
-                       abs_and_reg='both',show_true=FALSE,group_color=TRUE,
+                       show_true=FALSE,group_color=TRUE,
                        hpd_limit=10,
                        group_overlap=FALSE,
                        sample_persons=NULL,...) {
 
-  person_params <- .prepare_legis_data(object)
+  person_params <- .prepare_legis_data(object,
+                                       high_limit=high_limit,
+                                       low_limit=low_limit)
 
   # sample for plot only
   
@@ -88,6 +97,56 @@ id_plot_legis <- function(object,return_data=FALSE,item_plot=NULL,
   if(!is.null(hpd_limit)) {
     person_params <- filter(person_params,
                             abs(high_pt-low_pt)<hpd_limit)
+  }
+  
+  # create item plot data
+  
+  if(!is.null(item_plot)) {
+    
+    # loop over the item IDs and calculate midpoints and HPDs
+    if(object@model_type %in% c(1,2) || (model_type>6 && model_type<13)) {
+      # binary models and continuous
+      item_points <- lapply(item_plot,.item_plot_binary,object=object,
+                            low_limit=low_limit,
+                            high_limit=high_limit) %>% bind_rows()
+    } else if(object@model_type %in% c(3,4)) {
+      # rating scale
+      item_points <- lapply(item_plot,.item_plot_ord_rs,object=object,
+                            low_limit=low_limit,
+                            high_limit=high_limit) %>% bind_rows()
+    } else if(object@model_type %in% c(5,6)) {
+      # grm
+      item_points <- lapply(item_plot,.item_plot_ord_grm,object=object,
+                            low_limit=low_limit,
+                            high_limit=high_limit) %>% bind_rows()
+    } else if(object@model_type %in% c(13,14)) {
+      # latent space
+      item_points <- lapply(item_plot,.item_plot_ls,object=object,
+                            low_limit=low_limit,
+                            high_limit=high_limit) %>% bind_rows()
+    }
+    
+    # collect outcomes
+    
+    item_points <- left_join(item_points,object@score_data@score_matrix,by=c('item_name'='item_id')) %>% 
+      gather(key='ci_type',value='ci_value',item_high,item_low) %>% 
+      mutate(ci_type=factor(ci_type,levels=c('item_low',
+                                     'item_high'),
+                            labels=c(paste0(low_limit*100,'%'),
+                                     paste0(high_limit*100,'%'))))
+    person_params <- left_join(person_params,item_points,by=c('person_id'='person_id',
+                                                              'group_id'='group_id'))
+    # Choose a plot based on the user's options
+    
+    if(item_plot_type!='both') {
+      
+      item_plot_type <- switch(item_plot_type,
+                               `non-inflated`="Non-Inflated\nDiscrimination",
+                               inflated="Inflated\nDiscrimination")
+      
+      person_params <- filter(person_params,item_type==item_plot_type)
+    } 
+    
   }
   
   # Default plot: group names plotted as points
@@ -119,6 +178,27 @@ id_plot_legis <- function(object,return_data=FALSE,item_plot=NULL,
                                    check_overlap=TRUE,hjust=hjust_length,size=text_size_label)
   }
   
+    
+  if(!is.null(item_plot)) {
+    
+    # Add in bill vertical line (50% equiprobability voting line)
+      outplot <- outplot + geom_hline(aes(yintercept=item_median),linetype=2,alpha=0.6) +
+        geom_rug(aes(y=ci_value,linetype=ci_type)) +
+        guides(linetype=guide_legend('Item\nMidpoint\nHPD'),
+               colour=guide_legend('')) +
+        theme(legend.position = 'bottom')
+     
+    #Whether or not to add a facet_wrap
+    
+    if(item_plot_type=='both' & length(item_plot)>1) {
+      outplot <- outplot + facet_wrap(~item_name + item_type,dir='v')
+    } else if(item_plot_type=='both') {
+      outplot <- outplot + facet_wrap(~item_type,dir='v') 
+    } 
+    
+    
+  }
+  
   # Add a dirty trick to enable the legend to show what group labels instead of just the letter 'a'
   
   if(group_color==TRUE) {
@@ -126,213 +206,16 @@ id_plot_legis <- function(object,return_data=FALSE,item_plot=NULL,
     outplot <- outplot + geom_point(aes(x=reorder(person_id,median_pt),y=median_pt,color=group_id),size=0,stroke=0) +
       guides(colour = guide_legend(title="",override.aes = list(size = 5)))
   }
-  #, shape = sapply(levels(person_params$group),utf8ToInt)
-     
-    # Add theme elements
-    
-  outplot <- outplot  + theme_minimal() + ylab("") + xlab("") +
-      theme(axis.text.y=element_blank(),panel.grid.major.y = element_blank()) + coord_flip() 
-  
-
-  if(!is.null(item_plot)) {
-
-    bill_num <- which(colnames(object@score_data@score_matrix) %in% item_plot)
-    bill_discrim_reg <- paste0('sigma_reg_full[',bill_num,']')
-    bill_diff_reg <- paste0('B_int_full[',bill_num,']')
-    
-    if(any(object@model_type %in% c(2,4,6))) {
-      bill_discrim_abs <- paste0('sigma_abs_full[',bill_num,']')
-      bill_diff_abs <- paste0('A_int_full[',bill_num,']')
-      
-      to_rstan <- c(bill_discrim_reg,bill_diff_reg,bill_discrim_abs,bill_diff_abs)
-    } else {
-      to_rstan <- c(bill_discrim_reg,bill_diff_reg)
-    }
-    
-    if(any(object@model_type %in% c(3,4,5,6))) {
-      steps <- rstan::extract(object@stan_samples,pars='steps_votes') 
-    }
-
-    bill_pos <- rstan::extract(object@stan_samples,pars=to_rstan) %>% as_data_frame %>% 
-      gather(key = bills,value=ideal_pts) %>% 
-      group_by(bills) %>% 
-      mutate(rownum=1:n())
-    bill_pos <- spread(bill_pos,bills,ideal_pts) %>% 
-      select(-rownum)
-    names(bill_pos) <- stringr::str_replace_all(names(bill_pos),'[\\[\\]]',replacement='_')
-    bill_diff_reg <- stringr::str_replace_all(bill_diff_reg,'[\\[\\]]',replacement='_')
-    bill_discrim_reg <- stringr::str_replace_all(bill_discrim_reg,'[\\[\\]]',replacement='_')
-    if(any(object@model_type %in% c(2,4,6))) {
-      #inflated models
-      bill_diff_abs <- stringr::str_replace_all(bill_diff_abs,'[\\[\\]]',replacement='_')
-      bill_discrim_abs <- stringr::str_replace_all(bill_discrim_abs,'[\\[\\]]',replacement='_')
-    }
-
-    bill_pos <- lapply(1:length(bill_num),function(x) {
-
-      if(any(object@model_type %in% c(3,4,5,6))) {
-        # ordinal models
-        if(any(object@model_type %in% c(4,6))) {
-          #inflated ordinal
-          out_reg <- .calc_bill(bill_pos,
-                                int_reg=parse_quosure(bill_diff_reg[x]),
-                                sigma_reg=parse_quosure(bill_discrim_reg[x]),
-                                int_abs=parse_quosure(bill_diff_abs[x]),
-                                sigma_abs=parse_quosure(bill_discrim_abs[x]),
-                                steps_data=steps$steps_votes,
-                                step_num=ncol(steps$steps_votes),
-                                this_num=bill_num[x])
-        } else {
-          #non-inflated Ordinal
-          out_reg <- .calc_bill(bill_pos,
-                                int_reg=parse_quosure(bill_diff_reg[x]),
-                                sigma_reg=parse_quosure(bill_discrim_reg[x]),
-                                steps_data=steps$steps_votes,
-                                step_num=ncol(steps$steps_votes),
-                                this_num=bill_num[x])
-        }
-      } else {
-        #binary models
-        #inflated binary
-        if(object@model_type==2) {
-          out_reg <- .calc_bill(bill_pos,
-                                int_reg=parse_quosure(bill_diff_reg[x]),
-                                sigma_reg=parse_quosure(bill_discrim_reg[x]),
-                                int_abs=parse_quosure(bill_diff_abs[x]),
-                                sigma_abs=parse_quosure(bill_discrim_abs[x]),
-                                this_num=bill_num[x])
-        } else {
-          #non-inflated binary
-          out_reg <- .calc_bill(bill_pos,
-                                int_reg=parse_quosure(bill_diff_reg[x]),
-                                sigma_reg=parse_quosure(bill_discrim_reg[x]),
-                                this_num=bill_num[x])
-        }
-      }
-      return(out_reg)
-    })
-
-    bill_pos <- bind_rows(bill_pos) %>% 
-                gather(key = ci_type,value=ci_value,high_bill,low_bill)
-    
-    #Redo the legislator plot to make room for bill covariates
-    
-    # Pick up bills and put the labels back on
-    cols <- object@score_data@score_matrix[,item_plot] %>% as_data_frame
-    if(!is.null(sample_persons)) {
-      cols <- slice(cols,to_sample)
-    }
-    cols <- lapply(cols,function(x) {
-      if(object@model_type %in% c(2,4) && is.na(object@score_data@miss_val)) {
-        x <- factor(x,levels=object@score_data@vote_int,labels=object@score_data@vote_labels,exclude=NULL)
-      } else {
-        x <- factor(x,levels=object@score_data@vote_int,labels=object@score_data@vote_labels)
-      }
-      
-    }) %>% as_data_frame
-
-    if(length(item_plot)>1) {
-      person_params <- bind_cols(person_params,cols) %>% gather(bill_type,bill_vote,one_of(bill_num))
-    } else {
-      person_params <- bind_cols(person_params,cols) 
-      names(person_params) <- c(names(person_params)[-length(names(person_params))],'bill_vote')
-      person_params <- mutate(person_params,bill_type=bill_num)
-    }
-    
-    if(!is.null(show_score)) {
-      if(all(sapply(show_score,`%in%`,object@score_data@vote_labels))) {
-        person_params <- filter(person_params,bill_vote %in% show_score)
-      } else {
-        warning('Please specify a show_score parameter from the labels in the score/vote matrix.')
-      }
-    }
-
-    person_params <- left_join(person_params,bill_pos,c('bill_type'='bill_num')) %>% 
-      mutate(ci_type=factor(ci_type,levels=c('low_bill','high_bill'),
-                            labels=c('10%','90%')))
-    
-    # Choose a plot based on the user's options
-
-    if(any(object@model_type %in% c(2,4,6)) & abs_and_reg!='both') {
-
-      person_params <- filter(person_params,param==abs_and_reg)
-    } 
-    
-    # check to make sure all bill votes are NA -- if so the function will fail
-    # good to convert those to missing anyway
-    
-    person_params <- mutate(person_params,
-                            bill_vote=as.character(bill_vote),
-                            bill_vote=if_else(is.na(bill_vote),'Missing',bill_vote))
-    
-    outplot <- person_params %>% ggplot() + 
-      geom_linerange(aes(x=reorder(person_id,median_pt),ymin=low_pt,ymax=high_pt),alpha=person_ci_alpha)
-    
-    if(group_labels==TRUE) {
-      outplot <- outplot +       
-        geom_text(aes(x=reorder(person_id,median_pt),y=median_pt,label=reorder(group_id,median_pt),color=bill_vote),size=text_size_group,
-                                           check_overlap = group_overlap,
-                  fontface='bold') 
-    }
-    if(person_labels==TRUE) {
-      outplot <- outplot + 
-        geom_text(aes(x=reorder(person_id,median_pt),y=median_pt,label=reorder(person_id,median_pt),color=bill_vote),
-                                           check_overlap=TRUE,hjust=hjust_length,size=text_size_label)
-    }
-    if(group_labels==FALSE && person_labels==FALSE) {
-      outplot <- outplot +
-        geom_point(aes(x=reorder(person_id,median_pt),y=median_pt,color=bill_vote),size=point_size)
-    }
-
-    outplot <- outplot +
-      theme_minimal() + ylab("") + xlab("") +
-      theme(axis.text.y=element_blank(),panel.grid= element_blank()) + coord_flip()
-    
-    # Add in bill vertical line (50% equiprobability voting line)
-      outplot <- outplot + geom_hline(aes(yintercept=median_bill),linetype=2,alpha=0.6) +
-        geom_rug(aes(y=ci_value,linetype=ci_type)) +
-        guides(linetype=guide_legend('Item\nMidpoint\nHPD'),
-               colour=guide_legend('')) +
-        theme(legend.position = 'bottom')
-    
-    # Add in annotations
-    if(!is.null(person_params$step) && max(person_params$step)>1 && (abs_and_reg!='both' && object@model_type %in% c(2,4,6))) {
-      if(object@model_type %in% c(2,4,6)) {
-        bill_data <- distinct(bill_pos,median_bill,step,param)
-        bill_data <- filter(bill_data,param==abs_and_reg)
-        outplot <- outplot + annotate(geom='text',
-                                      x=person_params$person_id[which(abs(person_params$median_pt-quantile(person_params$median_pt,.8))==min(abs(person_params$median_pt-quantile(person_params$median_pt,.8))))][1:max(person_params$step)],
-                                      y=bill_data$median_bill + (min(bill_data$median_bill)-max(bill_data$median_bill))/(max(person_params$step)*3.5),
-                                      label=object@score_data@vote_labels[1:(length(object@score_data@vote_labels)-2)],
-                                      colour='dark green')
-      } else {
-        bill_data <- distinct(bill_pos,median_bill,step)
-        outplot <- outplot + annotate(geom='text',
-                                      x=person_params$person_id[which(abs(person_params$median_pt-quantile(person_params$median_pt,.8))==min(abs(person_params$median_pt-quantile(person_params$median_pt,.8))))][1:max(person_params$step)],
-                                      y=bill_data$median_bill + (min(bill_data$median_bill)-max(bill_data$median_bill))/(max(person_params$step)*3.5),
-                                      label=object@score_data@vote_labels[1:(length(object@score_data@vote_labels)-1)],
-                                      colour='dark green')
-      }
-
-    }
-     
-    #Whether or not to add a facet_wrap
-    
-    if(any(object@model_type %in% c(2,4,6)) & abs_and_reg=='both' & length(item_plot)>1) {
-      outplot <- outplot + facet_wrap(~param + bill_type,dir='v')
-    } else if(any(object@model_type %in% c(2,4,6)) & abs_and_reg %in% c('both','Absence Points') & length(item_plot)==1) {
-      outplot <- outplot + facet_wrap(~param,dir='v') 
-    } else if(length(item_plot)>1) {
-      outplot <- outplot + facet_wrap(~bill_type,dir='v') 
-    }
-    
-    
-  }
   
   if(show_true==TRUE) {
     outplot <- outplot + geom_point(aes(x=reorder(person_id,median_pt),y=true_vals),color='black',shape=2)
     
   }
+  
+  # Add theme elements
+  
+  outplot <- outplot  + theme_minimal() + ylab("") + xlab("") +
+    theme(axis.text.y=element_blank(),panel.grid.major.y = element_blank()) + coord_flip() 
 
   
   if(return_data==TRUE) {
@@ -384,7 +267,7 @@ id_plot_legis <- function(object,return_data=FALSE,item_plot=NULL,
 #' @param use_ci Whether or not high-posterior density intervals (credible intervals) should be
 #' plotted over the estimates (turn off if the plot is too busy)
 #' @param show_score Show only person/legislator ideal points that have a certain score/vote category from the outcome (character string)
-#' @param abs_and_reg Whether to show 'both' absence and regular item/bill midpoints if the model is absence-inflated, the default,
+#' @param item_plot_type Whether to show 'both' absence and regular item/bill midpoints if the model is absence-inflated, the default,
 #' or 'Absence Points' for only the absence midpoints or 'Vote Points' for only the non-inflated midpoints
 #' @param show_true Whether to show the true values of the legislators (if model has been simulated)
 #' @param group_overlap Whether to prevent the text from overlapping itself (ggplot2 option)
@@ -409,7 +292,7 @@ id_plot_legis_dyn <- function(object,return_data=FALSE,item_plot=NULL,
                               person_line_alpha=0.3,
                               person_ci_alpha=0.8,
                               show_score=NULL,
-                              abs_and_reg='both',show_true=FALSE,group_color=TRUE,
+                              item_plot_type='both',show_true=FALSE,group_color=TRUE,
                               hpd_limit=10,
                               group_overlap=FALSE,
                               sample_persons=NULL,

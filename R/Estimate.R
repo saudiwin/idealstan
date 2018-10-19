@@ -619,18 +619,18 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
   
   num_bills <- max(billpoints)
 
-  Y <- idealdata@score_matrix$outcome
+  Y <- as.numeric(idealdata@score_matrix$outcome)
   
   # check to see if we need to recode missing values from the data if the model_type doesn't handle missing data
-  if(model_type %in% c(1,3,5,7,9,11) & !is.na(idealdata@miss_val)) {
+  if(model_type %in% c(1,3,5,7,9,11,13) & !is.na(idealdata@miss_val)) {
     Y <- na_if(Y,idealdata@miss_val)
   }
   
   # check to see if more values than there should be for the bernoulli model
   
-  if(model_type==1 && length(table(Y))>2) {
+  if(model_type %in% c(1,13) && length(table(Y))>2) {
     stop('Too many values in score matrix for a binary model. Choose a different model_type.')
-  } else if(model_type==2 && length(table(Y))>3) {
+  } else if(model_type %in% c(2,14) && length(table(Y))>3) {
     stop("Too many values in score matrix for a binary model. Choose a different model_type.")
   }
 
@@ -643,7 +643,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
     billpoints <- billpoints[remove_nas]
     timepoints <- timepoints[remove_nas]
     
-  if(model_type>8) {
+  if(model_type>8 && model_type < 13) {
     N_cont <- length(Y)
     N_int <- 1L
     Y_cont <- Y
@@ -786,10 +786,10 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
   
   num_bills <- max(billpoints)
   
-  Y <- idealdata@score_matrix$outcome
+  Y <- as.numeric(idealdata@score_matrix$outcome)
   
   # check to see if we need to recode missing values from the data if the model_type doesn't handle missing data
-  if(model_type %in% c(1,3,5,7,9,11) & !is.na(idealdata@miss_val)) {
+  if(model_type %in% c(1,3,5,7,9,11,13) & !is.na(idealdata@miss_val)) {
     Y <- na_if(Y,idealdata@miss_val)
   }
   
@@ -801,7 +801,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
   billpoints <- billpoints[remove_nas]
   timepoints <- timepoints[remove_nas]
   
-  if(model_type>8) {
+  if(model_type>8 && model_type < 13) {
     N_cont <- length(Y)
     N_int <- 1
     Y_cont <- Y

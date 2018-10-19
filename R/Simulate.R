@@ -8,7 +8,7 @@
 #' 
 #' @param num_person The number of persons/personlators
 #' @param num_bills The number of items/bills
-#' @param model_type One of \code{'binary'}, \code{'ordinal-rating'}, \code{'ordinal-grm'}, \code{'poisson'}
+#' @param model_type One of \code{'binary'}, \code{'ordinal_rating'}, \code{'ordinal_grm'}, \code{'poisson'}
 #' \code{'normal'}, or \code{'lognormal'}
 #' @param latent_space Whether to use the latent space formulation of the ideal point model 
 #' \code{FALSE} by default.
@@ -42,7 +42,7 @@ id_sim_gen <- function(num_person=20,num_bills=50,
                             time_points=1,
                             time_process='random',
                           time_sd=.1,
-                             ideal_pts_sd=1,prior_type='gaussian',ordinal=TRUE,ordinal_outcomes=3,
+                             ideal_pts_sd=1,prior_type='gaussian',ordinal_outcomes=3,
                              graded_response=FALSE,inflate=FALSE,
                        sigma_sd=1) {
   
@@ -124,7 +124,7 @@ id_sim_gen <- function(num_person=20,num_bills=50,
     # use latent-space formulation for likelihood
     absence_discrim[1] <- abs(absence_discrim[1])
     pr_absence <- sapply(1:length(person_points),function(n) {
-      -sqrt((ideal_pts[person_points[n],time_points[n]]* - absence_diff[bill_points[n]])^2)
+      -sqrt((ideal_pts[person_points[n],time_points[n]] - absence_diff[bill_points[n]])^2)
     }) %>% plogis()
   } else {
     # use IRT formulation for likelihood
@@ -140,16 +140,14 @@ id_sim_gen <- function(num_person=20,num_bills=50,
   # this is the same for all DGPs
   if(latent_space) {
     if(inflate) {
-      absence_diff[1] <- abs(absence_diff[1])
+      pr_vote <- sapply(1:length(person_points),function(n) {
+        -sqrt((ideal_pts[person_points[n],time_points[n]] - reg_diff[bill_points[n]])^2)
+      }) %>% plogis()
+    } else {
       # latent space non-inflated formulation is different
       pr_vote <- sapply(1:length(person_points),function(n) {
         reg_discrim[bill_points[n]] + absence_discrim[bill_points[n]] -
-          sqrt((ideal_pts[person_points[n],time_points[n]]* - reg_diff[bill_points[n]])^2)
-      }) %>% plogis()
-    } else {
-      reg_discrim[1] <- abs(reg_discrim[1])
-      pr_vote <- sapply(1:length(person_points),function(n) {
-        -sqrt((ideal_pts[person_points[n],time_points[n]]* - reg_diff[bill_points[n]])^2)
+          sqrt((ideal_pts[person_points[n],time_points[n]] - reg_diff[bill_points[n]])^2)
       }) %>% plogis()
     }
     
@@ -186,7 +184,6 @@ id_sim_gen <- function(num_person=20,num_bills=50,
                                        reg_discrim_sd=reg_discrim_sd,
                                        ideal_pts_sd=ideal_pts_sd,
                                        prior_func=prior_func,
-                                       ordinal=ordinal,
                                        ordinal_outcomes=ordinal_outcomes,
                                        graded_response=graded_response,
                                        true_person=ideal_pts,

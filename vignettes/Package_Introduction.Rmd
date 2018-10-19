@@ -60,7 +60,7 @@ The function `id_sim_gen()` allows you to simulate data from any of the fourteen
 
 ```{r sim_data}
 
-ord_ideal_sim <- id_sim_gen()
+ord_ideal_sim <- id_sim_gen(model='ordinal_grm')
 knitr::kable(as_data_frame(head(ord_ideal_sim@score_matrix)))
 ```
 
@@ -76,12 +76,12 @@ high_leg <- sort(true_legis,decreasing = TRUE,index.return=TRUE)
 low_leg <- sort(true_legis,index.return=TRUE)
 
 ord_ideal_est <- id_estimate(idealdata=ord_ideal_sim,
-                             model_type=4,
+                             model_type=6,
                              fixtype='constrained',
                              id_diff=high_leg$x[1]-low_leg$x[1],
                              id_diff_high=high_leg$x[1],
-                             restrict_ind_high = high_leg$ix[1],
-                             restrict_ind_low=low_leg$ix[1],
+                             restrict_ind_high = as.character(high_leg$ix[1]),
+                             restrict_ind_low=as.character(low_leg$ix[1]),
                              refresh=500,
                              ncores=2,
                              person_sd=1,
@@ -102,7 +102,7 @@ For example, using our simulated data and the default settings (`'vb_full'`):
 
 ```{r restrict_auto}
 ord_ideal_est <- id_estimate(idealdata=ord_ideal_sim,
-                             model_type=4,
+                             model_type=6,
                              refresh=500,
                              ncores=2,
                            nchains=2,
@@ -137,44 +137,36 @@ The plot shows that there are roughly twice as many yes votes (value of 2) versu
 
 We can then run a binary IRT ideal point model in which absences are treated as a "hurdle" that the legislator must overcome in order to show up to vote (this is `model_type=2`). In essence, the model is calculating a separate ideal point position for each bill/item that represents the bill's salience in the ideal point space. Only if a bill is relatively salient will a legislator choose to show up and vote.
 
-Because this dataset is relatively large, we will use the `use_vb` option to use Stan's variational Bayesian inference. This version of the sampler is less accurate and tends to underestimate uncertainty, but it runs much, much faster. I constrain some conservative senators to be positive, and some liberal senators, such as Bernie Sanders, to be negative in order to identify the polarity in the model. I have to pass in the row indices of the constrained legislators to do this. The `seed` argument is passed along to the underlying Stan engine.
+Because this dataset is relatively large, we will use the `use_vb` option to use Stan's variational Bayesian inference. This version of the sampler is less accurate and tends to underestimate uncertainty, but it runs much, much faster. I constrain a conservative senator (Ben Sasse) to be positive, and a liberal senator, Bernie Sanders, to be negative in order to identify the polarity in the model. I have to pass in the names of the legislators as they exist in the IDs present in the data. The `seed` argument is passed along to the underlying Stan engine.
 
 ```{r run_114_model}
 sen_est <- id_estimate(senate_data,
                 model_type = 2,
                  use_vb = TRUE,
-                 ncores=4,
-                 nfix=2,
-                 restrict_type='constrain_oneway',
-                 restrict_params='person',
-                 restrict_ind_high = c(which(row.names(senate114$votes[-1,])=='SASSE (R NE)'),
-                                                   which(row.names(senate114$votes[-1,])=='CRUZ (R TX)'),
-                                                   which(row.names(senate114$votes[-1,])=='RUBIO (R FL)')),
-                 restrict_ind_low=c(which(row.names(senate114$votes[-1,])=='SANDERS (Indep VT)'),
-                                                which(row.names(senate114$votes[-1,])=='REID (D NV)'),
-                                                which(row.names(senate114$votes[-1,])=='WARREN (D MA)')),
-                 auto_id=FALSE,
-                 fixtype='constrained',
+                 fixtype='vb_partial',
+                 restrict_ind_high = 'SASSE (R NE)',
+                 restrict_ind_low='WARREN (D MA)',
             seed=84520,
             refresh=500)
 id_plot(sen_est,person_ci_alpha=0.7) + scale_colour_brewer(type='qual')
 ```
 
-The `id_plot` function has many other options which are documented in the help files. One notable option, though, is to plot bill midpoints along with the legislator ideal points. The midpoints show the line of equiprobability, i.e., at what ideal point is a legislator indifferent to voting on a bill (or answering an item correctly). To plot a bill midpoint overlay, simply include the column index of bill in the response matrix as the `item_plot` option:
+The `id_plot` function has many other options which are documented in the help files. One notable option, though, is to plot bill midpoints along with the legislator ideal points. The midpoints show the line of equiprobability, i.e., at what ideal point is a legislator with that ideal point indifferent to voting on a bill (or answering an item correctly). To plot a bill midpoint overlay, simply include the character ID of the bill (equivalent to the column name of the bill in the rollcall vote matrix) as the `item_plot` option:
 
 ```{r item_plot}
-id_plot(sen_est,person_ci_alpha=0.1,item_plot=205,
-        abs_and_reg='Vote Points') + scale_colour_brewer(type='qual')
+id_plot_legis(sen_est,person_ci_alpha=0.1,item_plot='Vote 94') +
+  scale_color_manual(values=c(D='blue',R='red',Indep='green'))
 ```
 
 The 50th bill in the 114 Senate shows very high discrimination: the bill midpoint is right in the middle of the ideal point distribution, with most Democrats voting yes and most Repulicans voting no. The two rug lines at the bottom of the plot show the high density posterior interval for the bill midpoint, and as can be seen, the uncertainty only included those legislators near the very center of the distribution.
 
-To look at the bill's absence midpoints, simply change the `abs_and_reg` paramater to the `id_plot` function:
+To look at the bill's absence midpoints, simply change the `item_plot_type` paramater to the `id_plot` function:
 
 ```{r abs_item_plot}
 
-id_plot(sen_est,person_ci_alpha=0.1,item_plot=205,
-        abs_and_reg='Absence Points') + scale_colour_brewer(type='qual')
+id_plot(sen_est,person_ci_alpha=0.1,item_plot='Vote 94',
+        item_plot_type='inflated') + scale_colour_brewer(type='qual') +
+  scale_color_manual(values=c(D='blue',R='red',Indep='green'))
 ```
 
-This absence midpoint shows that those who were most likely to be absent on this bill were Republicans who were pretty close to the far right (left) of the ideal point distribution. Of course, that does not mean absence always implies that one is far to the right, it is just how this particular bill absence midpoint happens to fall. In addition, the uncertainty around this midpoint is much higher than the vote midpoint.
+This absence midpoint shows that absences are very uninformative of ideal points for this particular bill (as is common in the Senate where absences are very rare).

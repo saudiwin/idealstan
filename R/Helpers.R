@@ -560,7 +560,9 @@
 }
 
 #' Helper function for preparing person ideal point plot data
-.prepare_legis_data <- function(object) {
+.prepare_legis_data <- function(object,
+                                high_limit=NULL,
+                                low_limit=NULL) {
   
 
   # 
@@ -570,7 +572,7 @@
     
     person_params <- person_params %>% gather(key = legis,value=ideal_pts) %>% 
       group_by(legis) %>% 
-      summarize(low_pt=quantile(ideal_pts,0.1),high_pt=quantile(ideal_pts,0.9),
+      summarize(low_pt=quantile(ideal_pts,low_limit),high_pt=quantile(ideal_pts,high_limit),
                 median_pt=median(ideal_pts)) %>% 
       mutate(param_id=stringr::str_extract(legis,'[0-9]+\\]'),
              param_id=as.numeric(stringr::str_extract(param_id,'[0-9]+')),
@@ -624,7 +626,7 @@
     
     person_params <-  person_params %>% 
       group_by(legis) %>% 
-      summarize(low_pt=quantile(ideal_pts,0.1),high_pt=quantile(ideal_pts,0.9),
+      summarize(low_pt=quantile(ideal_pts,low_limit),high_pt=quantile(ideal_pts,high_limit),
                 median_pt=median(ideal_pts)) %>% 
       left_join(person_ids,by=c(legis='long_name'))
     
@@ -797,7 +799,7 @@
   score_data <- mutate(score_data,group_id=party)
   
   # extract time from bill labels if it exists
-  if(!is.null(time_id)) {
+  if(!is.null(rc_obj$vote.data)) {
 
     score_data <- left_join(score_data,as_data_frame(rc_obj$vote.data),by=c(item_id=item_id))
   } else {
@@ -812,3 +814,196 @@
               item_id=item_id))
   
 } 
+
+#' Generate item-level midpoints for binary IRT outcomes
+.item_plot_binary <- function(param_name,object,
+                       high_limit=NULL,
+                       low_limit=NULL) {
+  
+  # first need to get num of the parameter
+  
+  param_num <- which(levels(object@score_data@score_matrix$item_id)==param_name)
+  
+  # now get all the necessary components
+  
+  reg_diff <- as.data.frame(object@stan_samples,pars=paste0('B_int_free[',param_num,']'))[[1]]
+  reg_discrim <- as.data.frame(object@stan_samples,pars=paste0('sigma_reg_free[',param_num,']'))[[1]]
+  abs_diff <- as.data.frame(object@stan_samples,pars=paste0('A_int_free[',param_num,']'))[[1]]
+  abs_discrim <- as.data.frame(object@stan_samples,pars=paste0('sigma_abs_free[',param_num,']'))[[1]]
+  
+  reg_mid <- reg_diff/reg_discrim
+  abs_mid <- abs_diff/abs_discrim
+  
+  if(class(object@score_data@score_matrix$outcome)=='factor') {
+    cut_names <- levels(object@score_data@score_matrix$outcome)
+  } else {
+    cut_names <- as.character(unique(object@score_data@score_matrix$outcome))
+  }
+  
+  reg_data <- data_frame(item_median=quantile(reg_mid,0.5),
+                         item_high=quantile(reg_mid,high_limit),
+                         item_low=quantile(reg_mid,low_limit),
+                         item_type='Non-Inflated\nDiscrimination',
+                         Outcome=cut_names[2],
+                         item_name=param_name)
+  
+  abs_data <- data_frame(item_median=quantile(abs_mid,0.5),
+                         item_high=quantile(abs_mid,high_limit),
+                         item_low=quantile(abs_mid,low_limit),
+                         item_type='Inflated\nDiscrimination',
+                         Outcome='Missing',
+                         item_name=param_name)
+  
+  out_d <- bind_rows(reg_data,abs_data)
+  
+  return(out_d)
+  
+}
+
+#' Generate item-level midpoints for ordinal-rating scale IRT outcomes
+.item_plot_ord_rs <- function(param_name,object,
+                              high_limit=NULL,
+                              low_limit=NULL) {
+
+  # first need to get num of the parameter
+  
+  param_num <- which(levels(object@score_data@score_matrix$item_id)==param_name)
+  
+  # now get all the necessary components
+  
+  reg_diff <- as.data.frame(object@stan_samples,pars=paste0('B_int_free[',param_num,']'))[[1]]
+  reg_discrim <- as.data.frame(object@stan_samples,pars=paste0('sigma_reg_free[',param_num,']'))[[1]]
+  abs_diff <- as.data.frame(object@stan_samples,pars=paste0('A_int_free[',param_num,']'))[[1]]
+  abs_discrim <- as.data.frame(object@stan_samples,pars=paste0('sigma_abs_free[',param_num,']'))[[1]]
+  cuts <- as.data.frame(object@stan_samples,pars='steps_votes')
+  if(class(object@score_data@score_matrix$outcome)=='factor') {
+    cut_names <- levels(object@score_data@score_matrix$outcome)
+  } else {
+    cut_names <- as.character(unique(object@score_data@score_matrix$outcome))
+  }
+  
+  # need to loop over cuts
+  
+  over_cuts <- lapply(1:ncol(cuts), function(c) {
+    reg_mid <- (reg_diff+cuts[[c]])/reg_discrim
+    abs_mid <- (abs_diff+cuts[[c]])/abs_discrim
+    
+    reg_data <- data_frame(item_median=quantile(reg_mid,0.5),
+                           item_high=quantile(reg_mid,high_limit),
+                           item_low=quantile(reg_mid,low_limit),
+                           item_type='Non-Inflated\nDiscrimination',
+                           Outcome=cut_names[c],
+                           item_name=param_name)
+    
+    abs_data <- data_frame(item_median=quantile(abs_mid,0.5),
+                           item_high=quantile(abs_mid,high_limit),
+                           item_low=quantile(abs_mid,low_limit),
+                           item_type='Inflated\nDiscrimination',
+                           Outcome=cut_names[c],
+                           item_name=param_name)
+    
+    out_d <- bind_rows(reg_data,abs_data)
+    
+    return(out_d)
+  }) %>% bind_rows
+  
+  return(over_cuts)
+  
+}
+
+#' Generate item-level midpoints for ordinal-GRM IRT outcomes
+.item_plot_ord_grm <- function(param_name,object,
+                              high_limit=NULL,
+                              low_limit=NULL) {
+
+  # first need to get num of the parameter
+  
+  param_num <- which(levels(object@score_data@score_matrix$item_id)==param_name)
+  
+  # now get all the necessary components
+  
+  reg_diff <- as.data.frame(object@stan_samples,pars=paste0('B_int_free[',param_num,']'))[[1]]
+  reg_discrim <- as.data.frame(object@stan_samples,pars=paste0('sigma_reg_free[',param_num,']'))[[1]]
+  abs_diff <- as.data.frame(object@stan_samples,pars=paste0('A_int_free[',param_num,']'))[[1]]
+  abs_discrim <- as.data.frame(object@stan_samples,pars=paste0('sigma_abs_free[',param_num,']'))[[1]]
+  
+  # figure out how many categories we need
+  
+  total_cat <- ncol(as.data.frame(object@stan_samples,pars='steps_votes'))
+  
+  cuts <- as.data.frame(object@stan_samples,pars=paste0('steps_votes_grm[',param_num,',',total_cat,']'))
+  
+  if(class(object@score_data@score_matrix$outcome)=='factor') {
+    cut_names <- levels(object@score_data@score_matrix$outcome)
+  } else {
+    cut_names <- as.character(unique(object@score_data@score_matrix$outcome))
+  }
+  
+  # need to loop over cuts
+  
+  over_cuts <- lapply(1:ncol(cuts), function(c) {
+    reg_mid <- (reg_diff+cuts[[c]])/reg_discrim
+    abs_mid <- (abs_diff+cuts[[c]])/abs_discrim
+    
+    reg_data <- data_frame(item_median=quantile(reg_mid,0.5),
+                           item_high=quantile(reg_mid,high_limit),
+                           item_low=quantile(reg_mid,low_limit),
+                           item_type='Non-Inflated\nDiscrimination',
+                           Outcome=cut_names[c],
+                           item_name=param_name)
+    
+    abs_data <- data_frame(item_median=quantile(abs_mid,0.5),
+                           item_high=quantile(abs_mid,high_limit),
+                           item_low=quantile(abs_mid,low_limit),
+                           item_type='Inflated\nDiscrimination',
+                           Outcome=cut_names[c],
+                           item_name=param_name)
+    
+    out_d <- bind_rows(reg_data,abs_data)
+    
+    return(out_d)
+  }) %>% bind_rows
+  
+  return(over_cuts)
+  
+}
+
+#' Generate item-level midpoints for binary latent-space outcomes
+.item_plot_ls <- function(param_name,object,
+                              high_limit=NULL,
+                              low_limit=NULL) {
+  browser()
+  # first need to get num of the parameter
+  
+  param_num <- which(levels(object@score_data@score_matrix$item_id)==param_name)
+  
+  # now get all the necessary components
+  
+  reg_diff <- as.data.frame(object@stan_samples,pars=paste0('B_int_free[',param_num,']'))[[1]]
+  abs_diff <- as.data.frame(object@stan_samples,pars=paste0('A_int_free[',param_num,']'))[[1]]
+  
+  if(class(object@score_data@score_matrix$outcome)=='factor') {
+    cut_names <- levels(object@score_data@score_matrix$outcome)
+  } else {
+    cut_names <- as.character(unique(object@score_data@score_matrix$outcome))
+  }
+  
+  reg_data <- data_frame(item_median=quantile(reg_diff,0.5),
+                         item_high=quantile(reg_diff,high_limit),
+                         item_low=quantile(reg_diff,low_limit),
+                         item_type='Non-Inflated\nItem\nIdeal Point',
+                         Outcome=cut_names[2],
+                         item_name=param_name)
+  
+  abs_data <- data_frame(item_median=quantile(abs_diff,0.5),
+                         item_high=quantile(abs_diff,high_limit),
+                         item_low=quantile(abs_diff,low_limit),
+                         item_type='Inflated\nItem\nIdeal Point',
+                         Outcome='Missing',
+                         item_name=param_name)
+  
+  out_d <- bind_rows(reg_data,abs_data)
+  
+  return(out_d)
+  
+}

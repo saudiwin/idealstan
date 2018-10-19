@@ -660,9 +660,9 @@ Another new addition is the latent space model, which is only a slight modificat
 
 Non-inflated:
 
-```{r latent_space_nonifl}
+```{r latent_space_noninfl}
 latent_noninfl_sim <- id_sim_gen(num_person=20,num_bills=125,ordinal=F,
-                                       inflate=T,
+                                       inflate=F,
                                        model_type='binary',
                                        latent_space=T,
                                absence_diff_mean=0,
@@ -689,5 +689,56 @@ id_plot_rhats(latent_noninfl_est)
 
 ```{r latent_noninfl_plot}
 id_plot_legis(latent_noninfl_est,show_true = T)
+```
+
+```{r latent_noninfl_plot_cov}
+id_sim_coverage(latent_noninfl_est) %>% 
+  bind_rows(.id='Parameter') %>% 
+  ggplot(aes(y=avg,x=Parameter)) +
+  stat_summary(fun.args=list(mult=1.96)) + 
+  theme_minimal() 
+```
+
+Inflated:
+
+```{r latent_space_infl}
+latent_infl_sim <- id_sim_gen(num_person=20,num_bills=125,ordinal=F,
+                                       inflate=T,
+                                       model_type='binary',
+                                       latent_space=T,
+                               absence_diff_mean=0,
+                               ideal_pts_sd = 1,
+                               diff_sd = 1,
+                               absence_discrim_sd = 1,
+                               reg_discrim_sd = 1)
+latent_infl_est <- id_estimate(idealdata=latent_infl_sim,
+                               model_type=14,
+                               restrict_ind_high = as.character(sort(latent_infl_sim@simul_data$true_person,
+                                                                     decreasing=TRUE,
+                                                        index=T)$ix[1]),
+                              restrict_ind_low = as.character(sort(latent_infl_sim@simul_data$true_person,
+                                                                   decreasing=F,
+                                                        index=T)$ix[1]),
+                               fixtype='constrained',
+                              id_diff = sort(latent_infl_sim@simul_data$true_person,decreasing=TRUE)[1] -
+                             sort(latent_infl_sim@simul_data$true_person,decreasing=F)[1],
+                                                      
+                             id_diff_high=sort(latent_infl_sim@simul_data$true_person,
+                                                  decreasing=TRUE)[1],
+                              diff_reg_sd = 2,
+                             diff_miss_sd=2)
+id_plot_rhats(latent_infl_est)
+```
+
+```{r latent_infl_plot}
+id_plot_legis(latent_infl_est,show_true = T)
+```
+
+```{r latent_infl_plot_cov}
+id_sim_coverage(latent_infl_est) %>% 
+  bind_rows(.id='Parameter') %>% 
+  ggplot(aes(y=avg,x=Parameter)) +
+  stat_summary(fun.args=list(mult=1.96)) + 
+  theme_minimal() 
 ```
 

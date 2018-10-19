@@ -263,7 +263,7 @@ setGeneric('id_plot',
 #'    Currently, the options are limited to a plot of legislator/person ideal points with bills/item midpoints as an optional overlay.
 #'    Additional plots will be available in future versions of \code{idealstan}.
 #' @param object A fitted \code{idealstan} object
-#' @param plot_type Specify the plot as a character string. Currently 'legislators' for legislator/person ideal point plot and 
+#' @param plot_type Specify the plot as a character string. Currently 'persons' for legislator/person ideal point plot and 
 #'    'histogram' for a histogram of model estimates for given parameters.
 #' @param ... Additional arguments passed on to the underlying functions. See individual function documentation for details.
 #' @return A \code{\link[ggplot2]{ggplot}} object
@@ -275,8 +275,8 @@ setGeneric('id_plot',
 #' \code{\link{id_estimate}} for how to estimate an \code{idealstan} object.
 #' @export
 setMethod(id_plot, signature(object='idealstan'),
-          function(object,plot_type='legislators',...) {
-            if(plot_type=='legislators') {
+          function(object,plot_type='persons',...) {
+            if(plot_type=='persons') {
               id_plot_legis(object,...)
             } else if(plot_type=='histogram') {
               id_plot_all_hist(object,...)
