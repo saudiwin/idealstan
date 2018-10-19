@@ -6,7 +6,7 @@
 .binary <- function(pr_absence=NULL,
                     pr_vote=NULL,
                     N=NULL,
-                    absence=NULL,
+                    inflate=NULL,
                     person_points=NULL,
                     item_points=NULL,
                     time_points=NULL,
@@ -17,9 +17,9 @@
   
   votes <- as.numeric(plogis(pr_vote)>runif(N))
   
-  # remove pr of absence if model is not inflated
+  # remove pr of inflate if model is not inflated
   
-  if(absence==F) {
+  if(inflate==F) {
     pr_absence <- -1
   }
   
@@ -38,7 +38,7 @@
                       high_val = 1,
                       low_val = 0,
                       middle_val = NULL,
-                      inflate=absence)
+                      inflate=inflate)
   
   return(out_data)                    
 }
@@ -46,7 +46,7 @@
 .ordinal_ratingscale <- function(pr_absence=NULL,
                     pr_vote=NULL,
                     N=NULL,
-                    absence=NULL,
+                    inflate=NULL,
                     person_points=NULL,
                     item_points=NULL,
                     time_points=NULL,
@@ -82,7 +82,7 @@
   
   # remove pr of absence if model is not inflated
   
-  if(absence==F) {
+  if(inflate==F) {
     pr_absence <- 0
   }
   
@@ -101,7 +101,7 @@
                       high_val = ordinal_outcomes,
                       low_val = 1,
                       middle_val = 2:(ordinal_outcomes-1),
-                      inflate=absence)
+                      inflate=inflate)
   
   return(out_data)                    
 }
@@ -109,7 +109,7 @@
 .ordinal_grm <- function(pr_absence=NULL,
                                  pr_vote=NULL,
                                  N=NULL,
-                                 absence=NULL,
+                                 inflate=NULL,
                                  person_points=NULL,
                                  item_points=NULL,
                                  time_points=NULL,
@@ -149,7 +149,7 @@
   
   # remove pr of absence if model is not inflated
   
-  if(absence==F) {
+  if(inflate==F) {
     pr_absence <- 0
   }
   
@@ -168,7 +168,7 @@
                       high_val = ordinal_outcomes,
                       low_val = 1,
                       middle_val = 2:(ordinal_outcomes-1),
-                      inflate=absence)
+                      inflate=inflate)
   
   return(out_data)                    
 }
@@ -176,7 +176,7 @@
 .poisson <- function(pr_absence=NULL,
                     pr_vote=NULL,
                     N=NULL,
-                    absence=NULL,
+                    inflate=NULL,
                     person_points=NULL,
                     item_points=NULL,
                     time_points=NULL,
@@ -189,7 +189,7 @@
   
   # remove pr of absence if model is not inflated
   
-  if(absence==F) {
+  if(inflate==F) {
     pr_absence <- 0
   }
   
@@ -205,7 +205,7 @@
 
   out_data <- id_make(score_data=out_data,
                       middle_val = NULL,
-                      inflate=absence,
+                      inflate=inflate,
                       continuous=F)
   
   return(out_data)                    
@@ -214,7 +214,7 @@
 .normal <- function(pr_absence=NULL,
                      pr_vote=NULL,
                      N=NULL,
-                     absence=NULL,
+                     inflate=NULL,
                      person_points=NULL,
                      item_points=NULL,
                      time_points=NULL,
@@ -228,7 +228,7 @@
   
   # remove pr of absence if model is not inflated
   
-  if(absence==F) {
+  if(inflate==F) {
     pr_absence <- 0
   }
   
@@ -244,7 +244,7 @@
   
   out_data <- id_make(score_data=out_data,
                       middle_val = NULL,
-                      inflate=absence,
+                      inflate=inflate,
                       continuous=T)
   
   return(out_data)                    
@@ -253,7 +253,7 @@
 .lognormal <- function(pr_absence=NULL,
                     pr_vote=NULL,
                     N=NULL,
-                    absence=NULL,
+                    inflate=NULL,
                     person_points=NULL,
                     item_points=NULL,
                     time_points=NULL,
@@ -267,7 +267,7 @@
   
   # remove pr of absence if model is not inflated
   
-  if(absence==F) {
+  if(inflate==F) {
     pr_absence <- 0
   }
   
@@ -283,7 +283,7 @@
   
   out_data <- id_make(score_data=out_data,
                       middle_val = NULL,
-                      inflate=absence,
+                      inflate=inflate,
                       continuous=T)
   
   return(out_data)                    
