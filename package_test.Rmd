@@ -593,7 +593,7 @@ And autocorrelation:
 
 ```{r irt_binary_time_ar_inflate}
 bin_time_ar_irt_2pl_abs_sim <- id_sim_gen(num_person=20,num_bills=200,ordinal=F,absence=T,
-                               absence_diff_mean=0,time_process = 'AR',time_points=50,time_sd = .5,diff_sd = 1,
+                               absence_diff_mean=0,time_process = 'AR',time_points=50,time_sd = .2,diff_sd = 1,
                                absence_discrim_sd = 1,
                                reg_discrim_sd = 1)
 bin_time_ar_irt_2pl_abs_est <- id_estimate(idealdata=bin_time_ar_irt_2pl_abs_sim,
@@ -611,10 +611,12 @@ bin_time_ar_irt_2pl_abs_est <- id_estimate(idealdata=bin_time_ar_irt_2pl_abs_sim
                                                decreasing=F)[1],
                               id_diff_high=sort(bin_time_ar_irt_2pl_abs_sim@simul_data$drift,
                                                   decreasing=TRUE)[1],
-                             time_sd=.5,
+                             time_sd=1,
                              use_ar=T,
                              person_sd = 3,
                              restrict_sd=.01,
+                             restrict_var = TRUE,
+                             restrict_var_high = 0.5,
                              ar_sd=1,
                              diff_reg_sd = 1,
                              diff_miss_sd = 1,
