@@ -18,4 +18,7 @@ matrix:
 before_install:
   - mkdir -p ~/.R/
   - echo "CXX14 = g++-7 -fPIC" >> ~/.R/Makevars
-  - echo "CXXFLAGS = -O3" >> ~/.R/Makevars
+  - echo "CXXFLAGS = -mtune=native -march=native -Wno-unused-variable -Wno-unused-function  -Wno-macro-redefined -O3" >> ~/.R/Makevars
+  
+after_install:
+  - cat /home/travis/build/saudiwin/idealstan/idealstan.Rcheck/00install.out
