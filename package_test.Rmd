@@ -26,7 +26,7 @@ This Rmarkdown file has a series of simulations run on the models offered in `id
 First, the standard IRT 2-PL (for this one, the absence discriminations are not a part of the model):
 
 ```{r irt_binary}
-bin_irt_2pl_sim <- id_sim_gen(num_person=20,num_bills=200,ordinal=F,absence=F,
+bin_irt_2pl_sim <- id_sim_gen(num_person=20,num_bills=200,ordinal=F,inflate=F,
                               diff_sd=1,
                               reg_discrim_sd = 1,
                               absence_discrim_sd = 1)
@@ -85,7 +85,7 @@ id_plot_sims(bin_irt_2pl_est)
 Next, inflated 2-PL IRT (binary):
 
 ```{r irt_binary_inflate}
-bin_irt_2pl_abs_sim <- id_sim_gen(num_person=20,num_bills=100,ordinal=F,absence=T,
+bin_irt_2pl_abs_sim <- id_sim_gen(num_person=20,num_bills=100,ordinal=F,inflate=T,
                                absence_diff_mean=0)
 bin_irt_2pl_abs_est <- id_estimate(idealdata=bin_irt_2pl_abs_sim,
                                model_type=2,
@@ -124,7 +124,7 @@ id_plot_sims(bin_irt_2pl_abs_est)
 Now we'll start with the ordinal models. First the uninflated ordinal model:
 
 ```{r irt_ordinal}
-ord_irt_sim <- id_sim_gen(num_person=20,num_bills=100,ordinal=T,absence=F,
+ord_irt_sim <- id_sim_gen(num_person=20,num_bills=100,ordinal=T,inflate=F,
                                absence_diff_mean=0,model_type='ordinal_ratingscale')
 ord_irt_est <- id_estimate(idealdata=ord_irt_sim,
                                model_type=3,
@@ -161,7 +161,7 @@ id_plot_sims(ord_irt_est)
 And we will finish with the inflated ordinal model:
 
 ```{r irt_ordinal_abs}
-ord_irt_abs_sim <- id_sim_gen(num_person=20,num_bills=100,ordinal=T,absence=T,
+ord_irt_abs_sim <- id_sim_gen(num_person=20,num_bills=100,ordinal=T,inflate=T,
                                absence_diff_mean=0,model_type='ordinal_ratingscale')
 ord_irt_abs_est <- id_estimate(idealdata=ord_irt_abs_sim,
                                model_type=4,
@@ -201,7 +201,7 @@ id_plot_sims(ord_irt_abs_est)
 We can now try the ordinal graded response version (non-inflated):
 
 ```{r irt_ordinal_grm}
-ord_irt_grm_sim <- id_sim_gen(num_person=20,num_bills=100,ordinal=T,absence=F,
+ord_irt_grm_sim <- id_sim_gen(num_person=20,num_bills=100,ordinal=T,inflate=F,
                                absence_diff_mean=0,model_type='ordinal_grm')
 ord_irt_grm_est <- id_estimate(idealdata=ord_irt_grm_sim,
                                model_type=5,
@@ -241,7 +241,7 @@ id_plot_sims(ord_irt_grm_est)
 And now the inflated GRM:
 
 ```{r irt_ordinal_grm_abs}
-ord_irt_grm_abs_sim <- id_sim_gen(num_person=20,num_bills=100,ordinal=T,absence=T,
+ord_irt_grm_abs_sim <- id_sim_gen(num_person=20,num_bills=100,ordinal=T,inflate=T,
                                absence_diff_mean=0,model_type='ordinal_grm')
 ord_irt_grm_abs_est <- id_estimate(idealdata=ord_irt_grm_abs_sim,
                                model_type=6,
@@ -283,7 +283,7 @@ id_plot_sims(ord_irt_grm_abs_est)
 Models I am adding to this release include the Poisson model:
 
 ```{r irt_ordinal_poisson}
-ord_irt_poisson_sim <- id_sim_gen(num_person=20,num_bills=100,ordinal=F,absence=F,
+ord_irt_poisson_sim <- id_sim_gen(num_person=20,num_bills=100,ordinal=F,inflate=F,
                                absence_diff_mean=0,model_type='poisson')
 ord_irt_poisson_est <- id_estimate(idealdata=ord_irt_poisson_sim,
                                model_type=7,
@@ -324,7 +324,7 @@ id_plot_sims(ord_irt_poisson_est)
 Now Poisson-inflated:
 
 ```{r irt_abs_poisson}
-ord_irt_poisson_sim <- id_sim_gen(num_person=20,num_bills=100,ordinal=T,absence=F,
+ord_irt_poisson_sim <- id_sim_gen(num_person=20,num_bills=100,ordinal=T,inflate=F,
                                absence_diff_mean=0,model_type='poisson')
 ord_irt_poisson_est <- id_estimate(idealdata=ord_irt_poisson_sim,
                                model_type=7,
@@ -364,7 +364,7 @@ id_plot_sims(ord_irt_poisson_est)
 A Normally-distributed outcome with no inflation:
 
 ```{r irt_normal}
-ord_irt_normal_sim <- id_sim_gen(num_person=20,num_bills=100,ordinal=F,absence=F,
+ord_irt_normal_sim <- id_sim_gen(num_person=20,num_bills=100,ordinal=F,inflate=F,
                                absence_diff_mean=0,model_type='normal')
 ord_irt_normal_est <- id_estimate(idealdata=ord_irt_normal_sim,
                                model_type=9,
@@ -405,7 +405,7 @@ A Normally-distributed outcome with inflation:
 
 
 ```{r irt_normal_abs}
-ord_irt_normal_abs_sim <- id_sim_gen(num_person=20,num_bills=100,ordinal=F,absence=F,
+ord_irt_normal_abs_sim <- id_sim_gen(num_person=20,num_bills=100,ordinal=F,inflate=F,
                                absence_diff_mean=0,model_type='normal')
 ord_irt_normal_abs_est <- id_estimate(idealdata=ord_irt_normal_abs_sim,
                                model_type=9,
@@ -445,7 +445,7 @@ id_plot_sims(ord_irt_normal_abs_est)
 A Lognormal model with no inflation:
 
 ```{r irt_lognormal}
-ord_irt_lognormal_sim <- id_sim_gen(num_person=20,num_bills=100,ordinal=F,absence=F,
+ord_irt_lognormal_sim <- id_sim_gen(num_person=20,num_bills=100,ordinal=F,inflate=F,
                                absence_diff_mean=0,model_type='lognormal')
 ord_irt_lognormal_est <- id_estimate(idealdata=ord_irt_lognormal_sim,
                                model_type=9,
@@ -485,7 +485,7 @@ id_plot_sims(ord_irt_lognormal_est)
 And last but not least, a lognormal model with inflation:
 
 ```{r irt_lognormal_abs}
-ord_irt_lognormal_abs_sim <- id_sim_gen(num_person=20,num_bills=100,ordinal=F,absence=F,
+ord_irt_lognormal_abs_sim <- id_sim_gen(num_person=20,num_bills=100,ordinal=F,inflate=F,
                                absence_diff_mean=0,model_type='lognormal')
 ord_irt_lognormal_abs_est <- id_estimate(idealdata=ord_irt_lognormal_abs_sim,
                                model_type=9,
@@ -531,7 +531,7 @@ While these models are identified, it appears that sometimes given the amount of
 First random walks:
 
 ```{r irt_binary_time_inflate}
-bin_time_irt_2pl_abs_sim <- id_sim_gen(num_person=20,num_bills=125,ordinal=F,absence=T,
+bin_time_irt_2pl_abs_sim <- id_sim_gen(num_person=20,num_bills=125,ordinal=F,inflate=T,
                                absence_diff_mean=0,time_process = 'random',time_points=25,ideal_pts_sd = 1,
 diff_sd = 1,
                                absence_discrim_sd = 1,
@@ -592,7 +592,8 @@ id_plot_sims(bin_time_irt_2pl_abs_est)
 And autocorrelation:
 
 ```{r irt_binary_time_ar_inflate}
-bin_time_ar_irt_2pl_abs_sim <- id_sim_gen(num_person=20,num_bills=200,ordinal=F,absence=T,
+
+bin_time_ar_irt_2pl_abs_sim <- id_sim_gen(num_person=20,num_bills=200,ordinal=F,inflate=T,
                                absence_diff_mean=0,time_process = 'AR',time_points=50,time_sd = .2,diff_sd = 1,
                                absence_discrim_sd = 1,
                                reg_discrim_sd = 1)
@@ -651,3 +652,42 @@ id_plot_sims(bin_time_ar_irt_2pl_abs_est,type='Residuals')
 id_plot_sims(bin_time_ar_irt_2pl_abs_est)
 
 ```
+
+
+## Latent Space Model
+
+Another new addition is the latent space model, which is only a slight modification on the IRT model. 
+
+Non-inflated:
+
+```{r latent_space_nonifl}
+latent_noninfl_sim <- id_sim_gen(num_person=20,num_bills=125,ordinal=F,
+                                       inflate=T,
+                                       model_type='binary',
+                                       latent_space=T,
+                               absence_diff_mean=0,
+                               ideal_pts_sd = 1,
+                               diff_sd = 1,
+                               absence_discrim_sd = 1,
+                               reg_discrim_sd = 1)
+latent_noninfl_est <- id_estimate(idealdata=latent_noninfl_sim,
+                               model_type=13,
+                               restrict_ind_high = as.character(sort(latent_noninfl_sim@simul_data$true_person,
+                                                                     decreasing=TRUE,
+                                                        index=T)$ix[1]),
+                              restrict_ind_low = as.character(sort(latent_noninfl_sim@simul_data$true_person,
+                                                                   decreasing=F,
+                                                        index=T)$ix[1]),
+                               fixtype='constrained',
+                              id_diff = sort(latent_noninfl_sim@simul_data$true_person,decreasing=TRUE)[1] -
+                             sort(latent_noninfl_sim@simul_data$true_person,decreasing=F)[1],
+                                                      
+                             id_diff_high=sort(latent_noninfl_sim@simul_data$true_person,
+                                                  decreasing=TRUE)[1])
+id_plot_rhats(latent_noninfl_est)
+```
+
+```{r latent_noninfl_plot}
+id_plot_legis(latent_noninfl_est,show_true = T)
+```
+

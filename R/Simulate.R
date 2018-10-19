@@ -8,7 +8,10 @@
 #' 
 #' @param num_person The number of persons/personlators
 #' @param num_bills The number of items/bills
-#' @param model_type One of \code{'binary'}, \code{'ordinal-rating'}, \code{'ordinal-grm'} or \code{'poisson'}
+#' @param model_type One of \code{'binary'}, \code{'ordinal-rating'}, \code{'ordinal-grm'}, \code{'poisson'}
+#' \code{'normal'}, or \code{'lognormal'}
+#' @param latent_space Whether to use the latent space formulation of the ideal point model 
+#' \code{FALSE} by default.
 #' @param absence_discrim_sd The SD of the discrimination parameters for the absence model
 #' @param absence_diff_mean The mean intercept for the absence model; increasing it will lower the total number of
 #' absences
@@ -23,7 +26,7 @@
 #' @param prior_type The statistical distribution that generates the data. Currently only 
 #' 'gaussian' is supported.
 #' @param ordinal_outcomes If \code{model} is \code{'ordinal'}, an integer giving the total number of categories
-#' @param absence If \code{TRUE}, an absence-inflated dataset is produced.
+#' @param inflate If \code{TRUE}, an missing-data-inflated dataset is produced.
 #' @param sigma_sd If a normal or log-normal distribution is being fitted, this parameter gives the standard 
 #' deviation of the outcome (i.e. the square root of the variance).
 #' @return The results is a \code{idealdata} object that can be used in the 
@@ -32,13 +35,15 @@
 #' @seealso \code{\link{id_plot_sims}} for plotting fitted models versus true values.
 #' @export
 id_sim_gen <- function(num_person=20,num_bills=50,
-                       model_type='binary',absence_discrim_sd=2,absence_diff_mean=0.5,
+                       model_type='binary',
+                       latent_space=FALSE,
+                       absence_discrim_sd=2,absence_diff_mean=0.5,
                              reg_discrim_sd=2,diff_sd=.25,
                             time_points=1,
                             time_process='random',
                           time_sd=.1,
                              ideal_pts_sd=1,prior_type='gaussian',ordinal=TRUE,ordinal_outcomes=3,
-                             graded_response=FALSE,absence=TRUE,
+                             graded_response=FALSE,inflate=FALSE,
                        sigma_sd=1) {
   
   # Allow for different type of distributions for ideal points
@@ -114,19 +119,46 @@ id_sim_gen <- function(num_person=20,num_bills=50,
   if((num_bills %% time_points)!=0) stop('Total number of time points must be a multiple of the number of bills/items.')
   time_points <- rep(1:time_points,each=num_bills/time_points)
   time_points <- time_points[bill_points]
-    
-  pr_absence <- sapply(1:length(person_points),function(n) {
-    ideal_pts[person_points[n],time_points[n]]*absence_discrim[bill_points[n]] - absence_diff[bill_points[n]]
-    }) %>% plogis()
   
+  if(latent_space) {
+    # use latent-space formulation for likelihood
+    absence_discrim[1] <- abs(absence_discrim[1])
+    pr_absence <- sapply(1:length(person_points),function(n) {
+      absence_discrim[1]*(ideal_pts[person_points[n],time_points[n]]* - absence_diff[bill_points[n]])^2
+    }) %>% plogis()
+  } else {
+    # use IRT formulation for likelihood
+    pr_absence <- sapply(1:length(person_points),function(n) {
+      ideal_pts[person_points[n],time_points[n]]*absence_discrim[bill_points[n]] - absence_diff[bill_points[n]]
+    }) %>% plogis()
+    
+  }
+
   reg_diff <- prior_func(params=list(N=num_bills,mean=0,sd=diff_sd))
   reg_discrim <- prior_func(params=list(N=num_bills,mean=0,sd=reg_discrim_sd))
   
   # this is the same for all DGPs
-  
-  pr_vote <- sapply(1:length(person_points),function(n) {
-    ideal_pts[person_points[n],time_points[n]]*reg_discrim[bill_points[n]] - reg_diff[bill_points[n]]
-  }) %>% plogis()
+  if(latent_space) {
+    if(inflate) {
+      absence_diff[1] <- abs(absence_diff[1])
+      # latent space non-inflated formulation is different
+      pr_vote <- sapply(1:length(person_points),function(n) {
+        reg_discrim[bill_points[n]] + absence_discrim[bill_points[n]] +
+          absence_diff[1]*(ideal_pts[person_points[n],time_points[n]]* - reg_diff[bill_points[n]])^2
+      }) %>% plogis()
+    } else {
+      reg_discrim[1] <- abs(reg_discrim[1])
+      pr_vote <- sapply(1:length(person_points),function(n) {
+        reg_discrim[1]*(ideal_pts[person_points[n],time_points[n]]* - reg_diff[bill_points[n]])^2
+      }) %>% plogis()
+    }
+    
+  } else {
+    pr_vote <- sapply(1:length(person_points),function(n) {
+      ideal_pts[person_points[n],time_points[n]]*reg_discrim[bill_points[n]] - reg_diff[bill_points[n]]
+    }) %>% plogis()
+  }
+
     
   # now pick a DGP function and run it
   
@@ -141,7 +173,7 @@ id_sim_gen <- function(num_person=20,num_bills=50,
            pr_vote=pr_vote,
            N=length(person_points),
            ordinal_outcomes=ordinal_outcomes,
-           absence=absence,
+           inflate=inflate,
            time_points=time_points,
            item_points=bill_points,
            person_points=person_points,

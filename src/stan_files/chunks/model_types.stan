@@ -279,7 +279,7 @@ if(model_type==1) {
 
       }
     }
-      
+  print(pi1[1:10]);
   Y_new ~ bernoulli_logit(pi1);
   
 } else if(model_type==14) {
