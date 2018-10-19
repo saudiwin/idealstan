@@ -1,8 +1,8 @@
 Package: idealstan
 Type: Package
 Title: Bayesian IRT Ideal Point Models with 'Stan'
-Version: 0.2.9.1
-Date: 2018-02-07
+Version: 0.2.9.2
+Date: 2018-10-16
 Authors@R: c(person("Robert","Kubinec", role = c("aut","cre"),
                      email = "rmk7xy@virginia.edu"),
               person("Jonah", "Gabry", role = "ctb"),
@@ -12,10 +12,10 @@ BugReports: https://github.com/saudiwin/idealstan/issues
 Description: Offers item-response theory (IRT) ideal-point scaling/dimension reduction methods that incorporate additional response categories and missing/censored values, including absences and abstentions, for roll call voting data (or any other kind of binary or ordinal item-response theory data). Full and approximate Bayesian inference is done via the 'Stan' engine (www.mc-stan.org). 
 License: GPL
 Depends:
-    R (>= 3.1),
+    R (>= 3.4.0),
     Rcpp (>= 0.12.7)
 Imports:
-    rstan (>= 2.13.2),
+    rstan (>= 2.18.1),
     rstantools (>= 1.1.0),
     methods (>= 3.3.1),
     dplyr,
@@ -31,7 +31,7 @@ Suggests:
     loo,
     knitr,
     rmarkdown
-LinkingTo: StanHeaders (>= 2.13.1), rstan (>= 2.13.2), BH (>= 1.62.0.1), Rcpp
+LinkingTo: StanHeaders (>= 2.18.0), rstan (>= 2.18.1), BH (>= 1.66), Rcpp
     (>= 0.12.7), RcppEigen (>= 0.3.2.9.0)
 RoxygenNote: 6.0.1
 LazyData: false
