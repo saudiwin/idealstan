@@ -41,7 +41,8 @@ matrix:
       env:
         - MATRIX_EVAL="CXX_OLEVEL=2 && CC=clang && CXX=clang++"
 
-
+# install gghighlight from source as it is on on CRAN
+# prevent installing dependencies which will all come from source
 before_install:
   - eval "${MATRIX_EVAL}"
   - sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
