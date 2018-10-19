@@ -124,7 +124,7 @@ id_sim_gen <- function(num_person=20,num_bills=50,
     # use latent-space formulation for likelihood
     absence_discrim[1] <- abs(absence_discrim[1])
     pr_absence <- sapply(1:length(person_points),function(n) {
-      absence_discrim[1]*(ideal_pts[person_points[n],time_points[n]]* - absence_diff[bill_points[n]])^2
+      -sqrt((ideal_pts[person_points[n],time_points[n]]* - absence_diff[bill_points[n]])^2)
     }) %>% plogis()
   } else {
     # use IRT formulation for likelihood
@@ -143,13 +143,13 @@ id_sim_gen <- function(num_person=20,num_bills=50,
       absence_diff[1] <- abs(absence_diff[1])
       # latent space non-inflated formulation is different
       pr_vote <- sapply(1:length(person_points),function(n) {
-        reg_discrim[bill_points[n]] + absence_discrim[bill_points[n]] +
-          absence_diff[1]*(ideal_pts[person_points[n],time_points[n]]* - reg_diff[bill_points[n]])^2
+        reg_discrim[bill_points[n]] + absence_discrim[bill_points[n]] -
+          sqrt((ideal_pts[person_points[n],time_points[n]]* - reg_diff[bill_points[n]])^2)
       }) %>% plogis()
     } else {
       reg_discrim[1] <- abs(reg_discrim[1])
       pr_vote <- sapply(1:length(person_points),function(n) {
-        reg_discrim[1]*(ideal_pts[person_points[n],time_points[n]]* - reg_diff[bill_points[n]])^2
+        -sqrt((ideal_pts[person_points[n],time_points[n]]* - reg_diff[bill_points[n]])^2)
       }) %>% plogis()
     }
     
