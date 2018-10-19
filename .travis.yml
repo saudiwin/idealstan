@@ -13,7 +13,9 @@ matrix:
           packages:
             - g++-7
       env:
-        - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7 && CXX14=g++-7 && CXX14FLAGS = -O3"
+        - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
         
 before_install:
-    - eval "${MATRIX_EVAL}"
+  - mkdir -p ~/.R/
+  - echo "CXX14 = g++-7" >> ~/.R/Makevars
+  - echo "CXXFLAGS = -O3" >> ~/.R/Makevars
