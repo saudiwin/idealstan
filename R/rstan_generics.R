@@ -39,7 +39,7 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
   all_params <- rstan::extract(object@stan_samples)
   y <- c(object@score_data@score_matrix)
   # check to see if we need to recode missing values from the data if the model_type doesn't handle missing data
-  if(object@model_type %in% c(1,3) & !is.null(object@score_data@miss_val)) {
+  if(object@model_type %in% c(1,3,5,7,9,11,13) & !is.null(object@score_data@miss_val)) {
     y <- na_if(y,object@score_data@miss_val)
   }
   

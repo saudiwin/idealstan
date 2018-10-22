@@ -190,7 +190,7 @@ id_make <- function(score_data=NULL,
   num_item <- max(as.numeric(factor(pull(score_rename,!!item_id))),na.rm=T)
   
   # create data frames for all hierachical parameters
-  
+
   if(!is.null(person_cov)) {
 
     personm <- model.matrix(person_cov,data=score_data)
@@ -198,6 +198,8 @@ id_make <- function(score_data=NULL,
     # need to check for missing data and remove any missing from IDs
     
     score_rename <- slice(score_rename,as.numeric(attr(personm,'dimnames')[[1]]))
+    
+    if(nrow(score_rename)!=nrow(personm)) stop('Covariate matrix and data matrix not the same size.')
     
     person_cov <- bind_cols(as_data_frame(personm),
                             select(score_rename,!! time_id,

@@ -50,10 +50,11 @@ irt_2pl_correct <- id_estimate(idealdata=irt_2pl,
 
 irt_2pl_incorrect <- id_estimate(idealdata=irt_2pl,
                                model_type=2,
-                               restrict_ind_high = c(1,2),
-                           restrict_params = 'person',
-                           pin_vals=c(-1,1.5),
-                               fixtype='pinned',
+                               restrict_ind_high = "1",
+                               restrict_ind_low="2",
+                               fixtype='constrained',
+                               id_diff = 4,
+                               id_diff_high = 2,
                            ncores=2,
                            nchains=2)
 

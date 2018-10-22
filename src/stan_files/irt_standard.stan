@@ -122,8 +122,12 @@ transformed parameters {
   vector[num_legis] L_tp1[T]; // all other params can float
   vector[1] restrict_low;
   
-
-  restrict_low = restrict_high - diff;
+  if(T==1) {
+    restrict_low = restrict_high - diff + legis_pred[1, num_legis-1, ] * legis_x_cons;
+  } else {
+    restrict_low = restrict_high - diff;
+  }
+  
 
   L_AR1 = append_row(L_AR1_free,ar_fix);
   

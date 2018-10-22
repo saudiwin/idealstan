@@ -264,12 +264,12 @@ id_plot_cov(sen_est_cov,cov_type='person_cov')
 Because of the scale of the plot, it can be difficult to see the values for the age interaction. However, because the plot is a `ggplot` object, we can restrict the x axis:
 
 ```{r cov_plot_small}
-id_plot_cov(sen_est_cov,cov_type='person_cov') + xlim(c(-0.1,0.1)) +
+id_plot_cov(sen_est_cov,cov_type='person_cov') + xlim(c(-0.25,0.25)) +
   ggtitle('Interaction of Party and Age on Ideal Point Scores in 114th Senate')
 ```
 
 
-Because these covariates are on the ideal point scale, the meaning of the scale in terms of party ideology must be kept in mind in order to interpret the plot. First, because we only have estimates for the "I" and "R" values of `party_code`, we know that the Democrats "D" are being used as the reference value. As a consequence, the coefficient for `age` is equal to the effect of age for Democrats (i.e., when the person is neither Republican or Independent). What is interesting is that the effect of `age` is similar for both Republicans and Democrats. Because both of these groups are on *opposite* sides of the ideal point spectrum, the substantive interpretation is that older Republicans tend to be *more* conservative/negative (see plot above), while older Democrats tend to be more moderate than younger Democrats.
+Because these covariates are on the ideal point scale, the meaning of the scale in terms of party ideology must be kept in mind in order to interpret the plot. First, because we only have estimates for the "I" and "R" values of `party_code`, we know that the Democrats "D" are being used as the reference value. As a consequence, the coefficient for `age` is equal to the effect of age for Democrats (i.e., when the person is neither Republican or Independent). What is interesting is that the effect of `age` moves in opposite sides for both Republicans and Democrats. Because both of these groups are on *opposite* sides of the ideal point spectrum, the substantive interpretation is that older Republicans & Democrats tend to be *more* conservative than younger Republicans and Democrats.
 
 Of course, because this model was fit with variational inference (`use_vb=T`), the results are an approximation. In this case given the size of the data it would be a good idea to run full Bayesian inference. 
 

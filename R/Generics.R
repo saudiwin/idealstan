@@ -335,7 +335,7 @@ setMethod('summary',signature(object='idealstan'),
               
               attributes(to_sum)$dimnames$parameters <- new_names
               
-              if(aggregate) {
+              if(!aggregate) {
                 return(to_sum)
               } else {
                 out_d <- data_frame(Covariate=new_names,
