@@ -7,7 +7,7 @@
 .init_stan(chain_id = NULL, restrict_sd = NULL, person_sd = NULL,
   num_legis = NULL, diff_high = NULL, T = NULL,
   restrict_var_high = NULL, time_sd = NULL, restrict_var = NULL,
-  actual = TRUE, use_ar = NULL)
+  actual = TRUE, use_ar = NULL, person_start = NULL)
 }
 \description{
 Simple function to provide initial values to Stan given current values of restrict_sd

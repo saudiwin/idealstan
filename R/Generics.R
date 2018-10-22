@@ -45,7 +45,8 @@ setClass('idealdata',
                     restrict_var_high='numeric',
                     restrict_mean_val='numeric',
                     restrict_mean_ind='numeric',
-                    restrict_mean='logical'))
+                    restrict_mean='logical',
+                    person_start='numeric'))
 
 
 #' Results of \code{\link{id_estimate}} function
@@ -149,6 +150,7 @@ setMethod('sample_model',signature(object='idealdata'),
                                 restrict_var_high=this_data$restrict_var_high,
                                 time_sd=this_data$time_sd,
                                 use_ar=this_data$use_ar,
+                                person_start=object@person_start,
                                 actual=TRUE)
 
             if(is.null(ncores)) {
@@ -264,22 +266,30 @@ setMethod('summary',signature(object='idealstan'),
                 # binary models and continuous
                 item_points <- lapply(item_plot,.item_plot_binary,object=object,
                                       low_limit=low_limit,
-                                      high_limit=high_limit) %>% bind_rows()
+                                      high_limit=high_limit,
+                                      all=T,
+                                      aggregate=aggregate) %>% bind_rows()
               } else if(object@model_type %in% c(3,4)) {
                 # rating scale
                 item_points <- lapply(item_plot,.item_plot_ord_rs,object=object,
                                       low_limit=low_limit,
-                                      high_limit=high_limit) %>% bind_rows()
+                                      high_limit=high_limit,
+                                      all=T,
+                                      aggregate=aggregate) %>% bind_rows()
               } else if(object@model_type %in% c(5,6)) {
                 # grm
                 item_points <- lapply(item_plot,.item_plot_ord_grm,object=object,
                                       low_limit=low_limit,
-                                      high_limit=high_limit) %>% bind_rows()
+                                      high_limit=high_limit,
+                                      all=T,
+                                      aggregate=aggregate) %>% bind_rows()
               } else if(object@model_type %in% c(13,14)) {
                 # latent space
                 item_points <- lapply(item_plot,.item_plot_ls,object=object,
                                       low_limit=low_limit,
-                                      high_limit=high_limit) %>% bind_rows()
+                                      high_limit=high_limit,
+                                      all=T,
+                                      aggregate=aggregate) %>% bind_rows()
               }
               return(item_points)
             }
@@ -307,6 +317,35 @@ setMethod('summary',signature(object='idealstan'),
                 select(parameters,par_type,posterior_mean,posterior_median,posterior_sd,Prob.025,
                        Prob.25,Prob.75,Prob.975)
               return(this_summary)
+            }
+            
+            if(pars %in% c('person_cov','discrim_reg_cov','discrim_infl_cov')) {
+
+              param_name <- switch(pars,person_cov='legis_x',
+                                   discrim_reg_cov='sigma_reg_x',
+                                   discrim_infl_cov='sigma_abs_x')
+              
+              to_sum <- as.array(object@stan_samples,
+                                  pars=param_name)
+              
+              # reset names of parameters
+              new_names <- switch(pars,person_cov=attributes(object@score_data@person_cov)$dimnames$colnames,
+                                  discrim_reg=attributes(object@score_data@item_cov)$dimnames$colnames,
+                                  discrim_abs=attributes(object@score_data@item_cov_miss)$dimnames$colnames)
+              
+              attributes(to_sum)$dimnames$parameters <- new_names
+              
+              if(aggregate) {
+                return(to_sum)
+              } else {
+                out_d <- data_frame(Covariate=new_names,
+                                    `Posterior Median`=apply(to_sum,3,median),
+                                    `Posterior High Interval`=apply(to_sum,3,quantile,high_limit),
+                                    `Posterior Low Interval`=apply(to_sum,3,quantile,low_limit),
+                                    Parameter=param_name)
+                return(out_d)
+              }
+              
             }
             
 })

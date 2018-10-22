@@ -604,15 +604,16 @@ id_plot_rhats <- function(obj) {
 #' 
 #' @param object A fitted \code{idealstan} object
 #' @param cov_type Either 'person_cov' for person-level hierarchical parameters,
-#' 'discrim_reg' for bill/item discrimination parameters from regular (non-inflated) model, and 
-#' 'discrim_abs' for bill/item discrimination parameters from inflated model.
+#' 'discrim_reg_cov' for bill/item discrimination parameters from regular (non-inflated) model, and 
+#' 'discrim_infl_cov' for bill/item discrimination parameters from inflated model.
 #' @return A \code{ggplot2} plot that can be further customized with \code{ggplot2} functions if need be.
+#' @export
 id_plot_cov <- function(object,
                         cov_type) {
   
   param_name <- switch(cov_type,person_cov='legis_x',
-                       discrim_reg='sigma_reg_x',
-                       discrim_abs='sigma_abs_x')
+                       discrim_reg_cov='sigma_reg_x',
+                       discrim_infl_cov='sigma_abs_x')
   
   to_plot <- as.array(object@stan_samples,
                    pars=param_name)

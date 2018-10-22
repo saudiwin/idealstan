@@ -165,15 +165,15 @@ This same missing-data mechanism also applies more broadly to situations of soci
 
 Because this dataset is relatively large, we will use the `use_vb` option to use Stan's variational Bayesian inference. This version of the sampler is less accurate and tends to underestimate uncertainty, but it runs much, much faster. Generally speaking, the values of the ideal points are close to the full posterior, and it is useful for exploratory model-building even with small datasets. For very large data, `use_vb` is the only viable option as estimation times may require days or longer. 
 
-Ideal points are not identified without further information about the latent scale, especially its direction: should conservative ideal points be listed as positive or negative? To identify the latent scale, I constrain a conservative senator (Ben Sasse) to be positive, and a liberal senator, Bernie Sanders, to be negative in order to identify the polarity in the model. I have to pass in the names of the legislators as they exist in the IDs present in the data (column `bionames`). Rather than specify the exact values to pin the legislators to, I set `fixtype` to `'vb_partial'` so that the function will first fit an un-identified model, and then use those estimates to determine what would be good values to pin these legislators to. Using `'vb_partial'` is the recommended way to identify models while using prior information about the direction of the latent scale as it avoids having to fix these ideal points to specific values.
+Ideal points are not identified without further information about the latent scale, especially its direction: should conservative ideal points be listed as positive or negative? To identify the latent scale, I constrain a conservative senator (John Barrasso) to be positive, and a liberal senator, Elizabeth Warren, to be negative in order to identify the polarity in the model. I have to pass in the names of the legislators as they exist in the IDs present in the `senate114` data (column `bionames`). Rather than specify the exact values to pin the legislators to, I set `fixtype` to `'vb_partial'` so that the function will first fit an un-identified model, and then use those estimates to determine what would be good values to pin these legislators to. Using `'vb_partial'` is the recommended way to identify models while using prior information about the direction of the latent scale as it avoids having to fix these ideal points to specific values. It will also create starting values for the ideal points that should speed convergence.
 
 ```{r run_114_model}
 sen_est <- id_estimate(senate_data,
                 model_type = 1,
-                 use_vb = F,
+                 use_vb = T,
                 fixtype='vb_partial',
-                 restrict_ind_high = "WYDEN, Ronald Lee",
-                 restrict_ind_low="WICKER, Roger F.",
+                 restrict_ind_high = "WARREN, Elizabeth",
+                 restrict_ind_low="BARRASSO, John A.",
             seed=84520)
 id_plot_legis(sen_est,person_ci_alpha=0.7) +
   scale_color_manual(values=c(D='blue',R='red',I='green')) +
@@ -210,17 +210,74 @@ ideal_pts_sum <- summary(sen_est,pars='ideal_pts')
 knitr::kable(head(ideal_pts_sum))
 ```
 
-`Parameter Name` is the name of the parameter in the underlying Stan code if you want to peruse the Stan object, which can be accessed as follows:
+`Parameter Name` is the name of the parameter in the underlying Stan code. If you want to peruse the Stan object, which can be accessed as follows:
 
 ```{r stan_obj}
 stan_obj <- sen_est@stan_samples
 ```
 
 
-We can also extract the individual posterior iterations to do addditional calculations that average over posterior uncertainty by changing the `aggregate` option:
+We can also extract the individual posterior iterations to do addditional calculations that average over posterior uncertainty by changing the `aggregate` option. In the following code, I access the individual posterior iterations for the item/bill parameters, including difficulty (average probability of voting yes), discrimination (how strongly the item/bill loads on either end of the ideal point scale) and the midpoints (position where someone with that ideal point would be indifferent to voting yes/no).
 
-```{r ideal_pts_sum}
+```{r ideal_pts_ind}
 ideal_pts_sum <- summary(sen_est,pars='items', aggregate=F)
 knitr::kable(head(ideal_pts_sum))
 ```
+
+## Hierarchical Covariates
+
+Finally, we can also fit a model where we include a covariate that varies by person/legislator. To do so, we need to pass a one-sided formula to the `id_make` function to prepare the data accordingly. By way of example, we will include a model where we include an interaction between party ID (`party_code`) and the legislator's age to see if younger/older legislators are more or less conservative. 
+
+```{r create_cov_data}
+
+senate114$age <- 2018 - senate114$born
+
+senate_data <- id_make(senate114,outcome = 'cast_code',
+                       person_id = 'bioname',
+                       item_id = 'rollnumber',
+                       group_id= 'party_code',
+                       time_id='date',
+                       person_cov = ~party_code*age,
+                       miss_val=9,
+                       exclude_level = 0,
+                       low_val=6,
+                       high_val=1,
+                       ordinal=FALSE,inflate = TRUE)
+
+sen_est_cov <- id_estimate(senate_data,
+                model_type = 1,
+                 use_vb = T,
+                fixtype='vb_full',
+                 restrict_ind_high = "BARRASSO, John A.",
+                 restrict_ind_low="WARREN, Elizabeth",
+            seed=84520)
+
+
+```
+
+We can then look at a plot of the covariate values:
+
+```{r cov_plot}
+id_plot_cov(sen_est_cov,cov_type='person_cov')
+```
+
+Because of the scale of the plot, it can be difficult to see the values for the age interaction. However, because the plot is a `ggplot` object, we can restrict the x axis:
+
+```{r cov_plot_small}
+id_plot_cov(sen_est_cov,cov_type='person_cov') + xlim(c(-0.1,0.1)) +
+  ggtitle('Interaction of Party and Age on Ideal Point Scores in 114th Senate')
+```
+
+
+Because these covariates are on the ideal point scale, the meaning of the scale in terms of party ideology must be kept in mind in order to interpret the plot. First, because we only have estimates for the "I" and "R" values of `party_code`, we know that the Democrats "D" are being used as the reference value. As a consequence, the coefficient for `age` is equal to the effect of age for Democrats (i.e., when the person is neither Republican or Independent). What is interesting is that the effect of `age` is similar for both Republicans and Democrats. Because both of these groups are on *opposite* sides of the ideal point spectrum, the substantive interpretation is that older Republicans tend to be *more* conservative/negative (see plot above), while older Democrats tend to be more moderate than younger Democrats.
+
+Of course, because this model was fit with variational inference (`use_vb=T`), the results are an approximation. In this case given the size of the data it would be a good idea to run full Bayesian inference. 
+
+We can also extract the covariate summary values using the `summary` function:
+
+```{r cov_values}
+cov_sum <- summary(sen_est_cov,pars='person_cov')
+knitr::kable(cov_sum)
+```
+
 

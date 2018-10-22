@@ -5,9 +5,9 @@
 \title{Function that does automatic identification of models using VB}
 \usage{
 .vb_fix(object = NULL, this_data = NULL, nfix = NULL,
-  auto_id = FALSE, ncores = NULL, all_args = NULL,
-  restrict_ind_high = NULL, restrict_ind_low = NULL,
-  model_type = NULL, use_groups = NULL, fixtype = NULL, ...)
+  ncores = NULL, all_args = NULL, restrict_ind_high = NULL,
+  restrict_ind_low = NULL, model_type = NULL, use_groups = NULL,
+  fixtype = NULL, ...)
 }
 \description{
 Function that does automatic identification of models using VB

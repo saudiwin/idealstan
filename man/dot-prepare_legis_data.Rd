@@ -4,7 +4,8 @@
 \alias{.prepare_legis_data}
 \title{Helper function for preparing person ideal point plot data}
 \usage{
-.prepare_legis_data(object)
+.prepare_legis_data(object, high_limit = NULL, low_limit = NULL,
+  aggregate = TRUE)
 }
 \description{
 Helper function for preparing person ideal point plot data

@@ -10,8 +10,8 @@ id_plot_cov(object, cov_type)
 \item{object}{A fitted \code{idealstan} object}
 
 \item{cov_type}{Either 'person_cov' for person-level hierarchical parameters,
-'discrim_reg' for bill/item discrimination parameters from regular (non-inflated) model, and 
-'discrim_abs' for bill/item discrimination parameters from inflated model.}
+'discrim_reg_cov' for bill/item discrimination parameters from regular (non-inflated) model, and 
+'discrim_infl_cov' for bill/item discrimination parameters from inflated model.}
 }
 \value{
 A \code{ggplot2} plot that can be further customized with \code{ggplot2} functions if need be.

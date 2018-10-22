@@ -5,12 +5,12 @@
 \alias{id_plot,idealstan-method}
 \title{Plot Results of \code{\link{id_estimate}}}
 \usage{
-\S4method{id_plot}{idealstan}(object, plot_type = "legislators", ...)
+\S4method{id_plot}{idealstan}(object, plot_type = "persons", ...)
 }
 \arguments{
 \item{object}{A fitted \code{idealstan} object}
 
-\item{plot_type}{Specify the plot as a character string. Currently 'legislators' for legislator/person ideal point plot and 
+\item{plot_type}{Specify the plot as a character string. Currently 'persons' for legislator/person ideal point plot and 
 'histogram' for a histogram of model estimates for given parameters.}
 
 \item{...}{Additional arguments passed on to the underlying functions. See individual function documentation for details.}

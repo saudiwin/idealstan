@@ -74,7 +74,6 @@ if(restrict_var==1) {
 parameters {
   vector[num_bills] sigma_abs_free;
   vector[num_legis] L_free;
-  //vector[num_legis] L_tp1_free[T]; // all other params can float
   vector[num_legis] L_tp1_var[T-1]; // non-centered variance
   vector[num_legis] L_AR1; // AR-1 parameters for AR-1 model
   vector[num_bills] sigma_reg_free;
@@ -91,9 +90,6 @@ parameters {
   real<lower=0> extra_sd;
   vector<lower=0>[num_legis] time_var;
   vector<lower=0,upper=restrict_var_high>[num_legis] time_var_restrict;
-  
-  //vector[num_legis] L_start; // starting values for time series
-  //real<lower=0> time_sd;
 }
 
 transformed parameters {
@@ -138,7 +134,6 @@ model {
   sigma_abs_free ~ normal(0,discrim_abs_sd);
   sigma_reg_free ~ normal(0,discrim_reg_sd);
   legis_x ~ normal(0,5);
-  //L_start ~ normal(0,1);
   sigma_reg_x ~ normal(srx_pred[num_bills, ] * sigma_reg_x,5);
   sigma_abs_x ~ normal(sax_pred[num_bills, ] * sigma_abs_x,5);
   legis_x_cons ~ normal(0,5);;
@@ -146,7 +141,7 @@ model {
   sigma_abs_x_cons ~ normal(0,5);
   L_AR1 ~ normal(0,ar_sd); // these parameters shouldn't get too big
   extra_sd ~ exponential(1);
-  //time_sd ~ exponential(5);
+
   if(model_type>2 && model_type<5) {
     for(i in 1:(m_step-2)) {
     steps_votes[i+1] - steps_votes[i] ~ normal(0,5);
@@ -154,9 +149,6 @@ model {
   } else {
     steps_votes ~ normal(0,5);
   }
-  /* if(sample_stationary==1) {
-    target += jacobian_stationary(L_AR1_r);
-  } */
 
   B_int_free ~ normal(0,diff_reg_sd);
   A_int_free ~ normal(0,diff_abs_sd);
@@ -165,10 +157,9 @@ model {
   steps_votes_grm[b] ~ normal(0,5);
   }
   
+  time_var_restrict ~ exponential(1/time_sd);
 
-    time_var_restrict ~ exponential(1/time_sd);
-
-    time_var ~ exponential(1/time_sd);
+  time_var ~ exponential(1/time_sd);
 
   
   //model

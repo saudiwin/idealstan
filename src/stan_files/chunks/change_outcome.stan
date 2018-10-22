@@ -23,7 +23,12 @@ if(model_type==4||model_type==6||model_type==8||model_type==14) {
     m= max(Y_int);
     m_step = m;
     
-  } else if(model_type==1||model_type==2||model_type==7||model_type==9||model_type==11||model_type==13||model_type==14) {
+  } else if(model_type==1||
+            model_type==2||
+            model_type==7||
+            model_type==9||
+            model_type==11||
+            model_type==13||model_type==14) {
     //Poisson & continuous non-inflated & binary
     m= 2;
     m_step = 2;

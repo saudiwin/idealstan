@@ -4,10 +4,11 @@
 \alias{id_plot_legis}
 \title{Plot Legislator/Person and Bill/Item Ideal Points}
 \usage{
-id_plot_legis(object, return_data = FALSE, item_plot = NULL,
-  text_size_label = 2, text_size_group = 2.5, point_size = 1,
-  hjust_length = -0.7, person_labels = TRUE, group_labels = F,
-  person_ci_alpha = 0.1, show_score = NULL, abs_and_reg = "both",
+id_plot_legis(object, return_data = FALSE, high_limit = 0.95,
+  low_limit = 0.05, item_plot = NULL,
+  item_plot_type = "non-inflated", text_size_label = 2,
+  text_size_group = 2.5, point_size = 1, hjust_length = -0.7,
+  person_labels = TRUE, group_labels = F, person_ci_alpha = 0.1,
   show_true = FALSE, group_color = TRUE, hpd_limit = 10,
   group_overlap = FALSE, sample_persons = NULL, ...)
 }
@@ -16,7 +17,16 @@ id_plot_legis(object, return_data = FALSE, item_plot = NULL,
 
 \item{return_data}{If true, the calculated legislator/bill data is returned along with the plot in a list}
 
-\item{item_plot}{The column index of the bill/item midpoint to overlay on the plot}
+\item{high_limit}{The quantile (number between 0 and 1) for the high end of posterior uncertainty to show in plot}
+
+\item{low_limit}{The quantile (number between 0 and 1) for the low end of posterior uncertainty to show in plot}
+
+\item{item_plot}{The IDs (character vector) of the bill/item midpoints to overlay on the plot}
+
+\item{item_plot_type}{Whether to show the \code{'non-inflated'} item/bill midpoints, 
+the \code{'inflated'} item/bill midpoints, or produce plots for \code{'both'} kinds of models. 
+Defaults to \code{'non-inflated'} and will only display an item/bill midpoint if one has been 
+specified in \code{item_plot}.}
 
 \item{text_size_label}{ggplot2 text size for legislator labels}
 
@@ -31,11 +41,6 @@ id_plot_legis(object, return_data = FALSE, item_plot = NULL,
 \item{group_labels}{if \code{TRUE}, use the group column to plot text markers for the group (parties) from the person/legislator data}
 
 \item{person_ci_alpha}{The transparency level of the dot plot and confidence bars for the person ideal points}
-
-\item{show_score}{Show only person/legislator ideal points that have a certain score/vote category from the outcome (character string)}
-
-\item{abs_and_reg}{Whether to show 'both' absence and regular item/bill midpoints if the model is absence-inflated, the default,
-or 'Absence Points' for only the absence midpoints or 'Vote Points' for only the non-inflated midpoints}
 
 \item{show_true}{Whether to show the true values of the legislators (if model has been simulated)}
 
@@ -56,8 +61,9 @@ uncertainties of legislator/persons and bills/items.
 }
 \details{
 This plot shows the distribution of ideal points for the legislators/persons in the model. It will plot them as a vertical
-dot plot with associated high-density posterior interval (10\% to 90\%). In addition, if the column index for a 
-bill/item from the response matrix is passed to the \code{item_plot} option, then an item/bill midpoint will be overlain
+dot plot with associated high-density posterior interval (can be changed 
+with \code{high_limit} and \code{low_limit} options). In addition, if item/bill IDs
+as a character vector is passed to the \code{item_plot} option, then an item/bill midpoint will be overlain
 on the ideal point plot, showing the point at which legislators/persons are indifferent to voting/answering on the 
 bill/item. Note that because this is an ideal point model, it is not possible to tell from the midpoint itself
 which side will be voting which way. For that reason, the legislators/persons are colored by their votes/scores to

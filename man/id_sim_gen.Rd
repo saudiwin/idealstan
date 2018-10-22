@@ -5,18 +5,22 @@
 \title{Simulate IRT ideal point data}
 \usage{
 id_sim_gen(num_person = 20, num_bills = 50, model_type = "binary",
-  absence_discrim_sd = 2, absence_diff_mean = 0.5,
-  reg_discrim_sd = 2, diff_sd = 0.25, time_points = 1,
-  time_process = "random", time_sd = 0.1, ideal_pts_sd = 1,
-  prior_type = "gaussian", ordinal = TRUE, ordinal_outcomes = 3,
-  graded_response = FALSE, absence = TRUE, sigma_sd = 1)
+  latent_space = FALSE, absence_discrim_sd = 2,
+  absence_diff_mean = 0.5, reg_discrim_sd = 2, diff_sd = 0.25,
+  time_points = 1, time_process = "random", time_sd = 0.1,
+  ideal_pts_sd = 1, prior_type = "gaussian", ordinal_outcomes = 3,
+  graded_response = FALSE, inflate = FALSE, sigma_sd = 1)
 }
 \arguments{
 \item{num_person}{The number of persons/personlators}
 
 \item{num_bills}{The number of items/bills}
 
-\item{model_type}{One of \code{'binary'}, \code{'ordinal-rating'}, \code{'ordinal-grm'} or \code{'poisson'}}
+\item{model_type}{One of \code{'binary'}, \code{'ordinal_rating'}, \code{'ordinal_grm'}, \code{'poisson'}
+\code{'normal'}, or \code{'lognormal'}}
+
+\item{latent_space}{Whether to use the latent space formulation of the ideal point model 
+\code{FALSE} by default.}
 
 \item{absence_discrim_sd}{The SD of the discrimination parameters for the absence model}
 
@@ -42,7 +46,7 @@ for a random walk or \code{'AR'} for an AR1 process}
 
 \item{ordinal_outcomes}{If \code{model} is \code{'ordinal'}, an integer giving the total number of categories}
 
-\item{absence}{If \code{TRUE}, an absence-inflated dataset is produced.}
+\item{inflate}{If \code{TRUE}, an missing-data-inflated dataset is produced.}
 
 \item{sigma_sd}{If a normal or log-normal distribution is being fitted, this parameter gives the standard 
 deviation of the outcome (i.e. the square root of the variance).}

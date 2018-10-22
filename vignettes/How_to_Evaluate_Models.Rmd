@@ -24,12 +24,12 @@ A big part of the purpose of `idealstan` is to give people different options in 
 
 `bayesplot` allows us to analyze the data we used to estimate the model compared to data produced by the model, or what is called the posterior predictive distribution. This is very useful as a general summary of model fit to see whether there are values of the outcome that we are over or under predicting.
 
-`idealstan` implements functions for each ideal point model that calculate the log-posterior probability of the data, which is the necessary input to use `loo`'s model evaluation features. This vignette demonstrates the basic usage.
+`idealstan` implements functions for each ideal point model that calculate the log-posterior probability of the data, which is the necessary input to use `loo`'s model evaluation features. This vignette demonstrates the basic usage. I also discuss best practices for evaluating models.
 
 We first begin by simulating data for a standard IRT 2-PL ideal point model but with strategically missing data:
 
 ```{r sim_irt_2pl}
-irt_2pl <- id_sim_gen(ordinal=FALSE,absence=TRUE)
+irt_2pl <- id_sim_gen(ordinal=FALSE,inflate=TRUE)
 ```
 
 We can then fit two ideal point models to the same data, one that uses constraints for identification and the other that pins two of the persons to arbitrary (and incorrect) values. 
@@ -38,15 +38,13 @@ We can then fit two ideal point models to the same data, one that uses constrain
 # Because of CRAN limitations, only using 2 cores & 2 chains
 irt_2pl_correct <- id_estimate(idealdata=irt_2pl,
                                model_type=2,
-                               restrict_ind_high = sort(irt_2pl@simul_data$true_reg_discrim,
+                               restrict_ind_high = as.character(sort(irt_2pl@simul_data$true_reg_discrim,
                                                         decreasing=TRUE,
-                                                        index=TRUE)$ix[1:3],
-                              restrict_ind_low = sort(irt_2pl@simul_data$true_reg_discrim,
+                                                        index=TRUE)$ix[1]),
+                              restrict_ind_low = as.character(sort(irt_2pl@simul_data$true_reg_discrim,
                                                       decreasing=FALSE,
-                                                        index=TRUE)$ix[1:3],
-                           restrict_params = 'discrim_reg',
-                               restrict_type = 'constrain_twoway',
-                               fixtype='constrained',
+                                                        index=TRUE)$ix[1]),
+                               fixtype='vb_partial',
                            ncores=2,
                            nchains=2)
 

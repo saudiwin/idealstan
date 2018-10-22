@@ -4,23 +4,28 @@
 \alias{id_estimate}
 \title{Estimate an \code{idealstan} model}
 \usage{
-id_estimate(idealdata = NULL, model_type = 2, use_subset = FALSE,
-  sample_it = FALSE, subset_group = NULL, subset_person = NULL,
-  sample_size = 20, nchains = 4, niters = 2000, use_vb = FALSE,
+id_estimate(idealdata = NULL, model_type = 2,
+  vary_ideal_pts = "none", use_subset = FALSE, sample_it = FALSE,
+  subset_group = NULL, subset_person = NULL, sample_size = 20,
+  nchains = 4, niters = 2000, use_vb = FALSE,
   restrict_ind_high = NULL, id_diff = 4, id_diff_high = 2,
   restrict_ind_low = NULL, fixtype = "vb_full", prior_fit = NULL,
-  warmup = floor(niters/2), ncores = 4, auto_id = FALSE,
-  use_ar = FALSE, use_groups = FALSE, discrim_reg_sd = 1,
-  discrim_miss_sd = 1, person_sd = 1, time_sd = 0.1,
-  sample_stationary = FALSE, ar_sd = 1, diff_reg_sd = 1,
-  diff_miss_sd = 1, restrict_sd = 0.01, restrict_mean = NULL,
-  restrict_var = NULL, restrict_mean_val = NULL,
-  restrict_mean_ind = NULL, restrict_var_high = 0.1, ...)
+  warmup = floor(niters/2), ncores = 4, use_groups = FALSE,
+  discrim_reg_sd = 1, discrim_miss_sd = 1, person_sd = 1,
+  time_sd = 0.1, sample_stationary = FALSE, ar_sd = 1,
+  diff_reg_sd = 1, diff_miss_sd = 1, restrict_sd = 0.01,
+  restrict_mean = NULL, restrict_var = NULL,
+  restrict_mean_val = NULL, restrict_mean_ind = NULL,
+  restrict_var_high = 0.1, ...)
 }
 \arguments{
 \item{idealdata}{An object produced by the \code{\link{id_make}} containing a score/vote matrix for use for estimation & plotting}
 
 \item{model_type}{An integer reflecting the kind of model to be estimated. See below.}
+
+\item{vary_ideal_pts}{Default \code{'none'}. If \code{'random_walk'} or \code{'AR1'}, a 
+time-varying ideal point model will be fit with either a random-walk process or an 
+AR1 process. See documentation for more info.}
 
 \item{use_subset}{Whether a subset of the legislators/persons should be used instead of the full response matrix}
 
@@ -73,11 +78,6 @@ See \code{\link[rstan]{stan}} for more info.}
 
 \item{ncores}{The number of cores in your computer to use for parallel processing in the Stan engine. 
 See \code{\link[rstan]{stan}} for more info.}
-
-\item{use_ar}{If \code{TRUE}, will estimate time-varying parameters for legislators/persons with an AR(1) prior 
-(implying 
-the ideal points are stationary over time). Otherwise the model
- will estimate a random-walk process for the ideal points.}
 
 \item{use_groups}{If \code{TRUE}, group parameters from the person/legis data given in \code{\link{id_make}} will be 
 estimated instead of individual parameters.}
@@ -163,9 +163,9 @@ As of this version of \code{idealstan}, the following model types are available:
 }
 
 In addition, each of these models can have time-varying ideal point (person) parameters if
-a column of dates is fed to the \code{\link{id_make}} function. If the option \code{use_ar} is 
-set to false, \code{id_estimate} will estimate a random-walk ideal point model where ideal points 
-move in a random direction. If \code{use_ar} is set to \code{TRUE}, a stationary ideal point model 
+a column of dates is fed to the \code{\link{id_make}} function. If the option \code{vary_ideal_pts} is 
+set to 'random_walk', \code{id_estimate} will estimate a random-walk ideal point model where ideal points 
+move in a random direction. If \code{vary_ideal_pts} is set to \code{'AR1'}, a stationary ideal point model 
 is estimated where ideal points fluctuate around long-term mean. In general, the stationary model
 is preferred when the time series is of short absolute duration (such as days or hours) while 
 the random-walk model is preferable when the time series is of very long duration and there are no

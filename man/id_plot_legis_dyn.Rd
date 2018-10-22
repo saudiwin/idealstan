@@ -9,7 +9,7 @@ id_plot_legis_dyn(object, return_data = FALSE, item_plot = NULL,
   person_plot = T, person_labels = NULL, group_labels = NULL,
   highlight = NULL, plot_text = TRUE, use_ci = TRUE,
   person_line_alpha = 0.3, person_ci_alpha = 0.8, show_score = NULL,
-  abs_and_reg = "both", show_true = FALSE, group_color = TRUE,
+  item_plot_type = "both", show_true = FALSE, group_color = TRUE,
   hpd_limit = 10, group_overlap = FALSE, sample_persons = NULL,
   plot_sim = FALSE, ...)
 }
@@ -48,7 +48,7 @@ plotted over the estimates (turn off if the plot is too busy)}
 
 \item{show_score}{Show only person/legislator ideal points that have a certain score/vote category from the outcome (character string)}
 
-\item{abs_and_reg}{Whether to show 'both' absence and regular item/bill midpoints if the model is absence-inflated, the default,
+\item{item_plot_type}{Whether to show 'both' absence and regular item/bill midpoints if the model is absence-inflated, the default,
 or 'Absence Points' for only the absence midpoints or 'Vote Points' for only the non-inflated midpoints}
 
 \item{show_true}{Whether to show the true values of the legislators (if model has been simulated)}

@@ -106,18 +106,17 @@
                              restrict_ind_low=restrict_ind_low,
                              use_groups=use_groups)
   }
+  
+  # need new order of variables
+  
+  new_order <- c(1:length(person))
+  new_order <- c(new_order[-c(to_constrain_low,
+                              to_constrain_high)],
+                 new_order[c(to_constrain_low,
+                             to_constrain_high)])
 
   if(this_data$T>1) {
     # do some additional model identification if necessary for time-varying ideal pt models
-    
-    # need new order of variables
-    
-    new_order <- c(1:length(person))
-    new_order <- c(new_order[-c(to_constrain_low,
-                                to_constrain_high)],
-                   new_order[c(to_constrain_low,
-                               to_constrain_high)])
-
     # figure out upper limit of estimated variances
     time_var_restrict <-  max(apply(this_params[,grepl(pattern = 'time_var_restrict',x=all_params)],2,quantile,.95)[new_order])
     # constrain any ideal points that are always positive or always negative
@@ -150,6 +149,7 @@
   object@constraint_type <- this_data$constraint_type
   object@diff <- diff
   object@diff_high <- diff_high
+  object@person_start <- person[new_order]
   return(object)
 }
 
@@ -729,7 +729,14 @@
                        time_sd=NULL,
                        restrict_var=NULL,
                        actual=TRUE,
-                       use_ar=NULL) {
+                       use_ar=NULL,
+                       person_start=NULL) {
+  
+  if(length(person_start)==0 || is.null(person_start)) {
+    L_free <- array(rnorm(n=num_legis-2,mean=0,sd=person_sd))
+  } else {
+    L_free <- array(person_start[1:(num_legis-2)])
+  }
 
   
   if(actual==TRUE) {
@@ -737,19 +744,19 @@
     if(T>1) {
       if(restrict_var) {
         return(list(restrict_high = array(rnorm(n=1,mean=diff_high,sd=restrict_sd)),
-                    L_free = array(rnorm(n=num_legis-2,mean=0,sd=person_sd)),
+                    L_free = L_free,
                     L_AR1 = array(runif(n = num_legis,min = -.5,max=.5)),
                     time_var_restrict = rep(restrict_var_high/2,num_legis)))
       } else {
         return(list(restrict_high = array(rnorm(n=1,mean=diff_high,sd=restrict_sd)),
-                    L_free = array(rnorm(n=num_legis-2,mean=0,sd=person_sd)),
+                    L_free = L_free,
                     L_AR1 = array(runif(n = num_legis,min = -.5,max=.5)),
                     time_var = rep(time_sd,num_legis)))
       }
       
     } else {
       return(list(restrict_high = array(rnorm(n=1,mean=diff_high,sd=restrict_sd)),
-                  L_free = array(rnorm(n=num_legis-2,mean=0,sd=person_sd)),
+                  L_free = L_free,
                   L_AR1 = array(runif(n = num_legis,min = -.5,max=.5))))
     }
 
@@ -833,7 +840,9 @@
 #' Generate item-level midpoints for binary IRT outcomes
 .item_plot_binary <- function(param_name,object,
                        high_limit=NULL,
-                       low_limit=NULL) {
+                       low_limit=NULL,
+                       all=FALSE,
+                       aggregate=FALSE) {
   
   # first need to get num of the parameter
   
@@ -854,31 +863,127 @@
   } else {
     cut_names <- as.character(unique(object@score_data@score_matrix$outcome))
   }
-  
-  reg_data <- data_frame(item_median=quantile(reg_mid,0.5),
-                         item_high=quantile(reg_mid,high_limit),
-                         item_low=quantile(reg_mid,low_limit),
-                         item_type='Non-Inflated\nDiscrimination',
-                         Outcome=cut_names[2],
-                         item_name=param_name)
-  
-  abs_data <- data_frame(item_median=quantile(abs_mid,0.5),
-                         item_high=quantile(abs_mid,high_limit),
-                         item_low=quantile(abs_mid,low_limit),
-                         item_type='Inflated\nDiscrimination',
-                         Outcome='Missing',
-                         item_name=param_name)
-  
-  out_d <- bind_rows(reg_data,abs_data)
-  
-  return(out_d)
-  
+  if(!all) {
+    reg_data <- data_frame(item_median=quantile(reg_mid,0.5),
+                           item_high=quantile(reg_mid,high_limit),
+                           item_low=quantile(reg_mid,low_limit),
+                           item_type='Non-Inflated\nDiscrimination',
+                           Outcome=cut_names[2],
+                           item_name=param_name)
+    
+    abs_data <- data_frame(item_median=quantile(abs_mid,0.5),
+                           item_high=quantile(abs_mid,high_limit),
+                           item_low=quantile(abs_mid,low_limit),
+                           item_type='Inflated\nDiscrimination',
+                           Outcome='Missing',
+                           item_name=param_name)
+    
+    out_d <- bind_rows(reg_data,abs_data)
+    
+    return(out_d)
+    
+  } else if(all && !aggregate) {
+    reg_data_mid <- data_frame(`Posterior Median`=quantile(reg_mid,0.5),
+                           `High Posterior Interval`=quantile(reg_mid,high_limit),
+                           `Low Posterior Interval`=quantile(reg_mid,low_limit),
+                           `Item Type`='Non-Inflated Item Midpoint',
+                           `Predicted Outcome`=cut_names[2],
+                           `Parameter`=param_name)
+    
+    abs_data_mid <- data_frame(`Posterior Median`=quantile(abs_mid,0.5),
+                           `High Posterior Interval`=quantile(abs_mid,high_limit),
+                           `Low Posterior Interval`=quantile(abs_mid,low_limit),
+                           `Item Type`='Inflated Item Midpoint',
+                           `Predicted Outcome`='Missing',
+                           `Parameter`=param_name)
+    
+    reg_data_discrim <- data_frame(`Posterior Median`=quantile(reg_discrim,0.5),
+                               `High Posterior Interval`=quantile(reg_discrim,high_limit),
+                               `Low Posterior Interval`=quantile(reg_discrim,low_limit),
+                               `Item Type`='Non-Inflated Discrimination',
+                               `Predicted Outcome`=cut_names[2],
+                               `Parameter`=param_name)
+    
+    abs_data_discrim <- data_frame(`Posterior Median`=quantile(abs_discrim,0.5),
+                               `High Posterior Interval`=quantile(abs_discrim,high_limit),
+                               `Low Posterior Interval`=quantile(abs_discrim,low_limit),
+                               `Item Type`='Inflated Discrimination',
+                               `Predicted Outcome`='Missing',
+                               `Parameter`=param_name)
+    
+    reg_data_diff <- data_frame(`Posterior Median`=quantile(reg_diff,0.5),
+                                   `High Posterior Interval`=quantile(reg_diff,high_limit),
+                                   `Low Posterior Interval`=quantile(reg_diff,low_limit),
+                                   `Item Type`='Non-Inflated Difficulty',
+                                   `Predicted Outcome`=cut_names[2],
+                                   `Parameter`=param_name)
+    
+    abs_data_diff <- data_frame(`Posterior Median`=quantile(abs_discrim,0.5),
+                                   `High Posterior Interval`=quantile(abs_discrim,high_limit),
+                                   `Low Posterior Interval`=quantile(abs_discrim,low_limit),
+                                   `Item Type`='Inflated Difficulty',
+                                   `Predicted Outcome`='Missing',
+                                   `Parameter`=param_name)
+    
+    out_d <- bind_rows(reg_data_mid,abs_data_mid,reg_data_discrim,
+                       abs_data_discrim,
+                       reg_data_diff,
+                       abs_data_diff)
+    
+    return(out_d)
+  } else if(all && aggregate) {
+    reg_data_mid <- data_frame(Posterior_Sample=reg_mid,
+                               `Item Type`='Non-Inflated Item Midpoint',
+                               `Predicted Outcome`=cut_names[2],
+                               `Parameter`=param_name) %>% 
+      mutate(Iteration=1:n())
+    
+    abs_data_mid <- data_frame(`Posterior_Sample`=abs_mid,
+                               `Item Type`='Inflated Item Midpoint',
+                               `Predicted Outcome`='Missing',
+                               `Parameter`=param_name) %>% 
+      mutate(Iteration=1:n())
+    
+    reg_data_discrim <- data_frame(`Posterior_Sample`=reg_discrim,
+                                   `Item Type`='Non-Inflated Discrimination',
+                                   `Predicted Outcome`=cut_names[2],
+                                   `Parameter`=param_name) %>% 
+      mutate(Iteration=1:n())
+    
+    abs_data_discrim <- data_frame(`Posterior_Sample`=abs_discrim,
+                                   `Item Type`='Inflated Discrimination',
+                                   `Predicted Outcome`='Missing',
+                                   `Parameter`=param_name) %>% 
+      mutate(Iteration=1:n())
+    
+    reg_data_diff <- data_frame(`Posterior_Sample`=reg_diff,
+                                `Item Type`='Non-Inflated Difficulty',
+                                `Predicted Outcome`=cut_names[2],
+                                `Parameter`=param_name) %>% 
+      mutate(Iteration=1:n())
+    
+    abs_data_diff <- data_frame(`Posterior_Sample`=abs_discrim,
+                                `Item Type`='Inflated Difficulty',
+                                `Predicted Outcome`='Missing',
+                                `Parameter`=param_name) %>% 
+      mutate(Iteration=1:n())
+    
+    out_d <- bind_rows(reg_data_mid,abs_data_mid,reg_data_discrim,
+                       abs_data_discrim,
+                       reg_data_diff,
+                       abs_data_diff)
+    
+    return(out_d)
+  }
+
 }
 
 #' Generate item-level midpoints for ordinal-rating scale IRT outcomes
 .item_plot_ord_rs <- function(param_name,object,
                               high_limit=NULL,
-                              low_limit=NULL) {
+                              low_limit=NULL,
+                              all=FALSE,
+                              aggregate=FALSE) {
 
   # first need to get num of the parameter
   
@@ -922,14 +1027,116 @@
     return(out_d)
   }) %>% bind_rows
   
-  return(over_cuts)
+  if(!all) {
+    
+    return(over_cuts)
+  
+} else if(all && !aggregate) {
+  
+  over_cuts <- select(over_cuts,
+                      )
+  
+  reg_data_mid <- data_frame(`Posterior Median`=quantile(reg_mid,0.5),
+                             `High Posterior Interval`=quantile(reg_mid,high_limit),
+                             `Low Posterior Interval`=quantile(reg_mid,low_limit),
+                             `Item Type`='Non-Inflated Item Midpoint',
+                             `Predicted Outcome`=cut_names[2],
+                             `Parameter`=param_name)
+  
+  abs_data_mid <- data_frame(`Posterior Median`=quantile(abs_mid,0.5),
+                             `High Posterior Interval`=quantile(abs_mid,high_limit),
+                             `Low Posterior Interval`=quantile(abs_mid,low_limit),
+                             `Item Type`='Inflated Item Midpoint',
+                             `Predicted Outcome`='Missing',
+                             `Parameter`=param_name)
+  
+  reg_data_discrim <- data_frame(`Posterior Median`=quantile(reg_discrim,0.5),
+                                 `High Posterior Interval`=quantile(reg_discrim,high_limit),
+                                 `Low Posterior Interval`=quantile(reg_discrim,low_limit),
+                                 `Item Type`='Non-Inflated Discrimination',
+                                 `Predicted Outcome`=cut_names[2],
+                                 `Parameter`=param_name)
+  
+  abs_data_discrim <- data_frame(`Posterior Median`=quantile(abs_discrim,0.5),
+                                 `High Posterior Interval`=quantile(abs_discrim,high_limit),
+                                 `Low Posterior Interval`=quantile(abs_discrim,low_limit),
+                                 `Item Type`='Inflated Discrimination',
+                                 `Predicted Outcome`='Missing',
+                                 `Parameter`=param_name)
+  
+  reg_data_diff <- data_frame(`Posterior Median`=quantile(reg_diff,0.5),
+                              `High Posterior Interval`=quantile(reg_diff,high_limit),
+                              `Low Posterior Interval`=quantile(reg_diff,low_limit),
+                              `Item Type`='Non-Inflated Difficulty',
+                              `Predicted Outcome`=cut_names[2],
+                              `Parameter`=param_name)
+  
+  abs_data_diff <- data_frame(`Posterior Median`=quantile(abs_discrim,0.5),
+                              `High Posterior Interval`=quantile(abs_discrim,high_limit),
+                              `Low Posterior Interval`=quantile(abs_discrim,low_limit),
+                              `Item Type`='Inflated Difficulty',
+                              `Predicted Outcome`='Missing',
+                              `Parameter`=param_name)
+  
+  out_d <- bind_rows(reg_data,abs_data,reg_data_discrim,
+                     abs_data_discrim,
+                     reg_data_diff,
+                     abs_data_diff)
+  
+  return(out_d)
+} else if(all && aggregate) {
+  reg_data_mid <- data_frame(Posterior_Sample=reg_mid,
+                             `Item Type`='Non-Inflated Item Midpoint',
+                             `Predicted Outcome`=cut_names[2],
+                             `Parameter`=param_name) %>% 
+    mutate(Iteration=1:n())
+  
+  abs_data_mid <- data_frame(`Posterior_Sample`=abs_mid,
+                             `Item Type`='Inflated Item Midpoint',
+                             `Predicted Outcome`='Missing',
+                             `Parameter`=param_name) %>% 
+    mutate(Iteration=1:n())
+  
+  reg_data_discrim <- data_frame(`Posterior_Sample`=reg_discrim,
+                                 `Item Type`='Non-Inflated Discrimination',
+                                 `Predicted Outcome`=cut_names[2],
+                                 `Parameter`=param_name) %>% 
+    mutate(Iteration=1:n())
+  
+  abs_data_discrim <- data_frame(`Posterior_Sample`=abs_discrim,
+                                 `Item Type`='Inflated Discrimination',
+                                 `Predicted Outcome`='Missing',
+                                 `Parameter`=param_name) %>% 
+    mutate(Iteration=1:n())
+  
+  reg_data_diff <- data_frame(`Posterior_Sample`=reg_diff,
+                              `Item Type`='Non-Inflated Difficulty',
+                              `Predicted Outcome`=cut_names[2],
+                              `Parameter`=param_name) %>% 
+    mutate(Iteration=1:n())
+  
+  abs_data_diff <- data_frame(`Posterior_Sample`=abs_discrim,
+                              `Item Type`='Inflated Difficulty',
+                              `Predicted Outcome`='Missing',
+                              `Parameter`=param_name) %>% 
+    mutate(Iteration=1:n())
+  
+  out_d <- bind_rows(reg_data,abs_data,reg_data_discrim,
+                     abs_data_discrim,
+                     reg_data_diff,
+                     abs_data_diff)
+  
+  return(out_d)
+}
   
 }
 
 #' Generate item-level midpoints for ordinal-GRM IRT outcomes
 .item_plot_ord_grm <- function(param_name,object,
                               high_limit=NULL,
-                              low_limit=NULL) {
+                              low_limit=NULL,
+                              all=FALSE,
+                              aggregate=FALSE) {
 
   # first need to get num of the parameter
   
