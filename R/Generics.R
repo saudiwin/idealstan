@@ -210,38 +210,108 @@ setMethod('id_model',signature(object='idealdata'),
 #' This function produces quantiles and standard deviations for the posterior samples of \code{idealstan} objects.
 #' 
 #' @param object An \code{idealstan} object fitted by \code{\link{id_estimate}}
-#' @param pars A character string of the name of the parameter in the Stan model
-#' 
+#' @param pars Either \code{'ideal_pts'} for person ideal points, 
+#' \code{'items'} for items/bills difficulty and discrimination paremeters,
+#' and \code{'all'} for all parameters in the model, including incidental parameters.
+#' @param high_limit A number between 0 and 1 reflecting the upper limit of the 
+#' uncertainty interval (defaults to 0.95).
+#' @param low_limit A number between 0 and 1 reflecting the lower limit of the 
+#' uncertainty interval (defaults to 0.05).
+#' @param aggregate Whether to return summaries of the posterior values or the 
+#' full posterior samples. Defaults to \code{TRUE}.
 #' @return A \code{\link[dplyr]{tibble}} data frame with parameters as rows and descriptive statistics as columns
 #' 
 #' @export
 setMethod('summary',signature(object='idealstan'),
-          function(object,pars=NULL) {
+          function(object,pars=NULL,
+                   high_limit=0.95,
+                   low_limit=0.05,
+                   aggregate=TRUE) {
             
             options(tibble.print_max=1000,
                     tibble.print_min=100)
-            if(!is.null(pars)) {
-              sumobj <- rstan::summary(object@stan_samples,pars=pars)
-              this_summary <- sumobj[[1]] %>% as_data_frame
-            } else {
-              sumobj <- rstan::summary(object@stan_samples)
-              this_summary <- sumobj[[1]] %>% as_data_frame
+            
+
+            if(pars=='ideal_pts') {
+              ideal_pts <- .prepare_legis_data(object,
+                                               high_limit=high_limit,
+                                               low_limit=low_limit,
+                                               aggregate=aggregate)
+              if(aggregate) {
+                ideal_pts <- select(ideal_pts,
+                                    Person=person_id,
+                                    Group=group_id,
+                                    `Low Posterior Interval`=low_pt,
+                                    `Posterior Median`=median_pt,
+                                    `High Posterior Interval`=high_pt,
+                                    `Parameter Name`=legis)
+              } else {
+                # add in iteration numbers
+                ideal_pts <- group_by(ideal_pts,person_id) %>% 
+                  mutate(Iteration=1:n())
+                ideal_pts <- select(ideal_pts,
+                                    Person=person_id,
+                                    Group=group_id,
+                                    Ideal_Points=ideal_pts,
+                                    Iteration,
+                                    `Parameter Name`=legis)
+              }
+              return(ideal_pts)
             }
             
-            this_summary <- mutate(this_summary,
-                                   parameters=row.names(sumobj[[1]]),
-                                   par_type=stringr::str_extract(parameters,'[A-Za-z_]+')) %>% 
-              rename(posterior_mean=`mean`,
-                     posterior_sd=`sd`,
-                     posterior_median=`50%`,
-                     Prob.025=`2.5%`,
-                     Prob.25=`25%`,
-                     Prob.75=`75%`,
-                     Prob.975=`97.5%`) %>% 
-              select(parameters,par_type,posterior_mean,posterior_median,posterior_sd,Prob.025,
-                     Prob.25,Prob.75,Prob.975)
-            return(this_summary)
-          })
+            if(pars=='items') {
+              # a bit trickier with item points
+              item_plot <- unique(object@score_data@score_matrix$item_id)
+              if(object@model_type %in% c(1,2) || (model_type>6 && model_type<13)) {
+                # binary models and continuous
+                item_points <- lapply(item_plot,.item_plot_binary,object=object,
+                                      low_limit=low_limit,
+                                      high_limit=high_limit) %>% bind_rows()
+              } else if(object@model_type %in% c(3,4)) {
+                # rating scale
+                item_points <- lapply(item_plot,.item_plot_ord_rs,object=object,
+                                      low_limit=low_limit,
+                                      high_limit=high_limit) %>% bind_rows()
+              } else if(object@model_type %in% c(5,6)) {
+                # grm
+                item_points <- lapply(item_plot,.item_plot_ord_grm,object=object,
+                                      low_limit=low_limit,
+                                      high_limit=high_limit) %>% bind_rows()
+              } else if(object@model_type %in% c(13,14)) {
+                # latent space
+                item_points <- lapply(item_plot,.item_plot_ls,object=object,
+                                      low_limit=low_limit,
+                                      high_limit=high_limit) %>% bind_rows()
+              }
+              return(item_points)
+            }
+
+            
+            if(pars=='all') {
+              if(!is.null(pars)) {
+                sumobj <- rstan::summary(object@stan_samples,pars=pars)
+                this_summary <- sumobj[[1]] %>% as_data_frame
+              } else {
+                sumobj <- rstan::summary(object@stan_samples)
+                this_summary <- sumobj[[1]] %>% as_data_frame
+              }
+              
+              this_summary <- mutate(this_summary,
+                                     parameters=row.names(sumobj[[1]]),
+                                     par_type=stringr::str_extract(parameters,'[A-Za-z_]+')) %>% 
+                rename(posterior_mean=`mean`,
+                       posterior_sd=`sd`,
+                       posterior_median=`50%`,
+                       Prob.025=`2.5%`,
+                       Prob.25=`25%`,
+                       Prob.75=`75%`,
+                       Prob.975=`97.5%`) %>% 
+                select(parameters,par_type,posterior_mean,posterior_median,posterior_sd,Prob.025,
+                       Prob.25,Prob.75,Prob.975)
+              return(this_summary)
+            }
+            
+})
 
 #' Generic Function for Plotting \code{idealstan} objects
 #' 

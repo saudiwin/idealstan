@@ -160,8 +160,8 @@ id_make <- function(score_data=NULL,
   
   # if time or group IDs don't exist, make dummies
   
-  test_group <- try(factor(pull(score_data,!!group_id)))
-  test_time <- try(pull(score_data,!!time_id))
+  test_group <- try(factor(pull(score_data,!!group_id)),silent=TRUE)
+  test_time <- try(pull(score_data,!!time_id),silent=TRUE)
   
   if(any('try-error' %in% class(test_group))) {
     score_rename$group_id <- factor("G")
@@ -363,9 +363,9 @@ id_make <- function(score_data=NULL,
 #' }
 #' 
 #' In addition, each of these models can have time-varying ideal point (person) parameters if
-#' a column of dates is fed to the \code{\link{id_make}} function. If the option \code{use_ar} is 
-#' set to false, \code{id_estimate} will estimate a random-walk ideal point model where ideal points 
-#' move in a random direction. If \code{use_ar} is set to \code{TRUE}, a stationary ideal point model 
+#' a column of dates is fed to the \code{\link{id_make}} function. If the option \code{vary_ideal_pts} is 
+#' set to 'random_walk', \code{id_estimate} will estimate a random-walk ideal point model where ideal points 
+#' move in a random direction. If \code{vary_ideal_pts} is set to \code{'AR1'}, a stationary ideal point model 
 #' is estimated where ideal points fluctuate around long-term mean. In general, the stationary model
 #' is preferred when the time series is of short absolute duration (such as days or hours) while 
 #' the random-walk model is preferable when the time series is of very long duration and there are no
@@ -402,6 +402,9 @@ id_make <- function(score_data=NULL,
 #' settings by passing the fitted \code{idealstan} object to the \code{prior_fit} option.
 #' @param idealdata An object produced by the \code{\link{id_make}} containing a score/vote matrix for use for estimation & plotting
 #' @param model_type An integer reflecting the kind of model to be estimated. See below.
+#' @param vary_ideal_pts Default \code{'none'}. If \code{'random_walk'} or \code{'AR1'}, a 
+#' time-varying ideal point model will be fit with either a random-walk process or an 
+#' AR1 process. See documentation for more info.
 #' @param use_subset Whether a subset of the legislators/persons should be used instead of the full response matrix
 #' @param sample_it Whether or not to use a random subsample of the response matrix. Useful for testing.
 #' @param subset_group If person/legislative data was included in the \code{\link{id_make}} function, then you can subset by
@@ -435,10 +438,6 @@ id_make <- function(score_data=NULL,
 #' @param id_diff The fixed difference between the high/low person/legislator ideal points used to identify the model. 
 #' Set at 4 as a standard value but can be changed to any arbitrary number without affecting model results besides re-scaling.
 #' @param id_diff_high The fixed intercept of the high ideal point used to constrain the model. 
-#' @param use_ar If \code{TRUE}, will estimate time-varying parameters for legislators/persons with an AR(1) prior 
-#' (implying 
-#' the ideal points are stationary over time). Otherwise the model
-#'  will estimate a random-walk process for the ideal points.
 #' @param sample_stationary If \code{TRUE}, the AR(1) coefficients in a time-varying model will be 
 #' sampled from an unconstrained space and then mapped back to a stationary space. Leaving this \code{TRUE} is 
 #' slower but will work better when there is limited information to identify a model. If used, the
@@ -555,7 +554,9 @@ id_make <- function(score_data=NULL,
 #'    \item Kubinec, R. "Generalized Ideal Point Models for Time-Varying and Missing-Data Inference". Working Paper.
 #' }
 #' @export
-id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=FALSE,
+id_estimate <- function(idealdata=NULL,model_type=2,
+                        vary_ideal_pts='none',
+                        use_subset=FALSE,sample_it=FALSE,
                            subset_group=NULL,subset_person=NULL,sample_size=20,
                            nchains=4,niters=2000,use_vb=FALSE,
                            restrict_ind_high=NULL,
@@ -565,8 +566,6 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
                            fixtype='vb_full',
                         prior_fit=NULL,
                         warmup=floor(niters/2),ncores=4,
-                           auto_id=FALSE,
-                          use_ar=FALSE,
                         use_groups=FALSE,
                            discrim_reg_sd=1,
                            discrim_miss_sd=1,
@@ -599,6 +598,19 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
    
     #Using an un-identified model with variational inference, find those parameters that would be most useful for
     #constraining/pinning to have an identified model for full Bayesian inference
+  
+  # change time IDs if non time-varying model is being fit
+  if(vary_ideal_pts=='none') {
+    idealdata@score_matrix$time_id <- 1
+    use_ar <- FALSE
+    # make sure that the covariate arrays are only one time point
+    idealdata@person_cov <- idealdata@person_cov[1,,,drop=F]
+    idealdata@group_cov <- idealdata@group_cov[1,,,drop=F]
+  } else if(vary_ideal_pts=='AR1') {
+    use_ar <- TRUE
+  } else {
+    use_ar <- FALSE
+  }
     
   # use either row numbers for person/legislator IDs or use group IDs (static or time-varying)
       
@@ -636,7 +648,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
 
   #Remove NA values, which should have been coded correctly in the make_idealdata function
   
-    remove_nas <- !is.na(Y)
+    remove_nas <- !is.na(Y) & !is.na(legispoints) & !is.na(billpoints) & !is.na(timepoints)
     Y <- Y[remove_nas]
 
     legispoints <- legispoints[remove_nas]
@@ -658,7 +670,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
   # set identification options
     
   if(length(idealdata@restrict_var)==0 && is.null(prior_fit)) {
-      if(use_ar) {
+      if(vary_ideal_pts %in% c('none','AR1')) {
         idealdata@restrict_var <- FALSE
       } else {
         idealdata@restrict_var <- TRUE
@@ -668,7 +680,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
     if(!is.null(restrict_var)) {
       idealdata@restrict_var <- restrict_var
     } else {
-      if(use_ar) {
+      if(vary_ideal_pts %in% c('none','AR1')) {
         idealdata@restrict_var <- FALSE
       } else {
         idealdata@restrict_var <- TRUE
@@ -698,7 +710,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
     idealdata@restrict_mean_ind <- 1
   }
     
-  if(length(idealdata@restrict_mean)>0 && use_ar==T && !is.null(prior_fit)) {
+  if(length(idealdata@restrict_mean)>0 && vary_ideal_pts=='AR1' && !is.null(prior_fit)) {
     
     # reset if a prior time-varying fit is being used
     if(is.null(restrict_mean)) {
@@ -711,7 +723,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
     idealdata@restrict_mean <- restrict_mean
       
   } else if(length(idealdata@restrict_mean)==0 && is.null(restrict_mean)) {
-    if(use_ar) {
+    if(vary_ideal_pts %in% c('AR1','none')) {
       idealdata@restrict_mean <- FALSE
     } else {
       idealdata@restrict_mean <- TRUE
@@ -743,7 +755,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
                     discrim_abs_sd=discrim_miss_sd,
                     diff_reg_sd=diff_reg_sd,
                     diff_abs_sd=diff_miss_sd,
-                    legis_sd=person_sd,
+                    legis_sd=1,
                     restrict_sd=restrict_sd,
                     use_ar=as.integer(use_ar),
                     diff=idealdata@diff,
@@ -795,7 +807,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
   
   #Remove NA values, which should have been coded correctly in the make_idealdata function
   
-  remove_nas <- !is.na(Y)
+  remove_nas <- !is.na(Y) & !is.na(legispoints) & !is.na(billpoints) & !is.na(timepoints)
   Y <- Y[remove_nas]
   legispoints <- legispoints[remove_nas]
   billpoints <- billpoints[remove_nas]
