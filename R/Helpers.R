@@ -1,7 +1,7 @@
 #' Function that does automatic identification of models using VB
 #'@importFrom forcats fct_relevel
 .vb_fix <- function(object=NULL,
-                    this_data=NULL,nfix=NULL,auto_id=FALSE,
+                    this_data=NULL,nfix=NULL,
                     ncores=NULL,all_args=NULL,
                     restrict_ind_high=NULL,
                     restrict_ind_low=NULL,

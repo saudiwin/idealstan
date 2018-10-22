@@ -155,7 +155,7 @@ senate_data <- id_make(senate114,outcome = 'cast_code',
                        exclude_level = 0,
                        low_val=6,
                        high_val=1,
-                       ordinal=FALSE)
+                       ordinal=FALSE,inflate = TRUE)
 
 ```
 
@@ -169,11 +169,11 @@ Ideal points are not identified without further information about the latent sca
 
 ```{r run_114_model}
 sen_est <- id_estimate(senate_data,
-                model_type = 2,
-                 use_vb = TRUE,
-                 fixtype='vb_partial',
-                 restrict_ind_high = 'SASSE, Benjamin Eric',
-                 restrict_ind_low='WARREN, Elizabeth',
+                model_type = 1,
+                 use_vb = F,
+                fixtype='vb_partial',
+                 restrict_ind_high = "WYDEN, Ronald Lee",
+                 restrict_ind_low="WICKER, Roger F.",
             seed=84520)
 id_plot_legis(sen_est,person_ci_alpha=0.7) +
   scale_color_manual(values=c(D='blue',R='red',I='green')) +

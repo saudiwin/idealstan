@@ -771,7 +771,6 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   idealdata <- id_model(object=idealdata,fixtype=fixtype,model_type=model_type,this_data=this_data,
                         nfix=nfix,restrict_ind_high=restrict_ind_high,
                         restrict_ind_low=restrict_ind_low,
-                        auto_id=auto_id,
                         ncores=ncores,
                         use_groups=use_groups,
                         prior_fit=prior_fit)
