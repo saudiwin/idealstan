@@ -77,6 +77,12 @@
     ordinal_outcomes <- ordinal_outcomes -1
   }
   
+  if(!inflate) {
+    pr_boost <- 1
+  } else {
+    pr_boost <- 0
+  }
+  
   if(type=='simulate') {
     cutpoints <- quantile(pr_vote,probs=seq(0,1,length.out = ordinal_outcomes+1))
     cutpoints <- cutpoints[2:(length(cutpoints)-1)]
@@ -88,55 +94,74 @@
     },simplify='array')
   } else if(type=='predict') {
     # over posterior draws
-    cuts <- sapply(1:ncol(cutpoints),function(y) {
-      pr_vote - cutpoints[,y]
+    cuts_iters <- sapply(1:nrow(cutpoints), function(i) {
+      cuts <- sapply(1:ncol(cutpoints),function(y) {
+        pr_vote[,i] - cutpoints[i,y]
+      })
     },simplify='array')
-  }
-   
 
-  browser()
+  }
   
   # Now we pick votes as a function of the number of categories
   # This code should work for any number of categories
-  votes <- sapply(1:nrow(cuts), function(i) {
-    this_cut <- cuts[i,]
-    
-    pr_bottom <- 1 - plogis(this_cut[1])
-    
-    mid_prs <- sapply(1:(length(this_cut)-1), function(c) {
-      plogis(this_cut[c]) - plogis(this_cut[c+1])
+  
+  if(type=='simulate') {
+    votes <- sapply(1:nrow(cuts), function(i) {
+      this_cut <- cuts[i,]
+      
+      pr_bottom <- 1 - plogis(this_cut[1])
+      
+      mid_prs <- sapply(1:(length(this_cut)-1), function(c) {
+        plogis(this_cut[c]) - plogis(this_cut[c+1])
+      })
+      
+      pr_top <- plogis(this_cut[length(this_cut)])
+      
+      return(sample(1:(length(this_cut)+1),size=1,prob=c(pr_bottom,mid_prs,pr_top)))
     })
     
-    pr_top <- plogis(this_cut[length(this_cut)])
+    combined <- if_else(pr_absence<(runif(N)+pr_boost),votes,as.integer(ordinal_outcomes)+1L)
     
-    return(sample(1:(length(this_cut)+1),size=1,prob=c(pr_bottom,mid_prs,pr_top)))
-  })
-  
-  # remove pr of absence if model is not inflated
-  
-  if(inflate==F) {
-    pr_absence <- 0
+    # Create a score dataset
+    
+    out_data <- data_frame(outcome=combined,
+                           person_id=person_points,
+                           time_id=time_points,
+                           item_id=item_points,
+                           group_id='G')
+    
+    out_data <- id_make(score_data=out_data,
+                        miss_val = as.integer(ordinal_outcomes)+1,
+                        high_val = ordinal_outcomes,
+                        low_val = 1,
+                        middle_val = 2:(ordinal_outcomes-1),
+                        inflate=inflate,
+                        ordinal=T)
+    
+    return(out_data) 
+  } else if(type=='predict') {
+    
+    over_iters <- sapply(1:ncol(pr_vote), function(d) {
+      votes <- sapply(1:dim(cuts_iters)[1], function(i) {
+        
+        this_cut <- cuts_iters[i,,d]
+        
+        pr_bottom <- 1 - plogis(this_cut[1])
+        
+        mid_prs <- sapply(1:(length(this_cut)-1), function(c) {
+          plogis(this_cut[c]) - plogis(this_cut[c+1])
+        })
+        
+        pr_top <- plogis(this_cut[length(this_cut)])
+        
+        return(sample(1:(length(this_cut)+1),size=1,prob=c(pr_bottom,mid_prs,pr_top)))
+      })
+    })
+    browser()
+    combined <- sapply(1:ncol(pr_absence), function(c) ifelse(pr_absence[,c]<(runif(N)+pr_boost),votes[,c],as.integer(ordinal_outcomes)+1L))
+    return(t(combined))
   }
-  
-  combined <- if_else(pr_absence<runif(N),votes,as.integer(ordinal_outcomes)+1L)
-  
-  # Create a score dataset
-  
-  out_data <- data_frame(outcome=combined,
-                         person_id=person_points,
-                         time_id=time_points,
-                         item_id=item_points,
-                         group_id='G')
-  
-  out_data <- id_make(score_data=out_data,
-                      miss_val = as.integer(ordinal_outcomes)+1,
-                      high_val = ordinal_outcomes,
-                      low_val = 1,
-                      middle_val = 2:(ordinal_outcomes-1),
-                      inflate=inflate,
-                      ordinal=T)
-  
-  return(out_data)                    
+                   
 }
 
 .ordinal_grm <- function(pr_absence=NULL,

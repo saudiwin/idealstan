@@ -81,6 +81,14 @@ id_plot_sims(bin_irt_2pl_est)
 
 ```
 
+```{r irt_2pl_pred}
+
+bin_irt_2pl_est %>% 
+  id_post_pred %>% 
+  id_plot_ppc(bin_irt_2pl_est,ppc_pred=.)
+
+```
+
 
 Next, inflated 2-PL IRT (binary):
 
@@ -121,10 +129,19 @@ id_plot_sims(bin_irt_2pl_abs_est)
 
 ```
 
+```{r irt_2pl_abs_pred}
+
+bin_irt_2pl_abs_est %>% 
+  id_post_pred %>% 
+  id_plot_ppc(bin_irt_2pl_abs_est,ppc_pred=.)
+
+```
+
+
 Now we'll start with the ordinal models. First the uninflated ordinal model:
 
 ```{r irt_ordinal}
-ord_irt_sim <- id_sim_gen(num_person=20,num_bills=100,ordinal=T,inflate=F,
+ord_irt_sim <- id_sim_gen(num_person=20,num_bills=100,inflate=F,
                                absence_diff_mean=0,model_type='ordinal_ratingscale')
 ord_irt_est <- id_estimate(idealdata=ord_irt_sim,
                                model_type=3,
@@ -158,10 +175,18 @@ id_plot_sims(ord_irt_est)
 
 ```
 
+```{r ord_irt_pred}
+
+ord_irt_est %>% 
+  id_post_pred %>% 
+  id_plot_ppc(ord_irt_est,ppc_pred=.)
+
+```
+
 And we will finish with the inflated ordinal model:
 
 ```{r irt_ordinal_abs}
-ord_irt_abs_sim <- id_sim_gen(num_person=20,num_bills=100,ordinal=T,inflate=T,
+ord_irt_abs_sim <- id_sim_gen(num_person=20,num_bills=100,inflate=T,
                                absence_diff_mean=0,model_type='ordinal_ratingscale')
 ord_irt_abs_est <- id_estimate(idealdata=ord_irt_abs_sim,
                                model_type=4,

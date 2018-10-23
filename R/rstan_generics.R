@@ -153,8 +153,8 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
                           time_points=time_points,
                           item_points=bill_points,
                           person_points=person_points,
-                          sigma_sd=all_params$extra_sd,
-                          cutpoints=cutpoints,
+                          sigma_sd=all_params$extra_sd[these_draws],
+                          cutpoints=cutpoints[these_draws,],
                           type='predict')
   
   # set attributes to pass along sample info
