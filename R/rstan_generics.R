@@ -37,17 +37,9 @@ setGeneric('id_post_pred',signature='object',
 setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100,sample_scores=NULL,...) {
 
   all_params <- rstan::extract(object@stan_samples)
-  y <- c(object@score_data@score_matrix)
-  # check to see if we need to recode missing values from the data if the model_type doesn't handle missing data
-  if(object@model_type %in% c(1,3,5,7,9,11,13) & !is.null(object@score_data@miss_val)) {
-    y <- na_if(y,object@score_data@miss_val)
-  }
   
-  legis_points <- rep(1:dim(all_params$L_full)[3],times=ncol(all_params$sigma_reg_full))
-  bill_points <- rep(1:ncol(all_params$sigma_reg_full),each=dim(all_params$L_full)[3])
-  time_points <- object@score_data@time[bill_points]
-  n_votes <- length(legis_points)
-  n_iters <- nrow(all_params$sigma_reg_full)
+  n_votes <- nrow(object@score_data@score_matrix)
+  n_iters <- nrow(all_params$sigma_reg_free)
   
   if(!is.null(sample_scores)) {
     this_sample <- sample(1:n_votes,sample_scores)
@@ -60,24 +52,114 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
   print(paste0('Processing posterior replications for ',n_votes,' scores using ',draws,
                ' posterior samples out of a total of ',n_iters, ' samples.'))
   
-  remove_nas <- !is.na(y)
+  
+  y <- as.numeric(object@score_data@score_matrix$outcome)[this_sample]
+  # check to see if we need to recode missing values from the data if the model_type doesn't handle missing data
+  if(object@model_type %in% c(1,3,5,7,9,11,13) & !is.null(object@score_data@miss_val)) {
+    y <- na_if(y,object@score_data@miss_val)
+  }
+  if(object@use_groups) {
+    person_points <- as.numeric(object@score_data@score_matrix$group_id)[this_sample]
+  } else {
+    person_points <- as.numeric(object@score_data@score_matrix$person_id)[this_sample]
+  }
+
+  bill_points <- as.numeric(object@score_data@score_matrix$item_id)[this_sample]
+  time_points <- as.numeric(object@score_data@score_matrix$time_id)[this_sample]
+  
+  remove_nas <- !is.na(y) && !is.na(person_points) && !is.na(bill_points) && !is.na(time_points)
+  y <- y[remove_nas]
   bill_points <- bill_points[remove_nas]
   time_points <- time_points[remove_nas]
-  legis_points <- legis_points[remove_nas]
+  person_points <- person_points[remove_nas]
   
   model_type <- object@model_type
+  latent_space <- model_type %in% c(13,14)
+  # we can do the initial processing here
   
-  rep_func <- switch(as.character(model_type),`4`=.predict_abs_ord,
-                     `1`=.predict_2pl,`2`=.predict_abs_bin,
-                     `3`=.predict_ord)
+  # loop over posterior iterations
   
-  out_predict <- rep_func(all_params=all_params,
-                          legis_points=legis_points,
-                          bill_points=bill_points,
-                          obj=object,
-                          time=time_points,
-                          sample_draws=these_draws,
-                          sample_scores=this_sample)
+  pr_absence_iter <- sapply(these_draws, function(d) {
+    if(latent_space) {
+      # use latent-space formulation for likelihood
+      pr_absence <- sapply(1:length(person_points),function(n) {
+        -sqrt((all_params$L_tp1[d,time_points[n],person_points[n]] - all_params$A_int_free[d,bill_points[n]])^2)
+      }) %>% plogis()
+    } else {
+      # use IRT formulation for likelihood
+      pr_absence <- sapply(1:length(person_points),function(n) {
+        all_params$L_tp1[d,time_points[n],person_points[n]]*all_params$sigma_abs_free[d,bill_points[n]] - all_params$A_int_free[d,bill_points[n]]
+      }) %>% plogis()
+      
+    }
+    return(pr_absence)
+  })
+
+  pr_vote_iter <- sapply(these_draws, function(d) {
+    if(latent_space) {
+      if(inflate) {
+        pr_vote <- sapply(1:length(person_points),function(n) {
+          -sqrt((all_params$L_tp1[d,time_points[n],person_points[n]] - all_params$B_int_free[d,bill_points[n]])^2)
+        }) %>% plogis()
+      } else {
+        # latent space non-inflated formulation is different
+        pr_vote <- sapply(1:length(person_points),function(n) {
+          all_params$sigma_reg_free[d,bill_points[n]] + all_params$sigma_abs_free[d,bill_points[n]] -
+            sqrt((all_params$L_tp1[d,time_points[n],person_points[n]] - all_params$B_int_free[d,bill_points[n]])^2)
+        }) %>% plogis()
+      }
+      
+    } else {
+      pr_vote <- sapply(1:length(person_points),function(n) {
+        all_params$L_tp1[d,time_points[n],person_points[n]]*all_params$sigma_reg_free[d,bill_points[n]] - all_params$B_int_free[d,bill_points[n]]
+      }) %>% plogis()
+    }
+    
+    return(pr_vote)
+  })
+
+  
+  rep_func <- switch(as.character(model_type),
+                     `1`=.binary,
+                     `2`=.binary,
+                     `3`=.ordinal_ratingscale,
+                     `4`=.ordinal_ratingscale,
+                     `5`=.ordinal_grm,
+                     `6`=.ordinal_grm,
+                     `7`=.poisson,
+                     `8`=.poisson,
+                     `9`=.normal,
+                     `10`=.normal,
+                     `11`=.lognormal,
+                     `12`=.lognormal,
+                     `13`=.binary,
+                     `14`=.binary)
+  
+  # pass along cutpoints as well
+  
+  if(model_type %in% c(3,4)) {
+    cutpoints <- all_params$steps_votes
+  } else if(model_type %in% c(5,6)) {
+    cutpoints <- all_params$steps_votes_grm
+  } else {
+    cutpoints <- 1
+  }
+  
+  out_predict <- rep_func(pr_absence=pr_absence_iter,
+                          pr_vote=pr_vote_iter,
+                          N=length(person_points),
+                          ordinal_outcomes=length(unique(object@score_data@score_matrix$outcome)),
+                          inflate=model_type %in% c(2,4,6,8,10,12,14),
+                          time_points=time_points,
+                          item_points=bill_points,
+                          person_points=person_points,
+                          sigma_sd=all_params$extra_sd,
+                          cutpoints=cutpoints,
+                          type='predict')
+  
+  # set attributes to pass along sample info
+  
+  attr(out_predict,'this_sample') <- this_sample
   
   class(out_predict) <- c('matrix','ppd')
   return(out_predict)
@@ -292,34 +374,42 @@ setGeneric('id_plot_ppc',signature='object',
 #' 
 #' This function is a wrapper around \code{\link[bayesplot]{ppc_bars}} that plots the posterior predictive distribution
 #' derived from \code{\link{id_post_pred}} against the original data. You can also specify a legislator/person or
-#' bill/item by specifying the index of each in the original score/vote matrix. Only person or items can be specified,
+#' bill/item by specifying the ID of each in the original data as a character vector. 
+#' Only persons or items can be specified,
 #' not both.
 #' 
 #' @param object A fitted idealstan object
 #' @param ppc_pred The output of the \code{\link{id_post_pred}} function on a fitted idealstan object
-#' @param person The indices of the rows (persons/legislators) around which to compare the posterior prediction
-#' @param item The indices of the columns (items/bills) around which to compare the posterior prediction
+#' @param person A character vector of the person IDs to calculate their model predictions
+#' @param item A character vector of item IDs to calculate their model predictions
 #' @param ... Other arguments passed on to \code{\link[bayesplot]{ppc_bars}}
 #' @export
 setMethod('id_plot_ppc',signature(object='idealstan'),function(object,
                                                                   ppc_pred=NULL,
                                                                   person=NULL,
                                                                     item=NULL,...) {
-  num_legis <- nrow(object@score_data@score_matrix)
-  num_bills <- ncol(object@score_data@score_matrix)
-  legispoints <- rep(1:num_legis,times=num_bills)
-  billpoints <- rep(1:num_bills,each=num_legis)
-  y <- c(object@score_data@score_matrix)
+
+  this_sample <- attr(ppc_pred,'this_sample')
   
+  y <- as.numeric(object@score_data@score_matrix$outcome)[this_sample]
   # check to see if we need to recode missing values from the data if the model_type doesn't handle missing data
-  if(object@model_type %in% c(1,3) & !is.null(object@score_data@miss_val)) {
+  if(object@model_type %in% c(1,3,5,7,9,11,13) & !is.null(object@score_data@miss_val)) {
     y <- na_if(y,object@score_data@miss_val)
   }
+  if(object@use_groups) {
+    person_points <- as.numeric(object@score_data@score_matrix$group_id)[this_sample]
+  } else {
+    person_points <- as.numeric(object@score_data@score_matrix$person_id)[this_sample]
+  }
   
-  remove_nas <- !is.na(y)
+  bill_points <- as.numeric(object@score_data@score_matrix$item_id)[this_sample]
+  time_points <- as.numeric(object@score_data@score_matrix$time_id)[this_sample]
+  
+  remove_nas <- !is.na(y) && !is.na(person_points) && !is.na(bill_points) && !is.na(time_points)
   y <- y[remove_nas]
-  billpoints <- billpoints[remove_nas]
-  legispoints <- legispoints[remove_nas]
+  bill_points <- bill_points[remove_nas]
+  time_points <- time_points[remove_nas]
+  person_points <- person_points[remove_nas]
   
   if(!is.null(item) && !is.null(person))
     stop('Please only specify an index to item or person, not both.')
@@ -327,9 +417,14 @@ setMethod('id_plot_ppc',signature(object='idealstan'),function(object,
   grouped <- T
   
   if(!is.null(person)) {
-    group_var <- if_else(legispoints %in% person, legispoints, 0L)
+    if(object@use_groups) {
+      group_var <- as.numeric(object@score_data@score_matrix$group_id %in% person)
+    } else {
+      group_var <- as.numeric(object@score_data@score_matrix$person_id %in% person)
+    }
+    
   } else if(!is.null(item)) {
-    group_var <- if_else(billpoints %in% item, billpoints, 0L)
+    group_var <- as.numeric(object@score_data@score_matrix$item_id %in% item)
   } else {
     grouped <- F
   }

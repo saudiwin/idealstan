@@ -10,37 +10,54 @@
                     person_points=NULL,
                     item_points=NULL,
                     time_points=NULL,
+                    type='simulate',
                     ...)
                     {
-  
+
   #standard IRT 2-PL model
+  if(type=='simulate') {
+    votes <- as.numeric(plogis(pr_vote)>runif(N))
+  } else if(type=='predict') {
+    votes <- apply(pr_vote,2,function(c) as.numeric(plogis(c)>runif(N)))
+  }
   
-  votes <- as.numeric(plogis(pr_vote)>runif(N))
   
   # remove pr of inflate if model is not inflated
   
-  if(inflate==F) {
-    pr_absence <- -1
+  if(!inflate) {
+    pr_boost <- 1
+  } else {
+    pr_boost <- 0
   }
   
-  combined <- if_else(pr_absence<runif(N),votes,2)
-  
-  # Create a score dataset
-  
-  out_data <- data_frame(outcome=combined,
-                         person_id=person_points,
-                         time_id=time_points,
-                         item_id=item_points,
-                         group_id='G')
-  
-  out_data <- id_make(score_data=out_data,
-                      miss_val = 2,
-                      high_val = 1,
-                      low_val = 0,
-                      middle_val = NULL,
-                      inflate=inflate)
-  
-  return(out_data)                    
+  if(type=='simulate') {
+    combined <- if_else(pr_absence<(runif(N)+pr_boost),votes,2)
+    
+    # Create a score dataset
+    
+    out_data <- data_frame(outcome=combined,
+                           person_id=person_points,
+                           time_id=time_points,
+                           item_id=item_points,
+                           group_id='G')
+    
+    out_data <- id_make(score_data=out_data,
+                        miss_val = 2,
+                        high_val = 1,
+                        low_val = 0,
+                        middle_val = NULL,
+                        inflate=inflate)
+    
+    return(out_data) 
+  } else if(type=='predict') {
+    combined <- sapply(1:ncol(pr_absence), function(c) ifelse(pr_absence[,c]<(runif(N)+pr_boost),votes[,c],2))
+    # add one to have minimum = 1
+    combined <- combined + 1
+    
+    # transpose to make S x N matrix
+    return(t(combined))
+  }
+                   
 }
 
 .ordinal_ratingscale <- function(pr_absence=NULL,
@@ -50,19 +67,34 @@
                     person_points=NULL,
                     item_points=NULL,
                     time_points=NULL,
+                    cutpoints=NULL,
                     ordinal_outcomes=NULL,
+                    type='simulate',
                     ...)
 {
   
-  cutpoints <- quantile(pr_vote,probs=seq(0,1,length.out = ordinal_outcomes+1))
-  cutpoints <- cutpoints[2:(length(cutpoints)-1)]
+  if(inflate && type!='simulate') {
+    ordinal_outcomes <- ordinal_outcomes -1
+  }
   
-  #Generate outcomes by personlator
-  
-  cuts <- sapply(cutpoints,function(y) {
-    pr_vote - y
-  },simplify='array')
-  
+  if(type=='simulate') {
+    cutpoints <- quantile(pr_vote,probs=seq(0,1,length.out = ordinal_outcomes+1))
+    cutpoints <- cutpoints[2:(length(cutpoints)-1)]
+    
+    #Generate outcomes by personlator
+    
+    cuts <- sapply(cutpoints,function(y) {
+      pr_vote - y
+    },simplify='array')
+  } else if(type=='predict') {
+    # over posterior draws
+    cuts <- sapply(1:ncol(cutpoints),function(y) {
+      pr_vote - cutpoints[,y]
+    },simplify='array')
+  }
+   
+
+  browser()
   
   # Now we pick votes as a function of the number of categories
   # This code should work for any number of categories
@@ -115,8 +147,13 @@
                                  item_points=NULL,
                                  time_points=NULL,
                                  ordinal_outcomes=NULL,
+                         type='simulate',
                                  ...)
 {
+  
+  if(inflate && type!='simulate') {
+    ordinal_outcomes <- ordinal_outcomes -1
+  }
 
   # need one set of cutpoints for each item
   
@@ -182,6 +219,7 @@
                     person_points=NULL,
                     item_points=NULL,
                     time_points=NULL,
+                    type='simulate',
                     ...)
 {
   
@@ -221,6 +259,7 @@
                      item_points=NULL,
                      time_points=NULL,
                     sigma_sd=NULL,
+                    type='simulate',
                      ...)
 {
   
@@ -260,6 +299,7 @@
                     item_points=NULL,
                     time_points=NULL,
                     sigma_sd=NULL,
+                    type='simulate',
                     ...)
 {
   

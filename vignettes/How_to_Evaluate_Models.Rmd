@@ -32,7 +32,7 @@ We first begin by simulating data for a standard IRT 2-PL ideal point model but 
 irt_2pl <- id_sim_gen(ordinal=FALSE,inflate=TRUE)
 ```
 
-We can then fit two ideal point models to the same data, one that uses constraints for identification and the other that pins two of the persons to arbitrary (and incorrect) values. 
+We can then fit two ideal point models to the same data, one that uses the correct binomial model for a 0/1 binary outcome, and the second that tries to fit a Poisson count model to this same binary data.
 
 ```{r fit_irt_2pl}
 # Because of CRAN limitations, only using 2 cores & 2 chains
@@ -49,12 +49,14 @@ irt_2pl_correct <- id_estimate(idealdata=irt_2pl,
                            nchains=2)
 
 irt_2pl_incorrect <- id_estimate(idealdata=irt_2pl,
-                               model_type=2,
-                               restrict_ind_high = "1",
-                               restrict_ind_low="2",
-                               fixtype='constrained',
-                               id_diff = 4,
-                               id_diff_high = 2,
+                               model_type=8,
+                            restrict_ind_high = as.character(sort(irt_2pl@simul_data$true_reg_discrim,
+                                                        decreasing=TRUE,
+                                                        index=TRUE)$ix[1]),
+                            restrict_ind_low = as.character(sort(irt_2pl@simul_data$true_reg_discrim,
+                                                      decreasing=FALSE,
+                                                        index=TRUE)$ix[1]),
+                            fixtype='vb_partial',
                            ncores=2,
                            nchains=2)
 
@@ -70,7 +72,7 @@ id_plot_rhats(irt_2pl_correct)
 id_plot_rhats(irt_2pl_incorrect)
 ```
 
-Only the first model seems to have converged--at this point we should go back and see if the model is miss-specified or there is something wrong with the data. But for the sake of illustration, we will look at other diagnostics. We can also examine whether 1) the models are able to replicate the data they were fitted on accurately and 2) overall measures of model fit. 
+We can only assume that the first model will converge. If the second model failed the Rhat test, at this point we should go back and see if the model is miss-specified or there is something wrong with the data. But for the sake of illustration, we will look at other diagnostics. We can also examine whether 1) the models are able to replicate the data they were fitted on accurately and 2) overall measures of model fit. 
 
 We can first look at how well the model reproduces the data, which is called the posterior predictive distribution. We can obtain these distributions using the `id_post_pred` function:
 
