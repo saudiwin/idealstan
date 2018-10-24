@@ -6,14 +6,19 @@
 \title{Posterior Prediction for \code{idealstan} objects}
 \usage{
 \S4method{id_post_pred}{idealstan}(object, draws = 100,
-  sample_scores = NULL, ...)
+  output = "observed", sample_scores = NULL, ...)
 }
 \arguments{
 \item{object}{A fitted \code{idealstan} object}
 
 \item{draws}{The number of draws to use from the total number of posterior draws (default is 100).}
 
-\item{sample_scores}{In addition to reducing the number of posterior draws used to calculate the posterior predictive distribution.}
+\item{output}{If the model has an unbounded outcome (Poisson, continuous, etc.), then
+specify whether to show the \code{'observed'} data (the default) or the binary 
+output \code{'missing'} showing whether an observation was predicted as missing or not}
+
+\item{sample_scores}{In addition to reducing the number of posterior draws used to 
+calculate the posterior predictive distribution.}
 
 \item{...}{Any other arguments passed on to posterior_predict (currently none available)}
 }

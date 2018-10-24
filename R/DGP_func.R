@@ -53,7 +53,7 @@
     combined <- sapply(1:ncol(pr_absence), function(c) ifelse(pr_absence[,c]<(runif(N)+pr_boost),votes[,c],2))
     # add one to have minimum = 1
     combined <- combined + 1
-    
+    attr(combined,'output') <- 'all'
     # transpose to make S x N matrix
     return(t(combined))
   }
@@ -90,13 +90,13 @@
     #Generate outcomes by personlator
     
     cuts <- sapply(cutpoints,function(y) {
-      pr_vote - y
+      qlogis(pr_vote) - y
     },simplify='array')
   } else if(type=='predict') {
     # over posterior draws
     cuts_iters <- sapply(1:nrow(cutpoints), function(i) {
       cuts <- sapply(1:ncol(cutpoints),function(y) {
-        pr_vote[,i] - cutpoints[i,y]
+        qlogis(pr_vote[,i]) - cutpoints[i,y]
       })
     },simplify='array')
 
@@ -140,7 +140,7 @@
     
     return(out_data) 
   } else if(type=='predict') {
-    
+
     over_iters <- sapply(1:ncol(pr_vote), function(d) {
       votes <- sapply(1:dim(cuts_iters)[1], function(i) {
         
@@ -159,6 +159,7 @@
     })
 
     combined <- sapply(1:ncol(pr_absence), function(c) ifelse(pr_absence[,c]<(runif(N)+pr_boost),over_iters[,c],as.integer(ordinal_outcomes)+1L))
+    attr(combined,'output') <- 'all'
     return(t(combined))
   }
                    
@@ -197,13 +198,13 @@
     #Generate outcomes by person and item
     
     cuts <- sapply(1:(ordinal_outcomes-1),function(y) {
-      pr_vote - all_cuts[y,]
+      qlogis(pr_vote) - all_cuts[y,]
     },simplify='array')
   } else {
     # over posterior draws
     
     cuts_iters <- sapply(1:dim(cutpoints)[1], function(i) {
-        pr_vote[,i] - cutpoints[i,item_points,]
+        qlogis(pr_vote[,i]) - cutpoints[i,item_points,]
     },simplify='array')
   }
 
@@ -265,6 +266,7 @@
     })
     
     combined <- sapply(1:ncol(pr_absence), function(c) ifelse(pr_absence[,c]<(runif(N)+pr_boost),over_iters[,c],as.integer(ordinal_outcomes)+1L))
+    attr(combined,'output') <- 'all'
     return(t(combined))
   }
   
@@ -279,6 +281,7 @@
                     item_points=NULL,
                     time_points=NULL,
                     type='simulate',
+                    output=NULL,
                     ...)
 {
 
@@ -318,10 +321,18 @@
     
     return(out_data) 
   } else if(type=='predict') {
-    combined <- sapply(1:ncol(pr_absence), function(c) ifelse(pr_absence[,c]<(runif(N)+pr_boost),votes[,c],max_val))
+    if(output=='observed') {
+      combined <- votes
+      attr(combined,'output') <- 'observed'
+      attr(combined,'output_type') <- 'discrete'
+    } else if(output=='missing') {
+      combined <- apply(pr_absence, function(c) as.numeric(c>runif(N)))
+      attr(combined,'output') <- 'missing'
+      attr(combined,'output_type') <- 'discrete'
+    }
     # transpose to make S x N matrix
     return(t(combined))
-  }
+  } 
   
 }
 
@@ -335,35 +346,59 @@
                      time_points=NULL,
                     sigma_sd=NULL,
                     type='simulate',
+                    output='observed',
                      ...)
 {
   
   #standard IRT 2-PL model
-  
-  votes <- rnorm(n = length(pr_vote),mean = pr_vote,sd = sigma_sd)
-  
-  # remove pr of absence if model is not inflated
-  
-  if(inflate==F) {
-    pr_absence <- 0
+  if(type=='simulate') {
+    votes <- rnorm(n = length(pr_vote),mean = pr_vote,sd = sigma_sd)
+  } else if(type=='predict') {
+    votes <- sapply(1:ncol(pr_vote),2,function(c) rnorm(n=length(c),mean=pr_vote[,c],sd=sigma_sd[c]))
   }
   
-  combined <- ifelse(pr_absence<runif(N),votes,max(votes)+1)
   
-  # Create a score dataset
+  # remove pr of inflate if model is not inflated
   
-  out_data <- data_frame(outcome=combined,
-                         person_id=person_points,
-                         time_id=time_points,
-                         item_id=item_points,
-                         group_id='G')
+  if(!inflate) {
+    pr_boost <- 1
+  } else {
+    pr_boost <- 0
+  }
   
-  out_data <- id_make(score_data=out_data,
-                      middle_val = NULL,
-                      inflate=inflate,
-                      unbounded=T)
+  if(type=='simulate') {
+    
+    combined <- if_else(pr_absence<(runif(N)+pr_boost),votes,as.integer(max(votes)+1))
+    
+    # Create a score dataset
+    
+    out_data <- data_frame(outcome=combined,
+                           person_id=person_points,
+                           time_id=time_points,
+                           item_id=item_points,
+                           group_id='G')
+    
+    out_data <- id_make(score_data=out_data,
+                        middle_val = NULL,
+                        miss_val=max(votes)+1,
+                        inflate=inflate,
+                        unbounded=T)
+    
+    return(out_data) 
+  } else if(type=='predict') {
+    if(output=='observed') {
+      combined <- votes
+      attr(combined,'output') <- 'observed'
+      attr(combined,'output_type') <- 'continuous'
+    } else if(output=='missing') {
+      combined <- apply(pr_absence, function(c) as.numeric(c>runif(N)))
+      attr(combined,'output') <- 'missing'
+      attr(combined,'output_type') <- 'discrete'
+    }
+    # transpose to make S x N matrix
+    return(t(combined))
+  } 
   
-  return(out_data)                    
 }
 
 .lognormal <- function(pr_absence=NULL,
@@ -376,35 +411,58 @@
                     time_points=NULL,
                     sigma_sd=NULL,
                     type='simulate',
+                    output='observed',
                     ...)
 {
   
   #standard IRT 2-PL model
-  
-  votes <- rlnorm(n = length(pr_vote),meanlog = exp(pr_vote),sdlog = sigma_sd)
-  
-  # remove pr of absence if model is not inflated
-  
-  if(inflate==F) {
-    pr_absence <- 0
+  if(type=='simulate') {
+    votes <- rlnorm(n = length(pr_vote),meanlog = exp(pr_vote),sdlog = sigma_sd)
+  } else if(type=='predict') {
+    votes <- sapply(1:ncol(pr_vote),2,function(c) rlnorm(n=length(c),meanlog=exp(pr_vote[,c]),sdlog=sigma_sd[c]))
   }
   
-  combined <- ifelse(pr_absence<runif(N),votes,max(votes)+1)
   
-  # Create a score dataset
+  # remove pr of inflate if model is not inflated
   
-  out_data <- data_frame(outcome=combined,
-                         person_id=person_points,
-                         time_id=time_points,
-                         item_id=item_points,
-                         group_id='G')
+  if(!inflate) {
+    pr_boost <- 1
+  } else {
+    pr_boost <- 0
+  }
   
-  out_data <- id_make(score_data=out_data,
-                      middle_val = NULL,
-                      inflate=inflate,
-                      unbounded=T)
-  
-  return(out_data)                    
+  if(type=='simulate') {
+    
+    combined <- if_else(pr_absence<(runif(N)+pr_boost),votes,as.integer(max(votes)+1))
+    
+    # Create a score dataset
+    
+    out_data <- data_frame(outcome=combined,
+                           person_id=person_points,
+                           time_id=time_points,
+                           item_id=item_points,
+                           group_id='G')
+    
+    out_data <- id_make(score_data=out_data,
+                        middle_val = NULL,
+                        miss_val=max(votes)+1,
+                        inflate=inflate,
+                        unbounded=T)
+    
+    return(out_data) 
+  } else if(type=='predict') {
+    if(output=='observed') {
+      combined <- votes
+      attr(combined,'output') <- 'observed'
+      attr(combined,'output_type') <- 'continuous'
+    } else if(output=='missing') {
+      combined <- apply(pr_absence, function(c) as.numeric(c>runif(N)))
+      attr(combined,'output') <- 'missing'
+      attr(combined,'output_type') <- 'discrete'
+    }
+    # transpose to make S x N matrix
+    return(t(combined))
+  }               
 }
 
 #' Function to generate random-walk or AR(1) person parameters

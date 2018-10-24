@@ -252,6 +252,10 @@ id_plot_legis <- function(object,return_data=FALSE,
 #' @param item_plot The column index of the bill/item midpoint to overlay on the plot
 #' @param text_size_label ggplot2 text size for legislator labels
 #' @param text_size_group ggplot2 text size for group text used for points
+#' @param high_limit A number between 0 and 1 showing the upper limit to compute the 
+#' posterior uncertainty interval (defaults to 0.95).
+#' @param low_limit A number between 0 and 1 showing the lower limit to compute the 
+#' posterior uncertainty interval (defaults to 0.05).
 #' @param line_size Sets the size of the line of the time-varying ideal points.
 #' @param person_plot If \code{TRUE}, plots the individual person/legislator ideal points.
 #' If \code{FALSE}, plots the group-level estimates. Group-level estimates only exist if
@@ -282,6 +286,8 @@ id_plot_legis <- function(object,return_data=FALSE,
 #' @examples 
 id_plot_legis_dyn <- function(object,return_data=FALSE,item_plot=NULL,
                               text_size_label=2,text_size_group=2.5,
+                              high_limit=0.95,
+                              low_limit=0.05,
                               line_size=1,
                               person_plot=T,
                               person_labels=NULL,
@@ -302,7 +308,9 @@ id_plot_legis_dyn <- function(object,return_data=FALSE,item_plot=NULL,
   
   person_labels <- quo(person_id)
   group_labels <- quo(group_id)
-  person_params <- .prepare_legis_data(object) 
+  person_params <- .prepare_legis_data(object,
+                                       high_limit=high_limit,
+                                       low_limit=low_limit) 
   
   if(object@use_groups) {
     base_id <- ~group_id

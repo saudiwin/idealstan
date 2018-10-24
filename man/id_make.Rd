@@ -9,7 +9,7 @@ id_make(score_data = NULL, outcome = "outcome",
   group_id = "group_id", simul_data = NULL, person_cov = NULL,
   group_cov = NULL, item_cov = NULL, miss_cov = NULL,
   item_cov_miss = NULL, miss_val = NA, high_val = 3L, low_val = 1L,
-  middle_val = 2L, ordinal = FALSE, continuous = FALSE,
+  middle_val = 2L, ordinal = FALSE, unbounded = FALSE,
   exclude_level = NULL, inflate = TRUE, simulation = FALSE)
 }
 \arguments{
@@ -72,8 +72,10 @@ between the lowest and highest categories, such as abstention in voting data or 
 
 \item{ordinal}{Whether or not the data contain ordinal responses. If \code{TRUE},
 middle values/abstentions are used as a middle category in constructing the outcome.
-Otherwise the response is assumed to be binary (yes/no).
-@param continuous Whether or not the outcome/response is continuous. If it is, \code{miss_val} 
+Otherwise the response is assumed to be binary (yes/no).}
+
+\item{unbounded}{Whether or not the outcome/response is unbounded (i.e., continuous or
+Poisson). If it is, \code{miss_val} 
 is recoded as the maximum of the outcome + 1.}
 
 \item{exclude_level}{A vector of any values that should be treated as \code{NA} in the response matrix. 
@@ -108,7 +110,7 @@ To run a time-varying model, you need to include a column with dates (or integer
 inflated model for missing data, be sure to specify the \code{miss_val} option to the value that should
 be modeled as missing and also set \code{inflate} to \code{TRUE}. Otherwise the \code{id_estimate}
 function will not have data in the correct form to run an inflated model.
-If the outcome is continuous, simply set \code{continuous} to \code{TRUE}. You can ignore the
+If the outcome is unbounded, simply set \code{unbounded} to \code{TRUE}. You can ignore the
 options that specify which values should be \code{high_val} or \code{low_val}, and all 
 missing values (\code{NA}) will be recoded to a specific value out of the range of the outcome to use
 for inflation.

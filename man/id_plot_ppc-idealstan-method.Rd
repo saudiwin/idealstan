@@ -13,15 +13,16 @@
 
 \item{ppc_pred}{The output of the \code{\link{id_post_pred}} function on a fitted idealstan object}
 
-\item{person}{The indices of the rows (persons/legislators) around which to compare the posterior prediction}
+\item{person}{A character vector of the person IDs to calculate their model predictions}
 
-\item{item}{The indices of the columns (items/bills) around which to compare the posterior prediction}
+\item{item}{A character vector of item IDs to calculate their model predictions}
 
 \item{...}{Other arguments passed on to \code{\link[bayesplot]{ppc_bars}}}
 }
 \description{
 This function is a wrapper around \code{\link[bayesplot]{ppc_bars}} that plots the posterior predictive distribution
 derived from \code{\link{id_post_pred}} against the original data. You can also specify a legislator/person or
-bill/item by specifying the index of each in the original score/vote matrix. Only person or items can be specified,
+bill/item by specifying the ID of each in the original data as a character vector. 
+Only persons or items can be specified,
 not both.
 }

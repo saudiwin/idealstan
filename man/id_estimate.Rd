@@ -141,7 +141,7 @@ Stan's MCMC engine.
 }
 \details{
 To run an IRT ideal point model, you must first pre-process your data using the \code{\link{id_make}} function. Be sure to specify the correct options for the
-kind of model you are going to run: if you want to run a continuous, ordinal and/or an inflated model, 
+kind of model you are going to run: if you want to run a unbounded, ordinal and/or an inflated model, 
 the data needs to be processed differently. Also any hierarchical covariates at the person or item level
 need to be specified in \code{\link{id_make}}.
 As of this version of \code{idealstan}, the following model types are available:
@@ -154,10 +154,10 @@ As of this version of \code{idealstan}, the following model types are available:
   \item Ordinal IRT (graded response) ideal point model with missing-data inflation
   \item Poisson IRT (Wordfish) ideal point model with no missing data inflation
   \item Poisson IRT (Wordfish) ideal point model with missing-data inflation
-  \item Continuous (Gaussian) IRT ideal point model with no missing data
-  \item Continuous (Gaussian) IRT ideal point model with missing-data inflation
-  \item Positive-Continuous (Log-normal) IRT ideal point model with no missing data
-  \item Positive-Continuous (Log-normal) IRT ideal point model with missing-data inflation
+  \item unbounded (Gaussian) IRT ideal point model with no missing data
+  \item unbounded (Gaussian) IRT ideal point model with missing-data inflation
+  \item Positive-unbounded (Log-normal) IRT ideal point model with no missing data
+  \item Positive-unbounded (Log-normal) IRT ideal point model with missing-data inflation
   \item Latent Space (binary response) ideal point model with no missing data
   \item Latent Space (binary response) ideal point model with missing-data inflation
 }

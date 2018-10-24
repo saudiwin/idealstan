@@ -109,6 +109,12 @@ bin_irt_2pl_abs_est <- id_estimate(idealdata=bin_irt_2pl_abs_sim,
 id_plot_rhats(bin_irt_2pl_abs_est)
 ```
 
+Plot true versus observed values:
+
+```{r irt_2pl_abs_plot}
+id_plot_legis(bin_irt_2pl_abs_est,show_true = T)
+```
+
 ```{r irt_2pl_abs_cov_plot}
 id_sim_coverage(bin_irt_2pl_abs_est) %>% 
   bind_rows(.id='Parameter') %>% 
@@ -153,6 +159,12 @@ ord_irt_est <- id_estimate(idealdata=ord_irt_sim,
                            id_diff = sort(ord_irt_sim@simul_data$true_person,decreasing=T)[1] -
                              sort(ord_irt_sim@simul_data$true_person,decreasing=F)[1])
 id_plot_rhats(ord_irt_est)
+```
+
+Plot true versus observed values:
+
+```{r irt_ord_plot}
+id_plot_legis(ord_irt_est,show_true = T)
 ```
 
 ```{r irt_ord_cov_plot}
@@ -201,6 +213,10 @@ ord_irt_abs_est <- id_estimate(idealdata=ord_irt_abs_sim,
                                 sort(ord_irt_abs_sim@simul_data$true_person,
                                   decreasing=F)[1])
 id_plot_rhats(ord_irt_abs_est)
+```
+
+```{r irt_ord_abs_plot}
+id_plot_legis(ord_irt_abs_est,show_true = T)
 ```
 
 ```{r ord_irt_abs_cov_plot}
@@ -259,6 +275,10 @@ id_sim_coverage(ord_irt_grm_est) %>%
   theme_minimal() 
 ```
 
+```{r irt_ord_grm_plot}
+id_plot_legis(ord_irt_grm_est,show_true = T)
+```
+
 ```{r ord_irt_grm_resid}
 
 id_plot_sims(ord_irt_grm_est,type='Residuals')
@@ -297,6 +317,10 @@ ord_irt_grm_abs_est <- id_estimate(idealdata=ord_irt_grm_abs_sim,
                                 sort(ord_irt_grm_abs_sim@simul_data$true_person,
                                   decreasing=F)[1])
 id_plot_rhats(ord_irt_grm_abs_est)
+```
+
+```{r irt_ord_grm_abs_plot}
+id_plot_legis(ord_irt_grm_abs_est,show_true = T)
 ```
 
 ```{r ord_irt_grm_abs_cov_plot}
@@ -349,6 +373,10 @@ ord_irt_poisson_est <- id_estimate(idealdata=ord_irt_poisson_sim,
 id_plot_rhats(ord_irt_poisson_est)
 ```
 
+```{r irt_poisson_plot}
+id_plot_legis(ord_irt_poisson_est,show_true = T)
+```
+
 ```{r ord_irt_poisson_cov_plot}
 id_sim_coverage(ord_irt_poisson_est) %>% 
   bind_rows(.id='Parameter') %>% 
@@ -377,6 +405,8 @@ ord_irt_poisson_est %>%
 
 ```
 
+
+
 Now Poisson-inflated:
 
 ```{r irt_abs_poisson}
@@ -384,17 +414,21 @@ ord_irt_poisson_abs_sim <- id_sim_gen(num_person=20,num_bills=100,inflate=T,
                                absence_diff_mean=0,model_type='poisson')
 ord_irt_poisson_abs_est <- id_estimate(idealdata=ord_irt_poisson_abs_sim,
                                model_type=8,
-                               restrict_ind_high = as.character(sort(ord_irt_poisson_sim@simul_data$true_person,
+                               restrict_ind_high = as.character(sort(ord_irt_poisson_abs_sim@simul_data$true_person,
                                                                      decreasing=T,
                                                         index=T)$ix[1]),
-                              restrict_ind_low = as.character(sort(ord_irt_poisson_sim@simul_data$true_person,
+                              restrict_ind_low = as.character(sort(ord_irt_poisson_abs_sim@simul_data$true_person,
                                                                    decreasing=F,
                                                         index=T)$ix[1]),
-                               fixtype='constrained',id_diff =sort(ord_irt_poisson_sim@simul_data$true_person,
+                               fixtype='constrained',id_diff =sort(ord_irt_poisson_abs_sim@simul_data$true_person,
                                                                    decreasing=T)[1] -
-                                sort(ord_irt_poisson_sim@simul_data$true_person,
+                                sort(ord_irt_poisson_abs_sim@simul_data$true_person,
                                   decreasing=F)[1])
 id_plot_rhats(ord_irt_poisson_abs_est)
+```
+
+```{r irt_poisson_abs_plot}
+id_plot_legis(ord_irt_poisson_abs_est,show_true = T)
 ```
 
 ```{r ord_irt_poisson_abs_cov_plot}
@@ -417,11 +451,21 @@ id_plot_sims(ord_irt_poisson_abs_est)
 
 ```
 
+
+
 ```{r ord_irt_poisson_abs_pred}
 
 ord_irt_poisson_abs_est %>% 
   id_post_pred %>% 
   id_plot_ppc(ord_irt_poisson_abs_est,ppc_pred=.)
+
+```
+
+```{r ord_irt_poisson_pred_missing}
+
+ord_irt_poisson_abs_est %>% 
+  id_post_pred(output='missing') %>% 
+  id_plot_ppc(ord_irt_poisson_est,ppc_pred=.)
 
 ```
 
@@ -445,6 +489,10 @@ ord_irt_normal_est <- id_estimate(idealdata=ord_irt_normal_sim,
 id_plot_rhats(ord_irt_normal_est)
 ```
 
+```{r irt_normal_plot}
+id_plot_legis(ord_irt_normal_est,show_true = T)
+```
+
 ```{r ord_irt_normal_cov_plot}
 id_sim_coverage(ord_irt_normal_est) %>% 
   bind_rows(.id='Parameter') %>% 
@@ -462,6 +510,14 @@ id_plot_sims(ord_irt_normal_est,type='Residuals')
 ```{r ord_irt_normal_RMSE}
 
 id_plot_sims(ord_irt_normal_est)
+
+```
+
+```{r ord_irt_normal_pred}
+
+ord_irt_normal_est %>% 
+  id_post_pred %>% 
+  id_plot_ppc(ord_irt_normal_est,ppc_pred=.)
 
 ```
 
@@ -484,6 +540,10 @@ ord_irt_normal_abs_est <- id_estimate(idealdata=ord_irt_normal_abs_sim,
                                 sort(ord_irt_normal_abs_sim@simul_data$true_person,
                                   decreasing=F)[1])
 id_plot_rhats(ord_irt_normal_abs_est)
+```
+
+```{r irt_normal_abs_plot}
+id_plot_legis(ord_irt_normal_abs_est,show_true = T)
 ```
 
 ```{r ord_irt_normal_abs_cov_plot}
@@ -526,6 +586,11 @@ ord_irt_lognormal_est <- id_estimate(idealdata=ord_irt_lognormal_sim,
 id_plot_rhats(ord_irt_lognormal_est)
 ```
 
+```{r irt_lognormal_plot}
+id_plot_legis(ord_irt_lognormal_est,show_true = T)
+```
+
+
 ```{r ord_irt_lognormal_cov_plot}
 id_sim_coverage(ord_irt_lognormal_est) %>% 
   bind_rows(.id='Parameter') %>% 
@@ -566,6 +631,10 @@ ord_irt_lognormal_abs_est <- id_estimate(idealdata=ord_irt_lognormal_abs_sim,
 id_plot_rhats(ord_irt_lognormal_abs_est)
 ```
 
+```{r irt_lognormal_abs_plot}
+id_plot_legis(ord_irt_lognormal_abs_est,show_true = T)
+```
+
 ```{r ord_irt_lognormal_abs_cov_plot}
 id_sim_coverage(ord_irt_lognormal_abs_est) %>% 
   bind_rows(.id='Parameter') %>% 
@@ -602,6 +671,7 @@ diff_sd = 1,
                                reg_discrim_sd = 1)
 bin_time_irt_2pl_abs_est <- id_estimate(idealdata=bin_time_irt_2pl_abs_sim,
                                model_type=2,
+                               vary_ideal_pts = 'random_walk',
                                restrict_ind_high = as.character(sort(bin_time_irt_2pl_abs_sim@simul_data$drift,
                                                                      decreasing=TRUE,
                                                         index=T)$ix[1]),

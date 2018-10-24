@@ -30,11 +30,17 @@ setGeneric('id_post_pred',signature='object',
 #'
 #' @param object A fitted \code{idealstan} object
 #' @param draws The number of draws to use from the total number of posterior draws (default is 100).
-#' @param sample_scores In addition to reducing the number of posterior draws used to calculate the posterior predictive distribution.
+#' @param sample_scores In addition to reducing the number of posterior draws used to 
+#' calculate the posterior predictive distribution.
+#' @param output If the model has an unbounded outcome (Poisson, continuous, etc.), then
+#' specify whether to show the \code{'observed'} data (the default) or the binary 
+#' output \code{'missing'} showing whether an observation was predicted as missing or not
 #' @param ... Any other arguments passed on to posterior_predict (currently none available)
 #' 
 #' @export
-setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100,sample_scores=NULL,...) {
+setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100,
+                                                                output='observed',
+                                                                sample_scores=NULL,...) {
 
   all_params <- rstan::extract(object@stan_samples)
   
@@ -159,7 +165,8 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
                           person_points=person_points,
                           sigma_sd=all_params$extra_sd[these_draws],
                           cutpoints=cutpoints,
-                          type='predict')
+                          type='predict',
+                          output=output)
   
   # set attributes to pass along sample info
   
@@ -418,6 +425,7 @@ setMethod('id_plot_ppc',signature(object='idealstan'),function(object,
   if(!is.null(item) && !is.null(person))
     stop('Please only specify an index to item or person, not both.')
   
+  # for discrete outcomes
   grouped <- T
   
   if(!is.null(person)) {
@@ -432,19 +440,67 @@ setMethod('id_plot_ppc',signature(object='idealstan'),function(object,
   } else {
     grouped <- F
   }
-
-  if(grouped && length(unique(group_var))>2) {
+  
+  if(attr(ppc_pred,'output')=='all') {
     
-    bayesplot::ppc_bars_grouped(y=y[group_var>0],yrep=ppc_pred[,group_var>0],group=group_var[group_var>0],...)
-    
-  } else {
-    if(grouped) {
-      bayesplot::ppc_bars(y=y[group_var>0],yrep=ppc_pred[,group_var>0],...)
+    if(grouped && length(unique(group_var))>2) {
+      
+      bayesplot::ppc_bars_grouped(y=y[group_var>0],yrep=ppc_pred[,group_var>0],group=group_var[group_var>0],...)
+      
     } else {
-      bayesplot::ppc_bars(y=y,yrep=ppc_pred,...)
+      if(grouped) {
+        bayesplot::ppc_bars(y=y[group_var>0],yrep=ppc_pred[,group_var>0],...)
+      } else {
+        bayesplot::ppc_bars(y=y,yrep=ppc_pred,...)
+      }
+      
+      
     }
+  } else if(attr(ppc_pred,'output')=='observed') {
+    # only show observed data for yrep
+    y <- na_if(y,object@score_data@miss_val)
+    y <- y[!is.na(y)]
+    if(attr(ppc_pred,'output_type')=='continuous') {
+      #unbounded observed outcomes (i.e., continuous)
+      bayesplot::ppc_dens_overlay(y=y,yrep=ppc_pred,...)
+    } else if(attr(ppc_pred,'output_type')=='discrete') {
+      if(grouped && length(unique(group_var))>2) {
+        
+        bayesplot::ppc_bars_grouped(y=y[group_var>0],yrep=ppc_pred[,group_var>0],group=group_var[group_var>0],...)
+        
+      } else {
+        if(grouped) {
+          bayesplot::ppc_bars(y=y[group_var>0],yrep=ppc_pred[,group_var>0],...)
+        } else {
+          bayesplot::ppc_bars(y=y,yrep=ppc_pred,...)
+        }
+        
+        
+      }
+    }
+
     
+  } else if(attr(ppc_pred,'output')=='missing') {
     
+    y <- as.numeric(y==miss_val)
+    
+    if(grouped && length(unique(group_var))>2) {
+      
+      bayesplot::ppc_bars_grouped(y=y[group_var>0],yrep=ppc_pred[,group_var>0],group=group_var[group_var>0],...)
+      
+    } else {
+      if(grouped) {
+        bayesplot::ppc_bars(y=y[group_var>0],yrep=ppc_pred[,group_var>0],...)
+      } else {
+        bayesplot::ppc_bars(y=y,yrep=ppc_pred,...)
+      }
+      
+      
+    }
   }
+  
+
+  
+
   
 })
