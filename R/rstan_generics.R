@@ -52,7 +52,7 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
   print(paste0('Processing posterior replications for ',n_votes,' scores using ',draws,
                ' posterior samples out of a total of ',n_iters, ' samples.'))
   
-  
+
   y <- as.numeric(object@score_data@score_matrix$outcome)[this_sample]
   # check to see if we need to recode missing values from the data if the model_type doesn't handle missing data
   if(object@model_type %in% c(1,3,5,7,9,11,13) & !is.null(object@score_data@miss_val)) {
@@ -67,8 +67,9 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
   bill_points <- as.numeric(object@score_data@score_matrix$item_id)[this_sample]
   time_points <- as.numeric(object@score_data@score_matrix$time_id)[this_sample]
   
-  remove_nas <- !is.na(y) && !is.na(person_points) && !is.na(bill_points) && !is.na(time_points)
+  remove_nas <- !is.na(y) & !is.na(person_points) & !is.na(bill_points) & !is.na(time_points)
   y <- y[remove_nas]
+  max_val <- max(y)
   bill_points <- bill_points[remove_nas]
   time_points <- time_points[remove_nas]
   person_points <- person_points[remove_nas]
@@ -139,8 +140,10 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
   
   if(model_type %in% c(3,4)) {
     cutpoints <- all_params$steps_votes
+    cutpoints <- cutpoints[these_draws,]
   } else if(model_type %in% c(5,6)) {
     cutpoints <- all_params$steps_votes_grm
+    cutpoints <- cutpoints[these_draws,,]
   } else {
     cutpoints <- 1
   }
@@ -152,9 +155,10 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
                           inflate=model_type %in% c(2,4,6,8,10,12,14),
                           time_points=time_points,
                           item_points=bill_points,
+                          max_val=max_val,
                           person_points=person_points,
                           sigma_sd=all_params$extra_sd[these_draws],
-                          cutpoints=cutpoints[these_draws,],
+                          cutpoints=cutpoints,
                           type='predict')
   
   # set attributes to pass along sample info
@@ -405,7 +409,7 @@ setMethod('id_plot_ppc',signature(object='idealstan'),function(object,
   bill_points <- as.numeric(object@score_data@score_matrix$item_id)[this_sample]
   time_points <- as.numeric(object@score_data@score_matrix$time_id)[this_sample]
   
-  remove_nas <- !is.na(y) && !is.na(person_points) && !is.na(bill_points) && !is.na(time_points)
+  remove_nas <- !is.na(y) & !is.na(person_points) & !is.na(bill_points) & !is.na(time_points)
   y <- y[remove_nas]
   bill_points <- bill_points[remove_nas]
   time_points <- time_points[remove_nas]
@@ -428,7 +432,7 @@ setMethod('id_plot_ppc',signature(object='idealstan'),function(object,
   } else {
     grouped <- F
   }
-  
+
   if(grouped && length(unique(group_var))>2) {
     
     bayesplot::ppc_bars_grouped(y=y[group_var>0],yrep=ppc_pred[,group_var>0],group=group_var[group_var>0],...)

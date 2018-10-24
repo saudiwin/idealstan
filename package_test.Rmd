@@ -223,10 +223,18 @@ id_plot_sims(ord_irt_abs_est)
 
 ```
 
+```{r ord_irt_abs_pred}
+
+ord_irt_abs_est %>% 
+  id_post_pred %>% 
+  id_plot_ppc(ord_irt_abs_est,ppc_pred=.)
+
+```
+
 We can now try the ordinal graded response version (non-inflated):
 
 ```{r irt_ordinal_grm}
-ord_irt_grm_sim <- id_sim_gen(num_person=20,num_bills=100,ordinal=T,inflate=F,
+ord_irt_grm_sim <- id_sim_gen(num_person=20,num_bills=100,inflate=F,
                                absence_diff_mean=0,model_type='ordinal_grm')
 ord_irt_grm_est <- id_estimate(idealdata=ord_irt_grm_sim,
                                model_type=5,
@@ -263,10 +271,18 @@ id_plot_sims(ord_irt_grm_est)
 
 ```
 
+```{r ord_irt_grm_pred}
+
+ord_irt_grm_est %>% 
+  id_post_pred %>% 
+  id_plot_ppc(ord_irt_grm_est,ppc_pred=.)
+
+```
+
 And now the inflated GRM:
 
 ```{r irt_ordinal_grm_abs}
-ord_irt_grm_abs_sim <- id_sim_gen(num_person=20,num_bills=100,ordinal=T,inflate=T,
+ord_irt_grm_abs_sim <- id_sim_gen(num_person=20,num_bills=100,inflate=T,
                                absence_diff_mean=0,model_type='ordinal_grm')
 ord_irt_grm_abs_est <- id_estimate(idealdata=ord_irt_grm_abs_sim,
                                model_type=6,
@@ -303,12 +319,20 @@ id_plot_sims(ord_irt_grm_abs_est)
 
 ```
 
+```{r ord_irt_grm_abs_pred}
+
+ord_irt_grm_abs_est %>% 
+  id_post_pred %>% 
+  id_plot_ppc(ord_irt_grm_abs_est,ppc_pred=.)
+
+```
+
 # Additional Models V0.3
 
 Models I am adding to this release include the Poisson model:
 
 ```{r irt_ordinal_poisson}
-ord_irt_poisson_sim <- id_sim_gen(num_person=20,num_bills=100,ordinal=F,inflate=F,
+ord_irt_poisson_sim <- id_sim_gen(num_person=20,num_bills=100,inflate=F,
                                absence_diff_mean=0,model_type='poisson')
 ord_irt_poisson_est <- id_estimate(idealdata=ord_irt_poisson_sim,
                                model_type=7,
@@ -345,14 +369,21 @@ id_plot_sims(ord_irt_poisson_est)
 
 ```
 
+```{r ord_irt_poisson_pred}
+
+ord_irt_poisson_est %>% 
+  id_post_pred %>% 
+  id_plot_ppc(ord_irt_poisson_est,ppc_pred=.)
+
+```
 
 Now Poisson-inflated:
 
 ```{r irt_abs_poisson}
-ord_irt_poisson_sim <- id_sim_gen(num_person=20,num_bills=100,ordinal=T,inflate=F,
+ord_irt_poisson_abs_sim <- id_sim_gen(num_person=20,num_bills=100,inflate=T,
                                absence_diff_mean=0,model_type='poisson')
-ord_irt_poisson_est <- id_estimate(idealdata=ord_irt_poisson_sim,
-                               model_type=7,
+ord_irt_poisson_abs_est <- id_estimate(idealdata=ord_irt_poisson_abs_sim,
+                               model_type=8,
                                restrict_ind_high = as.character(sort(ord_irt_poisson_sim@simul_data$true_person,
                                                                      decreasing=T,
                                                         index=T)$ix[1]),
@@ -363,11 +394,11 @@ ord_irt_poisson_est <- id_estimate(idealdata=ord_irt_poisson_sim,
                                                                    decreasing=T)[1] -
                                 sort(ord_irt_poisson_sim@simul_data$true_person,
                                   decreasing=F)[1])
-id_plot_rhats(ord_irt_poisson_est)
+id_plot_rhats(ord_irt_poisson_abs_est)
 ```
 
 ```{r ord_irt_poisson_abs_cov_plot}
-id_sim_coverage(ord_irt_poisson_est) %>% 
+id_sim_coverage(ord_irt_poisson_abs_est) %>% 
   bind_rows(.id='Parameter') %>% 
   ggplot(aes(y=avg,x=Parameter)) +
   stat_summary(fun.args=list(mult=1.96)) + 
@@ -376,13 +407,21 @@ id_sim_coverage(ord_irt_poisson_est) %>%
 
 ```{r ord_irt_poisson_abs_resid}
 
-id_plot_sims(ord_irt_poisson_est,type='Residuals')
+id_plot_sims(ord_irt_poisson_abs_est,type='Residuals')
 
 ```
 
 ```{r ord_irt_poisson_abs_RMSE}
 
-id_plot_sims(ord_irt_poisson_est)
+id_plot_sims(ord_irt_poisson_abs_est)
+
+```
+
+```{r ord_irt_poisson_abs_pred}
+
+ord_irt_poisson_abs_est %>% 
+  id_post_pred %>% 
+  id_plot_ppc(ord_irt_poisson_abs_est,ppc_pred=.)
 
 ```
 

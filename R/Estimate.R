@@ -17,7 +17,7 @@
 #' inflated model for missing data, be sure to specify the \code{miss_val} option to the value that should
 #' be modeled as missing and also set \code{inflate} to \code{TRUE}. Otherwise the \code{id_estimate}
 #' function will not have data in the correct form to run an inflated model.
-#' If the outcome is continuous, simply set \code{continuous} to \code{TRUE}. You can ignore the
+#' If the outcome is unbounded, simply set \code{unbounded} to \code{TRUE}. You can ignore the
 #' options that specify which values should be \code{high_val} or \code{low_val}, and all 
 #' missing values (\code{NA}) will be recoded to a specific value out of the range of the outcome to use
 #' for inflation.
@@ -69,7 +69,8 @@
 #' @param ordinal Whether or not the data contain ordinal responses. If \code{TRUE},
 #'  middle values/abstentions are used as a middle category in constructing the outcome.
 #'  Otherwise the response is assumed to be binary (yes/no).
-#'  @param continuous Whether or not the outcome/response is continuous. If it is, \code{miss_val} 
+#' @param unbounded Whether or not the outcome/response is unbounded (i.e., continuous or
+#'  Poisson). If it is, \code{miss_val} 
 #'  is recoded as the maximum of the outcome + 1. 
 #' @param exclude_level A vector of any values that should be treated as \code{NA} in the response matrix. 
 #' Unlike the \code{miss_val} parameter, these values will be dropped from the data before 
@@ -115,7 +116,7 @@ id_make <- function(score_data=NULL,
                            item_cov_miss=NULL,
                            miss_val=NA,high_val=3L,low_val=1L,middle_val=2L,
                            ordinal=FALSE,
-                    continuous=FALSE,
+                    unbounded=FALSE,
                            exclude_level=NULL,
                   inflate=TRUE,simulation=FALSE) {
   
@@ -278,44 +279,50 @@ id_make <- function(score_data=NULL,
   }
   
   # recode score/outcome
-  
-  if(ordinal==TRUE & inflate==TRUE) {
-    votes <- c(low_val,middle_val,high_val,miss_val)
-    vote_int <- as.integer(factor(votes,levels=votes))
-    names(vote_int) <- votes
-    vote_labels <-  c('No','Abstain','Yes','Absent')
-    miss_val <- vote_int[length(vote_int)]
-  } else if(ordinal==FALSE & inflate==TRUE) {
-    votes <- c(low_val,high_val,miss_val)
-    vote_int <- as.integer(factor(votes,levels=votes))
-    names(vote_int) <- votes
-    vote_labels <-  c('No','Yes','Absent')
-    miss_val <- vote_int[length(vote_int)]
-  } else if(ordinal==TRUE & inflate==FALSE)  {
-    votes <- c(low_val,middle_val,high_val)
-    vote_int <- as.integer(factor(votes,levels=votes))
-    names(vote_int) <- votes
-    vote_labels <-  c('No','Abstain','Yes')
-    miss_val <- NA
+  if(!unbounded) {
+    if(ordinal==TRUE & inflate==TRUE) {
+      votes <- c(low_val,middle_val,high_val,miss_val)
+      vote_int <- as.integer(factor(votes,levels=votes))
+      names(vote_int) <- votes
+      vote_labels <-  c('No','Abstain','Yes','Absent')
+      miss_val <- vote_int[length(vote_int)]
+    } else if(ordinal==FALSE & inflate==TRUE) {
+      votes <- c(low_val,high_val,miss_val)
+      vote_int <- as.integer(factor(votes,levels=votes))
+      names(vote_int) <- votes
+      vote_labels <-  c('No','Yes','Absent')
+      miss_val <- vote_int[length(vote_int)]
+    } else if(ordinal==TRUE & inflate==FALSE)  {
+      votes <- c(low_val,middle_val,high_val)
+      vote_int <- as.integer(factor(votes,levels=votes))
+      names(vote_int) <- votes
+      vote_labels <-  c('No','Abstain','Yes')
+      miss_val <- NA
+    } else {
+      votes <- c(low_val,high_val)
+      vote_int <- as.integer(factor(votes,levels=votes))
+      names(vote_int) <- votes
+      vote_labels <-  c('No','Yes')
+      miss_val <- NA
+    }
   } else {
-    votes <- c(low_val,high_val)
-    vote_int <- as.integer(factor(votes,levels=votes))
-    names(vote_int) <- votes
-    vote_labels <-  c('No','Yes')
-    miss_val <- NA
+    votes <- 1
+    vote_int <- 1
+    vote_labels <- 'None'
   }
-  
-  if(continuous==FALSE) {
+
+
+  if(!unbounded) {
     score_rename <- mutate(score_rename,!! quo_name(outcome) := as.integer(factor(!!outcome,
                                                                                   levels=votes)))
-  } else if(continuous==TRUE & inflate==TRUE) {
+  } else if(unbounded==TRUE & inflate==TRUE) {
     max_val <- max(pull(score_rename,!!outcome))
     if(is.na(miss_val)) {
-      score_rename <- mutate(score_rename,!! quo_name(outcome) := coalesce(is.na(!!outcome),max_val+1))
+      score_rename <- mutate(score_rename,!! quo_name(outcome) := coalesce(is.na(!!outcome),max_val+1L))
     } else {
-      score_rename <- mutate(score_rename,!! quo_name(outcome) := ifelse(!!outcome==miss_val,max_val+1))
+      score_rename <- mutate(score_rename,!! quo_name(outcome) := ifelse(!!outcome==miss_val,max_val+1L,!!outcome))
     }
-    miss_val <- max_val+1
+    miss_val <- max_val+1L
   } 
   
 
@@ -343,7 +350,7 @@ id_make <- function(score_data=NULL,
 #' Stan's MCMC engine.
 #' 
 #' To run an IRT ideal point model, you must first pre-process your data using the \code{\link{id_make}} function. Be sure to specify the correct options for the
-#' kind of model you are going to run: if you want to run a continuous, ordinal and/or an inflated model, 
+#' kind of model you are going to run: if you want to run a unbounded, ordinal and/or an inflated model, 
 #' the data needs to be processed differently. Also any hierarchical covariates at the person or item level
 #' need to be specified in \code{\link{id_make}}.
 #' As of this version of \code{idealstan}, the following model types are available:
@@ -356,10 +363,10 @@ id_make <- function(score_data=NULL,
 #'   \item Ordinal IRT (graded response) ideal point model with missing-data inflation
 #'   \item Poisson IRT (Wordfish) ideal point model with no missing data inflation
 #'   \item Poisson IRT (Wordfish) ideal point model with missing-data inflation
-#'   \item Continuous (Gaussian) IRT ideal point model with no missing data
-#'   \item Continuous (Gaussian) IRT ideal point model with missing-data inflation
-#'   \item Positive-Continuous (Log-normal) IRT ideal point model with no missing data
-#'   \item Positive-Continuous (Log-normal) IRT ideal point model with missing-data inflation
+#'   \item unbounded (Gaussian) IRT ideal point model with no missing data
+#'   \item unbounded (Gaussian) IRT ideal point model with missing-data inflation
+#'   \item Positive-unbounded (Log-normal) IRT ideal point model with no missing data
+#'   \item Positive-unbounded (Log-normal) IRT ideal point model with missing-data inflation
 #'   \item Latent Space (binary response) ideal point model with no missing data
 #'   \item Latent Space (binary response) ideal point model with missing-data inflation
 #' }
