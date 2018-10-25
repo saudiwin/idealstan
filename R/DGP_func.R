@@ -486,12 +486,12 @@
       over_iters <- sapply(1:ncol(pr_vote), function(c) {
         outdens <- ifelse(outcome==miss_val, 
                           dbinom(1,size = 1,prob=pr_absence[,c],log=T),
-                          dnorm(outcome,mean=pr_vote[,c]),sd=sigma_sd[c],log=T))
+                          dnorm(outcome,mean=pr_vote[,c],sd=sigma_sd[c],log=T))
       })
       
     } else {
       over_iters <- sapply(1:ncol(pr_vote), function(c) {
-        outdens <- dnorm(outcome,mean=pr_vote[,c]),sd=sigma_sd[c],log=T)})
+        outdens <- dnorm(outcome,mean=pr_vote[,c],sd=sigma_sd[c],log=T)})
     }
     return(t(over_iters))
   }
@@ -567,12 +567,12 @@
       over_iters <- sapply(1:ncol(pr_vote), function(c) {
         outdens <- ifelse(outcome==miss_val, 
                           dbinom(1,size = 1,prob=pr_absence[,c],log=T),
-                          dnorm(outcome,mean=pr_vote[,c]),sd=sigma_sd[c],log=T))
+                          dnorm(outcome,mean=pr_vote[,c],sd=sigma_sd[c],log=T))
       })
 
     } else {
       over_iters <- sapply(1:ncol(pr_vote), function(c) {
-        outdens <- dnorm(outcome,mean=pr_vote[,c]),sd=sigma_sd[c],log=T)})
+        outdens <- dnorm(outcome,mean=pr_vote[,c],sd=sigma_sd[c],log=T)})
     }
     return(t(over_iters))
   }

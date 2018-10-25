@@ -46,7 +46,8 @@ irt_2pl_correct <- id_estimate(idealdata=irt_2pl,
                                                         index=TRUE)$ix[1]),
                                fixtype='vb_partial',
                            ncores=2,
-                           nchains=2)
+                           nchains=2,
+                           niters = 500)
 
 irt_2pl_incorrect <- id_estimate(idealdata=irt_2pl,
                                model_type=8,
@@ -58,7 +59,8 @@ irt_2pl_incorrect <- id_estimate(idealdata=irt_2pl,
                                                         index=TRUE)$ix[1]),
                             fixtype='vb_partial',
                            ncores=2,
-                           nchains=2)
+                           nchains=2,
+                           niters=500)
 
 ```
 
@@ -119,7 +121,8 @@ correct_loo <- loo(log_lik_irt_2pl_correct,
 
 incorrect_loo <- loo(log_like_irt_2pl_incorrect,
                      cores=2,
-                     r_eff=relative_eff(log_like_irt_2pl_incorrect_reff))
+                     r_eff=relative_eff(exp(log_lik_irt_2pl_incorrect),
+                                      chain_id=derive_chain(log_lik_irt_2pl_incorrect)))
 
 print(correct_loo)
 print(incorrect_loo)
