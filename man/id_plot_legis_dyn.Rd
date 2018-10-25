@@ -11,8 +11,7 @@ id_plot_legis_dyn(object, return_data = FALSE, item_plot = NULL,
   plot_text = TRUE, use_ci = TRUE, person_line_alpha = 0.3,
   person_ci_alpha = 0.8, show_score = NULL, item_plot_type = "both",
   show_true = FALSE, group_color = TRUE, hpd_limit = 10,
-  group_overlap = FALSE, sample_persons = NULL, plot_sim = FALSE,
-  ...)
+  group_overlap = FALSE, sample_persons = NULL, plot_sim = FALSE, ...)
 }
 \arguments{
 \item{object}{A fitted \code{idealstan} object}

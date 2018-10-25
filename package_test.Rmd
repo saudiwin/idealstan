@@ -465,7 +465,7 @@ ord_irt_poisson_abs_est %>%
 
 ord_irt_poisson_abs_est %>% 
   id_post_pred(output='missing') %>% 
-  id_plot_ppc(ord_irt_poisson_est,ppc_pred=.)
+  id_plot_ppc(ord_irt_poisson_abs_est,ppc_pred=.)
 
 ```
 
@@ -525,10 +525,10 @@ A Normally-distributed outcome with inflation:
 
 
 ```{r irt_normal_abs}
-ord_irt_normal_abs_sim <- id_sim_gen(num_person=20,num_bills=100,ordinal=F,inflate=F,
+ord_irt_normal_abs_sim <- id_sim_gen(num_person=20,num_bills=100,inflate=T,
                                absence_diff_mean=0,model_type='normal')
 ord_irt_normal_abs_est <- id_estimate(idealdata=ord_irt_normal_abs_sim,
-                               model_type=9,
+                               model_type=10,
                                restrict_ind_high = as.character(sort(ord_irt_normal_abs_sim@simul_data$true_person,
                                                                      decreasing=T,
                                                         index=T)$ix[1]),
@@ -566,13 +566,29 @@ id_plot_sims(ord_irt_normal_abs_est)
 
 ```
 
+```{r ord_irt_normal_abs_pred}
+
+ord_irt_normal_abs_est %>% 
+  id_post_pred %>% 
+  id_plot_ppc(ord_irt_normal_abs_est,ppc_pred=.)
+
+```
+
+```{r ord_irt_normal_abs_miss_pred}
+
+ord_irt_normal_abs_est %>% 
+  id_post_pred(output='missing') %>% 
+  id_plot_ppc(ord_irt_normal_abs_est,ppc_pred=.)
+
+```
+
 A Lognormal model with no inflation:
 
 ```{r irt_lognormal}
 ord_irt_lognormal_sim <- id_sim_gen(num_person=20,num_bills=100,ordinal=F,inflate=F,
                                absence_diff_mean=0,model_type='lognormal')
 ord_irt_lognormal_est <- id_estimate(idealdata=ord_irt_lognormal_sim,
-                               model_type=9,
+                               model_type=11,
                                restrict_ind_high = as.character(sort(ord_irt_lognormal_sim@simul_data$true_person,
                                                                      decreasing=T,
                                                         index=T)$ix[1]),
@@ -617,7 +633,7 @@ And last but not least, a lognormal model with inflation:
 ord_irt_lognormal_abs_sim <- id_sim_gen(num_person=20,num_bills=100,ordinal=F,inflate=F,
                                absence_diff_mean=0,model_type='lognormal')
 ord_irt_lognormal_abs_est <- id_estimate(idealdata=ord_irt_lognormal_abs_sim,
-                               model_type=9,
+                               model_type=12,
                                restrict_ind_high = as.character(sort(ord_irt_lognormal_abs_sim@simul_data$true_person,
                                                                      decreasing=T,
                                                         index=T)$ix[1]),

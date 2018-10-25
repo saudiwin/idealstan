@@ -5,12 +5,11 @@
 \title{Plot Legislator/Person and Bill/Item Ideal Points}
 \usage{
 id_plot_legis(object, return_data = FALSE, high_limit = 0.95,
-  low_limit = 0.05, item_plot = NULL,
-  item_plot_type = "non-inflated", text_size_label = 2,
-  text_size_group = 2.5, point_size = 1, hjust_length = -0.7,
-  person_labels = TRUE, group_labels = F, person_ci_alpha = 0.1,
-  show_true = FALSE, group_color = TRUE, hpd_limit = 10,
-  group_overlap = FALSE, sample_persons = NULL, ...)
+  low_limit = 0.05, item_plot = NULL, item_plot_type = "non-inflated",
+  text_size_label = 2, text_size_group = 2.5, point_size = 1,
+  hjust_length = -0.7, person_labels = TRUE, group_labels = F,
+  person_ci_alpha = 0.1, show_true = FALSE, group_color = TRUE,
+  hpd_limit = 10, group_overlap = FALSE, sample_persons = NULL, ...)
 }
 \arguments{
 \item{object}{A fitted \code{idealstan} object}

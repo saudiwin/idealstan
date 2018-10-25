@@ -38,10 +38,10 @@ We can then fit two ideal point models to the same data, one that uses the corre
 # Because of CRAN limitations, only using 2 cores & 2 chains
 irt_2pl_correct <- id_estimate(idealdata=irt_2pl,
                                model_type=2,
-                               restrict_ind_high = as.character(sort(irt_2pl@simul_data$true_reg_discrim,
+                               restrict_ind_high = as.character(sort(irt_2pl@simul_data$true_person,
                                                         decreasing=TRUE,
                                                         index=TRUE)$ix[1]),
-                              restrict_ind_low = as.character(sort(irt_2pl@simul_data$true_reg_discrim,
+                              restrict_ind_low = as.character(sort(irt_2pl@simul_data$true_person,
                                                       decreasing=FALSE,
                                                         index=TRUE)$ix[1]),
                                fixtype='vb_partial',
@@ -50,10 +50,10 @@ irt_2pl_correct <- id_estimate(idealdata=irt_2pl,
 
 irt_2pl_incorrect <- id_estimate(idealdata=irt_2pl,
                                model_type=8,
-                            restrict_ind_high = as.character(sort(irt_2pl@simul_data$true_reg_discrim,
+                            restrict_ind_high = as.character(sort(irt_2pl@simul_data$true_person,
                                                         decreasing=TRUE,
                                                         index=TRUE)$ix[1]),
-                            restrict_ind_low = as.character(sort(irt_2pl@simul_data$true_reg_discrim,
+                            restrict_ind_low = as.character(sort(irt_2pl@simul_data$true_person,
                                                       decreasing=FALSE,
                                                         index=TRUE)$ix[1]),
                             fixtype='vb_partial',
@@ -81,7 +81,7 @@ post_correct <- id_post_pred(irt_2pl_correct)
 post_incorrect <- id_post_pred(irt_2pl_incorrect)
 ```
 
-What we can do is the use a wrapper around the `bayesplot` package called `id_plot_ppc` to see how well these models replicate their own data:
+What we can do is the use a wrapper around the `bayesplot` package called `id_plot_ppc` to see how well these models replicate their own data. These plots show the original data as blue bars and the posterior predictive estimate as an uncertainty interval. If the interval overlaps with the observed data, then the model was able to replicate the observed data, which is a basic and important validity test for the model, i.e., could the model have generated the data that was used to fit it?
 
 ```{r post_pred_graph}
 
@@ -90,30 +90,32 @@ id_plot_ppc(irt_2pl_incorrect,ppc_pred=post_incorrect)
 
 ```
 
-Even though the incorrect model didn't converge, it can still replicate the posterior data quite well. We can also look at particular persons or items to see how well the models predict those persons or items. For example, let's look at the first two persons in the simulated data for which we fixed that person's value to an arbitrary numbe:
+It is stupidly obvious from these plots that one should not use a Poisson distribution for a Bernoulli (binary) outcome as it will predict values as high as 10 (although it still puts the majority of the density on 1 and 2). Only two observed values are showing on the Poisson predictive distribution because the missing data model must be shown separately if the outcome is unbounded. To view the missing data model (i.e., a binary response), simply change the `output` option in `id_post_pred` to `'missing'`. We can also look at particular persons or items to see how well the models predict those persons or items. For example, let's look at the first two persons in the simulated data for which we incorrectly used the Poisson model by passing their IDs as a character vector to the `group` option:
 
 ```{r post_pred_ind}
-id_plot_ppc(irt_2pl_incorrect,ppc_pred=post_incorrect,person=c(1,2))
+id_plot_ppc(irt_2pl_incorrect,ppc_pred=post_incorrect,group=c('1','2'))
 ```
 
 
-Finally, we can turn to summary measures of model fit that also allow us to compare models directly to each other (if they were fit on the same data). To do so, I first employ the `id_log_lik` function to generate log-likelihood values for each of these models. I also need to create exponentiated log-likelihood values (setting `r_eff=T`), which are necessary to calculate the effective number of samples in evaluating model fit.
+Finally, we can turn to summary measures of model fit that also allow us to compare models directly to each other (if they were fit on the same data). To do so, I first employ the `log_lik` option of the `id_post_pred` function to generate log-likelihood values for each of these models. I also need to create exponentiated log-likelihood values (setting `type='log_lik_eff'`), which are necessary to calculate the effective number of samples in evaluating model fit.
 
 ```{r log_lik}
-log_lik_irt_2pl_correct <- id_log_lik(irt_2pl_correct)
-log_like_irt_2pl_incorrect <- id_log_lik(irt_2pl_incorrect)
-
-log_lik_irt_2pl_correct_reff <- id_log_lik(irt_2pl_correct,r_eff=T)
-log_like_irt_2pl_incorrect_reff <- id_log_lik(irt_2pl_incorrect,r_eff=T)
+log_lik_irt_2pl_correct <- id_post_pred(irt_2pl_correct,type='log_lik')
+log_like_irt_2pl_incorrect <- id_post_pred(irt_2pl_incorrect,type='log_lik')
 
 ```
 
 With this calculation can examine the models' `loo` values, which shows the relative predictive performance of the model to the data. Overall, model performance seems quite good, as the Pareto k values show that there are only a few dozen observations in the dataset that aren't well predicted. The LOO-IC, or the leave-one-out information criterion (think AIC or BIC), are also similar for the two models, although the correct model does have a lower (i.e., better) LOO-IC.
 
+Note that we must also specify the `relative_eff` function in order to calculate degrees of freedom. The first argument to `relative_eff` is the exponentiated log-likelihood matrix we calculated previously. The second argument uses the function `derive_chain` and also takes the log-likelihood matrix as its argument.
+
+I put in an option for two cores, but a larger number could be used which would improve the precision of the calculations.
+
 ```{r loo_show}
 correct_loo <- loo(log_lik_irt_2pl_correct,
                    cores=2,
-                   r_eff=relative_eff(log_lik_irt_2pl_correct_reff))
+                   r_eff=relative_eff(exp(log_lik_irt_2pl_correct),
+                                      chain_id=derive_chain(log_lik_irt_2pl_correct)))
 
 incorrect_loo <- loo(log_like_irt_2pl_incorrect,
                      cores=2,

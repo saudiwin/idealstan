@@ -5,12 +5,15 @@
 
 .binary <- function(pr_absence=NULL,
                     pr_vote=NULL,
+                    y=NULL,
                     N=NULL,
                     inflate=NULL,
                     person_points=NULL,
                     item_points=NULL,
                     time_points=NULL,
                     type='simulate',
+                    outcome=NULL,
+                    miss_val=NULL,
                     ...)
                     {
 
@@ -19,6 +22,19 @@
     votes <- as.numeric(plogis(pr_vote)>runif(N))
   } else if(type=='predict') {
     votes <- apply(pr_vote,2,function(c) as.numeric(plogis(c)>runif(N)))
+  } else if(type=='log_lik') {
+    if(inflate) {
+      over_iters <- sapply(1:ncol(pr_vote), function(c) {
+        outdens <- ifelse(outcome==miss_val, 
+                          dbinom(1,size = 1,prob=pr_absence[,c],log=T),
+                          dbinom(outcome-1,size=1,prob=pr_vote[,c],log=T))
+      })
+      
+    } else {
+      over_iters <- sapply(1:ncol(pr_vote), function(c) {
+        outdens <- dbinom(outcome-1,size=1,prob=pr_vote[,c],log=T)})
+    }
+    return(t(over_iters))
   }
   
   
@@ -70,6 +86,9 @@
                     cutpoints=NULL,
                     ordinal_outcomes=NULL,
                     type='simulate',
+                    y=NULL,
+                    outcome=NULL,
+                    miss_val=NULL,
                     ...)
 {
   
@@ -100,6 +119,19 @@
       })
     },simplify='array')
 
+  } else if(type=='log_lik') {
+    if(inflate) {
+      n_outcomes <- length(unique(outcome)) - 1
+    } else {
+      n_outcomes <- length(unique(outcome))
+    }
+    # over posterior draws
+    cuts_iters <- sapply(1:nrow(cutpoints), function(i) {
+      cuts <- sapply(1:ncol(cutpoints),function(y) {
+        qlogis(pr_vote[,i]) - cutpoints[i,y]
+      })
+    },simplify='array')
+    
   }
   
   # Now we pick votes as a function of the number of categories
@@ -161,12 +193,48 @@
     combined <- sapply(1:ncol(pr_absence), function(c) ifelse(pr_absence[,c]<(runif(N)+pr_boost),over_iters[,c],as.integer(ordinal_outcomes)+1L))
     attr(combined,'output') <- 'all'
     return(t(combined))
+  } else if(type=='log_lik') {
+    over_iters <- sapply(1:ncol(pr_vote), function(d) {
+      votes <- sapply(1:dim(cuts_iters)[1], function(i) {
+        
+        this_cut <- cuts_iters[i,,d]
+        
+        pr_bottom <- 1 - plogis(this_cut[1])
+        
+        mid_prs <- sapply(1:(length(this_cut)-1), function(c) {
+          plogis(this_cut[c]) - plogis(this_cut[c+1])
+        })
+        
+        pr_top <- plogis(this_cut[length(this_cut)])
+        
+        return(c(pr_bottom,mid_prs,pr_top))
+      })
+    },simplify='array')
+    out_num <- as.numeric(outcome)
+
+    if(inflate) {
+      # remove top category for vote prediction
+      out_num[out_num==max(out_num)] <- max(out_num) - 1
+      over_iters <- sapply(1:ncol(pr_vote), function(c) {
+        outdens <- ifelse(outcome==miss_val, 
+                          dbinom(1,size = 1,prob=pr_absence[,c],log=T),
+                          log(over_iters[out_num,,c]))
+      })
+    } else {
+      over_iters <- sapply(1:ncol(pr_vote), function(c) {
+        outdens <- log(over_iters[out_num,,c])
+      })
+    }
+    
+    attr(outdens,'output') <- 'all'
+    return(t(outdens))
   }
                    
 }
 
 .ordinal_grm <- function(pr_absence=NULL,
                                  pr_vote=NULL,
+                         y=NULL,
                                  N=NULL,
                                  inflate=NULL,
                                  person_points=NULL,
@@ -175,6 +243,8 @@
                                  ordinal_outcomes=NULL,
                          cutpoints=NULL,
                          type='simulate',
+                         outcome=NULL,
+                         miss_val=NULL,
                                  ...)
 {
   
@@ -268,12 +338,50 @@
     combined <- sapply(1:ncol(pr_absence), function(c) ifelse(pr_absence[,c]<(runif(N)+pr_boost),over_iters[,c],as.integer(ordinal_outcomes)+1L))
     attr(combined,'output') <- 'all'
     return(t(combined))
+  } else if(type=='log_lik') {
+    
+    over_iters <- sapply(1:ncol(pr_vote), function(d) {
+      votes <- sapply(1:dim(cuts_iters)[1], function(i) {
+        
+        this_cut <- cuts_iters[i,,d]
+        
+        pr_bottom <- 1 - plogis(this_cut[1])
+        
+        mid_prs <- sapply(1:(length(this_cut)-1), function(c) {
+          plogis(this_cut[c]) - plogis(this_cut[c+1])
+        })
+        
+        pr_top <- plogis(this_cut[length(this_cut)])
+        
+        return(c(pr_bottom,mid_prs,pr_top))
+      })
+    },simplify='array')
+    
+    out_num <- as.numeric(outcome)
+
+    if(inflate) {
+      # remove top category for vote prediction
+      out_num[out_num==max(out_num)] <- max(out_num) - 1
+      over_iters <- sapply(1:ncol(pr_vote), function(c) {
+        outdens <- ifelse(outcome==miss_val, 
+                          dbinom(1,size = 1,prob=pr_absence[,c],log=T),
+                          log(over_iters[out_num,,c]))
+      })
+    } else {
+      over_iters <- sapply(1:ncol(pr_vote), function(c) {
+        outdens <- log(over_iters[out_num,,c])
+      })
+    }
+    
+    attr(outdens,'output') <- 'all'
+    return(t(outdens))
   }
   
 }
 
 .poisson <- function(pr_absence=NULL,
                     pr_vote=NULL,
+                    y=NULL,
                     N=NULL,
                     max_val=NULL,
                     inflate=NULL,
@@ -282,6 +390,8 @@
                     time_points=NULL,
                     type='simulate',
                     output=NULL,
+                    outcome=NULL,
+                    miss_val=NULL,
                     ...)
 {
 
@@ -290,6 +400,19 @@
     votes <- rpois(n = length(pr_vote),lambda = exp(pr_vote))
   } else if(type=='predict') {
     votes <- apply(pr_vote,2,function(c) rpois(n=length(c),lambda = exp(c)))
+  } else if(type=='log_lik') {
+    if(inflate) {
+      over_iters <- sapply(1:ncol(pr_vote), function(c) {
+        outdens <- ifelse(outcome==miss_val, 
+                          dbinom(1,size = 1,prob=pr_absence[,c],log=T),
+                          dpois(outcome,lambda=exp(pr_vote[,c]),log=T))
+      })
+      
+    } else {
+      over_iters <- sapply(1:ncol(pr_vote), function(c) {
+        outdens <- dpois(outcome,lambda=exp(pr_vote[,c]),log=T)})
+    }
+    return(t(over_iters))
   }
   
   
@@ -326,7 +449,7 @@
       attr(combined,'output') <- 'observed'
       attr(combined,'output_type') <- 'discrete'
     } else if(output=='missing') {
-      combined <- apply(pr_absence, function(c) as.numeric(c>runif(N)))
+      combined <- apply(pr_absence, 2,function(c) as.numeric(c>runif(N)))
       attr(combined,'output') <- 'missing'
       attr(combined,'output_type') <- 'discrete'
     }
@@ -338,6 +461,7 @@
 
 .normal <- function(pr_absence=NULL,
                      pr_vote=NULL,
+                    y=NULL,
                      N=NULL,
                     max_val=NULL,
                      inflate=NULL,
@@ -347,14 +471,29 @@
                     sigma_sd=NULL,
                     type='simulate',
                     output='observed',
+                    outcome=NULL,
+                    miss_val=NULL,
                      ...)
 {
-  
+
   #standard IRT 2-PL model
   if(type=='simulate') {
     votes <- rnorm(n = length(pr_vote),mean = pr_vote,sd = sigma_sd)
   } else if(type=='predict') {
-    votes <- sapply(1:ncol(pr_vote),2,function(c) rnorm(n=length(c),mean=pr_vote[,c],sd=sigma_sd[c]))
+    votes <- sapply(1:ncol(pr_vote),function(c) rnorm(n=nrow(pr_vote),mean=pr_vote[,c],sd=sigma_sd[c]))
+  } else if(type=='log_lik') {
+    if(inflate) {
+      over_iters <- sapply(1:ncol(pr_vote), function(c) {
+        outdens <- ifelse(outcome==miss_val, 
+                          dbinom(1,size = 1,prob=pr_absence[,c],log=T),
+                          dnorm(outcome,mean=pr_vote[,c]),sd=sigma_sd[c],log=T))
+      })
+      
+    } else {
+      over_iters <- sapply(1:ncol(pr_vote), function(c) {
+        outdens <- dnorm(outcome,mean=pr_vote[,c]),sd=sigma_sd[c],log=T)})
+    }
+    return(t(over_iters))
   }
   
   
@@ -368,7 +507,7 @@
   
   if(type=='simulate') {
     
-    combined <- if_else(pr_absence<(runif(N)+pr_boost),votes,as.integer(max(votes)+1))
+    combined <- if_else(pr_absence<(runif(N)+pr_boost),votes,max(votes)+1)
     
     # Create a score dataset
     
@@ -391,7 +530,7 @@
       attr(combined,'output') <- 'observed'
       attr(combined,'output_type') <- 'continuous'
     } else if(output=='missing') {
-      combined <- apply(pr_absence, function(c) as.numeric(c>runif(N)))
+      combined <- apply(pr_absence, 2,function(c) as.numeric(c>runif(N)))
       attr(combined,'output') <- 'missing'
       attr(combined,'output_type') <- 'discrete'
     }
@@ -404,6 +543,7 @@
 .lognormal <- function(pr_absence=NULL,
                     pr_vote=NULL,
                     N=NULL,
+                    y=NULL,
                     max_val=NULL,
                     inflate=NULL,
                     person_points=NULL,
@@ -412,6 +552,8 @@
                     sigma_sd=NULL,
                     type='simulate',
                     output='observed',
+                    outcome=NULL,
+                    miss_val=NULL,
                     ...)
 {
   
@@ -419,7 +561,20 @@
   if(type=='simulate') {
     votes <- rlnorm(n = length(pr_vote),meanlog = exp(pr_vote),sdlog = sigma_sd)
   } else if(type=='predict') {
-    votes <- sapply(1:ncol(pr_vote),2,function(c) rlnorm(n=length(c),meanlog=exp(pr_vote[,c]),sdlog=sigma_sd[c]))
+    votes <- sapply(1:ncol(pr_vote),function(c) rlnorm(n=nrow(pr_vote),meanlog=exp(pr_vote[,c]),sdlog=sigma_sd[c]))
+  } else if(type=='log_lik') {
+    if(inflate) {
+      over_iters <- sapply(1:ncol(pr_vote), function(c) {
+        outdens <- ifelse(outcome==miss_val, 
+                          dbinom(1,size = 1,prob=pr_absence[,c],log=T),
+                          dnorm(outcome,mean=pr_vote[,c]),sd=sigma_sd[c],log=T))
+      })
+
+    } else {
+      over_iters <- sapply(1:ncol(pr_vote), function(c) {
+        outdens <- dnorm(outcome,mean=pr_vote[,c]),sd=sigma_sd[c],log=T)})
+    }
+    return(t(over_iters))
   }
   
   
@@ -433,7 +588,7 @@
   
   if(type=='simulate') {
     
-    combined <- if_else(pr_absence<(runif(N)+pr_boost),votes,as.integer(max(votes)+1))
+    combined <- if_else(pr_absence<(runif(N)+pr_boost),votes,max(votes)+1)
     
     # Create a score dataset
     
@@ -456,7 +611,7 @@
       attr(combined,'output') <- 'observed'
       attr(combined,'output_type') <- 'continuous'
     } else if(output=='missing') {
-      combined <- apply(pr_absence, function(c) as.numeric(c>runif(N)))
+      combined <- apply(pr_absence, 2,function(c) as.numeric(c>runif(N)))
       attr(combined,'output') <- 'missing'
       attr(combined,'output_type') <- 'discrete'
     }

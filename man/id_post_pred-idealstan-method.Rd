@@ -5,8 +5,8 @@
 \alias{id_post_pred,idealstan-method}
 \title{Posterior Prediction for \code{idealstan} objects}
 \usage{
-\S4method{id_post_pred}{idealstan}(object, draws = 100,
-  output = "observed", sample_scores = NULL, ...)
+\S4method{id_post_pred}{idealstan}(object, draws = 100, output = "observed",
+  type = "predict", sample_scores = NULL, ...)
 }
 \arguments{
 \item{object}{A fitted \code{idealstan} object}
@@ -17,17 +17,25 @@
 specify whether to show the \code{'observed'} data (the default) or the binary 
 output \code{'missing'} showing whether an observation was predicted as missing or not}
 
+\item{type}{Whether to produce posterior predictive values (\code{'predict'}, the default),
+or log-likelihood values (\code{'log_lik'}). See the How to Evaluate Models vignette for more info.}
+
 \item{sample_scores}{In addition to reducing the number of posterior draws used to 
 calculate the posterior predictive distribution.}
 
 \item{...}{Any other arguments passed on to posterior_predict (currently none available)}
 }
 \description{
-This function will draw from the posterior predictive distribution of the outcome, i.e., all the scores or 
- votes that are used to create the \code{idealstan} model. 
+This function will draw from the posterior distribution, whether in terms of the outcome (prediction)
+or to produce the log-likelihood values.  
+ 
+ This function can also produce either distribution of the 
+ outcomes (i.e., predictions) or the log-likelihood values of the posterior (set option 
+ \code{type} to \code{'log_lik'}.
+ For more information, see the package vignette How to Evaluate Models.
  
  You can then use functions such as 
- \code{\link[bayesplot]{ppc_bars}} to see how well the model does returning the correct number of categories
+ \code{\link{id_plot_ppc}} to see how well the model does returning the correct number of categories
  in the score/vote matrix. 
  Also see \code{help("posterior_predict", package = "rstanarm")}
 }

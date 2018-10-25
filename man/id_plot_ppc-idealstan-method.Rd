@@ -5,15 +5,16 @@
 \alias{id_plot_ppc,idealstan-method}
 \title{Plot Posterior Predictive Distribution for \code{idealstan} Objects}
 \usage{
-\S4method{id_plot_ppc}{idealstan}(object, ppc_pred = NULL,
-  person = NULL, item = NULL, ...)
+\S4method{id_plot_ppc}{idealstan}(object, ppc_pred = NULL, group = NULL,
+  item = NULL, ...)
 }
 \arguments{
 \item{object}{A fitted idealstan object}
 
 \item{ppc_pred}{The output of the \code{\link{id_post_pred}} function on a fitted idealstan object}
 
-\item{person}{A character vector of the person IDs to calculate their model predictions}
+\item{group}{A character vector of the person or group IDs 
+over which to subset the predictive distribution}
 
 \item{item}{A character vector of item IDs to calculate their model predictions}
 

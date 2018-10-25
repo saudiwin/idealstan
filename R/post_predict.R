@@ -204,6 +204,34 @@
     
   }
 
+#' Helper function for obtaining density given ordinal GRM cutpoints
+.sample_cut_grm_ll <-
+  function(pr_vote = NULL,
+           cutpoints = NULL,
+           n_outcomes = NULL,
+           item_points=NULL) {
+    # Given a raw ideal position of a bill-legislator combination, select the most likely outcome from all ordinal categories
+    
+    cuts <- sapply(cutpoints, function(y) {
+      pr_vote - y
+    })
+    
+    
+    # Now we pick votes as a function of the number of categories
+    # This code should work for any number of categories
+    
+    pr_bottom <- 1 - plogis(cuts[1])
+    
+    mid_prs <- sapply(1:(length(cuts) - 1), function(c) {
+      plogis(cuts[c]) - plogis(cuts[c + 1])
+    })
+    
+    pr_top <- plogis(cuts[length(cuts)])
+    
+    return(c(pr_bottom, mid_prs, pr_top))
+    
+  }
+
 #' Function to predict ordinary 2 PL models
 .predict_2pl <-
   function(all_params = NULL,

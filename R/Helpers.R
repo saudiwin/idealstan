@@ -1229,3 +1229,221 @@
   return(out_d)
   
 }
+
+#' a slightly hacked function to extract parameters as I want to
+.extract_nonp <- function(object, pars, permuted = TRUE, 
+                                inc_warmup = FALSE, include = TRUE) {
+            # Extract the samples in different forms for different parameters. 
+            #
+            # Args:
+            #   object: the object of "stanfit" class 
+            #   pars: the names of parameters (including other quantiles) 
+            #   permuted: if TRUE, the returned samples are permuted without
+            #     warming up. And all the chains are merged. 
+            #   inc_warmup: if TRUE, warmup samples are kept; otherwise, 
+            #     discarded. If permuted is TRUE, inc_warmup is ignored. 
+            #   include: if FALSE interpret pars as those to exclude
+            #
+            # Returns:
+            #   If permuted is TRUE, return an array (matrix) of samples with each
+            #   column being the samples for a parameter. 
+            #   If permuted is FALSE, return array with dimensions
+            #   (# of iter (with or w.o. warmup), # of chains, # of flat parameters). 
+            
+            if (object@mode == 1L) {
+              cat("Stan model '", object@model_name, "' is of mode 'test_grad';\n",
+                  "sampling is not conducted.\n", sep = '')
+              return(invisible(NULL)) 
+            } else if (object@mode == 2L) {
+              cat("Stan model '", object@model_name, "' does not contain samples.\n", sep = '') 
+              return(invisible(NULL)) 
+            } 
+            
+            if(!include) pars <- setdiff(object@sim$pars_oi, pars)
+            pars <- if (missing(pars)) object@sim$pars_oi else .check_pars_second(object@sim, pars) 
+            pars <- .remove_empty_pars(pars, object@sim$dims_oi)
+            tidx <- .pars_total_indexes(object@sim$pars_oi, 
+                                       object@sim$dims_oi, 
+                                       object@sim$fnames_oi, 
+                                       pars) 
+            
+            n_kept <- object@sim$n_save - object@sim$warmup2
+            fun1 <- function(par_i) {
+              # sss <- sapply(tidx[[par_i]], get_kept_samples2, object@sim)
+              # if (is.list(sss))  sss <- do.call(c, sss)
+              # the above two lines are slower than the following line of code
+              sss <- do.call(cbind, lapply(tidx[[par_i]], .get_kept_samples2, object@sim)) 
+              dim(sss) <- c(sum(n_kept), object@sim$dims_oi[[par_i]]) 
+              dimnames(sss) <- list(iterations = NULL)
+              attr(sss,'num_chains') <- object@sim$chains
+              attr(sss,'chain_order') <- rep(1:object@sim$chains,each=dim(sss)[1]/object@sim$chains)
+
+              sss 
+            } 
+            
+            if (permuted) {
+              slist <- lapply(pars, fun1) 
+              names(slist) <- pars 
+              return(slist) 
+            } 
+            
+            tidx <- unlist(tidx, use.names = FALSE) 
+            tidxnames <- object@sim$fnames_oi[tidx] 
+            sss <- lapply(tidx, .get_samples2, object@sim, inc_warmup) 
+            sss2 <- lapply(sss, function(x) do.call(c, x))  # concatenate samples from different chains
+            sssf <- unlist(sss2, use.names = FALSE) 
+            
+            n2 <- object@sim$n_save[1]  ## assuming all the chains have equal iter 
+            if (!inc_warmup) n2 <- n2 - object@sim$warmup2[1] 
+            dim(sssf) <- c(n2, object@sim$chains, length(tidx)) 
+            cids <- sapply(object@stan_args, function(x) x$chain_id)
+            dimnames(sssf) <- list(iterations = NULL, chains = paste0("chain:", cids), parameters = tidxnames)
+            sssf 
+          }
+
+
+#' we are going to modify this rstan function so that it no longer permutes
+#' just delete the last term -- maybe submit PR to rstan
+.get_kept_samples2 <- function(n, sim) {
+
+  # a different implementation of get_kept_samples 
+  # It seems this one is faster than get_kept_samples 
+  # TODO: to understand why it is faster? 
+  lst <- vector("list", sim$chains)
+  for (ic in 1:sim$chains) { 
+    if (sim$warmup2[ic] > 0) 
+      lst[[ic]] <- sim$samples[[ic]][[n]][-(1:sim$warmup2[ic])]
+    else 
+      lst[[ic]] <- sim$samples[[ic]][[n]]
+  } 
+  out <- do.call(c, lst)
+}
+
+#' another hacked function
+.check_pars_second <- function(sim, pars) {
+  #
+  # Check if all parameters in pars are parameters for which we saved
+  # their samples
+  #
+  # Args:
+  #   sim: The sim slot of class stanfit
+  #   pars: a character vector of parameter names
+  #
+  # Returns:
+  #   pars without white spaces, if any, if all are valid
+  #   otherwise stop reporting error
+  if (missing(pars)) return(sim$pars_oi)
+  allpars <- c(sim$pars_oi, sim$fnames_oi)
+  .check_pars(allpars, pars)
+}
+
+#' another hacked function
+.check_pars <- function(allpars, pars) {
+  pars_wo_ws <- gsub('\\s+', '', pars)
+  m <- which(match(pars_wo_ws, allpars, nomatch = 0) == 0)
+  if (length(m) > 0)
+    stop("no parameter ", paste(pars[m], collapse = ', '))
+  if (length(pars_wo_ws) == 0)
+    stop("no parameter specified (pars is empty)")
+  unique(pars_wo_ws)
+}
+
+#' yet another hacked function
+.remove_empty_pars <- function(pars, model_dims) {
+  #
+  # Remove parameters that are actually empty, which
+  # could happen when for exmample a user specify the
+  # following stan model code:
+  #
+  # transformed data { int n; n <- 0; }
+  # parameters { real y[n]; }
+  #
+  # Args:
+  #   pars: a character vector of parameters names
+  #   model_dims: a named list of the parameter dimension
+  #
+  # Returns:
+  #   A character vector of parameter names with empty parameter
+  #   being removed.
+  #
+  ind <- rep(TRUE, length(pars))
+  model_pars <- names(model_dims)
+  if (is.null(model_pars)) stop("model_dims need be a named list")
+  for (i in seq_along(pars)) {
+    p <- pars[i]
+    m <- match(p, model_pars)
+    if (!is.na(m) && prod(model_dims[[p]]) == 0)  ind[i] <- FALSE
+  }
+  pars[ind]
+}
+
+#' yet another hacked function
+.pars_total_indexes <- function(names, dims, fnames, pars) {
+# Obtain the total indexes for parameters (pars) in the
+# whole sequences of names that is order by 'column major.'
+# Args:
+#   names: all the parameters names specifying the sequence of parameters
+#   dims:  the dimensions for all parameters, the order for all parameters
+#          should be the same with that in 'names'
+#   fnames: all the parameter names specified by names and dims
+#   pars:  the parameters of interest. This function assumes that
+#     pars are in names.
+# Note: inside each parameter (vector or array), the sequence is in terms of
+#   col-major. That means if we have parameter alpha and beta, the dims
+#   of which are [2,2] and [2,3] respectively.  The whole parameter sequence
+#   are alpha[1,1], alpha[2,1], alpha[1,2], alpha[2,2], beta[1,1], beta[2,1],
+#   beta[1,2], beta[2,2], beta[1,3], beta[2,3]. In addition, for the col-majored
+#   sequence, an attribute named 'row_major_idx' is attached, which could
+#   be used when row major index is favored.
+
+starts <- .calc_starts(dims)
+par_total_indexes <- function(par) {
+  # for just one parameter
+  #
+  p <- match(par, fnames)
+  # note that here when `par' is a scalar, it would
+  # match one of `fnames'
+  if (!is.na(p)) {
+    names(p) <- par
+    attr(p, "row_major_idx") <- p
+    return(p)
+  }
+  p <- match(par, names)
+  np <- .num_pars(dims[[p]])
+  if (np == 0) return(NULL)
+  idx <- starts[p] + seq(0, by = 1, length.out = np)
+  names(idx) <- fnames[idx]
+  attr(idx, "row_major_idx") <- starts[p] + .idx_col2rowm(dims[[p]]) - 1
+  idx
+}
+idx <- lapply(pars, FUN = par_total_indexes)
+nulls <- sapply(idx, is.null)
+idx <- idx[!nulls]
+names(idx) <- pars[!nulls]
+idx
+}
+
+#yet another hacked function
+.calc_starts <- function(dims) {
+  len <- length(dims)
+  s <- sapply(unname(dims), function(d)  .num_pars(d), USE.NAMES = FALSE)
+  cumsum(c(1, s))[1:len]
+}
+
+#' yet another hacked function
+.num_pars <- function(d) prod(d)
+
+#' yet another hacked function
+.idx_col2rowm <- function(d) {
+# Suppose an iteration of samples for an array parameter is ordered by
+# col-major. This function generates the indexes that can be used to change
+# the sequences to row-major.
+# Args:
+#   d: the dimension of the parameter
+len <- length(d)
+if (0 == len) return(1)
+if (1 == len) return(1:d)
+idx <- aperm(array(1:prod(d), dim = d))
+return(as.vector(idx))
+}
+

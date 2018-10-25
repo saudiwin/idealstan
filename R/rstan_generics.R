@@ -20,11 +20,16 @@ setGeneric('id_post_pred',signature='object',
 
 #' Posterior Prediction for \code{idealstan} objects
 #' 
-#' This function will draw from the posterior predictive distribution of the outcome, i.e., all the scores or 
-#'  votes that are used to create the \code{idealstan} model. 
+#' This function will draw from the posterior distribution, whether in terms of the outcome (prediction)
+#' or to produce the log-likelihood values.  
+#'  
+#'  This function can also produce either distribution of the 
+#'  outcomes (i.e., predictions) or the log-likelihood values of the posterior (set option 
+#'  \code{type} to \code{'log_lik'}.
+#'  For more information, see the package vignette How to Evaluate Models.
 #'  
 #'  You can then use functions such as 
-#'  \code{\link[bayesplot]{ppc_bars}} to see how well the model does returning the correct number of categories
+#'  \code{\link{id_plot_ppc}} to see how well the model does returning the correct number of categories
 #'  in the score/vote matrix. 
 #'  Also see \code{help("posterior_predict", package = "rstanarm")}
 #'
@@ -32,6 +37,8 @@ setGeneric('id_post_pred',signature='object',
 #' @param draws The number of draws to use from the total number of posterior draws (default is 100).
 #' @param sample_scores In addition to reducing the number of posterior draws used to 
 #' calculate the posterior predictive distribution.
+#' @param type Whether to produce posterior predictive values (\code{'predict'}, the default),
+#' or log-likelihood values (\code{'log_lik'}). See the How to Evaluate Models vignette for more info.
 #' @param output If the model has an unbounded outcome (Poisson, continuous, etc.), then
 #' specify whether to show the \code{'observed'} data (the default) or the binary 
 #' output \code{'missing'} showing whether an observation was predicted as missing or not
@@ -40,20 +47,25 @@ setGeneric('id_post_pred',signature='object',
 #' @export
 setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100,
                                                                 output='observed',
+                                                                type='predict',
                                                                 sample_scores=NULL,...) {
-
-  all_params <- rstan::extract(object@stan_samples)
+  #all_params <- rstan::extract(object@stan_samples)
   
   n_votes <- nrow(object@score_data@score_matrix)
-  n_iters <- nrow(all_params$sigma_reg_free)
-  
-  if(!is.null(sample_scores)) {
+  n_iters <- (object@stan_samples@stan_args[[1]]$iter-object@stan_samples@stan_args[[1]]$warmup)*length(object@stan_samples@stan_args)
+  if(!is.null(sample_scores) && type!='log_lik') {
     this_sample <- sample(1:n_votes,sample_scores)
   } else {
     this_sample <- 1:n_votes
   }
   
-  these_draws <- sample(1:n_iters,draws)
+  if(type!='log_lik') {
+    these_draws <- sample(1:n_iters,draws)
+  } else {
+    these_draws <- 1:n_iters
+    draws <- n_iters
+  }
+  
   
   print(paste0('Processing posterior replications for ',n_votes,' scores using ',draws,
                ' posterior samples out of a total of ',n_iters, ' samples.'))
@@ -86,16 +98,23 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
   
   # loop over posterior iterations
   
+  L_tp1 <- .extract_nonp(object@stan_samples,'L_tp1')[[1]]
+  A_int_free <- .extract_nonp(object@stan_samples,'A_int_free')[[1]]
+  B_int_free <- .extract_nonp(object@stan_samples,'B_int_free')[[1]]
+  sigma_abs_free <- .extract_nonp(object@stan_samples,'sigma_abs_free')[[1]]
+  sigma_reg_free <- .extract_nonp(object@stan_samples,'sigma_reg_free')[[1]]
+  
+
   pr_absence_iter <- sapply(these_draws, function(d) {
     if(latent_space) {
       # use latent-space formulation for likelihood
       pr_absence <- sapply(1:length(person_points),function(n) {
-        -sqrt((all_params$L_tp1[d,time_points[n],person_points[n]] - all_params$A_int_free[d,bill_points[n]])^2)
+        -sqrt((L_tp1[d,time_points[n],person_points[n]] - A_int_free[d,bill_points[n]])^2)
       }) %>% plogis()
     } else {
       # use IRT formulation for likelihood
       pr_absence <- sapply(1:length(person_points),function(n) {
-        all_params$L_tp1[d,time_points[n],person_points[n]]*all_params$sigma_abs_free[d,bill_points[n]] - all_params$A_int_free[d,bill_points[n]]
+        L_tp1[d,time_points[n],person_points[n]]*sigma_abs_free[d,bill_points[n]] - A_int_free[d,bill_points[n]]
       }) %>% plogis()
       
     }
@@ -106,19 +125,19 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
     if(latent_space) {
       if(inflate) {
         pr_vote <- sapply(1:length(person_points),function(n) {
-          -sqrt((all_params$L_tp1[d,time_points[n],person_points[n]] - all_params$B_int_free[d,bill_points[n]])^2)
+          -sqrt((L_tp1[d,time_points[n],person_points[n]] - B_int_free[d,bill_points[n]])^2)
         }) %>% plogis()
       } else {
         # latent space non-inflated formulation is different
         pr_vote <- sapply(1:length(person_points),function(n) {
-          all_params$sigma_reg_free[d,bill_points[n]] + all_params$sigma_abs_free[d,bill_points[n]] -
-            sqrt((all_params$L_tp1[d,time_points[n],person_points[n]] - all_params$B_int_free[d,bill_points[n]])^2)
+          sigma_reg_free[d,bill_points[n]] + sigma_abs_free[d,bill_points[n]] -
+            sqrt((L_tp1[d,time_points[n],person_points[n]] - B_int_free[d,bill_points[n]])^2)
         }) %>% plogis()
       }
       
     } else {
       pr_vote <- sapply(1:length(person_points),function(n) {
-        all_params$L_tp1[d,time_points[n],person_points[n]]*all_params$sigma_reg_free[d,bill_points[n]] - all_params$B_int_free[d,bill_points[n]]
+        L_tp1[d,time_points[n],person_points[n]]*sigma_reg_free[d,bill_points[n]] - B_int_free[d,bill_points[n]]
       }) %>% plogis()
     }
     
@@ -143,12 +162,12 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
                      `14`=.binary)
   
   # pass along cutpoints as well
-  
+
   if(model_type %in% c(3,4)) {
-    cutpoints <- all_params$steps_votes
+    cutpoints <- .extract_nonp(object@stan_samples,'steps_votes')[[1]]
     cutpoints <- cutpoints[these_draws,]
   } else if(model_type %in% c(5,6)) {
-    cutpoints <- all_params$steps_votes_grm
+    cutpoints <- .extract_nonp(object@stan_samples,'steps_votes_grm')[[1]]
     cutpoints <- cutpoints[these_draws,,]
   } else {
     cutpoints <- 1
@@ -162,17 +181,24 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
                           time_points=time_points,
                           item_points=bill_points,
                           max_val=max_val,
+                          outcome=y,
+                          miss_val=object@score_data@miss_val,
                           person_points=person_points,
-                          sigma_sd=all_params$extra_sd[these_draws],
+                          sigma_sd=.extract_nonp(object,'extra_sd')[these_draws],
                           cutpoints=cutpoints,
-                          type='predict',
+                          type=type,
                           output=output)
-  
+
   # set attributes to pass along sample info
-  
+  attr(out_predict,'chain_order') <- attr(L_tp1,'chain_order')[these_draws]
   attr(out_predict,'this_sample') <- this_sample
   
-  class(out_predict) <- c('matrix','ppd')
+  if(type=='predict') {
+    class(out_predict) <- c('matrix','ppd')
+  } else if(type=='log_lik') {
+    class(out_predict) <- c('matrix','log_lik')
+  }
+  
   return(out_predict)
 })
 
@@ -391,16 +417,31 @@ setGeneric('id_plot_ppc',signature='object',
 #' 
 #' @param object A fitted idealstan object
 #' @param ppc_pred The output of the \code{\link{id_post_pred}} function on a fitted idealstan object
-#' @param person A character vector of the person IDs to calculate their model predictions
+#' @param group A character vector of the person or group IDs 
+#' over which to subset the predictive distribution
 #' @param item A character vector of item IDs to calculate their model predictions
 #' @param ... Other arguments passed on to \code{\link[bayesplot]{ppc_bars}}
 #' @export
 setMethod('id_plot_ppc',signature(object='idealstan'),function(object,
                                                                   ppc_pred=NULL,
-                                                                  person=NULL,
+                                                                 group=NULL,
                                                                     item=NULL,...) {
 
   this_sample <- attr(ppc_pred,'this_sample')
+  
+  # create grouping variable
+  if(!is.null(group)) {
+    if(object@use_groups) {
+      group_var <- factor(object@score_data@score_matrix$group_id, levels=group)
+    } else {
+      group_var <- factor(object@score_data@score_matrix$person_id, levels=group)
+    }
+    
+  } else if(!is.null(item)) {
+    group_var <- factor(object@score_data@score_matrix$item_id, levels=item)
+  } else {
+    grouped <- F
+  }
   
   y <- as.numeric(object@score_data@score_matrix$outcome)[this_sample]
   # check to see if we need to recode missing values from the data if the model_type doesn't handle missing data
@@ -421,80 +462,76 @@ setMethod('id_plot_ppc',signature(object='idealstan'),function(object,
   bill_points <- bill_points[remove_nas]
   time_points <- time_points[remove_nas]
   person_points <- person_points[remove_nas]
+  group_var <- group_var[remove_nas]
+  
+  # create a second one for the grouping variable
+  
+  remove_nas_group <- !is.na(group)
   
   if(!is.null(item) && !is.null(person))
     stop('Please only specify an index to item or person, not both.')
-  
+
   # for discrete outcomes
-  grouped <- T
-  
-  if(!is.null(person)) {
-    if(object@use_groups) {
-      group_var <- as.numeric(object@score_data@score_matrix$group_id %in% person)
-    } else {
-      group_var <- as.numeric(object@score_data@score_matrix$person_id %in% person)
-    }
-    
-  } else if(!is.null(item)) {
-    group_var <- as.numeric(object@score_data@score_matrix$item_id %in% item)
-  } else {
-    grouped <- F
+  if(!is.null(group)) {
+    grouped <- T
   }
   
   if(attr(ppc_pred,'output')=='all') {
     
-    if(grouped && length(unique(group_var))>2) {
+    if(grouped) {
       
-      bayesplot::ppc_bars_grouped(y=y[group_var>0],yrep=ppc_pred[,group_var>0],group=group_var[group_var>0],...)
+      bayesplot::ppc_bars_grouped(y=y[remove_nas_group],yrep=ppc_pred[,remove_nas_group],
+                                  group=group_var[remove_nas_group],...)
       
     } else {
-      if(grouped) {
-        bayesplot::ppc_bars(y=y[group_var>0],yrep=ppc_pred[,group_var>0],...)
-      } else {
         bayesplot::ppc_bars(y=y,yrep=ppc_pred,...)
-      }
       
       
     }
   } else if(attr(ppc_pred,'output')=='observed') {
     # only show observed data for yrep
     y <- na_if(y,object@score_data@miss_val)
-    y <- y[!is.na(y)]
+    to_remove <- !is.na(y)
+    y <- y[to_remove]
+    group_var <- group_var[to_remove]
+    remove_nas_group <- !is.na(group_var)
+    
     if(attr(ppc_pred,'output_type')=='continuous') {
+      ppc_pred <- ppc_pred[,to_remove]
       #unbounded observed outcomes (i.e., continuous)
-      bayesplot::ppc_dens_overlay(y=y,yrep=ppc_pred,...)
+      if(grouped) {
+        bayesplot::ppc_violin_grouped(y=y[remove_nas_group],yrep=ppc_pred[,remove_nas_group],
+                                      group=group_var[remove_nas_group],
+                                      ...)
+      } else {
+        bayesplot::ppc_dens_overlay(y=y,yrep=ppc_pred,...)
+      }
+      
     } else if(attr(ppc_pred,'output_type')=='discrete') {
-      if(grouped && length(unique(group_var))>2) {
+      ppc_pred <- ppc_pred[,to_remove]
+      if(grouped) {
         
-        bayesplot::ppc_bars_grouped(y=y[group_var>0],yrep=ppc_pred[,group_var>0],group=group_var[group_var>0],...)
+        bayesplot::ppc_bars_grouped(y=y[remove_nas_group],yrep=ppc_pred[,remove_nas_group],
+                                    group=group_var[remove_nas_group],...)
         
       } else {
-        if(grouped) {
-          bayesplot::ppc_bars(y=y[group_var>0],yrep=ppc_pred[,group_var>0],...)
-        } else {
           bayesplot::ppc_bars(y=y,yrep=ppc_pred,...)
-        }
-        
-        
       }
     }
 
     
   } else if(attr(ppc_pred,'output')=='missing') {
-    
-    y <- as.numeric(y==miss_val)
-    
-    if(grouped && length(unique(group_var))>2) {
+
+    y <- na_if(y,object@score_data@miss_val)
+    y <- as.numeric(is.na(y))
+    if(grouped) {
       
-      bayesplot::ppc_bars_grouped(y=y[group_var>0],yrep=ppc_pred[,group_var>0],group=group_var[group_var>0],...)
+      bayesplot::ppc_bars_grouped(y=y[remove_nas_group],yrep=ppc_pred[,remove_nas_group],
+                                  group=group_var[remove_nas_group],...)
       
     } else {
-      if(grouped) {
-        bayesplot::ppc_bars(y=y[group_var>0],yrep=ppc_pred[,group_var>0],...)
-      } else {
+
         bayesplot::ppc_bars(y=y,yrep=ppc_pred,...)
-      }
-      
       
     }
   }
@@ -504,3 +541,19 @@ setMethod('id_plot_ppc',signature(object='idealstan'),function(object,
 
   
 })
+
+
+#' Helper Function for `loo` calculation
+#' 
+#' This function accepts a log-likelihood matrix produced by `id_post_pred` and 
+#' extracts the IDs of the MCMC chains. It is necessary to use this function
+#' as the second argument to the `loo` function along with an exponentiated 
+#' log-likelihood matrix. See the package vignette How to Evaluate Models 
+#' for more details.
+#' 
+#' @ll_matrix A log-likelihood matrix as produced by the \code{\link{id_post_pred}}
+#' function
+#' @export
+derive_chain <- function(ll_matrix=NULL) {
+  attr(ll_matrix,'chain_order')
+}
