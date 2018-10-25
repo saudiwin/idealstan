@@ -436,9 +436,10 @@ setMethod('id_plot_ppc',signature(object='idealstan'),function(object,
     } else {
       group_var <- factor(object@score_data@score_matrix$person_id, levels=group)
     }
-    
+    grouped <- T
   } else if(!is.null(item)) {
     group_var <- factor(object@score_data@score_matrix$item_id, levels=item)
+    grouped <- T
   } else {
     grouped <- F
   }
@@ -470,11 +471,6 @@ setMethod('id_plot_ppc',signature(object='idealstan'),function(object,
   
   if(!is.null(item) && !is.null(person))
     stop('Please only specify an index to item or person, not both.')
-
-  # for discrete outcomes
-  if(!is.null(group)) {
-    grouped <- T
-  }
   
   if(attr(ppc_pred,'output')=='all') {
     
