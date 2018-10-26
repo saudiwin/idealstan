@@ -202,202 +202,12 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
   return(out_predict)
 })
 
-#' Generic Method for Extracting Log Likelihood from Stan Objects
-#' 
-#' This function is a generic that is used to match the functions used with \code{\link[loo]{loo}} to calculate
-#' Bayesian information criteria on models.
-#' @param object A fitted \code{idealstan} object
-#' @param ... Other arguments passed onto underlying functions 
-#' @export
-setGeneric('id_log_lik',signature='object',
-           function(object,...) standardGeneric('id_log_lik'))
-
-
-
-#' Extract Log-Likelihood of the Posterior
-#' 
-#' This funciton can then be used to 
-#' fit an information criterion to assess model fit, 
-#' see the package vignettes and the \code{\link[loo]{loo}} package for details.
-#' @param object A fitted \code{idealstan} object
-#' @param draws The number of draws to use from the total number of posterior draws (default is 100).
-#' @param sample_scores In addition to reducing the number of posterior draws 
-#'  used to calculate the posterior predictive distribution,
-#'  you can sample from the scores/votes themselves. 
-#'  To do so, set \code{sample_scores} to the number of scores/votes to sample.
-#' @param r_eff Whether to report a matrix used for calculation of effective samples (see \code{\link[loo]{relative_eff}})
-#' @param ... Other arguments passed on to underlying function (currently unused)
-#' 
-#' @return This function returns an S by N matrix of the log density of posterior draws, 
-#' where S is the size of the 
-#' posterior sample and N is the total number of parameters,
-#' or an array of I by C by N,
-#' where I is the number of MCMC iterations per chain, C is the number of chains from the Stan model object, and N 
-#' is the size of the underlying data. The first matrix can be fed directly to `loo` while the second
-#' array is used for the calculation of effective samples by loo.
-#' @export
-setMethod('id_log_lik',signature(object='idealstan'),function(object,...,draws=100,sample_scores=NULL,
-                                                              r_eff=FALSE) {
-  
-  if(r_eff==F) {
-    # if the point is to get the log likelihood density, use this code
-    all_params <- rstan::extract(object@stan_samples)
-    legis_points <- rep(1:dim(all_params$L_full)[3],times=ncol(all_params$sigma_reg_full))
-    bill_points <- rep(1:ncol(all_params$sigma_reg_full),each=dim(all_params$L_full)[3])
-    time_points <- object@score_data@time[bill_points]
-    y <- c(object@score_data@score_matrix)
-    
-    # check to see if we need to recode missing values from the data if the model_type doesn't handle missing data
-    if(object@model_type %in% c(1,3) & !is.null(object@score_data@miss_val)) {
-      y <- na_if(y,object@score_data@miss_val)
-    }
-    
-    remove_nas <- !is.na(y)
-    y <- y[remove_nas]
-    bill_points <- bill_points[remove_nas]
-    time_points <- time_points[remove_nas]
-    legis_points <- legis_points[remove_nas]
-    
-    n_votes <- length(legis_points)
-    n_iters <- nrow(all_params$sigma_reg_full)
-    
-    if(!is.null(sample_scores)) {
-      this_sample <- sample(1:n_votes,sample_scores)
-    } else {
-      this_sample <- 1:n_votes
-    }
-    
-    these_draws <- sample(1:n_iters,draws)
-    
-    print(paste0('Processing posterior replications for ',n_votes,' scores using ',draws,
-                 ' posterior samples out of a total of ',n_iters, ' samples.'))
-    
-    model_type <- object@model_type
-    
-    rep_func <- switch(as.character(model_type),`4`=.predict_abs_ord_ll,
-                       `1`=.predict_2pl_ll,`2`=.predict_abs_bin_ll,
-                       `3`=.predict_ord_ll)
-    
-    out_predict <- rep_func(all_params=all_params,
-                            legis_points=legis_points,
-                            bill_points=bill_points,
-                            obj=object,
-                            time=time_points,
-                            sample_draws=these_draws,
-                            sample_scores=this_sample,
-                            y=y)
-    
-    class(out_predict) <- c('matrix','ppd')
-    return(out_predict)
-  } else {
-    # conversely, to get the actual log likelihood with chain indices for use to 
-    # calculate r_eff with loo, then use this version
-    
-    all_params_chains <- rstan::extract(object@stan_samples,permuted=F)
-    
-    # loop over chains 
-    
-    over_chains <- lapply(1:dim(all_params_chains)[2], function(c) {
-      
-      
-      all_params <- all_params_chains[,c,]
-      legis_points <- rep(1:nrow(object@score_data@score_matrix),times=ncol(object@score_data@score_matrix))
-      bill_points <- rep(1:ncol(object@score_data@score_matrix),each=nrow(object@score_data@score_matrix))
-      time_points <- object@score_data@time[bill_points]
-      y <- c(object@score_data@score_matrix)
-      
-      # check to see if we need to recode missing values from the data if the model_type doesn't handle missing data
-      if(object@model_type %in% c(1,3) & !is.null(object@score_data@miss_val)) {
-        y <- na_if(y,object@score_data@miss_val)
-      }
-      
-      remove_nas <- !is.na(y)
-      y <- y[remove_nas]
-      bill_points <- bill_points[remove_nas]
-      time_points <- time_points[remove_nas]
-      legis_points <- legis_points[remove_nas]
-      
-      n_votes <- length(legis_points)
-      n_iters <- nrow(all_params)
-      
-      if(!is.null(sample_scores)) {
-        this_sample <- sample(1:n_votes,sample_scores)
-      } else {
-        this_sample <- 1:n_votes
-      }
-      
-      these_draws <- sample(1:n_iters,draws)
-      
-      print(paste0('Processing posterior replications for ',n_votes,' scores using ',draws,
-                   ' posterior samples out of a total of ',n_iters, ' samples.'))
-      
-      model_type <- object@model_type
-      
-      rep_func <- switch(as.character(model_type),`4`=.predict_abs_ord_ll,
-                         `1`=.predict_2pl_ll,`2`=.predict_abs_bin_ll,
-                         `3`=.predict_ord_ll)
-      
-      # create a list from all parameters
-      
-      # first need to reshape L_full - quite a pain
-      
-      L_full <- all_params[,grepl(x = colnames(all_params),
-                                  pattern='L_full')] %>% 
-        as_data_frame %>% 
-        mutate(iter=1:n()) %>% 
-        gather(key='param',value='estimate',-iter) %>% 
-        mutate(time=as.numeric(stringr::str_extract_all(param,"[0-9]+",simplify=T)[1:n()]),
-               id=as.numeric(stringr::str_extract_all(param,"[0-9]+",simplify=T)[(n()+1):(n()*2)])) %>% 
-        select(-param) %>% 
-        spread(key = id,value=estimate)
-      
-      L_full <- select(L_full,-iter) %>% 
-        split(.$time) %>% 
-        lapply(function(this_data) {
-          this_data$time <- NULL
-          return(this_data)
-        }) %>% 
-        abind::abind(along=3) %>% 
-        aperm(perm=c(1,3,2))
-      
-      to_list <- list(sigma_abs_full=all_params[,grepl(x = colnames(all_params),
-                                                  pattern='sigma_abs_full')],
-                      sigma_reg_full=all_params[,grepl(x = colnames(all_params),
-                                                       pattern='sigma_reg_full')],
-                      L_full=L_full,
-                      B_int_full=all_params[,grepl(x = colnames(all_params),
-                                                   pattern='B_int_full')],
-                      A_int_full=all_params[,grepl(x = colnames(all_params),
-                                                   pattern='A_int_full')],
-                      steps_votes=all_params[,grepl(x = colnames(all_params),
-                                                    pattern='steps_votes')],
-                      steps_votes_grm=all_params[,grepl(x = colnames(all_params),
-                                                        pattern='steps_votes_grm')])
-                      
-      
-      
-      out_predict <- rep_func(all_params=to_list,
-                              legis_points=legis_points,
-                              bill_points=bill_points,
-                              obj=object,
-                              time=time_points,
-                              sample_draws=these_draws,
-                              sample_scores=this_sample,
-                              y=y)
-    })
-    
-    # exponentiate and then bind these together as an array
-    out_array <- lapply(over_chains,exp) %>% 
-      abind::abind(along=3) %>% 
-      aperm(perm=c(1,3,2))
-    return(out_array)
-  }
-
-})
-
 #' Generic Method for Plotting Posterior Predictive Distribution
 #' 
-#' This function is a wrapper around \code{\link[bayesplot]{ppc_bars}} that enables the plotting of the posterior
+#' This function is a wrapper around \code{\link[bayesplot]{ppc_bars}},
+#' \code{\link[bayesplot]{ppc_dens_overlay}} and 
+#' \code{\link[bayesplot]{ppc_violin_grouped}}
+#' that enables the plotting of the posterior
 #' predictive distribution from \code{\link{id_post_pred}} against the original data and for the distribution for 
 #' individual persons/legislators and bills/items.
 #' 
@@ -409,9 +219,13 @@ setGeneric('id_plot_ppc',signature='object',
 
 #' Plot Posterior Predictive Distribution for \code{idealstan} Objects
 #' 
-#' This function is a wrapper around \code{\link[bayesplot]{ppc_bars}} that plots the posterior predictive distribution
-#' derived from \code{\link{id_post_pred}} against the original data. You can also specify a legislator/person or
-#' bill/item by specifying the ID of each in the original data as a character vector. 
+#' This function is a wrapper around \code{\link[bayesplot]{ppc_bars}},
+#' \code{\link[bayesplot]{ppc_dens_overlay}} and 
+#' \code{\link[bayesplot]{ppc_violin_grouped} that plots the posterior predictive distribution
+#' derived from \code{\link{id_post_pred}} against the original data. You can also subset the 
+#' posterior predictions over
+#' legislators/persons or
+#' bills/item sby specifying the ID of each in the original data as a character vector. 
 #' Only persons or items can be specified,
 #' not both.
 #' 

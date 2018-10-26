@@ -20,10 +20,3 @@ over which to subset the predictive distribution}
 
 \item{...}{Other arguments passed on to \code{\link[bayesplot]{ppc_bars}}}
 }
-\description{
-This function is a wrapper around \code{\link[bayesplot]{ppc_bars}} that plots the posterior predictive distribution
-derived from \code{\link{id_post_pred}} against the original data. You can also specify a legislator/person or
-bill/item by specifying the ID of each in the original data as a character vector. 
-Only persons or items can be specified,
-not both.
-}

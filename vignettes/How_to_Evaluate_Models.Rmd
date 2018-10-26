@@ -103,7 +103,7 @@ Finally, we can turn to summary measures of model fit that also allow us to comp
 
 ```{r log_lik}
 log_lik_irt_2pl_correct <- id_post_pred(irt_2pl_correct,type='log_lik')
-log_like_irt_2pl_incorrect <- id_post_pred(irt_2pl_incorrect,type='log_lik')
+log_lik_irt_2pl_incorrect <- id_post_pred(irt_2pl_incorrect,type='log_lik')
 
 ```
 
@@ -119,7 +119,7 @@ correct_loo <- loo(log_lik_irt_2pl_correct,
                    r_eff=relative_eff(exp(log_lik_irt_2pl_correct),
                                       chain_id=derive_chain(log_lik_irt_2pl_correct)))
 
-incorrect_loo <- loo(log_like_irt_2pl_incorrect,
+incorrect_loo <- loo(log_lik_irt_2pl_incorrect,
                      cores=2,
                      r_eff=relative_eff(exp(log_lik_irt_2pl_incorrect),
                                       chain_id=derive_chain(log_lik_irt_2pl_incorrect)))
@@ -135,3 +135,4 @@ compare(correct_loo,
         incorrect_loo)
 ```
 
+The first (correct) model is clearly preferred, as we would certainly hope in this extreme example. In less obvious cases, the `elpd` values can help arbitrate between model choices when a theoretical reason for choosing a model does not exist.

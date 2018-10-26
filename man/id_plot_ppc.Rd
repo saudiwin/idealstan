@@ -12,7 +12,10 @@ id_plot_ppc(object, ...)
 \item{...}{Other arguments passed on to underlying functions}
 }
 \description{
-This function is a wrapper around \code{\link[bayesplot]{ppc_bars}} that enables the plotting of the posterior
+This function is a wrapper around \code{\link[bayesplot]{ppc_bars}},
+\code{\link[bayesplot]{ppc_dens_overlay}} and 
+\code{\link[bayesplot]{ppc_violin_grouped}}
+that enables the plotting of the posterior
 predictive distribution from \code{\link{id_post_pred}} against the original data and for the distribution for 
 individual persons/legislators and bills/items.
 }
