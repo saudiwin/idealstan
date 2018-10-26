@@ -1,0 +1,140 @@
+---
+title: "Time-Varying Ideal Points"
+author: "Robert Kubinec"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Introduction to Idealstan}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,warning=FALSE,fig.align = 'center',fig.width = 7,fig.height=4)
+require(idealstan)
+require(dplyr)
+require(ggplot2)
+require(lubridate)
+```
+
+*Note: To report bugs with the package, please file an issue on the [Github page](https://github.com/saudiwin/idealstan/issues).*
+
+*If you use this package, please cite the following:*
+
+Kubinec, Robert. "Generalized Ideal Point Models for Time-Varying and Missing-Data Inference". Working Paper.
+
+This package implements to kinds of time-varying ideal point models. Because these time-varying models are independent of the specific outcome used, time-varying ideal point models can be fit with any outcome/response supported by the package, including binary, ordinal, counts, continuous and positive-continuous data, in addition to the latent space model for binary data. This vignette demonstrates the use of the two time-varying ideal point models and how to decide between them with example data drawn from the 114th Senate. 
+
+```{r example_data}
+data('senate114')
+knitr::kable(head(senate114))
+```
+
+The process to create a time-varying ideal point model is no different than that for creating a static model, except that a column should exist in the data with dates, preferably in `date` or `date-time` format. If you have a character vector of dates that you need to convert to R's `date` format, check out the excellent [lubridate package](https://lubridate.tidyverse.org/). I will demonstrate some of the package's functionality by re-coding the `senate114` dates, which are currently in year-month-day format. That will lead us to estimate one ideal point per day in the sample, which would be a lot of ideal points, as the following histogram of dates shows:
+
+```{r date_hist}
+senate114 %>% 
+  distinct(rollnumber,date) %>% 
+  ggplot(aes(x=date)) +
+  geom_bar() +
+  theme_minimal() + 
+  ylab('Count of Rollcall Votes') +
+  xlab('') +
+  ggtitle('Count of Votes by Day in the 114th Senate')
+```
+
+We see that for many individual days in the sample there are only a few votes at most. In addition, there are a total of `r length(unique(senate114$date))` time points in the sample, which would give us a lot of time points. We could certainly fit a model to all these time points, even with a small amount of data, but for this example I will show how to roll up the dates to the month level. 
+
+Using `lubridate`, we simply change the day of each month to 1:
+
+```{r change_date}
+day(senate114$date) <- 1
+```
+
+We can then plot the aggregated votes:
+
+```{r date_hist}
+senate114 %>% 
+  distinct(rollnumber,date) %>% 
+  ggplot(aes(x=date)) +
+  geom_bar() +
+  theme_minimal() + 
+  ylab('Count of Rollcall Votes') +
+  xlab('') +
+  ggtitle('Count of Votes by Month in the 114th Senate')
+```
+
+We have now reduced the number of time points to `r length(unique(senate114$date))`. Again, we could certainly model every time point in the data, but for the purposes of illustration we reduced the number. Aggregating dates can be useful when there is simply too much granularity in the data, such as dates recording down to each second or hour.
+
+There are two time-varying models included in `idealstan` package, each of which makes different assumptions about how ideal points change over time. It is important to note that neither of these models is superior to the other. Ideal points do not have any natural time process as they are a latent, unobserved construct, so the question is more about which time process is most relevant to the social or physical process being studied. 
+
+The first kind of model included in `idealstan` is known as a random-walk process (also non-stationary time-series and I(1)). This simple model of time implies that the location of an ideal point in the current time point is equal to the position of the ideal point in the prior time point plus some random noise. A helpful analogy is to imagine a frog hopping around a room. It could head in virtually any direction. 
+
+The advantage of the random-walk model is that it allows ideal points to move in any direction. The downside is that it can assume too much change in the ideal point process. It also does not provide a great deal of information about the time series other than the variance parameter of the time series that indicate the average rate of change over time (i.e., how bouncy the time series is). Furthermore, random-walk models change significantly when other covariates are included in the model, as an additional covariate that has a constant effect over time will push the time-series in a single direction. 
+
+Despite these limitations, this model is still useful, especially in two situations. First, when little is known about the time process/social situation, this model makes the most minimal assumptions about how ideal points change. Second, when the time series is of a relatively long time period, then the time series is likely to have some kind of random-walk nature, especially if there is no natural limit. For example, when looking at legislature voting data, ideal points may follow a random-walk pattern when looking at a legislator's entire career over decades. 
+
+The second model included in `idealstan` is a stationary time series model (also called an AR(1) or first-order autoregressive time series). A stationary time-series is so called because it must return over time to a long-term average or mean. Change over time is conceived of as shocks that push the time series away from its long-term average. The AR(1) model includes additional parameters that measure how fast a time-series will return to its long-term average. A good empirical example for this model is economic growth over time. There are periods when "growth shocks" occur, such as recessions and boom times. Overall, though, economic growth for a specific country will tend towards some long-term average rate of growth. Economic growth can't simply move off in any direction, especially in an upward direction, as that would over-heat the economy and result in massive inflation.
+
+Returning to the analysis of legislatures, a stationary model might be more appropriate for shorter time spans, such as the one in our Senate data that covers two years. Over this period of time, ideal points might experience shocks, such as scandals, but legislators are unlikely to change their fundamental policy positions in the course of a year. As such, a stationary model may be more appropriate.
+
+In addition, stationary models allow us to fit covariates that have a more meaningful interpretation: the estimates of covariates represent shocks to the ideal points away from their long-term average. We can even measure the time it takes for an ideal point process to return to its long-term average after experiencing the shock, such as if we included a covariate for 9/11 in the model.
+
+To show what these models look like, we will fit each model to the `senate114` data in turn. We use the `vb` option to produce variational estimates of the true posterior; these approximations are much faster to fit than the full model but usually have some distortions. For finished analysis we would want to use the full sampler (`use_vb=FALSE`). 
+
+To fit the random walk model, we first create data in which we pass the name of the column of dates for each bill/item to the `time_id` option of `id_make`:
+
+```{r create_data}
+senate_data <- id_make(senate114,outcome = 'cast_code',
+                       person_id = 'bioname',
+                       item_id = 'rollnumber',
+                       group_id= 'party_code',
+                       time_id='date',
+                       miss_val='Absent')
+```
+
+We then pass this object to the `id_estimate` function and specify `'random_walk'` in the `vary_ideal_pts` option. We also use `model_type=2` to select a binary model (yes/no votes) that adjust for the missing data (legislator absences). We pass the names of two Senators to restrict their ideal points for identification. For the random walk model, only the first time points for these Senators will be fixed. 
+
+```{r create_data}
+sen_est <- id_estimate(senate_data,
+                model_type = 2,
+                 use_vb = T,
+                fixtype='vb_partial',
+                vary_ideal_pts='random_walk',
+                 restrict_ind_high = "WARREN, Elizabeth",
+                 restrict_ind_low="BARRASSO, John A.",
+            seed=84520)
+```
+
+Given the fitted model, we can now plot the ideal points. We will turn off the option for showing the uncertainty interval as there are a lot of lines, one for reach of the 100 Senators:
+
+```{r plo_rw1}
+id_plot_legis_dyn(sen_est,use_ci = F)
+```
+
+This plot does now show very much that is particularly interesting. Most of the ideal points are not changing over time, except for some of the moderate Democrats that become slightly more conservative over time. This small amount of change is not surprising as the Senate has become highly polarized and people are not shifting their policy positions.
+
+However, we can also change the model's parameters to induce more change over time. By default, `idealstan` restricts the over-time change in ideal points to have an SD of no more than .1. Restricting the variance this low helps with identification, however, it also prevents the ideal points from changing too much, such as switching signs from one time point to the next. We can relax that parameter and see if we get slightly more variation by increasing the `restrict_var_high` option have an SD of .5:
+
+```{r more_rw_var}
+sen_est <- id_estimate(senate_data,
+                model_type = 2,
+                 use_vb = T,
+                restrict_var_high = .5,
+                fixtype='vb_partial',
+                vary_ideal_pts='random_walk',
+                 restrict_ind_high = "WARREN, Elizabeth",
+                 restrict_ind_low="BARRASSO, John A.",
+            seed=84520)
+
+id_plot_legis_dyn(sen_est,use_ci = F)
+```
+
+We now see slightly more movement, but not much mroe. Elizabeth Warren appears to move more, but we constrained her first time point so that may indicate why she moved over time. 
+
+We can also look at the variance of the ideal points to see which of the Senators had the highest variance in their ideal points:
+
+```{r rw_var_est}
+id_plot_legis_var(sen_est)
+```

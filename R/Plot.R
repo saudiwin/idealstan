@@ -232,6 +232,140 @@ id_plot_legis <- function(object,return_data=FALSE,
   
 }
 
+#' Plot Legislator/Person Over-time Variances
+#' 
+#' This function can be used on a fitted \code{idealstan} object to plot the over-time variances 
+#' (average rates of change in ideal points) for all the persons/legislators in the model.
+#' 
+#' This function will plot the person/legislator over-time variances as a vertical
+#' dot plot with associated high-density posterior interval (can be changed 
+#' with \code{high_limit} and \code{low_limit} options). 
+#' 
+#' @param object A fitted \code{idealstan} object
+#' @param return_data If true, the calculated legislator/bill data is returned along with the plot in a list
+#' @param high_limit The quantile (number between 0 and 1) for the high end of posterior uncertainty to show in plot
+#' @param low_limit The quantile (number between 0 and 1) for the low end of posterior uncertainty to show in plot
+#' @param item_plot The IDs (character vector) of the bill/item midpoints to overlay on the plot
+#' @param text_size_label ggplot2 text size for legislator labels
+#' @param text_size_group ggplot2 text size for group text used for points
+#' @param point_size If \code{person_labels} and \code{group_labels} are set to \code{FALSE}, controls the size of the points plotted.
+#' @param hjust_length horizontal adjustment of the legislator labels
+#' @param person_labels if \code{TRUE}, use the person_id column to plot labels for the person (legislator) ideal points
+#' @param group_labels if \code{TRUE}, use the group column to plot text markers for the group (parties) from the person/legislator data
+#' @param person_ci_alpha The transparency level of the dot plot and confidence bars for the person ideal points
+#' @param group_color If \code{TRUE}, give each group/bloc a different color
+#' @param group_overlap Whether to prevent the text from overlapping itself (ggplot2 option)
+#' @param ... Other options passed on to plotting function, currently ignored
+#' @import ggplot2
+#' @import lazyeval
+#' @importFrom rlang parse_quosure as_quosure
+#' @export
+#' @examples 
+#' 
+#' # To demonstrate, we load the 114th Senate data and fit a time-varying model
+#' 
+#' data('senate114_fit')
+#' 
+#' \dontrun{
+#' senate_data <- id_make(senate114,outcome = 'cast_code',
+#' person_id = 'bioname',
+#' item_id = 'rollnumber',
+#' group_id= 'party_code',
+#' time_id='date',
+#' miss_val='Absent')
+#' 
+#'  senate114_time_fit <- id_estimate(senate_data,
+#'  model_type = 2,
+#'  use_vb = T,
+#'  fixtype='vb_partial',
+#'  vary_ideal_pts='random_walk',
+#'  restrict_ind_high = "WARREN, Elizabeth",
+#'  restrict_ind_low="BARRASSO, John A.",
+#'  seed=84520)
+#' # We plot the variances for all the Senators
+#' 
+#' id_plot_legis_var(senate114_fit,item_plot=5)
+#' }
+id_plot_legis <- function(object,return_data=FALSE,
+                          high_limit=.95,
+                          low_limit=.05,
+                          text_size_label=2,text_size_group=2.5,
+                          point_size=1,
+                          hjust_length=-0.7,
+                          person_labels=TRUE,
+                          group_labels=F,
+                          person_ci_alpha=0.1,group_color=TRUE,
+                          group_overlap=FALSE,
+                          ...) {
+  
+  person_params <- .prepare_legis_data(object,
+                                       high_limit=high_limit,
+                                       low_limit=low_limit,
+                                       type='variance')
+  
+  # Default plot: group names plotted as points
+  
+  if(group_color==TRUE) {
+    outplot <- person_params %>% ggplot() +
+      geom_linerange(aes(x=reorder(person_id,median_pt),
+                         ymin=low_pt,ymax=high_pt,color=group_id),
+                     alpha=person_ci_alpha,
+                     show.legend = FALSE) +
+      geom_text(aes(x=reorder(person_id,median_pt),
+                    y=median_pt,label=reorder(group_id,median_pt),
+                    color=group_id),size=text_size_group,
+                check_overlap = group_overlap,show.legend = FALSE) 
+  } else if(group_color==FALSE) {
+    outplot <- person_params %>% ggplot() +
+      geom_linerange(aes(x=reorder(person_id,median_pt),ymin=low_pt,ymax=high_pt),alpha=person_ci_alpha) +
+      geom_text(aes(x=reorder(person_id,median_pt),y=median_pt,label=reorder(group_id,median_pt)),size=text_size_group,check_overlap = group_overlap)
+    
+  }
+  
+  # determine if legislator names should be plotted
+  
+  if(person_labels==TRUE & group_color==TRUE) {
+    outplot <- outplot + geom_text(aes(x=reorder(person_id,median_pt),y=median_pt,label=reorder(person_id,median_pt),color=group_id),
+                                   check_overlap=TRUE,hjust=hjust_length,size=text_size_label,show.legend = FALSE)
+  } else if(person_labels==TRUE & group_color==FALSE) {
+    outplot <- outplot + geom_text(aes(x=reorder(person_id,median_pt),y=median_pt,label=reorder(person_id,median_pt)),
+                                   check_overlap=TRUE,hjust=hjust_length,size=text_size_label)
+  }
+  
+  
+  # Add a dirty trick to enable the legend to show what group labels instead of just the letter 'a'
+  
+  if(group_color==TRUE) {
+    
+    outplot <- outplot + geom_point(aes(x=reorder(person_id,median_pt),y=median_pt,color=group_id),size=0,stroke=0) +
+      guides(colour = guide_legend(title="",override.aes = list(size = 5)))
+  }
+  
+  if(show_true==TRUE) {
+    outplot <- outplot + geom_point(aes(x=reorder(person_id,median_pt),y=true_vals),color='black',shape=2)
+    
+  }
+  
+  # Add theme elements
+  
+  outplot <- outplot  + theme_minimal() + ylab("") + xlab("") +
+    theme(axis.text.y=element_blank(),panel.grid.major.y = element_blank()) + coord_flip() 
+  
+  
+  if(return_data==TRUE) {
+    
+    return_list <- list(outplot=outplot,plot_data=person_params)
+    if(!is.null(item_plot)) {
+      return_list$bill_data <- bill_pos
+    }
+    return(return_list)
+    
+  } else (
+    return(outplot)
+  )
+  
+}
+
 #' Function to plot dynamic ideal point models
 #' 
 #' This function can be used on a fitted \code{idealstan} object to plot the relative positions and 

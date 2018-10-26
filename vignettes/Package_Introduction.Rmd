@@ -131,17 +131,17 @@ data('senate114')
 
 knitr::kable(select(head(senate114),1:8))
 
-hist(senate114$cast_code)
+table(senate114$cast_code)
 
 ```
 
-First, you can see that the data are in long form because there is one row for every vote cast by a legislator, in this case Senator Sessions. The outcome variable is `cast_code`. We also know the dates of the individual items (rollcalls), which we will use in the time-varying ideal point vignette to model time-varying ideal points.
+First, you can see that the data are in long form because there is one row for every vote cast by a legislator, in this case Senator Sessions. The outcome variable is `cast_code`. This variable is coded as a factor variable with the levels in the order we would want for a binary outcome, i.e, `'No'` is before `'Yes'`. We also know the dates of the individual items (rollcalls), which we will use in the time-varying ideal point vignette to model time-varying ideal points.
 
-The plot shows that there are roughly twice as many yes votes (value of 2) versus no votes (value of 1), with a small minority of absences (value of 3). In this case, absences can be counted as missing data.
+The table shows that there are roughly twice as many yes votes versus no votes, with a small minority of absences. In this case, absences can be counted as missing data.
 
 To create an `idealdata` object for modeling from our long data frame, we pass it to the `id_make` function and specify the names of the columns that correspond to person IDs, item IDs, group IDs (i.e., party), time IDs and the outcome, although only person, item and outcome are required for the function to work for a static model. 
 
-We also need to be sure to code the outcome so that it corresponds to our binary outcome (yes/no) model with missing-data marked as legislator absences. First, we want to specify that the value of 9 in the data should be marked as missing by passing this value to the `miss_val` option as this value implies that the legislator chose to miss the vote. We also want to specify the `low_val` and `high_val` options to signify which values correspond to `yes` and `no` votes (i.e, the binary 0/1 outcome). In this dataset, a value of 6 actually means a no vote while a 1 signifies a yes vote. Finally we set 0 as `exclude_level` because this value signifies that the legislator was not a member of the legislature during this time, which we can consider missing data that does not need to be included in the model. If the legislator did not have a choice in the matter, then there is no reason to model it using the hurdle function as there is no way the legislator could have shown up to vote, and hence is ignorable.
+Because our outcome is discrete and already coded as a factor, we only need to specify the `miss_val` option to tell `id_make` which value of the outcome should be considered as missing data. If we the outcome was a different type, such as character or numeric, we would also want to specify the `low_val` and `high_val` options to signify the ordering of the outcomes, whether for ordinal or binary data (for continuous or unbounded outcomes like the Poisson model, only `miss_val` needs to be passed to the function). If there is missing data that we want to ignore, i.e. not model in the function but rather remove before estimation, then we can also pass that value of the data as the `exclude_level` option.
 
 Note that there are many other columns in the `senate114` data. These can be used as person or item/bill covariates, as is discussed at the end of the vignette, but are essentially ignored unless specified to the `id_make` function.
 
@@ -151,11 +151,7 @@ senate_data <- id_make(senate114,outcome = 'cast_code',
                        item_id = 'rollnumber',
                        group_id= 'party_code',
                        time_id='date',
-                       miss_val=9,
-                       exclude_level = 0,
-                       low_val=6,
-                       high_val=1,
-                       ordinal=FALSE,inflate = TRUE)
+                       miss_val='Absent')
 
 ```
 
@@ -238,11 +234,7 @@ senate_data <- id_make(senate114,outcome = 'cast_code',
                        group_id= 'party_code',
                        time_id='date',
                        person_cov = ~party_code*age,
-                       miss_val=9,
-                       exclude_level = 0,
-                       low_val=6,
-                       high_val=1,
-                       ordinal=FALSE,inflate = TRUE)
+                       miss_val='Absent')
 
 sen_est_cov <- id_estimate(senate_data,
                 model_type = 1,

@@ -29,7 +29,7 @@ A big part of the purpose of `idealstan` is to give people different options in 
 We first begin by simulating data for a standard IRT 2-PL ideal point model but with strategically missing data:
 
 ```{r sim_irt_2pl}
-irt_2pl <- id_sim_gen(ordinal=FALSE,inflate=TRUE)
+irt_2pl <- id_sim_gen(inflate=TRUE)
 ```
 
 We can then fit two ideal point models to the same data, one that uses the correct binomial model for a 0/1 binary outcome, and the second that tries to fit a Poisson count model to this same binary data.

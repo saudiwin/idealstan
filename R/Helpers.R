@@ -563,9 +563,9 @@
 .prepare_legis_data <- function(object,
                                 high_limit=NULL,
                                 low_limit=NULL,
-                                aggregate=TRUE) {
+                                aggregate=TRUE,
+                                type='ideal_pts') {
   
-  # 
   if(length(unique(object@score_data@score_matrix$time_id))>1) {
     
     person_params <- as.data.frame(object@stan_samples,pars='L_tp1')
@@ -610,7 +610,17 @@
     
   } else {
     # need to match estimated parameters to original IDs
-    person_params <- as.data.frame(object@stan_samples,pars='L_full')
+    if(type=='ideal_pts') {
+      person_params <- as.data.frame(object@stan_samples,pars='L_full')
+    } else if(type=='variance') {
+      # load time-varying person variances
+      if(object@score_data@restrict_var) {
+        person_params <- as.data.frame(object@stan_samples,pars='time_var_restrict')
+      } else {
+        person_params <- as.data.frame(object@stan_samples,pars='time_var')
+      }
+    }
+    
     person_params <- person_params %>% gather(key = legis,value=ideal_pts) 
     # get ids out 
     

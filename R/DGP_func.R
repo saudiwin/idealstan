@@ -61,8 +61,7 @@
                         miss_val = 2,
                         high_val = 1,
                         low_val = 0,
-                        middle_val = NULL,
-                        inflate=inflate)
+                        middle_val = NULL)
     
     return(out_data) 
   } else if(type=='predict') {
@@ -166,9 +165,7 @@
                         miss_val = as.integer(ordinal_outcomes)+1,
                         high_val = ordinal_outcomes,
                         low_val = 1,
-                        middle_val = 2:(ordinal_outcomes-1),
-                        inflate=inflate,
-                        ordinal=T)
+                        middle_val = 2:(ordinal_outcomes-1))
     
     return(out_data) 
   } else if(type=='predict') {
@@ -312,9 +309,7 @@
                         miss_val = as.integer(ordinal_outcomes)+1,
                         high_val = ordinal_outcomes,
                         low_val = 1,
-                        middle_val = 2:(ordinal_outcomes-1),
-                        inflate=inflate,
-                        ordinal=T)
+                        middle_val = 2:(ordinal_outcomes-1))
     
     return(out_data)                      
   } else if(type=='predict') {
@@ -439,7 +434,6 @@
     out_data <- id_make(score_data=out_data,
                         middle_val = NULL,
                         miss_val=max(votes)+1,
-                        inflate=inflate,
                         unbounded=T)
     
     return(out_data) 
@@ -520,7 +514,6 @@
     out_data <- id_make(score_data=out_data,
                         middle_val = NULL,
                         miss_val=max(votes)+1,
-                        inflate=inflate,
                         unbounded=T)
     
     return(out_data) 
@@ -601,7 +594,6 @@
     out_data <- id_make(score_data=out_data,
                         middle_val = NULL,
                         miss_val=max(votes)+1,
-                        inflate=inflate,
                         unbounded=T)
     
     return(out_data) 

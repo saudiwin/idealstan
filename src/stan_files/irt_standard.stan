@@ -63,7 +63,7 @@ transformed data {
 	int Y_new[N];
 	int num_var_free; // whether to restrict variance parameters
 	int num_var_restrict;
-	real jacob_mean_correct; // log absolute determinant of the Jacobian of the pinned mean (if used for time-series)
+	real N_real; // used to adjust jacobian for mean restriction
 	
 	// need to assign a type of outcome to Y based on the model (discrete or continuous)
 	// to do this we need to trick Stan into assigning to an integer. 
@@ -82,12 +82,8 @@ if(restrict_var==1) {
   num_var_restrict=0;
   num_var_free=num_legis;
 }
-  if(T>1) {
-    jacob_mean_correct = jacob_mean(T,T);
-  } else {
-    jacob_mean_correct = 1;
-  }
 
+  N_real = N; // promote N to type real
   
 }
 
@@ -200,7 +196,7 @@ model {
 
 if(T>1 && restrict_mean==1) {
   mean(L_tp1[,restrict_mean_ind]) ~ normal(restrict_mean_val,.01);
-  target += jacob_mean_correct; // this is a constant as it only varies with the count of the parameters
+  target += jacob_mean(N,N_real); // this is a constant as it only varies with the count of the parameters
 }
   
 
