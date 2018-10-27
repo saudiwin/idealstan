@@ -74,9 +74,6 @@ estimation rather than modeled explicitly.}
 
 \item{simulation}{If \code{TRUE}, simulated values are saved in the \code{idealdata} object for 
 later plotting with the \code{\link{id_plot_sims}} function}
-
-\item{inflate}{If \code{TRUE}, the score matrix is set up to enable modeling of 
-missing data/absences (\code{miss_val}) as an inflation model in \code{\link{id_estimate}}}
 }
 \value{
 A \code{idealdata} object that can then be used in the \code{\link{id_estimate}} function 
@@ -139,8 +136,13 @@ library(dplyr)
 data('senate114')
 
 to_idealstan <-   id_make(score_data = senate114,
-high_val='Yes',
-low_val='No',
-miss_val='Absent')
+               outcome = 'cast_code',
+               person_id = 'bioname',
+               item_id = 'rollnumber',
+               group_id= 'party_code',
+               time_id='date',
+               high_val='Yes',
+               low_val='No',
+               miss_val='Absent')
 
 }

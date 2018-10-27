@@ -264,7 +264,7 @@ setMethod('summary',signature(object='idealstan'),
             if(pars=='items') {
               # a bit trickier with item points
               item_plot <- unique(object@score_data@score_matrix$item_id)
-              if(object@model_type %in% c(1,2) || (model_type>6 && model_type<13)) {
+              if(object@model_type %in% c(1,2) || (object@model_type>6 && object@model_type<13)) {
                 # binary models and continuous
                 item_points <- lapply(item_plot,.item_plot_binary,object=object,
                                       low_limit=low_limit,
@@ -516,6 +516,6 @@ setGeneric('stan_trace',
 setMethod('stan_trace',signature(object='idealstan'),
           function(object,par='L_full[1]') {
             
-        rstan::stan_trace(object@stan_samples,pars = par)
+        rstan::stan_trace(object@stan_samples,par=NULL)
           })
 

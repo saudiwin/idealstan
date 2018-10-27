@@ -38,8 +38,6 @@ id_plot_legis_var(object, return_data = FALSE, include = NULL,
 \item{group_color}{If \code{TRUE}, give each group/bloc a different color}
 
 \item{...}{Other options passed on to plotting function, currently ignored}
-
-\item{item_plot}{The IDs (character vector) of the bill/item midpoints to overlay on the plot}
 }
 \description{
 This function can be used on a fitted \code{idealstan} object to plot the over-time variances 

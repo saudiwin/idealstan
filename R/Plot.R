@@ -64,7 +64,7 @@ id_plot_legis <- function(object,return_data=FALSE,
                        hjust_length=-0.7,
                        person_labels=TRUE,
                        group_labels=F,
-                       person_ci_alpha=0.1,
+                       person_ci_alpha=0.2,
                        show_true=FALSE,group_color=TRUE,
                        hpd_limit=10,
                        sample_persons=NULL,...) {
@@ -75,6 +75,12 @@ id_plot_legis <- function(object,return_data=FALSE,
   
   if(!is.null(include)) {
     person_params <- filter(person_params, person_id %in% include)
+  }
+  
+  if(group_color) {
+    groupc <- ~groupc
+  } else {
+    groupc <- NA
   }
 
   # sample for plot only
@@ -109,7 +115,7 @@ id_plot_legis <- function(object,return_data=FALSE,
   if(!is.null(item_plot)) {
     
     # loop over the item IDs and calculate midpoints and HPDs
-    if(object@model_type %in% c(1,2) || (model_type>6 && model_type<13)) {
+    if(object@model_type %in% c(1,2) || (object@model_type>6 && object@model_type<13)) {
       # binary models and continuous
       item_points <- lapply(item_plot,.item_plot_binary,object=object,
                             low_limit=low_limit,
@@ -156,30 +162,27 @@ id_plot_legis <- function(object,return_data=FALSE,
   
   # Default plot: group names plotted as points
 
-  if(group_color==TRUE && is.null(item_plot)) {
+  if(is.null(item_plot)) {
     outplot <- person_params %>% ggplot() +
-      geom_linerange(aes(x=reorder(person_id,median_pt),
-                         ymin=low_pt,ymax=high_pt,color=group_id),
+      geom_linerange(aes_(x=~reorder(person_id,median_pt),
+                         ymin=~low_pt,ymax=~high_pt,color=~groupc),
                      alpha=person_ci_alpha,
                      show.legend = FALSE) +
-      geom_text(aes(x=reorder(person_id,median_pt),
-                    y=median_pt,label=reorder(group_id,median_pt),
-                    color=group_id),size=text_size_group,
+      geom_text(aes_(x=~reorder(person_id,median_pt),
+                    y=~median_pt,label=~reorder(group_id,median_pt),
+                    color=~groupc),size=text_size_group,
                 show.legend = FALSE,
                 check_overlap = T) 
-  } else if(group_color==FALSE && is.null(item_plot)) {
-    outplot <- person_params %>% ggplot() +
-      geom_linerange(aes(x=reorder(person_id,median_pt),ymin=low_pt,ymax=high_pt),alpha=person_ci_alpha) +
-      geom_text(aes(x=reorder(person_id,median_pt),y=median_pt,
-                    label=reorder(group_id,median_pt)),size=text_size_group,
-                check_overlap = T)
       
   } else {
     # if an item plot is being made, use the actual outcomes as points
+
     outplot <- person_params %>% ggplot() +
-      geom_linerange(aes(x=reorder(person_id,median_pt),ymin=low_pt,ymax=high_pt),alpha=person_ci_alpha) +
-      geom_text(aes(x=reorder(outcome,median_pt),y=median_pt,
-                    label=reorder(group_id,median_pt)),size=text_size_group,
+      geom_linerange(aes_(x=~reorder(person_id,median_pt),colour=~groupc,
+                         ymin=~low_pt,ymax=~high_pt),alpha=person_ci_alpha) +
+      geom_text(aes_(x=~reorder(person_id,median_pt),y=~median_pt,
+                    colour=~groupc,
+                    label=~reorder(outcome,median_pt)),size=text_size_group,
                 check_overlap = T)
     
   }
@@ -264,7 +267,6 @@ id_plot_legis <- function(object,return_data=FALSE,
 #' @param include Specify a list of person/legislator IDs to include in the plot (all others excluded)
 #' @param high_limit The quantile (number between 0 and 1) for the high end of posterior uncertainty to show in plot
 #' @param low_limit The quantile (number between 0 and 1) for the low end of posterior uncertainty to show in plot
-#' @param item_plot The IDs (character vector) of the bill/item midpoints to overlay on the plot
 #' @param text_size_label ggplot2 text size for legislator labels
 #' @param text_size_group ggplot2 text size for group text used for points
 #' @param point_size If \code{person_labels} and \code{group_labels} are set to \code{FALSE}, controls the size of the points plotted.
@@ -419,9 +421,6 @@ id_plot_legis_var <- function(object,return_data=FALSE,
 #' @param plot_text If \code{TRUE}, will plot \code{person_labels} over the lines.
 #' @param use_ci Whether or not high-posterior density intervals (credible intervals) should be
 #' plotted over the estimates (turn off if the plot is too busy)
-#' @param show_score Show only person/legislator ideal points that have a certain score/vote category from the outcome (character string)
-#' @param item_plot_type Whether to show 'both' absence and regular item/bill midpoints if the model is absence-inflated, the default,
-#' or 'Absence Points' for only the absence midpoints or 'Vote Points' for only the non-inflated midpoints
 #' @param show_true Whether to show the true values of the legislators (if model has been simulated)
 #' @param hpd_limit The greatest absolute difference in high-posterior density interval shown for any point. Useful for excluding imprecisely estimated persons/legislators from the plot. Leave NULL if you don't want to exclude any.
 #' @param sample_persons If you don't want to use the full number of persons/legislators from the model, enter a proportion (between 0 and 1) to select
@@ -443,7 +442,6 @@ id_plot_legis_dyn <- function(object,return_data=FALSE,
                               use_ci=TRUE,
                               person_line_alpha=0.3,
                               person_ci_alpha=0.8,
-                              show_score=NULL,
                               item_plot_type='non-inflated',show_true=FALSE,group_color=TRUE,
                               hpd_limit=10,
                               sample_persons=NULL,
@@ -462,7 +460,7 @@ id_plot_legis_dyn <- function(object,return_data=FALSE,
   if(!is.null(item_plot)) {
     
     # loop over the item IDs and calculate midpoints and HPDs
-    if(object@model_type %in% c(1,2) || (model_type>6 && model_type<13)) {
+    if(object@model_type %in% c(1,2) || (object@model_type>6 && object@model_type<13)) {
       # binary models and continuous
       item_points <- lapply(item_plot,.item_plot_binary,object=object,
                             low_limit=low_limit,
@@ -516,7 +514,7 @@ id_plot_legis_dyn <- function(object,return_data=FALSE,
   }
   
   if(object@use_groups) {
-    base_id <- ~group_id
+    base_id <- ~groupc
   } else {
     base_id <- ~person_id
   }
@@ -566,7 +564,7 @@ id_plot_legis_dyn <- function(object,return_data=FALSE,
       
       outplot <- outplot + 
         geom_line(aes_(y=~median_pt,group=base_id,
-                       colour=~group_id),
+                       colour=~groupc),
                   #alpha=person_ci_alpha,
                   size=line_size)
     } else {

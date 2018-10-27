@@ -13,7 +13,12 @@ if(getRversion() >= "2.15.1")  utils::globalVariables(c('get_samples2',
                                                         'time_id',
                                                         'time_point',
                                                         'true_pt',
-                                                        'variables'))
+                                                        'variables',
+                                                        'item_high',
+                                                        'item_low',
+                                                        'item_median',
+                                                        '5%',
+                                                        '95%'))
 
 .Random.seed <-
 c(403L, 10L, -25182749L, -1011638655L, -1866196752L, -1436149874L, 

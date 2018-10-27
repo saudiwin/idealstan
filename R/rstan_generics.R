@@ -95,6 +95,7 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
   
   model_type <- object@model_type
   latent_space <- model_type %in% c(13,14)
+  inflate <- model_type %in% c(2,4,6,8,10,12,14)
   # we can do the initial processing here
   
   # loop over posterior iterations
@@ -178,7 +179,7 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
                           pr_vote=pr_vote_iter,
                           N=length(person_points),
                           ordinal_outcomes=length(unique(object@score_data@score_matrix$outcome)),
-                          inflate=model_type %in% c(2,4,6,8,10,12,14),
+                          inflate=inflate,
                           time_points=time_points,
                           item_points=bill_points,
                           max_val=max_val,
@@ -285,7 +286,7 @@ setMethod('id_plot_ppc',signature(object='idealstan'),function(object,
   
   remove_nas_group <- !is.na(group)
   
-  if(!is.null(item) && !is.null(person))
+  if(!is.null(item) && !is.null(group))
     stop('Please only specify an index to item or person, not both.')
   
   if(attr(ppc_pred,'output')=='all') {

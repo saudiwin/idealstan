@@ -55,8 +55,6 @@
 #' (i.e., years in whole numbers).
 #' @param group_id Optional column name of a person/legislator group IDs (i.e., parties) in \code{score_data}. 
 #' Optional, default is \code{'group_id'}. Should be integer, character or factor.
-#' @param inflate If \code{TRUE}, the score matrix is set up to enable modeling of 
-#' missing data/absences (\code{miss_val}) as an inflation model in \code{\link{id_estimate}}
 #' @param person_cov A one-sided formula that specifies the covariates
 #' in \code{score_data} that will be used to hierarchically model the person/legislator ideal points
 #' @param group_cov A one-sided formula that specifies the covariates
@@ -94,6 +92,7 @@
 #' to fit a model.
 #' @export
 #' @import rstan
+#' @importFrom rlang `:=`
 #' @import dplyr
 #' @importFrom tidyr gather spread
 #' @import bayesplot
@@ -101,6 +100,7 @@
 #' @import Rcpp
 #' @import methods
 #' @importFrom stats dbinom median plogis quantile reorder rexp rlnorm runif sd step rnorm
+#' @importFrom utils person
 #' @useDynLib idealstan, .registration = TRUE
 #' @examples 
 #' # You can either use a pscl rollcall object or a vote/score matrix 
@@ -114,9 +114,14 @@
 #' data('senate114')
 #' 
 #' to_idealstan <-   id_make(score_data = senate114,
-#' high_val='Yes',
-#' low_val='No',
-#' miss_val='Absent')
+#'                outcome = 'cast_code',
+#'                person_id = 'bioname',
+#'                item_id = 'rollnumber',
+#'                group_id= 'party_code',
+#'                time_id='date',
+#'                high_val='Yes',
+#'                low_val='No',
+#'                miss_val='Absent')
 #' 
 id_make <- function(score_data=NULL,
                     outcome='outcome',
@@ -546,6 +551,11 @@ id_make <- function(score_data=NULL,
 #' \dontrun{
 #' 
 #' to_idealstan <-   id_make(score_data = senate114,
+#' outcome = 'cast_code',
+#' person_id = 'bioname',
+#' item_id = 'rollnumber',
+#' group_id= 'party_code',
+#' time_id='date',
 #' high_val='Yes',
 #' low_val='No',
 #' miss_val='Absent')
