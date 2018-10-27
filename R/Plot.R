@@ -156,7 +156,7 @@ id_plot_legis <- function(object,return_data=FALSE,
   
   # Default plot: group names plotted as points
 
-  if(group_color==TRUE && !is.null(item_plot)) {
+  if(group_color==TRUE && is.null(item_plot)) {
     outplot <- person_params %>% ggplot() +
       geom_linerange(aes(x=reorder(person_id,median_pt),
                          ymin=low_pt,ymax=high_pt,color=group_id),
@@ -167,7 +167,7 @@ id_plot_legis <- function(object,return_data=FALSE,
                     color=group_id),size=text_size_group,
                 show.legend = FALSE,
                 check_overlap = T) 
-  } else if(group_color==FALSE && !is.null(item_plot)) {
+  } else if(group_color==FALSE && is.null(item_plot)) {
     outplot <- person_params %>% ggplot() +
       geom_linerange(aes(x=reorder(person_id,median_pt),ymin=low_pt,ymax=high_pt),alpha=person_ci_alpha) +
       geom_text(aes(x=reorder(person_id,median_pt),y=median_pt,
@@ -188,14 +188,12 @@ id_plot_legis <- function(object,return_data=FALSE,
 
   if(person_labels==TRUE & group_color==TRUE) {
     outplot <- outplot + geom_text_repel(aes(x=reorder(person_id,median_pt),y=median_pt,label=reorder(person_id,median_pt),color=group_id),
-                                       hjust=hjust_length,size=text_size_label,show.legend = FALSE,
-                                       segment.alpha=0,
-                                       check_overlap=T)
+                                       nudge_x=hjust_length,size=text_size_label,show.legend = FALSE,
+                                       segment.alpha=0)
   } else if(person_labels==TRUE & group_color==FALSE) {
     outplot <- outplot + geom_text_repel(aes(x=reorder(person_id,median_pt),y=median_pt,label=reorder(person_id,median_pt)),
-                                   hjust=hjust_length,size=text_size_label,
-                                   segment.alpha=0,
-                                   check_overlap=T)
+                                   nudge_x=hjust_length,size=text_size_label,
+                                   segment.alpha=0)
   }
   
     
@@ -350,14 +348,12 @@ id_plot_legis_var <- function(object,return_data=FALSE,
   
   if(person_labels==TRUE & group_color==TRUE) {
     outplot <- outplot + geom_text_repel(aes(x=reorder(person_id,median_pt),y=median_pt,label=reorder(person_id,median_pt),color=group_id),
-                                   hjust=hjust_length,size=text_size_label,show.legend = FALSE,
-                                   segment.alpha=0,
-                                   check_overlap=T)
+                                   nudge_x=hjust_length,size=text_size_label,show.legend = FALSE,
+                                   segment.alpha=0)
   } else if(person_labels==TRUE & group_color==FALSE) {
     outplot <- outplot + geom_text_repel(aes(x=reorder(person_id,median_pt),y=median_pt,label=reorder(person_id,median_pt)),
-                                   hjust=hjust_length,size=text_size_label,
-                                   segment.alpha=0,
-                                   check_overlap=T)
+                                   nudge_x=hjust_length,size=text_size_label,
+                                   segment.alpha=0)
   }
   
   

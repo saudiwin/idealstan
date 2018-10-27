@@ -75,7 +75,7 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
   y <- as.numeric(object@score_data@score_matrix$outcome)[this_sample]
   # check to see if we need to recode missing values from the data if the model_type doesn't handle missing data
   if(object@model_type %in% c(1,3,5,7,9,11,13) & !is.null(object@score_data@miss_val)) {
-    y <- na_if(y,object@score_data@miss_val)
+    y <- .na_if(y,object@score_data@miss_val)
   }
   if(object@use_groups) {
     person_points <- as.numeric(object@score_data@score_matrix$group_id)[this_sample]
@@ -259,11 +259,12 @@ setMethod('id_plot_ppc',signature(object='idealstan'),function(object,
     grouped <- F
   }
   
-  y <- as.numeric(object@score_data@score_matrix$outcome)[this_sample]
+  y <- object@score_data@score_matrix$outcome[this_sample]
   # check to see if we need to recode missing values from the data if the model_type doesn't handle missing data
   if(object@model_type %in% c(1,3,5,7,9,11,13) & !is.null(object@score_data@miss_val)) {
-    y <- na_if(y,object@score_data@miss_val)
+    y <- .na_if(y,object@score_data@miss_val)
   }
+  
   if(object@use_groups) {
     person_points <- as.numeric(object@score_data@score_matrix$group_id)[this_sample]
   } else {
@@ -288,7 +289,7 @@ setMethod('id_plot_ppc',signature(object='idealstan'),function(object,
     stop('Please only specify an index to item or person, not both.')
   
   if(attr(ppc_pred,'output')=='all') {
-    
+    y <- as.numeric(y)
     if(grouped) {
       
       bayesplot::ppc_bars_grouped(y=y[remove_nas_group],yrep=ppc_pred[,remove_nas_group],
@@ -301,12 +302,12 @@ setMethod('id_plot_ppc',signature(object='idealstan'),function(object,
     }
   } else if(attr(ppc_pred,'output')=='observed') {
     # only show observed data for yrep
-    y <- na_if(y,object@score_data@miss_val)
+    y <- .na_if(y,object@score_data@miss_val)
     to_remove <- !is.na(y)
     y <- y[to_remove]
     group_var <- group_var[to_remove]
     remove_nas_group <- !is.na(group_var)
-    
+    y <- as.numeric(y)
     if(attr(ppc_pred,'output_type')=='continuous') {
       ppc_pred <- ppc_pred[,to_remove]
       #unbounded observed outcomes (i.e., continuous)
@@ -320,6 +321,7 @@ setMethod('id_plot_ppc',signature(object='idealstan'),function(object,
       
     } else if(attr(ppc_pred,'output_type')=='discrete') {
       ppc_pred <- ppc_pred[,to_remove]
+      y <- as.numeric(y)
       if(grouped) {
         
         bayesplot::ppc_bars_grouped(y=y[remove_nas_group],yrep=ppc_pred[,remove_nas_group],
@@ -333,7 +335,7 @@ setMethod('id_plot_ppc',signature(object='idealstan'),function(object,
     
   } else if(attr(ppc_pred,'output')=='missing') {
 
-    y <- na_if(y,object@score_data@miss_val)
+    y <- .na_if(y,object@score_data@miss_val)
     y <- as.numeric(is.na(y))
     if(grouped) {
       

@@ -648,11 +648,11 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   max_t <- max(timepoints)
   num_bills <- max(billpoints)
 
-  Y <- as.numeric(idealdata@score_matrix$outcome)
+  Y <- idealdata@score_matrix$outcome
   
   # check to see if we need to recode missing values from the data if the model_type doesn't handle missing data
   if(model_type %in% c(1,3,5,7,9,11,13) & !is.na(idealdata@miss_val)) {
-    Y <- na_if(Y,idealdata@miss_val)
+    Y <- .na_if(Y,idealdata@miss_val)
   }
   
   # check to see if more values than there should be for the bernoulli model
@@ -675,7 +675,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   if(model_type>8 && model_type < 13) {
     N_cont <- length(Y)
     N_int <- 1L
-    Y_cont <- Y
+    Y_cont <- as.numeric(Y)
     Y_int <- array(1L)
   } else {
     N_cont <- 1L
@@ -814,11 +814,11 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   max_t <- max(timepoints)
   num_bills <- max(billpoints)
   
-  Y <- as.numeric(idealdata@score_matrix$outcome)
+  Y <- idealdata@score_matrix$outcome
   
   # check to see if we need to recode missing values from the data if the model_type doesn't handle missing data
   if(model_type %in% c(1,3,5,7,9,11,13) & !is.na(idealdata@miss_val)) {
-    Y <- na_if(Y,idealdata@miss_val)
+    Y <- .na_if(Y,idealdata@miss_val)
   }
   
   #Remove NA values, which should have been coded correctly in the make_idealdata function
@@ -832,7 +832,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   if(model_type>8 && model_type < 13) {
     N_cont <- length(Y)
     N_int <- 1
-    Y_cont <- Y
+    Y_cont <- as.numeric(Y)
     Y_int <- array(1L)
   } else {
     N_cont <- 1

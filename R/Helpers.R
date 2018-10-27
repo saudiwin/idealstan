@@ -1460,3 +1460,12 @@ idx <- aperm(array(1:prod(d), dim = d))
 return(as.vector(idx))
 }
 
+#' A wrapper around na_if that also works on factors
+.na_if <- function(x,to_na=NULL) {
+  if(is.factor(x)) {
+    levels(x)[levels(x)==to_na] <- NA
+  } else {
+    x <- na_if(x,to_na)
+  }
+  return(x)
+}
