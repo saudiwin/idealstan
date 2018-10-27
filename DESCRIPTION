@@ -4,7 +4,7 @@ Title: Bayesian IRT Ideal Point Models with 'Stan'
 Version: 0.5.0
 Date: 2018-10-20
 Authors@R: c(person("Robert","Kubinec", role = c("aut","cre"),
-                     email = "rmk7xy@virginia.edu"),
+                     email = "rmk7@nyu.edu"),
               person("Jonah", "Gabry", role = "ctb"),
               person("Ben", "Goodrich", role = "ctb"),
               person("Trustees of Columbia University",role='cph'))
@@ -27,7 +27,8 @@ Imports:
     rlang,
     shinystan,
     gghighlight,
-    forcats
+    forcats,
+    ggrepel
 Suggests:
     pscl,
     loo,
@@ -40,7 +41,7 @@ LinkingTo:
     Rcpp (>= 0.12.7), 
     RcppEigen (>= 0.3.2.9.0)
 Encoding: UTF-8
-LazyData: false
+LazyData: true
 NeedsCompilation: yes
 SystemRequirements: GNU make
 RoxygenNote: 6.1.0
