@@ -36,7 +36,8 @@ setGeneric('id_post_pred',signature='object',
 #' @param object A fitted \code{idealstan} object
 #' @param draws The number of draws to use from the total number of posterior draws (default is 100).
 #' @param sample_scores In addition to reducing the number of posterior draws used to 
-#' calculate the posterior predictive distribution.
+#' calculate the posterior predictive distribution, which will reduce computational overhead.
+#' Only available for calculating predictive distributions, not log-likelihood values.
 #' @param type Whether to produce posterior predictive values (\code{'predict'}, the default),
 #' or log-likelihood values (\code{'log_lik'}). See the How to Evaluate Models vignette for more info.
 #' @param output If the model has an unbounded outcome (Poisson, continuous, etc.), then
@@ -233,7 +234,7 @@ setGeneric('id_plot_ppc',signature='object',
 #' @param ppc_pred The output of the \code{\link{id_post_pred}} function on a fitted idealstan object
 #' @param group A character vector of the person or group IDs 
 #' over which to subset the predictive distribution
-#' @param item A character vector of item IDs to calculate their model predictions
+#' @param item A character vector of item IDs to subset the posterior distribution
 #' @param ... Other arguments passed on to \code{\link[bayesplot]{ppc_bars}}
 #' @export
 setMethod('id_plot_ppc',signature(object='idealstan'),function(object,
@@ -361,7 +362,7 @@ setMethod('id_plot_ppc',signature(object='idealstan'),function(object,
 #' log-likelihood matrix. See the package vignette How to Evaluate Models 
 #' for more details.
 #' 
-#' @ll_matrix A log-likelihood matrix as produced by the \code{\link{id_post_pred}}
+#' @param ll_matrix A log-likelihood matrix as produced by the \code{\link{id_post_pred}}
 #' function
 #' @export
 derive_chain <- function(ll_matrix=NULL) {

@@ -21,7 +21,8 @@ output \code{'missing'} showing whether an observation was predicted as missing 
 or log-likelihood values (\code{'log_lik'}). See the How to Evaluate Models vignette for more info.}
 
 \item{sample_scores}{In addition to reducing the number of posterior draws used to 
-calculate the posterior predictive distribution.}
+calculate the posterior predictive distribution, which will reduce computational overhead.
+Only available for calculating predictive distributions, not log-likelihood values.}
 
 \item{...}{Any other arguments passed on to posterior_predict (currently none available)}
 }

@@ -223,7 +223,7 @@ setMethod('id_model',signature(object='idealdata'),
 #' 
 #' @export
 setMethod('summary',signature(object='idealstan'),
-          function(object,pars=NULL,
+          function(object,pars='ideal_pts',
                    high_limit=0.95,
                    low_limit=0.05,
                    aggregate=TRUE) {
@@ -241,6 +241,7 @@ setMethod('summary',signature(object='idealstan'),
                 ideal_pts <- select(ideal_pts,
                                     Person=person_id,
                                     Group=group_id,
+                                    Time_Point=time_id,
                                     `Low Posterior Interval`=low_pt,
                                     `Posterior Median`=median_pt,
                                     `High Posterior Interval`=high_pt,
@@ -252,6 +253,7 @@ setMethod('summary',signature(object='idealstan'),
                 ideal_pts <- select(ideal_pts,
                                     Person=person_id,
                                     Group=group_id,
+                                    Time_Point=time_id,
                                     Ideal_Points=ideal_pts,
                                     Iteration,
                                     `Parameter Name`=legis)
@@ -465,7 +467,55 @@ setMethod(launch_shinystan,signature(object='idealstan'),
                                  'restrict_ord',
                                  'steps_votes',
                                  'steps_votes_grm'),...) {
-            to_shiny <- as.shinystan(object@stan_samples,pars=pars)
+            to_shiny <- as.shinystan(object@stan_samples)
             launch_shinystan(to_shiny,...)
+          })
+
+#' Plot the MCMC posterior draws by chain
+#' 
+#' This function allows you to produce trace plots for assessing the quality
+#' and convergence of MCMC chains. 
+#' 
+#' To use this function, you must pass a fitted \code{idealstan} object
+#' along with the name of a parameter in the model. To determine these
+#' parameter names, use the \code{summary} function or obtain the data
+#' from a plot by passing the \code{return_data=TRUE} option to 
+#' \code{id_plog_legis} or \code{id_plot_legis_dyn} to find the 
+#' name of the parameter in the Stan model.
+#' 
+#' This function is a simple wrapper around \code{\link[rstan]{stan_trace}}. 
+#' Please refer to that function's documentation for further options.
+#' 
+#' @param object A fitted \code{idealstan} model
+#' @param par The character string  name of a parameter in the model 
+#' @param ... Other options passed on to \code{\link[rstan]{stan_trace}}
+#' @export
+setGeneric('stan_trace',
+           signature='object',
+           function(object,...) standardGeneric('stan_trace'))
+
+#' Plot the MCMC posterior draws by chain
+#' 
+#' This function allows you to produce trace plots for assessing the quality
+#' and convergence of MCMC chains. 
+#' 
+#' To use this function, you must pass a fitted \code{idealstan} object
+#' along with the name of a parameter in the model. To determine these
+#' parameter names, use the \code{summary} function or obtain the data
+#' from a plot by passing the \code{return_data=TRUE} option to 
+#' \code{id_plog_legis} or \code{id_plot_legis_dyn} to find the 
+#' name of the parameter in the Stan model.
+#' 
+#' This function is a simple wrapper around \code{\link[rstan]{stan_trace}}. 
+#' Please refer to that function's documentation for further options.
+#' 
+#' @param object A fitted \code{idealstan} model
+#' @param par The character string  name of a parameter in the model 
+#' @param ... Other options passed on to \code{\link[rstan]{stan_trace}}
+#' @export
+setMethod('stan_trace',signature(object='idealstan'),
+          function(object,par='L_full[1]') {
+            
+        rstan::stan_trace(object@stan_samples,pars = par)
           })
 

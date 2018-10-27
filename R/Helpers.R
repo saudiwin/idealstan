@@ -108,8 +108,12 @@
   }
   
   # need new order of variables
+  if(use_groups) {
+    new_order <- c(1:length(person))
+  } else {
+    new_order <- c(1:length(levels(object@score_matrix$group_id)))
+  }
   
-  new_order <- c(1:length(person))
   new_order <- c(new_order[-c(to_constrain_low,
                               to_constrain_high)],
                  new_order[c(to_constrain_low,
@@ -135,8 +139,7 @@
     object@restrict_mean_ind <- constrain_mean
     object@restrict_var_high <- time_var_restrict
   }
-  
-  
+
   
   this_data$num_fix_high <- 1
   this_data$num_fix_low <- 1
@@ -566,7 +569,7 @@
                                 aggregate=TRUE,
                                 type='ideal_pts') {
   
-  if(length(unique(object@score_data@score_matrix$time_id))>1) {
+  if(length(unique(object@score_data@score_matrix$time_id))>1 && type!='variance') {
     
     person_params <- as.data.frame(object@stan_samples,pars='L_tp1')
     if(aggregate) {
@@ -1204,7 +1207,7 @@
 .item_plot_ls <- function(param_name,object,
                               high_limit=NULL,
                               low_limit=NULL) {
-  browser()
+
   # first need to get num of the parameter
   
   param_num <- which(levels(object@score_data@score_matrix$item_id)==param_name)

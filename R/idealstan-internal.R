@@ -1,4 +1,20 @@
 
+# define some global variables for use with dplyr
+if(getRversion() >= "2.15.1")  utils::globalVariables(c('get_samples2',
+                                                        'abs_data',
+                                                        'abs_mid',
+                                                        'bill_pos',
+                                                        'group_id',
+                                                        'Iteration',
+                                                        'outcome',
+                                                        'person_id',
+                                                        'reg_data',
+                                                        'reg_mid',
+                                                        'time_id',
+                                                        'time_point',
+                                                        'true_pt',
+                                                        'variables'))
+
 .Random.seed <-
 c(403L, 10L, -25182749L, -1011638655L, -1866196752L, -1436149874L, 
 1092610297L, -1603636597L, -883502406L, -1554408004L, -427211009L, 

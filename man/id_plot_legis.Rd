@@ -4,17 +4,20 @@
 \alias{id_plot_legis}
 \title{Plot Legislator/Person and Bill/Item Ideal Points}
 \usage{
-id_plot_legis(object, return_data = FALSE, high_limit = 0.95,
-  low_limit = 0.05, item_plot = NULL, item_plot_type = "non-inflated",
-  text_size_label = 2, text_size_group = 2.5, point_size = 1,
-  hjust_length = -0.7, person_labels = TRUE, group_labels = F,
-  person_ci_alpha = 0.1, show_true = FALSE, group_color = TRUE,
-  hpd_limit = 10, group_overlap = FALSE, sample_persons = NULL, ...)
+id_plot_legis(object, return_data = FALSE, include = NULL,
+  high_limit = 0.95, low_limit = 0.05, item_plot = NULL,
+  item_plot_type = "non-inflated", text_size_label = 2,
+  text_size_group = 2.5, point_size = 1, hjust_length = -0.7,
+  person_labels = TRUE, group_labels = F, person_ci_alpha = 0.1,
+  show_true = FALSE, group_color = TRUE, hpd_limit = 10,
+  sample_persons = NULL, ...)
 }
 \arguments{
 \item{object}{A fitted \code{idealstan} object}
 
 \item{return_data}{If true, the calculated legislator/bill data is returned along with the plot in a list}
+
+\item{include}{Specify a list of person/legislator IDs to include in the plot (all others excluded)}
 
 \item{high_limit}{The quantile (number between 0 and 1) for the high end of posterior uncertainty to show in plot}
 
@@ -46,8 +49,6 @@ specified in \code{item_plot}.}
 \item{group_color}{If \code{TRUE}, give each group/bloc a different color}
 
 \item{hpd_limit}{The greatest absolute difference in high-posterior density interval shown for any point. Useful for excluding imprecisely estimated persons/legislators from the plot. Leave NULL if you don't want to exclude any.}
-
-\item{group_overlap}{Whether to prevent the text from overlapping itself (ggplot2 option)}
 
 \item{sample_persons}{If you don't want to use the full number of persons/legislators from the model, enter a proportion (between 0 and 1) to select
 only a fraction of the persons/legislators.}

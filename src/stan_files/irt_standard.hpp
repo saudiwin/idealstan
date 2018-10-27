@@ -564,7 +564,7 @@ private:
     vector<int> Y_new;
     int num_var_free;
     int num_var_restrict;
-    double N_real;
+    double num_legis_real;
 public:
     model_irt_standard(stan::io::var_context& context__,
         std::ostream* pstream__ = 0)
@@ -938,8 +938,8 @@ public:
             num_var_restrict = int(0);
             stan::math::fill(num_var_restrict, std::numeric_limits<int>::min());
             current_statement_begin__ = 225;
-            N_real = double(0);
-            stan::math::fill(N_real,DUMMY_VAR__);
+            num_legis_real = double(0);
+            stan::math::fill(num_legis_real,DUMMY_VAR__);
 
             current_statement_begin__ = 233;
             stan::math::assign(m_cont, max(Y_cont));
@@ -1090,7 +1090,7 @@ public:
                 stan::math::assign(num_var_free, num_legis);
             }
             current_statement_begin__ = 330;
-            stan::math::assign(N_real, N);
+            stan::math::assign(num_legis_real, num_legis);
 
             // validate transformed data
             current_statement_begin__ = 217;
@@ -1946,7 +1946,7 @@ public:
                 current_statement_begin__ = 495;
                 lp_accum__.add(normal_log<propto__>(mean(stan::model::rvalue(L_tp1, stan::model::cons_list(stan::model::index_omni(), stan::model::cons_list(stan::model::index_uni(restrict_mean_ind), stan::model::nil_index_list())), "L_tp1")), restrict_mean_val, 0.01));
                 current_statement_begin__ = 496;
-                lp_accum__.add(jacob_mean(N,N_real, pstream__));
+                lp_accum__.add(jacob_mean(num_legis,num_legis_real, pstream__));
             }
             current_statement_begin__ = 505;
             if (as_bool(logical_eq(T,1))) {

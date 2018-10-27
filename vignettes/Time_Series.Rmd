@@ -20,7 +20,7 @@ require(lubridate)
 
 *Note: To report bugs with the package, please file an issue on the [Github page](https://github.com/saudiwin/idealstan/issues).*
 
-*If you use this package, please cite the following:*
+**If you use this package, please cite the following:**
 
 Kubinec, Robert. "Generalized Ideal Point Models for Time-Varying and Missing-Data Inference". Working Paper.
 
@@ -83,6 +83,8 @@ In addition, stationary models allow us to fit covariates that have a more meani
 
 To show what these models look like, we will fit each model to the `senate114` data in turn. We use the `vb` option to produce variational estimates of the true posterior; these approximations are much faster to fit than the full model but usually have some distortions. For finished analysis we would want to use the full sampler (`use_vb=FALSE`). 
 
+## Random-Walk Model
+
 To fit the random walk model, we first create data in which we pass the name of the column of dates for each bill/item to the `time_id` option of `id_make`:
 
 ```{r create_data}
@@ -131,10 +133,92 @@ sen_est <- id_estimate(senate_data,
 id_plot_legis_dyn(sen_est,use_ci = F)
 ```
 
-We now see slightly more movement, but not much mroe. Elizabeth Warren appears to move more, but we constrained her first time point so that may indicate why she moved over time. 
+We now see slightly more movement. Republicans as a whole have moved slightly farther away from Democrats. Elizabeth Warren appears to move more, but we constrained her first time point so that may indicate why she moved over time. 
 
 We can also look at the variance of the ideal points to see which of the Senators had the highest variance in their ideal points:
 
 ```{r rw_var_est}
 id_plot_legis_var(sen_est)
 ```
+
+We can access the actual estimates of the variances by passing the `return_data=TRUE` option to the plot function:
+
+```{r var_est}
+out_d <- id_plot_legis_var(sen_est,return_data = T)
+knitr::kable(head(out_d$plot_data))
+```
+
+## Stationary Model
+
+We now fit a stationary version of the model by passing `'AR1'` to `vary_ideal_pts`. By default, this model does not put a hard upper limit on the over-time variance, but rather puts a tight prior on over-time variance that biases the variances to zero. We can increase this prior variance slightly by changing the value of `time_sd` from 0.1 to 0.2 to allow for more variation:
+
+
+```{r ar1_1}
+sen_est <- id_estimate(senate_data,
+                model_type = 2,
+                 use_vb = T,
+                time_sd = .2,
+                fixtype='vb_partial',
+                vary_ideal_pts='AR1',
+                 restrict_ind_high = "WARREN, Elizabeth",
+                 restrict_ind_low="BARRASSO, John A.",
+            seed=84520)
+
+id_plot_legis_dyn(sen_est,use_ci = F)
+```
+
+This plot shows minor pertubations in the ideal points of individual senators with a high level of relative stability over time. It provides strong evidence that a stationary model fits the data well. Given the short time frame, we would expect the Senator's ideal points to be more or less stationary.
+
+Finally, we can also examine the individual ideal points by each time point using the summary function:
+
+```{r sum_ideal_pt}
+summary(sen_est,pars='ideal_pts')
+```
+
+To examine trace plots of the actual MCMC sampling, we can use the `stan_plot` function to look at posterior sampling for the first time point for Lamar Alexander based on the value shown in `Parameter Name` in the table above:
+
+```{r mcmc_stan}
+stan_trace(sen_est,'L_tp1[1,1]')
+```
+
+## Group-level Time-varying Ideal Points
+
+Finally, we can also re-code the data so that we look at group-level, i.e. party-level, ideal points. To do so we need to specify the `use_groups=T` option in the `id_estimate` function, and we change the restricted parameters to parties:s
+
+```{r stationary_groups}
+sen_est <- id_estimate(senate_data,
+                model_type = 2,
+                 use_vb = T,
+                time_sd=0.2,
+                use_groups = T,
+                fixtype='vb_partial',
+                vary_ideal_pts='AR1',
+                 restrict_ind_high = "D",
+                 restrict_ind_low="R",
+            seed=84520)
+id_plot_legis_dyn(sen_est) + scale_colour_manual(values=c(R='red',
+                                                          D='blue',
+                                                          I='green'),
+                                                 name="Parties")
+  
+```
+
+
+
+Finally, we can also overlay a bill/item midpoint to see where the line of indifference in voting is relative to party positions:
+
+```{r party_mid}
+id_plot_legis_dyn(sen_est,item_plot='342',text_size_label = 5) + scale_colour_manual(values=c(R='red',
+                                                          D='blue',
+                                                          I='green'),
+                                                 name="Parties") +
+  ggtitle('Time-Varying Party-level Ideal Points for the 114th Senate',
+          subtitle = 'Midpoint (Line of Indifference to Voting) for 342nd Roll-call Vote as Dotted Line') +
+  guides(color='none') +
+  annotate(geom='text',
+           x = ymd('2016-01-01'),
+           y=-1,
+           label='Confirmation Vote for Wilhelmina Wright as U.S. District Judge')
+```
+
+As this plot shows, the line of indifference is in a no-person's zone in the middle of the plot, signifying the lack of overlap and consensus on legislation in the current Senate.

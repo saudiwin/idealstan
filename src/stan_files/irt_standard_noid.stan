@@ -75,7 +75,7 @@ parameters {
   vector[num_bills] sigma_abs_free;
   vector[num_legis] L_free;
   vector[num_legis] L_tp1_var[T-1]; // non-centered variance
-  vector[num_legis] L_AR1; // AR-1 parameters for AR-1 model
+  vector<lower=-0.99,upper=0.99>[num_legis] L_AR1; // AR-1 parameters for AR-1 model
   vector[num_bills] sigma_reg_free;
   vector[LX] legis_x;
   vector[SRX] sigma_reg_x;

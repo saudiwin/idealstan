@@ -11,7 +11,7 @@ id_estimate(idealdata = NULL, model_type = 2, vary_ideal_pts = "none",
   id_diff_high = 2, restrict_ind_low = NULL, fixtype = "vb_full",
   prior_fit = NULL, warmup = floor(niters/2), ncores = 4,
   use_groups = FALSE, discrim_reg_sd = 1, discrim_miss_sd = 1,
-  person_sd = 1, time_sd = 0.1, sample_stationary = FALSE, ar_sd = 1,
+  person_sd = 1, time_sd = 0.1, sample_stationary = FALSE, ar_sd = 2,
   diff_reg_sd = 1, diff_miss_sd = 1, restrict_sd = 0.01,
   restrict_mean = NULL, restrict_var = NULL, restrict_mean_val = NULL,
   restrict_mean_ind = NULL, restrict_var_high = 0.1, ...)
@@ -134,12 +134,12 @@ or a variational approximation if \code{use_vb} is set to \code{TRUE}. This obje
 }
 \description{
 This function will take a pre-processed \code{idealdata} vote/score dataframe and 
-run one of the available IRT ideal point models on the data using
+run one of the available IRT/latent space ideal point models on the data using
 Stan's MCMC engine.
 }
 \details{
 To run an IRT ideal point model, you must first pre-process your data using the \code{\link{id_make}} function. Be sure to specify the correct options for the
-kind of model you are going to run: if you want to run a unbounded, ordinal and/or an inflated model, 
+kind of model you are going to run: if you want to run an unbounded outcome (i.e. Poisson or continuous),
 the data needs to be processed differently. Also any hierarchical covariates at the person or item level
 need to be specified in \code{\link{id_make}}.
 As of this version of \code{idealstan}, the following model types are available:
@@ -169,18 +169,24 @@ is preferred when the time series is of short absolute duration (such as days or
 the random-walk model is preferable when the time series is of very long duration and there are no
 natural limits to the ideal points. Please see the package vignette and associated paper for more detail
 about these time-varying models.
-The inflation used for missing data assumes that missingness is a function of the persons (legislators')
+The inflation model used to account for missing data assumes that missingness is a 
+function of the persons' (legislators')
 ideal points. In other words,the model will take into account if people with high or low ideal points
 tend to have more/less missing data on a specific item/bill. If there isn't any relationship
 between missing data and ideal points, then the model assumes that the missingness is ignorable 
 conditional on each
 item, but it will still adjust the results to reflect these ignorable (random) missingness.
+
+To leave missing data out of the model, simply choose a version of the model in the list above
+that is non-inflated.
+
 Models can be either fit on the person/legislator IDs or on group-level IDs (as specified to the 
 \code{id_make} function). If group-level parameters should be fit, set \code{use_groups} to \code{TRUE}.
 }
 \section{Identification}{
 
-Identifying IRT models is challenging, and ideal point models are still more challenging because the discrimination parameters are not constrained.
+Identifying IRT models is challenging, and ideal point models are still more challenging 
+because the discrimination parameters are not constrained.
 As a result, more care must be taken to obtain estimates that are the same regardless of starting values. 
 The parameter \code{fixtype} enables you to change the type of identification used. The default, 'vb_full', 
 does not require any further
@@ -208,9 +214,7 @@ library(dplyr)
 
 # This code will take at least a few minutes to run 
 \dontrun{
-bin_irt_2pl_abs_sim <- id_sim_gen(ordinal=FALSE,
-                                  absence=TRUE,
-                                  absence_diff_mean=0)
+bin_irt_2pl_abs_sim <- id_sim_gen(model_type='binary',inflate=T)
 
 # Now we can put that directly into the id_estimate function 
 # to get full Bayesian posterior estimates
@@ -220,14 +224,14 @@ bin_irt_2pl_abs_sim <- id_sim_gen(ordinal=FALSE,
 bin_irt_2pl_abs_est <- id_estimate(bin_irt_2pl_abs_sim,
                        model_type=2,
                        restrict_ind_high = 
-                       sort(bin_irt_2pl_abs_sim@simul_data$true_reg_discrim,
+                       sort(bin_irt_2pl_abs_sim@simul_data$true_person,
                        decreasing=TRUE,
-                       index=TRUE)$ix[1:3],
+                       index=TRUE)$ix[1],
                        restrict_ind_low = 
-                       sort(bin_irt_2pl_abs_sim@simul_data$true_reg_discrim,
+                       sort(bin_irt_2pl_abs_sim@simul_data$true_person
                        decreasing=FALSE,
-                       index=TRUE)$ix[1:3],
-                       fixtype='constrained',
+                       index=TRUE)$ix[1],
+                       fixtype='vb_partial',
                        ncores=2,
                        nchains=2)
                                    
@@ -252,14 +256,16 @@ data('senate114')
 \dontrun{
 
 to_idealstan <-   id_make(score_data = senate114,
-                          ordinal = FALSE)
+high_val='Yes',
+low_val='No',
+miss_val='Absent')
 
 sen_est <- id_estimate(senate_data,
 model_type = 2,
 use_vb = TRUE,
 fixtype='vb_partial',
-restrict_ind_high = 'SASSE (R NE)',
-restrict_ind_low = 'GILLIBRAND (D NY)')
+restrict_ind_high = "BARRASSO, John A.",
+restrict_ind_low = "WARREN, Elizabeth")
 
 # After running the model, we can plot 
 # the results of the person/legislator ideal points

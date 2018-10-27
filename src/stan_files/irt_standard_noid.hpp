@@ -1076,7 +1076,7 @@ public:
         for (int j1__ = 0U; j1__ < num_legis; ++j1__)
             L_AR1(j1__) = vals_r__[pos__++];
         try {
-            writer__.vector_unconstrain(L_AR1);
+            writer__.vector_lub_unconstrain(-(0.98999999999999999),0.98999999999999999,L_AR1);
         } catch (const std::exception& e) { 
             throw std::runtime_error(std::string("Error transforming variable L_AR1: ") + e.what());
         }
@@ -1352,9 +1352,9 @@ public:
             Eigen::Matrix<local_scalar_t__,Eigen::Dynamic,1>  L_AR1;
             (void) L_AR1;  // dummy to suppress unused var warning
             if (jacobian__)
-                L_AR1 = in__.vector_constrain(num_legis,lp__);
+                L_AR1 = in__.vector_lub_constrain(-(0.98999999999999999),0.98999999999999999,num_legis,lp__);
             else
-                L_AR1 = in__.vector_constrain(num_legis);
+                L_AR1 = in__.vector_lub_constrain(-(0.98999999999999999),0.98999999999999999,num_legis);
 
             Eigen::Matrix<local_scalar_t__,Eigen::Dynamic,1>  sigma_reg_free;
             (void) sigma_reg_free;  // dummy to suppress unused var warning
@@ -2251,7 +2251,7 @@ public:
         for (size_t k_0__ = 0; k_0__ < dim_L_tp1_var_0__; ++k_0__) {
             L_tp1_var.push_back(in__.vector_constrain(num_legis));
         }
-        vector_d L_AR1 = in__.vector_constrain(num_legis);
+        vector_d L_AR1 = in__.vector_lub_constrain(-(0.98999999999999999),0.98999999999999999,num_legis);
         vector_d sigma_reg_free = in__.vector_constrain(num_bills);
         vector_d legis_x = in__.vector_constrain(LX);
         vector_d sigma_reg_x = in__.vector_constrain(SRX);

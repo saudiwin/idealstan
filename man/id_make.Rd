@@ -7,10 +7,9 @@
 id_make(score_data = NULL, outcome = "outcome", person_id = "person_id",
   item_id = "item_id", time_id = "time_id", group_id = "group_id",
   simul_data = NULL, person_cov = NULL, group_cov = NULL,
-  item_cov = NULL, miss_cov = NULL, item_cov_miss = NULL, miss_val = NA,
-  high_val = 3L, low_val = 1L, middle_val = 2L, ordinal = FALSE,
-  unbounded = FALSE, exclude_level = NULL, inflate = TRUE,
-  simulation = FALSE)
+  item_cov = NULL, item_cov_miss = NULL, miss_val = NA, high_val = NULL,
+  low_val = NULL, middle_val = NULL, unbounded = FALSE,
+  exclude_level = NA, simulation = FALSE)
 }
 \arguments{
 \item{score_data}{A data frame in long form, i.e., one row in the data for each 
@@ -48,31 +47,22 @@ item/bill discrimination parameters for the regular model}
 in the dataset that will be used to hierarchically model the item/bill discrimination parameters for the
 missing data model.}
 
-\item{miss_val}{The value (numeric or character) that indicate missing data/absences in the data. If 
-\code{inflate==TRUE}, these values will be recoded to a separate category to use in the inflation model.
-If there are multiple possible values, 
- pass along a numeric or character vector of all such values. If missing data is coded as \code{NA}, 
+\item{miss_val}{The value (numeric or character) that indicate missing data/absences in the data. 
+If missing data is coded as \code{NA}, 
  simply leave this parameter at the default, \code{NA}.}
 
-\item{high_val}{The value (numeric or character) that indicate the highest ordinal outcome possible, 
-such as yes in a vote dataset or correct in a test examination.
- If there are multiple possible values, 
- pass along a numeric or character vector of all such values.}
+\item{high_val}{The value (numeric or character) that indicate the highest discrete outcome possible, 
+such as yes in a vote dataset or correct in a test examination.}
 
-\item{low_val}{The value (numeric or character) that indicates the lowest ordinal outcome possible, 
-such as no votes in a vote dataset or incorrect in a test examination.
- If there are multiple possible values, 
- pass along a numeric or character vector of all such values.}
+\item{low_val}{The value (numeric or character) that indicates the lowest discrete outcome possible, 
+such as no votes in a vote dataset or incorrect in a test examination.}
 
 \item{middle_val}{The value (numeric or character) that indicate values 
-between the lowest and highest categories, such as abstention in voting data or "Neither Agree nor Disagree" in likert scales.
+between the lowest and highest categories, such as abstention in voting data or 
+"Neither Agree nor Disagree" in Likert scales.
  If there are multiple possible values, 
  pass along a numeric or character vector of all such values in correct order (lower to higher values).
- If there are no middle values (binary outcome), set to \code{NULL}.}
-
-\item{ordinal}{Whether or not the data contain ordinal responses. If \code{TRUE},
-middle values/abstentions are used as a middle category in constructing the outcome.
-Otherwise the response is assumed to be binary (yes/no).}
+ If there are no middle values (binary outcome), leave empty.}
 
 \item{unbounded}{Whether or not the outcome/response is unbounded (i.e., continuous or
 Poisson). If it is, \code{miss_val} 
@@ -82,10 +72,11 @@ is recoded as the maximum of the outcome + 1.}
 Unlike the \code{miss_val} parameter, these values will be dropped from the data before 
 estimation rather than modeled explicitly.}
 
+\item{simulation}{If \code{TRUE}, simulated values are saved in the \code{idealdata} object for 
+later plotting with the \code{\link{id_plot_sims}} function}
+
 \item{inflate}{If \code{TRUE}, the score matrix is set up to enable modeling of 
 missing data/absences (\code{miss_val}) as an inflation model in \code{\link{id_estimate}}}
-
-\item{simulation}{If \code{TRUE}, simulated values are saved in the \code{idealdata} object for later plotting with the \code{\link{id_plot_sims}} function}
 }
 \value{
 A \code{idealdata} object that can then be used in the \code{\link{id_estimate}} function 
@@ -96,24 +87,45 @@ To run an IRT model using \code{idealstan}, you must first process your data usi
 function.
 }
 \details{
-This function can be used either on a \code{rollcall} data object from package
-\code{pscl} or on a long data frame where one row equals one item-person (bill-legislator)
-observation. If a \code{rollcall} object is input, the \code{rollcall} data is converted
-to a long data frame.
+This function can accept either a \code{rollcall} data object from package
+\code{pscl} or a long data frame where one row equals one item-person (bill-legislator)
+observation with associated outcome. The preferred method is the long data frame 
+as passing a long data frame permits
+the inclusion of a wide range of covariates in the model, such as person-varying and item-varying 
+(bill-varying) covariates. 
+If a \code{rollcall} object is passed to the function, the \code{rollcall} data is converted
+to a long data frame with data from the \code{vote.data} matrix used to determine dates for bills.
 If passing a long data frame, you should specify the names of the 
 columns containing the IDs for persons, items and 
 groups (groups are IDs that may have multiple observations per ID, such as political parties or
-classes) to the \code{id_make} function. 
+classes) to the \code{id_make} function, along with the name of the response/outcome. 
 The only required columns are the item/bill ID and the person/legislator ID along with an 
 outcome column. 
-To run a time-varying model, you need to include a column with dates (or integers). To run an 
-inflated model for missing data, be sure to specify the \code{miss_val} option to the value that should
-be modeled as missing and also set \code{inflate} to \code{TRUE}. Otherwise the \code{id_estimate}
-function will not have data in the correct form to run an inflated model.
-If the outcome is unbounded, simply set \code{unbounded} to \code{TRUE}. You can ignore the
-options that specify which values should be \code{high_val} or \code{low_val}, and all 
+
+The preferred format for the outcome column for discrete variables (binary or ordinal)
+is to pass a factor variable with levels in the correct order, i.e., in ascending order.
+For example, if using legislative data, the levels of the factor should be \code{c('No','Yes')}.
+If a different kind of variable is passed, such as a character or numeric variable, 
+you should consider specifying \code{low_val},\code{high_val} and \code{middle_val} to 
+determine the correct order of the discrete outcome. Specifying \code{middle_val} is only
+necessary if you are estimating an ordinal model.
+
+If you do not specify a value for \code{miss_val}, then any \code{NA} are assumed to be 
+missing. If you do specify \code{miss_val} and you also have \code{NA} in your data 
+(assuming \code{miss_val} is not \code{NA}), then the function will treat the data
+coded as \code{miss_val} as missing data that should be modeled and will treat the \code{NA}
+data as ignorable missing data that will be removed (list-wise deletion) before estimating a
+model.
+
+To run a time-varying model, you need to include the name of a column with dates (or integers) that is passed 
+to the \code{time_id} option.
+
+If the outcome is unbounded i.e. a continuous or an unbounded 
+discrete variable like Poisson, simply set \code{unbounded} to \code{TRUE}. You can ignore the
+options that specify which values should be \code{high_val} or \code{low_val}. You can either specify
+a particular value as missing using \code{miss_val}, or all 
 missing values (\code{NA}) will be recoded to a specific value out of the range of the outcome to use
-for inflation.
+for modeling the missingness.
 }
 \examples{
 # You can either use a pscl rollcall object or a vote/score matrix 
@@ -127,6 +139,8 @@ library(dplyr)
 data('senate114')
 
 to_idealstan <-   id_make(score_data = senate114,
-ordinal = FALSE)
+high_val='Yes',
+low_val='No',
+miss_val='Absent')
 
 }

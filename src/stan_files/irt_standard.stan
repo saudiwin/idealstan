@@ -63,7 +63,7 @@ transformed data {
 	int Y_new[N];
 	int num_var_free; // whether to restrict variance parameters
 	int num_var_restrict;
-	real N_real; // used to adjust jacobian for mean restriction
+	real num_legis_real; // used to adjust jacobian for mean restriction
 	
 	// need to assign a type of outcome to Y based on the model (discrete or continuous)
 	// to do this we need to trick Stan into assigning to an integer. 
@@ -83,7 +83,7 @@ if(restrict_var==1) {
   num_var_free=num_legis;
 }
 
-  N_real = N; // promote N to type real
+  num_legis_real = num_legis; // promote N to type real
   
 }
 
@@ -196,7 +196,7 @@ model {
 
 if(T>1 && restrict_mean==1) {
   mean(L_tp1[,restrict_mean_ind]) ~ normal(restrict_mean_val,.01);
-  target += jacob_mean(N,N_real); // this is a constant as it only varies with the count of the parameters
+  target += jacob_mean(num_legis,num_legis_real); // this is a constant as it only varies with the count of the parameters
 }
   
 

@@ -6,6 +6,10 @@
 \usage{
 derive_chain(ll_matrix = NULL)
 }
+\arguments{
+\item{ll_matrix}{A log-likelihood matrix as produced by the \code{\link{id_post_pred}}
+function}
+}
 \description{
 This function accepts a log-likelihood matrix produced by `id_post_pred` and 
 extracts the IDs of the MCMC chains. It is necessary to use this function

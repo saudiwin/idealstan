@@ -8,8 +8,8 @@ id_sim_gen(num_person = 20, num_bills = 50, model_type = "binary",
   latent_space = FALSE, absence_discrim_sd = 2, absence_diff_mean = 0.5,
   reg_discrim_sd = 2, diff_sd = 0.25, time_points = 1,
   time_process = "random", time_sd = 0.1, ideal_pts_sd = 1,
-  prior_type = "gaussian", ordinal_outcomes = 3, graded_response = FALSE,
-  inflate = FALSE, sigma_sd = 1)
+  prior_type = "gaussian", ordinal_outcomes = 3, inflate = FALSE,
+  sigma_sd = 1)
 }
 \arguments{
 \item{num_person}{The number of persons/personlators}
@@ -20,12 +20,13 @@ id_sim_gen(num_person = 20, num_bills = 50, model_type = "binary",
 \code{'normal'}, or \code{'lognormal'}}
 
 \item{latent_space}{Whether to use the latent space formulation of the ideal point model 
-\code{FALSE} by default.}
+\code{FALSE} by default. NOTE: currently, the package only has estimation for a 
+binary response with the latent space formulation.}
 
-\item{absence_discrim_sd}{The SD of the discrimination parameters for the absence model}
+\item{absence_discrim_sd}{The SD of the discrimination parameters for the inflated model}
 
-\item{absence_diff_mean}{The mean intercept for the absence model; increasing it will lower the total number of
-absences}
+\item{absence_diff_mean}{The mean intercept for the inflated model; increasing it will lower the total number of
+missing data}
 
 \item{reg_discrim_sd}{The SD of the discrimination parameters for the non-inflated model}
 
@@ -57,12 +58,12 @@ The results is a \code{idealdata} object that can be used in the
 plotting functions.
 }
 \description{
-A function designed to simulate absence-inflated data with either binary or ordinal outcomes.
+A function designed to simulate IRT ideal point data.
 }
 \details{
 This function produces simulated data that matches (as closely as possible) the models
-used in the underlying Stan code. Currently the simulation can produce absence-inflated and
-non-absence-inflated binary and ordinal ideal point models.
+used in the underlying Stan code. Currently the simulation can produce inflated and non-inflated
+models with binary, ordinal (GRM and rating-scale), Poisson, Normal and Log-Normal responses.
 }
 \seealso{
 \code{\link{id_plot_sims}} for plotting fitted models versus true values.

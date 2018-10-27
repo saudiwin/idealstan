@@ -3,13 +3,14 @@
 #' To run an IRT model using \code{idealstan}, you must first process your data using the \code{id_make} 
 #' function. 
 #' 
-#' @details This function can be used either on a \code{rollcall} data object from package
-#' \code{pscl} or on a long data frame where one row equals one item-person (bill-legislator)
-#' observation. The preferred method is the latter as passing a long data frame permits
-#' a wide range of covariates to be included in the model, such as person-varying and item-varying 
+#' @details This function can accept either a \code{rollcall} data object from package
+#' \code{pscl} or a long data frame where one row equals one item-person (bill-legislator)
+#' observation with associated outcome. The preferred method is the long data frame 
+#' as passing a long data frame permits
+#' the inclusion of a wide range of covariates in the model, such as person-varying and item-varying 
 #' (bill-varying) covariates. 
 #' If a \code{rollcall} object is passed to the function, the \code{rollcall} data is converted
-#' to a long data frame with data from the `vote.data` matrix used to determine dates for bills.
+#' to a long data frame with data from the \code{vote.data} matrix used to determine dates for bills.
 #' If passing a long data frame, you should specify the names of the 
 #' columns containing the IDs for persons, items and 
 #' groups (groups are IDs that may have multiple observations per ID, such as political parties or
@@ -22,7 +23,8 @@
 #' For example, if using legislative data, the levels of the factor should be \code{c('No','Yes')}.
 #' If a different kind of variable is passed, such as a character or numeric variable, 
 #' you should consider specifying \code{low_val},\code{high_val} and \code{middle_val} to 
-#' determine the correct order of the discrete outcome.
+#' determine the correct order of the discrete outcome. Specifying \code{middle_val} is only
+#' necessary if you are estimating an ordinal model.
 #' 
 #' If you do not specify a value for \code{miss_val}, then any \code{NA} are assumed to be 
 #' missing. If you do specify \code{miss_val} and you also have \code{NA} in your data 
@@ -34,9 +36,10 @@
 #' To run a time-varying model, you need to include the name of a column with dates (or integers) that is passed 
 #' to the \code{time_id} option.
 #' 
-#' If the outcome is unbounded, simply set \code{unbounded} to \code{TRUE}. You can ignore the
+#' If the outcome is unbounded i.e. a continuous or an unbounded 
+#' discrete variable like Poisson, simply set \code{unbounded} to \code{TRUE}. You can ignore the
 #' options that specify which values should be \code{high_val} or \code{low_val}. You can either specify
-#' a particular value as missing using `miss_val`, or all 
+#' a particular value as missing using \code{miss_val}, or all 
 #' missing values (\code{NA}) will be recoded to a specific value out of the range of the outcome to use
 #' for modeling the missingness.
 #' 
@@ -111,7 +114,9 @@
 #' data('senate114')
 #' 
 #' to_idealstan <-   id_make(score_data = senate114,
-#' ordinal = FALSE)
+#' high_val='Yes',
+#' low_val='No',
+#' miss_val='Absent')
 #' 
 id_make <- function(score_data=NULL,
                     outcome='outcome',
@@ -123,7 +128,6 @@ id_make <- function(score_data=NULL,
                            person_cov=NULL,
                     group_cov=NULL,
                   item_cov=NULL,
-                           miss_cov=NULL,
                            item_cov_miss=NULL,
                            miss_val=NA,high_val=NULL,low_val=NULL,middle_val=NULL,
                     unbounded=FALSE,
@@ -342,11 +346,11 @@ id_make <- function(score_data=NULL,
 #' Estimate an \code{idealstan} model
 #' 
 #' This function will take a pre-processed \code{idealdata} vote/score dataframe and 
-#' run one of the available IRT ideal point models on the data using
+#' run one of the available IRT/latent space ideal point models on the data using
 #' Stan's MCMC engine.
 #' 
 #' To run an IRT ideal point model, you must first pre-process your data using the \code{\link{id_make}} function. Be sure to specify the correct options for the
-#' kind of model you are going to run: if you want to run a unbounded, ordinal and/or an inflated model, 
+#' kind of model you are going to run: if you want to run an unbounded outcome (i.e. Poisson or continuous),
 #' the data needs to be processed differently. Also any hierarchical covariates at the person or item level
 #' need to be specified in \code{\link{id_make}}.
 #' As of this version of \code{idealstan}, the following model types are available:
@@ -376,17 +380,23 @@ id_make <- function(score_data=NULL,
 #' the random-walk model is preferable when the time series is of very long duration and there are no
 #' natural limits to the ideal points. Please see the package vignette and associated paper for more detail
 #' about these time-varying models.
-#' The inflation used for missing data assumes that missingness is a function of the persons (legislators')
+#' The inflation model used to account for missing data assumes that missingness is a 
+#' function of the persons' (legislators')
 #' ideal points. In other words,the model will take into account if people with high or low ideal points
 #' tend to have more/less missing data on a specific item/bill. If there isn't any relationship
 #' between missing data and ideal points, then the model assumes that the missingness is ignorable 
 #' conditional on each
 #' item, but it will still adjust the results to reflect these ignorable (random) missingness.
+#' 
+#' To leave missing data out of the model, simply choose a version of the model in the list above
+#' that is non-inflated.
+#' 
 #' Models can be either fit on the person/legislator IDs or on group-level IDs (as specified to the 
 #' \code{id_make} function). If group-level parameters should be fit, set \code{use_groups} to \code{TRUE}.
 #' 
 #' @section Identification:
-#' Identifying IRT models is challenging, and ideal point models are still more challenging because the discrimination parameters are not constrained.
+#' Identifying IRT models is challenging, and ideal point models are still more challenging 
+#' because the discrimination parameters are not constrained.
 #' As a result, more care must be taken to obtain estimates that are the same regardless of starting values. 
 #' The parameter \code{fixtype} enables you to change the type of identification used. The default, 'vb_full', 
 #' does not require any further
@@ -494,9 +504,7 @@ id_make <- function(score_data=NULL,
 #' 
 #' # This code will take at least a few minutes to run 
 #' \dontrun{
-#' bin_irt_2pl_abs_sim <- id_sim_gen(ordinal=FALSE,
-#'                                   absence=TRUE,
-#'                                   absence_diff_mean=0)
+#' bin_irt_2pl_abs_sim <- id_sim_gen(model_type='binary',inflate=T)
 #' 
 #' # Now we can put that directly into the id_estimate function 
 #' # to get full Bayesian posterior estimates
@@ -506,14 +514,14 @@ id_make <- function(score_data=NULL,
 #' bin_irt_2pl_abs_est <- id_estimate(bin_irt_2pl_abs_sim,
 #'                        model_type=2,
 #'                        restrict_ind_high = 
-#'                        sort(bin_irt_2pl_abs_sim@simul_data$true_reg_discrim,
+#'                        sort(bin_irt_2pl_abs_sim@simul_data$true_person,
 #'                        decreasing=TRUE,
-#'                        index=TRUE)$ix[1:3],
+#'                        index=TRUE)$ix[1],
 #'                        restrict_ind_low = 
-#'                        sort(bin_irt_2pl_abs_sim@simul_data$true_reg_discrim,
+#'                        sort(bin_irt_2pl_abs_sim@simul_data$true_person
 #'                        decreasing=FALSE,
-#'                        index=TRUE)$ix[1:3],
-#'                        fixtype='constrained',
+#'                        index=TRUE)$ix[1],
+#'                        fixtype='vb_partial',
 #'                        ncores=2,
 #'                        nchains=2)
 #'                                    
@@ -538,14 +546,16 @@ id_make <- function(score_data=NULL,
 #' \dontrun{
 #' 
 #' to_idealstan <-   id_make(score_data = senate114,
-#'                           ordinal = FALSE)
+#' high_val='Yes',
+#' low_val='No',
+#' miss_val='Absent')
 #' 
 #' sen_est <- id_estimate(senate_data,
 #' model_type = 2,
 #' use_vb = TRUE,
 #' fixtype='vb_partial',
-#' restrict_ind_high = 'SASSE (R NE)',
-#' restrict_ind_low = 'GILLIBRAND (D NY)')
+#' restrict_ind_high = "BARRASSO, John A.",
+#' restrict_ind_low = "WARREN, Elizabeth")
 #' 
 #' # After running the model, we can plot 
 #' # the results of the person/legislator ideal points
@@ -558,6 +568,8 @@ id_make <- function(score_data=NULL,
 #'    \item Bafumi, J., Gelman, A., Park, D., & Kaplan, N. (2005). Practical Issues in Implementing and Understanding Bayesian Ideal Point Estimation. \emph{Political Analysis}, 13(2), 171-187. doi:10.1093/pan/mpi010
 #'    \item Kubinec, R. "Generalized Ideal Point Models for Time-Varying and Missing-Data Inference". Working Paper.
 #' }
+#' @importFrom stats dnorm dpois model.matrix qlogis relevel rpois
+#' @importForm utils person
 #' @export
 id_estimate <- function(idealdata=NULL,model_type=2,
                         vary_ideal_pts='none',
@@ -577,7 +589,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                            person_sd=1,
                         time_sd=.1,
                         sample_stationary=FALSE,
-                        ar_sd=1,
+                        ar_sd=2,
                            diff_reg_sd=1,
                            diff_miss_sd=1,
                            restrict_sd=0.01,

@@ -1,20 +1,21 @@
 #' Simulate IRT ideal point data
 #' 
-#' A function designed to simulate absence-inflated data with either binary or ordinal outcomes.
+#' A function designed to simulate IRT ideal point data.
 #' 
 #' This function produces simulated data that matches (as closely as possible) the models
-#' used in the underlying Stan code. Currently the simulation can produce absence-inflated and
-#' non-absence-inflated binary and ordinal ideal point models.
+#' used in the underlying Stan code. Currently the simulation can produce inflated and non-inflated
+#' models with binary, ordinal (GRM and rating-scale), Poisson, Normal and Log-Normal responses.
 #' 
 #' @param num_person The number of persons/personlators
 #' @param num_bills The number of items/bills
 #' @param model_type One of \code{'binary'}, \code{'ordinal_rating'}, \code{'ordinal_grm'}, \code{'poisson'}
 #' \code{'normal'}, or \code{'lognormal'}
 #' @param latent_space Whether to use the latent space formulation of the ideal point model 
-#' \code{FALSE} by default.
-#' @param absence_discrim_sd The SD of the discrimination parameters for the absence model
-#' @param absence_diff_mean The mean intercept for the absence model; increasing it will lower the total number of
-#' absences
+#' \code{FALSE} by default. NOTE: currently, the package only has estimation for a 
+#' binary response with the latent space formulation.
+#' @param absence_discrim_sd The SD of the discrimination parameters for the inflated model
+#' @param absence_diff_mean The mean intercept for the inflated model; increasing it will lower the total number of
+#' missing data
 #' @param reg_discrim_sd The SD of the discrimination parameters for the non-inflated model
 #' @param diff_sd The SD of the difficulty parameters (bill/item intercepts)
 #' @param time_points The number of time points for time-varying legislator/person parameters
@@ -43,7 +44,7 @@ id_sim_gen <- function(num_person=20,num_bills=50,
                             time_process='random',
                           time_sd=.1,
                              ideal_pts_sd=1,prior_type='gaussian',ordinal_outcomes=3,
-                             graded_response=FALSE,inflate=FALSE,
+                        inflate=FALSE,
                        sigma_sd=1) {
   
   # Allow for different type of distributions for ideal points

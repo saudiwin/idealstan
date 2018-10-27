@@ -9,7 +9,9 @@
 senate114
 }
 \description{
-This rollcall vote object (see \code{\link[pscl]{rollcall}}) contains the full voting records for the 114th Senate in the US
-Congress. The data can be pre-processed via the \code{\link{id_make}} function for estimation. See package vignette for details.
+This rollcall vote object (see \code{\link[pscl]{rollcall}}) contains voting records for the 114th Senate in the US
+Congress. Not all rollcalls are included, only those that had a 70-30 or closer split in the vote.
+The data can be pre-processed via the \code{\link{id_make}} function for estimation. 
+See package vignette for details.
 }
 \keyword{datasets}

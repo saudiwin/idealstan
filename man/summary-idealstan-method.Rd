@@ -5,7 +5,7 @@
 \alias{summary,idealstan-method}
 \title{Posterior Summaries for fitted \code{idealstan} object}
 \usage{
-\S4method{summary}{idealstan}(object, pars = NULL, high_limit = 0.95,
+\S4method{summary}{idealstan}(object, pars = "ideal_pts", high_limit = 0.95,
   low_limit = 0.05, aggregate = TRUE)
 }
 \arguments{

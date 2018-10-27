@@ -1,19 +1,10 @@
 ## Test environments
-* local OS X install, R 3.4.3
-* ubuntu 12.04 (on travis-ci), R 3.3.1
+* ubuntu 12.04 (on travis-ci), R 3.5.1
 * win-builder (devel and release)
+* local windows, R 3.5.1 and 3.4.3
 
 ## R CMD check results
 There were no ERRORs or WARNINGs. 
-
-There are 2 NOTEs:
-
-* * checking CRAN incoming feasibility ... NOTE
-Maintainer: 'Robert Kubinec <rmk7xy@virginia.edu>'
-
-New submission
-
-Explanation: This package has not been previously submitted to CRAN. 
 
 * checking installed package size ... NOTE
   installed size is 10.0Mb
