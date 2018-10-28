@@ -558,7 +558,7 @@ id_plot_legis_dyn <- function(object,return_data=FALSE,
   }
   
   if(object@use_groups) {
-    base_id <- groupc
+    base_id <- ~group_id
   } else {
     base_id <- ~person_id
   }
@@ -608,14 +608,14 @@ id_plot_legis_dyn <- function(object,return_data=FALSE,
       
       outplot <- outplot + 
         geom_line(aes_(y=~median_pt,group=base_id,
-                       colour=groupc),
-                  #alpha=person_ci_alpha,
+                       colour=~group_id),
+                  alpha=person_ci_alpha,
                   size=line_size)
     } else {
       
       outplot <- outplot + 
-        geom_line(aes_(y=~median_pt,colour=base_id),
-                  #alpha=person_ci_alpha,
+        geom_line(aes_(y=~median_pt),
+                  alpha=person_ci_alpha,
                   size=line_size)
     }
   }
@@ -657,8 +657,8 @@ id_plot_legis_dyn <- function(object,return_data=FALSE,
     }
     
     outplot <- outplot + 
-      geom_text(aes_(x=~time_id,y=~median_pt,label=base_id),data=sampled_data,
-                check_overlap=TRUE,size=text_size_label)
+      geom_text_repel(aes_(x=~time_id,y=~median_pt,label=base_id),data=sampled_data,
+                size=text_size_label,segment.colour='grey50',segment.alpha = 0.5)
     
   }
   

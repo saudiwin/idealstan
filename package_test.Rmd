@@ -694,7 +694,7 @@ bin_time_irt_2pl_abs_est <- id_estimate(idealdata=bin_time_irt_2pl_abs_sim,
                               restrict_ind_low = as.character(sort(bin_time_irt_2pl_abs_sim@simul_data$drift,
                                                                    decreasing=F,
                                                         index=T)$ix[1]),
-                               fixtype='constrained',
+                               fixtype='vb_partial',
                               id_diff = sort(bin_time_irt_2pl_abs_sim@simul_data$drift,decreasing=TRUE)[1] -
                              sort(bin_time_irt_2pl_abs_sim@simul_data$drift,decreasing=F)[1],
                                                       
@@ -755,7 +755,7 @@ bin_time_ar_irt_2pl_abs_est <- id_estimate(idealdata=bin_time_ar_irt_2pl_abs_sim
                               restrict_ind_low = as.character(sort(bin_time_ar_irt_2pl_abs_sim@simul_data$drift,
                                                                    decreasing=F,
                                                         index=T)$ix[1]),
-                               fixtype='constrained',
+                               fixtype='vb_partial',
                               id_diff = sort(bin_time_ar_irt_2pl_abs_sim@simul_data$drift,
                                                   decreasing=TRUE)[1] -
                                 sort(bin_time_ar_irt_2pl_abs_sim@simul_data$drift,

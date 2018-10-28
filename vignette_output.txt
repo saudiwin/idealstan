@@ -1,0 +1,20 @@
+
+> rmarkdown::render('vignettes/How_to_Evaluate_Models.Rmd')
+  |                                                                         |                                                                 |   0%  |                                                                         |...                                                              |   4%
+   inline R code fragments
+
+  |                                                                         |......                                                           |   9%
+label: setup (with options) 
+List of 1
+ $ include: logi FALSE
+
+  |                                                                         |........                                                         |  13%
+  ordinary text without R code
+
+  |                                                                         |...........                                                      |  17%
+label: sim_irt_2pl
+  |                                                                         |..............                                                   |  22%
+  ordinary text without R code
+
+  |                                                                         |.................                                                |  26%
+label: fit_irt_2pl
