@@ -237,6 +237,9 @@ setMethod('summary',signature(object='idealstan'),
                                                high_limit=high_limit,
                                                low_limit=low_limit,
                                                aggregate=aggregate)
+              if(is.null(ideal_pts$time_id)) {
+                ideal_pts$time_id=1
+              }
               if(aggregate) {
                 ideal_pts <- select(ideal_pts,
                                     Person=person_id,
@@ -516,6 +519,6 @@ setGeneric('stan_trace',
 setMethod('stan_trace',signature(object='idealstan'),
           function(object,par='L_full[1]') {
             
-        rstan::stan_trace(object@stan_samples,par=NULL)
+        rstan::stan_trace(object@stan_samples,pars = par)
           })
 

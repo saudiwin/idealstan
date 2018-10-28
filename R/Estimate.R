@@ -92,7 +92,6 @@
 #' to fit a model.
 #' @export
 #' @import rstan
-#' @importFrom rlang `:=`
 #' @import dplyr
 #' @importFrom tidyr gather spread
 #' @import bayesplot

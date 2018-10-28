@@ -178,7 +178,7 @@ id_plot_legis(sen_est,person_ci_alpha=0.2) +
 
 The `id_plot` function has many other options which are documented in the help files. One notable option, though, is to plot bill midpoints along with the legislator ideal points. The midpoints show the line of equiprobability, i.e., at what ideal point is a legislator with that ideal point indifferent to voting on a bill (or answering an item correctly). To plot a bill midpoint overlay, simply include the character ID of the bill (equivalent to the column name of the bill in the rollcall vote matrix) as the `item_plot` option:
 
-```{r item_plot}
+```{r item_plot,fig.width=8}
 id_plot_legis(sen_est,person_ci_alpha=0.1,item_plot='94') +
   scale_color_manual(values=c(D='blue',R='red',Indep='green')) +
   ggtitle('Ideal Points of the 114th Senate with Vote 94 Midpoint')
@@ -188,7 +188,7 @@ The 50th bill in the 114 Senate shows very high discrimination: the bill midpoin
 
 To look at the bill's absence midpoints, simply change the `item_plot_type` paramater to the `id_plot` function:
 
-```{r abs_item_plot}
+```{r abs_item_plot,fig.width=8}
 
 id_plot(sen_est,person_ci_alpha=0.1,item_plot='225',
         item_plot_type='inflated') + 
@@ -206,19 +206,31 @@ ideal_pts_sum <- summary(sen_est,pars='ideal_pts')
 knitr::kable(head(ideal_pts_sum))
 ```
 
-`Parameter Name` is the name of the parameter in the underlying Stan code. If you want to peruse the Stan object, which can be accessed as follows:
+`Parameter Name` is the name of the parameter in the underlying Stan code. If you want to peruse the Stan object, which can be accessed as follows. The name of the parameters for ideal points in the Stan model is `L_full` (as seen in the summary from above).
 
 ```{r stan_obj}
 stan_obj <- sen_est@stan_samples
+# show the 
+print(stan_obj,pars = c("L_full[1]",
+                        'L_full[2]',
+                        'L_full[3]'))
+```
+
+If we know the name of the Stan parameter, we can look at the trace plot to see how the MCMC sampling went. A good trace plot shows a bouncy line that is stable around an average value. For more info, see the [Stan documentation](http://mc-stan.org/users/documentation/case-studies/rstan_workflow.html).
+
+```{r stan_trace}
+stan_trace(sen_est,par='L_full[1]')
 ```
 
 
-We can also extract the individual posterior iterations to do addditional calculations that average over posterior uncertainty by changing the `aggregate` option. In the following code, I access the individual posterior iterations for the item/bill parameters, including difficulty (average probability of voting yes), discrimination (how strongly the item/bill loads on either end of the ideal point scale) and the midpoints (position where someone with that ideal point would be indifferent to voting yes/no).
+Finally we can also extract the individual posterior iterations to do addditional calculations that average over posterior uncertainty by changing the `aggregate` option. In the following code, I access the individual posterior iterations for the item/bill parameters, including difficulty (average probability of voting yes), discrimination (how strongly the item/bill loads on either end of the ideal point scale) and the midpoints (position where someone with that ideal point would be indifferent to voting yes/no).
 
 ```{r ideal_pts_ind}
 ideal_pts_sum <- summary(sen_est,pars='items', aggregate=F)
 knitr::kable(head(ideal_pts_sum))
 ```
+
+
 
 ## Hierarchical Covariates
 

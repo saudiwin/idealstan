@@ -78,3 +78,33 @@ bill/item. Note that because this is an ideal point model, it is not possible to
 which side will be voting which way. For that reason, the legislators/persons are colored by their votes/scores to
 make it clear.
 }
+\examples{
+
+\dontrun{
+
+# First create data and run a model
+
+to_idealstan <-   id_make(score_data = senate114,
+outcome = 'cast_code',
+person_id = 'bioname',
+item_id = 'rollnumber',
+group_id= 'party_code',
+time_id='date',
+high_val='Yes',
+low_val='No',
+miss_val='Absent')
+
+sen_est <- id_estimate(senate_data,
+model_type = 2,
+use_vb = TRUE,
+vary_ideal_pts='random_walk',
+fixtype='vb_partial',
+restrict_ind_high = "BARRASSO, John A.",
+restrict_ind_low = "WARREN, Elizabeth")
+
+# After running the model, we can plot 
+# the results of the person/legislator ideal points
+
+id_plot_legis_dyn(sen_est)
+}
+}

@@ -18,7 +18,9 @@ if(getRversion() >= "2.15.1")  utils::globalVariables(c('get_samples2',
                                                         'item_low',
                                                         'item_median',
                                                         '5%',
-                                                        '95%'))
+                                                        '95%',
+                                                        ":=",
+                                                        'item_type'))
 
 .Random.seed <-
 c(403L, 10L, -25182749L, -1011638655L, -1866196752L, -1436149874L, 

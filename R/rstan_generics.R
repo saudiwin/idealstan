@@ -72,7 +72,7 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
                ' posterior samples out of a total of ',n_iters, ' samples.'))
   
 
-  y <- as.numeric(object@score_data@score_matrix$outcome)[this_sample]
+  y <- object@score_data@score_matrix$outcome[this_sample]
   # check to see if we need to recode missing values from the data if the model_type doesn't handle missing data
   if(object@model_type %in% c(1,3,5,7,9,11,13) & !is.null(object@score_data@miss_val)) {
     y <- .na_if(y,object@score_data@miss_val)
@@ -88,6 +88,13 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
   
   remove_nas <- !is.na(y) & !is.na(person_points) & !is.na(bill_points) & !is.na(time_points)
   y <- y[remove_nas]
+  
+  if(is.factor(y)) {
+    miss_val <- which(levels(y)==object@score_data@miss_val)
+    y <- as.numeric(y)
+  }
+  
+  
   max_val <- max(y)
   bill_points <- bill_points[remove_nas]
   time_points <- time_points[remove_nas]
@@ -184,7 +191,7 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
                           item_points=bill_points,
                           max_val=max_val,
                           outcome=y,
-                          miss_val=object@score_data@miss_val,
+                          miss_val=miss_val,
                           person_points=person_points,
                           sigma_sd=.extract_nonp(object,'extra_sd')[these_draws],
                           cutpoints=cutpoints,
@@ -204,17 +211,24 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
   return(out_predict)
 })
 
-#' Generic Method for Plotting Posterior Predictive Distribution
+#' Plot Posterior Predictive Distribution for \code{idealstan} Objects
 #' 
 #' This function is a wrapper around \code{\link[bayesplot]{ppc_bars}},
 #' \code{\link[bayesplot]{ppc_dens_overlay}} and 
-#' \code{\link[bayesplot]{ppc_violin_grouped}}
-#' that enables the plotting of the posterior
-#' predictive distribution from \code{\link{id_post_pred}} against the original data and for the distribution for 
-#' individual persons/legislators and bills/items.
+#' \code{\link[bayesplot]{ppc_violin_grouped} that plots the posterior predictive distribution
+#' derived from \code{\link{id_post_pred}} against the original data. You can also subset the 
+#' posterior predictions over
+#' legislators/persons or
+#' bills/item sby specifying the ID of each in the original data as a character vector. 
+#' Only persons or items can be specified,
+#' not both.
 #' 
-#' @param object A fitted \code{idealstan} object
-#' @param ... Other arguments passed on to underlying functions
+#' @param object A fitted idealstan object
+#' @param ppc_pred The output of the \code{\link{id_post_pred}} function on a fitted idealstan object
+#' @param group A character vector of the person or group IDs 
+#' over which to subset the predictive distribution
+#' @param item A character vector of item IDs to subset the posterior distribution
+#' @param ... Other arguments passed on to \code{\link[bayesplot]{ppc_bars}}
 #' @export
 setGeneric('id_plot_ppc',signature='object',
            function(object,...) standardGeneric('id_plot_ppc'))
@@ -244,7 +258,7 @@ setMethod('id_plot_ppc',signature(object='idealstan'),function(object,
                                                                     item=NULL,...) {
 
   this_sample <- attr(ppc_pred,'this_sample')
-  
+
   # create grouping variable
   if(!is.null(group)) {
     if(object@use_groups) {
@@ -280,7 +294,10 @@ setMethod('id_plot_ppc',signature(object='idealstan'),function(object,
   bill_points <- bill_points[remove_nas]
   time_points <- time_points[remove_nas]
   person_points <- person_points[remove_nas]
-  group_var <- group_var[remove_nas]
+  if(!is.null(group)) {
+    group_var <- group_var[remove_nas]
+  }
+  
   
   # create a second one for the grouping variable
   
@@ -306,8 +323,10 @@ setMethod('id_plot_ppc',signature(object='idealstan'),function(object,
     y <- .na_if(y,object@score_data@miss_val)
     to_remove <- !is.na(y)
     y <- y[to_remove]
-    group_var <- group_var[to_remove]
-    remove_nas_group <- !is.na(group_var)
+    if(!is.null(group)) {
+      group_var <- group_var[to_remove]
+      remove_nas_group <- !is.na(group_var)
+    }
     y <- as.numeric(y)
     if(attr(ppc_pred,'output_type')=='continuous') {
       ppc_pred <- ppc_pred[,to_remove]
@@ -322,7 +341,7 @@ setMethod('id_plot_ppc',signature(object='idealstan'),function(object,
       
     } else if(attr(ppc_pred,'output_type')=='discrete') {
       ppc_pred <- ppc_pred[,to_remove]
-      y <- as.numeric(y)
+  
       if(grouped) {
         
         bayesplot::ppc_bars_grouped(y=y[remove_nas_group],yrep=ppc_pred[,remove_nas_group],

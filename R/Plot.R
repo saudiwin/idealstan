@@ -42,16 +42,32 @@
 #' @export
 #' @examples 
 #' 
-#' # To demonstrate, we load a fitted idealstan object based on the 114th Senate
+#' \dontrun{
 #' 
-#' data('senate114_fit')
+#' # First create data and run a model
 #' 
-#' id_plot_legis(senate114_fit)
+#' to_idealstan <-   id_make(score_data = senate114,
+#' outcome = 'cast_code',
+#' person_id = 'bioname',
+#' item_id = 'rollnumber',
+#' group_id= 'party_code',
+#' time_id='date',
+#' high_val='Yes',
+#' low_val='No',
+#' miss_val='Absent')
 #' 
-#' # We can overlap the bill/item midpoints to show 
-#' # where the persons/legislators are indifferent to responding positively
+#' sen_est <- id_estimate(senate_data,
+#' model_type = 2,
+#' use_vb = TRUE,
+#' fixtype='vb_partial',
+#' restrict_ind_high = "BARRASSO, John A.",
+#' restrict_ind_low = "WARREN, Elizabeth")
 #' 
-#' id_plot_legis(senate114_fit,item_plot=5)
+#' # After running the model, we can plot 
+#' # the results of the person/legislator ideal points
+#' 
+#' id_plot_legis(sen_est)
+#' }
 #' 
 id_plot_legis <- function(object,return_data=FALSE,
                           include=NULL,
@@ -78,7 +94,7 @@ id_plot_legis <- function(object,return_data=FALSE,
   }
   
   if(group_color) {
-    groupc <- ~groupc
+    groupc <- ~group_id
   } else {
     groupc <- NA
   }
@@ -165,12 +181,12 @@ id_plot_legis <- function(object,return_data=FALSE,
   if(is.null(item_plot)) {
     outplot <- person_params %>% ggplot() +
       geom_linerange(aes_(x=~reorder(person_id,median_pt),
-                         ymin=~low_pt,ymax=~high_pt,color=~groupc),
+                         ymin=~low_pt,ymax=~high_pt,color=groupc),
                      alpha=person_ci_alpha,
                      show.legend = FALSE) +
       geom_text(aes_(x=~reorder(person_id,median_pt),
                     y=~median_pt,label=~reorder(group_id,median_pt),
-                    color=~groupc),size=text_size_group,
+                    color=groupc),size=text_size_group,
                 show.legend = FALSE,
                 check_overlap = T) 
       
@@ -178,10 +194,10 @@ id_plot_legis <- function(object,return_data=FALSE,
     # if an item plot is being made, use the actual outcomes as points
 
     outplot <- person_params %>% ggplot() +
-      geom_linerange(aes_(x=~reorder(person_id,median_pt),colour=~groupc,
+      geom_linerange(aes_(x=~reorder(person_id,median_pt),colour=groupc,
                          ymin=~low_pt,ymax=~high_pt),alpha=person_ci_alpha) +
       geom_text(aes_(x=~reorder(person_id,median_pt),y=~median_pt,
-                    colour=~groupc,
+                    colour=groupc,
                     label=~reorder(outcome,median_pt)),size=text_size_group,
                 check_overlap = T)
     
@@ -431,6 +447,34 @@ id_plot_legis_var <- function(object,return_data=FALSE,
 #' @importFrom gghighlight gghighlight
 #' @export
 #' @examples 
+#' 
+#' \dontrun{
+#' 
+#' # First create data and run a model
+#' 
+#' to_idealstan <-   id_make(score_data = senate114,
+#' outcome = 'cast_code',
+#' person_id = 'bioname',
+#' item_id = 'rollnumber',
+#' group_id= 'party_code',
+#' time_id='date',
+#' high_val='Yes',
+#' low_val='No',
+#' miss_val='Absent')
+#' 
+#' sen_est <- id_estimate(senate_data,
+#' model_type = 2,
+#' use_vb = TRUE,
+#' vary_ideal_pts='random_walk',
+#' fixtype='vb_partial',
+#' restrict_ind_high = "BARRASSO, John A.",
+#' restrict_ind_low = "WARREN, Elizabeth")
+#' 
+#' # After running the model, we can plot 
+#' # the results of the person/legislator ideal points
+#' 
+#' id_plot_legis_dyn(sen_est)
+#' }
 id_plot_legis_dyn <- function(object,return_data=FALSE,
                               include=NULL,item_plot=NULL,
                               text_size_label=2,text_size_group=2.5,
@@ -514,7 +558,7 @@ id_plot_legis_dyn <- function(object,return_data=FALSE,
   }
   
   if(object@use_groups) {
-    base_id <- ~groupc
+    base_id <- groupc
   } else {
     base_id <- ~person_id
   }
@@ -564,7 +608,7 @@ id_plot_legis_dyn <- function(object,return_data=FALSE,
       
       outplot <- outplot + 
         geom_line(aes_(y=~median_pt,group=base_id,
-                       colour=~groupc),
+                       colour=groupc),
                   #alpha=person_ci_alpha,
                   size=line_size)
     } else {

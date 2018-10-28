@@ -71,15 +71,31 @@ make it clear.
 }
 \examples{
 
-# To demonstrate, we load a fitted idealstan object based on the 114th Senate
+\dontrun{
 
-data('senate114_fit')
+# First create data and run a model
 
-id_plot_legis(senate114_fit)
+to_idealstan <-   id_make(score_data = senate114,
+outcome = 'cast_code',
+person_id = 'bioname',
+item_id = 'rollnumber',
+group_id= 'party_code',
+time_id='date',
+high_val='Yes',
+low_val='No',
+miss_val='Absent')
 
-# We can overlap the bill/item midpoints to show 
-# where the persons/legislators are indifferent to responding positively
+sen_est <- id_estimate(senate_data,
+model_type = 2,
+use_vb = TRUE,
+fixtype='vb_partial',
+restrict_ind_high = "BARRASSO, John A.",
+restrict_ind_low = "WARREN, Elizabeth")
 
-id_plot_legis(senate114_fit,item_plot=5)
+# After running the model, we can plot 
+# the results of the person/legislator ideal points
+
+id_plot_legis(sen_est)
+}
 
 }

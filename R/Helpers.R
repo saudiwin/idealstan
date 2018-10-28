@@ -9,7 +9,7 @@
                     use_groups=NULL,
                     fixtype=NULL,...) {
   
-  
+  . <- NULL
   to_use <- stanmodels[['irt_standard_noid']]
 
   
@@ -108,7 +108,7 @@
   }
   
   # need new order of variables
-  if(use_groups) {
+  if(!use_groups) {
     new_order <- c(1:length(person))
   } else {
     new_order <- c(1:length(levels(object@score_matrix$group_id)))
@@ -1302,7 +1302,7 @@
             
             tidx <- unlist(tidx, use.names = FALSE) 
             tidxnames <- object@sim$fnames_oi[tidx] 
-            sss <- lapply(tidx, .get_samples2, object@sim, inc_warmup) 
+            sss <- lapply(tidx, .get_kept_samples2, object@sim, inc_warmup) 
             sss2 <- lapply(sss, function(x) do.call(c, x))  # concatenate samples from different chains
             sssf <- unlist(sss2, use.names = FALSE) 
             

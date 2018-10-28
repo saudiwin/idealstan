@@ -2,20 +2,19 @@
 % Please edit documentation in R/rstan_generics.R
 \name{id_plot_ppc}
 \alias{id_plot_ppc}
-\title{Generic Method for Plotting Posterior Predictive Distribution}
+\title{Plot Posterior Predictive Distribution for \code{idealstan} Objects}
 \usage{
 id_plot_ppc(object, ...)
 }
 \arguments{
-\item{object}{A fitted \code{idealstan} object}
+\item{object}{A fitted idealstan object}
 
-\item{...}{Other arguments passed on to underlying functions}
-}
-\description{
-This function is a wrapper around \code{\link[bayesplot]{ppc_bars}},
-\code{\link[bayesplot]{ppc_dens_overlay}} and 
-\code{\link[bayesplot]{ppc_violin_grouped}}
-that enables the plotting of the posterior
-predictive distribution from \code{\link{id_post_pred}} against the original data and for the distribution for 
-individual persons/legislators and bills/items.
+\item{...}{Other arguments passed on to \code{\link[bayesplot]{ppc_bars}}}
+
+\item{ppc_pred}{The output of the \code{\link{id_post_pred}} function on a fitted idealstan object}
+
+\item{group}{A character vector of the person or group IDs 
+over which to subset the predictive distribution}
+
+\item{item}{A character vector of item IDs to subset the posterior distribution}
 }
