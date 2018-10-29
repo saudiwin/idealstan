@@ -79,7 +79,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <p>Kubinec, Robert. “Generalized Ideal Point Models for Time-Varying and Missing-Data Inference”. Working Paper.</p>
 <p>This package implements to kinds of time-varying ideal point models. Because these time-varying models are independent of the specific outcome used, time-varying ideal point models can be fit with any outcome/response supported by the package, including binary, ordinal, counts, continuous and positive-continuous data, in addition to the latent space model for binary data. This vignette demonstrates the use of the two time-varying ideal point models and how to decide between them with example data drawn from the 114th Senate.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">data</span>(<span class="st">'senate114'</span>)
-knitr<span class="op">::</span><span class="kw">kable</span>(<span class="kw">head</span>(senate114))</code></pre></div>
+knitr<span class="op">::</span><span class="kw">kable</span>(<span class="kw">head</span>(<span class="kw">select</span>(senate114,<span class="dv">1</span><span class="op">:</span><span class="dv">7</span>)))</code></pre></div>
 <table>
 <thead>
 <tr class="header">
@@ -90,38 +90,6 @@ knitr<span class="op">::</span><span class="kw">kable</span>(<span class="kw">he
 <th align="left">date</th>
 <th align="left">cast_code</th>
 <th align="right">congress</th>
-<th align="left">chamber</th>
-<th align="right">nominate_log_likelihood</th>
-<th align="right">icpsr</th>
-<th align="right">state_icpsr</th>
-<th align="right">district_code</th>
-<th align="left">state_abbrev</th>
-<th align="right">occupancy</th>
-<th align="right">last_means</th>
-<th align="left">bioguide_id</th>
-<th align="right">died</th>
-<th align="right">nominate_dim1</th>
-<th align="right">nominate_dim2</th>
-<th align="right">nominate_geo_mean_probability</th>
-<th align="right">nominate_number_of_votes</th>
-<th align="right">nominate_number_of_errors</th>
-<th align="left">conditional</th>
-<th align="right">nokken_poole_dim1</th>
-<th align="right">nokken_poole_dim2</th>
-<th align="right">prob</th>
-<th align="right">session</th>
-<th align="right">clerk_rollnumber</th>
-<th align="right">yea_count</th>
-<th align="right">nay_count</th>
-<th align="right">nominate_mid_1</th>
-<th align="right">nominate_mid_2</th>
-<th align="right">nominate_spread_1</th>
-<th align="right">nominate_spread_2</th>
-<th align="left">bill_number</th>
-<th align="left">vote_result</th>
-<th align="left">vote_desc</th>
-<th align="left">vote_question</th>
-<th align="left">dtl_desc</th>
 </tr>
 </thead>
 <tbody>
@@ -133,38 +101,6 @@ knitr<span class="op">::</span><span class="kw">kable</span>(<span class="kw">he
 <td align="left">2015-01-20</td>
 <td align="left">Yes</td>
 <td align="right">114</td>
-<td align="left">Senate</td>
-<td align="right">-109.6303</td>
-<td align="right">49700</td>
-<td align="right">41</td>
-<td align="right">0</td>
-<td align="left">AL</td>
-<td align="right">0</td>
-<td align="right">1</td>
-<td align="left">S001141</td>
-<td align="right">NA</td>
-<td align="right">0.549</td>
-<td align="right">0.13</td>
-<td align="right">0.76537</td>
-<td align="right">410</td>
-<td align="right">46</td>
-<td align="left">NA</td>
-<td align="right">0.635</td>
-<td align="right">0.2</td>
-<td align="right">100.0</td>
-<td align="right">1</td>
-<td align="right">4</td>
-<td align="right">57</td>
-<td align="right">42</td>
-<td align="right">-0.077</td>
-<td align="right">-0.122</td>
-<td align="right">-0.401</td>
-<td align="right">-0.198</td>
-<td align="left">S1</td>
-<td align="left">Motion to Table Agreed to</td>
-<td align="left">NA</td>
-<td align="left">NA</td>
-<td align="left">NA</td>
 </tr>
 <tr class="even">
 <td align="left">SESSIONS, Jefferson Beauregard III (Jeff)</td>
@@ -174,38 +110,6 @@ knitr<span class="op">::</span><span class="kw">kable</span>(<span class="kw">he
 <td align="left">2015-01-20</td>
 <td align="left">Yes</td>
 <td align="right">114</td>
-<td align="left">Senate</td>
-<td align="right">-109.6303</td>
-<td align="right">49700</td>
-<td align="right">41</td>
-<td align="right">0</td>
-<td align="left">AL</td>
-<td align="right">0</td>
-<td align="right">1</td>
-<td align="left">S001141</td>
-<td align="right">NA</td>
-<td align="right">0.549</td>
-<td align="right">0.13</td>
-<td align="right">0.76537</td>
-<td align="right">410</td>
-<td align="right">46</td>
-<td align="left">NA</td>
-<td align="right">0.635</td>
-<td align="right">0.2</td>
-<td align="right">99.4</td>
-<td align="right">1</td>
-<td align="right">5</td>
-<td align="right">53</td>
-<td align="right">46</td>
-<td align="right">0.123</td>
-<td align="right">-0.088</td>
-<td align="right">-0.263</td>
-<td align="right">0.195</td>
-<td align="left">S1</td>
-<td align="left">Motion to Table Agreed to</td>
-<td align="left">NA</td>
-<td align="left">NA</td>
-<td align="left">NA</td>
 </tr>
 <tr class="odd">
 <td align="left">SESSIONS, Jefferson Beauregard III (Jeff)</td>
@@ -215,38 +119,6 @@ knitr<span class="op">::</span><span class="kw">kable</span>(<span class="kw">he
 <td align="left">2015-01-21</td>
 <td align="left">Yes</td>
 <td align="right">114</td>
-<td align="left">Senate</td>
-<td align="right">-109.6303</td>
-<td align="right">49700</td>
-<td align="right">41</td>
-<td align="right">0</td>
-<td align="left">AL</td>
-<td align="right">0</td>
-<td align="right">1</td>
-<td align="left">S001141</td>
-<td align="right">NA</td>
-<td align="right">0.549</td>
-<td align="right">0.13</td>
-<td align="right">0.76537</td>
-<td align="right">410</td>
-<td align="right">46</td>
-<td align="left">NA</td>
-<td align="right">0.635</td>
-<td align="right">0.2</td>
-<td align="right">100.0</td>
-<td align="right">1</td>
-<td align="right">7</td>
-<td align="right">54</td>
-<td align="right">45</td>
-<td align="right">0.036</td>
-<td align="right">-0.092</td>
-<td align="right">-0.459</td>
-<td align="right">0.166</td>
-<td align="left">S1</td>
-<td align="left">Amendment Rejected</td>
-<td align="left">NA</td>
-<td align="left">NA</td>
-<td align="left">NA</td>
 </tr>
 <tr class="even">
 <td align="left">SESSIONS, Jefferson Beauregard III (Jeff)</td>
@@ -256,38 +128,6 @@ knitr<span class="op">::</span><span class="kw">kable</span>(<span class="kw">he
 <td align="left">2015-01-21</td>
 <td align="left">No</td>
 <td align="right">114</td>
-<td align="left">Senate</td>
-<td align="right">-109.6303</td>
-<td align="right">49700</td>
-<td align="right">41</td>
-<td align="right">0</td>
-<td align="left">AL</td>
-<td align="right">0</td>
-<td align="right">1</td>
-<td align="left">S001141</td>
-<td align="right">NA</td>
-<td align="right">0.549</td>
-<td align="right">0.13</td>
-<td align="right">0.76537</td>
-<td align="right">410</td>
-<td align="right">46</td>
-<td align="left">NA</td>
-<td align="right">0.635</td>
-<td align="right">0.2</td>
-<td align="right">100.0</td>
-<td align="right">1</td>
-<td align="right">8</td>
-<td align="right">41</td>
-<td align="right">58</td>
-<td align="right">-0.047</td>
-<td align="right">-0.116</td>
-<td align="right">0.310</td>
-<td align="right">0.715</td>
-<td align="left">S1</td>
-<td align="left">Amendment Rejected</td>
-<td align="left">NA</td>
-<td align="left">NA</td>
-<td align="left">NA</td>
 </tr>
 <tr class="odd">
 <td align="left">SESSIONS, Jefferson Beauregard III (Jeff)</td>
@@ -297,38 +137,6 @@ knitr<span class="op">::</span><span class="kw">kable</span>(<span class="kw">he
 <td align="left">2015-01-21</td>
 <td align="left">Yes</td>
 <td align="right">114</td>
-<td align="left">Senate</td>
-<td align="right">-109.6303</td>
-<td align="right">49700</td>
-<td align="right">41</td>
-<td align="right">0</td>
-<td align="left">AL</td>
-<td align="right">0</td>
-<td align="right">1</td>
-<td align="left">S001141</td>
-<td align="right">NA</td>
-<td align="right">0.549</td>
-<td align="right">0.13</td>
-<td align="right">0.76537</td>
-<td align="right">410</td>
-<td align="right">46</td>
-<td align="left">NA</td>
-<td align="right">0.635</td>
-<td align="right">0.2</td>
-<td align="right">99.9</td>
-<td align="right">1</td>
-<td align="right">9</td>
-<td align="right">54</td>
-<td align="right">45</td>
-<td align="right">0.071</td>
-<td align="right">-0.116</td>
-<td align="right">-0.248</td>
-<td align="right">-0.616</td>
-<td align="left">S1</td>
-<td align="left">Amendment Rejected</td>
-<td align="left">NA</td>
-<td align="left">NA</td>
-<td align="left">NA</td>
 </tr>
 <tr class="even">
 <td align="left">SESSIONS, Jefferson Beauregard III (Jeff)</td>
@@ -338,38 +146,6 @@ knitr<span class="op">::</span><span class="kw">kable</span>(<span class="kw">he
 <td align="left">2015-01-21</td>
 <td align="left">No</td>
 <td align="right">114</td>
-<td align="left">Senate</td>
-<td align="right">-109.6303</td>
-<td align="right">49700</td>
-<td align="right">41</td>
-<td align="right">0</td>
-<td align="left">AL</td>
-<td align="right">0</td>
-<td align="right">1</td>
-<td align="left">S001141</td>
-<td align="right">NA</td>
-<td align="right">0.549</td>
-<td align="right">0.13</td>
-<td align="right">0.76537</td>
-<td align="right">410</td>
-<td align="right">46</td>
-<td align="left">NA</td>
-<td align="right">0.635</td>
-<td align="right">0.2</td>
-<td align="right">95.2</td>
-<td align="right">1</td>
-<td align="right">11</td>
-<td align="right">59</td>
-<td align="right">40</td>
-<td align="right">0.291</td>
-<td align="right">-0.028</td>
-<td align="right">0.171</td>
-<td align="right">0.806</td>
-<td align="left">S1</td>
-<td align="left">Amendment Rejected</td>
-<td align="left">NA</td>
-<td align="left">NA</td>
-<td align="left">NA</td>
 </tr>
 </tbody>
 </table>
@@ -423,8 +199,8 @@ knitr<span class="op">::</span><span class="kw">kable</span>(<span class="kw">he
                  <span class="dt">restrict_ind_high =</span> <span class="st">&quot;WARREN, Elizabeth&quot;</span>,
                  <span class="dt">restrict_ind_low=</span><span class="st">&quot;BARRASSO, John A.&quot;</span>,
             <span class="dt">seed=</span><span class="dv">84520</span>)</code></pre></div>
-<pre><code>## Chain 1: Gradient evaluation took 0.018 seconds
-## Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 180 seconds.
+<pre><code>## Chain 1: Gradient evaluation took 0.021 seconds
+## Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 210 seconds.
 ## Chain 1: Iteration:   1 / 250 [  0%]  (Adaptation)
 ## Chain 1: Iteration:  50 / 250 [ 20%]  (Adaptation)
 ## Chain 1: Iteration: 100 / 250 [ 40%]  (Adaptation)
@@ -435,8 +211,8 @@ knitr<span class="op">::</span><span class="kw">kable</span>(<span class="kw">he
 ## Chain 1:    200        -9544.641             0.504            1.000
 ## Chain 1:    300        -9508.650             0.337            0.008   MEDIAN ELBO CONVERGED
 ## Chain 1: Drawing a sample of size 1000 from the approximate posterior... 
-## Chain 1: Gradient evaluation took 0.013 seconds
-## Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 130 seconds.
+## Chain 1: Gradient evaluation took 0.012 seconds
+## Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 120 seconds.
 ## Chain 1: Iteration:   1 / 250 [  0%]  (Adaptation)
 ## Chain 1: Iteration:  50 / 250 [ 20%]  (Adaptation)
 ## Chain 1: Iteration: 100 / 250 [ 40%]  (Adaptation)
@@ -463,8 +239,8 @@ knitr<span class="op">::</span><span class="kw">kable</span>(<span class="kw">he
                  <span class="dt">restrict_ind_high =</span> <span class="st">&quot;WARREN, Elizabeth&quot;</span>,
                  <span class="dt">restrict_ind_low=</span><span class="st">&quot;BARRASSO, John A.&quot;</span>,
             <span class="dt">seed=</span><span class="dv">84520</span>)</code></pre></div>
-<pre><code>## Chain 1: Gradient evaluation took 0.015 seconds
-## Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 150 seconds.
+<pre><code>## Chain 1: Gradient evaluation took 0.012 seconds
+## Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 120 seconds.
 ## Chain 1: Iteration:   1 / 250 [  0%]  (Adaptation)
 ## Chain 1: Iteration:  50 / 250 [ 20%]  (Adaptation)
 ## Chain 1: Iteration: 100 / 250 [ 40%]  (Adaptation)
@@ -477,8 +253,8 @@ knitr<span class="op">::</span><span class="kw">kable</span>(<span class="kw">he
 ## Chain 1:    400        -9489.842             0.254            0.011
 ## Chain 1:    500        -9480.068             0.203            0.004   MEDIAN ELBO CONVERGED
 ## Chain 1: Drawing a sample of size 1000 from the approximate posterior... 
-## Chain 1: Gradient evaluation took 0.012 seconds
-## Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 120 seconds.
+## Chain 1: Gradient evaluation took 0.013 seconds
+## Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 130 seconds.
 ## Chain 1: Iteration:   1 / 250 [  0%]  (Adaptation)
 ## Chain 1: Iteration:  50 / 250 [ 20%]  (Adaptation)
 ## Chain 1: Iteration: 100 / 250 [ 40%]  (Adaptation)
@@ -586,8 +362,8 @@ knitr<span class="op">::</span><span class="kw">kable</span>(<span class="kw">he
                  <span class="dt">restrict_ind_high =</span> <span class="st">&quot;WARREN, Elizabeth&quot;</span>,
                  <span class="dt">restrict_ind_low=</span><span class="st">&quot;BARRASSO, John A.&quot;</span>,
             <span class="dt">seed=</span><span class="dv">84520</span>)</code></pre></div>
-<pre><code>## Chain 1: Gradient evaluation took 0.012 seconds
-## Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 120 seconds.
+<pre><code>## Chain 1: Gradient evaluation took 0.013 seconds
+## Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 130 seconds.
 ## Chain 1: Iteration:   1 / 250 [  0%]  (Adaptation)
 ## Chain 1: Iteration:  50 / 250 [ 20%]  (Adaptation)
 ## Chain 1: Iteration: 100 / 250 [ 40%]  (Adaptation)
@@ -717,8 +493,8 @@ knitr<span class="op">::</span><span class="kw">kable</span>(<span class="kw">he
                  <span class="dt">restrict_ind_high =</span> <span class="st">&quot;D&quot;</span>,
                  <span class="dt">restrict_ind_low=</span><span class="st">&quot;R&quot;</span>,
             <span class="dt">seed=</span><span class="dv">84520</span>)</code></pre></div>
-<pre><code>## Chain 1: Gradient evaluation took 0.014 seconds
-## Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 140 seconds.
+<pre><code>## Chain 1: Gradient evaluation took 0.019 seconds
+## Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 190 seconds.
 ## Chain 1: Iteration:   1 / 250 [  0%]  (Adaptation)
 ## Chain 1: Iteration:  50 / 250 [ 20%]  (Adaptation)
 ## Chain 1: Iteration: 100 / 250 [ 40%]  (Adaptation)

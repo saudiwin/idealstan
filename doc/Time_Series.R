@@ -7,7 +7,7 @@ require(lubridate)
 
 ## ----example_data--------------------------------------------------------
 data('senate114')
-knitr::kable(head(senate114))
+knitr::kable(head(select(senate114,1:7)))
 
 ## ----date_hist-----------------------------------------------------------
 senate114 %>% 
