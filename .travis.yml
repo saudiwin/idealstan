@@ -31,11 +31,8 @@ matrix:
       env:
         - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
     - os: osx
-      osx_image: xcode9.3
-      r: release
-    - os: osx
-      osx_image: xcode9.3
-      r: devel
+      osx_image: xcode10
+      r: oldrel
      
 before_install:
   - mkdir -p ~/.R/
