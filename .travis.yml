@@ -1,10 +1,10 @@
 language: r
 sudo: false
 cache: packages
-fortran: false
+
   
-r_check_args: "--no-vignettes"
-r_build_args: '--no-build-vignettes'
+#r_check_args: "--no-vignettes"
+#r_build_args: '--no-build-vignettes'
 
 matrix:
   include:
@@ -31,6 +31,7 @@ matrix:
       env:
         - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
     - os: osx
+      fortran: false
       osx_image: xcode10
       r: release
 

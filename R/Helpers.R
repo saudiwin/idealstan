@@ -1616,6 +1616,7 @@ idx
 }
 
 #' yet another hacked function
+#' @noRd
 .num_pars <- function(d) prod(d)
 
 #' yet another hacked function
