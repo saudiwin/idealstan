@@ -215,7 +215,7 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
 #' 
 #' This function is the generic method for generating posterior distributions 
 #' from a fitted \code{idealstan} model. Functions are documented in the 
-#' actual method (\code{\linkS4method{id_plot_ppc}}).
+#' actual method.
 #' 
 #' This function is a wrapper around \code{\link[bayesplot]{ppc_bars}},
 #' \code{\link[bayesplot]{ppc_dens_overlay}} and 
