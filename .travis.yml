@@ -1,16 +1,27 @@
 language: r
 sudo: false
 cache: packages
-r: 
-  - devel
-  - release
+fortan: false
   
 r_check_args: "--no-vignettes"
+r_build_args: '--no-build-vignettes'
 
 matrix:
   include:
     - os: linux
       dist: trusty
+      r: release
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-7
+      env:
+        - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
+    - os: linux
+      dist: trusty
+      r: devel
       addons:
         apt:
           sources:
@@ -20,6 +31,11 @@ matrix:
       env:
         - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
     - os: osx
+      osx_image: xcode10
+      r: release
+    - os: osx
+      osx_image: xcode10
+      r: devel
      
 before_install:
   - mkdir -p ~/.R/
