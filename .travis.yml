@@ -1,7 +1,7 @@
 language: r
 sudo: false
 cache: packages
-fortan: false
+fortran: false
   
 r_check_args: "--no-vignettes"
 r_build_args: '--no-build-vignettes'
@@ -32,7 +32,10 @@ matrix:
         - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
     - os: osx
       osx_image: xcode10
-      r: oldrel
+      r: release
+    - os: osx
+      osx_image: xcode10
+      r: devel
      
 before_install:
   - mkdir -p ~/.R/
