@@ -1,26 +1,16 @@
 language: r
-sudo: true
+sudo: false
 cache: packages
-dist: trusty
 r: 
   - devel
   - release
-
-r_binary_packages:
-  - Rcpp
-  - dplyr
-  - ggplot2
-  - stringr
   
 r_check_args: "--no-vignettes"
-
-os: 
-  - linux
-  - osx
 
 matrix:
   include:
     - os: linux
+      dist: trusty
       addons:
         apt:
           sources:
@@ -29,9 +19,7 @@ matrix:
             - g++-7
       env:
         - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
-  include: 
     - os: osx
-    - osx_image: xcode7.2
      
 before_install:
   - mkdir -p ~/.R/
