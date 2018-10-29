@@ -36,6 +36,7 @@ matrix:
     - os: osx
       osx_image: xcode10
       r: devel
+      brew_packages: libgit2
      
 before_install:
   - mkdir -p ~/.R/

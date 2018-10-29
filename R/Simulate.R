@@ -203,6 +203,7 @@ id_sim_gen <- function(num_person=20,num_bills=50,
 
 #' A function that loops over numbers of personlators/bills to provide a coherent over-view of 
 #' idealstan performance for a given model type.
+#' @noRd
 .id_sim_test <- function(param_range=c(50,150),by=10,simul_type='absence',is.ordinal=TRUE,
                            restrict_type='constrain_twoway',restrict_params='person',
                            num_constrain=10,fixtype='pinned',...) {

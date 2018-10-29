@@ -2,7 +2,7 @@
 # DGP Functions -----------------------------------------------------------
 
 # Functions used to generate all the models
-
+#' @noRd
 .binary <- function(pr_absence=NULL,
                     pr_vote=NULL,
                     y=NULL,
@@ -615,6 +615,7 @@
 
 #' Function to generate random-walk or AR(1) person parameters
 #' Recursively generate data
+#' @noRd
 .gen_ts_data <- function(t,adj_in,alpha_int,sigma,init_sides) {
   current_val <- new.env()
   current_val$t1 <- 0

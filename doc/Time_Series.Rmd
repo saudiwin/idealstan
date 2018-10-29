@@ -28,7 +28,7 @@ This package implements to kinds of time-varying ideal point models. Because the
 
 ```{r example_data}
 data('senate114')
-knitr::kable(head(select(senate114,1:7)))
+knitr::kable(head(senate114))
 ```
 
 The process to create a time-varying ideal point model is no different than that for creating a static model, except that a column should exist in the data with dates, preferably in `date` or `date-time` format. If you have a character vector of dates that you need to convert to R's `date` format, check out the excellent [lubridate package](https://lubridate.tidyverse.org/). I will demonstrate some of the package's functionality by re-coding the `senate114` dates, which are currently in year-month-day format. That will lead us to estimate one ideal point per day in the sample, which would be a lot of ideal points, as the following histogram of dates shows:

@@ -1,5 +1,6 @@
 #' Function that does automatic identification of models using VB
-#'@importFrom forcats fct_relevel
+#' @importFrom forcats fct_relevel
+#' @noRd
 .vb_fix <- function(object=NULL,
                     this_data=NULL,nfix=NULL,
                     ncores=NULL,all_args=NULL,
@@ -157,6 +158,7 @@
 }
 
 #' Function that uses a previously-identified model to maintain comparability across model types
+#' @noRd
 .prior_fit <- function(object=NULL,
                        prior_fit=NULL,
                        use_groups=NULL,...) {
@@ -191,6 +193,7 @@
 }
 
 #' Function that constrains certain known parameters
+#' @noRd
 .constrain_fix <- function(object=NULL,
                            restrict_ind_high=NULL,
                            restrict_ind_low=NULL,
@@ -449,6 +452,7 @@
 #' }
 
 #' Function that figures out what kind of hierarchical model (if any) is being run
+#' @noRd
 .get_hier_type <- function(obj) {
   
   if(all(obj@person_cov) && all(obj@item_cov) && all(obj@item_cov_miss)) {
@@ -472,6 +476,7 @@
   }
 }
 
+#' @noRd
 .extract_samples <- function(obj=NULL,extract_type=NULL,...) {
   if(!is.null(extract_type)) {
     param <- switch(extract_type,persons='L_full',
@@ -489,80 +494,9 @@
 }
 
 
-#helper to calculate medians and high/low points of a column given a name 
-.calc_bill <- function(df,int_reg,
-                       sigma_reg,
-                       int_abs=NULL,
-                       sigma_abs=NULL,
-                       steps_data=NULL,
-                       step_num=2,
-                       this_num=NULL) {
-  
-  if(is.null(steps_data)) {
-    # non-ordinal
-    # int_reg <- enenquo(int_reg)
-    # sigma_reg <- enquo(sigma_reg)
-    # int_abs <- enquo(int_abs)
-    # sigma_abs <- enquo(sigma_abs)
-    out_data <- summarize(df,median_bill=median((!!int_reg)/(!!sigma_reg)),
-                          high_bill=quantile((!!int_reg)/(!!sigma_reg),0.9),
-                          low_bill=quantile((!!int_reg)/(!!sigma_reg),0.1)) %>% 
-      mutate(param='Vote Points',
-             step=1)
-    if(!is.null(int_abs)) {
-      
-      out_data <- summarize(df,median_bill=median((!!int_abs)/(!!sigma_abs)),
-                            high_bill=quantile((!!int_abs)/(!!sigma_abs),0.9),
-                            low_bill=quantile((!!int_abs)/(!!sigma_abs),0.1)) %>% 
-        mutate(param='Absence Points',
-               step=1) %>% 
-        bind_rows(out_data)
-    }
-    
-  } else {
-    #ordinal
-    # int_reg <- enquo(int_reg)
-    # sigma_reg <- enquo(sigma_reg)
-    # int_abs <- enquo(int_abs)
-    # sigma_abs <- enquo(sigma_abs)
-    
-    out_data <- lapply(1:step_num, function(s,steps_data=NULL) {
-      
-      out_data <- summarize(df,median_bill=median(((!!int_reg)+steps_data[,s])/(!!sigma_reg)),
-                            high_bill=quantile(((!!int_reg)+steps_data[,s])/(!!sigma_reg),0.9),
-                            low_bill=quantile(((!!int_reg)+steps_data[,s])/(!!sigma_reg),0.1)) %>% 
-        mutate(param='Vote Points',
-               step=s)
-      
-      if(!is.null(int_abs)) {
-        
-        out_data <- summarize(df,median_bill=median(((!!int_abs)+steps_data[,s])/(!!sigma_abs)),
-                              high_bill=quantile(((!!int_abs)+steps_data[,s])/(!!sigma_abs),0.9),
-                              low_bill=quantile(((!!int_abs)+steps_data[,s])/(!!sigma_abs),0.1)) %>% 
-          mutate(param='Absence Points',
-                 step=s) %>% 
-          bind_rows(out_data)
-        
-      }
-      return(out_data)
-    },steps_data=steps_data) %>% bind_rows
-    
-  }
-  mutate(out_data,bill_num=this_num) %>% return()
-}
-
-#' Helper function that determines if there are more missing than non-missing
-#' observations
-.det_missing <- function(object,model_type=NULL) {
-  if(model_type %in% c(2,4,6)) {
-    all_data <- object@score_matrix$outcome
-    return((sum(all_data==object@miss_val)/length(all_data))>.5)
-  } else {
-    return(FALSE)
-  }
-}
 
 #' Helper function for preparing person ideal point plot data
+#' @noRd
 .prepare_legis_data <- function(object,
                                 high_limit=NULL,
                                 low_limit=NULL,
@@ -674,6 +608,7 @@
 #' @param col_var_name Unquoted variable name that identifies the data.frame column corresponding names of the columns (2nd dimension) of the array
 #' @param col_var_value Unquoted variable name that identifies the data.frame column corresponding to the values that populate the cells of the array
 #' @param third_dim_var Unquoted variable name that identifis the data.frame column corresponding to the dimension around which to stack the matrices (3rd dimension of array)
+#' @noRd
 .create_array <- function(input_matrix,arr_dim=2,row_var=NULL,
                           col_var_name=NULL,
                           col_var_value,third_dim_var=NULL) {
@@ -720,6 +655,7 @@
 
 #' Simple function to test for what an input is
 #' Default_val should be quoted
+#' @noRd
 .check_quoted <- function(quoted=NULL,default_val) {
   if(is.null(quoted)) {
     quoted <- default_val
@@ -732,6 +668,7 @@
 }
 
 #' Simple function to provide initial values to Stan given current values of restrict_sd
+#' @noRd
 .init_stan <- function(chain_id=NULL,
                        restrict_sd=NULL,
                         person_sd=NULL,
@@ -785,6 +722,7 @@
 
 #' used to calculate the true ideal points
 #' given that a non-centered parameterization is used.
+#' @noRd
 .calc_true_pts <- function(obj) {
 
 
@@ -816,6 +754,7 @@
 }
 
 #' Pre-process rollcall objects
+#' @noRd
 .prepare_rollcall <- function(rc_obj=NULL,item_id=NULL,time_id=NULL) {
   
   # make the outcome
@@ -851,6 +790,7 @@
 } 
 
 #' Generate item-level midpoints for binary IRT outcomes
+#' @noRd
 .item_plot_binary <- function(param_name,object,
                        high_limit=NULL,
                        low_limit=NULL,
@@ -1004,6 +944,7 @@
 }
 
 #' Generate item-level midpoints for ordinal-rating scale IRT outcomes
+#' @noRd
 .item_plot_ord_rs <- function(param_name,object,
                               high_limit=NULL,
                               low_limit=NULL,
@@ -1174,6 +1115,7 @@
 }
 
 #' Generate item-level midpoints for ordinal-GRM IRT outcomes
+#' @noRd
 .item_plot_ord_grm <- function(param_name,object,
                               high_limit=NULL,
                               low_limit=NULL,
@@ -1349,9 +1291,11 @@
 }
 
 #' Generate item-level midpoints for binary latent-space outcomes
+#' @noRd
 .item_plot_ls <- function(param_name,object,
                               high_limit=NULL,
-                              low_limit=NULL) {
+                              low_limit=NULL,
+                          aggregate=F) {
 
   # first need to get num of the parameter
   
@@ -1465,6 +1409,7 @@
 }
 
 #' a slightly hacked function to extract parameters as I want to
+#' @noRd
 .extract_nonp <- function(object, pars, permuted = TRUE, 
                                 inc_warmup = FALSE, include = TRUE) {
             # Extract the samples in different forms for different parameters. 
@@ -1538,6 +1483,7 @@
 
 #' we are going to modify this rstan function so that it no longer permutes
 #' just delete the last term -- maybe submit PR to rstan
+#' @noRd
 .get_kept_samples2 <- function(n, sim) {
 
   # a different implementation of get_kept_samples 
@@ -1554,6 +1500,7 @@
 }
 
 #' another hacked function
+#' @noRd
 .check_pars_second <- function(sim, pars) {
   #
   # Check if all parameters in pars are parameters for which we saved
@@ -1572,6 +1519,7 @@
 }
 
 #' another hacked function
+#' @noRd
 .check_pars <- function(allpars, pars) {
   pars_wo_ws <- gsub('\\s+', '', pars)
   m <- which(match(pars_wo_ws, allpars, nomatch = 0) == 0)
@@ -1583,6 +1531,7 @@
 }
 
 #' yet another hacked function
+#' @noRd
 .remove_empty_pars <- function(pars, model_dims) {
   #
   # Remove parameters that are actually empty, which
@@ -1612,6 +1561,7 @@
 }
 
 #' yet another hacked function
+#' @noRd
 .pars_total_indexes <- function(names, dims, fnames, pars) {
 # Obtain the total indexes for parameters (pars) in the
 # whole sequences of names that is order by 'column major.'
@@ -1658,6 +1608,7 @@ idx
 }
 
 #yet another hacked function
+#' @noRd
 .calc_starts <- function(dims) {
   len <- length(dims)
   s <- sapply(unname(dims), function(d)  .num_pars(d), USE.NAMES = FALSE)
@@ -1668,6 +1619,7 @@ idx
 .num_pars <- function(d) prod(d)
 
 #' yet another hacked function
+#' @noRd
 .idx_col2rowm <- function(d) {
 # Suppose an iteration of samples for an array parameter is ordered by
 # col-major. This function generates the indexes that can be used to change
@@ -1682,6 +1634,7 @@ return(as.vector(idx))
 }
 
 #' A wrapper around na_if that also works on factors
+#' @noRd
 .na_if <- function(x,to_na=NULL) {
   if(is.factor(x)) {
     levels(x)[levels(x)==to_na] <- NA
