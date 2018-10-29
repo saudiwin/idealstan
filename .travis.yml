@@ -3,8 +3,8 @@ sudo: false
 cache: packages
 
   
-#r_check_args: "--no-vignettes"
-#r_build_args: '--no-build-vignettes'
+r_check_args: "--no-vignettes"
+r_build_args: '--no-build-vignettes'
 
 matrix:
   include:
