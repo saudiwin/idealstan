@@ -356,7 +356,12 @@ id_make <- function(score_data=NULL,
 #' To run an IRT ideal point model, you must first pre-process your data using the \code{\link{id_make}} function. Be sure to specify the correct options for the
 #' kind of model you are going to run: if you want to run an unbounded outcome (i.e. Poisson or continuous),
 #' the data needs to be processed differently. Also any hierarchical covariates at the person or item level
-#' need to be specified in \code{\link{id_make}}.
+#' need to be specified in \code{\link{id_make}}. If they are specified in \code{\link{id_make}}, than all 
+#' subsequent models fit by this function will have these covariates.
+#' 
+#' \strong{Note that for static ideal point models, the covariates are only defined for those 
+#' persons who are not being used as constraints.}
+#' 
 #' As of this version of \code{idealstan}, the following model types are available:
 #' \enumerate{
 #'   \item IRT 2-PL (binary response) ideal point model, no missing-data inflation

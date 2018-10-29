@@ -10,8 +10,6 @@ stan_trace(object, ...)
 \item{object}{A fitted \code{idealstan} model}
 
 \item{...}{Other options passed on to \code{\link[rstan]{stan_trace}}}
-
-\item{par}{The character string  name of a parameter in the model}
 }
 \description{
 This function allows you to produce trace plots for assessing the quality

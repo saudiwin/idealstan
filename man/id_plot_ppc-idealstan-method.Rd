@@ -5,8 +5,8 @@
 \alias{id_plot_ppc,idealstan-method}
 \title{Plot Posterior Predictive Distribution for \code{idealstan} Objects}
 \usage{
-\S4method{id_plot_ppc}{idealstan}(object, ppc_pred = NULL, group = NULL,
-  item = NULL, ...)
+\S4method{id_plot_ppc}{idealstan}(object, ppc_pred = NULL,
+  group = NULL, item = NULL, ...)
 }
 \arguments{
 \item{object}{A fitted idealstan object}
@@ -19,4 +19,8 @@ over which to subset the predictive distribution}
 \item{item}{A character vector of item IDs to subset the posterior distribution}
 
 \item{...}{Other arguments passed on to \code{\link[bayesplot]{ppc_bars}}}
+}
+\description{
+This function is the actual method for generating posterior distributions 
+from a fitted \code{idealstan} model.
 }

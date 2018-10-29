@@ -474,6 +474,7 @@
   if(type=='simulate') {
     votes <- rnorm(n = length(pr_vote),mean = pr_vote,sd = sigma_sd)
   } else if(type=='predict') {
+
     votes <- sapply(1:ncol(pr_vote),function(c) rnorm(n=nrow(pr_vote),mean=pr_vote[,c],sd=sigma_sd[c]))
   } else if(type=='log_lik') {
     if(inflate) {

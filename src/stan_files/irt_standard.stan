@@ -119,7 +119,7 @@ transformed parameters {
   vector[1] restrict_low;
   
   if(T==1) {
-    restrict_low = restrict_high - diff + legis_pred[1, num_legis-1, ] * legis_x_cons;
+    restrict_low = restrict_high - diff;
   } else {
     restrict_low = restrict_high - diff;
   }

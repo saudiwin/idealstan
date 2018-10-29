@@ -7,14 +7,12 @@
 id_plot_ppc(object, ...)
 }
 \arguments{
-\item{object}{A fitted idealstan object}
+\item{object}{A fitted \code{idealstan} object}
 
 \item{...}{Other arguments passed on to \code{\link[bayesplot]{ppc_bars}}}
-
-\item{ppc_pred}{The output of the \code{\link{id_post_pred}} function on a fitted idealstan object}
-
-\item{group}{A character vector of the person or group IDs 
-over which to subset the predictive distribution}
-
-\item{item}{A character vector of item IDs to subset the posterior distribution}
+}
+\description{
+This function is the generic method for generating posterior distributions 
+from a fitted \code{idealstan} model. Functions are documented in the 
+actual method (\code{\linkS4method{id_plot_ppc}}).
 }

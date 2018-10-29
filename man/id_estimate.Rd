@@ -4,17 +4,19 @@
 \alias{id_estimate}
 \title{Estimate an \code{idealstan} model}
 \usage{
-id_estimate(idealdata = NULL, model_type = 2, vary_ideal_pts = "none",
-  use_subset = FALSE, sample_it = FALSE, subset_group = NULL,
-  subset_person = NULL, sample_size = 20, nchains = 4, niters = 2000,
-  use_vb = FALSE, restrict_ind_high = NULL, id_diff = 4,
-  id_diff_high = 2, restrict_ind_low = NULL, fixtype = "vb_full",
-  prior_fit = NULL, warmup = floor(niters/2), ncores = 4,
-  use_groups = FALSE, discrim_reg_sd = 1, discrim_miss_sd = 1,
-  person_sd = 1, time_sd = 0.1, sample_stationary = FALSE, ar_sd = 2,
+id_estimate(idealdata = NULL, model_type = 2,
+  vary_ideal_pts = "none", use_subset = FALSE, sample_it = FALSE,
+  subset_group = NULL, subset_person = NULL, sample_size = 20,
+  nchains = 4, niters = 2000, use_vb = FALSE,
+  restrict_ind_high = NULL, id_diff = 4, id_diff_high = 2,
+  restrict_ind_low = NULL, fixtype = "vb_full", prior_fit = NULL,
+  warmup = floor(niters/2), ncores = 4, use_groups = FALSE,
+  discrim_reg_sd = 1, discrim_miss_sd = 1, person_sd = 1,
+  time_sd = 0.1, sample_stationary = FALSE, ar_sd = 2,
   diff_reg_sd = 1, diff_miss_sd = 1, restrict_sd = 0.01,
-  restrict_mean = NULL, restrict_var = NULL, restrict_mean_val = NULL,
-  restrict_mean_ind = NULL, restrict_var_high = 0.1, ...)
+  restrict_mean = NULL, restrict_var = NULL,
+  restrict_mean_val = NULL, restrict_mean_ind = NULL,
+  restrict_var_high = 0.1, ...)
 }
 \arguments{
 \item{idealdata}{An object produced by the \code{\link{id_make}} containing a score/vote matrix for use for estimation & plotting}
@@ -141,7 +143,12 @@ Stan's MCMC engine.
 To run an IRT ideal point model, you must first pre-process your data using the \code{\link{id_make}} function. Be sure to specify the correct options for the
 kind of model you are going to run: if you want to run an unbounded outcome (i.e. Poisson or continuous),
 the data needs to be processed differently. Also any hierarchical covariates at the person or item level
-need to be specified in \code{\link{id_make}}.
+need to be specified in \code{\link{id_make}}. If they are specified in \code{\link{id_make}}, than all 
+subsequent models fit by this function will have these covariates.
+
+\strong{Note that for static ideal point models, the covariates are only defined for those 
+persons who are not being used as constraints.}
+
 As of this version of \code{idealstan}, the following model types are available:
 \enumerate{
   \item IRT 2-PL (binary response) ideal point model, no missing-data inflation

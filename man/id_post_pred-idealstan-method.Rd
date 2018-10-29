@@ -5,8 +5,8 @@
 \alias{id_post_pred,idealstan-method}
 \title{Posterior Prediction for \code{idealstan} objects}
 \usage{
-\S4method{id_post_pred}{idealstan}(object, draws = 100, output = "observed",
-  type = "predict", sample_scores = NULL, ...)
+\S4method{id_post_pred}{idealstan}(object, draws = 100,
+  output = "observed", type = "predict", sample_scores = NULL, ...)
 }
 \arguments{
 \item{object}{A fitted \code{idealstan} object}

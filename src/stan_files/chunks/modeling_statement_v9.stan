@@ -3,8 +3,7 @@
 // We include diff_high as an offset as we want this parameter to be halfway past 0 
 
   if(T==1) {
-    restrict_high ~normal(diff_high + 
-                  legis_pred[1, num_legis, ] * legis_x_cons, 
+    restrict_high ~normal(diff_high, 
                     restrict_sd);
   } else {
     restrict_high ~normal(diff_high, 

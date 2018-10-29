@@ -193,7 +193,7 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
                           outcome=y,
                           miss_val=miss_val,
                           person_points=person_points,
-                          sigma_sd=.extract_nonp(object,'extra_sd')[these_draws],
+                          sigma_sd=.extract_nonp(object@stan_samples,'extra_sd')[[1]][these_draws],
                           cutpoints=cutpoints,
                           type=type,
                           output=output)
@@ -213,6 +213,10 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
 
 #' Plot Posterior Predictive Distribution for \code{idealstan} Objects
 #' 
+#' This function is the generic method for generating posterior distributions 
+#' from a fitted \code{idealstan} model. Functions are documented in the 
+#' actual method (\code{\linkS4method{id_plot_ppc}}).
+#' 
 #' This function is a wrapper around \code{\link[bayesplot]{ppc_bars}},
 #' \code{\link[bayesplot]{ppc_dens_overlay}} and 
 #' \code{\link[bayesplot]{ppc_violin_grouped} that plots the posterior predictive distribution
@@ -223,11 +227,13 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
 #' Only persons or items can be specified,
 #' not both.
 #' 
-#' @param object A fitted idealstan object
-#' @param ppc_pred The output of the \code{\link{id_post_pred}} function on a fitted idealstan object
-#' @param group A character vector of the person or group IDs 
-#' over which to subset the predictive distribution
-#' @param item A character vector of item IDs to subset the posterior distribution
+#' If you specify a value for \code{group} that is either a person ID or a group ID 
+#' (depending on whether a person or group-level model was fit), then you can see the 
+#' posterior distributions for those specific persons. Similarly, if an item ID is passed
+#' to \code{item}, you can see how well the model predictions compare to the true values
+#' for that specific item.
+#' 
+#' @param object A fitted \code{idealstan} object
 #' @param ... Other arguments passed on to \code{\link[bayesplot]{ppc_bars}}
 #' @export
 setGeneric('id_plot_ppc',signature='object',
@@ -235,6 +241,9 @@ setGeneric('id_plot_ppc',signature='object',
 
 #' Plot Posterior Predictive Distribution for \code{idealstan} Objects
 #' 
+#' This function is the actual method for generating posterior distributions 
+#' from a fitted \code{idealstan} model.
+#' 
 #' This function is a wrapper around \code{\link[bayesplot]{ppc_bars}},
 #' \code{\link[bayesplot]{ppc_dens_overlay}} and 
 #' \code{\link[bayesplot]{ppc_violin_grouped} that plots the posterior predictive distribution
@@ -244,6 +253,12 @@ setGeneric('id_plot_ppc',signature='object',
 #' bills/item sby specifying the ID of each in the original data as a character vector. 
 #' Only persons or items can be specified,
 #' not both.
+#' 
+#' If you specify a value for \code{group} that is either a person ID or a group ID 
+#' (depending on whether a person or group-level model was fit), then you can see the 
+#' posterior distributions for those specific persons. Similarly, if an item ID is passed
+#' to \code{item}, you can see how well the model predictions compare to the true values
+#' for that specific item.
 #' 
 #' @param object A fitted idealstan object
 #' @param ppc_pred The output of the \code{\link{id_post_pred}} function on a fitted idealstan object
@@ -296,12 +311,12 @@ setMethod('id_plot_ppc',signature(object='idealstan'),function(object,
   person_points <- person_points[remove_nas]
   if(!is.null(group)) {
     group_var <- group_var[remove_nas]
+    # create a second one for the grouping variable
+    remove_nas_group <- !is.na(group)
   }
   
   
-  # create a second one for the grouping variable
   
-  remove_nas_group <- !is.na(group)
   
   if(!is.null(item) && !is.null(group))
     stop('Please only specify an index to item or person, not both.')

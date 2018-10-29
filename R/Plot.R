@@ -208,11 +208,17 @@ id_plot_legis <- function(object,return_data=FALSE,
   if(person_labels==TRUE & group_color==TRUE) {
     outplot <- outplot + geom_text_repel(aes(x=reorder(person_id,median_pt),y=median_pt,label=reorder(person_id,median_pt),color=group_id),
                                        nudge_x=hjust_length,size=text_size_label,show.legend = FALSE,
-                                       segment.alpha=0)
+                                       segment.alpha=0,data=distinct(person_params,
+                                                                     person_id,
+                                                                     median_pt,
+                                                                     group_id))
   } else if(person_labels==TRUE & group_color==FALSE) {
     outplot <- outplot + geom_text_repel(aes(x=reorder(person_id,median_pt),y=median_pt,label=reorder(person_id,median_pt)),
                                    nudge_x=hjust_length,size=text_size_label,
-                                   segment.alpha=0)
+                                   segment.alpha=0,data=distinct(person_params,
+                                                                 person_id,
+                                                                 median_pt,
+                                                                 group_id))
   }
   
     
@@ -258,9 +264,7 @@ id_plot_legis <- function(object,return_data=FALSE,
   if(return_data==TRUE) {
     
     return_list <- list(outplot=outplot,plot_data=person_params)
-    if(!is.null(item_plot)) {
-      return_list$bill_data <- bill_pos
-    }
+
     return(return_list)
     
   } else (
@@ -881,10 +885,15 @@ id_plot_rhats <- function(obj) {
 #' @param cov_type Either 'person_cov' for person-level hierarchical parameters,
 #' 'discrim_reg_cov' for bill/item discrimination parameters from regular (non-inflated) model, and 
 #' 'discrim_infl_cov' for bill/item discrimination parameters from inflated model.
+#' @param filter_cov A character vector of coefficients from covariate plots to exclude from
+#' plotting (should be the names of coefficients as they appear in the plots)
+#' @param ... Any additional parameters passed on to \code{\link[bayesplot]{mcmc_intervals}}
 #' @return A \code{ggplot2} plot that can be further customized with \code{ggplot2} functions if need be.
 #' @export
 id_plot_cov <- function(object,
-                        cov_type) {
+                        cov_type='person_cov',
+                        filter_cov=NULL,
+                        ...) {
   
   param_name <- switch(cov_type,person_cov='legis_x',
                        discrim_reg_cov='sigma_reg_x',
@@ -899,6 +908,9 @@ id_plot_cov <- function(object,
                       discrim_abs=attributes(object@score_data@item_cov_miss)$dimnames$colnames)
 
   attributes(to_plot)$dimnames$parameters <- new_names
-  
-  mcmc_intervals(to_plot) + xlab('Ideal Point Score')
+  if(!is.null(filter_cov)) {
+    to_plot <- to_plot[,,new_names %in% filter_cov]
+  }
+
+  mcmc_intervals(to_plot,...) + xlab('Ideal Point Score')
 }

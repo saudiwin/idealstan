@@ -270,7 +270,8 @@ if(model_type==1) {
 } else if(model_type==13) {
   //latent space non-inflated (normal parameterization)
   if(T==1) {
-        pi1 = sigma_reg_free[bb]  + sigma_abs_free[bb] -  sqrt(square( L_full[ll] - B_int_free[bb]));
+    
+        pi1 = sigma_reg_free[ll]  + sigma_abs_free[bb] -  sqrt(square( L_full[ll] - B_int_free[bb]));
 
   } else {
       for(n in 1:N) {

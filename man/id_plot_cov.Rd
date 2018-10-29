@@ -4,7 +4,7 @@
 \alias{id_plot_cov}
 \title{Display Coefficient Plot of Hierarchical Covariates}
 \usage{
-id_plot_cov(object, cov_type)
+id_plot_cov(object, cov_type = "person_cov", filter_cov = NULL, ...)
 }
 \arguments{
 \item{object}{A fitted \code{idealstan} object}
@@ -12,6 +12,11 @@ id_plot_cov(object, cov_type)
 \item{cov_type}{Either 'person_cov' for person-level hierarchical parameters,
 'discrim_reg_cov' for bill/item discrimination parameters from regular (non-inflated) model, and 
 'discrim_infl_cov' for bill/item discrimination parameters from inflated model.}
+
+\item{filter_cov}{A character vector of coefficients from covariate plots to exclude from
+plotting (should be the names of coefficients as they appear in the plots)}
+
+\item{...}{Any additional parameters passed on to \code{\link[bayesplot]{mcmc_intervals}}}
 }
 \value{
 A \code{ggplot2} plot that can be further customized with \code{ggplot2} functions if need be.

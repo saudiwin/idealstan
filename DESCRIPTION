@@ -32,6 +32,7 @@ Imports:
 Suggests:
     pscl,
     loo,
+    lubridate,
     knitr,
     rmarkdown
 LinkingTo: 
@@ -44,4 +45,5 @@ Encoding: UTF-8
 LazyData: true
 NeedsCompilation: yes
 SystemRequirements: GNU make
+VignetteBuilder: knitr
 RoxygenNote: 6.1.0

@@ -18,3 +18,461 @@ label: sim_irt_2pl
 
   |                                                                         |.................                                                |  26%
 label: fit_irt_2pl
+  |                                                                         |....................                                             |  30%
+  ordinary text without R code
+
+  |                                                                         |.......................                                          |  35%
+label: rhats_correct
+  |                                                                         |.........................                                        |  39%
+  ordinary text without R code
+
+  |                                                                         |............................                                     |  43%
+label: rhats_incorrect
+  |                                                                         |...............................                                  |  48%
+  ordinary text without R code
+
+  |                                                                         |..................................                               |  52%
+label: post_pred
+  |                                                                         |.....................................                            |  57%
+  ordinary text without R code
+
+  |                                                                         |........................................                         |  61%
+label: post_pred_graph
+  |                                                                         |..........................................                       |  65%
+  ordinary text without R code
+
+  |                                                                         |.............................................                    |  70%
+label: post_pred_ind
+  |                                                                         |................................................                 |  74%
+  ordinary text without R code
+
+  |                                                                         |...................................................              |  78%
+label: log_lik
+  |                                                                         |......................................................           |  83%
+  ordinary text without R code
+
+  |                                                                         |.........................................................        |  87%
+label: loo_show
+  |                                                                         |...........................................................      |  91%
+  ordinary text without R code
+
+  |                                                                         |..............................................................   |  96%
+label: loo_compare (with options) 
+List of 2
+ $ warn   : symbol F
+ $ message: symbol F
+
+  |                                                                         |.................................................................| 100%
+  ordinary text without R code
+
+
+"C:/Program Files/RStudio/bin/pandoc/pandoc" +RTS -K512m -RTS How_to_Evaluate_Models.utf8.md --to html4 --from markdown+autolink_bare_uris+ascii_identifiers+tex_math_single_backslash --output How_to_Evaluate_Models.html --smart --email-obfuscation none --self-contained --standalone --section-divs --template "C:\Users\bobku\Documents\R\win-library\3.2\rmarkdown\rmd\h\default.html" --highlight-style pygments --css "C:\Users\bobku\Documents\R\win-library\3.2\rmarkdown\rmarkdown\templates\html_vignette\resources\vignette.css" --mathjax --variable "mathjax-url:https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" 
+
+> rmarkdown::render('vignettes/Package_Introduction.Rmd')
+  |                                                                         |                                                                 |   0%  |                                                                         |..                                                               |   3%
+   inline R code fragments
+
+  |                                                                         |...                                                              |   5%
+label: setup (with options) 
+List of 1
+ $ include: logi FALSE
+
+  |                                                                         |.....                                                            |   8%
+  ordinary text without R code
+
+  |                                                                         |.......                                                          |  10%
+label: sim_data
+  |                                                                         |........                                                         |  13%
+  ordinary text without R code
+
+  |                                                                         |..........                                                       |  15%
+label: constrain_sim
+  |                                                                         |............                                                     |  18%
+  ordinary text without R code
+
+  |                                                                         |.............                                                    |  21%
+label: check_true
+  |                                                                         |...............                                                  |  23%
+  ordinary text without R code
+
+  |                                                                         |.................                                                |  26%
+label: restrict_auto
+  |                                                                         |..................                                               |  28%
+  ordinary text without R code
+
+  |                                                                         |....................                                             |  31%
+label: rhats
+  |                                                                         |......................                                           |  33%
+  ordinary text without R code
+
+  |                                                                         |.......................                                          |  36%
+label: check_data
+  |                                                                         |.........................                                        |  38%
+  ordinary text without R code
+
+  |                                                                         |...........................                                      |  41%
+label: long_to_ideal
+  |                                                                         |............................                                     |  44%
+  ordinary text without R code
+
+  |                                                                         |..............................                                   |  46%
+label: run_114_model
+  |                                                                         |................................                                 |  49%
+  ordinary text without R code
+
+  |                                                                         |.................................                                |  51%
+label: item_plot (with options) 
+List of 1
+ $ fig.width: num 8
+
+  |                                                                         |...................................                              |  54%
+  ordinary text without R code
+
+  |                                                                         |.....................................                            |  56%
+label: abs_item_plot (with options) 
+List of 1
+ $ fig.width: num 8
+
+  |                                                                         |......................................                           |  59%
+  ordinary text without R code
+
+  |                                                                         |........................................                         |  62%
+label: ideal_pts_sum
+  |                                                                         |..........................................                       |  64%
+  ordinary text without R code
+
+  |                                                                         |...........................................                      |  67%
+label: stan_obj
+  |                                                                         |.............................................                    |  69%
+  ordinary text without R code
+
+  |                                                                         |...............................................                  |  72%
+label: stan_trace
+  |                                                                         |................................................                 |  74%
+  ordinary text without R code
+
+  |                                                                         |..................................................               |  77%
+label: ideal_pts_ind
+  |                                                                         |....................................................             |  79%
+  ordinary text without R code
+
+  |                                                                         |.....................................................            |  82%
+label: create_cov_data
+  |                                                                         |.......................................................          |  85%
+  ordinary text without R code
+
+  |                                                                         |.........................................................        |  87%
+label: cov_plot
+  |                                                                         |..........................................................       |  90%
+  ordinary text without R code
+
+  |                                                                         |............................................................     |  92%
+label: cov_plot_small
+  |                                                                         |..............................................................   |  95%
+  ordinary text without R code
+
+  |                                                                         |...............................................................  |  97%
+label: cov_values
+  |                                                                         |.................................................................| 100%
+  ordinary text without R code
+
+
+"C:/Program Files/RStudio/bin/pandoc/pandoc" +RTS -K512m -RTS Package_Introduction.utf8.md --to html4 --from markdown+autolink_bare_uris+ascii_identifiers+tex_math_single_backslash --output Package_Introduction.html --smart --email-obfuscation none --self-contained --standalone --section-divs --template "C:\Users\bobku\Documents\R\win-library\3.2\rmarkdown\rmd\h\default.html" --highlight-style pygments --css "C:\Users\bobku\Documents\R\win-library\3.2\rmarkdown\rmarkdown\templates\html_vignette\resources\vignette.css" --mathjax --variable "mathjax-url:https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" 
+
+> rmarkdown::render('vignettes/Time_Series.Rmd')
+Email results to rmk7@nyu.edu?
+1: For sure
+2: Not yet
+3: Nope
+
+
+> # Script to run all relevant vignettes (including package test)
+> 
+> devtools::build_vignettes()
+NULL
+
+> rmarkdown::render('package_test.Rmd')
+  |                                                                         |                                                                 |   0%  |                                                                         |                                                                 |   1%
+  ordinary text without R code
+
+  |                                                                         |.                                                                |   1%
+label: setup (with options) 
+List of 1
+ $ include: logi FALSE
+
+  |                                                                         |.                                                                |   2%
+  ordinary text without R code
+
+
+label: irt_binary
+  |                                                                         |..                                                               |   3%
+  ordinary text without R code
+
+
+label: cov_plot_irt_2pl
+  |                                                                         |...                                                              |   4%
+  ordinary text without R code
+
+
+label: irt_2pl_plot
+  |                                                                         |...                                                              |   5%
+  ordinary text without R code
+
+  |                                                                         |....                                                             |   6%
+label: irt_2pl_resid
+
+  ordinary text without R code
+
+  |                                                                         |....                                                             |   7%
+label: irt_2pl_RMSE
+  |                                                                         |.....                                                            |   7%
+  ordinary text without R code
+
+  |                                                                         |.....                                                            |   8%
+label: irt_2pl_pred
+
+  ordinary text without R code
+
+  |                                                                         |......                                                           |   9%
+label: irt_binary_inflate
+
+  ordinary text without R code
+
+  |                                                                         |.......                                                          |  10%
+label: irt_2pl_abs_plot
+  |                                                                         |.......                                                          |  11%
+  ordinary text without R code
+
+
+label: irt_2pl_abs_cov_plot
+  |                                                                         |........                                                         |  12%
+  ordinary text without R code
+
+
+label: irt_2pl_abs_resid
+  |                                                                         |........                                                         |  13%
+  ordinary text without R code
+
+  |                                                                         |.........                                                        |  13%
+label: irt_2pl_abs_RMSE
+  |                                                                         |.........                                                        |  14%
+  ordinary text without R code
+
+  |                                                                         |.........                                                        |  15%
+label: irt_2pl_abs_pred
+  |                                                                         |..........                                                       |  15%
+  ordinary text without R code
+
+  |                                                                         |..........                                                       |  16%
+label: irt_ordinal
+  |                                                                         |...........                                                      |  16%
+  ordinary text without R code
+
+  |                                                                         |...........                                                      |  17%
+label: irt_ord_plot
+
+  ordinary text without R code
+
+  |                                                                         |............                                                     |  18%
+label: irt_ord_cov_plot
+
+  ordinary text without R code
+
+  |                                                                         |............                                                     |  19%
+label: ord_irt_resid
+  |                                                                         |.............                                                    |  20%
+  ordinary text without R code
+
+
+label: ord_irt_RMSE
+  |                                                                         |.............                                                    |  21%
+  ordinary text without R code
+
+  |                                                                         |..............                                                   |  21%
+label: ord_irt_pred
+  |                                                                         |..............                                                   |  22%
+  ordinary text without R code
+
+  |                                                                         |...............                                                  |  22%
+label: irt_ordinal_abs
+  |                                                                         |...............                                                  |  23%
+  ordinary text without R code
+
+
+label: irt_ord_abs_plot
+  |                                                                         |................                                                 |  24%
+  ordinary text without R code
+
+  |                                                                         |................                                                 |  25%
+label: ord_irt_abs_cov_plot
+
+  ordinary text without R code
+
+  |                                                                         |.................                                                |  26%
+label: ord_irt_abs_resid
+
+  ordinary text without R code
+
+  |                                                                         |.................                                                |  27%
+label: ord_irt_abs_RMSE
+  |                                                                         |..................                                               |  27%
+  ordinary text without R code
+
+  |                                                                         |..................                                               |  28%
+label: ord_irt_abs_pred
+  |                                                                         |...................                                              |  28%
+  ordinary text without R code
+
+  |                                                                         |...................                                              |  29%
+label: irt_ordinal_grm
+  |                                                                         |...................                                              |  30%
+  ordinary text without R code
+
+  |                                                                         |....................                                             |  30%
+label: ord_irt_grm_cov_plot
+  |                                                                         |....................                                             |  31%
+  ordinary text without R code
+
+
+label: irt_ord_grm_plot
+  |                                                                         |.....................                                            |  32%
+  ordinary text without R code
+
+
+label: ord_irt_grm_resid
+  |                                                                         |.....................                                            |  33%
+  ordinary text without R code
+
+  |                                                                         |......................                                           |  34%
+label: ord_irt_grm_RMSE
+
+  ordinary text without R code
+
+  |                                                                         |.......................                                          |  35%
+label: ord_irt_grm_pred
+
+  ordinary text without R code
+
+  |                                                                         |.......................                                          |  36%
+label: irt_ordinal_grm_abs
+  |                                                                         |........................                                         |  36%
+  ordinary text without R code
+
+  |                                                                         |........................                                         |  37%
+label: irt_ord_grm_abs_plot
+
+  ordinary text without R code
+
+  |                                                                         |.........................                                        |  38%
+label: ord_irt_grm_abs_cov_plot
+  |                                                                         |.........................                                        |  39%
+  ordinary text without R code
+
+
+label: ord_irt_grm_abs_resid
+  |                                                                         |..........................                                       |  40%
+  ordinary text without R code
+
+
+label: ord_irt_grm_abs_RMSE
+  |                                                                         |...........................                                      |  41%
+  ordinary text without R code
+
+
+label: ord_irt_grm_abs_pred
+  |                                                                         |...........................                                      |  42%
+  ordinary text without R code
+
+  |                                                                         |............................                                     |  42%
+label: irt_ordinal_poisson
+  |                                                                         |............................                                     |  43%
+  ordinary text without R code
+
+  |                                                                         |............................                                     |  44%
+label: irt_poisson_plot
+  |                                                                         |.............................                                    |  44%
+  ordinary text without R code
+
+  |                                                                         |.............................                                    |  45%
+label: ord_irt_poisson_cov_plot
+
+  ordinary text without R code
+
+  |                                                                         |..............................                                   |  46%
+label: ord_irt_poisson_resid
+
+  ordinary text without R code
+
+  |                                                                         |...............................                                  |  47%
+label: ord_irt_poisson_RMSE
+
+  ordinary text without R code
+
+  |                                                                         |...............................                                  |  48%
+label: ord_irt_poisson_pred
+  |                                                                         |................................                                 |  49%
+  ordinary text without R code
+
+
+label: irt_abs_poisson
+  |                                                                         |................................                                 |  50%
+  ordinary text without R code
+
+  |                                                                         |.................................                                |  50%
+label: irt_poisson_abs_plot
+  |                                                                         |.................................                                |  51%
+  ordinary text without R code
+
+
+label: ord_irt_poisson_abs_cov_plot
+  |                                                                         |..................................                               |  52%
+  ordinary text without R code
+
+  |                                                                         |..................................                               |  53%
+label: ord_irt_poisson_abs_resid
+
+  ordinary text without R code
+
+  |                                                                         |...................................                              |  54%
+label: ord_irt_poisson_abs_RMSE
+
+  ordinary text without R code
+
+  |                                                                         |....................................                             |  55%
+label: ord_irt_poisson_abs_pred
+
+  ordinary text without R code
+
+  |                                                                         |....................................                             |  56%
+label: ord_irt_poisson_pred_missing
+  |                                                                         |.....................................                            |  56%
+  ordinary text without R code
+
+  |                                                                         |.....................................                            |  57%
+label: irt_normal
+  |                                                                         |.....................................                            |  58%
+  ordinary text without R code
+
+  |                                                                         |......................................                           |  58%
+label: irt_normal_plot
+  |                                                                         |......................................                           |  59%
+  ordinary text without R code
+
+
+label: ord_irt_normal_cov_plot
+  |                                                                         |.......................................                          |  60%
+  ordinary text without R code
+
+
+label: ord_irt_normal_resid
+  |                                                                         |........................................                         |  61%
+  ordinary text without R code
+
+
+label: ord_irt_normal_RMSE
+  |                                                                         |........................................                         |  62%
+  ordinary text without R code
+
+  |                                                                         |.........................................                        |  63%
+label: ord_irt_normal_pred
+

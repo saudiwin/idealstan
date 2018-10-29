@@ -6,11 +6,12 @@
 \usage{
 id_plot_legis_dyn(object, return_data = FALSE, include = NULL,
   item_plot = NULL, text_size_label = 2, text_size_group = 2.5,
-  high_limit = 0.95, low_limit = 0.05, line_size = 1, highlight = NULL,
-  plot_text = TRUE, use_ci = TRUE, person_line_alpha = 0.3,
-  person_ci_alpha = 0.8, item_plot_type = "non-inflated",
-  show_true = FALSE, group_color = TRUE, hpd_limit = 10,
-  sample_persons = NULL, plot_sim = FALSE, ...)
+  high_limit = 0.95, low_limit = 0.05, line_size = 1,
+  highlight = NULL, plot_text = TRUE, use_ci = TRUE,
+  person_line_alpha = 0.3, person_ci_alpha = 0.8,
+  item_plot_type = "non-inflated", show_true = FALSE,
+  group_color = TRUE, hpd_limit = 10, sample_persons = NULL,
+  plot_sim = FALSE, ...)
 }
 \arguments{
 \item{object}{A fitted \code{idealstan} object}

@@ -895,48 +895,54 @@
     
     return(out_d)
     
-  } else if(all && !aggregate) {
+  } else if(all && aggregate) {
     reg_data_mid <- data_frame(`Posterior Median`=quantile(reg_mid,0.5),
-                           `High Posterior Interval`=quantile(reg_mid,high_limit),
-                           `Low Posterior Interval`=quantile(reg_mid,low_limit),
+                               `High Posterior Interval`=quantile(reg_mid,high_limit),
+                               `Low Posterior Interval`=quantile(reg_mid,low_limit),
                            `Item Type`='Non-Inflated Item Midpoint',
                            `Predicted Outcome`=cut_names[2],
-                           `Parameter`=param_name)
+                           `Item Name`=param_name,
+                           `Parameter`=paste0('A function of other parameters'))
     
     abs_data_mid <- data_frame(`Posterior Median`=quantile(abs_mid,0.5),
-                           `High Posterior Interval`=quantile(abs_mid,high_limit),
-                           `Low Posterior Interval`=quantile(abs_mid,low_limit),
+                               `High Posterior Interval`=quantile(abs_mid,high_limit),
+                               `Low Posterior Interval`=quantile(abs_mid,low_limit),
                            `Item Type`='Inflated Item Midpoint',
+                           `Item Name`=param_name,
                            `Predicted Outcome`='Missing',
-                           `Parameter`=param_name)
+                           `Parameter`=paste0('A function of other parameters'))
     
     reg_data_discrim <- data_frame(`Posterior Median`=quantile(reg_discrim,0.5),
-                               `High Posterior Interval`=quantile(reg_discrim,high_limit),
-                               `Low Posterior Interval`=quantile(reg_discrim,low_limit),
+                                   `High Posterior Interval`=quantile(reg_discrim,high_limit),
+                                   `Low Posterior Interval`=quantile(reg_discrim,low_limit),
+                                   `Item Name`=param_name,
                                `Item Type`='Non-Inflated Discrimination',
                                `Predicted Outcome`=cut_names[2],
-                               `Parameter`=param_name)
+                               `Parameter`=paste0('sigma_reg_free[',param_name,']'))
     
     abs_data_discrim <- data_frame(`Posterior Median`=quantile(abs_discrim,0.5),
-                               `High Posterior Interval`=quantile(abs_discrim,high_limit),
-                               `Low Posterior Interval`=quantile(abs_discrim,low_limit),
-                               `Item Type`='Inflated Discrimination',
-                               `Predicted Outcome`='Missing',
-                               `Parameter`=param_name)
-    
-    reg_data_diff <- data_frame(`Posterior Median`=quantile(reg_diff,0.5),
-                                   `High Posterior Interval`=quantile(reg_diff,high_limit),
-                                   `Low Posterior Interval`=quantile(reg_diff,low_limit),
-                                   `Item Type`='Non-Inflated Difficulty',
-                                   `Predicted Outcome`=cut_names[2],
-                                   `Parameter`=param_name)
-    
-    abs_data_diff <- data_frame(`Posterior Median`=quantile(abs_discrim,0.5),
                                    `High Posterior Interval`=quantile(abs_discrim,high_limit),
                                    `Low Posterior Interval`=quantile(abs_discrim,low_limit),
+                                   `Item Name`=param_name,
+                               `Item Type`='Inflated Discrimination',
+                               `Predicted Outcome`='Missing',
+                               `Parameter`=paste0('sigma_abs_free[',param_name,']'))
+    
+    reg_data_diff <- data_frame(`Posterior Median`=quantile(reg_diff,0.5),
+                                `High Posterior Interval`=quantile(reg_diff,high_limit),
+                                `Low Posterior Interval`=quantile(reg_diff,low_limit),
+                                `Item Name`=param_name,
+                                   `Item Type`='Non-Inflated Difficulty',
+                                   `Predicted Outcome`=cut_names[2],
+                                   `Parameter`=paste0('B_int_free[',param_name,']'))
+    
+    abs_data_diff <- data_frame(`Posterior Median`=quantile(abs_diff,0.5),
+                                `High Posterior Interval`=quantile(abs_diff,high_limit),
+                                `Low Posterior Interval`=quantile(abs_diff,low_limit),
+                                `Item Name`=param_name,
                                    `Item Type`='Inflated Difficulty',
                                    `Predicted Outcome`='Missing',
-                                   `Parameter`=param_name)
+                                   `Parameter`=paste0('A_int_free[',param_name,']'))
     
     out_d <- bind_rows(reg_data_mid,abs_data_mid,reg_data_discrim,
                        abs_data_discrim,
@@ -944,41 +950,47 @@
                        abs_data_diff)
     
     return(out_d)
-  } else if(all && aggregate) {
+  } else if(all && !aggregate) {
     reg_data_mid <- data_frame(Posterior_Sample=reg_mid,
+                               `Item Name`=param_name,
                                `Item Type`='Non-Inflated Item Midpoint',
                                `Predicted Outcome`=cut_names[2],
-                               `Parameter`=param_name) %>% 
+                               `Parameter`='A function of other parameters') %>% 
       mutate(Iteration=1:n())
     
     abs_data_mid <- data_frame(`Posterior_Sample`=abs_mid,
+                               `Item Name`=param_name,
                                `Item Type`='Inflated Item Midpoint',
                                `Predicted Outcome`='Missing',
-                               `Parameter`=param_name) %>% 
+                               `Parameter`='A function of other parameters') %>% 
       mutate(Iteration=1:n())
     
     reg_data_discrim <- data_frame(`Posterior_Sample`=reg_discrim,
+                                   `Item Name`=param_name,
                                    `Item Type`='Non-Inflated Discrimination',
                                    `Predicted Outcome`=cut_names[2],
-                                   `Parameter`=param_name) %>% 
+                                   `Parameter`=paste0('sigma_reg_free[',param_name,']')) %>% 
       mutate(Iteration=1:n())
     
     abs_data_discrim <- data_frame(`Posterior_Sample`=abs_discrim,
+                                   `Item Name`=param_name,
                                    `Item Type`='Inflated Discrimination',
                                    `Predicted Outcome`='Missing',
-                                   `Parameter`=param_name) %>% 
+                                   `Parameter`=paste0('sigma_abs_free[',param_name,']')) %>% 
       mutate(Iteration=1:n())
     
     reg_data_diff <- data_frame(`Posterior_Sample`=reg_diff,
+                                `Item Name`=param_name,
                                 `Item Type`='Non-Inflated Difficulty',
                                 `Predicted Outcome`=cut_names[2],
-                                `Parameter`=param_name) %>% 
+                                `Parameter`=paste0('B_int_free[',param_name,']')) %>% 
       mutate(Iteration=1:n())
     
     abs_data_diff <- data_frame(`Posterior_Sample`=abs_discrim,
+                                `Item Name`=param_name,
                                 `Item Type`='Inflated Difficulty',
                                 `Predicted Outcome`='Missing',
-                                `Parameter`=param_name) %>% 
+                                `Parameter`=paste0('A_int_free[',param_name,']')) %>% 
       mutate(Iteration=1:n())
     
     out_d <- bind_rows(reg_data_mid,abs_data_mid,reg_data_discrim,
@@ -1014,12 +1026,12 @@
   } else {
     cut_names <- as.character(unique(object@score_data@score_matrix$outcome))
   }
-  
+  abs_mid <- abs_diff/abs_discrim
   # need to loop over cuts
   
-  over_cuts <- lapply(1:ncol(cuts), function(c) {
+  reg_data <- lapply(1:ncol(cuts), function(c) {
     reg_mid <- (reg_diff+cuts[[c]])/reg_discrim
-    abs_mid <- (abs_diff+cuts[[c]])/abs_discrim
+    
     
     reg_data <- data_frame(item_median=quantile(reg_mid,0.5),
                            item_high=quantile(reg_mid,high_limit),
@@ -1028,40 +1040,47 @@
                            Outcome=cut_names[c],
                            item_name=param_name)
     
-    abs_data <- data_frame(item_median=quantile(abs_mid,0.5),
-                           item_high=quantile(abs_mid,high_limit),
-                           item_low=quantile(abs_mid,low_limit),
-                           item_type='Inflated\nDiscrimination',
-                           Outcome=cut_names[c],
-                           item_name=param_name)
-    
-    out_d <- bind_rows(reg_data,abs_data)
-    
-    return(out_d)
+    return(reg_data)
   }) %>% bind_rows
+  
+  abs_data <- data_frame(item_median=quantile(abs_mid,0.5),
+                         item_high=quantile(abs_mid,high_limit),
+                         item_low=quantile(abs_mid,low_limit),
+                         item_type='Inflated\nDiscrimination',
+                         Outcome='Missing',
+                         item_name=param_name)
+  
+  out_d <- bind_rows(abs_data,reg_data)
   
   if(!all) {
     
-    return(over_cuts)
+    return(out_d)
   
-} else if(all && !aggregate) {
+} else if(all && aggregate) {
   
-  over_cuts <- select(over_cuts,
-                      )
+  # need to loop over cuts
   
-  reg_data_mid <- data_frame(`Posterior Median`=quantile(reg_mid,0.5),
-                             `High Posterior Interval`=quantile(reg_mid,high_limit),
-                             `Low Posterior Interval`=quantile(reg_mid,low_limit),
-                             `Item Type`='Non-Inflated Item Midpoint',
-                             `Predicted Outcome`=cut_names[2],
-                             `Parameter`=param_name)
+  reg_data <- lapply(1:ncol(cuts), function(c) {
+    reg_mid <- (reg_diff+cuts[[c]])/reg_discrim
+    
+    reg_data <- data_frame(`Posterior Median`=quantile(reg_mid,0.5),
+                           `High Posterior Interval`=quantile(reg_mid,high_limit),
+                           `Low Posterior Interval`=quantile(reg_mid,low_limit),
+                           `Item Type`='Non-Inflated Item Midpoint',
+                           `Predicted Outcome`=cut_names[c],
+                           `Parameter`=param_name)
+    
+    
+    
+    return(reg_data)
+  }) %>% bind_rows
   
-  abs_data_mid <- data_frame(`Posterior Median`=quantile(abs_mid,0.5),
-                             `High Posterior Interval`=quantile(abs_mid,high_limit),
-                             `Low Posterior Interval`=quantile(abs_mid,low_limit),
-                             `Item Type`='Inflated Item Midpoint',
-                             `Predicted Outcome`='Missing',
-                             `Parameter`=param_name)
+  abs_data <- data_frame(`Posterior Median`=quantile(abs_mid,0.5),
+                         `High Posterior Interval`=quantile(abs_mid,high_limit),
+                         `Low Posterior Interval`=quantile(abs_mid,low_limit),
+                         `Item Type`='Inflated Item Midpoint',
+                         `Predicted Outcome`='Missing',
+                         `Parameter`=param_name)
   
   reg_data_discrim <- data_frame(`Posterior Median`=quantile(reg_discrim,0.5),
                                  `High Posterior Interval`=quantile(reg_discrim,high_limit),
@@ -1097,12 +1116,22 @@
                      abs_data_diff)
   
   return(out_d)
-} else if(all && aggregate) {
-  reg_data_mid <- data_frame(Posterior_Sample=reg_mid,
-                             `Item Type`='Non-Inflated Item Midpoint',
-                             `Predicted Outcome`=cut_names[2],
-                             `Parameter`=param_name) %>% 
-    mutate(Iteration=1:n())
+} else if(all && !aggregate) {
+  
+  reg_data_mid <- lapply(1:ncol(cuts), function(c) {
+    reg_mid <- (reg_diff+cuts[[c]])/reg_discrim
+    
+    reg_data_mid <- data_frame(Posterior_Sample=reg_mid,
+                               `Item Type`='Non-Inflated Item Midpoint',
+                               `Predicted Outcome`=cut_names[2],
+                               `Parameter`=param_name) %>% 
+      mutate(Iteration=1:n())
+    
+    
+    
+    return(reg_data_mid)
+  }) %>% bind_rows
+
   
   abs_data_mid <- data_frame(`Posterior_Sample`=abs_mid,
                              `Item Type`='Inflated Item Midpoint',
@@ -1134,7 +1163,7 @@
                               `Parameter`=param_name) %>% 
     mutate(Iteration=1:n())
   
-  out_d <- bind_rows(reg_data,abs_data,reg_data_discrim,
+  out_d <- bind_rows(reg_data_mid,abs_data_mid,reg_data_discrim,
                      abs_data_discrim,
                      reg_data_diff,
                      abs_data_diff)
@@ -1173,12 +1202,12 @@
   } else {
     cut_names <- as.character(unique(object@score_data@score_matrix$outcome))
   }
-  
+  abs_mid <- abs_diff/abs_discrim
   # need to loop over cuts
   
-  over_cuts <- lapply(1:ncol(cuts), function(c) {
+  reg_data <- lapply(1:ncol(cuts), function(c) {
     reg_mid <- (reg_diff+cuts[[c]])/reg_discrim
-    abs_mid <- (abs_diff+cuts[[c]])/abs_discrim
+    
     
     reg_data <- data_frame(item_median=quantile(reg_mid,0.5),
                            item_high=quantile(reg_mid,high_limit),
@@ -1187,20 +1216,136 @@
                            Outcome=cut_names[c],
                            item_name=param_name)
     
-    abs_data <- data_frame(item_median=quantile(abs_mid,0.5),
-                           item_high=quantile(abs_mid,high_limit),
-                           item_low=quantile(abs_mid,low_limit),
-                           item_type='Inflated\nDiscrimination',
-                           Outcome=cut_names[c],
-                           item_name=param_name)
-    
-    out_d <- bind_rows(reg_data,abs_data)
-    
-    return(out_d)
+    return(reg_data)
   }) %>% bind_rows
   
-  return(over_cuts)
+  abs_data <- data_frame(item_median=quantile(abs_mid,0.5),
+                         item_high=quantile(abs_mid,high_limit),
+                         item_low=quantile(abs_mid,low_limit),
+                         item_type='Inflated\nDiscrimination',
+                         Outcome='Missing',
+                         item_name=param_name)
   
+  out_d <- bind_rows(abs_data,reg_data)
+  
+  if(!all) {
+    
+    return(out_d)
+    
+  } else if(all && aggregate) {
+    
+    # need to loop over cuts
+    
+    reg_data <- lapply(1:ncol(cuts), function(c) {
+      reg_mid <- (reg_diff+cuts[[c]])/reg_discrim
+      
+      reg_data <- data_frame(`Posterior Median`=quantile(reg_mid,0.5),
+                             `High Posterior Interval`=quantile(reg_mid,high_limit),
+                             `Low Posterior Interval`=quantile(reg_mid,low_limit),
+                             `Item Type`='Non-Inflated Item Midpoint',
+                             `Predicted Outcome`=cut_names[c],
+                             `Parameter`=param_name)
+      
+      
+      
+      return(reg_data)
+    }) %>% bind_rows
+    
+    abs_data <- data_frame(`Posterior Median`=quantile(abs_mid,0.5),
+                           `High Posterior Interval`=quantile(abs_mid,high_limit),
+                           `Low Posterior Interval`=quantile(abs_mid,low_limit),
+                           `Item Type`='Inflated Item Midpoint',
+                           `Predicted Outcome`='Missing',
+                           `Parameter`=param_name)
+    
+    reg_data_discrim <- data_frame(`Posterior Median`=quantile(reg_discrim,0.5),
+                                   `High Posterior Interval`=quantile(reg_discrim,high_limit),
+                                   `Low Posterior Interval`=quantile(reg_discrim,low_limit),
+                                   `Item Type`='Non-Inflated Discrimination',
+                                   `Predicted Outcome`=cut_names[2],
+                                   `Parameter`=param_name)
+    
+    abs_data_discrim <- data_frame(`Posterior Median`=quantile(abs_discrim,0.5),
+                                   `High Posterior Interval`=quantile(abs_discrim,high_limit),
+                                   `Low Posterior Interval`=quantile(abs_discrim,low_limit),
+                                   `Item Type`='Inflated Discrimination',
+                                   `Predicted Outcome`='Missing',
+                                   `Parameter`=param_name)
+    
+    reg_data_diff <- data_frame(`Posterior Median`=quantile(reg_diff,0.5),
+                                `High Posterior Interval`=quantile(reg_diff,high_limit),
+                                `Low Posterior Interval`=quantile(reg_diff,low_limit),
+                                `Item Type`='Non-Inflated Difficulty',
+                                `Predicted Outcome`=cut_names[2],
+                                `Parameter`=param_name)
+    
+    abs_data_diff <- data_frame(`Posterior Median`=quantile(abs_discrim,0.5),
+                                `High Posterior Interval`=quantile(abs_discrim,high_limit),
+                                `Low Posterior Interval`=quantile(abs_discrim,low_limit),
+                                `Item Type`='Inflated Difficulty',
+                                `Predicted Outcome`='Missing',
+                                `Parameter`=param_name)
+    
+    out_d <- bind_rows(reg_data,abs_data,reg_data_discrim,
+                       abs_data_discrim,
+                       reg_data_diff,
+                       abs_data_diff)
+    
+    return(out_d)
+  } else if(all && !aggregate) {
+    
+    reg_data_mid <- lapply(1:ncol(cuts), function(c) {
+      reg_mid <- (reg_diff+cuts[[c]])/reg_discrim
+      
+      reg_data_mid <- data_frame(Posterior_Sample=reg_mid,
+                                 `Item Type`='Non-Inflated Item Midpoint',
+                                 `Predicted Outcome`=cut_names[2],
+                                 `Parameter`=param_name) %>% 
+        mutate(Iteration=1:n())
+      
+      
+      
+      return(reg_data_mid)
+    }) %>% bind_rows
+    
+    
+    abs_data_mid <- data_frame(`Posterior_Sample`=abs_mid,
+                               `Item Type`='Inflated Item Midpoint',
+                               `Predicted Outcome`='Missing',
+                               `Parameter`=param_name) %>% 
+      mutate(Iteration=1:n())
+    
+    reg_data_discrim <- data_frame(`Posterior_Sample`=reg_discrim,
+                                   `Item Type`='Non-Inflated Discrimination',
+                                   `Predicted Outcome`=cut_names[2],
+                                   `Parameter`=param_name) %>% 
+      mutate(Iteration=1:n())
+    
+    abs_data_discrim <- data_frame(`Posterior_Sample`=abs_discrim,
+                                   `Item Type`='Inflated Discrimination',
+                                   `Predicted Outcome`='Missing',
+                                   `Parameter`=param_name) %>% 
+      mutate(Iteration=1:n())
+    
+    reg_data_diff <- data_frame(`Posterior_Sample`=reg_diff,
+                                `Item Type`='Non-Inflated Difficulty',
+                                `Predicted Outcome`=cut_names[2],
+                                `Parameter`=param_name) %>% 
+      mutate(Iteration=1:n())
+    
+    abs_data_diff <- data_frame(`Posterior_Sample`=abs_discrim,
+                                `Item Type`='Inflated Difficulty',
+                                `Predicted Outcome`='Missing',
+                                `Parameter`=param_name) %>% 
+      mutate(Iteration=1:n())
+    
+    out_d <- bind_rows(reg_data_mid,abs_data_mid,reg_data_discrim,
+                       abs_data_discrim,
+                       reg_data_diff,
+                       abs_data_diff)
+    
+    return(out_d)
+  }  
 }
 
 #' Generate item-level midpoints for binary latent-space outcomes
@@ -1216,6 +1361,7 @@
   
   reg_diff <- as.data.frame(object@stan_samples,pars=paste0('B_int_free[',param_num,']'))[[1]]
   abs_diff <- as.data.frame(object@stan_samples,pars=paste0('A_int_free[',param_num,']'))[[1]]
+  item_int <- as.data.frame(object@stan_samples,pars=paste0('sigma_abs_free[',param_num,']'))[[1]]
   
   if(class(object@score_data@score_matrix$outcome)=='factor') {
     cut_names <- levels(object@score_data@score_matrix$outcome)
@@ -1239,7 +1385,82 @@
   
   out_d <- bind_rows(reg_data,abs_data)
   
-  return(out_d)
+  
+  
+  if(!all) {
+    
+    return(out_d)
+    
+  } else if(all && aggregate) {
+    reg_data <- data_frame(item_median=quantile(reg_diff,0.5),
+                           item_high=quantile(reg_diff,high_limit),
+                           item_low=quantile(reg_diff,low_limit),
+                           item_type='Non-Inflated Item Ideal Point',
+                           Outcome=cut_names[2],
+                           item_name=param_name,
+                           Parameter=paste0('B_int_free[',param_num,']'))
+    
+    abs_data <- data_frame(item_median=quantile(abs_diff,0.5),
+                           item_high=quantile(abs_diff,high_limit),
+                           item_low=quantile(abs_diff,low_limit),
+                           item_type='Inflated Item Ideal Point',
+                           Outcome='Missing',
+                           item_name=param_name,
+                           Parameter=paste0('A_int_free[',param_num,']'))
+    
+    ideal_int <- data_frame(item_median=quantile(ideal_int,0.5),
+                           item_high=quantile(ideal_int,high_limit),
+                           item_low=quantile(ideal_int,low_limit),
+                           item_type='Ideal Point Intercept',
+                           Outcome=cut_names[2],
+                           item_name=param_name,
+                           Parameter=paste0('sigma_reg_free[',param_num,']'))
+    
+    item_int <- data_frame(item_median=quantile(item_int,0.5),
+                           item_high=quantile(item_int,high_limit),
+                           item_low=quantile(item_int,low_limit),
+                           item_type='Item Intercept',
+                           Outcome=cut_names[2],
+                           item_name=param_name,
+                           Parameter=paste0('sigma_abs_free[',param_num,']'))
+    
+    out_d <- bind_rows(reg_data,abs_data,ideal_int,item_int)
+    
+    return(out_d)
+  } else if(all && !aggregate) {
+    reg_data <- data_frame(Posterior_Sample=reg_diff,
+                               `Item Name`=param_name,
+                               `Item Type`='Non-Inflated Item Ideal Point',
+                               `Predicted Outcome`=cut_names[2],
+                               `Parameter`=paste0('B_int_free[',param_num,']')) %>% 
+      mutate(Iteration=1:n())
+    
+    abs_data <- data_frame(`Posterior_Sample`=abs_diff,
+                               `Item Name`=param_name,
+                               `Item Type`='Inflated Item Ideal Point',
+                               `Predicted Outcome`='Missing',
+                               `Parameter`=paste0('A_int_free[',param_num,']')) %>% 
+      mutate(Iteration=1:n())
+    
+    ideal_int <- data_frame(`Posterior_Sample`=ideal_int,
+                                   `Item Name`=param_name,
+                                   `Item Type`='Ideal Point Intercept',
+                                   `Predicted Outcome`=cut_names[2],
+                                   `Parameter`=paste0('sigma_reg_free[',param_name,']')) %>% 
+      mutate(Iteration=1:n())
+    
+    item_int<- data_frame(`Posterior_Sample`=item_int,
+                                   `Item Name`=param_name,
+                                   `Item Type`='Item Intercept',
+                                   `Predicted Outcome`='Missing',
+                                   `Parameter`=paste0('sigma_abs_free[',param_name,']')) %>% 
+      mutate(Iteration=1:n())
+    
+    out_d <- bind_rows(reg_data,abs_data,
+                       ideal_int,item_int)
+    
+    return(out_d)
+  }
   
 }
 

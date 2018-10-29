@@ -147,7 +147,7 @@ id_sim_gen <- function(num_person=20,num_bills=50,
     } else {
       # latent space non-inflated formulation is different
       pr_vote <- sapply(1:length(person_points),function(n) {
-        reg_discrim[bill_points[n]] + absence_discrim[bill_points[n]] -
+        reg_discrim[person_points[n]] + absence_discrim[bill_points[n]] -
           sqrt((ideal_pts[person_points[n],time_points[n]] - reg_diff[bill_points[n]])^2)
       }) %>% plogis()
     }

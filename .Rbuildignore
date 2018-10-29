@@ -1,4 +1,4 @@
-^idealstanv2\.Rproj$
+^idealstan\.Rproj$
 ^\.Rproj\.user$
 ^\.travis\.yml$
 package_test.html
@@ -10,3 +10,4 @@ package_test.nb.html
 package_test_files
 render_vignettes.R
 vignette_output.txt
+cran-comments.md

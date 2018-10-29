@@ -11,7 +11,7 @@ vignette: >
 
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE,warning=TRUE,fig.align = 'center')
+knitr::opts_chunk$set(echo = TRUE,warning=TRUE,fig.align = 'center',fig.width=6, fig.height=5)
 require(idealstan)
 require(dplyr)
 require(ggplot2)
@@ -20,7 +20,7 @@ require(bayesplot)
 options(mc.cores=2)
 ```
 
-A big part of the purpose of `idealstan` is to give people different options in fitting ideal point models to diverse data. Along with that, `idealstan` makes use of Bayesian model evaluation a la [loo](https://CRAN.R-project.org/package=loo/vignettes/loo-example.html) and also can analyze the posterior predictive distribution using [bayesplot](http://mc-stan.org/users/interfaces/bayesplot). `loo` is an approximation of the predictive error of a Bayesian model via leave-one-out cross-validation (LOO-CV). True LOO-CV on Bayesian models is computationally prohibitive because it involves estimating a new model for each data point. For IRT models incorporating thousands or even millions of observations, this is practically infeasible.
+A big part of the purpose of `idealstan` is to give people different options in fitting ideal point models to diverse data. Along with that, `idealstan` makes use of Bayesian model evaluation a la [loo](https://CRAN.R-project.org/package=loo/) and also can analyze the posterior predictive distribution using [bayesplot](http://mc-stan.org/users/interfaces/bayesplot). `loo` is an approximation of the predictive error of a Bayesian model via leave-one-out cross-validation (LOO-CV). True LOO-CV on Bayesian models is computationally prohibitive because it involves estimating a new model for each data point. For IRT models incorporating thousands or even millions of observations, this is practically infeasible.
 
 `bayesplot` allows us to analyze the data we used to estimate the model compared to data produced by the model, or what is called the posterior predictive distribution. This is very useful as a general summary of model fit to see whether there are values of the outcome that we are over or under predicting.
 
@@ -99,7 +99,7 @@ id_plot_ppc(irt_2pl_incorrect,ppc_pred=post_incorrect,group=c('1','2'))
 ```
 
 
-Finally, we can turn to summary measures of model fit that also allow us to compare models directly to each other (if they were fit on the same data). To do so, I first employ the `log_lik` option of the `id_post_pred` function to generate log-likelihood values for each of these models. I also need to create exponentiated log-likelihood values (setting `type='log_lik_eff'`), which are necessary to calculate the effective number of samples in evaluating model fit.
+Finally, we can turn to summary measures of model fit that also allow us to compare models directly to each other (if they were fit on the same data). To do so, I first employ the `log_lik` option of the `id_post_pred` function to generate log-likelihood values for each of these models.
 
 ```{r log_lik}
 log_lik_irt_2pl_correct <- id_post_pred(irt_2pl_correct,type='log_lik')
@@ -107,11 +107,9 @@ log_lik_irt_2pl_incorrect <- id_post_pred(irt_2pl_incorrect,type='log_lik')
 
 ```
 
-With this calculation can examine the models' `loo` values, which shows the relative predictive performance of the model to the data. Overall, model performance seems quite good, as the Pareto k values show that there are only a few dozen observations in the dataset that aren't well predicted. The LOO-IC, or the leave-one-out information criterion (think AIC or BIC), are also similar for the two models, although the correct model does have a lower (i.e., better) LOO-IC.
-
 Note that we must also specify the `relative_eff` function in order to calculate degrees of freedom. The first argument to `relative_eff` is the exponentiated log-likelihood matrix we calculated previously. The second argument uses the function `derive_chain` and also takes the log-likelihood matrix as its argument.
 
-I put in an option for two cores, but a larger number could be used which would improve the precision of the calculations.
+I put in an option for two cores, but a larger number could be used which would improve the speed of the calculations.
 
 ```{r loo_show}
 correct_loo <- loo(log_lik_irt_2pl_correct,
@@ -127,6 +125,8 @@ incorrect_loo <- loo(log_lik_irt_2pl_incorrect,
 print(correct_loo)
 print(incorrect_loo)
 ```
+
+With this calculation we can examine the models' `loo` values, which shows the relative predictive performance of the model to the data. Overall, model performance seems quite good, as the Pareto k values show that there are only a few dozen observations in the dataset that aren't well predicted. The LOO-IC, or the leave-one-out information criterion (think AIC or BIC), is much lower (i.e. better) for the correct model, as we would expect.
 
 We can also compare the LOOIC of the two models explicitly using a second `loo` function that will even give us a confidence interval around the difference. If the difference is negative, then the first (correct) model has higher predictive accuracy:
 

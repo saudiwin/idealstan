@@ -265,6 +265,7 @@ setMethod('summary',signature(object='idealstan'),
             }
             
             if(pars=='items') {
+
               # a bit trickier with item points
               item_plot <- unique(object@score_data@score_matrix$item_id)
               if(object@model_type %in% c(1,2) || (object@model_type>6 && object@model_type<13)) {
@@ -490,7 +491,6 @@ setMethod(launch_shinystan,signature(object='idealstan'),
 #' Please refer to that function's documentation for further options.
 #' 
 #' @param object A fitted \code{idealstan} model
-#' @param par The character string  name of a parameter in the model 
 #' @param ... Other options passed on to \code{\link[rstan]{stan_trace}}
 #' @export
 setGeneric('stan_trace',
