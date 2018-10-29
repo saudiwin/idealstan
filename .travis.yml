@@ -31,10 +31,10 @@ matrix:
       env:
         - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
     - os: osx
-      osx_image: xcode10
+      osx_image: xcode9.3
       r: release
     - os: osx
-      osx_image: xcode10
+      osx_image: xcode9.3
       r: devel
      
 before_install:
