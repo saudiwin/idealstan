@@ -198,7 +198,7 @@ values. The inflation is designed to be general enough to handle a wide array of
 situations where strategic social choices make missing data important to take into account.
 
 The missing data is assumed to be any possible value of the outcome. The well-known 
-zero-inflated Poisson model is a special case where missing values are known to beall zeroes. 
+zero-inflated Poisson model is a special case where missing values are known to be all zeroes. 
 To fit a zero-inflated Poisson model, change \code{inflate_zeroes} to \code{TRUE} and also 
 make sure to set the value for zero as \code{miss_val} in the \code{\link{id_make}} function.
 This will only work for outcomes that are distributed as Poisson variables (i.e., 

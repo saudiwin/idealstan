@@ -12,7 +12,7 @@ id_sim_gen(num_person = 20, num_bills = 50, model_type = "binary",
   inflate = FALSE, sigma_sd = 1)
 }
 \arguments{
-\item{num_person}{The number of persons/personlators}
+\item{num_person}{The number of persons/persons}
 
 \item{num_bills}{The number of items/bills}
 
@@ -40,7 +40,7 @@ for a random walk or \code{'AR'} for an AR1 process}
 \item{time_sd}{The standard deviation of the change in ideal points over time (should be low relative to 
 \code{ideal_pts_sd})}
 
-\item{ideal_pts_sd}{The SD for the person/personlator ideal points}
+\item{ideal_pts_sd}{The SD for the person/person ideal points}
 
 \item{prior_type}{The statistical distribution that generates the data. Currently only 
 'gaussian' is supported.}

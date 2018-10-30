@@ -6,7 +6,7 @@
 #' used in the underlying Stan code. Currently the simulation can produce inflated and non-inflated
 #' models with binary, ordinal (GRM and rating-scale), Poisson, Normal and Log-Normal responses.
 #' 
-#' @param num_person The number of persons/personlators
+#' @param num_person The number of persons/persons
 #' @param num_bills The number of items/bills
 #' @param model_type One of \code{'binary'}, \code{'ordinal_rating'}, \code{'ordinal_grm'}, \code{'poisson'}
 #' \code{'normal'}, or \code{'lognormal'}
@@ -23,7 +23,7 @@
 #' for a random walk or \code{'AR'} for an AR1 process
 #' @param time_sd The standard deviation of the change in ideal points over time (should be low relative to 
 #' \code{ideal_pts_sd})
-#' @param ideal_pts_sd The SD for the person/personlator ideal points
+#' @param ideal_pts_sd The SD for the person/person ideal points
 #' @param prior_type The statistical distribution that generates the data. Currently only 
 #' 'gaussian' is supported.
 #' @param ordinal_outcomes If \code{model} is \code{'ordinal'}, an integer giving the total number of categories
@@ -203,7 +203,7 @@ id_sim_gen <- function(num_person=20,num_bills=50,
   
 }
 
-#' A function that loops over numbers of personlators/bills to provide a coherent over-view of 
+#' A function that loops over numbers of persons/bills to provide a coherent over-view of 
 #' idealstan performance for a given model type.
 #' @noRd
 .id_sim_test <- function(param_range=c(50,150),by=10,simul_type='absence',is.ordinal=TRUE,

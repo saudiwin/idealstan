@@ -167,7 +167,7 @@ sen_est <- id_estimate(senate_data,
 id_plot_legis_dyn(sen_est,use_ci = F)
 ```
 
-This plot shows minor pertubations in the ideal points of individual senators with a high level of relative stability over time. It provides strong evidence that a stationary model fits the data well. Given the short time frame, we would expect the Senator's ideal points to be more or less stationary.
+This plot shows minor perturbations in the ideal points of individual senators with a high level of relative stability over time. It provides strong evidence that a stationary model fits the data well. Given the short time frame, we would expect the Senator's ideal points to be more or less stationary.
 
 Finally, we can also examine the individual ideal points by each time point using the summary function:
 

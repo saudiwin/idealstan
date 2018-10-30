@@ -12,7 +12,7 @@
 \item{object}{An \code{idealstan} object fitted by \code{\link{id_estimate}}}
 
 \item{pars}{Either \code{'ideal_pts'} for person ideal points, 
-\code{'items'} for items/bills difficulty and discrimination paremeters,
+\code{'items'} for items/bills difficulty and discrimination parameters,
 and \code{'all'} for all parameters in the model, including incidental parameters.}
 
 \item{high_limit}{A number between 0 and 1 reflecting the upper limit of the 

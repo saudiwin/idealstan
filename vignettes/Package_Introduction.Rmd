@@ -23,7 +23,7 @@ require(ggplot2)
 
 Kubinec, Robert. "Generalized Ideal Point Models for Time-Varying and Missing-Data Inference". Working Paper.
 
-This package implements IRT (item response theory) ideal point models, which are models designed for situations in which actors make strategic choices that correlate with a unidimensional scale, such as the left-right axis in American politics, disagreement over product design in consumer choice, or psychometric scales in which the direction that items load on the latent scale is unknown. Compared to traditional IRT, ideal point models examine the polarizing influence of a set of items on a set of persons, and has simlarities to models based on Euclidean latent spaces, such as multi-dimensional scaling. In fact, this package also implements a version of the latent space model for binary outcomes, which is an alternate formulation of an ideal point model.
+This package implements IRT (item response theory) ideal point models, which are models designed for situations in which actors make strategic choices that correlate with a unidimensional scale, such as the left-right axis in American politics, disagreement over product design in consumer choice, or psychometric scales in which the direction that items load on the latent scale is unknown. Compared to traditional IRT, ideal point models examine the polarizing influence of a set of items on a set of persons, and has similarities to models based on Euclidean latent spaces, such as multi-dimensional scaling. In fact, this package also implements a version of the latent space model for binary outcomes, which is an alternate formulation of an ideal point model.
 
 The goal of `idealstan` is to offer a wide variety of ideal point models that can model missing-data, time-varying ideal points, and incorporate a range of outcomes, including binary outcomes, counts, continuous and ordinal responses. In addition, `idealstan` uses the Stan estimation engine to offer full and variational Bayesian inference for all models so that every model is estimated with uncertainty. Variational inference provides a means to estimate Bayesian models on very large data sets when full Bayesian estimation is impractical. The package also exploits variational inference to automatically identify models instead of requiring users to pre-specify which persons or items in the data to constrain in advance.
 
@@ -184,9 +184,9 @@ id_plot_legis(sen_est,person_ci_alpha=0.1,item_plot='94') +
   ggtitle('Ideal Points of the 114th Senate with Vote 94 Midpoint')
 ```
 
-The 50th bill in the 114 Senate shows very high discrimination: the bill midpoint is right in the middle of the ideal point distribution, with most Democrats voting yes and most Repulicans voting no. The two rug lines at the bottom of the plot show the high density posterior interval for the bill midpoint, and as can be seen, the uncertainty only included those legislators near the very center of the distribution.
+The 50th bill in the 114 Senate shows very high discrimination: the bill midpoint is right in the middle of the ideal point distribution, with most Democrats voting yes and most Republicans voting no. The two rug lines at the bottom of the plot show the high density posterior interval for the bill midpoint, and as can be seen, the uncertainty only included those legislators near the very center of the distribution.
 
-To look at the bill's absence midpoints, simply change the `item_plot_type` paramater to the `id_plot` function:
+To look at the bill's absence midpoints, simply change the `item_plot_type` parameter to the `id_plot` function:
 
 ```{r abs_item_plot,fig.height=8}
 
@@ -199,7 +199,7 @@ The wide high-posterior density (HPD) interval of the absence midpoint ruglines 
 
 ## Parameter Values
 
-We can obtain summary estimates of all the ideal points and item/bill discrimination/difficulty paramters using the summary function that provides the median value of the parameters in addition to a specified posterior density interval (i.e., 5%-95%). For example, we can extract summaries for the ideal points:
+We can obtain summary estimates of all the ideal points and item/bill discrimination/difficulty parameters using the summary function that provides the median value of the parameters in addition to a specified posterior density interval (i.e., 5%-95%). For example, we can extract summaries for the ideal points:
 
 ```{r ideal_pts_sum}
 ideal_pts_sum <- summary(sen_est,pars='ideal_pts')
