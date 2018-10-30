@@ -187,6 +187,7 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
                           N=length(person_points),
                           ordinal_outcomes=length(unique(object@score_data@score_matrix$outcome)),
                           inflate=inflate,
+                          latent_space=latent_space,
                           time_points=time_points,
                           item_points=bill_points,
                           max_val=max_val,
