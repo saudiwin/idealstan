@@ -52,6 +52,7 @@ data {
   real restrict_mean_val;
   int restrict_mean_ind;
   int restrict_mean;
+  int zeroes; // whether to use traditional zero-inflation for bernoulli and poisson models
 }
 
 transformed data {
@@ -64,6 +65,7 @@ transformed data {
 	int num_var_free; // whether to restrict variance parameters
 	int num_var_restrict;
 	real num_legis_real; // used to adjust jacobian for mean restriction
+	int num_ls; // extra person params for latent space
 	
 	// need to assign a type of outcome to Y based on the model (discrete or continuous)
 	// to do this we need to trick Stan into assigning to an integer. 
@@ -85,11 +87,18 @@ if(restrict_var==1) {
 
   num_legis_real = num_legis; // promote N to type real
   
+  if(model_type==13) {
+    num_ls=num_legis;
+  } else {
+    num_ls=0;
+  }
+  
 }
 
 parameters {
   vector[num_bills] sigma_abs_free;
   vector[num_legis - 2] L_free; // first T=1 params to constrain
+  vector[num_ls] ls_int; // extra intercepts for non-inflated latent space
   vector[num_legis] L_tp1_var[T-1]; // non-centered variance
   vector<lower=-.99,upper=.99>[num_legis-1] L_AR1_free; // AR-1 parameters for AR-1 model
   vector[num_bills] sigma_reg_free;
@@ -178,7 +187,9 @@ model {
   for(t in 1:(T-1)) {
     L_tp1_var[t] ~ normal(0,1);
   }
-
+    
+  ls_int ~ normal(0,legis_sd);
+  
   B_int_free ~ normal(0,diff_reg_sd);
   A_int_free ~ normal(0,diff_abs_sd);
 
@@ -188,9 +199,9 @@ model {
   }
   
 
-    time_var_restrict ~ exponential(1/time_sd);
+  time_var_restrict ~ exponential(1/time_sd);
 
-    time_var ~ exponential(1/time_sd);
+  time_var ~ exponential(1/time_sd);
 
 // add correction for time-series models
 

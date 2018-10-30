@@ -123,7 +123,7 @@ id_sim_gen <- function(num_person=20,num_bills=50,
   
   if(latent_space) {
     # use latent-space formulation for likelihood
-    absence_discrim[1] <- abs(absence_discrim[1])
+
     pr_absence <- sapply(1:length(person_points),function(n) {
       -sqrt((ideal_pts[person_points[n],time_points[n]] - absence_diff[bill_points[n]])^2)
     }) %>% plogis()
@@ -146,6 +146,7 @@ id_sim_gen <- function(num_person=20,num_bills=50,
       }) %>% plogis()
     } else {
       # latent space non-inflated formulation is different
+      reg_discrim <- prior_func(params=list(N=num_person,mean=0,sd=ideal_pts_sd))
       pr_vote <- sapply(1:length(person_points),function(n) {
         reg_discrim[person_points[n]] + absence_discrim[bill_points[n]] -
           sqrt((ideal_pts[person_points[n],time_points[n]] - reg_diff[bill_points[n]])^2)
@@ -173,6 +174,7 @@ id_sim_gen <- function(num_person=20,num_bills=50,
            N=length(person_points),
            ordinal_outcomes=ordinal_outcomes,
            inflate=inflate,
+           latent_space=latent_space,
            time_points=time_points,
            item_points=bill_points,
            person_points=person_points,

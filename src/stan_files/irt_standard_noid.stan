@@ -44,6 +44,7 @@ data {
   real ar_sd;
   int restrict_var;
   real restrict_var_high;
+  int zeroes; // whether to use traditional zero-inflation for bernoulli and poisson models
 }
 
 transformed data {
@@ -54,6 +55,7 @@ transformed data {
 	real m_cont;
 	int num_var_restrict;
 	int num_var_free;
+	int num_ls; // extra person params for latent space
 	
 	// need to assign a type of outcome to Y based on the model (discrete or continuous)
 	// to do this we need to trick Stan into assigning to an integer. 
@@ -69,11 +71,19 @@ if(restrict_var==1) {
   num_var_restrict=0;
   num_var_free=num_legis;
 }
+
+  if(model_type==13) {
+    num_ls=num_legis;
+  } else {
+    num_ls=0;
+  }
+
 }
 
 parameters {
   vector[num_bills] sigma_abs_free;
   vector[num_legis] L_free;
+  vector[num_ls] ls_int; // extra intercepts for non-inflated latent space
   vector[num_legis] L_tp1_var[T-1]; // non-centered variance
   vector<lower=-0.99,upper=0.99>[num_legis] L_AR1; // AR-1 parameters for AR-1 model
   vector[num_bills] sigma_reg_free;
@@ -140,6 +150,7 @@ model {
   sigma_reg_x_cons ~ normal(0,5);
   sigma_abs_x_cons ~ normal(0,5);
   L_AR1 ~ normal(0,ar_sd); // these parameters shouldn't get too big
+  ls_int ~ normal(0,legis_sd);
   extra_sd ~ exponential(1);
 
   if(model_type>2 && model_type<5) {

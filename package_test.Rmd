@@ -832,6 +832,7 @@ id_sim_coverage(latent_noninfl_est) %>%
 Inflated:
 
 ```{r latent_space_infl}
+# you can't have too few people relative to bills
 latent_infl_sim <- id_sim_gen(num_person=20,num_bills=125,ordinal=F,
                                        inflate=T,
                                        model_type='binary',

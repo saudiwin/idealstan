@@ -173,7 +173,12 @@ if(model_type==1) {
   	      1 ~ bernoulli_logit(pi2[n]);
         } else {
           0 ~ bernoulli_logit(pi2[n]);
-          Y_int[n] ~ poisson(exp(pi1[n]));
+          if(zeroes==1) {
+            Y_int[n] ~ poisson(exp(pi1[n])) T[1,];
+          } else {
+            Y_int[n] ~ poisson(exp(pi1[n]));
+          }
+          
           }
         }
 
@@ -271,12 +276,12 @@ if(model_type==1) {
   //latent space non-inflated (normal parameterization)
   if(T==1) {
     
-        pi1 = sigma_reg_free[ll]  + sigma_abs_free[bb] -  sqrt(square( L_full[ll] - B_int_free[bb]));
+        pi1 = ls_int[ll]  + sigma_abs_free[bb] -  sqrt(square( L_full[ll] - B_int_free[bb]));
 
   } else {
       for(n in 1:N) {
 
-        pi1[n] = sigma_reg_free[bb[n]] + sigma_abs_free[bb[n]] -
+        pi1[n] = ls_int[ll[n]] + sigma_abs_free[bb[n]] -
                   sqrt(square(L_tp1[time[n],ll[n]] - B_int_free[bb[n]]));
 
       }
@@ -301,10 +306,11 @@ if(model_type==1) {
     for(n in 1:N) {
         
         if(absence[n]==1) {
-  	      1 ~ bernoulli_logit(pi2[n]);
+          // multiply by 2 to make the model work across the probability scale
+  	      target += log(2) + bernoulli_logit_lpmf(1|pi2[n]);
         } else {
-          0 ~ bernoulli_logit(pi2[n]);
-          Y_new[n] ~ bernoulli_logit(pi1[n]);
+          target += log(2) + bernoulli_logit_lpmf(0|pi2[n]);
+          target += log(2) + bernoulli_logit_lpmf(Y_new[n]|pi1[n]);
           }
     }
   

@@ -14,25 +14,33 @@
                     type='simulate',
                     outcome=NULL,
                     miss_val=NULL,
+                    latent_space=NULL,
                     ...)
                     {
+  
+  # need a factor to multiply the probability for latent-space models
+  if(latent_space && inflate) {
+    mul_fac <- 2
+  } else {
+    mul_fac <- 1
+  }
 
   #standard IRT 2-PL model
   if(type=='simulate') {
-    votes <- as.numeric(plogis(pr_vote)>runif(N))
+    votes <- as.numeric((mul_fac*plogis(pr_vote))>runif(N))
   } else if(type=='predict') {
-    votes <- apply(pr_vote,2,function(c) as.numeric(plogis(c)>runif(N)))
+    votes <- apply(pr_vote,2,function(c) as.numeric((plogis(c)*mul_fac)>runif(N)))
   } else if(type=='log_lik') {
     if(inflate) {
       over_iters <- sapply(1:ncol(pr_vote), function(c) {
         outdens <- ifelse(outcome==miss_val, 
-                          dbinom(1,size = 1,prob=pr_absence[,c],log=T),
-                          dbinom(outcome-1,size=1,prob=pr_vote[,c],log=T))
+                          dbinom(1,size = 1,prob=pr_absence[,c]*mul_fac,log=T),
+                          dbinom(outcome-1,size=1,prob=pr_vote[,c]*mul_fac,log=T))
       })
       
     } else {
       over_iters <- sapply(1:ncol(pr_vote), function(c) {
-        outdens <- dbinom(outcome-1,size=1,prob=pr_vote[,c],log=T)})
+        outdens <- dbinom(outcome-1,size=1,prob=pr_vote[,c]*mul_fac,log=T)})
     }
     return(t(over_iters))
   }

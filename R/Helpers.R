@@ -1306,6 +1306,7 @@
   reg_diff <- as.data.frame(object@stan_samples,pars=paste0('B_int_free[',param_num,']'))[[1]]
   abs_diff <- as.data.frame(object@stan_samples,pars=paste0('A_int_free[',param_num,']'))[[1]]
   item_int <- as.data.frame(object@stan_samples,pars=paste0('sigma_abs_free[',param_num,']'))[[1]]
+  ideal_int <- as.data.frame(object@stan_samples,pars=paste0('ls_int[',param_num,']'))[[1]]
   
   if(class(object@score_data@score_matrix$outcome)=='factor') {
     cut_names <- levels(object@score_data@score_matrix$outcome)

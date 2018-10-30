@@ -5,6 +5,7 @@
 #' The data can be pre-processed via the \code{\link{id_make}} function for estimation. 
 #' See package vignette for details.
 #'
-#' @format A roll call vote object that is a list with \code{votes} as the legislator-bill roll call vote matrix.
+#' @format A long data frame with one row for every vote cast by a Senator.
+#' @source \url{http://www.voteview.com/}
 "senate114"
 
