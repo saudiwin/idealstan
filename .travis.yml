@@ -1,6 +1,7 @@
 language: r
 sudo: true
 cache: packages
+warnings_are_errors: false
 
   
 r_check_args: "--no-vignettes"

@@ -4,7 +4,7 @@
 \alias{id_estimate}
 \title{Estimate an \code{idealstan} model}
 \usage{
-id_estimate(idealdata = NULL, model_type = 2,
+id_estimate(idealdata = NULL, model_type = 2, inflate_zero = FALSE,
   vary_ideal_pts = "none", use_subset = FALSE, sample_it = FALSE,
   subset_group = NULL, subset_person = NULL, sample_size = 20,
   nchains = 4, niters = 2000, use_vb = FALSE,
@@ -22,6 +22,12 @@ id_estimate(idealdata = NULL, model_type = 2,
 \item{idealdata}{An object produced by the \code{\link{id_make}} containing a score/vote matrix for use for estimation & plotting}
 
 \item{model_type}{An integer reflecting the kind of model to be estimated. See below.}
+
+\item{inflate_zero}{If the outcome is distributed as Poisson (count/unbounded integer), 
+setting this to 
+\code{TRUE} will fit a traditional zero-inflated model. To use correctly, the value for 
+zero must be passed as the \code{miss_val} option to \code{\link{id_make}} before
+running a model so that zeroes are coded as missing data.}
 
 \item{vary_ideal_pts}{Default \code{'none'}. If \code{'random_walk'} or \code{'AR1'}, a 
 time-varying ideal point model will be fit with either a random-walk process or an 
@@ -149,7 +155,9 @@ subsequent models fit by this function will have these covariates.
 \strong{Note that for static ideal point models, the covariates are only defined for those 
 persons who are not being used as constraints.}
 
-As of this version of \code{idealstan}, the following model types are available:
+As of this version of \code{idealstan}, the following model types are available. Simply pass 
+the number of the model in the list to the \code{model_type} option to fit the model.
+
 \enumerate{
   \item IRT 2-PL (binary response) ideal point model, no missing-data inflation
   \item IRT 2-PL ideal point model (binary response) with missing- inflation
@@ -169,20 +177,32 @@ As of this version of \code{idealstan}, the following model types are available:
 
 In addition, each of these models can have time-varying ideal point (person) parameters if
 a column of dates is fed to the \code{\link{id_make}} function. If the option \code{vary_ideal_pts} is 
-set to 'random_walk', \code{id_estimate} will estimate a random-walk ideal point model where ideal points 
+set to \code{'random_walk'}, \code{id_estimate} will estimate a random-walk ideal point model where ideal points 
 move in a random direction. If \code{vary_ideal_pts} is set to \code{'AR1'}, a stationary ideal point model 
 is estimated where ideal points fluctuate around long-term mean. In general, the stationary model
 is preferred when the time series is of short absolute duration (such as days or hours) while 
 the random-walk model is preferable when the time series is of very long duration and there are no
 natural limits to the ideal points. Please see the package vignette and associated paper for more detail
 about these time-varying models.
+
 The inflation model used to account for missing data assumes that missingness is a 
 function of the persons' (legislators')
 ideal points. In other words,the model will take into account if people with high or low ideal points
-tend to have more/less missing data on a specific item/bill. If there isn't any relationship
+tend to have more/less missing data on a specific item/bill. Missing data is whatever was 
+passed as \code{miss_val} to the \code{\link{id_make}} function. 
+If there isn't any relationship
 between missing data and ideal points, then the model assumes that the missingness is ignorable 
 conditional on each
-item, but it will still adjust the results to reflect these ignorable (random) missingness.
+item, but it will still adjust the results to reflect these ignorable (random) missing
+values. The inflation is designed to be general enough to handle a wide array of potential
+situations where strategic social choices make missing data important to take into account.
+
+The missing data is assumed to be any possible value of the outcome. The well-known 
+zero-inflated Poisson model is a special case where missing values are known to beall zeroes. 
+To fit a zero-inflated Poisson model, change \code{inflate_zeroes} to \code{TRUE} and also 
+make sure to set the value for zero as \code{miss_val} in the \code{\link{id_make}} function.
+This will only work for outcomes that are distributed as Poisson variables (i.e., 
+unbounded integers or counts).
 
 To leave missing data out of the model, simply choose a version of the model in the list above
 that is non-inflated.

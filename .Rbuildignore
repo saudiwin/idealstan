@@ -14,5 +14,5 @@ render_vignettes.R
 vignette_output.txt
 cran-comments.md
 doc/*
-vignettes/*
+
 

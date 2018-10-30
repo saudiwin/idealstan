@@ -27,7 +27,7 @@
 
   #standard IRT 2-PL model
   if(type=='simulate') {
-    votes <- as.numeric((mul_fac*plogis(pr_vote))>runif(N))
+    votes <- as.numeric((mul_fac*pr_vote)>runif(N))
   } else if(type=='predict') {
     votes <- apply(pr_vote,2,function(c) as.numeric((plogis(c)*mul_fac)>runif(N)))
   } else if(type=='log_lik') {
@@ -55,7 +55,7 @@
   }
   
   if(type=='simulate') {
-    combined <- if_else(pr_absence<(runif(N)+pr_boost),votes,2)
+    combined <- if_else((pr_absence*mul_fac)<(runif(N)+pr_boost),votes,2)
     
     # Create a score dataset
     
