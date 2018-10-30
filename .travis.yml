@@ -46,3 +46,6 @@ before_install:
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then echo "CC = clang" >> ~/.R/Makevars; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then sudo tlmgr install inconsolata; fi
   
+after_failure:
+  - cat /home/travis/build/saudiwin/idealstan/idealstan.Rcheck/00install.out
+  
