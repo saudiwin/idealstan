@@ -10,6 +10,8 @@ matrix:
       r: release
       r_check_args: "--no-vignettes"
       r_build_args: '--no-build-vignettes'
+      r_binary_packages:
+        - devtools
       addons:
         apt:
           sources:
@@ -21,6 +23,8 @@ matrix:
     - os: linux
       dist: trusty
       r: devel
+      r_binary_packages:
+        - devtools
       addons:
         apt:
           sources:
