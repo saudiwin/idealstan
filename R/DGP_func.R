@@ -29,7 +29,7 @@
   if(type=='simulate') {
     votes <- as.numeric((mul_fac*pr_vote)>runif(N))
   } else if(type=='predict') {
-    votes <- apply(pr_vote,2,function(c) as.numeric((plogis(c)*mul_fac)>runif(N)))
+    votes <- apply(pr_vote,2,function(c) as.numeric((c*mul_fac)>runif(N)))
   } else if(type=='log_lik') {
     if(inflate) {
       over_iters <- sapply(1:ncol(pr_vote), function(c) {

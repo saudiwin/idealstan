@@ -1,5 +1,3 @@
-^Meta$
-^doc$
 ^idealstan\.Rproj$
 ^\.Rproj\.user$
 ^\.travis\.yml$
@@ -13,6 +11,5 @@ package_test_files
 render_vignettes.R
 vignette_output.txt
 cran-comments.md
-doc/*
-..Rcheck
+
 
