@@ -5,7 +5,7 @@ date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Introduction to Idealstan}
-  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEngine{R.rsp::asis}
   %\VignetteEncoding{UTF-8}
 ---
 
