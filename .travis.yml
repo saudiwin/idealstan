@@ -3,15 +3,13 @@ sudo: true
 cache: packages
 warnings_are_errors: false
 
-  
-r_check_args: "--no-vignettes"
-r_build_args: '--no-build-vignettes'
-
 matrix:
   include:
     - os: linux
       dist: trusty
       r: release
+      r_check_args: "--no-vignettes"
+      r_build_args: '--no-build-vignettes'
       addons:
         apt:
           sources:
