@@ -1,23 +1,23 @@
 Package: idealstan
 Type: Package
-Title: Bayesian IRT Ideal Point Models with 'Stan'
-Version: 0.2.9.2
-Date: 2018-10-16
+Title: Generalized IRT Ideal Point Models with 'Stan'
+Version: 0.5.0
+Date: 2018-10-27
 Authors@R: c(person("Robert","Kubinec", role = c("aut","cre"),
-                     email = "rmk7xy@virginia.edu"),
+                     email = "rmk7@nyu.edu"),
               person("Jonah", "Gabry", role = "ctb"),
               person("Ben", "Goodrich", role = "ctb"),
               person("Trustees of Columbia University",role='cph'))
 BugReports: https://github.com/saudiwin/idealstan/issues
-Description: Offers item-response theory (IRT) ideal-point scaling/dimension reduction methods that incorporate additional response categories and missing/censored values, including absences and abstentions, for roll call voting data (or any other kind of binary or ordinal item-response theory data). Full and approximate Bayesian inference is done via the 'Stan' engine (www.mc-stan.org). 
+Description: Offers item-response theory (IRT) ideal-point estimation for binary, ordinal, counts and continuous responses with time-varying and missing-data inference. Full and approximate Bayesian sampling with 'Stan' (www.mc-stan.org). 
 License: GPL
-Depends:
+Depends: 
+    methods,
     R (>= 3.4.0),
-    Rcpp (>= 0.12.7)
-Imports:
+    Rcpp (>= 0.12.18)
+Imports: 
     rstan (>= 2.18.1),
-    rstantools (>= 1.1.0),
-    methods (>= 3.3.1),
+    rstantools (>= 1.5.1),
     dplyr,
     tidyr,
     stringr,
@@ -25,15 +25,24 @@ Imports:
     ggplot2,
     lazyeval,
     rlang,
-    shinystan
+    shinystan,
+    gghighlight,
+    forcats,
+    ggrepel
 Suggests:
     pscl,
     loo,
-    knitr,
-    rmarkdown
-LinkingTo: StanHeaders (>= 2.18.0), rstan (>= 2.18.1), BH (>= 1.66), Rcpp
-    (>= 0.12.7), RcppEigen (>= 0.3.2.9.0)
-RoxygenNote: 6.0.1
-LazyData: false
-VignetteBuilder: knitr
+    lubridate,
+    R.rsp
+LinkingTo: 
+    StanHeaders (>= 2.18.0), 
+    rstan (>= 2.18.1), 
+    BH (>= 1.66), 
+    Rcpp (>= 0.12.7), 
+    RcppEigen (>= 0.3.2.9.0)
+Encoding: UTF-8
+LazyData: true
+NeedsCompilation: yes
 SystemRequirements: GNU make
+VignetteBuilder: R.rsp
+RoxygenNote: 6.1.0

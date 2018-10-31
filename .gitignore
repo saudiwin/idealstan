@@ -1,3 +1,5 @@
+doc
+Meta
 .Rproj.user
 .Rhistory
 .RData
@@ -8,7 +10,8 @@ src/*.so
 src/*.dll
 *.rds
 package_test.nb.html
-inst/doc
+package_test_files/*
+irt_standard_tst*
 bfg-1.12.16.jar
 src-i386
 src-x64

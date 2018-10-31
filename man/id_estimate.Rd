@@ -4,22 +4,34 @@
 \alias{id_estimate}
 \title{Estimate an \code{idealstan} model}
 \usage{
-id_estimate(idealdata = NULL, model_type = 2, use_subset = FALSE,
-  sample_it = FALSE, subset_group = NULL, subset_person = NULL,
-  sample_size = 20, nchains = 4, niters = 2000, use_vb = FALSE,
-  nfix = 3, restrict_params = "person", pin_vals = NULL,
-  restrict_ind_high = NULL, restrict_ind_low = NULL,
-  restrict_type = "constrain_twoway", fixtype = "vb",
-  warmup = floor(niters/2), ncores = 4, auto_id = FALSE,
-  discrim_reg_sd = 3, discrim_miss_sd = 3, person_sd = 1,
-  diff_reg_sd = 4, diff_miss_sd = 4, restrict_sd = 4,
-  restrict_low_bar = 0, restrict_high_bar = 0, restrict_alpha = 4,
-  restrict_beta = 1, ...)
+id_estimate(idealdata = NULL, model_type = 2, inflate_zero = FALSE,
+  vary_ideal_pts = "none", use_subset = FALSE, sample_it = FALSE,
+  subset_group = NULL, subset_person = NULL, sample_size = 20,
+  nchains = 4, niters = 2000, use_vb = FALSE,
+  restrict_ind_high = NULL, id_diff = 4, id_diff_high = 2,
+  restrict_ind_low = NULL, fixtype = "vb_full", prior_fit = NULL,
+  warmup = floor(niters/2), ncores = 4, use_groups = FALSE,
+  discrim_reg_sd = 1, discrim_miss_sd = 1, person_sd = 1,
+  time_sd = 0.1, sample_stationary = FALSE, ar_sd = 2,
+  diff_reg_sd = 1, diff_miss_sd = 1, restrict_sd = 0.01,
+  restrict_mean = NULL, restrict_var = NULL,
+  restrict_mean_val = NULL, restrict_mean_ind = NULL,
+  restrict_var_high = 0.1, ...)
 }
 \arguments{
 \item{idealdata}{An object produced by the \code{\link{id_make}} containing a score/vote matrix for use for estimation & plotting}
 
 \item{model_type}{An integer reflecting the kind of model to be estimated. See below.}
+
+\item{inflate_zero}{If the outcome is distributed as Poisson (count/unbounded integer), 
+setting this to 
+\code{TRUE} will fit a traditional zero-inflated model. To use correctly, the value for 
+zero must be passed as the \code{miss_val} option to \code{\link{id_make}} before
+running a model so that zeroes are coded as missing data.}
+
+\item{vary_ideal_pts}{Default \code{'none'}. If \code{'random_walk'} or \code{'AR1'}, a 
+time-varying ideal point model will be fit with either a random-walk process or an 
+AR1 process. See documentation for more info.}
 
 \item{use_subset}{Whether a subset of the legislators/persons should be used instead of the full response matrix}
 
@@ -42,26 +54,30 @@ the response matrix}
 \item{use_vb}{Whether or not to use Stan's variational Bayesian inference engine instead of full Bayesian inference. Pros: it's much faster.
 Cons: it's not quite as accurate. See \code{\link[rstan]{vb}} for more info.}
 
-\item{nfix}{An integer specifying the number of parameters to constrain (for both high and low) if \code{fixtype} is set to \code{'vb'}}
-
-\item{restrict_params}{Determines which parameters in the model are used for identification. If \code{fixtype} is 'vb', can be
-either 'person' (person/legislator ideal points) or 'items' (discrimination parameters for items/bills). Otherwise, the value must be one
-of the available classes of parameters: 'person' for persons/legislators, 'discrim_miss' for the missing-inflated item/bill discrimination
-parameters, or 'discrim_reg' for the non-inflated item/bill discrimination parameters.}
-
-\item{pin_vals}{If \code{fixtype} is set to 'pinned', then a vector of numeric values of which to pin the legislators/persons or 
-bills/items should be given.}
-
 \item{restrict_ind_high}{If \code{fixtype} is not "vb", the particular indices of legislators/persons or bills/items to constrain high}
+
+\item{id_diff}{The fixed difference between the high/low person/legislator ideal points used to identify the model. 
+Set at 4 as a standard value but can be changed to any arbitrary number without affecting model results besides re-scaling.}
+
+\item{id_diff_high}{The fixed intercept of the high ideal point used to constrain the model.}
 
 \item{restrict_ind_low}{If \code{fixtype} is not "vb", the particular indices of legislators/persons or bills/items to constrain low. 
 (Note: not used if values are pinned).}
 
-\item{restrict_type}{Determines whether constraints will only be set on one direction 'constrain_oneway' or both high/low
-constrains 'constrain_twoway'. Ignored if \code{fixtype} is equal to 'pinned'.}
+\item{fixtype}{Sets the particular kind of identification used on the model, could be one of 'vb_full' 
+(identification provided exclusively by running a variational identification model with no prior info), 
+'vb_partial' (two indices of ideal points to fix are provided but the values to fix are determined by the
+identification model), 
+'constrain' (two indices of ideal points to fix are provided--only sufficient for model if \code{restrict_var} is 
+\code{FALSE}, 
+and 'prior_fit' (a previous identified \code{idealstan} fit is passed to the \code{prior_fit} option and used
+as the basis for identification).
+ See details for more information.}
 
-\item{fixtype}{Sets the particular kind of identification used on the model, could be one of 'vb','constrained' or 'pinned'.
-See details for more information.}
+\item{prior_fit}{If a previous \code{idealstan} model was fit \emph{with the same} data, then the same
+identification constraints can be recycled from the prior fit if the \code{idealstan} object is passed 
+to this option. Note that means that all identification options, like \code{restrict_var}, will also 
+be the same}
 
 \item{warmup}{The number of iterations to use to calibrate Stan's sampler on a given model. Shouldn't be less than 100. 
 See \code{\link[rstan]{stan}} for more info.}
@@ -69,9 +85,8 @@ See \code{\link[rstan]{stan}} for more info.}
 \item{ncores}{The number of cores in your computer to use for parallel processing in the Stan engine. 
 See \code{\link[rstan]{stan}} for more info.}
 
-\item{auto_id}{If \code{TRUE}, a variational Bayesian version of your model will be run using \code{\link[rstan]{vb}} in a 
-non-identified form. Depending on what is set via \code{restrict_type} and \code{restrict_params}, bills/items or 
-persons/legislators will be used to constrain and identify the model.}
+\item{use_groups}{If \code{TRUE}, group parameters from the person/legis data given in \code{\link{id_make}} will be 
+estimated instead of individual parameters.}
 
 \item{discrim_reg_sd}{Set the prior standard deviation of the bimodal prior for the discrimination parameters for the non-inflated model.}
 
@@ -79,21 +94,45 @@ persons/legislators will be used to constrain and identify the model.}
 
 \item{person_sd}{Set the prior standard deviation for the legislators (persons) parameters}
 
+\item{time_sd}{The precision (inverse variance) of the over-time component of the person/legislator
+parameters. A higher value will allow for less over-time variation (useful if estimates bounce too much). 
+Default is 4.}
+
+\item{sample_stationary}{If \code{TRUE}, the AR(1) coefficients in a time-varying model will be 
+sampled from an unconstrained space and then mapped back to a stationary space. Leaving this \code{TRUE} is 
+slower but will work better when there is limited information to identify a model. If used, the
+\code{ar_sd} parameter should be increased to 5 to allow for wider sampling in the unconstrained space.}
+
+\item{ar_sd}{If an AR(1) model is used, this defines the prior scale of the Normal distribution. A lower number 
+can help 
+identify the model when there are few time points.}
+
 \item{diff_reg_sd}{Set the prior standard deviation for the bill (item) intercepts for the non-inflated model.}
 
 \item{diff_miss_sd}{Set the prior standard deviation for the bill (item) intercepts for the inflated model.}
 
 \item{restrict_sd}{Set the prior standard deviation for constrained parameters}
 
-\item{restrict_low_bar}{Set the constraint threshold for constrained parameters (parameter must be lower than this bar and no greater than zero)}
+\item{restrict_mean}{Whether or not to restrict the over-time mean of an ideal point 
+(additional identification measure when standard fixes don't work). \code{TRUE} by 
+default for random-walk models.}
 
-\item{restrict_high_bar}{Set the constraint threshold for constrained parameters (parameter must be higher than this bar and no less than zero)}
+\item{restrict_var}{Whether to limit variance to no higher than 0.5 for random-walk time series models.
+If left blank (the default), will be set to \code{TRUE} for random-walk models and \code{FALSE} for 
+AR(1) models if identification is still a challenge (note: using this for AR(1) models is 
+probably overkill).}
 
-\item{restrict_alpha}{This is the scale (alpha) parameter passed to the gamma prior if exactly two item/person parameters are constrained, each high or low. The gamma prior pushes these two
-polar parameters apart. A higher value will push these two poles farther apart, which will help identification.}
+\item{restrict_mean_val}{For random-walk models, the mean of a time-series ideal point to constrain.
+Should not be set a priori (leave blank) unless you are absolutely sure. Otherwise it is set by 
+the identification model.}
 
-\item{restrict_beta}{The beta (shape) parameter passed to the gamma prior if exactly two item/person parameters are constrained, each high or low. The gamma prior pushes these two
-polar parameters apart.}
+\item{restrict_mean_ind}{For random-walk models, the ID of the person/group whose over-time
+mean to constrain. Should be left blank (will be set by identification model) unless you are 
+really sure.}
+
+\item{restrict_var_high}{The upper limit for the variance parameter (if \code{restrict_var=TRUE} & 
+model is a random-walk time-series). If left blank, either defaults to 0.1 or is set by 
+identification model.}
 
 \item{...}{Additional parameters passed on to Stan's sampling engine. See \code{\link[rstan]{stan}} for more information.}
 }
@@ -102,46 +141,97 @@ A fitted \code{\link{idealstan}} object that contains posterior samples of all p
 or a variational approximation if \code{use_vb} is set to \code{TRUE}. This object can then be passed to the plotting functions for further analysis.
 }
 \description{
-This function will take a pre-processed \code{idealdata} vote/score matrix and run one of the available IRT models on the data using
+This function will take a pre-processed \code{idealdata} vote/score dataframe and 
+run one of the available IRT/latent space ideal point models on the data using
 Stan's MCMC engine.
 }
 \details{
 To run an IRT ideal point model, you must first pre-process your data using the \code{\link{id_make}} function. Be sure to specify the correct options for the
-kind of model you are going to run: if you want to run an ordinal and/or an inflated model, the data needs to be processed differently.
-As of this version of \code{idealstan}, the following model types are available:
+kind of model you are going to run: if you want to run an unbounded outcome (i.e. Poisson or continuous),
+the data needs to be processed differently. Also any hierarchical covariates at the person or item level
+need to be specified in \code{\link{id_make}}. If they are specified in \code{\link{id_make}}, than all 
+subsequent models fit by this function will have these covariates.
+
+\strong{Note that for static ideal point models, the covariates are only defined for those 
+persons who are not being used as constraints.}
+
+As of this version of \code{idealstan}, the following model types are available. Simply pass 
+the number of the model in the list to the \code{model_type} option to fit the model.
+
 \enumerate{
-  \item IRT 2-PL (binary response) ideal point model, no absence inflation
-  \item IRT 2-PL model (binary response) with absence inflation
-  \item Ordinal IRT (rating scale) model incorporating abstentions as middle category, no absence inflation
-  \item Ordinal IRT (rating scale) model incorporating abstentions as middle category with absence inflation
+  \item IRT 2-PL (binary response) ideal point model, no missing-data inflation
+  \item IRT 2-PL ideal point model (binary response) with missing- inflation
+  \item Ordinal IRT (rating scale) ideal point model no missing-data inflation
+  \item Ordinal IRT (rating scale) ideal point model with missing-data inflation
+  \item Ordinal IRT (graded response) ideal point model no missing-data inflation
+  \item Ordinal IRT (graded response) ideal point model with missing-data inflation
+  \item Poisson IRT (Wordfish) ideal point model with no missing data inflation
+  \item Poisson IRT (Wordfish) ideal point model with missing-data inflation
+  \item unbounded (Gaussian) IRT ideal point model with no missing data
+  \item unbounded (Gaussian) IRT ideal point model with missing-data inflation
+  \item Positive-unbounded (Log-normal) IRT ideal point model with no missing data
+  \item Positive-unbounded (Log-normal) IRT ideal point model with missing-data inflation
+  \item Latent Space (binary response) ideal point model with no missing data
+  \item Latent Space (binary response) ideal point model with missing-data inflation
 }
-Additional models are available but have not yet been tested. You can find them by searching the included stan files for more info.
+
+In addition, each of these models can have time-varying ideal point (person) parameters if
+a column of dates is fed to the \code{\link{id_make}} function. If the option \code{vary_ideal_pts} is 
+set to \code{'random_walk'}, \code{id_estimate} will estimate a random-walk ideal point model where ideal points 
+move in a random direction. If \code{vary_ideal_pts} is set to \code{'AR1'}, a stationary ideal point model 
+is estimated where ideal points fluctuate around long-term mean. In general, the stationary model
+is preferred when the time series is of short absolute duration (such as days or hours) while 
+the random-walk model is preferable when the time series is of very long duration and there are no
+natural limits to the ideal points. Please see the package vignette and associated paper for more detail
+about these time-varying models.
+
+The inflation model used to account for missing data assumes that missingness is a 
+function of the persons' (legislators')
+ideal points. In other words,the model will take into account if people with high or low ideal points
+tend to have more/less missing data on a specific item/bill. Missing data is whatever was 
+passed as \code{miss_val} to the \code{\link{id_make}} function. 
+If there isn't any relationship
+between missing data and ideal points, then the model assumes that the missingness is ignorable 
+conditional on each
+item, but it will still adjust the results to reflect these ignorable (random) missing
+values. The inflation is designed to be general enough to handle a wide array of potential
+situations where strategic social choices make missing data important to take into account.
+
+The missing data is assumed to be any possible value of the outcome. The well-known 
+zero-inflated Poisson model is a special case where missing values are known to be all zeroes. 
+To fit a zero-inflated Poisson model, change \code{inflate_zeroes} to \code{TRUE} and also 
+make sure to set the value for zero as \code{miss_val} in the \code{\link{id_make}} function.
+This will only work for outcomes that are distributed as Poisson variables (i.e., 
+unbounded integers or counts).
+
+To leave missing data out of the model, simply choose a version of the model in the list above
+that is non-inflated.
+
+Models can be either fit on the person/legislator IDs or on group-level IDs (as specified to the 
+\code{id_make} function). If group-level parameters should be fit, set \code{use_groups} to \code{TRUE}.
 }
 \section{Identification}{
 
-Identifying IRT models is challenging, and ideal point models are still more challenging because the discrimination parameters are not constrained.
+Identifying IRT models is challenging, and ideal point models are still more challenging 
+because the discrimination parameters are not constrained.
 As a result, more care must be taken to obtain estimates that are the same regardless of starting values. 
-The parameter \code{fixtype} enables you to change the type of identification used. The default, 'vb', does not require any further
+The parameter \code{fixtype} enables you to change the type of identification used. The default, 'vb_full', 
+does not require any further
 information from you in order for the model to be fit. In this version of identification, an unidentified model is run using
-variational Bayesian inference (see \code{\link[rstan]{vb}}). If \code{restrict_type} is set to 'constrain_oneway', then the \code{nfix}
-highest legislators/persons (if \code{restrict_params} is 'person') or bills/items (if \code{restrict_params} equals 'items') 
-are used to constrain and identify the model. If \code{restrict_type} is set to 'constrain_twoway', then \code{nfix} highest and lowest legislators/persons
-or bills/items are used to constrain and identify the model.
-In addition, if \code{fixtype='vb'} is used, \code{auto_id} can be set to \code{TRUE}. This will run additional variational Bayesian models
-using the identification achieved and will see if the signs of the estimated parameters are at least 90 percent in the same direction. If so, 
-the model is considered identified. If not, the function will re-run and will increase \code{nfix} by one to see if that will identify the model, 
-ad infinitum.
-If \code{fixtype} is set to 'constrained', then identification is achieved by constraining a specified list of legislators/persons or
-bills/items. If \code{restrict_type} is 'constrain_oneway', then the indices of all constrained legislators/persons or bills/items
-should be included as the row or column indices of these parameters in the response matrix as a vector in \code{restrict_ind_high}.
-If \code{restrict_type} is 'constrain_twoway,' then the indices of high constrained parameters should go in 
-\code{restrict_ind_high} and the indices of low constrained parameters in \code{restrict_ind_low}. The numbers of high and low
-constrained parameters should be equal. To pick the parameter to constrain, set \code{restrict_params} to 'person' for legislators/persons,
-'discrim_miss' for absence-inflated bill discrimination parameters, and 'discrim_reg' for non-inflated bill discrimination parameters.
-If \code{fixtype} is set to 'pinned', then identification is achieved via pinning with very tight priors a set of legislators/persons or bills/items.
-The indices of legislators/persons (i.e. row indices in the response matrix) or bills/items (column indices in the response matrix) should be passed as a vector
-to \code{restrict_ind_high}, while \code{restrict_ind_low} should be left blank. The particular values to pin these parameters is passed as a 
-numeric vector to \code{pin_vals}.
+variational Bayesian inference (see \code{\link[rstan]{vb}}). The function will then select two 
+persons/legislators that end up on either end of the ideal point spectrum, and pin their ideal points
+to those specific values. This is sufficient to identify all of the static models and also the AR(1) 
+time-varying models. For random-walk time-varying models, identification is more difficult (see vignette).
+Setting the option \code{restrict_mean} to \code{TRUE} will implement additional identification 
+constraints on random-walk models.
+A particularly convenient option for \code{fixtype} is \code{'vb_partial'}. In this case, the user
+should pass the IDs (as a character vector) of the persons to constrain high (\code{restrict_ind_high}) and
+low (\code{restrict_ind_low}). A model will then be fit to find the likely positions of these parameters,
+which will then be used to fit an identified model. In this way, the user can achieve a certain
+shape of the ideal point distribution without needing to choose specific values ahead of time to pin
+parameters to.
+If a prior model has been estimated with the same data, the user can re-use those identification 
+settings by passing the fitted \code{idealstan} object to the \code{prior_fit} option.
 }
 
 \examples{
@@ -151,9 +241,7 @@ library(dplyr)
 
 # This code will take at least a few minutes to run 
 \dontrun{
-bin_irt_2pl_abs_sim <- id_sim_gen(ordinal=FALSE,
-                                  absence=TRUE,
-                                  absence_diff_mean=0)
+bin_irt_2pl_abs_sim <- id_sim_gen(model_type='binary',inflate=T)
 
 # Now we can put that directly into the id_estimate function 
 # to get full Bayesian posterior estimates
@@ -163,16 +251,14 @@ bin_irt_2pl_abs_sim <- id_sim_gen(ordinal=FALSE,
 bin_irt_2pl_abs_est <- id_estimate(bin_irt_2pl_abs_sim,
                        model_type=2,
                        restrict_ind_high = 
-                       sort(bin_irt_2pl_abs_sim@simul_data$true_reg_discrim,
+                       sort(bin_irt_2pl_abs_sim@simul_data$true_person,
                        decreasing=TRUE,
-                       index=TRUE)$ix[1:3],
+                       index=TRUE)$ix[1],
                        restrict_ind_low = 
-                       sort(bin_irt_2pl_abs_sim@simul_data$true_reg_discrim,
+                       sort(bin_irt_2pl_abs_sim@simul_data$true_person
                        decreasing=FALSE,
-                       index=TRUE)$ix[1:3],
-                       restrict_params = 'discrim_reg', 
-                       restrict_type = 'constrain_twoway',
-                       fixtype='constrained',
+                       index=TRUE)$ix[1],
+                       fixtype='vb_partial',
                        ncores=2,
                        nchains=2)
                                    
@@ -197,17 +283,21 @@ data('senate114')
 \dontrun{
 
 to_idealstan <-   id_make(score_data = senate114,
-                          ordinal = FALSE,
-                          include_pres=FALSE)
+outcome = 'cast_code',
+person_id = 'bioname',
+item_id = 'rollnumber',
+group_id= 'party_code',
+time_id='date',
+high_val='Yes',
+low_val='No',
+miss_val='Absent')
 
 sen_est <- id_estimate(senate_data,
 model_type = 2,
 use_vb = TRUE,
-restrict_type='constrain_oneway',
-restrict_params='person',
-restrict_ind_high = which(row.names(senate114$votes[-1,])=='SASSE (R NE)'),
-auto_id=FALSE,
-fixtype='constrained')
+fixtype='vb_partial',
+restrict_ind_high = "BARRASSO, John A.",
+restrict_ind_low = "WARREN, Elizabeth")
 
 # After running the model, we can plot 
 # the results of the person/legislator ideal points
@@ -220,6 +310,7 @@ id_plot_legis(sen_est)
 \enumerate{
    \item Clinton, J., Jackman, S., & Rivers, D. (2004). The Statistical Analysis of Roll Call Data. \emph{The American Political Science Review}, 98(2), 355-370. doi:10.1017/S0003055404001194
    \item Bafumi, J., Gelman, A., Park, D., & Kaplan, N. (2005). Practical Issues in Implementing and Understanding Bayesian Ideal Point Estimation. \emph{Political Analysis}, 13(2), 171-187. doi:10.1093/pan/mpi010
+   \item Kubinec, R. "Generalized Ideal Point Models for Time-Varying and Missing-Data Inference". Working Paper.
 }
 }
 \seealso{

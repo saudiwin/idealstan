@@ -4,37 +4,53 @@
 \alias{id_sim_gen}
 \title{Simulate IRT ideal point data}
 \usage{
-id_sim_gen(num_person = 20, num_bills = 50, absence_discrim_sd = 2,
+id_sim_gen(num_person = 20, num_bills = 50, model_type = "binary",
+  latent_space = FALSE, absence_discrim_sd = 2,
   absence_diff_mean = 0.5, reg_discrim_sd = 2, diff_sd = 0.25,
-  ideal_pts_sd = 1, prior_type = "gaussian", ordinal = TRUE,
-  ordinal_outcomes = 3, graded_response = FALSE, absence = TRUE)
+  time_points = 1, time_process = "random", time_sd = 0.1,
+  ideal_pts_sd = 1, prior_type = "gaussian", ordinal_outcomes = 3,
+  inflate = FALSE, sigma_sd = 1)
 }
 \arguments{
-\item{num_person}{The number of persons/personlators}
+\item{num_person}{The number of persons/persons}
 
 \item{num_bills}{The number of items/bills}
 
-\item{absence_discrim_sd}{The SD of the discrimination parameters for the absence model}
+\item{model_type}{One of \code{'binary'}, \code{'ordinal_rating'}, \code{'ordinal_grm'}, \code{'poisson'}
+\code{'normal'}, or \code{'lognormal'}}
 
-\item{absence_diff_mean}{The mean intercept for the absence model; increasing it will lower the total number of
-absences}
+\item{latent_space}{Whether to use the latent space formulation of the ideal point model 
+\code{FALSE} by default. NOTE: currently, the package only has estimation for a 
+binary response with the latent space formulation.}
+
+\item{absence_discrim_sd}{The SD of the discrimination parameters for the inflated model}
+
+\item{absence_diff_mean}{The mean intercept for the inflated model; increasing it will lower the total number of
+missing data}
 
 \item{reg_discrim_sd}{The SD of the discrimination parameters for the non-inflated model}
 
 \item{diff_sd}{The SD of the difficulty parameters (bill/item intercepts)}
 
-\item{ideal_pts_sd}{The SD for the person/personlator ideal points}
+\item{time_points}{The number of time points for time-varying legislator/person parameters}
+
+\item{time_process}{The process used to generate the ideal points: currently either \code{'random'} 
+for a random walk or \code{'AR'} for an AR1 process}
+
+\item{time_sd}{The standard deviation of the change in ideal points over time (should be low relative to 
+\code{ideal_pts_sd})}
+
+\item{ideal_pts_sd}{The SD for the person/person ideal points}
 
 \item{prior_type}{The statistical distribution that generates the data. Currently only 
 'gaussian' is supported.}
 
-\item{ordinal}{Whether the data should have binary (\code{FALSE}) or ordinal (\code{TRUE}) responses}
+\item{ordinal_outcomes}{If \code{model} is \code{'ordinal'}, an integer giving the total number of categories}
 
-\item{ordinal_outcomes}{If \code{ordinal} is \code{TRUE}, an integer giving the total number of categories}
+\item{inflate}{If \code{TRUE}, an missing-data-inflated dataset is produced.}
 
-\item{graded_response}{Not currently implemented}
-
-\item{absence}{If \code{TRUE}, an absence-inflated dataset is produced.}
+\item{sigma_sd}{If a normal or log-normal distribution is being fitted, this parameter gives the standard 
+deviation of the outcome (i.e. the square root of the variance).}
 }
 \value{
 The results is a \code{idealdata} object that can be used in the 
@@ -42,12 +58,12 @@ The results is a \code{idealdata} object that can be used in the
 plotting functions.
 }
 \description{
-A function designed to simulate absence-inflated data with either binary or ordinal outcomes.
+A function designed to simulate IRT ideal point data.
 }
 \details{
 This function produces simulated data that matches (as closely as possible) the models
-used in the underlying Stan code. Currently the simulation can produce absence-inflated and
-non-absence-inflated binary and ordinal ideal point models.
+used in the underlying Stan code. Currently the simulation can produce inflated and non-inflated
+models with binary, ordinal (GRM and rating-scale), Poisson, Normal and Log-Normal responses.
 }
 \seealso{
 \code{\link{id_plot_sims}} for plotting fitted models versus true values.

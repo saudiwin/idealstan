@@ -4,8 +4,9 @@
 #' uncertainties of legislator/persons and bills/items.
 #' 
 #' This plot shows the distribution of ideal points for the legislators/persons in the model. It will plot them as a vertical
-#' dot plot with associated high-density posterior interval (10\% to 90\%). In addition, if the column index for a 
-#' bill/item from the response matrix is passed to the \code{item_plot} option, then an item/bill midpoint will be overlain
+#' dot plot with associated high-density posterior interval (can be changed 
+#' with \code{high_limit} and \code{low_limit} options). In addition, if item/bill IDs
+#' as a character vector is passed to the \code{item_plot} option, then an item/bill midpoint will be overlain
 #' on the ideal point plot, showing the point at which legislators/persons are indifferent to voting/answering on the 
 #' bill/item. Note that because this is an ideal point model, it is not possible to tell from the midpoint itself
 #' which side will be voting which way. For that reason, the legislators/persons are colored by their votes/scores to
@@ -13,84 +14,91 @@
 #' 
 #' @param object A fitted \code{idealstan} object
 #' @param return_data If true, the calculated legislator/bill data is returned along with the plot in a list
-#' @param item_plot The column index of the bill/item midpoint to overlay on the plot
+#' @param include Specify a list of person/legislator IDs to include in the plot (all others excluded)
+#' @param high_limit The quantile (number between 0 and 1) for the high end of posterior uncertainty to show in plot
+#' @param low_limit The quantile (number between 0 and 1) for the low end of posterior uncertainty to show in plot
+#' @param item_plot The IDs (character vector) of the bill/item midpoints to overlay on the plot
 #' @param text_size_label ggplot2 text size for legislator labels
 #' @param text_size_group ggplot2 text size for group text used for points
 #' @param point_size If \code{person_labels} and \code{group_labels} are set to \code{FALSE}, controls the size of the points plotted.
 #' @param hjust_length horizontal adjustment of the legislator labels
-#' @param person_labels if \code{TRUE}, use the person.names column to plot labels for the person (legislator) ideal points
+#' @param person_labels if \code{TRUE}, use the person_id column to plot labels for the person (legislator) ideal points
 #' @param group_labels if \code{TRUE}, use the group column to plot text markers for the group (parties) from the person/legislator data
 #' @param person_ci_alpha The transparency level of the dot plot and confidence bars for the person ideal points
-#' @param show_score Show only person/legislator ideal points that have a certain score/vote category from the outcome (character string)
-#' @param abs_and_reg Whether to show 'both' absence and regular item/bill midpoints if the model is absence-inflated, the default,
-#' or 'Absence Points' for only the absence midpoints or 'Vote Points' for only the non-inflated midpoints
+#' @param item_plot_type Whether to show the \code{'non-inflated'} item/bill midpoints, 
+#' the \code{'inflated'} item/bill midpoints, or produce plots for \code{'both'} kinds of models. 
+#' Defaults to \code{'non-inflated'} and will only display an item/bill midpoint if one has been 
+#' specified in \code{item_plot}.
 #' @param show_true Whether to show the true values of the legislators (if model has been simulated)
 #' @param group_color If \code{TRUE}, give each group/bloc a different color
-#' @param group_overlap Whether to prevent the text from overlapping itself (ggplot2 option)
 #' @param hpd_limit The greatest absolute difference in high-posterior density interval shown for any point. Useful for excluding imprecisely estimated persons/legislators from the plot. Leave NULL if you don't want to exclude any.
 #' @param sample_persons If you don't want to use the full number of persons/legislators from the model, enter a proportion (between 0 and 1) to select
 #'  only a fraction of the persons/legislators.
 #' @param ... Other options passed on to plotting function, currently ignored
 #' @import ggplot2
 #' @import lazyeval
-#' @importFrom rlang parse_quosure
+#' @importFrom rlang parse_quosure as_quosure
+#' @import ggrepel
 #' @export
 #' @examples 
 #' 
-#' # To demonstrate, we load a fitted idealstan object based on the 114th Senate
+#' \dontrun{
 #' 
-#' data('senate114_fit')
+#' # First create data and run a model
 #' 
-#' id_plot_legis(senate114_fit)
+#' to_idealstan <-   id_make(score_data = senate114,
+#' outcome = 'cast_code',
+#' person_id = 'bioname',
+#' item_id = 'rollnumber',
+#' group_id= 'party_code',
+#' time_id='date',
+#' high_val='Yes',
+#' low_val='No',
+#' miss_val='Absent')
 #' 
-#' # We can overlap the bill/item midpoints to show 
-#' # where the persons/legislators are indifferent to responding positively
+#' sen_est <- id_estimate(senate_data,
+#' model_type = 2,
+#' use_vb = TRUE,
+#' fixtype='vb_partial',
+#' restrict_ind_high = "BARRASSO, John A.",
+#' restrict_ind_low = "WARREN, Elizabeth")
 #' 
-#' id_plot_legis(senate114_fit,item_plot=5)
+#' # After running the model, we can plot 
+#' # the results of the person/legislator ideal points
 #' 
-id_plot_legis <- function(object,return_data=FALSE,item_plot=NULL,
+#' id_plot_legis(sen_est)
+#' }
+#' 
+id_plot_legis <- function(object,return_data=FALSE,
+                          include=NULL,
+                          high_limit=.95,
+                          low_limit=.05,
+                          item_plot=NULL,
+                          item_plot_type='non-inflated',
                        text_size_label=2,text_size_group=2.5,
                        point_size=1,
                        hjust_length=-0.7,
                        person_labels=TRUE,
                        group_labels=F,
-                       person_ci_alpha=0.1,
-                       show_score=NULL,
-                       abs_and_reg='both',show_true=FALSE,group_color=TRUE,
+                       person_ci_alpha=0.2,
+                       show_true=FALSE,group_color=TRUE,
                        hpd_limit=10,
-                       group_overlap=FALSE,
                        sample_persons=NULL,...) {
 
-  person_data <- object@score_data@person_data
+  person_params <- .prepare_legis_data(object,
+                                       high_limit=high_limit,
+                                       low_limit=low_limit)
   
-  # Apply any filters from the data processing stage so that the labels match
-  
-  if(length(object@score_data@subset_person)>0) {
-    person_data <- filter(person_data,person.names %in% object@score_data@subset_person)
-  } else if(length(object@score_data@subset_group)>0) {
-    person_data <- filter(person_data,group %in% object@score_data@subset_person)
+  if(!is.null(include)) {
+    person_params <- filter(person_params, person_id %in% include)
   }
   
-  if(length(object@score_data@to_sample)>0) {
-    person_data <- slice(person_data,object@score_data@to_sample)
+  if(group_color) {
+    groupc <- ~group_id
+  } else {
+    groupc <- NA
   }
-  
-  # Reorder rows to match those rows that were switched for identification purposes
 
-  person_data <- slice(person_data,as.numeric(row.names(object@score_data@score_matrix)))
-  
-  person_params <- rstan::extract(object@stan_samples,pars='L_full')[[1]] %>% 
-    as_data_frame 
-  names(person_params) <- as.character(1:length(person_params))
-  person_params <- person_params %>% gather(key = legis,value=ideal_pts) %>% 
-    mutate(legis=as.numeric(legis)) %>% 
-    group_by(legis) %>% 
-    summarize(low_pt=quantile(ideal_pts,0.1),high_pt=quantile(ideal_pts,0.9),
-              median_pt=median(ideal_pts))
-
-  person_params <- mutate(person_params,person.names=person_data$person.names,
-                          group=person_data$group)
-  
   # sample for plot only
   
   if(!is.null(sample_persons)) {
@@ -105,10 +113,12 @@ id_plot_legis <- function(object,return_data=FALSE,item_plot=NULL,
   # Rescale simulated values to ensure that they match estimated values in terms of scale multiplicativity
 
   if(show_true==TRUE) {
-    person_params <- mutate(person_params,true_vals=scale(person_data$true_legis)[,1],
-                            median_pt=scale(median_pt)[,1],
-                            low_pt=scale(low_pt)[,1],
-                            high_pt=scale(high_pt)[,1])
+    
+    true_vals <- data_frame(true_vals=object@score_data@simul_data$true_person[,1]) %>% 
+      slice(as.numeric(levels(person_params$person_id))) %>% 
+      mutate(id_num=1:n())
+    
+    person_params <- left_join(person_params,true_vals)
   }
   
   if(!is.null(hpd_limit)) {
@@ -116,268 +126,568 @@ id_plot_legis <- function(object,return_data=FALSE,item_plot=NULL,
                             abs(high_pt-low_pt)<hpd_limit)
   }
   
+  # create item plot data
+  
+  if(!is.null(item_plot)) {
+    
+    # loop over the item IDs and calculate midpoints and HPDs
+    if(object@model_type %in% c(1,2) || (object@model_type>6 && object@model_type<13)) {
+      # binary models and continuous
+      item_points <- lapply(item_plot,.item_plot_binary,object=object,
+                            low_limit=low_limit,
+                            high_limit=high_limit) %>% bind_rows()
+    } else if(object@model_type %in% c(3,4)) {
+      # rating scale
+      item_points <- lapply(item_plot,.item_plot_ord_rs,object=object,
+                            low_limit=low_limit,
+                            high_limit=high_limit) %>% bind_rows()
+    } else if(object@model_type %in% c(5,6)) {
+      # grm
+      item_points <- lapply(item_plot,.item_plot_ord_grm,object=object,
+                            low_limit=low_limit,
+                            high_limit=high_limit) %>% bind_rows()
+    } else if(object@model_type %in% c(13,14)) {
+      # latent space
+      item_points <- lapply(item_plot,.item_plot_ls,object=object,
+                            low_limit=low_limit,
+                            high_limit=high_limit) %>% bind_rows()
+    }
+    
+    # collect outcomes
+    
+    item_points <- left_join(item_points,object@score_data@score_matrix,by=c('item_name'='item_id')) %>% 
+      gather(key='ci_type',value='ci_value',item_high,item_low) %>% 
+      mutate(ci_type=factor(ci_type,levels=c('item_low',
+                                     'item_high'),
+                            labels=c(paste0(low_limit*100,'%'),
+                                     paste0(high_limit*100,'%'))))
+    person_params <- left_join(person_params,item_points,by=c('person_id'='person_id',
+                                                              'group_id'='group_id'))
+    # Choose a plot based on the user's options
+    
+    if(item_plot_type!='both') {
+      
+      item_plot_type <- switch(item_plot_type,
+                               `non-inflated`="Non-Inflated\nDiscrimination",
+                               inflated="Inflated\nDiscrimination")
+      
+      person_params <- filter(person_params,item_type==item_plot_type)
+    } 
+    
+  }
+  
   # Default plot: group names plotted as points
 
-  if(group_color==TRUE) {
+  if(is.null(item_plot)) {
     outplot <- person_params %>% ggplot() +
-      geom_linerange(aes(x=reorder(person.names,median_pt),
-                         ymin=low_pt,ymax=high_pt,color=group),
+      geom_linerange(aes_(x=~reorder(person_id,median_pt),
+                         ymin=~low_pt,ymax=~high_pt,color=groupc),
                      alpha=person_ci_alpha,
                      show.legend = FALSE) +
-      geom_text(aes(x=reorder(person.names,median_pt),
-                    y=median_pt,label=reorder(group,median_pt),
-                    color=group),size=text_size_group,
-                check_overlap = group_overlap,show.legend = FALSE) 
-  } else if(group_color==FALSE) {
-    outplot <- person_params %>% ggplot() +
-      geom_linerange(aes(x=reorder(person.names,median_pt),ymin=low_pt,ymax=high_pt),alpha=person_ci_alpha) +
-      geom_text(aes(x=reorder(person.names,median_pt),y=median_pt,label=reorder(group,median_pt)),size=text_size_group,check_overlap = group_overlap)
+      geom_text(aes_(x=~reorder(person_id,median_pt),
+                    y=~median_pt,label=~reorder(group_id,median_pt),
+                    color=groupc),size=text_size_group,
+                show.legend = FALSE,
+                check_overlap = T) 
       
+  } else {
+    # if an item plot is being made, use the actual outcomes as points
+
+    outplot <- person_params %>% ggplot() +
+      geom_linerange(aes_(x=~reorder(person_id,median_pt),colour=groupc,
+                         ymin=~low_pt,ymax=~high_pt),alpha=person_ci_alpha) +
+      geom_text(aes_(x=~reorder(person_id,median_pt),y=~median_pt,
+                    colour=groupc,
+                    label=~reorder(outcome,median_pt)),size=text_size_group,
+                check_overlap = T)
+    
   }
     
     # determine if legislator names should be plotted
 
   if(person_labels==TRUE & group_color==TRUE) {
-    outplot <- outplot + geom_text(aes(x=reorder(person.names,median_pt),y=median_pt,label=reorder(person.names,median_pt),color=group),
-                                       check_overlap=TRUE,hjust=hjust_length,size=text_size_label,show.legend = FALSE)
+    outplot <- outplot + geom_text_repel(aes(x=reorder(person_id,median_pt),y=median_pt,label=reorder(person_id,median_pt),color=group_id),
+                                       nudge_x=hjust_length,size=text_size_label,show.legend = FALSE,
+                                       segment.alpha=0,data=distinct(person_params,
+                                                                     person_id,
+                                                                     median_pt,
+                                                                     group_id))
   } else if(person_labels==TRUE & group_color==FALSE) {
-    outplot <- outplot + geom_text(aes(x=reorder(person.names,median_pt),y=median_pt,label=reorder(person.names,median_pt)),
-                                   check_overlap=TRUE,hjust=hjust_length,size=text_size_label)
+    outplot <- outplot + geom_text_repel(aes(x=reorder(person_id,median_pt),y=median_pt,label=reorder(person_id,median_pt)),
+                                   nudge_x=hjust_length,size=text_size_label,
+                                   segment.alpha=0,data=distinct(person_params,
+                                                                 person_id,
+                                                                 median_pt,
+                                                                 group_id))
+  }
+  
+    
+  if(!is.null(item_plot)) {
+    
+    # Add in bill vertical line (50% equiprobability voting line)
+      outplot <- outplot + geom_hline(aes(yintercept=item_median),linetype=2,alpha=0.6) +
+        geom_rug(aes(y=ci_value,linetype=ci_type)) +
+        guides(linetype=guide_legend('Item\nMidpoint\nHPD'),
+               colour=guide_legend('')) +
+        theme(legend.position = 'bottom')
+     
+    #Whether or not to add a facet_wrap
+    
+    if(item_plot_type=='both' & length(item_plot)>1) {
+      outplot <- outplot + facet_wrap(~item_name + item_type,dir='v')
+    } else if(item_plot_type=='both') {
+      outplot <- outplot + facet_wrap(~item_type,dir='v') 
+    } 
+    
+    
   }
   
   # Add a dirty trick to enable the legend to show what group labels instead of just the letter 'a'
   
   if(group_color==TRUE) {
     
-    outplot <- outplot + geom_point(aes(x=reorder(person.names,median_pt),y=median_pt,color=group),size=0,stroke=0) +
+    outplot <- outplot + geom_point(aes(x=reorder(person_id,median_pt),y=median_pt,color=group_id),size=0,stroke=0) +
       guides(colour = guide_legend(title="",override.aes = list(size = 5)))
-  }
-  #, shape = sapply(levels(person_params$group),utf8ToInt)
-     
-    # Add theme elements
-    
-  outplot <- outplot  + theme_minimal() + ylab("") + xlab("") +
-      theme(axis.text.y=element_blank(),panel.grid.major.y = element_blank()) + coord_flip() 
-  
-
-  if(!is.null(item_plot)) {
-
-    bill_num <- which(colnames(object@score_data@score_matrix) %in% item_plot)
-    bill_discrim_reg <- paste0('sigma_reg_full[',bill_num,']')
-    bill_diff_reg <- paste0('B_int_full[',bill_num,']')
-    
-    if(any(object@model_type %in% c(2,4,6))) {
-      bill_discrim_abs <- paste0('sigma_abs_full[',bill_num,']')
-      bill_diff_abs <- paste0('A_int_full[',bill_num,']')
-      
-      to_rstan <- c(bill_discrim_reg,bill_diff_reg,bill_discrim_abs,bill_diff_abs)
-    } else {
-      to_rstan <- c(bill_discrim_reg,bill_diff_reg)
-    }
-    
-    if(any(object@model_type %in% c(3,4,5,6))) {
-      steps <- rstan::extract(object@stan_samples,pars='steps_votes') 
-    }
-
-    bill_pos <- rstan::extract(object@stan_samples,pars=to_rstan) %>% as_data_frame %>% 
-      gather(key = bills,value=ideal_pts) %>% 
-      group_by(bills) %>% 
-      mutate(rownum=1:n())
-    bill_pos <- spread(bill_pos,bills,ideal_pts) %>% 
-      select(-rownum)
-    names(bill_pos) <- stringr::str_replace_all(names(bill_pos),'[\\[\\]]',replacement='_')
-    bill_diff_reg <- stringr::str_replace_all(bill_diff_reg,'[\\[\\]]',replacement='_')
-    bill_discrim_reg <- stringr::str_replace_all(bill_discrim_reg,'[\\[\\]]',replacement='_')
-    if(any(object@model_type %in% c(2,4,6))) {
-      #inflated models
-      bill_diff_abs <- stringr::str_replace_all(bill_diff_abs,'[\\[\\]]',replacement='_')
-      bill_discrim_abs <- stringr::str_replace_all(bill_discrim_abs,'[\\[\\]]',replacement='_')
-    }
-
-    bill_pos <- lapply(1:length(bill_num),function(x) {
-
-      if(any(object@model_type %in% c(3,4,5,6))) {
-        # ordinal models
-        if(any(object@model_type %in% c(4,6))) {
-          #inflated ordinal
-          out_reg <- .calc_bill(bill_pos,
-                                int_reg=parse_quosure(bill_diff_reg[x]),
-                                sigma_reg=parse_quosure(bill_discrim_reg[x]),
-                                int_abs=parse_quosure(bill_diff_abs[x]),
-                                sigma_abs=parse_quosure(bill_discrim_abs[x]),
-                                steps_data=steps$steps_votes,
-                                step_num=ncol(steps$steps_votes),
-                                this_num=bill_num[x])
-        } else {
-          #non-inflated Ordinal
-          out_reg <- .calc_bill(bill_pos,
-                                int_reg=parse_quosure(bill_diff_reg[x]),
-                                sigma_reg=parse_quosure(bill_discrim_reg[x]),
-                                steps_data=steps$steps_votes,
-                                step_num=ncol(steps$steps_votes),
-                                this_num=bill_num[x])
-        }
-      } else {
-        #binary models
-        #inflated binary
-        if(object@model_type==2) {
-          out_reg <- .calc_bill(bill_pos,
-                                int_reg=parse_quosure(bill_diff_reg[x]),
-                                sigma_reg=parse_quosure(bill_discrim_reg[x]),
-                                int_abs=parse_quosure(bill_diff_abs[x]),
-                                sigma_abs=parse_quosure(bill_discrim_abs[x]),
-                                this_num=bill_num[x])
-        } else {
-          #non-inflated binary
-          out_reg <- .calc_bill(bill_pos,
-                                int_reg=parse_quosure(bill_diff_reg[x]),
-                                sigma_reg=parse_quosure(bill_discrim_reg[x]),
-                                this_num=bill_num[x])
-        }
-      }
-      return(out_reg)
-    })
-
-    bill_pos <- bind_rows(bill_pos) %>% 
-                gather(key = ci_type,value=ci_value,high_bill,low_bill)
-    
-    #Redo the legislator plot to make room for bill covariates
-    
-    # Pick up bills and put the labels back on
-    cols <- object@score_data@score_matrix[,item_plot] %>% as_data_frame
-    if(!is.null(sample_persons)) {
-      cols <- slice(cols,to_sample)
-    }
-    cols <- lapply(cols,function(x) {
-      if(object@model_type %in% c(2,4) && is.na(object@score_data@miss_val)) {
-        x <- factor(x,levels=object@score_data@vote_int,labels=object@score_data@vote_labels,exclude=NULL)
-      } else {
-        x <- factor(x,levels=object@score_data@vote_int,labels=object@score_data@vote_labels)
-      }
-      
-    }) %>% as_data_frame
-
-    if(length(item_plot)>1) {
-      person_params <- bind_cols(person_params,cols) %>% gather(bill_type,bill_vote,one_of(bill_num))
-    } else {
-      person_params <- bind_cols(person_params,cols) 
-      names(person_params) <- c(names(person_params)[-length(names(person_params))],'bill_vote')
-      person_params <- mutate(person_params,bill_type=bill_num)
-    }
-    
-    if(!is.null(show_score)) {
-      if(all(sapply(show_score,`%in%`,object@score_data@vote_labels))) {
-        person_params <- filter(person_params,bill_vote %in% show_score)
-      } else {
-        warning('Please specify a show_score parameter from the labels in the score/vote matrix.')
-      }
-    }
-
-    if(show_true==TRUE) {
-      person_params <- mutate(person_params,true_vals=scale(person_data$true_legis)[,1],
-                              median_pt=scale(median_pt)[,1],
-                              low_pt=scale(low_pt)[,1],
-                              high_pt=scale(high_pt)[,1])
-    }
-    person_params <- left_join(person_params,bill_pos,c('bill_type'='bill_num')) %>% 
-      mutate(ci_type=factor(ci_type,levels=c('low_bill','high_bill'),
-                            labels=c('10%','90%')))
-    
-    # Choose a plot based on the user's options
-
-    if(any(object@model_type %in% c(2,4,6)) & abs_and_reg!='both') {
-
-      person_params <- filter(person_params,param==abs_and_reg)
-    } 
-    
-    # check to make sure all bill votes are NA -- if so the function will fail
-    # good to convert those to missing anyway
-    
-    person_params <- mutate(person_params,
-                            bill_vote=as.character(bill_vote),
-                            bill_vote=if_else(is.na(bill_vote),'Missing',bill_vote))
-    
-    outplot <- person_params %>% ggplot() + 
-      geom_linerange(aes(x=reorder(person.names,median_pt),ymin=low_pt,ymax=high_pt),alpha=person_ci_alpha)
-    
-    if(group_labels==TRUE) {
-      outplot <- outplot +       
-        geom_text(aes(x=reorder(person.names,median_pt),y=median_pt,label=reorder(group,median_pt),color=bill_vote),size=text_size_group,
-                                           check_overlap = group_overlap,
-                  fontface='bold') 
-    }
-    if(person_labels==TRUE) {
-      outplot <- outplot + 
-        geom_text(aes(x=reorder(person.names,median_pt),y=median_pt,label=reorder(person.names,median_pt),color=bill_vote),
-                                           check_overlap=TRUE,hjust=hjust_length,size=text_size_label)
-    }
-    if(group_labels==FALSE && person_labels==FALSE) {
-      outplot <- outplot +
-        geom_point(aes(x=reorder(person.names,median_pt),y=median_pt,color=bill_vote),size=point_size)
-    }
-
-    outplot <- outplot +
-      theme_minimal() + ylab("") + xlab("") +
-      theme(axis.text.y=element_blank(),panel.grid= element_blank()) + coord_flip()
-    
-    # Add in bill vertical line (50% equiprobability voting line)
-      outplot <- outplot + geom_hline(aes(yintercept=median_bill),linetype=2,alpha=0.6) +
-        geom_rug(aes(y=ci_value,linetype=ci_type)) +
-        guides(linetype=guide_legend('Item\nMidpoint\nHPD'),
-               colour=guide_legend('')) +
-        theme(legend.position = 'bottom')
-    
-    # Add in annotations
-    if(!is.null(person_params$step) && max(person_params$step)>1 && (abs_and_reg!='both' && object@model_type %in% c(2,4,6))) {
-      if(object@model_type %in% c(2,4,6)) {
-        bill_data <- distinct(bill_pos,median_bill,step,param)
-        bill_data <- filter(bill_data,param==abs_and_reg)
-        outplot <- outplot + annotate(geom='text',
-                                      x=person_params$person.names[which(abs(person_params$median_pt-quantile(person_params$median_pt,.8))==min(abs(person_params$median_pt-quantile(person_params$median_pt,.8))))][1:max(person_params$step)],
-                                      y=bill_data$median_bill + (min(bill_data$median_bill)-max(bill_data$median_bill))/(max(person_params$step)*3.5),
-                                      label=object@score_data@vote_labels[1:(length(object@score_data@vote_labels)-2)],
-                                      colour='dark green')
-      } else {
-        bill_data <- distinct(bill_pos,median_bill,step)
-        outplot <- outplot + annotate(geom='text',
-                                      x=person_params$person.names[which(abs(person_params$median_pt-quantile(person_params$median_pt,.8))==min(abs(person_params$median_pt-quantile(person_params$median_pt,.8))))][1:max(person_params$step)],
-                                      y=bill_data$median_bill + (min(bill_data$median_bill)-max(bill_data$median_bill))/(max(person_params$step)*3.5),
-                                      label=object@score_data@vote_labels[1:(length(object@score_data@vote_labels)-1)],
-                                      colour='dark green')
-      }
-
-    }
-     
-    #Whether or not to add a facet_wrap
-    
-    if(any(object@model_type %in% c(2,4,6)) & abs_and_reg=='both' & length(item_plot)>1) {
-      outplot <- outplot + facet_wrap(~param + bill_type,dir='v')
-    } else if(any(object@model_type %in% c(2,4,6)) & abs_and_reg %in% c('both','Absence Points') & length(item_plot)==1) {
-      outplot <- outplot + facet_wrap(~param,dir='v') 
-    } else if(length(item_plot)>1) {
-      outplot <- outplot + facet_wrap(~bill_type,dir='v') 
-    }
-    
-    
   }
   
   if(show_true==TRUE) {
-    outplot <- outplot + geom_point(aes(x=reorder(person.names,median_pt),y=true_vals),color='black',shape=2)
+    outplot <- outplot + geom_point(aes(x=reorder(person_id,median_pt),y=true_vals),color='black',shape=2)
     
   }
+  
+  # Add theme elements
+  
+  outplot <- outplot  + theme_minimal() + ylab("") + xlab("") +
+    theme(axis.text.y=element_blank(),panel.grid.major.y = element_blank()) + coord_flip() 
 
   
   if(return_data==TRUE) {
     
     return_list <- list(outplot=outplot,plot_data=person_params)
-    if(!is.null(item_plot)) {
-      return_list$bill_data <- bill_pos
-    }
+
     return(return_list)
     
   } else (
     return(outplot)
   )
+  
+}
+
+#' Plot Legislator/Person Over-time Variances
+#' 
+#' This function can be used on a fitted \code{idealstan} object to plot the over-time variances 
+#' (average rates of change in ideal points) for all the persons/legislators in the model.
+#' 
+#' This function will plot the person/legislator over-time variances as a vertical
+#' dot plot with associated high-density posterior interval (can be changed 
+#' with \code{high_limit} and \code{low_limit} options). 
+#' 
+#' @param object A fitted \code{idealstan} object
+#' @param return_data If true, the calculated legislator/bill data is returned along with the plot in a list
+#' @param include Specify a list of person/legislator IDs to include in the plot (all others excluded)
+#' @param high_limit The quantile (number between 0 and 1) for the high end of posterior uncertainty to show in plot
+#' @param low_limit The quantile (number between 0 and 1) for the low end of posterior uncertainty to show in plot
+#' @param text_size_label ggplot2 text size for legislator labels
+#' @param text_size_group ggplot2 text size for group text used for points
+#' @param point_size If \code{person_labels} and \code{group_labels} are set to \code{FALSE}, controls the size of the points plotted.
+#' @param hjust_length horizontal adjustment of the legislator labels
+#' @param person_labels if \code{TRUE}, use the person_id column to plot labels for the person (legislator) ideal points
+#' @param group_labels if \code{TRUE}, use the group column to plot text markers for the group (parties) from the person/legislator data
+#' @param person_ci_alpha The transparency level of the dot plot and confidence bars for the person ideal points
+#' @param group_color If \code{TRUE}, give each group/bloc a different color
+#' @param ... Other options passed on to plotting function, currently ignored
+#' @import ggplot2
+#' @import lazyeval
+#' @importFrom rlang parse_quosure as_quosure
+#' @export
+#' @examples 
+#' 
+#' # To demonstrate, we load the 114th Senate data and fit a time-varying model
+#' 
+#' data('senate114_fit')
+#' 
+#' \dontrun{
+#' senate_data <- id_make(senate114,outcome = 'cast_code',
+#' person_id = 'bioname',
+#' item_id = 'rollnumber',
+#' group_id= 'party_code',
+#' time_id='date',
+#' miss_val='Absent')
+#' 
+#'  senate114_time_fit <- id_estimate(senate_data,
+#'  model_type = 2,
+#'  use_vb = T,
+#'  fixtype='vb_partial',
+#'  vary_ideal_pts='random_walk',
+#'  restrict_ind_high = "WARREN, Elizabeth",
+#'  restrict_ind_low="BARRASSO, John A.",
+#'  seed=84520)
+#' # We plot the variances for all the Senators
+#' 
+#' id_plot_legis_var(senate114_fit,item_plot=5)
+#' }
+id_plot_legis_var <- function(object,return_data=FALSE,
+                              include=NULL,
+                          high_limit=.95,
+                          low_limit=.05,
+                          text_size_label=2,text_size_group=2.5,
+                          point_size=1,
+                          hjust_length=-0.7,
+                          person_labels=TRUE,
+                          group_labels=F,
+                          person_ci_alpha=0.1,group_color=TRUE,
+                          ...) {
+  
+  person_params <- .prepare_legis_data(object,
+                                       high_limit=high_limit,
+                                       low_limit=low_limit,
+                                       type='variance')
+  
+  if(!is.null(include)) {
+    person_params <- filter(person_params, person_id %in% include)
+  }
+  
+  # Default plot: group names plotted as points
+  
+  if(group_color==TRUE) {
+    outplot <- person_params %>% ggplot() +
+      geom_linerange(aes(x=reorder(person_id,median_pt),
+                         ymin=low_pt,ymax=high_pt,color=group_id),
+                     alpha=person_ci_alpha,
+                     show.legend = FALSE) +
+      geom_text(aes(x=reorder(person_id,median_pt),
+                    y=median_pt,label=reorder(group_id,median_pt),
+                    color=group_id),size=text_size_group,show.legend = FALSE) 
+  } else if(group_color==FALSE) {
+    outplot <- person_params %>% ggplot() +
+      geom_linerange(aes(x=reorder(person_id,median_pt),ymin=low_pt,ymax=high_pt),alpha=person_ci_alpha) +
+      geom_text(aes(x=reorder(person_id,median_pt),y=median_pt,
+                          label=reorder(group_id,median_pt)),size=text_size_group)
+    
+  }
+  
+  # determine if legislator names should be plotted
+  
+  if(person_labels==TRUE & group_color==TRUE) {
+    outplot <- outplot + geom_text_repel(aes(x=reorder(person_id,median_pt),y=median_pt,label=reorder(person_id,median_pt),color=group_id),
+                                   nudge_x=hjust_length,size=text_size_label,show.legend = FALSE,
+                                   segment.alpha=0)
+  } else if(person_labels==TRUE & group_color==FALSE) {
+    outplot <- outplot + geom_text_repel(aes(x=reorder(person_id,median_pt),y=median_pt,label=reorder(person_id,median_pt)),
+                                   nudge_x=hjust_length,size=text_size_label,
+                                   segment.alpha=0)
+  }
+  
+  
+  # Add a dirty trick to enable the legend to show what group labels instead of just the letter 'a'
+  
+  if(group_color==TRUE) {
+    
+    outplot <- outplot + geom_point(aes(x=reorder(person_id,median_pt),y=median_pt,color=group_id),size=0,stroke=0) +
+      guides(colour = guide_legend(title="",override.aes = list(size = 5)))
+  }
+  
+  # Add theme elements
+  
+  outplot <- outplot  + theme_minimal() + ylab("") + xlab("") +
+    theme(axis.text.y=element_blank(),panel.grid.major.y = element_blank()) + coord_flip() 
+  
+  
+  if(return_data==TRUE) {
+    
+    return_list <- list(outplot=outplot,plot_data=person_params)
+    return(return_list)
+    
+  } else (
+    return(outplot)
+  )
+  
+}
+
+#' Function to plot dynamic ideal point models
+#' 
+#' This function can be used on a fitted \code{idealstan} object to plot the relative positions and 
+#' uncertainties of legislator/persons and bills/items when the legislator/person ideal points
+#' are allowed to vary over time.
+#' 
+#' This plot shows the distribution of ideal points for the legislators/persons in the model,
+#' and also traces the path of these ideal points over time. It will plot them as a vertical
+#' line with associated high-density posterior interval (10\% to 90\%). In addition, if the column index for a 
+#' bill/item from the response matrix is passed to the \code{item_plot} option, then an item/bill midpoint will be overlain
+#' on the ideal point plot, showing the point at which legislators/persons are indifferent to voting/answering on the 
+#' bill/item. Note that because this is an ideal point model, it is not possible to tell from the midpoint itself
+#' which side will be voting which way. For that reason, the legislators/persons are colored by their votes/scores to
+#' make it clear.
+#' 
+#' @param object A fitted \code{idealstan} object
+#' @param return_data If true, the calculated legislator/bill data is returned along with the plot in a list
+#' @param include Specify a list of person/legislator IDs to include in the plot (all others excluded)
+#' @param item_plot The value of the item/bill for which to plot its midpoint (character value)
+#' @param item_plot_type Whether to show the \code{'non-inflated'} item/bill midpoints, 
+#' the \code{'inflated'} item/bill midpoints, or produce plots for \code{'both'} kinds of models. 
+#' Defaults to \code{'non-inflated'} and will only display an item/bill midpoint if one has been 
+#' specified in \code{item_plot}.
+#' @param text_size_label ggplot2 text size for legislator labels
+#' @param text_size_group ggplot2 text size for group text used for points
+#' @param high_limit A number between 0 and 1 showing the upper limit to compute the 
+#' posterior uncertainty interval (defaults to 0.95).
+#' @param low_limit A number between 0 and 1 showing the lower limit to compute the 
+#' posterior uncertainty interval (defaults to 0.05).
+#' @param line_size Sets the size of the line of the time-varying ideal points.
+#' @param group_color If \code{TRUE}, use the groups instead of individuals to plot colours
+#' @param highlight A character referring to one of the persons in \code{person_labels} that the plot can highlight relative to other persons
+#' @param person_ci_alpha The transparency level of ribbon confidence interval around the time-varying ideal points
+#' @param person_line_alpha The transparency level of the time-varying ideal point line
+#' @param plot_text If \code{TRUE}, will plot \code{person_labels} over the lines.
+#' @param use_ci Whether or not high-posterior density intervals (credible intervals) should be
+#' plotted over the estimates (turn off if the plot is too busy)
+#' @param show_true Whether to show the true values of the legislators (if model has been simulated)
+#' @param hpd_limit The greatest absolute difference in high-posterior density interval shown for any point. Useful for excluding imprecisely estimated persons/legislators from the plot. Leave NULL if you don't want to exclude any.
+#' @param sample_persons If you don't want to use the full number of persons/legislators from the model, enter a proportion (between 0 and 1) to select
+#'  only a fraction of the persons/legislators.
+#' @param plot_sim Whether to plot the true values of parameters if a simulation was used to generate data 
+#' (see \code{\link{id_sim_gen}})
+#' @param ... Other options passed on to plotting function, currently ignored
+#' @importFrom gghighlight gghighlight
+#' @export
+#' @examples 
+#' 
+#' \dontrun{
+#' 
+#' # First create data and run a model
+#' 
+#' to_idealstan <-   id_make(score_data = senate114,
+#' outcome = 'cast_code',
+#' person_id = 'bioname',
+#' item_id = 'rollnumber',
+#' group_id= 'party_code',
+#' time_id='date',
+#' high_val='Yes',
+#' low_val='No',
+#' miss_val='Absent')
+#' 
+#' sen_est <- id_estimate(senate_data,
+#' model_type = 2,
+#' use_vb = TRUE,
+#' vary_ideal_pts='random_walk',
+#' fixtype='vb_partial',
+#' restrict_ind_high = "BARRASSO, John A.",
+#' restrict_ind_low = "WARREN, Elizabeth")
+#' 
+#' # After running the model, we can plot 
+#' # the results of the person/legislator ideal points
+#' 
+#' id_plot_legis_dyn(sen_est)
+#' }
+id_plot_legis_dyn <- function(object,return_data=FALSE,
+                              include=NULL,item_plot=NULL,
+                              text_size_label=2,text_size_group=2.5,
+                              high_limit=0.95,
+                              low_limit=0.05,
+                              line_size=1,
+                              highlight=NULL,
+                              plot_text=TRUE,
+                              use_ci=TRUE,
+                              person_line_alpha=0.3,
+                              person_ci_alpha=0.8,
+                              item_plot_type='non-inflated',show_true=FALSE,group_color=TRUE,
+                              hpd_limit=10,
+                              sample_persons=NULL,
+                              plot_sim=FALSE,...) {
+  
+  # prepare data
+  
+  person_labels <- quo(person_id)
+  group_labels <- quo(group_id)
+  person_params <- .prepare_legis_data(object,
+                                       high_limit=high_limit,
+                                       low_limit=low_limit) 
+  
+  # create item plot data
+  
+  if(!is.null(item_plot)) {
+    
+    # loop over the item IDs and calculate midpoints and HPDs
+    if(object@model_type %in% c(1,2) || (object@model_type>6 && object@model_type<13)) {
+      # binary models and continuous
+      item_points <- lapply(item_plot,.item_plot_binary,object=object,
+                            low_limit=low_limit,
+                            high_limit=high_limit) %>% bind_rows()
+    } else if(object@model_type %in% c(3,4)) {
+      # rating scale
+      item_points <- lapply(item_plot,.item_plot_ord_rs,object=object,
+                            low_limit=low_limit,
+                            high_limit=high_limit) %>% bind_rows()
+    } else if(object@model_type %in% c(5,6)) {
+      # grm
+      item_points <- lapply(item_plot,.item_plot_ord_grm,object=object,
+                            low_limit=low_limit,
+                            high_limit=high_limit) %>% bind_rows()
+    } else if(object@model_type %in% c(13,14)) {
+      # latent space
+      item_points <- lapply(item_plot,.item_plot_ls,object=object,
+                            low_limit=low_limit,
+                            high_limit=high_limit) %>% bind_rows()
+    }
+    
+    # collect outcomes
+    
+    item_points <- left_join(item_points,object@score_data@score_matrix,by=c('item_name'='item_id')) %>% 
+      gather(key='ci_type',value='ci_value',item_high,item_low) %>% 
+      mutate(ci_type=factor(ci_type,levels=c('item_low',
+                                             'item_high'),
+                            labels=c(paste0(low_limit*100,'%'),
+                                     paste0(high_limit*100,'%'))))
+    person_params <- left_join(person_params,item_points,by=c('person_id'='person_id',
+                                                              'group_id'='group_id'))
+    person_params$time_id <- person_params$time_id.x
+    person_params$time_id.x <- NULL
+    person_params$time_id.y <- NULL
+    person_params <- spread(person_params,key=ci_type,value=ci_value)
+    # Choose a plot based on the user's options
+    
+    if(item_plot_type!='both') {
+      
+      item_plot_type <- switch(item_plot_type,
+                               `non-inflated`="Non-Inflated\nDiscrimination",
+                               inflated="Inflated\nDiscrimination")
+      
+      person_params <- filter(person_params,item_type==item_plot_type)
+    } 
+    
+  }
+  
+  if(!is.null(include)) {
+    person_params <- filter(person_params, person_id %in% include)
+  }
+  
+  if(object@use_groups) {
+    base_id <- ~group_id
+  } else {
+    base_id <- ~person_id
+  }
+  
+  # allow the option of plotting "true" ideal points instead of estimated ones as lines
+  if(!is.null(object@score_data@simul_data) && plot_sim==T) {
+    
+    true_pts <- object@score_data@simul_data$true_person
+    colnames(true_pts) <- c(as.character(1:ncol(true_pts)))
+    true_pts <- as_data_frame(true_pts) %>% mutate(person_id=1:n()) %>% 
+      gather(key = time_id,value=true_pt,-person_id) %>% 
+      # need to flip for identification
+      mutate(time_id=as.numeric(time_id),
+             person_id=factor(person_id),
+             person_id=fct_relevel(person_id,object@score_data@restrict_ind_low,
+                                   object@score_data@restrict_ind_high,
+                                   
+                                   after=length(levels(person_id))))
+    person_params <- left_join(person_params,true_pts,by=c("person_id","time_id"))
+    
+  }
+  
+  
+  # plot CIs first for background
+  
+  if(use_ci==T) {
+    outplot <- person_params %>% ggplot(aes_(x=~time_id)) + geom_ribbon(aes_(ymin=~low_pt,
+                                          ymax=~high_pt,
+                                          group=base_id),
+                                     fill='grey80',
+                                     colour=NA,
+                                     alpha=person_ci_alpha)
+  } else {
+    outplot <- person_params %>% ggplot(aes_(x=~time_id))
+  } 
+  
+  # add time-varying ideal points\
+  if(!is.null(object@score_data@simul_data) && plot_sim==T) {
+    
+    outplot <- outplot + 
+      geom_line(aes_(y=~true_pt,colour=base_id),
+                alpha=person_ci_alpha,
+                size=line_size)
+    
+  } else {
+    if(group_color) {
+      
+      outplot <- outplot + 
+        geom_line(aes_(y=~median_pt,group=base_id,
+                       colour=~group_id),
+                  alpha=person_ci_alpha,
+                  size=line_size)
+    } else {
+      
+      outplot <- outplot + 
+        geom_line(aes_(y=~median_pt),
+                  alpha=person_ci_alpha,
+                  size=line_size)
+    }
+  }
+  
+  # add item plot if it exists
+  
+  if(!is.null(item_plot)) {
+    
+    # Add in bill vertical line (50% equiprobability voting line)
+    outplot <- outplot + geom_hline(aes(yintercept=item_median),linetype=2,alpha=0.6) +
+      geom_ribbon(aes(ymin=`5%`,
+                      ymax=`95%`),alpha=0.2,fill='pink') +
+      guides(colour=guide_legend('')) +
+      theme(legend.position = 'bottom')
+    
+    #Whether or not to add a facet_wrap
+    
+    if(item_plot_type=='both' & length(item_plot)>1) {
+      outplot <- outplot + facet_wrap(~item_name + item_type,dir='v')
+    } else if(item_plot_type=='both') {
+      outplot <- outplot + facet_wrap(~item_type,dir='v') 
+    } 
+    
+    
+  }
+
+  
+  # plot random labels
+  
+  if(plot_text==TRUE) {
+    
+    # need new data that scatters names around the plot
+    
+    sampled_data <- group_by(person_params,!!as_quosure(base_id)) %>% sample_n(1)
+    
+    if(!is.null(highlight)) {
+      
+      sampled_data <- filter(sampled_data,!(!!as_quosure(base_id) %in% highlight))
+    }
+    
+    outplot <- outplot + 
+      geom_text_repel(aes_(x=~time_id,y=~median_pt,label=base_id),data=sampled_data,
+                size=text_size_label,segment.colour='grey50',segment.alpha = 0.5)
+    
+  }
+  
+  # select some special lines to highlight
+  
+  if(!is.null(highlight)) {
+    # give some of the persons a special color and make bigger
+    
+    outplot <- outplot + 
+      gghighlight(!!as_quosure(base_id) %in% highlight,use_group_by = F)
+  }
+  
+  # only use a legend if groups are used or highlights
+  
+  if(group_color==F || (group_color==F && is.null(highlight))) {
+    output <- outplot + 
+      guides(color=FALSE,
+             fill=FALSE)
+  }
+  
+  outplot <- outplot +
+    theme_minimal() + ylab("Ideal Point Scale") + xlab("") +
+    theme(panel.grid= element_blank())
+  
+  return(outplot)
   
 }
 
@@ -418,9 +728,9 @@ id_plot_compare <- function(model1=NULL,model2=NULL,scale_flip=FALSE,return_data
     combined_data <- mutate(combined_data, median_pt=scale(median_pt)[,1])
   }
   
-  outplot <- combined_data %>% ggplot(aes(y=reorder(person.names,median_pt),x=median_pt,color=this_model)) + 
-    geom_point() + geom_text(aes(label=reorder(person.names,median_pt)),size=text_size_label,
-                             check_overlap=TRUE,hjust=hjust) +
+  outplot <- combined_data %>% ggplot(aes(y=reorder(person_id,median_pt),x=median_pt,color=this_model)) + 
+    geom_point() + geom_text_repel(aes(label=reorder(person_id,median_pt)),size=text_size_label,
+                             hjust=hjust) +
     geom_errorbarh(aes(xmin=low_pt,xmax=high_pt)) + theme_minimal() + ylab("") + xlab("") +
     theme(axis.text.y=element_blank(),panel.grid.major.y = element_blank())
   
@@ -562,4 +872,45 @@ id_plot_rhats <- function(obj) {
   data_frame(Rhats=get_out[,'Rhat']) %>% 
     ggplot(aes(x=Rhats)) + theme_minimal() + geom_histogram() +
     ylab('Parameters') +theme(panel.grid=element_blank())
+}
+
+#' Display Coefficient Plot of Hierarchical Covariates
+#' 
+#' This function will pull the estimates of the hierarchical covariates (whether at the person or 
+#' item-discrimination level) and then plot them on a vertical coefficient plot. Names of 
+#' the parameters are taken from the levels of the factor if a categorical variable and the
+#' column names otherwise. 
+#' 
+#' @param object A fitted \code{idealstan} object
+#' @param cov_type Either 'person_cov' for person-level hierarchical parameters,
+#' 'discrim_reg_cov' for bill/item discrimination parameters from regular (non-inflated) model, and 
+#' 'discrim_infl_cov' for bill/item discrimination parameters from inflated model.
+#' @param filter_cov A character vector of coefficients from covariate plots to exclude from
+#' plotting (should be the names of coefficients as they appear in the plots)
+#' @param ... Any additional parameters passed on to \code{\link[bayesplot]{mcmc_intervals}}
+#' @return A \code{ggplot2} plot that can be further customized with \code{ggplot2} functions if need be.
+#' @export
+id_plot_cov <- function(object,
+                        cov_type='person_cov',
+                        filter_cov=NULL,
+                        ...) {
+  
+  param_name <- switch(cov_type,person_cov='legis_x',
+                       discrim_reg_cov='sigma_reg_x',
+                       discrim_infl_cov='sigma_abs_x')
+  
+  to_plot <- as.array(object@stan_samples,
+                   pars=param_name)
+  
+  # reset names of parameters
+  new_names <- switch(cov_type,person_cov=attributes(object@score_data@person_cov)$dimnames$colnames,
+                      discrim_reg=attributes(object@score_data@item_cov)$dimnames$colnames,
+                      discrim_abs=attributes(object@score_data@item_cov_miss)$dimnames$colnames)
+
+  attributes(to_plot)$dimnames$parameters <- new_names
+  if(!is.null(filter_cov)) {
+    to_plot <- to_plot[,,new_names %in% filter_cov]
+  }
+
+  mcmc_intervals(to_plot,...) + xlab('Ideal Point Score')
 }

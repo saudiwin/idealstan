@@ -5,10 +5,24 @@
 \alias{summary,idealstan-method}
 \title{Posterior Summaries for fitted \code{idealstan} object}
 \usage{
-\S4method{summary}{idealstan}(object)
+\S4method{summary}{idealstan}(object, pars = "ideal_pts",
+  high_limit = 0.95, low_limit = 0.05, aggregate = TRUE)
 }
 \arguments{
 \item{object}{An \code{idealstan} object fitted by \code{\link{id_estimate}}}
+
+\item{pars}{Either \code{'ideal_pts'} for person ideal points, 
+\code{'items'} for items/bills difficulty and discrimination parameters,
+and \code{'all'} for all parameters in the model, including incidental parameters.}
+
+\item{high_limit}{A number between 0 and 1 reflecting the upper limit of the 
+uncertainty interval (defaults to 0.95).}
+
+\item{low_limit}{A number between 0 and 1 reflecting the lower limit of the 
+uncertainty interval (defaults to 0.05).}
+
+\item{aggregate}{Whether to return summaries of the posterior values or the 
+full posterior samples. Defaults to \code{TRUE}.}
 }
 \value{
 A \code{\link[dplyr]{tibble}} data frame with parameters as rows and descriptive statistics as columns

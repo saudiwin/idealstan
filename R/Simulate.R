@@ -1,34 +1,51 @@
 #' Simulate IRT ideal point data
 #' 
-#' A function designed to simulate absence-inflated data with either binary or ordinal outcomes.
+#' A function designed to simulate IRT ideal point data.
 #' 
 #' This function produces simulated data that matches (as closely as possible) the models
-#' used in the underlying Stan code. Currently the simulation can produce absence-inflated and
-#' non-absence-inflated binary and ordinal ideal point models.
+#' used in the underlying Stan code. Currently the simulation can produce inflated and non-inflated
+#' models with binary, ordinal (GRM and rating-scale), Poisson, Normal and Log-Normal responses.
 #' 
-#' @param num_person The number of persons/personlators
+#' @param num_person The number of persons/persons
 #' @param num_bills The number of items/bills
-#' @param absence_discrim_sd The SD of the discrimination parameters for the absence model
-#' @param absence_diff_mean The mean intercept for the absence model; increasing it will lower the total number of
-#' absences
+#' @param model_type One of \code{'binary'}, \code{'ordinal_rating'}, \code{'ordinal_grm'}, \code{'poisson'}
+#' \code{'normal'}, or \code{'lognormal'}
+#' @param latent_space Whether to use the latent space formulation of the ideal point model 
+#' \code{FALSE} by default. NOTE: currently, the package only has estimation for a 
+#' binary response with the latent space formulation.
+#' @param absence_discrim_sd The SD of the discrimination parameters for the inflated model
+#' @param absence_diff_mean The mean intercept for the inflated model; increasing it will lower the total number of
+#' missing data
 #' @param reg_discrim_sd The SD of the discrimination parameters for the non-inflated model
 #' @param diff_sd The SD of the difficulty parameters (bill/item intercepts)
-#' @param ideal_pts_sd The SD for the person/personlator ideal points
+#' @param time_points The number of time points for time-varying legislator/person parameters
+#' @param time_process The process used to generate the ideal points: currently either \code{'random'} 
+#' for a random walk or \code{'AR'} for an AR1 process
+#' @param time_sd The standard deviation of the change in ideal points over time (should be low relative to 
+#' \code{ideal_pts_sd})
+#' @param ideal_pts_sd The SD for the person/person ideal points
 #' @param prior_type The statistical distribution that generates the data. Currently only 
 #' 'gaussian' is supported.
-#' @param ordinal Whether the data should have binary (\code{FALSE}) or ordinal (\code{TRUE}) responses
-#' @param ordinal_outcomes If \code{ordinal} is \code{TRUE}, an integer giving the total number of categories
-#' @param graded_response Not currently implemented
-#' @param absence If \code{TRUE}, an absence-inflated dataset is produced.
+#' @param ordinal_outcomes If \code{model} is \code{'ordinal'}, an integer giving the total number of categories
+#' @param inflate If \code{TRUE}, an missing-data-inflated dataset is produced.
+#' @param sigma_sd If a normal or log-normal distribution is being fitted, this parameter gives the standard 
+#' deviation of the outcome (i.e. the square root of the variance).
 #' @return The results is a \code{idealdata} object that can be used in the 
 #' \code{\link{id_estimate}} function to run a model. It can also be used in the simulation
 #' plotting functions.
 #' @seealso \code{\link{id_plot_sims}} for plotting fitted models versus true values.
 #' @export
-id_sim_gen <- function(num_person=20,num_bills=50,absence_discrim_sd=2,absence_diff_mean=0.5,
+id_sim_gen <- function(num_person=20,num_bills=50,
+                       model_type='binary',
+                       latent_space=FALSE,
+                       absence_discrim_sd=2,absence_diff_mean=0.5,
                              reg_discrim_sd=2,diff_sd=.25,
-                             ideal_pts_sd=1,prior_type='gaussian',ordinal=TRUE,ordinal_outcomes=3,
-                             graded_response=FALSE,absence=TRUE) {
+                            time_points=1,
+                            time_process='random',
+                          time_sd=.1,
+                             ideal_pts_sd=1,prior_type='gaussian',ordinal_outcomes=3,
+                        inflate=FALSE,
+                       sigma_sd=1) {
   
   # Allow for different type of distributions for ideal points
 
@@ -54,10 +71,6 @@ id_sim_gen <- function(num_person=20,num_bills=50,absence_discrim_sd=2,absence_d
     }
   }
   
-  #Fixed average participation value for each person/legislator
-  
-  avg_particip <- rnorm(n=1,mean=0,sd=1)
-  
   # First simulate ideal points for person/legislators/bills
   # Bill difficulty parameters are fixed because they are not entirely interesting (they represent intercepts)
   
@@ -66,275 +79,133 @@ id_sim_gen <- function(num_person=20,num_bills=50,absence_discrim_sd=2,absence_d
   # need to make some of them negative to reflect the switching nature of policies
   #absence_discrim <- prior_func(params=list(N=num_bills,mean=1,sd=absence_discrim_sd)) * if_else(runif(num_bills-1)>0.5,1,-1)
   absence_discrim <- prior_func(params=list(N=num_bills,mean=0,sd=absence_discrim_sd))
-  # personlator ideal points common to both types of models (absence and regular)
-  
-  ideal_pts <- prior_func(params=list(N=num_person,mean=0,sd=ideal_pts_sd))
-  
-  # First generate prob of absences
-  # Use matrix multiplication because it's faster (unlike the stan method)
-  
-  #pr_absence <- plogis(t(t(ideal_pts %*% t(absence_discrim))-absence_diff + prior_func(params=list(N=num_bills,mean=0,sd=noise))) - 0.1*avg_particip)
-  person_points <- rep(1:num_person,times=num_bills)
-  bill_points <- rep(1:num_bills,each=num_person)
-  
-  pr_absence <- sapply(1:length(person_points), function(n) {
-    ideal_pts[person_points[n]]*absence_discrim[bill_points[n]] - absence_diff[bill_points[n]]}) %>% plogis
-  
-  reg_diff <- prior_func(params=list(N=num_bills,mean=0,sd=diff_sd))
-  #reg_discrim <- prior_func(params=list(N=num_bills,mean=1,sd=reg_discrim_sd)) * if_else(runif(num_bills-1)>0.5,1,-1)
-  reg_discrim <- prior_func(params=list(N=num_bills,mean=0,sd=reg_discrim_sd))
-  
-  pr_vote <- sapply(1:length(person_points), function(n) {
-    ideal_pts[person_points[n]]*reg_discrim[bill_points[n]] - reg_diff[bill_points[n]]
-  })
-  
-    #plogis(t(t(ideal_pts %*% t(absence_discrim))) -absence_diff - 0.1*avg_particip)
-  # Estimate prob of people voting on a bill (yes/no/abstain), then deflate that by the probability
-  # of absence
-  
-  if(ordinal==TRUE & graded_response==FALSE & absence==TRUE) {
-    
-    # Need to simulate a separate prob for each outcome category
-    # I only simulate 3 outcome categories by default as that is what you find in personlatures
-    # Standard model for ordinal outcomes is the rating-scale model, also called a "divide by total"
-    # ordinal logit/categorical logit
-    
-    # Now create cutpoints that are equally spaced in the ideal point space
-    cutpoints <- quantile(pr_vote,probs=seq(0,1,length.out = ordinal_outcomes+1))
-    cutpoints <- cutpoints[2:(length(cutpoints)-1)]
-  
-    #Generate outcomes by personlator
-    
-    cuts <- sapply(cutpoints,function(y) {
-      pr_vote - y
-    },simplify='array')
+  # person ideal points common to both types of models (absence and regular)
 
-
-    # Now we pick votes as a function of the number of categories
-    # This code should work for any number of categories
-    votes <- sapply(1:nrow(cuts), function(i) {
-      this_cut <- cuts[i,]
+  if(time_points==1) {
+    ideal_pts <- as.matrix(prior_func(params=list(N=num_person,mean=0,sd=ideal_pts_sd)))
+    drift <- 0
+    ar_adj <- 0
+  } else if(time_points>1) {
+    # if more than 1 time point, generate via an AR or random walk process
+    ideal_t1 <- prior_func(params=list(N=num_person,mean=0,sd=ideal_pts_sd))
+    if(time_process=='AR') {
+      # random AR parameters
+      ar_adj <- runif(n = num_person,min = -0.5,max=0.5)
+    } else if(time_process=='random') {
+      ar_adj <- rep(1,num_person)
+    }
+      # drift parameters
+      drift <- prior_func(params=list(N=num_person,mean=0,sd=ideal_pts_sd))
       
-      pr_bottom <- 1 - plogis(this_cut[1])
-      
-      mid_prs <- sapply(1:(length(this_cut)-1), function(c) {
-        plogis(this_cut[c]) - plogis(this_cut[c+1])
-      })
-      
-      pr_top <- plogis(this_cut[length(this_cut)])
-      
-      return(sample(1:(length(this_cut)+1),size=1,prob=c(pr_bottom,mid_prs,pr_top)))
-    })
-    
-  
-    # now determine if the outcome. personlators only vote if they show up
-    # Absences are coded as category 4
-    
-    combined <- if_else(pr_absence<runif(length(person_points)),votes,as.integer(ordinal_outcomes)+1L)
-    
-    # Create a vote matrix
-    
-    combined <- matrix(combined,ncol=num_bills,nrow=num_person,byrow = F)
-    
-    #Got the vote matrix, run ideal_data
-    
-    colnames(combined) <- paste0('Vote_',1:ncol(combined))
-    row.names(combined) <- paste0('person_',1:nrow(combined))
-    
-    out_data <- id_make(score_data=combined,person_data=data_frame(person.names=paste0('person_',1:nrow(combined)),
-                                                                        group='L',
-                                                                        true_person=as.numeric(ideal_pts)),
-                               miss_val = ordinal_outcomes+1,
-                               high_val = ordinal_outcomes,
-                               low_val = 1,
-                               middle_val = 2:(ordinal_outcomes-1),
-                              inflate=absence,
-                               simul_data=list(num_person=num_person,
-                                              num_bills=num_bills,
-                                              absence_discrim_sd=absence_discrim_sd,
-                                              absence_diff_mean=absence_diff_mean,
-                                              reg_discrim_sd=reg_discrim_sd,
-                                              ideal_pts_sd=ideal_pts_sd,
-                                              prior_func=prior_func,
-                                              ordinal=ordinal,
-                                              ordinal_outcomes=ordinal_outcomes,
-                                              graded_response=graded_response,
-                                              true_person=ideal_pts,
-                                              true_reg_discrim=reg_discrim,
-                                              true_abs_discrim=absence_discrim),
-                               simulation=TRUE)
-    
-  } else if(ordinal==TRUE & graded_response==TRUE & absence==TRUE) {
-    stop('Graded response model not currently implemented in idealstan.')
-    reg_discrim <- prior_func(params=list(N=num_bills,mean=0,sd=reg_discrim_sd)) %>% as.matrix
-    
-    all_outcomes <- lapply((1-ordinal_outcomes),function(x) {
-      
-      
-      reg_diff <- prior_func(params=list(N=num_bills,mean=0,sd=1))
-      
-      pr_vote <-t(t(ideal_pts %*% t(reg_discrim))-reg_diff)
-      
-    })
-    
-  } else if(ordinal==FALSE & graded_response==FALSE & absence==FALSE) {
-    
-    #standard IRT 2-PL model
-
-    votes <- as.numeric(plogis(pr_vote)>runif(length(person_points)))
-    
-    
-    # now determine if the outcome. personlators only vote if they show up
-    # Absences are coded as category 4
-    
-    combined <- votes
-    
-    # Create a vote matrix
-    
-    combined <- matrix(combined,ncol=num_bills,nrow=num_person,byrow = F)
-    
-    #Got the vote matrix, run ideal_data
-    
-    colnames(combined) <- paste0('Vote_',1:ncol(combined))
-    row.names(combined) <- paste0('person_',1:nrow(combined))
-    
-    out_data <- id_make(score_data=combined,person_data=data_frame(person.names=paste0('person_',1:nrow(combined)),
-                                                                        group='L',
-                                                                        true_person=as.numeric(ideal_pts)),
-                               miss_val = NA,
-                               high_val = 1,
-                               low_val = 0,
-                               middle_val = NULL,
-                        inflate=absence,
-                               simul_data=list(num_person=num_person,
-                                               num_bills=num_bills,
-                                               absence_discrim_sd=absence_discrim_sd,
-                                               absence_diff_mean=absence_diff_mean,
-                                               reg_discrim_sd=reg_discrim_sd,
-                                               ideal_pts_sd=ideal_pts_sd,
-                                               prior_func=prior_func,
-                                               ordinal=ordinal,
-                                               ordinal_outcomes=ordinal_outcomes,
-                                               graded_response=graded_response,
-                                               true_person=ideal_pts,
-                                               true_reg_discrim=reg_discrim,
-                                               true_abs_discrim=absence_discrim),
-                               simulation=TRUE)
-  } else if(ordinal==TRUE & graded_response==FALSE & absence==FALSE) {
-    
-    cutpoints <- quantile(pr_vote,probs=seq(0,1,length.out = ordinal_outcomes+1))
-    cutpoints <- cutpoints[2:(length(cutpoints)-1)]
-    
-    #Generate outcomes by personlator
-    
-    cuts <- sapply(cutpoints,function(y) {
-      pr_vote - y
-    },simplify='array')
-    
-    # Now we pick votes as a function of the number of categories
-    # This code should work for any number of categories
-    votes <- sapply(1:nrow(cuts), function(i) {
-      this_cut <- cuts[i,]
-      
-      pr_bottom <- 1 - plogis(this_cut[1])
-      
-      mid_prs <- sapply(1:(length(this_cut)-1), function(c) {
-        plogis(this_cut[c]) - plogis(this_cut[c+1])
-      })
-      
-      pr_top <- plogis(this_cut[length(this_cut)])
-      
-      return(sample(1:(length(this_cut)+1),size=1,prob=c(pr_bottom,mid_prs,pr_top)))
-    })
-    
-    
-    # now determine if the outcome. personlators only vote if they show up
-    # Absences are coded as category 4
-    
-    combined <- votes
-    
-    # Create a vote matrix
-    
-    combined <- matrix(combined,ncol=num_bills,nrow=num_person,byrow = F)
-    
-    #Got the vote matrix, run ideal_data
-    
-    colnames(combined) <- paste0('Vote_',1:ncol(combined))
-    row.names(combined) <- paste0('person_',1:nrow(combined))
-    
-    out_data <- id_make(score_data=combined,person_data=data_frame(person.names=paste0('person_',1:nrow(combined)),
-                                                                        group='L',
-                                                                        true_person=as.numeric(ideal_pts)),
-                               miss_val = ordinal_outcomes+1,
-                               high_val = ordinal_outcomes,
-                               low_val = 1,
-                               inflate=absence,
-                               middle_val = 2:(ordinal_outcomes-1),
-                               simul_data=list(num_person=num_person,
-                                               num_bills=num_bills,
-                                               absence_discrim_sd=absence_discrim_sd,
-                                               absence_diff_mean=absence_diff_mean,
-                                               reg_discrim_sd=reg_discrim_sd,
-                                               ideal_pts_sd=ideal_pts_sd,
-                                               prior_func=prior_func,
-                                               ordinal=ordinal,
-                                               ordinal_outcomes=ordinal_outcomes,
-                                               graded_response=graded_response,
-                                               true_person=ideal_pts,
-                                               true_reg_discrim=reg_discrim,
-                                               true_abs_discrim=absence_discrim),
-                               simulation=TRUE)
-  } else if(ordinal==F && graded_response==F && absence==T) {
-    #inflated IRT 2-PL model
-    
-    votes <- as.numeric(plogis(pr_vote)>runif(length(person_points)))
-    
-    
-    # now determine if the outcome. personlators only vote if they show up
-    # Absences are coded as category 3 for binary data
-    
-    combined <- if_else(pr_absence<runif(length(person_points)),votes,2)
-    
-    # Create a vote matrix
-    
-    combined <- matrix(combined,ncol=num_bills,nrow=num_person,byrow = F)
-    
-    #Got the vote matrix, run ideal_data
-    
-    colnames(combined) <- paste0('Vote_',1:ncol(combined))
-    row.names(combined) <- paste0('person_',1:nrow(combined))
-    
-    out_data <- id_make(score_data=combined,person_data=data_frame(person.names=paste0('person_',1:nrow(combined)),
-                                                                   group='L',
-                                                                   true_person=as.numeric(ideal_pts)),
-                        miss_val = 2,
-                        high_val = 1,
-                        low_val = 0,
-                        middle_val = NULL,
-                        inflate=absence,
-                        simul_data=list(num_person=num_person,
-                                        num_bills=num_bills,
-                                        absence_discrim_sd=absence_discrim_sd,
-                                        absence_diff_mean=absence_diff_mean,
-                                        reg_discrim_sd=reg_discrim_sd,
-                                        ideal_pts_sd=ideal_pts_sd,
-                                        prior_func=prior_func,
-                                        ordinal=ordinal,
-                                        ordinal_outcomes=ordinal_outcomes,
-                                        graded_response=graded_response,
-                                        true_person=ideal_pts,
-                                        true_reg_discrim=reg_discrim,
-                                        true_abs_discrim=absence_discrim),
-                        simulation=TRUE)
+      ideal_pts <- lapply(1:num_person, function(i) {
+        this_person <- .gen_ts_data(t=time_points,
+                                    adj_in=ar_adj[i],
+                                    alpha_int=drift[i],
+                                    sigma=time_sd,
+                                    init_sides=ideal_t1[i])
+        return(this_person)
+      }) %>% bind_cols %>% as.matrix
+      ideal_pts <- t(ideal_pts)
+  } else {
+    stop('Incorrect time process specified.')
   }
   
-  return(out_data)
+  # First generate prob of absences
+
+  person_points <- rep(1:num_person,times=num_bills)
+  bill_points <- rep(1:num_bills,each=num_person)
+
+  # generate time points
   
+  if((num_bills %% time_points)!=0) stop('Total number of time points must be a multiple of the number of bills/items.')
+  time_points <- rep(1:time_points,each=num_bills/time_points)
+  time_points <- time_points[bill_points]
+  
+  if(latent_space) {
+    # use latent-space formulation for likelihood
+
+    pr_absence <- sapply(1:length(person_points),function(n) {
+      -sqrt((ideal_pts[person_points[n],time_points[n]] - absence_diff[bill_points[n]])^2)
+    }) %>% plogis()
+  } else {
+    # use IRT formulation for likelihood
+    pr_absence <- sapply(1:length(person_points),function(n) {
+      ideal_pts[person_points[n],time_points[n]]*absence_discrim[bill_points[n]] - absence_diff[bill_points[n]]
+    }) %>% plogis()
+    
+  }
+
+  reg_diff <- prior_func(params=list(N=num_bills,mean=0,sd=diff_sd))
+  reg_discrim <- prior_func(params=list(N=num_bills,mean=0,sd=reg_discrim_sd))
+  
+  # this is the same for all DGPs
+  if(latent_space) {
+    if(inflate) {
+      pr_vote <- sapply(1:length(person_points),function(n) {
+        -sqrt((ideal_pts[person_points[n],time_points[n]] - reg_diff[bill_points[n]])^2)
+      }) %>% plogis()
+    } else {
+      # latent space non-inflated formulation is different
+      reg_discrim <- prior_func(params=list(N=num_person,mean=0,sd=ideal_pts_sd))
+      pr_vote <- sapply(1:length(person_points),function(n) {
+        reg_discrim[person_points[n]] + absence_discrim[bill_points[n]] -
+          sqrt((ideal_pts[person_points[n],time_points[n]] - reg_diff[bill_points[n]])^2)
+      }) %>% plogis()
+    }
+    
+  } else {
+    pr_vote <- sapply(1:length(person_points),function(n) {
+      ideal_pts[person_points[n],time_points[n]]*reg_discrim[bill_points[n]] - reg_diff[bill_points[n]]
+    }) %>% plogis()
+  }
+
+    
+  # now pick a DGP function and run it
+  
+  run_func <- switch(model_type,binary=.binary,
+                     `ordinal_ratingscale`=.ordinal_ratingscale,
+                     `ordinal_grm`=.ordinal_grm,
+                     `poisson`=.poisson,
+                     normal=.normal,
+                     lognormal=.lognormal)
+  
+  outobj <- run_func(pr_absence=pr_absence,
+           pr_vote=pr_vote,
+           N=length(person_points),
+           ordinal_outcomes=ordinal_outcomes,
+           inflate=inflate,
+           latent_space=latent_space,
+           time_points=time_points,
+           item_points=bill_points,
+           person_points=person_points,
+           sigma_sd=sigma_sd)
+  
+  outobj@simul_data <- list(num_person=num_person,
+                                       num_bills=num_bills,
+                                       absence_discrim_sd=absence_discrim_sd,
+                                       absence_diff_mean=absence_diff_mean,
+                                       reg_discrim_sd=reg_discrim_sd,
+                                       ideal_pts_sd=ideal_pts_sd,
+                                       prior_func=prior_func,
+                                       ordinal_outcomes=ordinal_outcomes,
+                                       true_person=ideal_pts,
+                                       true_reg_discrim=reg_discrim,
+                                       true_abs_discrim=absence_discrim,
+                            drift=drift,
+                            ar_adj=ar_adj)
+
+  outobj@person_data <- data_frame(person.names=paste0('person_',1:nrow(outobj@score_matrix)),
+                                               group='L')
+  
+  outobj@simulation <- TRUE
+  
+  return(outobj)
   
 }
 
-#' A function that loops over numbers of personlators/bills to provide a coherent over-view of 
+#' A function that loops over numbers of persons/bills to provide a coherent over-view of 
 #' idealstan performance for a given model type.
+#' @noRd
 .id_sim_test <- function(param_range=c(50,150),by=10,simul_type='absence',is.ordinal=TRUE,
                            restrict_type='constrain_twoway',restrict_params='person',
                            num_constrain=10,fixtype='pinned',...) {
@@ -443,9 +314,15 @@ id_sim_rmse <- function(obj,rep=1) {
   
   all_true <- obj@score_data@simul_data
   
-  true_person <- all_true$true_person[as.numeric(row.names(obj@score_data@score_matrix))]
-  true_sigma_reg <- all_true$true_reg_discrim[as.numeric(colnames(obj@score_data@score_matrix))]
-  true_sigma_abs <- all_true$true_abs_discrim[as.numeric(colnames(obj@score_data@score_matrix))]
+  if(length(unique(as.numeric(obj@score_data@score_matrix$time_id)))>1) {
+    true_person <- all_true$true_person[as.numeric(levels(obj@score_data@score_matrix$person_id)),]
+    person_est <- all_params$L_tp1
+  } else {
+    true_person <- all_true$true_person[as.numeric(levels(obj@score_data@score_matrix$person_id))]
+    person_est <- all_params$L_full
+  }
+  true_sigma_reg <- all_true$true_reg_discrim
+  true_sigma_abs <- all_true$true_abs_discrim
   
   over_params <- function(est_param,true_param) {
   
@@ -474,9 +351,9 @@ id_sim_rmse <- function(obj,rep=1) {
   }
   
   
-  out_data <- list(`Ideal Points`=over_params(all_params$L_full,true_person),
-                   `Absence Discrimination`=over_params(all_params$sigma_abs_full,true_sigma_abs),
-                   `Item Discrimination`=over_params(all_params$sigma_reg_full,true_sigma_reg))
+  out_data <- list(`Ideal Points`=over_params(person_est,true_person),
+                   `Absence Discrimination`=over_params(all_params$sigma_abs_free,true_sigma_abs),
+                   `Item Discrimination`=over_params(all_params$sigma_reg_free,true_sigma_reg))
   
   return(out_data)
 
@@ -494,21 +371,32 @@ id_sim_coverage <- function(obj,rep=1,quantiles=c(.95,.05)) {
   
   all_true <- obj@score_data@simul_data
   
-  true_person <- all_true$true_person[as.numeric(row.names(obj@score_data@score_matrix))]
-  true_sigma_reg <- all_true$true_reg_discrim[as.numeric(colnames(obj@score_data@score_matrix))]
-  true_sigma_abs <- all_true$true_abs_discrim[as.numeric(colnames(obj@score_data@score_matrix))]
+  if(length(unique(as.numeric(obj@score_data@score_matrix$time_id)))>1) {
+    true_person <- all_true$true_person[as.numeric(levels(obj@score_data@score_matrix$person_id)),]
+    person_est <- all_params$L_tp1
+  } else {
+    true_person <- all_true$true_person[as.numeric(levels(obj@score_data@score_matrix$person_id))]
+    person_est <- all_params$L_full
+  }
+  
+  true_sigma_reg <- all_true$true_reg_discrim
+  true_sigma_abs <- all_true$true_abs_discrim
   
   over_params <- function(est_param,true_param) {
 
     if(class(est_param)=='array') {
       param_length <- dim(est_param)[3]
+      time <- dim(est_param)[2]
+      high <- apply(est_param,c(2,3), quantile,quantiles[1])
+      low <- apply(est_param,c(2,3), quantile,quantiles[2])
       all_covs <- sapply(1:param_length, function(i) {
-        high <- quantile(est_param[,,i],quantiles[1])
-        low <- quantile(est_param[,,i],quantiles[2])
-        this_sd <- sd(est_param[,,i])
-        #this_param <- (true_param[i] < (true_param[i]+1.96*this_sd)) && (true_param[i] > (true_param[i]-1.96*this_sd))
-        this_param <- (true_param[i] < high) && (true_param[i] >low)
+        over_time <- sapply(1:time,function(t) {
+          this_sd <- apply(est_param,c(2,3), sd)
+          #this_param <- (true_param[i] < (true_param[i]+1.96*this_sd)) && (true_param[i] > (true_param[i]-1.96*this_sd))
+          this_param <- (true_param[i,t] < high[t,i]) && (true_param[i,t] >low[t,i])
+        })
         
+        return(over_time)
       })
     } else if(class(est_param)=='matrix') {
       param_length <- ncol(est_param)
@@ -535,10 +423,12 @@ id_sim_coverage <- function(obj,rep=1,quantiles=c(.95,.05)) {
   # person_points <- lapply(to_iters,over_params,
   #                         est_param=all_params$L_full,
   #                         true_param=true_person)
-  
-  out_data <- list(`Person Ideal Points`=over_params(all_params$L_full,true_person),
-                         `Absence Discriminations`=over_params(all_params$sigma_abs_full,true_sigma_abs),
-                         `Item Discrimations`=over_params(all_params$sigma_reg_full,true_sigma_reg))
+
+    out_data <- list(`Person Ideal Points`=over_params(person_est,true_person),
+                     `Absence Discriminations`=over_params(all_params$sigma_abs_free,true_sigma_abs),
+                     `Item Discrimations`=over_params(all_params$sigma_reg_free,true_sigma_reg))
+
+
   
   return(out_data)
 }
@@ -554,9 +444,16 @@ id_sim_resid <- function(obj,rep=1) {
   
   all_true <- obj@score_data@simul_data
   
-  true_person <- all_true$true_person[as.numeric(row.names(obj@score_data@score_matrix))]
-  true_sigma_reg <- all_true$true_reg_discrim[as.numeric(colnames(obj@score_data@score_matrix))]
-  true_sigma_abs <- all_true$true_abs_discrim[as.numeric(colnames(obj@score_data@score_matrix))]
+  if(length(unique(as.numeric(obj@score_data@score_matrix$time_id)))>1) {
+    true_person <- all_true$true_person[as.numeric(levels(obj@score_data@score_matrix$person_id)),]
+    person_est <- all_params$L_tp1
+  } else {
+    true_person <- all_true$true_person[as.numeric(levels(obj@score_data@score_matrix$person_id))]
+    person_est <- all_params$L_full
+  }
+  
+  true_sigma_reg <- all_true$true_reg_discrim
+  true_sigma_abs <- all_true$true_abs_discrim
   
   over_params <- function(est_param,true_param) {
 
@@ -587,9 +484,9 @@ id_sim_resid <- function(obj,rep=1) {
     return(out_data1)
   }
   
-  out_data <- list(`Ideal Points`=over_params(all_params$L_full,true_person),
-                   `Absence Discrimination`=over_params(all_params$sigma_abs_full,true_sigma_abs),
-                   `Item Discrimination`=over_params(all_params$sigma_reg_full,true_sigma_reg))
+  out_data <- list(`Ideal Points`=over_params(person_est,true_person),
+                   `Absence Discrimination`=over_params(all_params$sigma_abs_free,true_sigma_abs),
+                   `Item Discrimination`=over_params(all_params$sigma_reg_free,true_sigma_reg))
   
   return(out_data)
 

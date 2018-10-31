@@ -5,23 +5,22 @@
 \alias{id_plot_ppc,idealstan-method}
 \title{Plot Posterior Predictive Distribution for \code{idealstan} Objects}
 \usage{
-\S4method{id_plot_ppc}{idealstan}(object, ppc_pred = NULL, person = NULL,
-  item = NULL, ...)
+\S4method{id_plot_ppc}{idealstan}(object, ppc_pred = NULL,
+  group = NULL, item = NULL, ...)
 }
 \arguments{
 \item{object}{A fitted idealstan object}
 
 \item{ppc_pred}{The output of the \code{\link{id_post_pred}} function on a fitted idealstan object}
 
-\item{person}{The indices of the rows (persons/legislators) around which to compare the posterior prediction}
+\item{group}{A character vector of the person or group IDs 
+over which to subset the predictive distribution}
 
-\item{item}{The indices of the columns (items/bills) around which to compare the posterior prediction}
+\item{item}{A character vector of item IDs to subset the posterior distribution}
 
 \item{...}{Other arguments passed on to \code{\link[bayesplot]{ppc_bars}}}
 }
 \description{
-This function is a wrapper around \code{\link[bayesplot]{ppc_bars}} that plots the posterior predictive distribution
-derived from \code{\link{id_post_pred}} against the original data. You can also specify a legislator/person or
-bill/item by specifying the index of each in the original score/vote matrix. Only person or items can be specified,
-not both.
+This function is the actual method for generating posterior distributions 
+from a fitted \code{idealstan} model.
 }

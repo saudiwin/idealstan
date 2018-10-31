@@ -1,27 +1,32 @@
 ## Test environments
-* local OS X install, R 3.4.3
-* ubuntu 12.04 (on travis-ci), R 3.3.1
-* win-builder (devel and release)
+* ubuntu 14.04 (on travis-ci), R devel and release
+* mac os x sierra (on travis-ci), R release
+* win-builder, R release
 
 ## R CMD check results
 There were no ERRORs or WARNINGs. 
 
-There are 2 NOTEs:
+* checking CRAN incoming feasibility ... NOTE
+Maintainer: 'Robert Kubinec <rmk7@nyu.edu>'
 
-* * checking CRAN incoming feasibility ... NOTE
-Maintainer: 'Robert Kubinec <rmk7xy@virginia.edu>'
+New maintainer:
+  Robert Kubinec <rmk7@nyu.edu>
+Old maintainer(s):
+  Robert Kubinec <rmk7xy@virginia.edu>
 
-New submission
-
-Explanation: This package has not been previously submitted to CRAN. 
+Explanation: I am keeping my contact information up to date.
 
 * checking installed package size ... NOTE
-  installed size is 10.0Mb
+  installed size is  7.3Mb
   sub-directories of 1Mb or more:
-    data   3.5Mb
-    libs   5.4Mb
+    libs   5.9Mb
     
-Explanation: This package has a large installed library because it uses the Stan MCMC engine as a backend, and it comes with pre-compiled C++ modules that are loaded into Stan through the package `rstan`. As a result, the libraries are large, but the actual R code in the package is small. For data, I included a fitted model object from the package in order to provide example code for package functions that need model objects, but would require a very long package build time if I had to fit a model in each example. 
+Explanation: This package has a large installed library because it uses the Stan MCMC engine as a backend, and it comes with pre-compiled C++ modules that are loaded into Stan through the package `rstan`. As a result, the libraries are large, but the actual R code in the package is relatively small. 
+
+* checking for GNU extensions in Makefiles ... NOTE
+  GNU make is a SystemRequirements.
+  
+GNU Make is a requirement because of the C++ back-end used to compile and fit models using package `rstan`.
 
 
 ## Downstream dependencies

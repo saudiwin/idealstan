@@ -1,46 +1,95 @@
 #' Create data to run IRT model
 #' 
-#' To run an IRT model using \code{idealstan}, you must first process your data using the \code{id_make} function. 
+#' To run an IRT model using \code{idealstan}, you must first process your data using the \code{id_make} 
+#' function. 
 #' 
-#' @param score_data Your person-item (legislator-bill) matrix in which persons (legislators) are in rows and 
-#'    items (bills) are in columns. The cells of the matrix should contain consecutive integers \eqn{1,...K} for 
-#'    ordinal \eqn{K} outcomes or integers \eqn{[0,1]} for a binary outcome in which 0 equals no (or incorrect) and 
-#'    1 equals yes (or correct). If absences/missing data are included, they should be coded as the highest category \eqn{K+1} for
-#'    ordinal outcomes and 2 for binary outcomes.
+#' @details This function can accept either a \code{rollcall} data object from package
+#' \code{pscl} or a long data frame where one row equals one item-person (bill-legislator)
+#' observation with associated outcome. The preferred method is the long data frame 
+#' as passing a long data frame permits
+#' the inclusion of a wide range of covariates in the model, such as person-varying and item-varying 
+#' (bill-varying) covariates. 
+#' If a \code{rollcall} object is passed to the function, the \code{rollcall} data is converted
+#' to a long data frame with data from the \code{vote.data} matrix used to determine dates for bills.
+#' If passing a long data frame, you should specify the names of the 
+#' columns containing the IDs for persons, items and 
+#' groups (groups are IDs that may have multiple observations per ID, such as political parties or
+#' classes) to the \code{id_make} function, along with the name of the response/outcome. 
+#' The only required columns are the item/bill ID and the person/legislator ID along with an 
+#' outcome column. 
+#' 
+#' The preferred format for the outcome column for discrete variables (binary or ordinal)
+#' is to pass a factor variable with levels in the correct order, i.e., in ascending order.
+#' For example, if using legislative data, the levels of the factor should be \code{c('No','Yes')}.
+#' If a different kind of variable is passed, such as a character or numeric variable, 
+#' you should consider specifying \code{low_val},\code{high_val} and \code{middle_val} to 
+#' determine the correct order of the discrete outcome. Specifying \code{middle_val} is only
+#' necessary if you are estimating an ordinal model.
+#' 
+#' If you do not specify a value for \code{miss_val}, then any \code{NA} are assumed to be 
+#' missing. If you do specify \code{miss_val} and you also have \code{NA} in your data 
+#' (assuming \code{miss_val} is not \code{NA}), then the function will treat the data
+#' coded as \code{miss_val} as missing data that should be modeled and will treat the \code{NA}
+#' data as ignorable missing data that will be removed (list-wise deletion) before estimating a
+#' model.
+#' 
+#' To run a time-varying model, you need to include the name of a column with dates (or integers) that is passed 
+#' to the \code{time_id} option.
+#' 
+#' If the outcome is unbounded i.e. a continuous or an unbounded 
+#' discrete variable like Poisson, simply set \code{unbounded} to \code{TRUE}. You can ignore the
+#' options that specify which values should be \code{high_val} or \code{low_val}. You can either specify
+#' a particular value as missing using \code{miss_val}, or all 
+#' missing values (\code{NA}) will be recoded to a specific value out of the range of the outcome to use
+#' for modeling the missingness.
+#' 
+#' @param score_data A data frame in long form, i.e., one row in the data for each 
+#' measured score or vote in the data or a \code{rollcall} data object from package \code{pscl}.
+#' @param outcome Column name of the outcome in \code{score_data}, default is \code{"outcome"}
+#' @param person_id Column name of the person/legislator ID index in \code{score_data}, 
+#' default is \code{'person_id'}. Should be integer, character or factor.
+#' @param item_id Column name of the item/bill ID index in \code{score_data}, 
+#' default is \code{'item_id'}.  Should be integer, character or factor.
+#' @param time_id Column name of the time values in \code{score_data}: 
+#' optional, default is \code{'time_id'}. Should be a date or date-time class, but can be an integer
+#' (i.e., years in whole numbers).
+#' @param group_id Optional column name of a person/legislator group IDs (i.e., parties) in \code{score_data}. 
+#' Optional, default is \code{'group_id'}. Should be integer, character or factor.
+#' @param person_cov A one-sided formula that specifies the covariates
+#' in \code{score_data} that will be used to hierarchically model the person/legislator ideal points
+#' @param group_cov A one-sided formula that specifies the covariates
+#' in \code{score_data} that will be used to hierarchically model the person/legislator ideal points 
+#' at the group level. Use this in place of \code{person_cov} if you intend to run a group-level model.
+#' @param item_cov A one-sided formula that specifies the covariates
+#' in \code{score_data} that will be used to hierarchically model the 
+#' item/bill discrimination parameters for the regular model
+#' @param item_cov_miss A one-sided formula that specifies the covariates
+#' in the dataset that will be used to hierarchically model the item/bill discrimination parameters for the
+#' missing data model.
 #' @param simul_data Optionally, data that has been generated by the \code{\link{id_sim_gen}} function.
-#' @param person_cov A matrix of person (legislator) covariates for hierarchical modeling. If multiple time points are used, then should be a 
-#'  multi-column matrix with one column for each time point.
-#' @param item_cov A one-column matrix of item (bill) covariates for hierarchical modeling of item (bill) discrimination parameters in the non-inflated model, i.e., non-missing model
-#' @param item_cov_miss A one-column matrix of item (bill) covariates for hierarchical modeling of item (bill) discrimination parameters in the inflated model (missing data model)
-#' @param person_data An optional data frame of information about the persons (legislators). Should include a \code{person.names} column containing names of
-#'  persons (legislators) and optionally a \code{group} column with names of any groupings of the persons (legislators), such as parties or blocs (used for visualization).
-#' @param item_data An optional data frame of item/bill labels and other information used for visualization. Should include \code{item.names} column 
-#'  containing item/bill labels; other columns are optional.
-#' @param miss_val The value (numeric or character) that indicate missing data/absences in the data. If there are multiple possible values, 
-#'  pass along a numeric or character vector of all such values. If missing data is coded as \code{NA}, simply leave this parameter at the default, \code{NA}.
-#' @param high_val The value (numeric or character) that indicate the highest ordinal outcome possible, such as yes in a vote dataset or correct in a test examination.
-#'  If there are multiple possible values, 
-#'  pass along a numeric or character vector of all such values.
-#' @param low_val The value (numeric or character) that indicates the lowest ordinal outcome possible, such as no votes in a vote dataset or incorrect in a test examination.
-#'  If there are multiple possible values, 
-#'  pass along a numeric or character vector of all such values.
-#' @param middle_val The value (numeric or character) that indicate values between the lowest and highest categories, such as abstention in voting data or "Neither Agree nor Disagree" in likert scales.
+#' @param miss_val The value (numeric or character) that indicate missing data/absences in the data. 
+#' If missing data is coded as \code{NA}, 
+#'  simply leave this parameter at the default, \code{NA}.
+#' @param high_val The value (numeric or character) that indicate the highest discrete outcome possible, 
+#' such as yes in a vote dataset or correct in a test examination.
+#' @param low_val The value (numeric or character) that indicates the lowest discrete outcome possible, 
+#' such as no votes in a vote dataset or incorrect in a test examination.
+#' @param middle_val The value (numeric or character) that indicate values 
+#' between the lowest and highest categories, such as abstention in voting data or 
+#' "Neither Agree nor Disagree" in Likert scales.
 #'  If there are multiple possible values, 
 #'  pass along a numeric or character vector of all such values in correct order (lower to higher values).
-#'  If there are no middle values (binary outcome), set to \code{NULL}.
-#' @param ordinal Whether or not the data contain ordinal responses. If \code{TRUE}, middle values/abstentions are used as a middle category in constructing the outcome.
-#'  Otherwise the response is assumed to be binary (yes/no) or (correct/incorrect).
-#' @param time An optional integer vector of length equal to the number of columns in the response matrix (i.e., the number of items or bills)
-#'  that indicates for each item/bill which time point that item/bill belongs to. This time vector is only used for models in which person/legislator
-#'  ideal points are allowed to vary over time. 
-#' @param outcome_label_type Whether to use pre-set labels for the outcome values. If set to \code{bills}, the default, will label the outcome as \code{c('No','Abstain','Yes','Absent')} if there are 3 possible categories.
-#'  Otherwise, either pass \code{NULL} to this option to use integers for labels or a character vector equal to the number of categories in the
-#'  outcome. Used for visualization.
-#' @param exclude_level A vector of any values that should be treated as \code{NA} in the response matrix. Unlike the \code{middle_val} parameter, these values will be dropped from the data before estimation rather than modeled explicitly.
-#' @param inflate If \code{TRUE}, the score matrix is set up to enable modeling of missing data/absences (\code{miss_val}) as an inflation model in \code{\link{id_estimate}}
-#' @param simulation If \code{TRUE}, simulated values are saved in the \code{idealdata} object for later plotting with the \code{\link{id_plot_sims}} function
-#' @param include_pres If \code{FALSE} and \code{score_data} is a \code{rollcall} object, drop the first row which often represents tiebreaker votes cast by the Vice President in the US Senate.
-#' @return A \code{idealdata} object that can then be used in the \code{\link{id_estimate}} function to fit a model.
+#'  If there are no middle values (binary outcome), leave empty.
+#' @param unbounded Whether or not the outcome/response is unbounded (i.e., continuous or
+#'  Poisson). If it is, \code{miss_val} 
+#'  is recoded as the maximum of the outcome + 1. 
+#' @param exclude_level A vector of any values that should be treated as \code{NA} in the response matrix. 
+#' Unlike the \code{miss_val} parameter, these values will be dropped from the data before 
+#' estimation rather than modeled explicitly.
+#' @param simulation If \code{TRUE}, simulated values are saved in the \code{idealdata} object for 
+#' later plotting with the \code{\link{id_plot_sims}} function
+#' @return A \code{idealdata} object that can then be used in the \code{\link{id_estimate}} function 
+#' to fit a model.
 #' @export
 #' @import rstan
 #' @import dplyr
@@ -50,6 +99,7 @@
 #' @import Rcpp
 #' @import methods
 #' @importFrom stats dbinom median plogis quantile reorder rexp rlnorm runif sd step rnorm
+#' @importFrom utils person
 #' @useDynLib idealstan, .registration = TRUE
 #' @examples 
 #' # You can either use a pscl rollcall object or a vote/score matrix 
@@ -63,163 +113,231 @@
 #' data('senate114')
 #' 
 #' to_idealstan <-   id_make(score_data = senate114,
-#' ordinal = FALSE,
-#' include_pres=FALSE)
+#'                outcome = 'cast_code',
+#'                person_id = 'bioname',
+#'                item_id = 'rollnumber',
+#'                group_id= 'party_code',
+#'                time_id='date',
+#'                high_val='Yes',
+#'                low_val='No',
+#'                miss_val='Absent')
 #' 
-id_make <- function(score_data=NULL,simul_data=NULL,
-                           person_cov=NULL,item_cov=NULL,
+id_make <- function(score_data=NULL,
+                    outcome='outcome',
+                    person_id='person_id',
+                    item_id='item_id',
+                    time_id='time_id',
+                    group_id='group_id',
+                    simul_data=NULL,
+                           person_cov=NULL,
+                    group_cov=NULL,
+                  item_cov=NULL,
                            item_cov_miss=NULL,
-                           person_data=NULL,item_data=NULL,
-                           miss_val=NA,high_val=3L,low_val=1L,middle_val=2L,
-                           ordinal=TRUE,time=NULL,
-                           outcome_label_type='votes',
-                           exclude_level=NULL,inflate=TRUE,simulation=FALSE,
-                    include_pres=FALSE) {
+                           miss_val=NA,high_val=NULL,low_val=NULL,middle_val=NULL,
+                    unbounded=FALSE,
+                           exclude_level=NA,simulation=FALSE) {
   
   
-  if(class(score_data)=='rollcall') {
+  # make sure to ungroup it if it's a tidy data frame
+  if('tbl' %in% class(score_data)) score_data <- ungroup(score_data)
+  
+  # if object is a rollcall, pre-process data into long form
+  if('rollcall' %in% class(score_data)) {
+    score_data <- .prepare_rollcall(score_data,item_id=item_id,
+                                    time_id=time_id)
+    
+    time_id <- score_data$time_id
+    item_id <- score_data$item_id
+    score_data <- score_data$score_data
+    
     miss_val <- 9
     low_val <- 6
     high_val <- 1
     exclude_level <- c(3,7)
-    row_names <- row.names(score_data$legis.data)
-    if(include_pres==F) {
-      person_data <- slice(score_data$legis.data,-1)
-      row_names <- row_names[-1]
-    }
-    
-    person_data <-  mutate(person_data,group=party,person.names=row_names)
-    
-    if(include_pres==F) {
-      score_data <- score_data$votes[-1,]
-    } else {
-      score_data <- score_data$votes
-    }
-    
-    row.names(score_data) <- row_names
-  }
-  
-  
-  # recode missing into something that works
-  if(is.na(miss_val) && inflate==TRUE) {
-    if(sum(is.na(score_data))==0) stop('To use missing-data model, you must have at least one missing value in the score matrix.')
-    suppressWarnings(score_data <- apply(score_data,2,function(c) {
-      if(is.numeric(c)) {
-          max_c <- max(c,na.rm=T)
-          c[is.na(c)] <- max_c +1
-      } else {
-        c[is.na(c)] <- 'Missing'
-        }
-      return(c)
-      
-    }))
-    if(is.numeric(score_data[,1])) {
-      miss_val <- max(score_data)
-    } else {
-      miss_val <- 'Missing'
-    }
-  }
 
-  if(ordinal==TRUE & inflate==TRUE) {
-    votes <- c(low_val,middle_val,high_val,miss_val)
-    vote_int <- as.integer(factor(votes,levels=votes))
-    names(vote_int) <- votes
-    vote_labels <-  c('No','Abstain','Yes','Absent')
-    miss_val <- vote_int[length(vote_int)]
-  } else if(ordinal==FALSE & inflate==TRUE) {
-    votes <- c(low_val,high_val,miss_val)
-    vote_int <- as.integer(factor(votes,levels=votes))
-    names(vote_int) <- votes
-    vote_labels <-  c('No','Yes','Absent')
-    miss_val <- vote_int[length(vote_int)]
-  } else if(ordinal==TRUE & inflate==FALSE)  {
-    votes <- c(low_val,middle_val,high_val)
-    vote_int <- as.integer(factor(votes,levels=votes))
-    names(vote_int) <- votes
-    vote_labels <-  c('No','Abstain','Yes')
-    miss_val <- NA
+  } 
+  
+    # data is already in long form
+    # test for input and quote
+    outcome <- .check_quoted(outcome,quo(outcome))
+    item_id <- .check_quoted(item_id,quo(item_id))
+    time_id <- .check_quoted(time_id,quo(time_id))
+    group_id <- .check_quoted(group_id,quo(group_id))
+    person_id <- .check_quoted(person_id,quo(person_id))
+
+  
+  
+  # rename data
+  # IDs are made factors now so we can re-arrange indices when need be
+  score_rename <- select(score_data,
+                       outcome = !!outcome,
+                       item_id = !!item_id,
+                       person_id = !!person_id) %>% 
+    mutate(item_id=factor(!! quo(item_id)),
+           person_id=factor(!! quo(person_id)))
+  
+  # if time or group IDs don't exist, make dummies
+  
+  test_group <- try(factor(pull(score_data,!!group_id)),silent=TRUE)
+  test_time <- try(pull(score_data,!!time_id),silent=TRUE)
+  
+  if(any('try-error' %in% class(test_group))) {
+    score_rename$group_id <- factor("G")
   } else {
-    votes <- c(low_val,high_val)
-    vote_int <- as.integer(factor(votes,levels=votes))
-    names(vote_int) <- votes
-    vote_labels <-  c('No','Yes')
-    miss_val <- NA
+    score_rename$group_id <- test_group
+  }
+  if(any('try-error' %in% class(test_time))) {
+    score_rename$time_id <- 1
+  } else {
+    score_rename$time_id <- test_time
   }
   
-  if(class(score_data)=='matrix') {
-    # Register all possible votes as integers, then before running the model we can change them if need be.
-    cleaned <- score_data %>% apply(2,function(c) {
-      as.integer(factor(c,levels=votes))
-    }) 
-  } else if(class(score_data)=='rollcall') {
-    
-  } else {
-    stop('Please provide either a matrix or a rollcall object as the score_data argument.')
-  }
-  if(!is.null(time)) {
-    if(length(time)!=ncol(cleaned)) {
-      stop('Time vector must be same length as the number of columns in the vote matrix.')
-    }
-    time <- as.numeric(factor(time))
-    max_t <- max(time)
-  } else {
-    time <- rep(1,ncol(cleaned))
-  }
-  colnames(cleaned) <- as.character(1:ncol(cleaned))
-  #before doing this, need to ensure that 1) all legislators in person_data have votes and 
-  #2) the rows were correctly ordered to match score_data <-> person_data
+  # now we can make these all quosures again to use in NSE
+  
+  outcome <- quo(outcome)
+  item_id <- quo(item_id)
+  person_id <- quo(person_id)
+  time_id <- quo(time_id)
+  group_id <- quo(group_id)
+  
+  # see what the max time point is
+  
+  max_t <- max(as.numeric(factor(pull(score_rename,!!time_id))),na.rm=T)
+  num_person <- max(as.numeric(factor(pull(score_rename,!!person_id))),na.rm=T)
+  num_group <- try(max(as.numeric(factor(pull(score_rename,!!group_id)))))
+  num_item <- max(as.numeric(factor(pull(score_rename,!!item_id))),na.rm=T)
+  
+  # create data frames for all hierachical parameters
+
   if(!is.null(person_cov)) {
-    if('data.frame' %in% class(person_cov)) {
-      person_cov <- as.matrix(person_cov)
-      
-    } else if('matrix' %in% class(person_cov)) {
-      person_cov <- array(person_cov,dim(c(ncol(person_cov),nrow(person_cov),max_t)))
-    }
 
+    personm <- model.matrix(person_cov,data=score_data)
+    
+    # need to check for missing data and remove any missing from IDs
+    
+    score_rename <- slice(score_rename,as.numeric(attr(personm,'dimnames')[[1]]))
+    
+    if(nrow(score_rename)!=nrow(personm)) stop('Covariate matrix and data matrix not the same size.')
+    
+    person_cov <- bind_cols(as_data_frame(personm),
+                            select(score_rename,!! time_id,
+                                   !!person_id))
+    
+    # convert to long form for function
+    
+    person_cov <- gather(person_cov,key = !! quo(labels),value = !!quo(variables),
+                         -!!time_id,-!!person_id) %>% 
+      distinct
+    
+    person_cov <- .create_array(input_matrix=person_cov,
+                                row_var=person_id,
+                                col_var_name=labels,
+                                col_var_value=variables,
+                                third_dim_var=time_id)
+    
+    # reorder to fit stan
+    person_cov <- aperm(person_cov,c(3,1,2))
   } else {
-    person_cov <- array(c(rep(1,nrow(person_data)),1,1),dim=c(1,nrow(person_data),1))
+    person_cov <- .create_array(matrix(rep(0,num_person),nrow=num_person,ncol=1),arr_dim=max_t)
+    person_cov <- aperm(person_cov,c(3,1,2))
+  }
+  
+  # separate parameters for group-level covariates
+  
+  if(!is.null(group_cov)) {
+    
+    groupm <- model.matrix(group_cov,data=score_data)
+    
+    # need to check for missing data and remove any missing from IDs
+    
+    score_rename <- slice(score_rename,as.numeric(attr(groupm,'dimnames')[[1]]))
+    
+    group_cov <- bind_cols(as_data_frame(groupm),
+                            select(score_rename,!! time_id,
+                                   !!group_id))
+    
+    # convert to long form for function
+    
+    group_cov <- gather(group_cov,key = !! quo(labels),value = !!quo(variables),
+                         -!!time_id,-!!group_id) %>% 
+      distinct
+    
+    group_cov <- .create_array(input_matrix=group_cov,
+                                row_var=group_id,
+                                col_var_name=labels,
+                                col_var_value=variables,
+                                third_dim_var=time_id)
+    
+    # reorder to fit stan
+    group_cov <- aperm(group_cov,c(3,1,2))
+  } else {
+    group_cov <- .create_array(matrix(rep(0,num_group),nrow=num_group,ncol=1),arr_dim=max_t)
+    group_cov <- aperm(group_cov,c(3,1,2))
   }
   
   if(!is.null(item_cov)) {
-    if(nrow(bill_cov)!=ncol(cleaned)) {
-      stop('Item/bill covariate data must be same length as the number of columns of score/vote matrix.')
-    }
+    
+    itemm <- select(score_data, !!! all.vars(item_cov)) %>% 
+      mutate(item_id=pull(score_rename,!!item_id)) %>% 
+      distinct(!!item_id,.keep_all = T)
+    
+    item_cov <- model.matrix(item_cov,data=itemm)
   } else {
-    item_cov <- matrix(rep(1,ncol(cleaned)),nrow=ncol(cleaned),ncol=1)
-  }
+    item_cov <- matrix(rep(0,num_item),nrow=num_item,ncol=1) 
+    }
   if(!is.null(item_cov_miss)) {
-    if(nrow(item_cov_miss)!=ncol(cleaned)) {
-      stop('Item/bill covariate data must be same length as the number of columns of score/vote matrix.')
-    }
+    itemm <- select(score_data, !!! all.vars(item_cov)) %>% 
+      mutate(item_id=pull(score_rename,!!item_id)) %>% 
+      distinct(!!item_id,.keep_all = T)
+    
+    item_cov_miss <- model.matrix(item_cov_miss,data=itemm)
   } else {
-    item_cov_miss <- matrix(rep(1,ncol(cleaned)),nrow=ncol(cleaned),ncol=1)
+    item_cov_miss <- matrix(rep(0,num_item),nrow=num_item,ncol=1) 
   }
   
-  #not sure why I ever had this in here
-  #person_data$person.names <- row.names(score_data)
+  # recode score/outcome
+  if(!unbounded) {
+    
+    if(is.na(miss_val)) {
+      score_rename$outcome[is.na(score_rename$outcome)] <- 'Missing'
+      miss_val <- 'Missing'
+    }
+    
+    if(!is.null(high_val) && !is.null(low_val) && !is.null(middle_val)) {
+
+      score_rename$outcome <- factor(score_rename$outcome,
+                                     levels=c(low_val,middle_val,high_val,miss_val),
+                                     exclude = exclude_level)
+    } else if(!is.null(high_val) && !is.null(low_val)) {
+      score_rename$outcome <- factor(score_rename$outcome,
+                                     levels=c(low_val,high_val,miss_val),
+                                     exclude = exclude_level)
+    } else {
+      # variable does not need to be recoded, only move missing to the end
+      score_rename$outcome <- factor(score_rename$outcome)
+      score_rename$outcome <- fct_relevel(score_rename$outcome,miss_val,after=Inf)
+    }
+  } 
+
+
+  if(unbounded) {
+    max_val <- max(pull(score_rename,!!outcome))
+    # make missing data the highest observed value
+    if(is.na(miss_val)) {
+      score_rename <- mutate(score_rename,!! quo_name(outcome) := coalesce(is.na(!!outcome),max_val+1L))
+    } else {
+      score_rename <- mutate(score_rename,!! quo_name(outcome) := ifelse(!!outcome==miss_val,max_val+1L,!!outcome))
+    }
+    miss_val <- max_val+1L
+  } 
   
-  row.names(cleaned) <- as.character(1:nrow(cleaned))
-  
-  if(!("group" %in% names(person_data))) person_data$group <- rep('O',nrow(score_data))
-  
-  # check what kind of vote labels to use
-  
-  if(outcome_label_type=='none') {
-    vote_labels <- as.character(vote_int)
-  } else if(outcome_label_type!='votes') {
-    vote_labels <- outcome_label_type
-  }
 
   outobj <- new('idealdata',
-      score_matrix=cleaned,
-      person_data=person_data,
+      score_matrix=score_rename,
       person_cov=person_cov,
-      time=time,
+      group_cov=group_cov,
       item_cov=item_cov,
       item_cov_miss=item_cov_miss,
-      vote_labels=vote_labels,
-      vote_int=vote_int,
-      vote_count=length(votes) - length(exclude_level),
       miss_val=miss_val)
   
   if(simulation==TRUE) {
@@ -231,45 +349,105 @@ id_make <- function(score_data=NULL,simul_data=NULL,
 
 #' Estimate an \code{idealstan} model
 #' 
-#' This function will take a pre-processed \code{idealdata} vote/score matrix and run one of the available IRT models on the data using
+#' This function will take a pre-processed \code{idealdata} vote/score dataframe and 
+#' run one of the available IRT/latent space ideal point models on the data using
 #' Stan's MCMC engine.
 #' 
 #' To run an IRT ideal point model, you must first pre-process your data using the \code{\link{id_make}} function. Be sure to specify the correct options for the
-#' kind of model you are going to run: if you want to run an ordinal and/or an inflated model, the data needs to be processed differently.
-#' As of this version of \code{idealstan}, the following model types are available:
+#' kind of model you are going to run: if you want to run an unbounded outcome (i.e. Poisson or continuous),
+#' the data needs to be processed differently. Also any hierarchical covariates at the person or item level
+#' need to be specified in \code{\link{id_make}}. If they are specified in \code{\link{id_make}}, than all 
+#' subsequent models fit by this function will have these covariates.
+#' 
+#' \strong{Note that for static ideal point models, the covariates are only defined for those 
+#' persons who are not being used as constraints.}
+#' 
+#' As of this version of \code{idealstan}, the following model types are available. Simply pass 
+#' the number of the model in the list to the \code{model_type} option to fit the model.
+#' 
 #' \enumerate{
-#'   \item IRT 2-PL (binary response) ideal point model, no absence inflation
-#'   \item IRT 2-PL model (binary response) with absence inflation
-#'   \item Ordinal IRT (rating scale) model incorporating abstentions as middle category, no absence inflation
-#'   \item Ordinal IRT (rating scale) model incorporating abstentions as middle category with absence inflation
+#'   \item IRT 2-PL (binary response) ideal point model, no missing-data inflation
+#'   \item IRT 2-PL ideal point model (binary response) with missing- inflation
+#'   \item Ordinal IRT (rating scale) ideal point model no missing-data inflation
+#'   \item Ordinal IRT (rating scale) ideal point model with missing-data inflation
+#'   \item Ordinal IRT (graded response) ideal point model no missing-data inflation
+#'   \item Ordinal IRT (graded response) ideal point model with missing-data inflation
+#'   \item Poisson IRT (Wordfish) ideal point model with no missing data inflation
+#'   \item Poisson IRT (Wordfish) ideal point model with missing-data inflation
+#'   \item unbounded (Gaussian) IRT ideal point model with no missing data
+#'   \item unbounded (Gaussian) IRT ideal point model with missing-data inflation
+#'   \item Positive-unbounded (Log-normal) IRT ideal point model with no missing data
+#'   \item Positive-unbounded (Log-normal) IRT ideal point model with missing-data inflation
+#'   \item Latent Space (binary response) ideal point model with no missing data
+#'   \item Latent Space (binary response) ideal point model with missing-data inflation
 #' }
-#' Additional models are available but have not yet been tested. You can find them by searching the included stan files for more info.
+#' 
+#' In addition, each of these models can have time-varying ideal point (person) parameters if
+#' a column of dates is fed to the \code{\link{id_make}} function. If the option \code{vary_ideal_pts} is 
+#' set to \code{'random_walk'}, \code{id_estimate} will estimate a random-walk ideal point model where ideal points 
+#' move in a random direction. If \code{vary_ideal_pts} is set to \code{'AR1'}, a stationary ideal point model 
+#' is estimated where ideal points fluctuate around long-term mean. In general, the stationary model
+#' is preferred when the time series is of short absolute duration (such as days or hours) while 
+#' the random-walk model is preferable when the time series is of very long duration and there are no
+#' natural limits to the ideal points. Please see the package vignette and associated paper for more detail
+#' about these time-varying models.
+#' 
+#' The inflation model used to account for missing data assumes that missingness is a 
+#' function of the persons' (legislators')
+#' ideal points. In other words,the model will take into account if people with high or low ideal points
+#' tend to have more/less missing data on a specific item/bill. Missing data is whatever was 
+#' passed as \code{miss_val} to the \code{\link{id_make}} function. 
+#' If there isn't any relationship
+#' between missing data and ideal points, then the model assumes that the missingness is ignorable 
+#' conditional on each
+#' item, but it will still adjust the results to reflect these ignorable (random) missing
+#' values. The inflation is designed to be general enough to handle a wide array of potential
+#' situations where strategic social choices make missing data important to take into account.
+#' 
+#' The missing data is assumed to be any possible value of the outcome. The well-known 
+#' zero-inflated Poisson model is a special case where missing values are known to be all zeroes. 
+#' To fit a zero-inflated Poisson model, change \code{inflate_zeroes} to \code{TRUE} and also 
+#' make sure to set the value for zero as \code{miss_val} in the \code{\link{id_make}} function.
+#' This will only work for outcomes that are distributed as Poisson variables (i.e., 
+#' unbounded integers or counts).
+#' 
+#' To leave missing data out of the model, simply choose a version of the model in the list above
+#' that is non-inflated.
+#' 
+#' Models can be either fit on the person/legislator IDs or on group-level IDs (as specified to the 
+#' \code{id_make} function). If group-level parameters should be fit, set \code{use_groups} to \code{TRUE}.
+#' 
 #' @section Identification:
-#' Identifying IRT models is challenging, and ideal point models are still more challenging because the discrimination parameters are not constrained.
+#' Identifying IRT models is challenging, and ideal point models are still more challenging 
+#' because the discrimination parameters are not constrained.
 #' As a result, more care must be taken to obtain estimates that are the same regardless of starting values. 
-#' The parameter \code{fixtype} enables you to change the type of identification used. The default, 'vb', does not require any further
+#' The parameter \code{fixtype} enables you to change the type of identification used. The default, 'vb_full', 
+#' does not require any further
 #' information from you in order for the model to be fit. In this version of identification, an unidentified model is run using
-#' variational Bayesian inference (see \code{\link[rstan]{vb}}). If \code{restrict_type} is set to 'constrain_oneway', then the \code{nfix}
-#' highest legislators/persons (if \code{restrict_params} is 'person') or bills/items (if \code{restrict_params} equals 'items') 
-#' are used to constrain and identify the model. If \code{restrict_type} is set to 'constrain_twoway', then \code{nfix} highest and lowest legislators/persons
-#' or bills/items are used to constrain and identify the model.
-#' In addition, if \code{fixtype='vb'} is used, \code{auto_id} can be set to \code{TRUE}. This will run additional variational Bayesian models
-#' using the identification achieved and will see if the signs of the estimated parameters are at least 90 percent in the same direction. If so, 
-#' the model is considered identified. If not, the function will re-run and will increase \code{nfix} by one to see if that will identify the model, 
-#' ad infinitum.
-#' If \code{fixtype} is set to 'constrained', then identification is achieved by constraining a specified list of legislators/persons or
-#' bills/items. If \code{restrict_type} is 'constrain_oneway', then the indices of all constrained legislators/persons or bills/items
-#' should be included as the row or column indices of these parameters in the response matrix as a vector in \code{restrict_ind_high}.
-#' If \code{restrict_type} is 'constrain_twoway,' then the indices of high constrained parameters should go in 
-#' \code{restrict_ind_high} and the indices of low constrained parameters in \code{restrict_ind_low}. The numbers of high and low
-#' constrained parameters should be equal. To pick the parameter to constrain, set \code{restrict_params} to 'person' for legislators/persons,
-#' 'discrim_miss' for absence-inflated bill discrimination parameters, and 'discrim_reg' for non-inflated bill discrimination parameters.
-#' If \code{fixtype} is set to 'pinned', then identification is achieved via pinning with very tight priors a set of legislators/persons or bills/items.
-#' The indices of legislators/persons (i.e. row indices in the response matrix) or bills/items (column indices in the response matrix) should be passed as a vector
-#' to \code{restrict_ind_high}, while \code{restrict_ind_low} should be left blank. The particular values to pin these parameters is passed as a 
-#' numeric vector to \code{pin_vals}.
+#' variational Bayesian inference (see \code{\link[rstan]{vb}}). The function will then select two 
+#' persons/legislators that end up on either end of the ideal point spectrum, and pin their ideal points
+#' to those specific values. This is sufficient to identify all of the static models and also the AR(1) 
+#' time-varying models. For random-walk time-varying models, identification is more difficult (see vignette).
+#' Setting the option \code{restrict_mean} to \code{TRUE} will implement additional identification 
+#' constraints on random-walk models.
+#' A particularly convenient option for \code{fixtype} is \code{'vb_partial'}. In this case, the user
+#' should pass the IDs (as a character vector) of the persons to constrain high (\code{restrict_ind_high}) and
+#' low (\code{restrict_ind_low}). A model will then be fit to find the likely positions of these parameters,
+#' which will then be used to fit an identified model. In this way, the user can achieve a certain
+#' shape of the ideal point distribution without needing to choose specific values ahead of time to pin
+#' parameters to.
+#' If a prior model has been estimated with the same data, the user can re-use those identification 
+#' settings by passing the fitted \code{idealstan} object to the \code{prior_fit} option.
 #' @param idealdata An object produced by the \code{\link{id_make}} containing a score/vote matrix for use for estimation & plotting
 #' @param model_type An integer reflecting the kind of model to be estimated. See below.
+#' @param inflate_zero If the outcome is distributed as Poisson (count/unbounded integer), 
+#' setting this to 
+#' \code{TRUE} will fit a traditional zero-inflated model. To use correctly, the value for 
+#' zero must be passed as the \code{miss_val} option to \code{\link{id_make}} before
+#' running a model so that zeroes are coded as missing data.
+#' @param vary_ideal_pts Default \code{'none'}. If \code{'random_walk'} or \code{'AR1'}, a 
+#' time-varying ideal point model will be fit with either a random-walk process or an 
+#' AR1 process. See documentation for more info.
 #' @param use_subset Whether a subset of the legislators/persons should be used instead of the full response matrix
 #' @param sample_it Whether or not to use a random subsample of the response matrix. Useful for testing.
 #' @param subset_group If person/legislative data was included in the \code{\link{id_make}} function, then you can subset by
@@ -283,39 +461,63 @@ id_make <- function(score_data=NULL,simul_data=NULL,
 #' @param niters The number of iterations to run Stan's sampler. Shouldn't be set much lower than 500. See \code{\link[rstan]{stan}} for more info.
 #' @param use_vb Whether or not to use Stan's variational Bayesian inference engine instead of full Bayesian inference. Pros: it's much faster.
 #' Cons: it's not quite as accurate. See \code{\link[rstan]{vb}} for more info.
-#' @param nfix An integer specifying the number of parameters to constrain (for both high and low) if \code{fixtype} is set to \code{'vb'}
 #' @param warmup The number of iterations to use to calibrate Stan's sampler on a given model. Shouldn't be less than 100. 
 #' See \code{\link[rstan]{stan}} for more info.
 #' @param ncores The number of cores in your computer to use for parallel processing in the Stan engine. 
 #' See \code{\link[rstan]{stan}} for more info.
-#' @param fixtype Sets the particular kind of identification used on the model, could be one of 'vb','constrained' or 'pinned'.
+#' @param fixtype Sets the particular kind of identification used on the model, could be one of 'vb_full' 
+#' (identification provided exclusively by running a variational identification model with no prior info), 
+#' 'vb_partial' (two indices of ideal points to fix are provided but the values to fix are determined by the
+#' identification model), 
+#' 'constrain' (two indices of ideal points to fix are provided--only sufficient for model if \code{restrict_var} is 
+#' \code{FALSE}, 
+#' and 'prior_fit' (a previous identified \code{idealstan} fit is passed to the \code{prior_fit} option and used
+#' as the basis for identification).
 #'  See details for more information.
-#' @param restrict_type Determines whether constraints will only be set on one direction 'constrain_oneway' or both high/low
-#' constrains 'constrain_twoway'. Ignored if \code{fixtype} is equal to 'pinned'.
-#' @param restrict_params Determines which parameters in the model are used for identification. If \code{fixtype} is 'vb', can be
-#' either 'person' (person/legislator ideal points) or 'items' (discrimination parameters for items/bills). Otherwise, the value must be one
-#' of the available classes of parameters: 'person' for persons/legislators, 'discrim_miss' for the missing-inflated item/bill discrimination
-#' parameters, or 'discrim_reg' for the non-inflated item/bill discrimination parameters.
-#' @param auto_id If \code{TRUE}, a variational Bayesian version of your model will be run using \code{\link[rstan]{vb}} in a 
-#' non-identified form. Depending on what is set via \code{restrict_type} and \code{restrict_params}, bills/items or 
-#' persons/legislators will be used to constrain and identify the model. 
-#' @param pin_vals If \code{fixtype} is set to 'pinned', then a vector of numeric values of which to pin the legislators/persons or 
-#' bills/items should be given.
+#' @param prior_fit If a previous \code{idealstan} model was fit \emph{with the same} data, then the same
+#' identification constraints can be recycled from the prior fit if the \code{idealstan} object is passed 
+#' to this option. Note that means that all identification options, like \code{restrict_var}, will also 
+#' be the same
+#' @param id_diff The fixed difference between the high/low person/legislator ideal points used to identify the model. 
+#' Set at 4 as a standard value but can be changed to any arbitrary number without affecting model results besides re-scaling.
+#' @param id_diff_high The fixed intercept of the high ideal point used to constrain the model. 
+#' @param sample_stationary If \code{TRUE}, the AR(1) coefficients in a time-varying model will be 
+#' sampled from an unconstrained space and then mapped back to a stationary space. Leaving this \code{TRUE} is 
+#' slower but will work better when there is limited information to identify a model. If used, the
+#' \code{ar_sd} parameter should be increased to 5 to allow for wider sampling in the unconstrained space.
+#' @param ar_sd If an AR(1) model is used, this defines the prior scale of the Normal distribution. A lower number 
+#' can help 
+#' identify the model when there are few time points.
+#' @param use_groups If \code{TRUE}, group parameters from the person/legis data given in \code{\link{id_make}} will be 
+#'  estimated instead of individual parameters. 
 #' @param restrict_ind_high If \code{fixtype} is not "vb", the particular indices of legislators/persons or bills/items to constrain high
 #' @param restrict_ind_low If \code{fixtype} is not "vb", the particular indices of legislators/persons or bills/items to constrain low. 
 #' (Note: not used if values are pinned).
 #' @param discrim_reg_sd Set the prior standard deviation of the bimodal prior for the discrimination parameters for the non-inflated model.
 #' @param discrim_miss_sd Set the prior standard deviation of the bimodal prior for the discrimination parameters for the inflated model.
 #' @param person_sd Set the prior standard deviation for the legislators (persons) parameters
+#' @param time_sd The precision (inverse variance) of the over-time component of the person/legislator
+#' parameters. A higher value will allow for less over-time variation (useful if estimates bounce too much). 
+#' Default is 4.
 #' @param diff_reg_sd Set the prior standard deviation for the bill (item) intercepts for the non-inflated model.
 #' @param diff_miss_sd Set the prior standard deviation for the bill (item) intercepts for the inflated model.
 #' @param restrict_sd Set the prior standard deviation for constrained parameters
-#' @param restrict_low_bar Set the constraint threshold for constrained parameters (parameter must be lower than this bar and no greater than zero)
-#' @param restrict_high_bar Set the constraint threshold for constrained parameters (parameter must be higher than this bar and no less than zero)
-#' @param restrict_alpha This is the scale (alpha) parameter passed to the gamma prior if exactly two item/person parameters are constrained, each high or low. The gamma prior pushes these two
-#' polar parameters apart. A higher value will push these two poles farther apart, which will help identification. 
-#' @param restrict_beta The beta (shape) parameter passed to the gamma prior if exactly two item/person parameters are constrained, each high or low. The gamma prior pushes these two
-#' polar parameters apart.
+#' @param restrict_var Whether to limit variance to no higher than 0.5 for random-walk time series models.
+#' If left blank (the default), will be set to \code{TRUE} for random-walk models and \code{FALSE} for 
+#' AR(1) models if identification is still a challenge (note: using this for AR(1) models is 
+#' probably overkill).
+#' @param restrict_var_high The upper limit for the variance parameter (if \code{restrict_var=TRUE} & 
+#' model is a random-walk time-series). If left blank, either defaults to 0.1 or is set by 
+#' identification model.
+#' @param restrict_mean Whether or not to restrict the over-time mean of an ideal point 
+#' (additional identification measure when standard fixes don't work). \code{TRUE} by 
+#' default for random-walk models.
+#' @param restrict_mean_val For random-walk models, the mean of a time-series ideal point to constrain.
+#' Should not be set a priori (leave blank) unless you are absolutely sure. Otherwise it is set by 
+#' the identification model.
+#' @param restrict_mean_ind For random-walk models, the ID of the person/group whose over-time
+#' mean to constrain. Should be left blank (will be set by identification model) unless you are 
+#' really sure.
 #' @param ... Additional parameters passed on to Stan's sampling engine. See \code{\link[rstan]{stan}} for more information.
 #' @return A fitted \code{\link{idealstan}} object that contains posterior samples of all parameters either via full Bayesian inference
 #' or a variational approximation if \code{use_vb} is set to \code{TRUE}. This object can then be passed to the plotting functions for further analysis.
@@ -330,9 +532,7 @@ id_make <- function(score_data=NULL,simul_data=NULL,
 #' 
 #' # This code will take at least a few minutes to run 
 #' \dontrun{
-#' bin_irt_2pl_abs_sim <- id_sim_gen(ordinal=FALSE,
-#'                                   absence=TRUE,
-#'                                   absence_diff_mean=0)
+#' bin_irt_2pl_abs_sim <- id_sim_gen(model_type='binary',inflate=T)
 #' 
 #' # Now we can put that directly into the id_estimate function 
 #' # to get full Bayesian posterior estimates
@@ -342,16 +542,14 @@ id_make <- function(score_data=NULL,simul_data=NULL,
 #' bin_irt_2pl_abs_est <- id_estimate(bin_irt_2pl_abs_sim,
 #'                        model_type=2,
 #'                        restrict_ind_high = 
-#'                        sort(bin_irt_2pl_abs_sim@simul_data$true_reg_discrim,
+#'                        sort(bin_irt_2pl_abs_sim@simul_data$true_person,
 #'                        decreasing=TRUE,
-#'                        index=TRUE)$ix[1:3],
+#'                        index=TRUE)$ix[1],
 #'                        restrict_ind_low = 
-#'                        sort(bin_irt_2pl_abs_sim@simul_data$true_reg_discrim,
+#'                        sort(bin_irt_2pl_abs_sim@simul_data$true_person
 #'                        decreasing=FALSE,
-#'                        index=TRUE)$ix[1:3],
-#'                        restrict_params = 'discrim_reg', 
-#'                        restrict_type = 'constrain_twoway',
-#'                        fixtype='constrained',
+#'                        index=TRUE)$ix[1],
+#'                        fixtype='vb_partial',
 #'                        ncores=2,
 #'                        nchains=2)
 #'                                    
@@ -376,17 +574,21 @@ id_make <- function(score_data=NULL,simul_data=NULL,
 #' \dontrun{
 #' 
 #' to_idealstan <-   id_make(score_data = senate114,
-#'                           ordinal = FALSE,
-#'                           include_pres=FALSE)
+#' outcome = 'cast_code',
+#' person_id = 'bioname',
+#' item_id = 'rollnumber',
+#' group_id= 'party_code',
+#' time_id='date',
+#' high_val='Yes',
+#' low_val='No',
+#' miss_val='Absent')
 #' 
 #' sen_est <- id_estimate(senate_data,
 #' model_type = 2,
 #' use_vb = TRUE,
-#' restrict_type='constrain_oneway',
-#' restrict_params='person',
-#' restrict_ind_high = which(row.names(senate114$votes[-1,])=='SASSE (R NE)'),
-#' auto_id=FALSE,
-#' fixtype='constrained')
+#' fixtype='vb_partial',
+#' restrict_ind_high = "BARRASSO, John A.",
+#' restrict_ind_low = "WARREN, Elizabeth")
 #' 
 #' # After running the model, we can plot 
 #' # the results of the person/legislator ideal points
@@ -397,28 +599,41 @@ id_make <- function(score_data=NULL,simul_data=NULL,
 #' @references \enumerate{
 #'    \item Clinton, J., Jackman, S., & Rivers, D. (2004). The Statistical Analysis of Roll Call Data. \emph{The American Political Science Review}, 98(2), 355-370. doi:10.1017/S0003055404001194
 #'    \item Bafumi, J., Gelman, A., Park, D., & Kaplan, N. (2005). Practical Issues in Implementing and Understanding Bayesian Ideal Point Estimation. \emph{Political Analysis}, 13(2), 171-187. doi:10.1093/pan/mpi010
+#'    \item Kubinec, R. "Generalized Ideal Point Models for Time-Varying and Missing-Data Inference". Working Paper.
 #' }
+#' @importFrom stats dnorm dpois model.matrix qlogis relevel rpois
+#' @importForm utils person
 #' @export
-id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=FALSE,
+id_estimate <- function(idealdata=NULL,model_type=2,
+                        inflate_zero=FALSE,
+                        vary_ideal_pts='none',
+                        use_subset=FALSE,sample_it=FALSE,
                            subset_group=NULL,subset_person=NULL,sample_size=20,
-                           nchains=4,niters=2000,use_vb=FALSE,nfix=3,restrict_params='person',
-                           pin_vals=NULL,restrict_ind_high=NULL,
+                           nchains=4,niters=2000,use_vb=FALSE,
+                           restrict_ind_high=NULL,
+                          id_diff=4,
+                        id_diff_high=2,
                            restrict_ind_low=NULL,
-                           restrict_type='constrain_twoway',
-                           fixtype='vb',warmup=floor(niters/2),ncores=4,
-                           auto_id=FALSE,
-                           discrim_reg_sd=3,
-                           discrim_miss_sd=3,
+                           fixtype='vb_full',
+                        prior_fit=NULL,
+                        warmup=floor(niters/2),ncores=4,
+                        use_groups=FALSE,
+                           discrim_reg_sd=1,
+                           discrim_miss_sd=1,
                            person_sd=1,
-                           diff_reg_sd=4,
-                           diff_miss_sd=4,
-                           restrict_sd=4,
-                           restrict_low_bar=0,
-                        restrict_high_bar=0,
-                        restrict_alpha=4,
-                        restrict_beta=1,
+                        time_sd=.1,
+                        sample_stationary=FALSE,
+                        ar_sd=2,
+                           diff_reg_sd=1,
+                           diff_miss_sd=1,
+                           restrict_sd=0.01,
+                        restrict_mean=NULL,
+                        restrict_var=NULL,
+                        restrict_mean_val=NULL,
+                        restrict_mean_ind=NULL,
+                        restrict_var_high=0.1,
                            ...) {
-  
+
   
   if(use_subset==TRUE || sample_it==TRUE) {
     idealdata <- subset_ideal(idealdata,use_subset=use_subset,sample_it=sample_it,subset_group=subset_group,
@@ -426,135 +641,286 @@ id_estimate <- function(idealdata=NULL,model_type=2,use_subset=FALSE,sample_it=F
   }
   
 
-    hier_type <- suppressWarnings(.get_hier_type(idealdata))
     idealdata@stanmodel <- stanmodels[['irt_standard']]
+    
+  # currently fixed at one param, can change in future versions
+    
+  nfix <- 1
    
     #Using an un-identified model with variational inference, find those parameters that would be most useful for
     #constraining/pinning to have an identified model for full Bayesian inference
   
-  num_legis <- nrow(idealdata@score_matrix)
-  num_bills <- ncol(idealdata@score_matrix)
-  legispoints <- rep(1:num_legis,times=num_bills)
-  billpoints <- rep(1:num_bills,each=num_legis)
-  timepoints <- idealdata@time[billpoints]
-  avg_particip <- rep(1,num_legis)
-  Y <- c(idealdata@score_matrix)
+  # change time IDs if non time-varying model is being fit
+  if(vary_ideal_pts=='none') {
+    idealdata@score_matrix$time_id <- 1
+    use_ar <- FALSE
+    # make sure that the covariate arrays are only one time point
+    idealdata@person_cov <- idealdata@person_cov[1,,,drop=F]
+    idealdata@group_cov <- idealdata@group_cov[1,,,drop=F]
+  } else if(vary_ideal_pts=='AR1') {
+    use_ar <- TRUE
+  } else {
+    use_ar <- FALSE
+  }
+    
+  # use either row numbers for person/legislator IDs or use group IDs (static or time-varying)
+      
+  if(use_groups==T) {
+    legispoints <- as.numeric(idealdata@score_matrix$group_id)
+    num_legis <- max(legispoints)
+    # this handles the situation in which the data is fake and only 
+    # groups are used as parameters
+    legis_pred <- idealdata@group_cov
+  } else {
+    legispoints <- as.numeric(idealdata@score_matrix$person_id)
+    num_legis <- max(legispoints)
+    legis_pred <- idealdata@person_cov
+  }
+
+  billpoints <- as.numeric(idealdata@score_matrix$item_id)
+  timepoints <- as.numeric(factor(idealdata@score_matrix$time_id))
+  max_t <- max(timepoints)
+  num_bills <- max(billpoints)
+
+  Y <- idealdata@score_matrix$outcome
   
   # check to see if we need to recode missing values from the data if the model_type doesn't handle missing data
-  if(model_type %in% c(1,3) & !is.null(idealdata@miss_val)) {
-    Y <- na_if(Y,idealdata@miss_val)
+  if(model_type %in% c(1,3,5,7,9,11,13) & !is.na(idealdata@miss_val)) {
+    Y <- .na_if(Y,idealdata@miss_val)
+  }
+  
+  # check to see if more values than there should be for the bernoulli model
+  
+  if(model_type %in% c(1,13) && length(table(Y))>2) {
+    stop('Too many values in score matrix for a binary model. Choose a different model_type.')
+  } else if(model_type %in% c(2,14) && length(table(Y))>3) {
+    stop("Too many values in score matrix for a binary model. Choose a different model_type.")
   }
 
   #Remove NA values, which should have been coded correctly in the make_idealdata function
   
-    remove_nas <- !is.na(Y)
+    remove_nas <- !is.na(Y) & !is.na(legispoints) & !is.na(billpoints) & !is.na(timepoints)
     Y <- Y[remove_nas]
+
     legispoints <- legispoints[remove_nas]
     billpoints <- billpoints[remove_nas]
     timepoints <- timepoints[remove_nas]
+    
+  if(model_type>8 && model_type < 13) {
+    N_cont <- length(Y)
+    N_int <- 1L
+    Y_cont <- as.numeric(Y)
+    Y_int <- array(1L)
+  } else {
+    N_cont <- 1L
+    N_int <- length(Y)
+    Y_cont <- array(1)
+    Y_int <- as.integer(Y)
+  }
+    
+  # set identification options
+    
+  if(length(idealdata@restrict_var)==0 && is.null(prior_fit)) {
+      if(vary_ideal_pts %in% c('none','AR1')) {
+        idealdata@restrict_var <- FALSE
+      } else {
+        idealdata@restrict_var <- TRUE
+      }
+  } else if(length(idealdata@restrict_var)>0 && !is.null(prior_fit)) {
+    # reset if a prior fit is being used for ID
+    if(!is.null(restrict_var)) {
+      idealdata@restrict_var <- restrict_var
+    } else {
+      if(vary_ideal_pts %in% c('none','AR1')) {
+        idealdata@restrict_var <- FALSE
+      } else {
+        idealdata@restrict_var <- TRUE
+      } 
+    }
+  } else if(length(idealdata@restrict_var)==0 && !is.null(restrict_var)) {
+    idealdata@restrict_var <- restrict_var
+  }
 
+  # add in restrictions if they weren't identified by VB
+    
+  if(length(idealdata@restrict_var_high)==0 && !is.null(restrict_var_high)) {
+      idealdata@restrict_var_high <- restrict_var_high
+  } else if(length(idealdata@restrict_var_high)==0 && is.null(restrict_var_high)) {
+      idealdata@restrict_var_high <- 1
+  }
+    
+  if(length(idealdata@restrict_mean_val)==0 && !is.null(restrict_mean_val)) {
+      idealdata@restrict_mean_val <- restrict_mean_val
+  } else if(length(idealdata@restrict_mean_val)==0 && is.null(restrict_mean_val)) {
+    idealdata@restrict_mean_val <- 1
+  }
+    
+  if(length(idealdata@restrict_mean_ind)==0 && !is.null(restrict_mean_ind)) {
+      idealdata@restrict_mean_ind <- restrict_mean_ind
+  } else if(length(idealdata@restrict_mean_ind)==0 && is.null(restrict_mean_ind)) {
+    idealdata@restrict_mean_ind <- 1
+  }
+    
+  if(length(idealdata@restrict_mean)>0 && vary_ideal_pts=='AR1' && !is.null(prior_fit)) {
+    
+    # reset if a prior time-varying fit is being used
+    if(is.null(restrict_mean)) {
+      idealdata@restrict_mean <- FALSE
+    } else {
+      idealdata@restrict_mean <- restrict_mean
+    }
+    
+  } else if(length(idealdata@restrict_mean)==0 && !is.null(restrict_mean)) {
+    idealdata@restrict_mean <- restrict_mean
+      
+  } else if(length(idealdata@restrict_mean)==0 && is.null(restrict_mean)) {
+    if(vary_ideal_pts %in% c('AR1','none')) {
+      idealdata@restrict_mean <- FALSE
+    } else {
+      idealdata@restrict_mean <- TRUE
+    }
+  }
+    
   this_data <- list(N=length(Y),
-                    T=max(idealdata@time),
-                    Y=Y,
-                    hier_type=hier_type,
+                    N_cont=N_cont,
+                    N_int=N_int,
+                    Y_int=Y_int,
+                    Y_cont=Y_cont,
+                    T=max_t,
                     num_legis=num_legis,
                     num_bills=num_bills,
                     ll=legispoints,
                     bb=billpoints,
-                    time=timepoints,
-                    LX=dim(idealdata@person_cov)[1],
+                    num_fix_high=as.integer(1),
+                    num_fix_low=as.integer(1),
+                    LX=dim(idealdata@person_cov)[3],
                     SRX=ncol(idealdata@item_cov),
                     SAX=ncol(idealdata@item_cov_miss),
-                    legis_pred=idealdata@person_cov,
+                    legis_pred=legis_pred,
+                    group_pred=idealdata@group_cov,
                     srx_pred=idealdata@item_cov,
                     sax_pred=idealdata@item_cov_miss,
-                    particip=avg_particip,
+                    time=timepoints,
                     model_type=model_type,
                     discrim_reg_sd=discrim_reg_sd,
                     discrim_abs_sd=discrim_miss_sd,
-                    legis_sd=person_sd,
                     diff_reg_sd=diff_reg_sd,
                     diff_abs_sd=diff_miss_sd,
+                    legis_sd=1,
                     restrict_sd=restrict_sd,
-                    restrict_low_bar=restrict_low_bar,
-                    restrict_high_bar=restrict_high_bar,
-                    restrict_alpha=restrict_alpha,
-                    restrict_beta=restrict_beta)
-  
-  idealdata <- id_model(object=idealdata,fixtype=fixtype,model_type=model_type,this_data=this_data,
-                        nfix=nfix,restrict_params=restrict_params,restrict_ind_high=restrict_ind_high,
-                        restrict_ind_low=restrict_ind_low,
-                        restrict_type=restrict_type,
-                        auto_id=auto_id,
-                        ncores=ncores)
+                    use_ar=as.integer(use_ar),
+                    diff=idealdata@diff,
+                    diff_high=idealdata@diff_high,
+                    time_sd=time_sd,
+                    ar_sd=ar_sd,
+                    restrict_var=idealdata@restrict_var,
+                    restrict_var_high=idealdata@restrict_var_high,
+                    restrict_mean=idealdata@restrict_mean,
+                    restrict_mean_val=idealdata@restrict_mean_val,
+                    restrict_mean_ind=idealdata@restrict_mean_ind,
+                    zeroes=inflate_zero)
 
-  # Now remake the data to reflect the constrained parameters
- 
-  num_legis <- nrow(idealdata@score_matrix)
-  num_bills <- ncol(idealdata@score_matrix)
-  legispoints <- rep(1:num_legis,times=num_bills)
-  billpoints <- rep(1:num_bills,each=num_legis)
-  timepoints <- idealdata@time[billpoints]
+  idealdata <- id_model(object=idealdata,fixtype=fixtype,model_type=model_type,this_data=this_data,
+                        nfix=nfix,restrict_ind_high=restrict_ind_high,
+                        restrict_ind_low=restrict_ind_low,
+                        ncores=ncores,
+                        use_groups=use_groups,
+                        prior_fit=prior_fit)
+
+  # if diff hasn't been set yet, set it
   
-  Y <- c(idealdata@score_matrix)
+  if(length(idealdata@diff_high)==0) {
+      idealdata@diff <- id_diff
+      idealdata@diff_high <- id_diff_high
+  }
+  
+  # now run an identified run
+  # repeat data formation as positions of rows/columns may have shifted
+  if(use_groups==T) {
+    legispoints <- as.numeric(idealdata@score_matrix$group_id)
+    num_legis <- max(legispoints)
+  } else {
+    legispoints <- as.numeric(idealdata@score_matrix$person_id)
+    num_legis <- max(legispoints)
+  }
+  
+  billpoints <- as.numeric(idealdata@score_matrix$item_id)
+  timepoints <- as.numeric(factor(idealdata@score_matrix$time_id))
+  max_t <- max(timepoints)
+  num_bills <- max(billpoints)
+  
+  Y <- idealdata@score_matrix$outcome
   
   # check to see if we need to recode missing values from the data if the model_type doesn't handle missing data
-  if(model_type %in% c(1,3) & !is.null(idealdata@miss_val)) {
-    Y <- na_if(Y,idealdata@miss_val)
+  if(model_type %in% c(1,3,5,7,9,11,13) & !is.na(idealdata@miss_val)) {
+    Y <- .na_if(Y,idealdata@miss_val)
   }
   
   #Remove NA values, which should have been coded correctly in the make_idealdata function
   
-  remove_nas <- !is.na(Y)
+  remove_nas <- !is.na(Y) & !is.na(legispoints) & !is.na(billpoints) & !is.na(timepoints)
   Y <- Y[remove_nas]
   legispoints <- legispoints[remove_nas]
   billpoints <- billpoints[remove_nas]
   timepoints <- timepoints[remove_nas]
-
-  pin_vals <- if(any(is.null(pin_vals))) {
-    rep(1,idealdata@restrict_num_high)
+  
+  if(model_type>8 && model_type < 13) {
+    N_cont <- length(Y)
+    N_int <- 1
+    Y_cont <- as.numeric(Y)
+    Y_int <- array(1L)
   } else {
-    pin_vals
+    N_cont <- 1
+    N_int <- length(Y)
+    Y_cont <- array(1L)
+    Y_int <- as.integer(Y)
   }
-  dim(pin_vals) <- idealdata@restrict_num_high
+  
   this_data <- list(N=length(Y),
-                    T=max(idealdata@time),
-                    Y=Y,
-                    hier_type=hier_type,
+                    N_cont=N_cont,
+                    N_int=N_int,
+                    Y_int=Y_int,
+                    Y_cont=Y_cont,
+                    T=max_t,
                     num_legis=num_legis,
                     num_bills=num_bills,
                     ll=legispoints,
                     bb=billpoints,
-                    num_fix_high=idealdata@restrict_num_high,
-                    num_fix_low=idealdata@restrict_num_low,
-                    constrain_par=idealdata@param_fix,
-                    constraint_type=idealdata@constraint_type,
-                    LX=dim(idealdata@person_cov)[1],
+                    num_fix_high=as.integer(1),
+                    num_fix_low=as.integer(1),
+                    LX=dim(idealdata@person_cov)[3],
                     SRX=ncol(idealdata@item_cov),
                     SAX=ncol(idealdata@item_cov_miss),
-                    legis_pred=idealdata@person_cov,
+                    legis_pred=legis_pred,
+                    group_pred=idealdata@group_cov,
                     srx_pred=idealdata@item_cov,
                     sax_pred=idealdata@item_cov_miss,
                     time=timepoints,
-                    particip=avg_particip,
                     model_type=model_type,
-                    pin_vals=pin_vals,
                     discrim_reg_sd=discrim_reg_sd,
                     discrim_abs_sd=discrim_miss_sd,
                     diff_reg_sd=diff_reg_sd,
                     diff_abs_sd=diff_miss_sd,
                     legis_sd=person_sd,
                     restrict_sd=restrict_sd,
-                    restrict_low_bar=restrict_low_bar,
-                    restrict_high_bar=restrict_high_bar,
-                    restrict_alpha=restrict_alpha,
-                    restrict_beta=restrict_beta)
+                    use_ar=as.integer(use_ar),
+                    diff=idealdata@diff,
+                    diff_high=idealdata@diff_high,
+                    time_sd=time_sd,
+                    ar_sd=ar_sd,
+                    restrict_var=idealdata@restrict_var,
+                    restrict_var_high=idealdata@restrict_var_high,
+                    restrict_mean_val=idealdata@restrict_mean_val,
+                    restrict_mean_ind=idealdata@restrict_mean_ind,
+                    restrict_mean=idealdata@restrict_mean,
+                    zeroes=inflate_zero)
 
   outobj <- sample_model(object=idealdata,nchains=nchains,niters=niters,warmup=warmup,ncores=ncores,
                          this_data=this_data,use_vb=use_vb,...)
   
   outobj@model_type <- model_type
-  
+  outobj@use_ar <- use_ar
+  outobj@use_groups <- use_groups
   return(outobj)
   
 }

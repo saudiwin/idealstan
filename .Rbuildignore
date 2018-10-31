@@ -1,14 +1,15 @@
-cleanup*
-^\.travis\.yml$
-^.*\.Rproj$
+^idealstan\.Rproj$
 ^\.Rproj\.user$
-^chunks$
-README*
-package_test*
-cran-comments.md
-NEWS.md
+^\.travis\.yml$
+package_test.html
+package_test.Rmd
+DE 2018.Rdata
 LICENSE.txt
-^\.DS_Store
-^\.Rmd
-bfg-1*
+delaware_example.R
+package_test.nb.html
+package_test_files
+render_vignettes.R
+vignette_output.txt
+cran-comments.md
+
 
