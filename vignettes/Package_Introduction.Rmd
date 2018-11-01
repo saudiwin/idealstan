@@ -289,7 +289,14 @@ id_plot_cov(sen_est_cov,cov_type='person_cov',
             filter_cov=c('age','party_codeR:age')) + 
   ggtitle('Effect of Age by Party on Ideal Point Scores in 114th Senate') +
   scale_y_discrete(breaks=c('age','party_codeR:age'),
-                   labels=c('Democrats','Republicans'))
+                   labels=c('Democrats','Republicans')) +
+  scale_x_continuous(breaks=c(-0.05,-0.025,0,0.025),
+                     labels=c('More\nConservative',
+                              '-0.025',
+                              '0',
+                              'More\nLiberal'),
+                     limits=c(-0.07,0.04))
+
 ```
 
 Because these covariates are on the ideal point scale, the meaning of the scale in terms of party ideology must be kept in mind in order to interpret the plot. First, because we only have estimates for the "I" and "R" values of `party_code`, we know that the Democrats "D" are being used as the reference value. As a consequence, the coefficient for `age` is equal to the effect of age for Democrats (i.e., when the person is neither Republican or Independent). As a result, a negative value for age for Democrats corresponds to more liberalism as they are on the negative side of the scale, while a positive value for age for Republicans implies more conservatism (and vice versa). Keeping the direction of the scale in mind is crucial for understanding hierarchical covariates in ideal point models.

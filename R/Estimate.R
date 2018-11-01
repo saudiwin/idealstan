@@ -671,10 +671,12 @@ id_estimate <- function(idealdata=NULL,model_type=2,
     # this handles the situation in which the data is fake and only 
     # groups are used as parameters
     legis_pred <- idealdata@group_cov
+    lx <- dim(idealdata@group_cov)[3]
   } else {
     legispoints <- as.numeric(idealdata@score_matrix$person_id)
     num_legis <- max(legispoints)
     legis_pred <- idealdata@person_cov
+    lx <- dim(idealdata@person_cov)[3]
   }
 
   billpoints <- as.numeric(idealdata@score_matrix$item_id)
@@ -793,7 +795,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     bb=billpoints,
                     num_fix_high=as.integer(1),
                     num_fix_low=as.integer(1),
-                    LX=dim(idealdata@person_cov)[3],
+                    LX=lx,
                     SRX=ncol(idealdata@item_cov),
                     SAX=ncol(idealdata@item_cov_miss),
                     legis_pred=legis_pred,
@@ -839,9 +841,11 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   if(use_groups==T) {
     legispoints <- as.numeric(idealdata@score_matrix$group_id)
     num_legis <- max(legispoints)
+    lx <- dim(idealdata@group_cov)[3]
   } else {
     legispoints <- as.numeric(idealdata@score_matrix$person_id)
     num_legis <- max(legispoints)
+    lx <- dim(idealdata@person_cov)[3]
   }
   
   billpoints <- as.numeric(idealdata@score_matrix$item_id)
@@ -888,7 +892,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     bb=billpoints,
                     num_fix_high=as.integer(1),
                     num_fix_low=as.integer(1),
-                    LX=dim(idealdata@person_cov)[3],
+                    LX=lx,
                     SRX=ncol(idealdata@item_cov),
                     SAX=ncol(idealdata@item_cov_miss),
                     legis_pred=legis_pred,
