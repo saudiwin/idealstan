@@ -681,8 +681,8 @@ id_estimate <- function(idealdata=NULL,model_type=2,
 
   billpoints <- as.numeric(idealdata@score_matrix$item_id)
   timepoints <- as.numeric(factor(idealdata@score_matrix$time_id))
-  max_t <- max(timepoints)
-  num_bills <- max(billpoints)
+  max_t <- max(timepoints,na.rm=T)
+  num_bills <- max(billpoints,na.rm=T)
 
   Y <- idealdata@score_matrix$outcome
   
@@ -850,8 +850,8 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   
   billpoints <- as.numeric(idealdata@score_matrix$item_id)
   timepoints <- as.numeric(factor(idealdata@score_matrix$time_id))
-  max_t <- max(timepoints)
-  num_bills <- max(billpoints)
+  max_t <- max(timepoints,na.rm=T)
+  num_bills <- max(billpoints,na.rm=T)
   
   Y <- idealdata@score_matrix$outcome
   
