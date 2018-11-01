@@ -882,9 +882,10 @@ id_plot_rhats <- function(obj) {
 #' column names otherwise. 
 #' 
 #' @param object A fitted \code{idealstan} object
-#' @param cov_type Either 'person_cov' for person-level hierarchical parameters,
-#' 'discrim_reg_cov' for bill/item discrimination parameters from regular (non-inflated) model, and 
-#' 'discrim_infl_cov' for bill/item discrimination parameters from inflated model.
+#' @param cov_type Either \code{'person_cov'} for person-level hierarchical parameters,
+#' \code{'group_cov'} for group-level hierarchical parameters,
+#' \code{'discrim_reg_cov'} for bill/item discrimination parameters from regular (non-inflated) model, and 
+#' \code{'discrim_infl_cov'} for bill/item discrimination parameters from inflated model.
 #' @param filter_cov A character vector of coefficients from covariate plots to exclude from
 #' plotting (should be the names of coefficients as they appear in the plots)
 #' @param ... Any additional parameters passed on to \code{\link[bayesplot]{mcmc_intervals}}
@@ -902,8 +903,13 @@ id_plot_cov <- function(object,
   to_plot <- as.array(object@stan_samples,
                    pars=param_name)
   
+  if(object@use_groups && cov_type=='person_cov') {
+    cov_type <- 'group_cov'
+  }
+  
   # reset names of parameters
   new_names <- switch(cov_type,person_cov=attributes(object@score_data@person_cov)$dimnames$colnames,
+                      group_cov=attributes(object@score_data@group_cov)$dimnames$colnames,
                       discrim_reg=attributes(object@score_data@item_cov)$dimnames$colnames,
                       discrim_abs=attributes(object@score_data@item_cov_miss)$dimnames$colnames)
 
