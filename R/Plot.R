@@ -324,7 +324,7 @@ id_plot_legis <- function(object,return_data=FALSE,
 #'  seed=84520)
 #' # We plot the variances for all the Senators
 #' 
-#' id_plot_legis_var(senate114_fit,item_plot=5)
+#' id_plot_legis_var(senate114_fit)
 #' }
 id_plot_legis_var <- function(object,return_data=FALSE,
                               include=NULL,
@@ -343,9 +343,16 @@ id_plot_legis_var <- function(object,return_data=FALSE,
                                        low_limit=low_limit,
                                        type='variance')
   
+  if(object@use_groups) {
+    person_params$person_id <- person_params$group_id 
+    person_params <- person_params %>% distinct
+  }
+  
   if(!is.null(include)) {
     person_params <- filter(person_params, person_id %in% include)
   }
+  
+
   
   # Default plot: group names plotted as points
   

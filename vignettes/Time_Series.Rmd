@@ -130,7 +130,7 @@ sen_est <- id_estimate(senate_data,
                  restrict_ind_low="BARRASSO, John A.",
             seed=84520)
 
-id_plot_legis_dyn(sen_est,use_ci = F)
+id_plot_legis_dyn(sen_est,use_ci = F) + ggtitle('Time-Varying Ideal Points of 114th U.S. Senate',subtitle='Ideal Points Vary with Random-Walk Process')
 ```
 
 We now see slightly more movement. Republicans as a whole have moved slightly farther away from Democrats. Elizabeth Warren appears to move more, but we constrained her first time point so that may indicate why she moved over time. 
@@ -138,7 +138,7 @@ We now see slightly more movement. Republicans as a whole have moved slightly fa
 We can also look at the variance of the ideal points to see which of the Senators had the highest variance in their ideal points:
 
 ```{r rw_var_est,fig.height=8}
-id_plot_legis_var(sen_est)
+id_plot_legis_var(sen_est) + ggtitle('Variances of Time-Varying Ideal Points in 114th U.S. Senate',subtitle='Higher Variances Indicate Less Stable Ideal Points')
 ```
 
 We can access the actual estimates of the variances by passing the `return_data=TRUE` option to the plot function:
