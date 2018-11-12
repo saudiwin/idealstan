@@ -130,6 +130,10 @@
     ideal_pts_mean <- rstan::extract(post_modes,'L_tp1')[[1]] %>% apply(3,mean) %>% .[new_order]
     sign_match <- sign(ideal_pts_low) == sign(ideal_pts_high)
     constrain_mean <- which(sign_match)
+    # need to select the largest single one if no confidence intervals that don't cross zero
+    if(length(constrain_mean)==0) {
+      constrain_mean <- which(ideal_pts_mean==min(ideal_pts_mean))
+    }
     if(length(constrain_mean)>1) {
       constrain_mean <- constrain_mean[abs(ideal_pts_mean[constrain_mean])==max(abs(ideal_pts_mean[constrain_mean]))]
     }
