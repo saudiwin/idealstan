@@ -722,7 +722,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
     
   # set identification options
     
-  if(length(idealdata@restrict_var)==0 && is.null(prior_fit)) {
+  if(length(idealdata@restrict_var)==0 && is.null(prior_fit) && is.null(restrict_var)) {
       if(vary_ideal_pts %in% c('none','AR1')) {
         idealdata@restrict_var <- FALSE
       } else {
