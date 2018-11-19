@@ -565,7 +565,12 @@ id_plot_legis_dyn <- function(object,return_data=FALSE,
   }
   
   if(!is.null(include)) {
-    person_params <- filter(person_params, person_id %in% include)
+    if(object@use_groups) {
+      person_params <- filter(person_params, group_id %in% include)
+    } else {
+      person_params <- filter(person_params, person_id %in% include)
+    }
+    
   }
   
   if(object@use_groups) {
