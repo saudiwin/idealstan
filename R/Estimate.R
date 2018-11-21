@@ -315,7 +315,7 @@ id_make <- function(score_data=NULL,
     } else {
       # variable does not need to be recoded, only move missing to the end
       score_rename$outcome <- factor(score_rename$outcome)
-      score_rename$outcome <- fct_relevel(score_rename$outcome,miss_val,after=Inf)
+      score_rename$outcome <- fct_relevel(score_rename$outcome,as.character(miss_val),after=Inf)
     }
   } 
 

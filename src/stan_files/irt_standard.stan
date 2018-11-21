@@ -97,7 +97,7 @@ if(restrict_var==1) {
 
 parameters {
   vector[num_bills] sigma_abs_free;
-  vector[num_legis - 2] L_free; // first T=1 params to constrain
+  vector[num_legis - num_constrain_l] L_free; // first T=1 params to constrain
   vector[num_ls] ls_int; // extra intercepts for non-inflated latent space
   vector[num_legis] L_tp1_var[T-1]; // non-centered variance
   vector<lower=-.99,upper=.99>[num_legis-1] L_AR1_free; // AR-1 parameters for AR-1 model
