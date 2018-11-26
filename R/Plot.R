@@ -632,7 +632,8 @@ id_plot_legis_dyn <- function(object,return_data=FALSE,
       outplot <- outplot + 
         geom_line(aes_(y=~median_pt),
                   alpha=person_ci_alpha,
-                  size=line_size)
+                  size=line_size,
+                  group=base_id)
     }
   }
   

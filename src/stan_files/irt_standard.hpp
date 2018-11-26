@@ -1133,8 +1133,8 @@ public:
             validate_non_negative_index("sigma_abs_free", "num_bills", num_bills);
             num_params_r__ += num_bills;
             current_statement_begin__ = 344;
-            validate_non_negative_index("L_free", "(num_legis - 2)", (num_legis - 2));
-            num_params_r__ += (num_legis - 2);
+            validate_non_negative_index("L_free", "(num_legis - num_constrain_l)", (num_legis - num_constrain_l));
+            num_params_r__ += (num_legis - num_constrain_l);
             current_statement_begin__ = 345;
             validate_non_negative_index("ls_int", "num_ls", num_ls);
             num_params_r__ += num_ls;
@@ -1222,10 +1222,10 @@ public:
             throw std::runtime_error("variable L_free missing");
         vals_r__ = context__.vals_r("L_free");
         pos__ = 0U;
-        validate_non_negative_index("L_free", "(num_legis - 2)", (num_legis - 2));
-        context__.validate_dims("initialization", "L_free", "vector_d", context__.to_vec((num_legis - 2)));
-        vector_d L_free(static_cast<Eigen::VectorXd::Index>((num_legis - 2)));
-        for (int j1__ = 0U; j1__ < (num_legis - 2); ++j1__)
+        validate_non_negative_index("L_free", "(num_legis - num_constrain_l)", (num_legis - num_constrain_l));
+        context__.validate_dims("initialization", "L_free", "vector_d", context__.to_vec((num_legis - num_constrain_l)));
+        vector_d L_free(static_cast<Eigen::VectorXd::Index>((num_legis - num_constrain_l)));
+        for (int j1__ = 0U; j1__ < (num_legis - num_constrain_l); ++j1__)
             L_free(j1__) = vals_r__[pos__++];
         try {
             writer__.vector_unconstrain(L_free);
@@ -1518,9 +1518,9 @@ public:
             Eigen::Matrix<local_scalar_t__,Eigen::Dynamic,1>  L_free;
             (void) L_free;  // dummy to suppress unused var warning
             if (jacobian__)
-                L_free = in__.vector_constrain((num_legis - 2),lp__);
+                L_free = in__.vector_constrain((num_legis - num_constrain_l),lp__);
             else
-                L_free = in__.vector_constrain((num_legis - 2));
+                L_free = in__.vector_constrain((num_legis - num_constrain_l));
 
             Eigen::Matrix<local_scalar_t__,Eigen::Dynamic,1>  ls_int;
             (void) ls_int;  // dummy to suppress unused var warning
@@ -2462,7 +2462,7 @@ public:
         dims__.push_back(num_bills);
         dimss__.push_back(dims__);
         dims__.resize(0);
-        dims__.push_back((num_legis - 2));
+        dims__.push_back((num_legis - num_constrain_l));
         dimss__.push_back(dims__);
         dims__.resize(0);
         dims__.push_back(num_ls);
@@ -2543,7 +2543,7 @@ public:
         (void) function__;  // dummy to suppress unused var warning
         // read-transform, write parameters
         vector_d sigma_abs_free = in__.vector_constrain(num_bills);
-        vector_d L_free = in__.vector_constrain((num_legis - 2));
+        vector_d L_free = in__.vector_constrain((num_legis - num_constrain_l));
         vector_d ls_int = in__.vector_constrain(num_ls);
         vector<vector_d> L_tp1_var;
         size_t dim_L_tp1_var_0__ = (T - 1);
@@ -2571,7 +2571,7 @@ public:
             for (int k_0__ = 0; k_0__ < num_bills; ++k_0__) {
             vars__.push_back(sigma_abs_free[k_0__]);
             }
-            for (int k_0__ = 0; k_0__ < (num_legis - 2); ++k_0__) {
+            for (int k_0__ = 0; k_0__ < (num_legis - num_constrain_l); ++k_0__) {
             vars__.push_back(L_free[k_0__]);
             }
             for (int k_0__ = 0; k_0__ < num_ls; ++k_0__) {
@@ -2854,7 +2854,7 @@ public:
             param_name_stream__ << "sigma_abs_free" << '.' << k_0__;
             param_names__.push_back(param_name_stream__.str());
         }
-        for (int k_0__ = 1; k_0__ <= (num_legis - 2); ++k_0__) {
+        for (int k_0__ = 1; k_0__ <= (num_legis - num_constrain_l); ++k_0__) {
             param_name_stream__.str(std::string());
             param_name_stream__ << "L_free" << '.' << k_0__;
             param_names__.push_back(param_name_stream__.str());
@@ -2981,7 +2981,7 @@ public:
             param_name_stream__ << "sigma_abs_free" << '.' << k_0__;
             param_names__.push_back(param_name_stream__.str());
         }
-        for (int k_0__ = 1; k_0__ <= (num_legis - 2); ++k_0__) {
+        for (int k_0__ = 1; k_0__ <= (num_legis - num_constrain_l); ++k_0__) {
             param_name_stream__.str(std::string());
             param_name_stream__ << "L_free" << '.' << k_0__;
             param_names__.push_back(param_name_stream__.str());
