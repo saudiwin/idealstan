@@ -51,7 +51,7 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
                                                                 type='predict',
                                                                 sample_scores=NULL,...) {
   #all_params <- rstan::extract(object@stan_samples)
-  browser()
+
   n_votes <- nrow(object@score_data@score_matrix)
   
   if(object@stan_samples@stan_args[[1]]$method != 'variational') {
@@ -91,7 +91,7 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
   }
 
   bill_points <- as.numeric(object@score_data@score_matrix$item_id)[this_sample]
-  time_points <- as.numeric(object@score_data@score_matrix$time_id)[this_sample]
+  time_points <- as.numeric(factor(object@score_data@score_matrix$time_id))[this_sample]
   
   remove_nas <- !is.na(y) & !is.na(person_points) & !is.na(bill_points) & !is.na(time_points)
   y <- y[remove_nas]
