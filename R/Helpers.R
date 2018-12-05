@@ -639,7 +639,13 @@
     
     to_array <- lapply(split(to_spread,pull(to_spread,!!third_dim_var)), function(this_data) {
       # spread and stuff into a list
-      spread_it <- spread(this_data,key=!!col_var_name,value=!!col_var_value) %>% 
+      spread_it <- try(spread(this_data,key=!!col_var_name,value=!!col_var_value))
+      if('try-error' %in% class(spread_it)) {
+        print('Failed to find unique covariate values for dataset:')
+        print(this_data)
+        stop()
+      }
+      spread_it <- spread_it %>% 
         select(-!!row_var,-!!third_dim_var) %>% as.matrix
       row.names(spread_it) <- unique(pull(this_data,!!row_var))
       return(spread_it)
