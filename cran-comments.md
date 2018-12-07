@@ -1,25 +1,15 @@
 ## Test environments
 * ubuntu 14.04 (on travis-ci), R devel and release
 * mac os x sierra (on travis-ci), R release
-* win-builder, R release
+* win-builder, R devel
 
 ## R CMD check results
-There were no ERRORs or WARNINGs. 
-
-* checking CRAN incoming feasibility ... NOTE
-Maintainer: 'Robert Kubinec <rmk7@nyu.edu>'
-
-New maintainer:
-  Robert Kubinec <rmk7@nyu.edu>
-Old maintainer(s):
-  Robert Kubinec <rmk7xy@virginia.edu>
-
-Explanation: I am keeping my contact information up to date.
+There were no ERRORs or WARNINGs. 2 NOTEs:
 
 * checking installed package size ... NOTE
-  installed size is  7.3Mb
+  installed size is  5.5Mb
   sub-directories of 1Mb or more:
-    libs   5.9Mb
+    libs   4.1Mb
     
 Explanation: This package has a large installed library because it uses the Stan MCMC engine as a backend, and it comes with pre-compiled C++ modules that are loaded into Stan through the package `rstan`. As a result, the libraries are large, but the actual R code in the package is relatively small. 
 

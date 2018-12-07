@@ -130,6 +130,10 @@
     ideal_pts_mean <- rstan::extract(post_modes,'L_tp1')[[1]] %>% apply(3,mean) %>% .[new_order]
     sign_match <- sign(ideal_pts_low) == sign(ideal_pts_high)
     constrain_mean <- which(sign_match)
+    # need to select the largest single one if no confidence intervals that don't cross zero
+    if(length(constrain_mean)==0) {
+      constrain_mean <- which(ideal_pts_mean==min(ideal_pts_mean))
+    }
     if(length(constrain_mean)>1) {
       constrain_mean <- constrain_mean[abs(ideal_pts_mean[constrain_mean])==max(abs(ideal_pts_mean[constrain_mean]))]
     }
@@ -635,7 +639,13 @@
     
     to_array <- lapply(split(to_spread,pull(to_spread,!!third_dim_var)), function(this_data) {
       # spread and stuff into a list
-      spread_it <- spread(this_data,key=!!col_var_name,value=!!col_var_value) %>% 
+      spread_it <- try(spread(this_data,key=!!col_var_name,value=!!col_var_value))
+      if('try-error' %in% class(spread_it)) {
+        print('Failed to find unique covariate values for dataset:')
+        print(this_data)
+        stop()
+      }
+      spread_it <- spread_it %>% 
         select(-!!row_var,-!!third_dim_var) %>% as.matrix
       row.names(spread_it) <- unique(pull(this_data,!!row_var))
       return(spread_it)

@@ -315,7 +315,7 @@ id_make <- function(score_data=NULL,
     } else {
       # variable does not need to be recoded, only move missing to the end
       score_rename$outcome <- factor(score_rename$outcome)
-      score_rename$outcome <- fct_relevel(score_rename$outcome,miss_val,after=Inf)
+      score_rename$outcome <- fct_relevel(score_rename$outcome,as.character(miss_val),after=Inf)
     }
   } 
 
@@ -671,16 +671,18 @@ id_estimate <- function(idealdata=NULL,model_type=2,
     # this handles the situation in which the data is fake and only 
     # groups are used as parameters
     legis_pred <- idealdata@group_cov
+    lx <- dim(idealdata@group_cov)[3]
   } else {
     legispoints <- as.numeric(idealdata@score_matrix$person_id)
     num_legis <- max(legispoints)
     legis_pred <- idealdata@person_cov
+    lx <- dim(idealdata@person_cov)[3]
   }
 
   billpoints <- as.numeric(idealdata@score_matrix$item_id)
   timepoints <- as.numeric(factor(idealdata@score_matrix$time_id))
-  max_t <- max(timepoints)
-  num_bills <- max(billpoints)
+  max_t <- max(timepoints,na.rm=T)
+  num_bills <- max(billpoints,na.rm=T)
 
   Y <- idealdata@score_matrix$outcome
   
@@ -720,7 +722,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
     
   # set identification options
     
-  if(length(idealdata@restrict_var)==0 && is.null(prior_fit)) {
+  if(length(idealdata@restrict_var)==0 && is.null(prior_fit) && is.null(restrict_var)) {
       if(vary_ideal_pts %in% c('none','AR1')) {
         idealdata@restrict_var <- FALSE
       } else {
@@ -793,7 +795,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     bb=billpoints,
                     num_fix_high=as.integer(1),
                     num_fix_low=as.integer(1),
-                    LX=dim(idealdata@person_cov)[3],
+                    LX=lx,
                     SRX=ncol(idealdata@item_cov),
                     SAX=ncol(idealdata@item_cov_miss),
                     legis_pred=legis_pred,
@@ -839,15 +841,17 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   if(use_groups==T) {
     legispoints <- as.numeric(idealdata@score_matrix$group_id)
     num_legis <- max(legispoints)
+    lx <- dim(idealdata@group_cov)[3]
   } else {
     legispoints <- as.numeric(idealdata@score_matrix$person_id)
     num_legis <- max(legispoints)
+    lx <- dim(idealdata@person_cov)[3]
   }
   
   billpoints <- as.numeric(idealdata@score_matrix$item_id)
   timepoints <- as.numeric(factor(idealdata@score_matrix$time_id))
-  max_t <- max(timepoints)
-  num_bills <- max(billpoints)
+  max_t <- max(timepoints,na.rm=T)
+  num_bills <- max(billpoints,na.rm=T)
   
   Y <- idealdata@score_matrix$outcome
   
@@ -888,7 +892,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     bb=billpoints,
                     num_fix_high=as.integer(1),
                     num_fix_low=as.integer(1),
-                    LX=dim(idealdata@person_cov)[3],
+                    LX=lx,
                     SRX=ncol(idealdata@item_cov),
                     SAX=ncol(idealdata@item_cov_miss),
                     legis_pred=legis_pred,

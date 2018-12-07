@@ -90,9 +90,6 @@ parameters {
   vector[LX] legis_x;
   vector[SRX] sigma_reg_x;
   vector[SAX] sigma_abs_x;
-  vector[LX] legis_x_cons;
-  vector[SRX] sigma_reg_x_cons;
-  vector[SAX] sigma_abs_x_cons;
   ordered[m_step-1] steps_votes;
   ordered[m_step-1] steps_votes_grm[num_bills];
   vector[num_bills] B_int_free;
@@ -146,9 +143,6 @@ model {
   legis_x ~ normal(0,5);
   sigma_reg_x ~ normal(srx_pred[num_bills, ] * sigma_reg_x,5);
   sigma_abs_x ~ normal(sax_pred[num_bills, ] * sigma_abs_x,5);
-  legis_x_cons ~ normal(0,5);;
-  sigma_reg_x_cons ~ normal(0,5);
-  sigma_abs_x_cons ~ normal(0,5);
   L_AR1 ~ normal(0,ar_sd); // these parameters shouldn't get too big
   ls_int ~ normal(0,legis_sd);
   extra_sd ~ exponential(1);

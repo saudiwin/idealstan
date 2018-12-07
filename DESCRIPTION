@@ -1,8 +1,8 @@
 Package: idealstan
 Type: Package
 Title: Generalized IRT Ideal Point Models with 'Stan'
-Version: 0.5.0
-Date: 2018-10-27
+Version: 0.5.1
+Date: 2018-11-26
 Authors@R: c(person("Robert","Kubinec", role = c("aut","cre"),
                      email = "rmk7@nyu.edu"),
               person("Jonah", "Gabry", role = "ctb"),
@@ -16,7 +16,7 @@ Depends:
     R (>= 3.4.0),
     Rcpp (>= 0.12.18)
 Imports: 
-    rstan (>= 2.18.1),
+    rstan (>= 2.18.2),
     rstantools (>= 1.5.1),
     dplyr,
     tidyr,
@@ -36,7 +36,7 @@ Suggests:
     R.rsp
 LinkingTo: 
     StanHeaders (>= 2.18.0), 
-    rstan (>= 2.18.1), 
+    rstan (>= 2.18.2), 
     BH (>= 1.66), 
     Rcpp (>= 0.12.7), 
     RcppEigen (>= 0.3.2.9.0)

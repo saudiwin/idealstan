@@ -324,7 +324,7 @@ id_plot_legis <- function(object,return_data=FALSE,
 #'  seed=84520)
 #' # We plot the variances for all the Senators
 #' 
-#' id_plot_legis_var(senate114_fit,item_plot=5)
+#' id_plot_legis_var(senate114_fit)
 #' }
 id_plot_legis_var <- function(object,return_data=FALSE,
                               include=NULL,
@@ -343,9 +343,16 @@ id_plot_legis_var <- function(object,return_data=FALSE,
                                        low_limit=low_limit,
                                        type='variance')
   
+  if(object@use_groups) {
+    person_params$person_id <- person_params$group_id 
+    person_params <- person_params %>% distinct
+  }
+  
   if(!is.null(include)) {
     person_params <- filter(person_params, person_id %in% include)
   }
+  
+
   
   # Default plot: group names plotted as points
   
@@ -558,7 +565,12 @@ id_plot_legis_dyn <- function(object,return_data=FALSE,
   }
   
   if(!is.null(include)) {
-    person_params <- filter(person_params, person_id %in% include)
+    if(object@use_groups) {
+      person_params <- filter(person_params, group_id %in% include)
+    } else {
+      person_params <- filter(person_params, person_id %in% include)
+    }
+    
   }
   
   if(object@use_groups) {
@@ -618,7 +630,7 @@ id_plot_legis_dyn <- function(object,return_data=FALSE,
     } else {
       
       outplot <- outplot + 
-        geom_line(aes_(y=~median_pt),
+        geom_line(aes_(y=~median_pt,group=base_id),
                   alpha=person_ci_alpha,
                   size=line_size)
     }
@@ -882,9 +894,10 @@ id_plot_rhats <- function(obj) {
 #' column names otherwise. 
 #' 
 #' @param object A fitted \code{idealstan} object
-#' @param cov_type Either 'person_cov' for person-level hierarchical parameters,
-#' 'discrim_reg_cov' for bill/item discrimination parameters from regular (non-inflated) model, and 
-#' 'discrim_infl_cov' for bill/item discrimination parameters from inflated model.
+#' @param cov_type Either \code{'person_cov'} for person-level hierarchical parameters,
+#' \code{'group_cov'} for group-level hierarchical parameters,
+#' \code{'discrim_reg_cov'} for bill/item discrimination parameters from regular (non-inflated) model, and 
+#' \code{'discrim_infl_cov'} for bill/item discrimination parameters from inflated model.
 #' @param filter_cov A character vector of coefficients from covariate plots to exclude from
 #' plotting (should be the names of coefficients as they appear in the plots)
 #' @param ... Any additional parameters passed on to \code{\link[bayesplot]{mcmc_intervals}}
@@ -902,8 +915,13 @@ id_plot_cov <- function(object,
   to_plot <- as.array(object@stan_samples,
                    pars=param_name)
   
+  if(object@use_groups && cov_type=='person_cov') {
+    cov_type <- 'group_cov'
+  }
+  
   # reset names of parameters
   new_names <- switch(cov_type,person_cov=attributes(object@score_data@person_cov)$dimnames$colnames,
+                      group_cov=attributes(object@score_data@group_cov)$dimnames$colnames,
                       discrim_reg=attributes(object@score_data@item_cov)$dimnames$colnames,
                       discrim_abs=attributes(object@score_data@item_cov_miss)$dimnames$colnames)
 

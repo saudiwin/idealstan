@@ -51,9 +51,16 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
                                                                 type='predict',
                                                                 sample_scores=NULL,...) {
   #all_params <- rstan::extract(object@stan_samples)
-  
+
   n_votes <- nrow(object@score_data@score_matrix)
-  n_iters <- (object@stan_samples@stan_args[[1]]$iter-object@stan_samples@stan_args[[1]]$warmup)*length(object@stan_samples@stan_args)
+  
+  if(object@stan_samples@stan_args[[1]]$method != 'variational') {
+    n_iters <- (object@stan_samples@stan_args[[1]]$iter-object@stan_samples@stan_args[[1]]$warmup)*length(object@stan_samples@stan_args)
+  } else {
+    # there is no warmup for VB
+    n_iters <- dim(object@stan_samples)[1]
+  }
+
   if(!is.null(sample_scores) && type!='log_lik') {
     this_sample <- sample(1:n_votes,sample_scores)
   } else {
@@ -84,7 +91,7 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
   }
 
   bill_points <- as.numeric(object@score_data@score_matrix$item_id)[this_sample]
-  time_points <- as.numeric(object@score_data@score_matrix$time_id)[this_sample]
+  time_points <- as.numeric(factor(object@score_data@score_matrix$time_id))[this_sample]
   
   remove_nas <- !is.na(y) & !is.na(person_points) & !is.na(bill_points) & !is.na(time_points)
   y <- y[remove_nas]
