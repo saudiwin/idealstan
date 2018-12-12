@@ -6,7 +6,11 @@ require(ggplot2)
 require(forcats)
 # classic ARMA stan model:
 
+<<<<<<< HEAD
 num_person <- 20
+=======
+num_person <- 25
+>>>>>>> c8693ce5c2be08311250599e4a6fa2427bd82f0b
 num_bills <- 100
 alpha_int <- rnorm(num_person)
 sigma <- 0.1
@@ -69,13 +73,34 @@ Y <- rstan::extract(simu_fit)$f[1,,]
 require(tidyr)
 require(stringr)
 
-y_plot <- as_data_frame(Y) %>% mutate(person=1:n()) %>% 
-  gather(key=time,value=estimate,-person) %>% 
+y_plot <- as_data_frame(Y) %>% mutate(person=1:n(),
+                                      alpha_true=alpha_true,
+                                      rho_true=rho_true) %>% 
+  gather(key=time,value=estimate,-person,-alpha_true,-rho_true) %>% 
   mutate(time=as.numeric(str_extract(time,'[0-9]+')))
 
 y_plot %>% 
   ggplot(aes(y=estimate,x=time)) +
-  geom_line(aes(group=person),alpha=0.5) +
+  geom_line(aes(colour=alpha_true,group=person,size=alpha_true),alpha=0.5) +
+  theme(panel.grid = element_blank(),
+        panel.background = element_blank())
+
+y_plot %>% 
+  ggplot(aes(y=estimate,x=time)) +
+  geom_line(aes(colour=rho_true,group=person,size=rho_true),alpha=0.5) +
+  theme(panel.grid = element_blank(),
+        panel.background = element_blank())
+
+# see how these variables correlate with mean and SD
+
+y_plot %>% 
+  group_by(person) %>% 
+  summarize(mean_p=mean(estimate),
+            sd_p=sd(estimate),
+            rho_true=rho_true[1],
+            alpha_true=alpha_true[1]) %>% 
+  ggplot(aes(y=alpha_true,x=rho_true)) +
+    geom_point(aes(colour=mean_p,size=sd_p),alpha=0.5) +
   theme(panel.grid = element_blank(),
         panel.background = element_blank())
 
@@ -209,12 +234,16 @@ outcome[n] ~ bernoulli_logit(discrim[bb[n]] * (Y[tt[n],ll[n]]) - diff[bb[n]]);
 
 to_stan <- stan_model(model_code = stan_code)
 
+<<<<<<< HEAD
 # find the item to constrain
 
 all_means <- apply(Y,1,mean)
 restrict_mean_ind <- which(all_means==max(all_means))
 
 run_ar1 <- sampling(to_stan,data=list(N=length(outcome),
+=======
+run_ar1 <- vb(to_stan,data=list(N=length(outcome),
+>>>>>>> c8693ce5c2be08311250599e4a6fa2427bd82f0b
                                       L=nrow(Y),
                                       B=num_bills,
                                       restrict_mean_ind=restrict_mean_ind,
@@ -227,48 +256,28 @@ run_ar1 <- sampling(to_stan,data=list(N=length(outcome),
                                       id_diff=sort.int(alpha_int,index.return = T,decreasing = T)$x[1] -
                                         sort.int(alpha_int,index.return = T,decreasing = F)$x[1],
                                       id_diff_high=sort.int(alpha_int,index.return = T,decreasing = T)$x[1]),
-                cores=3,iter=1000,chains=3)
+              tol_rel_obj=1e-4)
 
 
 
-print(run_ar1)
+print(run_ar1,pars='m_sd')
 
-all_res <- summary(run_ar1)
+# get estimates for y 
 
-alpha <- all_res$summary[grepl(x=row.names(all_res$summary),
-                               pattern='alpha\\['),
-                         'mean']
+y_est <- summary(run_ar1,pars='Y')$summary[,'mean']
+y_est <- matrix(y_est,nrow=25)
 
-alpha <- alpha[c(1:(restrict_high-1),num_person,(restrict_high):(num_person-1))]
-cor(alpha,alpha_int)
-adj_in_est <- all_res$summary[grepl(x=row.names(all_res$summary),
-                                    pattern='adj_in\\['),
-                              'mean']
-adj_in_est <- adj_in_est[c(1:(restrict_high-1),num_person,(restrict_high):(num_person-1))]
-cor(adj_in_est,adj_in)
-Y_est <- all_res$summary[grepl(x=row.names(all_res$summary),
-                               pattern='Y\\['),
-                         'mean']
+cor(c(y_est),c(Y))
 
-cor(Y_est,c(Y[c(1:(restrict_high-1),num_person,(restrict_high):(num_person-1)),]))
+plot_data <- data_frame(y_est=c(y_est),
+                        y=c(Y),
+                        time=rep(1:t,times=num_person),
+                        person=rep(1:num_person,each=t)) %>% 
+  gather(est_type,estimate,-time,-person)
 
-# now try a random walk model
-
-alpha_int <- -1.25
-sigma <- 0.1
-adj_in <- 1
-
-t <- 20
-
-
-Y <-  .gen_ts_data(t=t,
-                   adj_in=adj_in,
-                   alpha_int=alpha_int,
-                   sigma=sigma,
-                   init_sides=0)
-
-
-to_stan <- stan_model(model_code = stan_code)
-
-run_rw <- sampling(to_stan,data=list(N=length(Y$t_11),
-                                     Y=Y$t_11))
+plot_data %>% 
+  ggplot(aes(y=estimate,x=time)) +
+  geom_line(aes(colour=est_type,group=person),alpha=0.5) +
+  facet_wrap(~est_type) +
+  theme(panel.grid = element_blank(),
+        panel.background = element_blank())
