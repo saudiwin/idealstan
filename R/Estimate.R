@@ -445,9 +445,10 @@ id_make <- function(score_data=NULL,
 #' \code{TRUE} will fit a traditional zero-inflated model. To use correctly, the value for 
 #' zero must be passed as the \code{miss_val} option to \code{\link{id_make}} before
 #' running a model so that zeroes are coded as missing data.
-#' @param vary_ideal_pts Default \code{'none'}. If \code{'random_walk'} or \code{'AR1'}, a 
-#' time-varying ideal point model will be fit with either a random-walk process or an 
-#' AR1 process. See documentation for more info.
+#' @param vary_ideal_pts Default \code{'none'}. If \code{'random_walk'}, \code{'AR1'} or 
+#' \code{'gp'}, a 
+#' time-varying ideal point model will be fit with either a random-walk process, an 
+#' AR1 process or a Gaussian process. See documentation for more info.
 #' @param use_subset Whether a subset of the legislators/persons should be used instead of the full response matrix
 #' @param sample_it Whether or not to use a random subsample of the response matrix. Useful for testing.
 #' @param subset_group If person/legislative data was included in the \code{\link{id_make}} function, then you can subset by
@@ -653,15 +654,16 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   # change time IDs if non time-varying model is being fit
   if(vary_ideal_pts=='none') {
     idealdata@score_matrix$time_id <- 1
-    use_ar <- FALSE
     # make sure that the covariate arrays are only one time point
     idealdata@person_cov <- idealdata@person_cov[1,,,drop=F]
     idealdata@group_cov <- idealdata@group_cov[1,,,drop=F]
-  } else if(vary_ideal_pts=='AR1') {
-    use_ar <- TRUE
-  } else {
-    use_ar <- FALSE
-  }
+  } 
+  
+  vary_ideal_pts <- switch(vary_ideal_points,
+                           none=1,
+                           random_walk=2,
+                           AR1=3,
+                           gp=4)
     
   # use either row numbers for person/legislator IDs or use group IDs (static or time-varying)
       
@@ -723,7 +725,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   # set identification options
     
   if(length(idealdata@restrict_var)==0 && is.null(prior_fit) && is.null(restrict_var)) {
-      if(vary_ideal_pts %in% c('none','AR1')) {
+      if(vary_ideal_pts %in% c(1,3)) {
         idealdata@restrict_var <- FALSE
       } else {
         idealdata@restrict_var <- TRUE
@@ -733,7 +735,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
     if(!is.null(restrict_var)) {
       idealdata@restrict_var <- restrict_var
     } else {
-      if(vary_ideal_pts %in% c('none','AR1')) {
+      if(vary_ideal_pts %in% c(1,3)) {
         idealdata@restrict_var <- FALSE
       } else {
         idealdata@restrict_var <- TRUE
@@ -763,7 +765,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
     idealdata@restrict_mean_ind <- 1
   }
     
-  if(length(idealdata@restrict_mean)>0 && vary_ideal_pts=='AR1' && !is.null(prior_fit)) {
+  if(length(idealdata@restrict_mean)>0 && vary_ideal_pts==3 && !is.null(prior_fit)) {
     
     # reset if a prior time-varying fit is being used
     if(is.null(restrict_mean)) {
@@ -776,7 +778,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
     idealdata@restrict_mean <- restrict_mean
       
   } else if(length(idealdata@restrict_mean)==0 && is.null(restrict_mean)) {
-    if(vary_ideal_pts %in% c('AR1','none')) {
+    if(vary_ideal_pts %in% c(1,3)) {
       idealdata@restrict_mean <- FALSE
     } else {
       idealdata@restrict_mean <- TRUE
@@ -810,7 +812,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     diff_abs_sd=diff_miss_sd,
                     legis_sd=1,
                     restrict_sd=restrict_sd,
-                    use_ar=as.integer(use_ar),
+                    time_proc=vary_ideal_pts,
                     diff=idealdata@diff,
                     diff_high=idealdata@diff_high,
                     time_sd=time_sd,

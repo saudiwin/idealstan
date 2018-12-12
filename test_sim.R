@@ -186,9 +186,9 @@ int tt[N];
 int outcome[N];
 real id_diff;
 real id_diff_high;
-vector[L] rho;
-real m_sd;
-real sigma;
+//vector[L] rho;
+//real m_sd;
+//real sigma;
 int restrict_mean_ind;
 real restrict_mean_val;
 } 
@@ -202,13 +202,13 @@ L_real = L;
   }
 }
 parameters {
-//vector[L] alpha;
+real<lower=0> alpha;
 matrix[T,L] Y;
-//vector<lower=0>[L] rho;
+vector<lower=0>[L] rho;
 //vector<lower=0>[L] m_sd;
 vector[B] discrim;
 vector[B] diff;
-//real<lower=0> sigma;
+real<lower=0> sigma;
 //vector[1] high;
 }
 transformed parameters {
@@ -218,7 +218,7 @@ matrix[T, T] cov[L];
 matrix[T, T] L_cov[L];
 
   for(n in 1:L) {
-    cov[n] =   cov_exp_quad(x, m_sd, rho[n])
+    cov[n] =   cov_exp_quad(x, alpha, rho[n])
       + diag_matrix(rep_vector(square(sigma),L));
     L_cov[n] = cholesky_decompose(cov[n]);
   }
@@ -228,9 +228,10 @@ for(n in 1:L) {
 }
 diff ~ normal(0,3);
 discrim ~ normal(0,3);
-//rho ~ inv_gamma(8.91924, 34.5805);
+rho ~ inv_gamma(8.91924, 34.5805);
+sigma ~ exponential(5);
 //m_sd ~ normal(0, 2);
-//alpha ~ normal(0,1);
+alpha ~ normal(0,1);
 
 // constrain the over-time mean of one L
 max(Y[,restrict_mean_ind]) ~ normal(restrict_mean_val,.01);
@@ -267,7 +268,7 @@ run_ar1 <- sampling(to_stan,data=list(N=length(outcome),
                                       id_diff=sort.int(alpha_int,index.return = T,decreasing = T)$x[1] -
                                         sort.int(alpha_int,index.return = T,decreasing = F)$x[1],
                                       id_diff_high=sort.int(alpha_int,index.return = T,decreasing = T)$x[1]),
-              iter=1000,chains=4,cores=4)
+              iter=1000,chains=3,cores=3)
 
 
 
@@ -315,13 +316,13 @@ y_long_est <- left_join(y_long_est,
                         y_long_est_low,by=c('time','person','type')) %>% 
                 left_join(y_long_est_high,by=c('time','person','type'))
 
-combine_data <- bind_rows(y_long_est,y_long,.id='type')
+combine_data <- bind_rows(y_long_est,y_long)
 
 combine_data %>% 
-  ggplot(aes(y=estimate,x=time)) +
+  ggplot(aes(x=time)) +
   geom_ribbon(aes(ymax=estimate_high,
-                  ymin=estimate_low),alpha=0.5) +
-  geom_line(aes(linetype=type,group=person),alpha=0.5) +
+                  ymin=estimate_low,fill=type),alpha=0.5) +
+  geom_line(aes(linetype=type,y=estimate),alpha=0.5) +
   facet_wrap(~person) +
   theme(panel.grid = element_blank(),
         panel.background = element_blank())
