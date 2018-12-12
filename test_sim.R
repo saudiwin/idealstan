@@ -6,13 +6,13 @@ require(ggplot2)
 require(forcats)
 # classic ARMA stan model:
 
-num_person <- 25
-num_bills <- 200
+num_person <- 20
+num_bills <- 100
 alpha_int <- rnorm(num_person)
 sigma <- 0.1
 adj_in <- runif(num_person,-.8,.8)
 
-t <- 100
+t <- 20
 
 # simulate the GP
 
@@ -124,7 +124,23 @@ person_points <- fct_relevel(person_points,as.character(restrict_high),
 
 # now fit a model to the observed series
 
-stan_code <- '
+stan_code <- "
+functions {
+  real jacob_mean(int N, real N_real) {
+    vector[N] col_vec;
+real num_div;
+real density;
+
+num_div = 1/N_real;
+
+col_vec = rep_vector(num_div,N);
+
+density = sum(log(col_vec));
+
+return density;
+
+}
+}
 data {
 int N;
 int L;
@@ -136,10 +152,14 @@ int tt[N];
 int outcome[N];
 real id_diff;
 real id_diff_high;
+int restrict_mean_ind;
+real restrict_mean_val;
 } 
 transformed data {
 // need a time counter as input for the Gaussian process.
-  real x[T]; 
+  real x[T];
+real L_real;
+L_real = L;
   for (t in 1:T) {
     x[t] = t;
   }
@@ -151,8 +171,8 @@ vector<lower=0>[L] rho;
 vector<lower=0>[L] m_sd;
 vector[B] discrim;
 vector[B] diff;
-real<lower=0> sigma;
-vector[1] high;
+//real<lower=0> sigma;
+//vector[1] high;
 }
 transformed parameters {
 
@@ -175,18 +195,30 @@ discrim ~ normal(0,3);
 rho ~ inv_gamma(8.91924, 34.5805);
 m_sd ~ normal(0, 2);
 alpha ~ normal(0,1);
+
+// constrain the over-time mean of one L
+  mean(Y[,restrict_mean_ind]) ~ normal(restrict_mean_val,.01);
+  target += jacob_mean(L,L_real); // this is a constant as it only varies with the count of the parameters
+
 for(n in 1:N) {
 outcome[n] ~ bernoulli_logit(discrim[bb[n]] * (Y[tt[n],ll[n]]) - diff[bb[n]]);
 }
 
 }
-'
+"
 
 to_stan <- stan_model(model_code = stan_code)
+
+# find the item to constrain
+
+all_means <- apply(Y,1,mean)
+restrict_mean_ind <- which(all_means==max(all_means))
 
 run_ar1 <- sampling(to_stan,data=list(N=length(outcome),
                                       L=nrow(Y),
                                       B=num_bills,
+                                      restrict_mean_ind=restrict_mean_ind,
+                                      restrict_mean_val=all_means[restrict_mean_ind],
                                       T=t,
                                       ll=as.numeric(person_points),
                                       bb=bill_points,
