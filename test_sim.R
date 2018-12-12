@@ -6,23 +6,21 @@ require(ggplot2)
 require(forcats)
 # classic ARMA stan model:
 
-<<<<<<< HEAD
-num_person <- 20
-=======
-num_person <- 25
->>>>>>> c8693ce5c2be08311250599e4a6fa2427bd82f0b
-num_bills <- 100
+num_person <- 10
+
+
+num_bills <- 200
 alpha_int <- rnorm(num_person)
 sigma <- 0.1
 adj_in <- runif(num_person,-.8,.8)
 
-t <- 20
+t <- 10
 
 # simulate the GP
 
-alpha_true <- runif(n = num_person,2,3)
+alpha_true <- 0.5
 rho_true <- runif(n=num_person,2.5,5.5)
-sigma_true <- runif(n=num_person,0.5,3)
+sigma_true <- 0.1
 
 N_total = num_person
 x_total <- 1:t
@@ -36,8 +34,8 @@ int<lower=1> T;
 real x[T];
 
 real<lower=0> rho[N];
-real<lower=0> alpha[N];
-real<lower=0> sigma[N];
+real<lower=0> alpha;
+real<lower=0> sigma;
 }
 
 transformed data {
@@ -45,7 +43,7 @@ transformed data {
 matrix[T, T] cov[N];
 matrix[T, T] L_cov[N];
 for(n in 1:N) {
-cov[n] =   cov_exp_quad(x, alpha[n], rho[n])
+cov[n] =   cov_exp_quad(x, alpha, rho[n])
 + diag_matrix(rep_vector(1e-10, T));
 L_cov[n] = cholesky_decompose(cov[n]);
 }
@@ -58,9 +56,14 @@ model {}
 
 generated quantities {
 matrix[N,T] f;
-for(n in 1:N) {
-f[n,] = multi_normal_cholesky_rng(rep_vector(0, T), L_cov[n])';
-}  
+matrix[N,T] Y;
+  for(n in 1:N) {
+    f[n,] = multi_normal_cholesky_rng(rep_vector(0, T), L_cov[n])';
+    for(t in 1:T) {
+      Y[n,t] = normal_rng(f[n,t],sigma);
+    }
+    
+  }  
 }"
 
 simu_fit <- stan(model_code = sim_gauss, data=simu_data, iter=1,
@@ -68,7 +71,7 @@ simu_fit <- stan(model_code = sim_gauss, data=simu_data, iter=1,
 
 # more realistic
 
-Y <- rstan::extract(simu_fit)$f[1,,]
+Y <- rstan::extract(simu_fit)$Y[1,,]
 
 require(tidyr)
 require(stringr)
@@ -77,13 +80,17 @@ y_plot <- as_data_frame(Y) %>% mutate(person=1:n(),
                                       alpha_true=alpha_true,
                                       rho_true=rho_true) %>% 
   gather(key=time,value=estimate,-person,-alpha_true,-rho_true) %>% 
-  mutate(time=as.numeric(str_extract(time,'[0-9]+')))
+  mutate(time=as.numeric(str_extract(time,'[0-9]+'))) %>% 
+  group_by(person) %>% 
+  mutate(overall_mean=max(estimate),
+         time_pt=time[which(estimate==max(estimate))])
 
 y_plot %>% 
   ggplot(aes(y=estimate,x=time)) +
   geom_line(aes(colour=alpha_true,group=person,size=alpha_true),alpha=0.5) +
   theme(panel.grid = element_blank(),
-        panel.background = element_blank())
+        panel.background = element_blank()) +
+  geom_text(aes(y=overall_mean,x=time_pt,label=as.character(overall_mean)),colour='red')
 
 y_plot %>% 
   ggplot(aes(y=estimate,x=time)) +
@@ -103,6 +110,8 @@ y_plot %>%
     geom_point(aes(colour=mean_p,size=sd_p),alpha=0.5) +
   theme(panel.grid = element_blank(),
         panel.background = element_blank())
+
+# now need to estimate the original data
 
 # plot data
 
@@ -177,6 +186,9 @@ int tt[N];
 int outcome[N];
 real id_diff;
 real id_diff_high;
+vector[L] rho;
+real m_sd;
+real sigma;
 int restrict_mean_ind;
 real restrict_mean_val;
 } 
@@ -190,40 +202,39 @@ L_real = L;
   }
 }
 parameters {
-vector[L] alpha;
+//vector[L] alpha;
 matrix[T,L] Y;
-vector<lower=0>[L] rho;
-vector<lower=0>[L] m_sd;
+//vector<lower=0>[L] rho;
+//vector<lower=0>[L] m_sd;
 vector[B] discrim;
 vector[B] diff;
 //real<lower=0> sigma;
 //vector[1] high;
 }
 transformed parameters {
-
-  matrix[T, T] cov[L];
-  matrix[T, T] L_cov[L];
-
-  for(n in 1:L) {
-    cov[n] =   cov_exp_quad(x, m_sd[n], rho[n])
-      + diag_matrix(rep_vector(1e-10, T));
-    L_cov[n] = cholesky_decompose(cov[n]);
-  }
 }
 model {
+matrix[T, T] cov[L];
+matrix[T, T] L_cov[L];
+
+  for(n in 1:L) {
+    cov[n] =   cov_exp_quad(x, m_sd, rho[n])
+      + diag_matrix(rep_vector(square(sigma),L));
+    L_cov[n] = cholesky_decompose(cov[n]);
+  }
 
 for(n in 1:L) {
   Y[,n] ~ multi_normal_cholesky(rep_vector(0, T), L_cov[n]);
 }
 diff ~ normal(0,3);
 discrim ~ normal(0,3);
-rho ~ inv_gamma(8.91924, 34.5805);
-m_sd ~ normal(0, 2);
-alpha ~ normal(0,1);
+//rho ~ inv_gamma(8.91924, 34.5805);
+//m_sd ~ normal(0, 2);
+//alpha ~ normal(0,1);
 
 // constrain the over-time mean of one L
-  mean(Y[,restrict_mean_ind]) ~ normal(restrict_mean_val,.01);
-  target += jacob_mean(L,L_real); // this is a constant as it only varies with the count of the parameters
+max(Y[,restrict_mean_ind]) ~ normal(restrict_mean_val,.01);
+  //target += jacob_mean(L,L_real); // this is a constant as it only varies with the count of the parameters
 
 for(n in 1:N) {
 outcome[n] ~ bernoulli_logit(discrim[bb[n]] * (Y[tt[n],ll[n]]) - diff[bb[n]]);
@@ -234,20 +245,20 @@ outcome[n] ~ bernoulli_logit(discrim[bb[n]] * (Y[tt[n],ll[n]]) - diff[bb[n]]);
 
 to_stan <- stan_model(model_code = stan_code)
 
-<<<<<<< HEAD
 # find the item to constrain
 
-all_means <- apply(Y,1,mean)
-restrict_mean_ind <- which(all_means==max(all_means))
+all_means <- apply(Y,1,max)
+restrict_mean_ind <- which(all_means==min(all_means))
 
 run_ar1 <- sampling(to_stan,data=list(N=length(outcome),
-=======
-run_ar1 <- vb(to_stan,data=list(N=length(outcome),
->>>>>>> c8693ce5c2be08311250599e4a6fa2427bd82f0b
+
                                       L=nrow(Y),
                                       B=num_bills,
                                       restrict_mean_ind=restrict_mean_ind,
                                       restrict_mean_val=all_means[restrict_mean_ind],
+                                      rho=rho_true,
+                                      m_sd=alpha_true,
+                                      sigma=sigma,
                                       T=t,
                                       ll=as.numeric(person_points),
                                       bb=bill_points,
@@ -256,28 +267,61 @@ run_ar1 <- vb(to_stan,data=list(N=length(outcome),
                                       id_diff=sort.int(alpha_int,index.return = T,decreasing = T)$x[1] -
                                         sort.int(alpha_int,index.return = T,decreasing = F)$x[1],
                                       id_diff_high=sort.int(alpha_int,index.return = T,decreasing = T)$x[1]),
-              tol_rel_obj=1e-4)
+              iter=1000,chains=4,cores=4)
 
 
 
-print(run_ar1,pars='m_sd')
+#print(run_ar1,pars='rho')
 
 # get estimates for y 
 
 y_est <- summary(run_ar1,pars='Y')$summary[,'mean']
-y_est <- matrix(y_est,nrow=25)
+y_est <- matrix(y_est,nrow=num_person,ncol=t)
 
 cor(c(y_est),c(Y))
 
-plot_data <- data_frame(y_est=c(y_est),
-                        y=c(Y),
-                        time=rep(1:t,times=num_person),
-                        person=rep(1:num_person,each=t)) %>% 
-  gather(est_type,estimate,-time,-person)
+colnames(Y) <- paste0('time_',1:t)
+colnames(y_est) <- paste0('time_',1:t)
 
-plot_data %>% 
+y_long <- as_data_frame(Y) %>% 
+  mutate(person=1:n()) %>% 
+  gather(time,estimate,-person) %>% 
+  mutate(time=as.numeric(str_extract(time,'[0-9]+')),
+         type='true')
+
+y_long_est <- as_data_frame(y_est) %>% 
+  mutate(person=1:n()) %>% 
+  gather(time,estimate,-person) %>% 
+  mutate(time=as.numeric(str_extract(time,'[0-9]+')),
+         type='estimated')
+
+y_est_low <- summary(run_ar1,pars='Y')$summary[,'2.5%']
+y_est_low <- matrix(y_est_low,nrow=num_person,ncol=t)
+y_long_est_low <- as_data_frame(y_est_low) %>% 
+  mutate(person=1:n()) %>% 
+  gather(time,estimate_low,-person) %>% 
+  mutate(time=as.numeric(str_extract(time,'[0-9]+')),
+         type='estimated')
+
+y_est_high <- summary(run_ar1,pars='Y')$summary[,'97.5%']
+y_est_high <- matrix(y_est_high,nrow=num_person,ncol=t)
+y_long_est_high <- as_data_frame(y_est_high) %>% 
+  mutate(person=1:n()) %>% 
+  gather(time,estimate_high,-person) %>% 
+  mutate(time=as.numeric(str_extract(time,'[0-9]+')),
+         type='estimated')
+
+y_long_est <- left_join(y_long_est,
+                        y_long_est_low,by=c('time','person','type')) %>% 
+                left_join(y_long_est_high,by=c('time','person','type'))
+
+combine_data <- bind_rows(y_long_est,y_long,.id='type')
+
+combine_data %>% 
   ggplot(aes(y=estimate,x=time)) +
-  geom_line(aes(colour=est_type,group=person),alpha=0.5) +
-  facet_wrap(~est_type) +
+  geom_ribbon(aes(ymax=estimate_high,
+                  ymin=estimate_low),alpha=0.5) +
+  geom_line(aes(linetype=type,group=person),alpha=0.5) +
+  facet_wrap(~person) +
   theme(panel.grid = element_blank(),
         panel.background = element_blank())
