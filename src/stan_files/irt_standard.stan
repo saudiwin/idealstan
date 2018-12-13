@@ -52,6 +52,7 @@ data {
   real restrict_mean_val;
   int restrict_mean_ind;
   int restrict_mean;
+  int time_proc;
   int zeroes; // whether to use traditional zero-inflation for bernoulli and poisson models
 }
 
@@ -66,6 +67,22 @@ transformed data {
 	int num_var_restrict;
 	real num_legis_real; // used to adjust jacobian for mean restriction
 	int num_ls; // extra person params for latent space
+	int gp_N; // use for creating zero-length arrays if gp not used
+	int gp_1; // zero-length gp-related scalars
+	int gp_nT; // used to make L_tp1 go to model block if GPs are used
+	int gp_oT; // used to make L_tp1 go to model block if GPs are used
+	
+	if(time_proc!=4) {
+	  gp_N=0;
+	  gp_1=0;
+	  gp_oT=T;
+	  gp_nT=0;
+	} else {
+	  gp_N=num_legis;
+	  gp_1=1;
+	  gp_nT=0;
+	  gp_oT=T;
+	}
 	
 	// need to assign a type of outcome to Y based on the model (discrete or continuous)
 	// to do this we need to trick Stan into assigning to an integer. 
@@ -98,6 +115,7 @@ if(restrict_var==1) {
 parameters {
   vector[num_bills] sigma_abs_free;
   vector[num_legis - num_constrain_l] L_free; // first T=1 params to constrain
+  vector[gp_1] m_sd; // marginal standard deviation of GP
   vector[num_ls] ls_int; // extra intercepts for non-inflated latent space
   vector[num_legis] L_tp1_var[T-1]; // non-centered variance
   vector<lower=-.99,upper=.99>[num_legis-1] L_AR1_free; // AR-1 parameters for AR-1 model
@@ -121,9 +139,9 @@ transformed parameters {
 
   vector[num_legis] L_full;
   vector[num_legis] L_AR1;
-  vector[num_legis] L_tp1[T]; // all other params can float
+  vector[num_legis] L_tp1[gp_oT]; // equal to zero if GPs are used
   vector[1] restrict_low;
-  
+
   if(T==1) {
     restrict_low = restrict_high - diff;
   } else {
@@ -138,24 +156,31 @@ transformed parameters {
 
   
   if(T>1) {
-    if(use_ar==1) {
+    if(time_proc==3) {
       // in AR model, intercepts are constant over time
 #include /chunks/l_hier_ar1_prior.stan
-
-    } else {
+    } else if(time_proc==2){
       // in RW model, intercepts are used for first time period
 #include /chunks/l_hier_prior.stan
-    }
-  } else {
-    L_tp1[1] = L_full;
+    } else if(time_proc!=4) {
+      L_tp1[1] = L_full;
+    } 
   }
-
 }
 
 model {
   //vectors to hold model calculations
   vector[N] pi1;
   vector[N] pi2;
+  // GP params
+  matrix[T, T] cov[gp_N]; // zero-length if not a GP model
+  matrix[T, T] L_cov[gp_N];
+  matrix[gp_nT,num_legis] L_temp; // equal to T if GPs are used
+  vector[gp_nT] calc_values; // used for calculating covariate values for GPs
+  
+  if(time_proc==4 && T>1) {
+#include /chunks/l_hier_gp_prior.stan  
+  }
 
   legis_x ~ normal(0,5);
   sigma_abs_x ~ normal(0,5);
@@ -193,14 +218,18 @@ model {
   
 
   time_var_restrict ~ exponential(1/time_sd);
-
-  time_var ~ exponential(1/time_sd);
+  if(time_proc!=4) {
+    time_var ~ exponential(1/time_sd);
+  } else {
+    time_var ~ inv_gamma(8.91924, 34.5805);
+  }
+  
 
 // add correction for time-series models
 
 if(T>1 && restrict_mean==1) {
-  mean(L_tp1[,restrict_mean_ind]) ~ normal(restrict_mean_val,.01);
-  target += jacob_mean(num_legis,num_legis_real); // this is a constant as it only varies with the count of the parameters
+  max(L_tp1[,restrict_mean_ind]) ~ normal(restrict_mean_val,.01);
+  //target += jacob_mean(num_legis,num_legis_real); // this is a constant as it only varies with the count of the parameters
 }
   
 
@@ -211,8 +240,16 @@ if(T>1 && restrict_mean==1) {
 
 #include /chunks/model_types.stan
 
+}
+generated quantities {
+  vector[num_legis] L_tp2[gp_nT]; // equal to T if GPs are used
+  if(time_proc==4) {
+  
+  for(n in 1:gp_N) {
 
 
-
+    L_tp2[,n] = multi_normal_cholesky(legis_pred[, n, ] * legis_x, L_cov[n]); 
+    
+  }
 }
 
