@@ -446,7 +446,7 @@ id_make <- function(score_data=NULL,
 #' zero must be passed as the \code{miss_val} option to \code{\link{id_make}} before
 #' running a model so that zeroes are coded as missing data.
 #' @param vary_ideal_pts Default \code{'none'}. If \code{'random_walk'}, \code{'AR1'} or 
-#' \code{'gp'}, a 
+#' \code{'GP'}, a 
 #' time-varying ideal point model will be fit with either a random-walk process, an 
 #' AR1 process or a Gaussian process. See documentation for more info.
 #' @param use_subset Whether a subset of the legislators/persons should be used instead of the full response matrix
@@ -667,7 +667,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                            none=1,
                            random_walk=2,
                            AR1=3,
-                           gp=4)
+                           GP=4)
     
   # use either row numbers for person/legislator IDs or use group IDs (static or time-varying)
       

@@ -25,7 +25,6 @@ data {
   int LX;
   int SRX;
   int SAX;
-  int use_ar;
   int<lower=1> num_legis;
   int<lower=1> num_bills;
   int ll[N];
@@ -105,6 +104,7 @@ parameters {
   vector[num_legis] L_free;
   vector[num_ls] ls_int; // extra intercepts for non-inflated latent space
   vector[num_legis] L_tp1_var[T-1]; // non-centered variance
+  vector[num_legis] L_tp2[gp_nT]; // additional L_tp1 for GPs only
   vector<lower=-0.99,upper=0.99>[num_legis] L_AR1; // AR-1 parameters for AR-1 model
   vector[num_bills] sigma_reg_free;
   vector[LX] legis_x;
@@ -128,39 +128,43 @@ transformed parameters {
   L_full=L_free;
   
   if(T>1) {
-    if(use_ar==1) {
+    if(time_proc==3) {
       // in AR model, intercepts are constant over time
 #include /chunks/l_hier_ar1_prior.stan
 
-    } else {
+    } else if(time_proc==2) {
       // in RW model, intercepts are used for first time period
 #include /chunks/l_hier_prior.stan
-    }
+    } else if(time_proc==4) {
+      L_tp1 = L_tp2; // just copy over the variables, saves code if costs a bit of extra memory
+                      // should be manageable memory loss
   } else {
     L_tp1[1] = L_full;
   }
 
+  }
 }
 
 model {
   //vectors to hold model calculations
   vector[N] pi1;
   vector[N] pi2;
-  
-  // GP params
-  matrix[T, T] cov[gp_N]; // zero-length if not a GP model
-  matrix[T, T] L_cov[gp_N];// zero-length if not a GP model
-  vector[gp_nT] calc_values; // used for calculating covariate values for GPs
-  
-  if(time_proc==4 && T>1) {
-#include /chunks/l_hier_gp_prior.stan  
-  }
 
 
   if(T==1) {
     L_free ~normal(legis_pred[1, 1:(num_legis), ] * legis_x, legis_sd);
   } else {
     L_free ~ normal(0,legis_sd);
+  }
+  
+  if(time_proc==4) {
+    //locally create the relevant variables for processing the GP
+    {
+    matrix[T, T] cov[gp_N]; // zero-length if not a GP model
+    matrix[T, T] L_cov[gp_N];// zero-length if not a GP model
+    vector[gp_nT] calc_values; // used for calculating covariate values for GPs
+#include /chunks/l_hier_gp_prior.stan   
+    }
   }
   
   for(t in 1:(T-1)) {

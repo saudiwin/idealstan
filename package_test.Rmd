@@ -806,13 +806,7 @@ time_gp_est <- id_estimate(idealdata=time_gp_sim,
                               restrict_ind_low = as.character(sort(bin_time_ar_irt_2pl_abs_sim@simul_data$drift,
                                                                    decreasing=F,
                                                         index=T)$ix[1]),
-                               fixtype='vb_partial',
-                              id_diff = sort(bin_time_ar_irt_2pl_abs_sim@simul_data$drift,
-                                                  decreasing=TRUE)[1] -
-                                sort(bin_time_ar_irt_2pl_abs_sim@simul_data$drift,
-                                               decreasing=F)[1],
-                              id_diff_high=sort(bin_time_ar_irt_2pl_abs_sim@simul_data$drift,
-                                                  decreasing=TRUE)[1])
+                               fixtype='vb_full')
 id_plot_rhats(time_gp_est)
 ```
 
