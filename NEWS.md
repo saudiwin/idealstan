@@ -1,3 +1,6 @@
+#Release v0.6.0
+* Set a stricter threshold for `vb` to `1e-04` to promote more robust variational inference
+
 #Release v0.5.1
 * Fixed bugs in plotting functions related to plotting two groups.
 * Fixed bug in AR(1) model with restricted time variance.

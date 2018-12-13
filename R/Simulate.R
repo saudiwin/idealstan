@@ -19,8 +19,9 @@
 #' @param reg_discrim_sd The SD of the discrimination parameters for the non-inflated model
 #' @param diff_sd The SD of the difficulty parameters (bill/item intercepts)
 #' @param time_points The number of time points for time-varying legislator/person parameters
-#' @param time_process The process used to generate the ideal points: currently either \code{'random'} 
-#' for a random walk or \code{'AR'} for an AR1 process
+#' @param time_process The process used to generate the ideal points: either \code{'random'} 
+#' for a random walk, \code{'AR'} for an AR1 process,
+#' or \code{'GP'} for a Gaussian process.
 #' @param time_sd The standard deviation of the change in ideal points over time (should be low relative to 
 #' \code{ideal_pts_sd})
 #' @param ideal_pts_sd The SD for the person/person ideal points
@@ -86,14 +87,29 @@ id_sim_gen <- function(num_person=20,num_bills=50,
     drift <- 0
     ar_adj <- 0
   } else if(time_points>1) {
-    # if more than 1 time point, generate via an AR or random walk process
-    ideal_t1 <- prior_func(params=list(N=num_person,mean=0,sd=ideal_pts_sd))
-    if(time_process=='AR') {
-      # random AR parameters
-      ar_adj <- runif(n = num_person,min = -0.5,max=0.5)
-    } else if(time_process=='random') {
-      ar_adj <- rep(1,num_person)
-    }
+    # if more than 1 time point, generate via an AR, random-walk or GP process
+    if(time_process=='GP') {
+      ar_adj <- runif(n=num_person,2.5,5.5) # rho parameter in GPs
+      drift <- 0.5 # marginal standard deviation
+      simu_data <- list(N=num_person,
+                        T=time_points,
+                        x=1:time_points,
+                        rho=ar_adj,
+                        alpha=drift,
+                        sigma=time_sd)
+      # loop over persons and construct GP with stan code
+      simu_fit <- sampling(stanmodels[['sim_gp']], data=simu_data, iter=1,
+                       chains=1, seed=494838, algorithm="Fixed_param")
+      ideal_pts <- rstan::extract(simu_fit)$Y[1,,]
+      
+    } else {
+      ideal_t1 <- prior_func(params=list(N=num_person,mean=0,sd=ideal_pts_sd))
+      if(time_process=='AR') {
+        # random AR parameters
+        ar_adj <- runif(n = num_person,min = -0.5,max=0.5)
+      } else if(time_process=='random') {
+        ar_adj <- rep(1,num_person)
+      }
       # drift parameters
       drift <- prior_func(params=list(N=num_person,mean=0,sd=ideal_pts_sd))
       
@@ -106,8 +122,7 @@ id_sim_gen <- function(num_person=20,num_bills=50,
         return(this_person)
       }) %>% bind_cols %>% as.matrix
       ideal_pts <- t(ideal_pts)
-  } else {
-    stop('Incorrect time process specified.')
+    }
   }
   
   # First generate prob of absences

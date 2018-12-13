@@ -44,6 +44,8 @@ data {
   real ar_sd;
   int restrict_var;
   real restrict_var_high;
+  int time_proc;
+  real time_ind[T]; // the actual indices/values of time points, used for Gaussian processes
   int zeroes; // whether to use traditional zero-inflation for bernoulli and poisson models
 }
 
@@ -56,6 +58,24 @@ transformed data {
 	int num_var_restrict;
 	int num_var_free;
 	int num_ls; // extra person params for latent space
+	int gp_N; // use for creating zero-length arrays if gp not used
+	int gp_1; // zero-length gp-related scalars
+	int gp_nT; // used to make L_tp1 go to model block if GPs are used
+	int gp_oT; // used to make L_tp1 go to model block if GPs are used
+	
+	//reset these values to use GP-specific parameters
+	if(time_proc!=4) {
+	  gp_N=0;
+	  gp_1=0;
+	  gp_oT=T;
+	  gp_nT=0;
+	} else {
+	  gp_N=num_legis;
+	  gp_1=1;
+	  gp_nT=T;
+	  gp_oT=0;
+	}
+	
 	
 	// need to assign a type of outcome to Y based on the model (discrete or continuous)
 	// to do this we need to trick Stan into assigning to an integer. 
@@ -94,9 +114,10 @@ parameters {
   ordered[m_step-1] steps_votes_grm[num_bills];
   vector[num_bills] B_int_free;
   vector[num_bills] A_int_free;
+  vector<lower=0>[gp_1] m_sd; // marginal standard deviation for GPs
   real<lower=0> extra_sd;
-  vector<lower=0>[num_legis] time_var;
-  vector<lower=0,upper=restrict_var_high>[num_legis] time_var_restrict;
+  vector<lower=0>[num_legis] time_var; // variance for time series processes
+  vector<lower=0,upper=restrict_var_high>[num_legis] time_var_restrict; // optional restricted variance
 }
 
 transformed parameters {
@@ -125,6 +146,15 @@ model {
   //vectors to hold model calculations
   vector[N] pi1;
   vector[N] pi2;
+  
+  // GP params
+  matrix[T, T] cov[gp_N]; // zero-length if not a GP model
+  matrix[T, T] L_cov[gp_N];// zero-length if not a GP model
+  vector[gp_nT] calc_values; // used for calculating covariate values for GPs
+  
+  if(time_proc==4 && T>1) {
+#include /chunks/l_hier_gp_prior.stan  
+  }
 
 
   if(T==1) {
@@ -146,6 +176,7 @@ model {
   L_AR1 ~ normal(0,ar_sd); // these parameters shouldn't get too big
   ls_int ~ normal(0,legis_sd);
   extra_sd ~ exponential(1);
+  m_sd ~ exponential(10); // tight prior on GP marginal standard deviation
 
   if(model_type>2 && model_type<5) {
     for(i in 1:(m_step-2)) {
@@ -164,7 +195,11 @@ model {
   
   time_var_restrict ~ exponential(1/time_sd);
 
-  time_var ~ exponential(1/time_sd);
+  if(time_proc!=4) {
+    time_var ~ exponential(1/time_sd);
+  } else {
+    time_var ~ inv_gamma(8.91924, 34.5805);
+  }
 
   
   //model

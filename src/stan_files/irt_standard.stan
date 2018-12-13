@@ -53,6 +53,7 @@ data {
   int restrict_mean_ind;
   int restrict_mean;
   int time_proc;
+  real time_ind[T]; // the actual indices/values of time points, used for Gaussian processes
   int zeroes; // whether to use traditional zero-inflation for bernoulli and poisson models
 }
 
@@ -72,6 +73,7 @@ transformed data {
 	int gp_nT; // used to make L_tp1 go to model block if GPs are used
 	int gp_oT; // used to make L_tp1 go to model block if GPs are used
 	
+	//reset these values to use GP-specific parameters
 	if(time_proc!=4) {
 	  gp_N=0;
 	  gp_1=0;
@@ -80,8 +82,8 @@ transformed data {
 	} else {
 	  gp_N=num_legis;
 	  gp_1=1;
-	  gp_nT=0;
-	  gp_oT=T;
+	  gp_nT=T;
+	  gp_oT=0;
 	}
 	
 	// need to assign a type of outcome to Y based on the model (discrete or continuous)
@@ -115,7 +117,7 @@ if(restrict_var==1) {
 parameters {
   vector[num_bills] sigma_abs_free;
   vector[num_legis - num_constrain_l] L_free; // first T=1 params to constrain
-  vector[gp_1] m_sd; // marginal standard deviation of GP
+  vector<lower=0>[gp_1] m_sd; // marginal standard deviation of GP
   vector[num_ls] ls_int; // extra intercepts for non-inflated latent space
   vector[num_legis] L_tp1_var[T-1]; // non-centered variance
   vector<lower=-.99,upper=.99>[num_legis-1] L_AR1_free; // AR-1 parameters for AR-1 model
@@ -139,7 +141,7 @@ transformed parameters {
 
   vector[num_legis] L_full;
   vector[num_legis] L_AR1;
-  vector[num_legis] L_tp1[gp_oT]; // equal to zero if GPs are used
+  vector[num_legis] L_tp1[T];
   vector[1] restrict_low;
 
   if(T==1) {
@@ -174,8 +176,7 @@ model {
   vector[N] pi2;
   // GP params
   matrix[T, T] cov[gp_N]; // zero-length if not a GP model
-  matrix[T, T] L_cov[gp_N];
-  matrix[gp_nT,num_legis] L_temp; // equal to T if GPs are used
+  matrix[T, T] L_cov[gp_N];// zero-length if not a GP model
   vector[gp_nT] calc_values; // used for calculating covariate values for GPs
   
   if(time_proc==4 && T>1) {
@@ -210,6 +211,7 @@ model {
   
   B_int_free ~ normal(0,diff_reg_sd);
   A_int_free ~ normal(0,diff_abs_sd);
+  m_sd ~ exponential(10); // tight prior on GP marginal standard deviation
 
   //exog_param ~ normal(0,5);
   for(b in 1:num_bills) {
@@ -242,14 +244,19 @@ if(T>1 && restrict_mean==1) {
 
 }
 generated quantities {
-  vector[num_legis] L_tp2[gp_nT]; // equal to T if GPs are used
+/*
+vector[num_legis] L_tp2[gp_nT]; // equal to T if GPs are used
+  row_vector[gp_nT] calc_values; // used to hold values from legis_preds
   if(time_proc==4) {
   
   for(n in 1:gp_N) {
-
-
-    L_tp2[,n] = multi_normal_cholesky(legis_pred[, n, ] * legis_x, L_cov[n]); 
+    // generate estimated ideal points here to avoid creating all the correlation matrices
+    for(t in 1:T) {
+        calc_values[t] = legis_pred[t, n, ] * legis_x;
+    }
+    L_tp2[,n] = multi_normal_cholesky(calc_values * legis_x, L_cov[n]); 
     
   }
+  */
 }
 

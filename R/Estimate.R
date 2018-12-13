@@ -462,6 +462,10 @@ id_make <- function(score_data=NULL,
 #' @param niters The number of iterations to run Stan's sampler. Shouldn't be set much lower than 500. See \code{\link[rstan]{stan}} for more info.
 #' @param use_vb Whether or not to use Stan's variational Bayesian inference engine instead of full Bayesian inference. Pros: it's much faster.
 #' Cons: it's not quite as accurate. See \code{\link[rstan]{vb}} for more info.
+#' @param tol_rel_obj If \code{use_vb} is \code{TRUE}, this parameter sets the stopping rule for the \code{vb} algorithm. 
+#' It's default is \code{1e-04}, or 0.0001. A stricter threshold will require the sampler to run longer but may yield a
+#' better result in a difficult model with highly correlated parameters. Lowering the threshold should work fine for simpler
+#' models.
 #' @param warmup The number of iterations to use to calibrate Stan's sampler on a given model. Shouldn't be less than 100. 
 #' See \code{\link[rstan]{stan}} for more info.
 #' @param ncores The number of cores in your computer to use for parallel processing in the Stan engine. 
@@ -659,7 +663,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
     idealdata@group_cov <- idealdata@group_cov[1,,,drop=F]
   } 
   
-  vary_ideal_pts <- switch(vary_ideal_points,
+  vary_ideal_pts <- switch(vary_ideal_pts,
                            none=1,
                            random_walk=2,
                            AR1=3,
@@ -683,6 +687,15 @@ id_estimate <- function(idealdata=NULL,model_type=2,
 
   billpoints <- as.numeric(idealdata@score_matrix$item_id)
   timepoints <- as.numeric(factor(idealdata@score_matrix$time_id))
+  # for gaussian processes, need actual time values
+  time_ind <- switch(class(idealdata@score_matrix$time_id)[1],
+                     factor=unique(as.numeric(idealdata@score_matrix$time_id)),
+                     date=unique(as.numeric(idealdata@score_matrix$time_id)),
+                     POSIXct=unique(as.numeric(idealdata@score_matrix$time_id)),
+                     POSIXlt=unique(as.numeric(idealdata@score_matrix$time_id)),
+                     numeric=unique(idealdata@score_matrix$time_id),
+                     integer=unique(idealdata@score_matrix$time_id))
+  
   max_t <- max(timepoints,na.rm=T)
   num_bills <- max(billpoints,na.rm=T)
 
@@ -822,7 +835,9 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     restrict_mean=idealdata@restrict_mean,
                     restrict_mean_val=idealdata@restrict_mean_val,
                     restrict_mean_ind=idealdata@restrict_mean_ind,
-                    zeroes=inflate_zero)
+                    zeroes=inflate_zero,
+                    time_ind=time_ind,
+                    time_proc=vary_ideal_pts)
 
   idealdata <- id_model(object=idealdata,fixtype=fixtype,model_type=model_type,this_data=this_data,
                         nfix=nfix,restrict_ind_high=restrict_ind_high,
@@ -852,6 +867,14 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   
   billpoints <- as.numeric(idealdata@score_matrix$item_id)
   timepoints <- as.numeric(factor(idealdata@score_matrix$time_id))
+  # for gaussian processes, need actual time values
+  time_ind <- switch(class(idealdata@score_matrix$time_id)[1],
+                     factor=unique(as.numeric(idealdata@score_matrix$time_id)),
+                     date=unique(as.numeric(idealdata@score_matrix$time_id)),
+                     POSIXct=unique(as.numeric(idealdata@score_matrix$time_id)),
+                     POSIXlt=unique(as.numeric(idealdata@score_matrix$time_id)),
+                     numeric=unique(idealdata@score_matrix$time_id),
+                     integer=unique(idealdata@score_matrix$time_id))
   max_t <- max(timepoints,na.rm=T)
   num_bills <- max(billpoints,na.rm=T)
   
@@ -919,10 +942,14 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     restrict_mean_val=idealdata@restrict_mean_val,
                     restrict_mean_ind=idealdata@restrict_mean_ind,
                     restrict_mean=idealdata@restrict_mean,
-                    zeroes=inflate_zero)
+                    zeroes=inflate_zero,
+                    time_ind=time_ind,
+                    time_proc=vary_ideal_pts)
 
   outobj <- sample_model(object=idealdata,nchains=nchains,niters=niters,warmup=warmup,ncores=ncores,
-                         this_data=this_data,use_vb=use_vb,...)
+                         this_data=this_data,use_vb=use_vb,
+                         tol_rel_obj=tol_rel_obj,
+                         ...)
   
   outobj@model_type <- model_type
   outobj@use_ar <- use_ar

@@ -137,7 +137,8 @@ setGeneric('sample_model',signature='object',
 
 setMethod('sample_model',signature(object='idealdata'),
           function(object,nchains=4,niters=2000,warmup=floor(niters/2),ncores=NULL,
-                   to_use=to_use,this_data=this_data,use_vb=FALSE,...) {
+                   to_use=to_use,this_data=this_data,use_vb=FALSE,
+                   tol_rel_obj=NULL,...) {
 
             
             init_vals <- lapply(1:nchains,.init_stan,
@@ -162,7 +163,12 @@ setMethod('sample_model',signature(object='idealdata'),
                                     init=init_vals,
                                     ...)
             } else {
+              if(is.null(tol_rel_obj)) {
+                # set to this number for identification runs
+                tol_rel_obj <- 1e-02
+              }
               out_model <- vb(object@stanmodel,data=this_data,
+                              tol_rel_obj=tol_rel_obj,
                               ...)
             }
             outobj <- new('idealstan',

@@ -1,13 +1,17 @@
-// chunk giving a hiearchical TS prior to legislators/persons
+// chunk giving a GP prior to legislators/persons
 
-//add basic integrated time-series prior
-for(n in 1:gp_N) {
+for(n in 1:num_legis) {
+  
+  //create covariance matrices given current values of hiearchical parameters
+  cov[n] =   cov_exp_quad(time_ind, m_sd[1], time_var[n])
+      + diag_matrix(rep_vector(square(extra_sd),num_legis));
+  L_cov[n] = cholesky_decompose(cov[n]);
   
   for(t in 1:T) {
     calc_values[t] = legis_pred[t, n, ] * legis_x;
   }
 
 
-L_temp[,n] ~ multi_normal_cholesky(calc_values, L_cov[n]); 
+to_vector(L_tp1[,n]) ~ multi_normal_cholesky(calc_values, L_cov[n]); 
     
 }
