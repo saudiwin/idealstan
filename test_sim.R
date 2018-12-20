@@ -229,9 +229,9 @@ for(n in 1:L) {
 diff ~ normal(0,3);
 discrim ~ normal(0,3);
 rho ~ inv_gamma(8.91924, 34.5805);
-sigma ~ exponential(5);
+sigma ~ normal(-2.3,.1);
 //m_sd ~ normal(0, 2);
-alpha ~ normal(0,1);
+alpha ~ normal(-0.7,.1);
 
 // constrain the over-time mean of one L
 max(Y[,restrict_mean_ind]) ~ normal(restrict_mean_val,.01);

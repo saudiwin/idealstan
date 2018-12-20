@@ -607,6 +607,7 @@ id_make <- function(score_data=NULL,
 #'    \item Clinton, J., Jackman, S., & Rivers, D. (2004). The Statistical Analysis of Roll Call Data. \emph{The American Political Science Review}, 98(2), 355-370. doi:10.1017/S0003055404001194
 #'    \item Bafumi, J., Gelman, A., Park, D., & Kaplan, N. (2005). Practical Issues in Implementing and Understanding Bayesian Ideal Point Estimation. \emph{Political Analysis}, 13(2), 171-187. doi:10.1093/pan/mpi010
 #'    \item Kubinec, R. "Generalized Ideal Point Models for Time-Varying and Missing-Data Inference". Working Paper.
+#'    \item Betancourt, Michael. "Robust Gaussian Processes in Stan". (October 2017). Case Study.
 #' }
 #' @importFrom stats dnorm dpois model.matrix qlogis relevel rpois
 #' @importForm utils person
@@ -699,6 +700,11 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                      POSIXlt=unique(as.numeric(idealdata@score_matrix$time_id)),
                      numeric=unique(idealdata@score_matrix$time_id),
                      integer=unique(idealdata@score_matrix$time_id))
+  
+  # now need to generate max/min values for empirical length-scale prior in GP
+  if(vary_ideal_pts==4) {
+    gp_length <- .gp_prior(time_ind)
+  }
   
   max_t <- max(timepoints,na.rm=T)
   num_bills <- max(billpoints,na.rm=T)
@@ -842,7 +848,8 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     zeroes=inflate_zero,
                     time_ind=time_ind,
                     time_proc=vary_ideal_pts,
-                    gp_sd_par=gp_sd_par)
+                    gp_length_a=gp_length$`a`,
+                    gp_length_b=gp_length$b)
 
   idealdata <- id_model(object=idealdata,fixtype=fixtype,model_type=model_type,this_data=this_data,
                         nfix=nfix,restrict_ind_high=restrict_ind_high,
@@ -950,7 +957,8 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     zeroes=inflate_zero,
                     time_ind=time_ind,
                     time_proc=vary_ideal_pts,
-                    gp_sd_par=gp_sd_par)
+                    gp_length_a=gp_length$`a`,
+                    gp_length_b=gp_length$b)
 
   outobj <- sample_model(object=idealdata,nchains=nchains,niters=niters,warmup=warmup,ncores=ncores,
                          this_data=this_data,use_vb=use_vb,

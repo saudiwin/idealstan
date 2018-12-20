@@ -793,7 +793,7 @@ The Gaussian process differs in that is a non-parametric approach to time-series
 
 ```{r time_gp_inflate}
 
-time_gp_sim <- id_sim_gen(num_person=10,num_bills=2000,inflate=T,
+time_gp_sim <- id_sim_gen(num_person=10,num_bills=200,inflate=T,
                                absence_diff_mean=0,
                           time_process = 'GP',
                           time_points=40,

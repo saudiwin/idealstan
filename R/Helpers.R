@@ -1676,3 +1676,25 @@ return(as.vector(idx))
   }
   return(x)
 }
+
+#' Calculate priors for Gaussian processes
+#' @noRd
+.gp_prior <- function(time_points=NULL) {
+
+  # need to calculate minimum and maximum difference between *any* two points
+  diff_time <- diff(time_points)
+  min_diff <- min(diff_time)+1
+  # divide max_diff by 2 to constrain the prior away from very large values
+  max_diff <- abs(time_points[1]-time_points[2])
+  
+  # now run the stan program with the data
+  
+  fit <- sampling(object = stanmodels[['gp_prior_tune']], iter=1, warmup=0, chains=1,
+              seed=5838298, algorithm="Fixed_param")
+  params <- extract(fit)
+  
+  return(list(a=c(params$a),
+              b=c(params$b)))
+  
+}
+

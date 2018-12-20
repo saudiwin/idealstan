@@ -46,7 +46,9 @@ data {
   int time_proc;
   real time_ind[T]; // the actual indices/values of time points, used for Gaussian processes
   int zeroes; // whether to use traditional zero-inflation for bernoulli and poisson models
-  real gp_sd_par; // the reciprocal of the mean of the residual variation in a GP
+  real gp_sd_par; // residual variation in GP
+  real gp_length_a; // a parameter in inverse-gamma GP length-scale prior
+  real gp_length_b; // b parameter in inverse-gamma GP length-scale prior
 }
 
 transformed data {
@@ -205,7 +207,7 @@ model {
   if(time_proc!=4) {
     time_var ~ exponential(1/time_sd);
   } else {
-    time_var ~ inv_gamma(8.91924, 34.5805);
+    time_var ~ inv_gamma(gp_length_a, gp_length_b);
   }
 
   
