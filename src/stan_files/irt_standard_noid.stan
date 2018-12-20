@@ -46,6 +46,7 @@ data {
   int time_proc;
   real time_ind[T]; // the actual indices/values of time points, used for Gaussian processes
   int zeroes; // whether to use traditional zero-inflation for bernoulli and poisson models
+  real gp_sd_par; // the reciprocal of the mean of the residual variation in a GP
 }
 
 transformed data {
@@ -115,6 +116,7 @@ parameters {
   vector[num_bills] B_int_free;
   vector[num_bills] A_int_free;
   vector<lower=0>[gp_1] m_sd; // marginal standard deviation for GPs
+  vector<lower=0>[gp_1] gp_sd; //additional residual variation in Y for GPs
   real<lower=0> extra_sd;
   vector<lower=0>[num_legis] time_var; // variance for time series processes
   vector<lower=0,upper=restrict_var_high>[num_legis] time_var_restrict; // optional restricted variance
@@ -180,7 +182,8 @@ model {
   L_AR1 ~ normal(0,ar_sd); // these parameters shouldn't get too big
   ls_int ~ normal(0,legis_sd);
   extra_sd ~ exponential(1);
-  m_sd ~ exponential(10); // tight prior on GP marginal standard deviation
+  gp_sd ~ exponential(gp_sd_par);
+  m_sd ~ exponential(1); // tight prior on GP marginal standard deviation
 
   if(model_type>2 && model_type<5) {
     for(i in 1:(m_step-2)) {

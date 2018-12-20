@@ -9,14 +9,15 @@
                     model_type=NULL,
                     use_groups=NULL,
                     fixtype=NULL,...) {
-  browser()
+
   
   . <- NULL
   to_use <- stanmodels[['irt_standard_noid']]
 
   
   post_modes <- rstan::vb(object=to_use,data =this_data,
-                          algorithm='meanfield')
+                          algorithm='meanfield',
+                          output_samples=100)
 
   # Test whether there is a lot of missing data
   
@@ -86,6 +87,7 @@
     
     # what to constrain the difference to given the priors
     diff_high <- person[to_constrain_high[1]] 
+    sign_flip <- 1 # whether we need to flip signs 
     diff <- person[to_constrain_high[1]]  - person[to_constrain_low[1]]
     
   } else {
@@ -100,6 +102,11 @@
     
     
     diff_high <- abs(person[to_constrain_high])
+    if(sign(person[to_constrain_high])<0) {
+      sign_flip <- -1
+    } else {
+      sign_flip <- 1
+    }
     diff <- diff_high - sign(person[to_constrain_high])*person[to_constrain_low]
     
     # next we are going to re-order the person IDs around the constraints
@@ -124,38 +131,35 @@
   if(this_data$T>1) {
     # do some additional model identification if necessary for time-varying ideal pt models
     # figure out upper limit of estimated variances
+
+    ideal_pts_low <- rstan::extract(post_modes,'L_tp1')[[1]] %>% apply(c(2,3),quantile,.01) %>% .[,new_order]
+    ideal_pts_high <- rstan::extract(post_modes,'L_tp1')[[1]] %>% apply(c(2,3),quantile,.99) %>% .[,new_order]
+    ideal_pts_low <- ideal_pts_low*sign_flip
+    ideal_pts_high <- ideal_pts_high*sign_flip
     
-    ideal_pts_low <- rstan::extract(post_modes,'L_tp1')[[1]] %>% apply(c(2,3),quantile,.05) %>% .[,new_order]
-    ideal_pts_high <- rstan::extract(post_modes,'L_tp1')[[1]] %>% apply(c(2,3),quantile,.95) %>% .[,new_order]
-    ideal_pts_mean <- rstan::extract(post_modes,'L_tp1')[[1]] %>% apply(3,mean) %>% .[,new_order]
+    # now pull the lowest low and highest high
+    ideal_pts_low <- apply(ideal_pts_low,2,function(c) c[which(c==max(c))])
+    ideal_pts_high <- apply(ideal_pts_high,2,function(c) c[which(c==min(c))])
     
-    if(time_proc %in% c(2,3)) {
-      time_var_restrict <-  max(apply(this_params[,grepl(pattern = 'time_var_restrict',x=all_params)],2,quantile,.95)[new_order])
+    ideal_pts_mean <- rstan::extract(post_modes,'L_tp1')[[1]] %>% apply(3,mean) %>% .[new_order]
+    ideal_pts_mean <- ideal_pts_mean * sign_flip
+    time_var_restrict <-  max(apply(this_params[,grepl(pattern = 'time_var_restrict',x=all_params)],2,quantile,.95)[new_order])
+    
+    if(this_data$time_proc %in% c(2,3)) {
+      # this is just additional for these models
+      restrict_mean_ind <- which(ideal_pts_low==max(ideal_pts_low))
       
-      # constrain any ideal points that are always positive or always negative
-      sign_match <- sign(ideal_pts_low) == sign(ideal_pts_high)
-      constrain_mean <- which(sign_match)
-      # need to select the largest single one if no confidence intervals that don't cross zero
-      if(length(constrain_mean)==0) {
-        constrain_mean <- which(ideal_pts_mean==min(ideal_pts_mean))
-      }
-      if(length(constrain_mean)>1) {
-        constrain_mean <- constrain_mean[abs(ideal_pts_mean[constrain_mean])==max(abs(ideal_pts_mean[constrain_mean]))]
-      }
-      
-      restrict_mean <- ideal_pts_mean[constrain_mean]
-    } else if(time_proc==4) {
+    } else if(this_data$time_proc==4) {
       if(fixtype=='vb_full') {
         restrict_mean_ind <- which(ideal_pts_low==max(ideal_pts_low))
       } else {
-        # just constrain the one that we fixed to be highest
-        restrict_mean_ind <- length(ideal_pts_low)
+        # just constrain the lowest one that we fixed
+        restrict_mean_ind <- to_constrain_high
       }
-      restrict_mean_val <- ideal_pts_low[restrict_mean_ind]
+      
     }
 
-    
-    object@restrict_mean_val <- restrict_mean
+    object@restrict_mean_val <- ideal_pts_low[restrict_mean_ind]
     object@restrict_mean_ind <- restrict_mean_ind
     object@restrict_var_high <- time_var_restrict
   }
@@ -232,12 +236,14 @@
     # reorder group parameters
     object@score_matrix <- mutate(ungroup(object@score_matrix), 
                                   group_id=factor(!! quo(group_id)),
-                                  group_id=fct_relevel(!!quo(group_id),to_constrain_low,to_constrain_high,
+                                  group_id=fct_relevel(!!quo(group_id),as.character(to_constrain_low),
+                                                       as.character(to_constrain_high),
                                                        after=length(levels(!!quo(group_id)))))
   } else {
     object@score_matrix <- mutate(ungroup(object@score_matrix), 
                                   person_id=factor(!! quo(person_id)),
-                                  person_id=fct_relevel(!!quo(person_id),to_constrain_low,to_constrain_high,
+                                  person_id=fct_relevel(!!quo(person_id),as.character(to_constrain_low),
+                                                        as.character(to_constrain_high),
                                                        after=length(levels(!!quo(person_id)))))
   }
   

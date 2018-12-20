@@ -54,6 +54,7 @@ data {
   int time_proc;
   real time_ind[T]; // the actual indices/values of time points, used for Gaussian processes
   int zeroes; // whether to use traditional zero-inflation for bernoulli and poisson models
+  real gp_sd_par;
 }
 
 transformed data {
@@ -117,6 +118,7 @@ parameters {
   vector[num_bills] sigma_abs_free;
   vector[num_legis - num_constrain_l] L_free; // first T=1 params to constrain
   vector<lower=0>[gp_1] m_sd; // marginal standard deviation of GP
+  vector<lower=0>[gp_1] gp_sd; // residual GP variation in Y
   vector[num_legis] L_tp2[gp_nT]; // additional L_tp1 for GPs only
   vector[num_ls] ls_int; // extra intercepts for non-inflated latent space
   vector[num_legis] L_tp1_var[T-1]; // non-centered variance
@@ -181,6 +183,7 @@ model {
   sigma_abs_x ~ normal(0,5);
   sigma_reg_x ~ normal(0,5);
   extra_sd ~ exponential(1);
+  gp_sd ~ exponential(gp_sd_par);
   ar_fix ~ normal(0,1);
   L_AR1_free ~ normal(0,ar_sd);
 
@@ -213,7 +216,7 @@ model {
   
   B_int_free ~ normal(0,diff_reg_sd);
   A_int_free ~ normal(0,diff_abs_sd);
-  m_sd ~ exponential(10); // tight prior on GP marginal standard deviation
+  m_sd ~ exponential(1); // tight prior on GP marginal standard deviation
 
   //exog_param ~ normal(0,5);
   for(b in 1:num_bills) {
@@ -232,7 +235,7 @@ model {
 // add correction for time-series models
 
 if(T>1 && restrict_mean==1) {
-  max(L_tp1[,restrict_mean_ind]) ~ normal(restrict_mean_val,.01);
+  min(L_tp1[,restrict_mean_ind]) ~ normal(restrict_mean_val,.01);
   //target += jacob_mean(num_legis,num_legis_real); // this is a constant as it only varies with the count of the parameters
 }
   

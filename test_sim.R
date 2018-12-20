@@ -251,7 +251,7 @@ to_stan <- stan_model(model_code = stan_code)
 all_means <- apply(Y,1,max)
 restrict_mean_ind <- which(all_means==min(all_means))
 
-run_ar1 <- sampling(to_stan,data=list(N=length(outcome),
+run_ar1 <- vb(to_stan,data=list(N=length(outcome),
 
                                       L=nrow(Y),
                                       B=num_bills,
@@ -267,8 +267,8 @@ run_ar1 <- sampling(to_stan,data=list(N=length(outcome),
                                       outcome=outcome,
                                       id_diff=sort.int(alpha_int,index.return = T,decreasing = T)$x[1] -
                                         sort.int(alpha_int,index.return = T,decreasing = F)$x[1],
-                                      id_diff_high=sort.int(alpha_int,index.return = T,decreasing = T)$x[1]),
-              iter=1000,chains=3,cores=3)
+                                      id_diff_high=sort.int(alpha_int,index.return = T,decreasing = T)$x[1]))
+              #iter=1000,chains=3,cores=3)
 
 
 

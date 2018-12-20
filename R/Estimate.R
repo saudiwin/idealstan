@@ -523,6 +523,8 @@ id_make <- function(score_data=NULL,
 #' @param restrict_mean_ind For random-walk models, the ID of the person/group whose over-time
 #' mean to constrain. Should be left blank (will be set by identification model) unless you are 
 #' really sure.
+#' @param gp_sd_par The expected value of the exponential distribution used for the 
+#' variance of the gaussian time process.
 #' @param ... Additional parameters passed on to Stan's sampling engine. See \code{\link[rstan]{stan}} for more information.
 #' @return A fitted \code{\link{idealstan}} object that contains posterior samples of all parameters either via full Bayesian inference
 #' or a variational approximation if \code{use_vb} is set to \code{TRUE}. This object can then be passed to the plotting functions for further analysis.
@@ -637,6 +639,8 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                         restrict_mean_val=NULL,
                         restrict_mean_ind=NULL,
                         restrict_var_high=0.1,
+                        tol_rel_obj=1e-04,
+                        gp_sd_par=10,
                            ...) {
 
   
@@ -837,7 +841,8 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     restrict_mean_ind=idealdata@restrict_mean_ind,
                     zeroes=inflate_zero,
                     time_ind=time_ind,
-                    time_proc=vary_ideal_pts)
+                    time_proc=vary_ideal_pts,
+                    gp_sd_par=gp_sd_par)
 
   idealdata <- id_model(object=idealdata,fixtype=fixtype,model_type=model_type,this_data=this_data,
                         nfix=nfix,restrict_ind_high=restrict_ind_high,
@@ -944,7 +949,8 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     restrict_mean=idealdata@restrict_mean,
                     zeroes=inflate_zero,
                     time_ind=time_ind,
-                    time_proc=vary_ideal_pts)
+                    time_proc=vary_ideal_pts,
+                    gp_sd_par=gp_sd_par)
 
   outobj <- sample_model(object=idealdata,nchains=nchains,niters=niters,warmup=warmup,ncores=ncores,
                          this_data=this_data,use_vb=use_vb,
@@ -952,7 +958,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                          ...)
   
   outobj@model_type <- model_type
-  outobj@use_ar <- use_ar
+  outobj@time_proc <- vary_ideal_pts
   outobj@use_groups <- use_groups
   return(outobj)
   

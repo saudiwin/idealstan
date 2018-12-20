@@ -59,7 +59,7 @@ setClass('idealstan',
          slots=list(score_data='idealdata',
                     to_fix='list',
                     model_type='numeric',
-                    use_ar='logical',
+                    time_proc='numeric',
                     model_code='character',
                     test_model_code='character',
                     stan_samples='stanfit',
@@ -169,6 +169,7 @@ setMethod('sample_model',signature(object='idealdata'),
               }
               out_model <- vb(object@stanmodel,data=this_data,
                               tol_rel_obj=tol_rel_obj,
+                              iter=20000,
                               ...)
             }
             outobj <- new('idealstan',
