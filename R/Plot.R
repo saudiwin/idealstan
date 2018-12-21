@@ -12,7 +12,14 @@
 #' which side will be voting which way. For that reason, the legislators/persons are colored by their votes/scores to
 #' make it clear.
 #' 
-#' @param object A fitted \code{idealstan} object
+#' To compare across multiple \code{idealstan} models, pass a named list 
+#' \code{list(model1=model1,model2=model2,etc)} to the \code{object} option. 
+#' Note that these comparisons will done by individual persons/groups, so if there are a lot of 
+#' persons/groups, consider using the \code{include} option to only compare a specific set
+#' of persons/groups.
+#' 
+#' @param object A fitted \code{idealstan} object or a named list
+#' of \code{idealstan} objects to compare across models
 #' @param return_data If true, the calculated legislator/bill data is returned along with the plot in a list
 #' @param include Specify a list of person/legislator IDs to include in the plot (all others excluded)
 #' @param high_limit The quantile (number between 0 and 1) for the high end of posterior uncertainty to show in plot
@@ -84,19 +91,34 @@ id_plot_legis <- function(object,return_data=FALSE,
                        show_true=FALSE,group_color=TRUE,
                        hpd_limit=10,
                        sample_persons=NULL,...) {
+  
+  if(class(person_params)=='idealstan') {
+    person_params <- .prepare_legis_data(object,
+                                         high_limit=high_limit,
+                                         low_limit=low_limit)
+    model_wrap <- FALSE
+  } else {
+    # loop over lists
+    person_params <- lapply(object,.prepare_legis_data,
+                            high_limit=high_limit,
+                            low_limit=low_limit) %>% 
+      bind_rows(.id='Model')
+    # now we can facet by persons/groups
+    model_wrap <- TRUE
+  }
 
-  person_params <- .prepare_legis_data(object,
-                                       high_limit=high_limit,
-                                       low_limit=low_limit)
   
   if(!is.null(include)) {
     person_params <- filter(person_params, person_id %in% include)
   }
   
-  if(group_color) {
+  if(group_color && !model_wrap) {
     groupc <- ~group_id
-  } else {
+  } else if(!group_color && !model_wrap) {
     groupc <- NA
+  } else {
+    # if multiple models, subset by models
+    groupc <- ~Model
   }
 
   # sample for plot only
@@ -257,8 +279,15 @@ id_plot_legis <- function(object,return_data=FALSE,
   
   # Add theme elements
   
-  outplot <- outplot  + theme_minimal() + ylab("") + xlab("") +
-    theme(axis.text.y=element_blank(),panel.grid.major.y = element_blank()) + coord_flip() 
+  outplot <- outplot  +  ylab("") + xlab("") +
+    theme(axis.text.y=element_blank(),panel.grid.major.y = element_blank(),
+          strip.background = element_blank(),
+          panel.background = element_blank()) + coord_flip() 
+  
+  if(model_wrap) {
+    # facet by groups/persons
+    outplot <- outplot + facet_wrap(~group_id)
+  }
 
   
   if(return_data==TRUE) {
@@ -426,7 +455,7 @@ id_plot_legis_var <- function(object,return_data=FALSE,
 #' which side will be voting which way. For that reason, the legislators/persons are colored by their votes/scores to
 #' make it clear.
 #' 
-#' @param object A fitted \code{idealstan} object
+#' @param object A fitted \code{idealstan} object or a 
 #' @param return_data If true, the calculated legislator/bill data is returned along with the plot in a list
 #' @param include Specify a list of person/legislator IDs to include in the plot (all others excluded)
 #' @param item_plot The value of the item/bill for which to plot its midpoint (character value)
