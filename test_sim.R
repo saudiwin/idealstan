@@ -229,12 +229,12 @@ for(n in 1:L) {
 diff ~ normal(0,3);
 discrim ~ normal(0,3);
 rho ~ inv_gamma(8.91924, 34.5805);
-sigma ~ normal(-2.3,.1);
+sigma ~ normal(.1,.01);
 //m_sd ~ normal(0, 2);
-alpha ~ normal(-0.7,.1);
+alpha ~ normal(0.8,.1);
 
 // constrain the over-time mean of one L
-max(Y[,restrict_mean_ind]) ~ normal(restrict_mean_val,.01);
+//max(Y[,restrict_mean_ind]) ~ normal(restrict_mean_val,.01);
   //target += jacob_mean(L,L_real); // this is a constant as it only varies with the count of the parameters
 
 for(n in 1:N) {
@@ -251,7 +251,7 @@ to_stan <- stan_model(model_code = stan_code)
 all_means <- apply(Y,1,max)
 restrict_mean_ind <- which(all_means==min(all_means))
 
-run_ar1 <- vb(to_stan,data=list(N=length(outcome),
+run_ar1 <- sampling(to_stan,data=list(N=length(outcome),
 
                                       L=nrow(Y),
                                       B=num_bills,
@@ -267,8 +267,8 @@ run_ar1 <- vb(to_stan,data=list(N=length(outcome),
                                       outcome=outcome,
                                       id_diff=sort.int(alpha_int,index.return = T,decreasing = T)$x[1] -
                                         sort.int(alpha_int,index.return = T,decreasing = F)$x[1],
-                                      id_diff_high=sort.int(alpha_int,index.return = T,decreasing = T)$x[1]))
-              #iter=1000,chains=3,cores=3)
+                                      id_diff_high=sort.int(alpha_int,index.return = T,decreasing = T)$x[1]),
+              iter=1000,chains=4,cores=4)
 
 
 
