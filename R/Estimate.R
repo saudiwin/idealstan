@@ -704,6 +704,8 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   # now need to generate max/min values for empirical length-scale prior in GP
   if(vary_ideal_pts==4) {
     gp_length <- .gp_prior(time_ind)
+  } else {
+    gp_length <- list(a=0,b=0)
   }
   
   max_t <- max(timepoints,na.rm=T)
