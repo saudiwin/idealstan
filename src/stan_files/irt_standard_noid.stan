@@ -167,7 +167,7 @@ model {
     matrix[T, T] cov[gp_N]; // zero-length if not a GP model
     matrix[T, T] L_cov[gp_N];// zero-length if not a GP model
     vector[gp_nT] calc_values; // used for calculating covariate values for GPs
-#include src/stan_files/chunks/l_gp_prior.stan   
+#include /stan_files/chunks/l_gp_prior.stan   
     }
   }
   
