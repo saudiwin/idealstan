@@ -68,9 +68,9 @@ stan::io::program_reader prog_reader__() {
     reader.add_event(448, 0, "start", "/chunks/l_hier_prior.stan");
     reader.add_event(464, 16, "end", "/chunks/l_hier_prior.stan");
     reader.add_event(464, 170, "restart", "model_irt_standard");
-    reader.add_event(502, 208, "include", "/chunks/l_hier_gp_prior.stan   ");
-    reader.add_event(502, 0, "start", "/chunks/l_hier_gp_prior.stan   ");
-    reader.add_event(520, 18, "end", "/chunks/l_hier_gp_prior.stan   ");
+    reader.add_event(502, 208, "include", "/chunks/l_gp_prior.stan   ");
+    reader.add_event(502, 0, "start", "/chunks/l_gp_prior.stan   ");
+    reader.add_event(520, 18, "end", "/chunks/l_gp_prior.stan   ");
     reader.add_event(520, 209, "restart", "model_irt_standard");
     reader.add_event(556, 245, "include", "/chunks/modeling_statement_v9.stan");
     reader.add_event(556, 0, "start", "/chunks/modeling_statement_v9.stan");
