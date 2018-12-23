@@ -14,7 +14,7 @@ id_plot_legis_dyn(object, return_data = FALSE, include = NULL,
   plot_sim = FALSE, ...)
 }
 \arguments{
-\item{object}{A fitted \code{idealstan} object}
+\item{object}{A fitted \code{idealstan} object or a}
 
 \item{return_data}{If true, the calculated legislator/bill data is returned along with the plot in a list}
 

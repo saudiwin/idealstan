@@ -24,7 +24,7 @@ require(lubridate)
 
 Kubinec, Robert. "Generalized Ideal Point Models for Time-Varying and Missing-Data Inference". Working Paper.
 
-This package implements to kinds of time-varying ideal point models. Because these time-varying models are independent of the specific outcome used, time-varying ideal point models can be fit with any outcome/response supported by the package, including binary, ordinal, counts, continuous and positive-continuous data, in addition to the latent space model for binary data. This vignette demonstrates the use of the two time-varying ideal point models and how to decide between them with example data drawn from the 114th Senate. 
+This package implements to kinds of time-varying ideal point models. Because these time-varying models are independent of the specific outcome used, time-varying ideal point models can be fit with any outcome/response supported by the package, including binary, ordinal, counts, continuous and positive-continuous data, in addition to the latent space model for binary data. This vignette demonstrates the use of the two time-varying ideal point models and how to decide between them with example data drawn from the 114th Senate and Delaware's state legislature. 
 
 ```{r example_data}
 data('senate114')
@@ -67,7 +67,7 @@ senate114 %>%
 
 We have now reduced the number of time points to `r length(unique(senate114$date))`. Again, we could certainly model every time point in the data, but for the purposes of illustration we reduced the number. Aggregating dates can be useful when there is simply too much granularity in the data, such as dates recording down to each second or hour.
 
-There are two time-varying models included in `idealstan` package, each of which makes different assumptions about how ideal points change over time. It is important to note that neither of these models is superior to the other. Ideal points do not have any natural time process as they are a latent, unobserved construct, so the question is more about which time process is most relevant to the social or physical process being studied. 
+There are three time-varying models included in `idealstan` package, each of which makes different assumptions about how ideal points change over time. It is important to note that neither of these models is superior to the other. Ideal points do not have any natural time process as they are a latent, unobserved construct, so the question is more about which time process is most relevant to the social or physical process being studied. 
 
 The first kind of model included in `idealstan` is known as a random-walk process (also non-stationary time-series and I(1)). This simple model of time implies that the location of an ideal point in the current time point is equal to the position of the ideal point in the prior time point plus some random noise. A helpful analogy is to imagine a frog hopping around a room. It could head in virtually any direction. 
 
@@ -77,11 +77,13 @@ Despite these limitations, this model is still useful, especially in two situati
 
 The second model included in `idealstan` is a stationary time series model (also called an AR(1) or first-order autoregressive time series). A stationary time-series is so called because it must return over time to a long-term average or mean. Change over time is conceived of as shocks that push the time series away from its long-term average. The AR(1) model includes additional parameters that measure how fast a time-series will return to its long-term average. A good empirical example for this model is economic growth over time. There are periods when "growth shocks" occur, such as recessions and boom times. Overall, though, economic growth for a specific country will tend towards some long-term average rate of growth. Economic growth can't simply move off in any direction, especially in an upward direction, as that would over-heat the economy and result in massive inflation.
 
-Returning to the analysis of legislatures, a stationary model might be more appropriate for shorter time spans, such as the one in our Senate data that covers two years. Over this period of time, ideal points might experience shocks, such as scandals, but legislators are unlikely to change their fundamental policy positions in the course of a year. As such, a stationary model may be more appropriate.
+The third model is known as a Gaussian process. Fully explaining how Gaussian processes work is beyond the scope of this vignette, but I refer readers to [this case study](https://betanalpha.github.io/assets/case_studies/gp_part1/part1.html) as a very helpful introduction.
 
-In addition, stationary models allow us to fit covariates that have a more meaningful interpretation: the estimates of covariates represent shocks to the ideal points away from their long-term average. We can even measure the time it takes for an ideal point process to return to its long-term average after experiencing the shock, such as if we included a covariate for 9/11 in the model.
+Returning to the analysis of legislatures, the random-walk and Gaussian process models share in common that they allow time series to move in any possible direction. The Gaussian process model puts fewer constraints on the movement of the time series, while the random walk allows only for modest evolutionary change over time. The random-walk model's advantage is that it is a good deal simpler than the Gaussian process.
 
-To show what these models look like, we will fit each model to the `senate114` data in turn. We use the `vb` option to produce variational estimates of the true posterior; these approximations are much faster to fit than the full model but usually have some distortions. For finished analysis we would want to use the full sampler (`use_vb=FALSE`). 
+The stationary model, by contrast, assumes that ideal points have a single long-term average. The ideal points may receive "shocks" that force them away, but they will inevitably return. While this is a more specific set of assumptions than the random walk or Gaussian process, stationary models have the significant advantage of allowing us to fit covariates that have a more meaningful interpretation: the estimates of covariates represent shocks to the ideal points away from their long-term average. We can even measure the time it takes for an ideal point process to return to its long-term average after experiencing the shock.
+
+To show what these models look like, we will fit each model to the `delaware` data in turn. We use the `vb` option to produce variational estimates of the true posterior; these approximations are much faster to fit than the full model but usually have some distortions. For finished analysis we would want to use the full sampler (`use_vb=FALSE`), unless we have so much data that processing time for the full model is infeasible. 
 
 ## Random-Walk Model
 
@@ -208,7 +210,7 @@ id_plot_legis_dyn(sen_est) + scale_colour_manual(values=c(R='red',
 
 
 Finally, we can also overlay a bill/item midpoint to see where the line of indifference in voting is relative to party positions:
-
+d
 ```{r party_mid}
 id_plot_legis_dyn(sen_est,item_plot='342',text_size_label = 5) + scale_colour_manual(values=c(R='red',
                                                           D='blue',

@@ -16,7 +16,7 @@ id_estimate(idealdata = NULL, model_type = 2, inflate_zero = FALSE,
   diff_reg_sd = 1, diff_miss_sd = 1, restrict_sd = 0.01,
   restrict_mean = NULL, restrict_var = NULL,
   restrict_mean_val = NULL, restrict_mean_ind = NULL,
-  restrict_var_high = 0.1, ...)
+  restrict_var_high = 0.1, tol_rel_obj = 1e-04, gp_sd_par = 10, ...)
 }
 \arguments{
 \item{idealdata}{An object produced by the \code{\link{id_make}} containing a score/vote matrix for use for estimation & plotting}
@@ -29,9 +29,10 @@ setting this to
 zero must be passed as the \code{miss_val} option to \code{\link{id_make}} before
 running a model so that zeroes are coded as missing data.}
 
-\item{vary_ideal_pts}{Default \code{'none'}. If \code{'random_walk'} or \code{'AR1'}, a 
-time-varying ideal point model will be fit with either a random-walk process or an 
-AR1 process. See documentation for more info.}
+\item{vary_ideal_pts}{Default \code{'none'}. If \code{'random_walk'}, \code{'AR1'} or 
+\code{'GP'}, a 
+time-varying ideal point model will be fit with either a random-walk process, an 
+AR1 process or a Gaussian process. See documentation for more info.}
 
 \item{use_subset}{Whether a subset of the legislators/persons should be used instead of the full response matrix}
 
@@ -134,7 +135,19 @@ really sure.}
 model is a random-walk time-series). If left blank, either defaults to 0.1 or is set by 
 identification model.}
 
+\item{tol_rel_obj}{If \code{use_vb} is \code{TRUE}, this parameter sets the stopping rule for the \code{vb} algorithm. 
+It's default is \code{1e-04}, or 0.0001. A stricter threshold will require the sampler to run longer but may yield a
+better result in a difficult model with highly correlated parameters. Lowering the threshold should work fine for simpler
+models.}
+
+\item{gp_sd_par}{The expected value of the exponential distribution used for the 
+variance of the gaussian time process.}
+
 \item{...}{Additional parameters passed on to Stan's sampling engine. See \code{\link[rstan]{stan}} for more information.}
+
+\item{tol_rel_obj}{The threshold used for stopping variational inference \code{use_vb}. 
+A lower number will produce a more conservative threshold. If repeated sampling shows
+inconsistent estimates, lowering the threshold should improve convergence.}
 }
 \value{
 A fitted \code{\link{idealstan}} object that contains posterior samples of all parameters either via full Bayesian inference
@@ -311,6 +324,7 @@ id_plot_legis(sen_est)
    \item Clinton, J., Jackman, S., & Rivers, D. (2004). The Statistical Analysis of Roll Call Data. \emph{The American Political Science Review}, 98(2), 355-370. doi:10.1017/S0003055404001194
    \item Bafumi, J., Gelman, A., Park, D., & Kaplan, N. (2005). Practical Issues in Implementing and Understanding Bayesian Ideal Point Estimation. \emph{Political Analysis}, 13(2), 171-187. doi:10.1093/pan/mpi010
    \item Kubinec, R. "Generalized Ideal Point Models for Time-Varying and Missing-Data Inference". Working Paper.
+   \item Betancourt, Michael. "Robust Gaussian Processes in Stan". (October 2017). Case Study.
 }
 }
 \seealso{

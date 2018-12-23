@@ -525,6 +525,9 @@ id_make <- function(score_data=NULL,
 #' really sure.
 #' @param gp_sd_par The expected value of the exponential distribution used for the 
 #' variance of the gaussian time process.
+#' @param tol_rel_obj The threshold used for stopping variational inference \code{use_vb}. 
+#' A lower number will produce a more conservative threshold. If repeated sampling shows
+#' inconsistent estimates, lowering the threshold should improve convergence.
 #' @param ... Additional parameters passed on to Stan's sampling engine. See \code{\link[rstan]{stan}} for more information.
 #' @return A fitted \code{\link{idealstan}} object that contains posterior samples of all parameters either via full Bayesian inference
 #' or a variational approximation if \code{use_vb} is set to \code{TRUE}. This object can then be passed to the plotting functions for further analysis.

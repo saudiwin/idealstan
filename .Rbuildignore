@@ -11,5 +11,6 @@ package_test_files
 render_vignettes.R
 vignette_output.txt
 cran-comments.md
+test_*
 
 

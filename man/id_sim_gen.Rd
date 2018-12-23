@@ -34,8 +34,9 @@ missing data}
 
 \item{time_points}{The number of time points for time-varying legislator/person parameters}
 
-\item{time_process}{The process used to generate the ideal points: currently either \code{'random'} 
-for a random walk or \code{'AR'} for an AR1 process}
+\item{time_process}{The process used to generate the ideal points: either \code{'random'} 
+for a random walk, \code{'AR'} for an AR1 process,
+or \code{'GP'} for a Gaussian process.}
 
 \item{time_sd}{The standard deviation of the change in ideal points over time (should be low relative to 
 \code{ideal_pts_sd})}
