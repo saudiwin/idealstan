@@ -144,10 +144,6 @@ models.}
 variance of the gaussian time process.}
 
 \item{...}{Additional parameters passed on to Stan's sampling engine. See \code{\link[rstan]{stan}} for more information.}
-
-\item{tol_rel_obj}{The threshold used for stopping variational inference \code{use_vb}. 
-A lower number will produce a more conservative threshold. If repeated sampling shows
-inconsistent estimates, lowering the threshold should improve convergence.}
 }
 \value{
 A fitted \code{\link{idealstan}} object that contains posterior samples of all parameters either via full Bayesian inference

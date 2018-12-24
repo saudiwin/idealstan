@@ -68,19 +68,15 @@ stan::io::program_reader prog_reader__() {
     reader.add_event(448, 0, "start", "/chunks/l_hier_prior.stan");
     reader.add_event(464, 16, "end", "/chunks/l_hier_prior.stan");
     reader.add_event(464, 170, "restart", "model_irt_standard");
-    reader.add_event(502, 208, "include", "/chunks/l_gp_prior.stan   ");
-    reader.add_event(502, 0, "start", "/chunks/l_gp_prior.stan   ");
-    reader.add_event(520, 18, "end", "/chunks/l_gp_prior.stan   ");
-    reader.add_event(520, 209, "restart", "model_irt_standard");
-    reader.add_event(556, 245, "include", "/chunks/modeling_statement_v9.stan");
+    reader.add_event(556, 262, "include", "/chunks/modeling_statement_v9.stan");
     reader.add_event(556, 0, "start", "/chunks/modeling_statement_v9.stan");
     reader.add_event(582, 26, "end", "/chunks/modeling_statement_v9.stan");
-    reader.add_event(582, 246, "restart", "model_irt_standard");
-    reader.add_event(585, 249, "include", "/chunks/model_types.stan");
+    reader.add_event(582, 263, "restart", "model_irt_standard");
+    reader.add_event(585, 266, "include", "/chunks/model_types.stan");
     reader.add_event(585, 0, "start", "/chunks/model_types.stan");
     reader.add_event(903, 318, "end", "/chunks/model_types.stan");
-    reader.add_event(903, 250, "restart", "model_irt_standard");
-    reader.add_event(923, 268, "end", "model_irt_standard");
+    reader.add_event(903, 267, "restart", "model_irt_standard");
+    reader.add_event(923, 285, "end", "model_irt_standard");
     return reader;
 }
 

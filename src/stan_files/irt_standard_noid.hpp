@@ -56,15 +56,11 @@ stan::io::program_reader prog_reader__() {
     reader.add_event(352, 0, "start", "/chunks/l_hier_prior.stan");
     reader.add_event(368, 16, "end", "/chunks/l_hier_prior.stan");
     reader.add_event(368, 141, "restart", "model_irt_standard_noid");
-    reader.add_event(396, 169, "include", "/chunks/l_gp_prior.stan   ");
-    reader.add_event(396, 0, "start", "/chunks/l_gp_prior.stan   ");
-    reader.add_event(414, 18, "end", "/chunks/l_gp_prior.stan   ");
-    reader.add_event(414, 170, "restart", "model_irt_standard_noid");
-    reader.add_event(459, 215, "include", "/chunks/model_types.stan");
+    reader.add_event(459, 232, "include", "/chunks/model_types.stan");
     reader.add_event(459, 0, "start", "/chunks/model_types.stan");
     reader.add_event(777, 318, "end", "/chunks/model_types.stan");
-    reader.add_event(777, 216, "restart", "model_irt_standard_noid");
-    reader.add_event(783, 220, "end", "model_irt_standard_noid");
+    reader.add_event(777, 233, "restart", "model_irt_standard_noid");
+    reader.add_event(783, 237, "end", "model_irt_standard_noid");
     return reader;
 }
 
