@@ -396,7 +396,10 @@ id_plot_legis_var <- function(object,return_data=FALSE,
                     color=group_id),size=text_size_group,show.legend = FALSE) 
   } else if(group_color==FALSE) {
     outplot <- person_params %>% ggplot() +
-      geom_linerange(aes(x=reorder(person_id,median_pt),ymin=low_pt,ymax=high_pt),alpha=person_ci_alpha) +
+      geom_linerange(aes(x=reorder(person_id,
+                                   median_pt),
+                         ymin=low_pt,ymax=high_pt),
+                     alpha=person_ci_alpha) +
       geom_text(aes(x=reorder(person_id,median_pt),y=median_pt,
                           label=reorder(group_id,median_pt)),size=text_size_group)
     

@@ -884,7 +884,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   # for gaussian processes, need actual time values
   time_ind <- switch(class(idealdata@score_matrix$time_id)[1],
                      factor=unique(as.numeric(idealdata@score_matrix$time_id)),
-                     date=unique(as.numeric(idealdata@score_matrix$time_id)),
+                     Date=unique(as.numeric(idealdata@score_matrix$time_id)),
                      POSIXct=unique(as.numeric(idealdata@score_matrix$time_id)),
                      POSIXlt=unique(as.numeric(idealdata@score_matrix$time_id)),
                      numeric=unique(idealdata@score_matrix$time_id),
