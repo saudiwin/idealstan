@@ -92,19 +92,30 @@ id_plot_legis <- function(object,return_data=FALSE,
                        hpd_limit=10,
                        sample_persons=NULL,...) {
   
-  if(class(person_params)=='idealstan') {
+  if(class(object)=='idealstan') {
     person_params <- .prepare_legis_data(object,
                                          high_limit=high_limit,
                                          low_limit=low_limit)
     model_wrap <- FALSE
+    use_groups <- object@use_groups
   } else {
     # loop over lists
     person_params <- lapply(object,.prepare_legis_data,
                             high_limit=high_limit,
                             low_limit=low_limit) %>% 
       bind_rows(.id='Model')
+    
+    check_groups <- sapply(object,function(x) x@use_groups)
+    if(all(check_groups)) {
+      use_groups <- T
+    } else {
+      use_groups <- F
+    }
     # now we can facet by persons/groups
     model_wrap <- TRUE
+    group_color <- FALSE
+    # assume all data is the same
+    object <- object[[1]]
   }
 
   
@@ -538,9 +549,32 @@ id_plot_legis_dyn <- function(object,return_data=FALSE,
   
   person_labels <- quo(person_id)
   group_labels <- quo(group_id)
-  person_params <- .prepare_legis_data(object,
-                                       high_limit=high_limit,
-                                       low_limit=low_limit) 
+  already_facet <- FALSE
+  
+  if(class(object)=='idealstan') {
+    person_params <- .prepare_legis_data(object,
+                                         high_limit=high_limit,
+                                         low_limit=low_limit)
+    model_wrap <- FALSE
+    use_groups <- object@use_groups
+  } else {
+    # loop over lists
+    person_params <- lapply(object,.prepare_legis_data,
+                            high_limit=high_limit,
+                            low_limit=low_limit) %>% 
+      bind_rows(.id='Model')
+    
+    check_groups <- sapply(object,function(x) x@use_groups)
+    if(all(check_groups)) {
+      use_groups <- T
+    } else {
+      use_groups <- F
+    }
+    # now we can facet by persons/groups
+    model_wrap <- TRUE
+    # assume all data is the same
+    object <- object[[1]]
+  }
   
   # create item plot data
   
@@ -597,7 +631,7 @@ id_plot_legis_dyn <- function(object,return_data=FALSE,
   }
   
   if(!is.null(include)) {
-    if(object@use_groups) {
+    if(use_groups) {
       person_params <- filter(person_params, group_id %in% include)
     } else {
       person_params <- filter(person_params, person_id %in% include)
@@ -605,10 +639,18 @@ id_plot_legis_dyn <- function(object,return_data=FALSE,
     
   }
   
-  if(object@use_groups) {
+  if(use_groups && !model_wrap) {
     base_id <- ~group_id
-  } else {
+  } else if(!use_groups && !model_wrap) {
     base_id <- ~person_id
+  } else {
+    # set base id to the model type
+    base_id <- ~Model
+    if(use_groups) {
+      wrap_id <- ~group_id
+    } else {
+      wrap_id <- ~person_id
+    }
   }
   
   # allow the option of plotting "true" ideal points instead of estimated ones as lines
@@ -654,12 +696,20 @@ id_plot_legis_dyn <- function(object,return_data=FALSE,
     
   } else {
     if(group_color) {
+      if(model_wrap) {
+        outplot <- outplot + 
+          geom_line(aes_(y=~median_pt,group=base_id,
+                         colour=~Model),
+                    alpha=person_ci_alpha,
+                    size=line_size)
+      } else {
+        outplot <- outplot + 
+          geom_line(aes_(y=~median_pt,group=base_id,
+                         colour=~group_id),
+                    alpha=person_ci_alpha,
+                    size=line_size)
+      }
       
-      outplot <- outplot + 
-        geom_line(aes_(y=~median_pt,group=base_id,
-                       colour=~group_id),
-                  alpha=person_ci_alpha,
-                  size=line_size)
     } else {
       
       outplot <- outplot + 
@@ -681,13 +731,24 @@ id_plot_legis_dyn <- function(object,return_data=FALSE,
       theme(legend.position = 'bottom')
     
     #Whether or not to add a facet_wrap
-    
-    if(item_plot_type=='both' & length(item_plot)>1) {
-      outplot <- outplot + facet_wrap(~item_name + item_type,dir='v')
+    # Note interferes with model_wrap
+    if(item_plot_type=='both' && length(item_plot)>1) {
+      if(model_wrap) {
+        outplot <- outplot + facet_wrap(update(wrap_id,~. + item_name + item_type),dir='v')
+      } else {
+        outplot <- outplot + facet_wrap(~item_name + item_type ,dir='v')
+      }
+      
     } else if(item_plot_type=='both') {
-      outplot <- outplot + facet_wrap(~item_type,dir='v') 
+      if(model_wrap) {
+        outplot <- outplot + facet_wrap(update(wrap_id,~ . + item_type),dir='v')
+      } else {
+        outplot <- outplot + facet_wrap(~item_type,dir='v')
+      }
+       
     } 
-    
+    # record state
+    already_facet <- TRUE
     
   }
 
@@ -731,6 +792,12 @@ id_plot_legis_dyn <- function(object,return_data=FALSE,
   outplot <- outplot +
     theme_minimal() + ylab("Ideal Point Scale") + xlab("") +
     theme(panel.grid= element_blank())
+  
+  # if not already facetted, facet
+  
+  if(!already_facet && model_wrap) {
+    outplot <- outplot + facet_wrap(wrap_id,scales = 'free_y')
+  }
   
   return(outplot)
   
@@ -948,7 +1015,7 @@ id_plot_cov <- function(object,
   to_plot <- as.array(object@stan_samples,
                    pars=param_name)
   
-  if(object@use_groups && cov_type=='person_cov') {
+  if(use_groups && cov_type=='person_cov') {
     cov_type <- 'group_cov'
   }
   

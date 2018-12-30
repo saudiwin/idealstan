@@ -36,7 +36,7 @@ static int current_statement_begin__;
 stan::io::program_reader prog_reader__() {
     stan::io::program_reader reader;
     reader.add_event(0, 0, "start", "model_gp_prior_tune");
-    reader.add_event(33, 31, "end", "model_gp_prior_tune");
+    reader.add_event(36, 34, "end", "model_gp_prior_tune");
     return reader;
 }
 
@@ -100,8 +100,8 @@ struct tail_delta_functor__ {
 #include <meta_header.hpp>
  class model_gp_prior_tune : public prob_grad {
 private:
-    vector_d y_guess;
     vector_d theta;
+    vector_d y_guess;
     vector_d y;
     vector<double> x_r;
     vector<int> x_i;
@@ -141,41 +141,47 @@ public:
 
         // initialize member variables
         try {
+            current_statement_begin__ = 14;
+            validate_non_negative_index("theta", "2", 2);
+            context__.validate_dims("data initialization", "theta", "vector_d", context__.to_vec(2));
+            validate_non_negative_index("theta", "2", 2);
+            theta = vector_d(static_cast<Eigen::VectorXd::Index>(2));
+            vals_r__ = context__.vals_r("theta");
+            pos__ = 0;
+            size_t theta_i_vec_lim__ = 2;
+            for (size_t i_vec__ = 0; i_vec__ < theta_i_vec_lim__; ++i_vec__) {
+                theta[i_vec__] = vals_r__[pos__++];
+            }
 
             // validate, data variables
-            // initialize data variables
             current_statement_begin__ = 14;
+            // initialize data variables
+            current_statement_begin__ = 18;
             validate_non_negative_index("y_guess", "2", 2);
             y_guess = vector_d(static_cast<Eigen::VectorXd::Index>(2));
             stan::math::fill(y_guess,DUMMY_VAR__);
             stan::math::assign(y_guess,transpose(stan::math::to_row_vector(stan::math::array_builder<double >().add(stan::math::log(10)).add(stan::math::log(20)).array())));
-            current_statement_begin__ = 15;
-            validate_non_negative_index("theta", "2", 2);
-            theta = vector_d(static_cast<Eigen::VectorXd::Index>(2));
-            stan::math::fill(theta,DUMMY_VAR__);
-            stan::math::assign(theta,transpose(stan::math::to_row_vector(stan::math::array_builder<double >().add(2).add(10).array())));
-            current_statement_begin__ = 16;
+            current_statement_begin__ = 19;
             validate_non_negative_index("y", "2", 2);
             y = vector_d(static_cast<Eigen::VectorXd::Index>(2));
             stan::math::fill(y,DUMMY_VAR__);
-            current_statement_begin__ = 17;
+            current_statement_begin__ = 20;
             validate_non_negative_index("x_r", "0", 0);
             x_r = std::vector<double>(0,double(0));
             stan::math::fill(x_r,DUMMY_VAR__);
-            current_statement_begin__ = 18;
+            current_statement_begin__ = 21;
             validate_non_negative_index("x_i", "0", 0);
             x_i = std::vector<int>(0,int(0));
             stan::math::fill(x_i, std::numeric_limits<int>::min());
 
-            current_statement_begin__ = 20;
+            current_statement_begin__ = 23;
             stan::math::assign(y, algebra_solver(tail_delta_functor__(), y_guess, theta, x_r, x_i, pstream__));
 
             // validate transformed data
-            current_statement_begin__ = 14;
-            current_statement_begin__ = 15;
-            current_statement_begin__ = 16;
-            current_statement_begin__ = 17;
             current_statement_begin__ = 18;
+            current_statement_begin__ = 19;
+            current_statement_begin__ = 20;
+            current_statement_begin__ = 21;
 
             // validate, set parameter ranges
             num_params_r__ = 0U;
@@ -319,13 +325,13 @@ public:
             }
             if (!include_gqs__) return;
             // declare and define generated quantities
-            current_statement_begin__ = 27;
+            current_statement_begin__ = 30;
             local_scalar_t__ a;
             (void) a;  // dummy to suppress unused var warning
 
             stan::math::initialize(a, DUMMY_VAR__);
             stan::math::fill(a,DUMMY_VAR__);
-            current_statement_begin__ = 28;
+            current_statement_begin__ = 31;
             local_scalar_t__ b;
             (void) b;  // dummy to suppress unused var warning
 
@@ -333,14 +339,14 @@ public:
             stan::math::fill(b,DUMMY_VAR__);
 
 
-            current_statement_begin__ = 29;
+            current_statement_begin__ = 32;
             stan::math::assign(a, stan::math::exp(get_base1(y,1,"y",1)));
-            current_statement_begin__ = 30;
+            current_statement_begin__ = 33;
             stan::math::assign(b, stan::math::exp(get_base1(y,2,"y",1)));
 
             // validate generated quantities
-            current_statement_begin__ = 27;
-            current_statement_begin__ = 28;
+            current_statement_begin__ = 30;
+            current_statement_begin__ = 31;
 
             // write generated quantities
         vars__.push_back(a);

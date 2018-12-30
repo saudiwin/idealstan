@@ -10,9 +10,12 @@ functions {
   }
 }
 
+data {
+  vector[2] theta; // two-length vector of min and max of distance
+}
+
 transformed data {
   vector[2] y_guess = [log(10), log(20)]';
-  vector[2] theta = [2, 10]';
   vector[2] y;
   real x_r[0];
   int x_i[0];

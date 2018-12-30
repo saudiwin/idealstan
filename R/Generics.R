@@ -167,9 +167,24 @@ setMethod('sample_model',signature(object='idealdata'),
                 # set to this number for identification runs
                 tol_rel_obj <- 1e-02
               }
+              if(this_data$time_proc==4) {
+                # increase the precision of the gradient ascent when 
+                # using the GP as it is more complicated
+                elbo_samples <- 200
+                grad_samples <- 2
+                eval_elbo <- 50
+                tol_rel_obj <- .002
+              } else {
+                elbo_samples <- 100
+                grad_samples <- 1
+                eval_elbo <- 100
+              }
               out_model <- vb(object@stanmodel,data=this_data,
                               tol_rel_obj=tol_rel_obj,
                               iter=20000,
+                              elbo_samples=elbo_samples,
+                              grad_samples=grad_samples,
+                              eval_elbo=eval_elbo,
                               ...)
             }
             outobj <- new('idealstan',

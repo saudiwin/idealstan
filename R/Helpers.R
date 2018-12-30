@@ -17,6 +17,7 @@
   
   post_modes <- rstan::vb(object=to_use,data =this_data,
                           algorithm='meanfield',
+                          tol_rel_obj=.001, # better convergence criterion than default
                           output_samples=100)
 
   # Test whether there is a lot of missing data
@@ -1685,7 +1686,7 @@ return(as.vector(idx))
   diff_time <- diff(time_points)
   min_diff <- min(diff_time)+1
   # divide max_diff by 2 to constrain the prior away from very large values
-  max_diff <- abs(time_points[1]-time_points[2])
+  max_diff <- abs(time_points[1]-time_points[2])*2
   
   # now run the stan program with the data
   

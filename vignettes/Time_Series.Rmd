@@ -183,7 +183,8 @@ del_est_rw3 <- id_estimate(delaware_data,
                  restrict_ind_high = "D",
                  restrict_ind_low="R",
             seed=84520)
-id_plot_legis_dyn(del_est_rw3) + scale_colour_manual(values=c(R='red',
+id_plot_legis_dyn(del_est_rw3,
+                  include=c('D','R')) + scale_colour_manual(values=c(R='red',
                                                           D='blue',
                                                           I='green'),
                                                  name="Parties")
@@ -195,11 +196,13 @@ id_plot_legis_dyn(del_est_rw3) + scale_colour_manual(values=c(R='red',
 We can also overlay a bill/item midpoint to see where the line of indifference in voting is relative to party positions. In a dynamic ideal point model, the bill/item midpoint will be a straight line as the bill-item midpoint was only voted on in one time point, and hence has only one parameter:
 
 ```{r party_mid}
-id_plot_legis_dyn(sen_est,item_plot='342',text_size_label = 5) + scale_colour_manual(values=c(R='red',
+id_plot_legis_dyn(del_est_rw3,item_plot='342',
+                  text_size_label = 5,
+                  include=c('D','R')) + scale_colour_manual(values=c(R='red',
                                                           D='blue',
                                                           I='green'),
                                                  name="Parties") +
-  ggtitle('Time-Varying Party-level Ideal Points for the 114th Senate',
+  ggtitle('Time-Varying Party-level Ideal Points for the Delaware State Legislature',
           subtitle = 'Midpoint (Line of Indifference to Voting) for 342nd Roll-call Vote as Dotted Line') +
   guides(color='none') +
   annotate(geom='text',
@@ -213,7 +216,7 @@ As this plot shows, the line of indifference is in a no-person's zone in the mid
 I will now estimate additional AR(1) and a Gaussian process model to use as comparison points to the random-walk model for parties:
 
 ```{r ar1_and_gp}
-del_est_ar2 <- id_estimate(senate_data,
+del_est_ar2 <- id_estimate(delaware_data,
                 model_type = 2,
                  use_vb = T,
                 time_sd=0.2,
@@ -224,15 +227,24 @@ del_est_ar2 <- id_estimate(senate_data,
                  restrict_ind_low="R",
             seed=84520)
 
-del_est_gp1 <- id_estimate(senate_data,
+del_est_gp1 <- id_estimate(delaware_data,
                 model_type = 2,
                  use_vb = T,
-                time_sd=0.2,
                 use_groups = T,
+                gp_sd_par = .5,
                 fixtype='vb_partial',
                 vary_ideal_pts='GP',
                  restrict_ind_high = "D",
                  restrict_ind_low="R",
             seed=84520)
+```
+
+We can the use an option in the `id_plot_legis_dyn` function to pass in all three models as a list to see how they compare to each other over the same groups:
+
+```{r compare_mods}
+id_plot_legis_dyn(list(RW=del_est_rw3,
+                       AR1=del_est_ar2,
+                       GP=del_est_gp1),
+                  include=c('D','R'))
 ```
 

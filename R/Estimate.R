@@ -463,7 +463,7 @@ id_make <- function(score_data=NULL,
 #' @param use_vb Whether or not to use Stan's variational Bayesian inference engine instead of full Bayesian inference. Pros: it's much faster.
 #' Cons: it's not quite as accurate. See \code{\link[rstan]{vb}} for more info.
 #' @param tol_rel_obj If \code{use_vb} is \code{TRUE}, this parameter sets the stopping rule for the \code{vb} algorithm. 
-#' It's default is \code{1e-04}, or 0.0001. A stricter threshold will require the sampler to run longer but may yield a
+#' It's default is 0.0005. A stricter threshold will require the sampler to run longer but may yield a
 #' better result in a difficult model with highly correlated parameters. Lowering the threshold should work fine for simpler
 #' models.
 #' @param warmup The number of iterations to use to calibrate Stan's sampler on a given model. Shouldn't be less than 100. 
@@ -523,8 +523,15 @@ id_make <- function(score_data=NULL,
 #' @param restrict_mean_ind For random-walk models, the ID of the person/group whose over-time
 #' mean to constrain. Should be left blank (will be set by identification model) unless you are 
 #' really sure.
-#' @param gp_sd_par The expected value of the exponential distribution used for the 
-#' variance of the gaussian time process.
+#' @param gp_sd_par The upper limit on allowed residual variation of the Gaussian process
+#' prior. Increasing the limit will permit the GP to more closely follow the time points, 
+#' resulting in much sharper bends in the function and potentially oscillation.
+#' @param gp_num_diff The number of time points to use to calculate the length-scale prior
+#' that determines the level of smoothness of the GP time process. Increasing this value
+#' will result in greater smoothness/autocorrelation over time by selecting a greater number
+#' of time points over which to calculate the length-scale prior.
+#' @param gp_m_sd_par The upper limit of the marginal standard deviation of the GP time 
+#' process. Decreasing this value will result in smoother fits.
 #' @param ... Additional parameters passed on to Stan's sampling engine. See \code{\link[rstan]{stan}} for more information.
 #' @return A fitted \code{\link{idealstan}} object that contains posterior samples of all parameters either via full Bayesian inference
 #' or a variational approximation if \code{use_vb} is set to \code{TRUE}. This object can then be passed to the plotting functions for further analysis.
@@ -640,8 +647,10 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                         restrict_mean_val=NULL,
                         restrict_mean_ind=NULL,
                         restrict_var_high=0.1,
-                        tol_rel_obj=1e-04,
-                        gp_sd_par=10,
+                        tol_rel_obj=.0005,
+                        gp_sd_par=.5,
+                        gp_num_diff=4,
+                        gp_m_sd_par=1,
                            ...) {
 
   
@@ -850,8 +859,9 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     zeroes=inflate_zero,
                     time_ind=time_ind,
                     time_proc=vary_ideal_pts,
-                    gp_length_a=gp_length$`a`,
-                    gp_length_b=gp_length$b)
+                    gp_sd_par=gp_sd_par,
+                    num_diff=gp_num_diff,
+                    m_sd_par=gp_m_sd_par)
 
   idealdata <- id_model(object=idealdata,fixtype=fixtype,model_type=model_type,this_data=this_data,
                         nfix=nfix,restrict_ind_high=restrict_ind_high,
@@ -959,8 +969,9 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     zeroes=inflate_zero,
                     time_ind=time_ind,
                     time_proc=vary_ideal_pts,
-                    gp_length_a=gp_length$`a`,
-                    gp_length_b=gp_length$b)
+                    gp_sd_par=gp_sd_par,
+                    num_diff=gp_num_diff,
+                    m_sd_par=gp_m_sd_par)
 
   outobj <- sample_model(object=idealdata,nchains=nchains,niters=niters,warmup=warmup,ncores=ncores,
                          this_data=this_data,use_vb=use_vb,

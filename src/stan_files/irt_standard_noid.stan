@@ -3,6 +3,7 @@
 
 functions {
 #include /chunks/stationary_functions.stan
+#include /chunks/calc_rlnorm_gp.stan
 }
 
 data {
@@ -47,8 +48,8 @@ data {
   real time_ind[T]; // the actual indices/values of time points, used for Gaussian processes
   int zeroes; // whether to use traditional zero-inflation for bernoulli and poisson models
   real gp_sd_par; // residual variation in GP
-  real gp_length_a; // a parameter in inverse-gamma GP length-scale prior
-  real gp_length_b; // b parameter in inverse-gamma GP length-scale prior
+  int num_diff; // number of time points used to calculate GP length-scale prior
+  real m_sd_par; // the marginal standard deviation of the GP
 }
 
 transformed data {
@@ -64,12 +65,18 @@ transformed data {
 	int gp_1; // zero-length gp-related scalars
 	int gp_nT; // used to make L_tp1 go to model block if GPs are used
 	int gp_oT; // used to make L_tp1 go to model block if GPs are used
+	vector[2] gp_length; 
+	
+	// set mean of log-normal distribution for GP length-scale prior
+	
+	gp_length = gp_prior_mean(time_ind,num_diff);
 	
 	//reset these values to use GP-specific parameters
 	if(time_proc!=4) {
 	  gp_N=0;
 	  gp_1=0;
 	  gp_oT=T;
+	  gp_length[2] = 0;
 	  gp_nT=0;
 	} else {
 	  gp_N=num_legis;
@@ -117,10 +124,10 @@ parameters {
   ordered[m_step-1] steps_votes_grm[num_bills];
   vector[num_bills] B_int_free;
   vector[num_bills] A_int_free;
-  vector<lower=0>[gp_1] m_sd; // marginal standard deviation for GPs
-  vector<lower=0>[gp_1] gp_sd; //additional residual variation in Y for GPs
+  vector<lower=0,upper=m_sd_par>[gp_1] m_sd; // marginal standard deviation for GPs
+  vector<lower=0,upper=gp_sd_par>[gp_1] gp_sd; //additional residual variation in Y for GPs
   real<lower=0> extra_sd;
-  vector<lower=0>[num_legis] time_var; // variance for time series processes
+  vector<lower=gp_length[2]>[num_legis] time_var; // variance for time series processes. constrained if GP
   vector<lower=0,upper=restrict_var_high>[num_legis] time_var_restrict; // optional restricted variance
 }
 
@@ -142,6 +149,7 @@ transformed parameters {
     } else if(time_proc==4) {
       L_tp1 = L_tp2; // just copy over the variables, saves code if costs a bit of extra memory
                       // should be manageable memory loss
+      L_full = rep_vector(0,num_legis); // need to put something in here
   } else {
     L_tp1[1] = L_full;
   }
@@ -201,8 +209,8 @@ for(n in 1:num_legis) {
   L_AR1 ~ normal(0,ar_sd); // these parameters shouldn't get too big
   ls_int ~ normal(0,legis_sd);
   extra_sd ~ exponential(1);
-  gp_sd ~ exponential(gp_sd_par);
-  m_sd ~ exponential(1); // tight prior on GP marginal standard deviation
+  gp_sd ~ exponential(1);
+  m_sd ~ exponential(2); // tight prior on GP marginal standard deviation
 
   if(model_type>2 && model_type<5) {
     for(i in 1:(m_step-2)) {
@@ -224,7 +232,7 @@ for(n in 1:num_legis) {
   if(time_proc!=4) {
     time_var ~ exponential(1/time_sd);
   } else {
-    time_var ~ inv_gamma(gp_length_a, gp_length_b);
+    time_var ~ lognormal(gp_length[1],.2);
   }
 
   
