@@ -49,7 +49,8 @@ data {
   int zeroes; // whether to use traditional zero-inflation for bernoulli and poisson models
   real gp_sd_par; // residual variation in GP
   int num_diff; // number of time points used to calculate GP length-scale prior
-  real m_sd_par; // the marginal standard deviation of the GP
+  real m_sd_par[2]; // the marginal standard deviation of the GP
+  int min_length; // the minimum threshold for GP length-scale prior
 }
 
 transformed data {
@@ -68,8 +69,12 @@ transformed data {
 	vector[2] gp_length; 
 	
 	// set mean of log-normal distribution for GP length-scale prior
+	if(time_proc==4) {
+	  gp_length = gp_prior_mean(time_ind,num_diff,min_length);
+	} else {
+	  gp_length = [0,0]';
+	}
 	
-	gp_length = gp_prior_mean(time_ind,num_diff);
 	
 	//reset these values to use GP-specific parameters
 	if(time_proc!=4) {
@@ -124,7 +129,7 @@ parameters {
   ordered[m_step-1] steps_votes_grm[num_bills];
   vector[num_bills] B_int_free;
   vector[num_bills] A_int_free;
-  vector<lower=0,upper=m_sd_par>[gp_1] m_sd; // marginal standard deviation for GPs
+  vector<lower=0,upper=m_sd_par[1]>[gp_1] m_sd; // marginal standard deviation for GPs
   vector<lower=0,upper=gp_sd_par>[gp_1] gp_sd; //additional residual variation in Y for GPs
   real<lower=0> extra_sd;
   vector<lower=gp_length[2]>[num_legis] time_var; // variance for time series processes. constrained if GP
@@ -154,6 +159,8 @@ transformed parameters {
     L_tp1[1] = L_full;
   }
 
+  } else {
+    L_tp1[1] = L_full;
   }
 }
 
@@ -182,7 +189,7 @@ for(n in 1:num_legis) {
   //create covariance matrices given current values of hiearchical parameters
   
   cov[n] =   cov_exp_quad(time_ind, m_sd[1], time_var[n])
-      + diag_matrix(rep_vector(square(gp_sd[1]),T));
+      + diag_matrix(rep_vector(square(gp_sd_par),T));
   L_cov[n] = cholesky_decompose(cov[n]);
   
   for(t in 1:T) {
@@ -209,9 +216,9 @@ for(n in 1:num_legis) {
   L_AR1 ~ normal(0,ar_sd); // these parameters shouldn't get too big
   ls_int ~ normal(0,legis_sd);
   extra_sd ~ exponential(1);
-  gp_sd ~ exponential(1);
-  m_sd ~ exponential(2); // tight prior on GP marginal standard deviation
-
+  gp_sd ~ normal(0,2);
+  m_sd ~ inv_gamma(m_sd_par[2],1); // tight prior on GP marginal standard deviation
+  
   if(model_type>2 && model_type<5) {
     for(i in 1:(m_step-2)) {
     steps_votes[i+1] - steps_votes[i] ~ normal(0,5);
@@ -232,7 +239,7 @@ for(n in 1:num_legis) {
   if(time_proc!=4) {
     time_var ~ exponential(1/time_sd);
   } else {
-    time_var ~ lognormal(gp_length[1],.2);
+    time_var ~ lognormal(gp_length[1],.025);
   }
 
   

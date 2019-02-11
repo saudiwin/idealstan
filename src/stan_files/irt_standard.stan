@@ -49,15 +49,16 @@ data {
   real time_sd;
   int restrict_var;
   real restrict_var_high;
-  real restrict_mean_val;
-  int restrict_mean_ind;
+  real restrict_mean_val[2];
+  int restrict_mean_ind[8];
   int restrict_mean;
   int time_proc;
   real time_ind[T]; // the actual indices/values of time points, used for Gaussian processes
   int zeroes; // whether to use traditional zero-inflation for bernoulli and poisson models
   real gp_sd_par; // residual variation in GP
   int num_diff; // number of time points used to calculate GP length-scale prior
-  real m_sd_par; // the marginal standard deviation of the GP
+  real m_sd_par[2]; // the marginal standard deviation of the GP
+  int min_length; // the minimum threshold for GP length-scale prior
 }
 
 transformed data {
@@ -79,7 +80,12 @@ transformed data {
 	
 	// set mean of log-normal distribution for GP length-scale prior
 	
-	gp_length = gp_prior_mean(time_ind,num_diff);
+	if(time_proc==4) {
+	  gp_length = gp_prior_mean(time_ind,num_diff,min_length);
+	} else {
+	  gp_length = [0,0]';
+	}
+	
 	
 	//reset these values to use GP-specific parameters
 	if(time_proc!=4) {
@@ -126,8 +132,8 @@ if(restrict_var==1) {
 parameters {
   vector[num_bills] sigma_abs_free;
   vector[num_legis - num_constrain_l] L_free; // first T=1 params to constrain
-  vector<lower=0,upper=m_sd_par>[gp_1] m_sd; // marginal standard deviation of GP
-  vector<lower=0,upper=gp_sd_par>[gp_1] gp_sd; // residual GP variation in Y
+  vector<lower=0,upper=m_sd_par[1]>[gp_N] m_sd; // marginal standard deviation of GP
+  vector<lower=0,upper=gp_sd_par>[gp_N] gp_sd; // residual GP variation in Y
   vector[num_legis] L_tp2[gp_nT]; // additional L_tp1 for GPs only
   vector[num_ls] ls_int; // extra intercepts for non-inflated latent space
   vector[num_legis] L_tp1_var[T-1]; // non-centered variance
@@ -182,6 +188,8 @@ transformed parameters {
     } else  {
       L_tp1[1] = L_full;
     } 
+  } else {
+    L_tp1[1] = L_full;
   }
 }
 
@@ -193,7 +201,7 @@ model {
   sigma_abs_x ~ normal(0,5);
   sigma_reg_x ~ normal(0,5);
   extra_sd ~ exponential(1);
-  gp_sd ~ exponential(1);
+  gp_sd ~ normal(0,2);
   ar_fix ~ normal(0,1);
   L_AR1_free ~ normal(0,ar_sd);
 
@@ -220,8 +228,8 @@ for(n in 1:num_legis) {
   
   //create covariance matrices given current values of hiearchical parameters
   
-  cov[n] =   cov_exp_quad(time_ind, m_sd[1], time_var[n])
-      + diag_matrix(rep_vector(square(gp_sd[1]),T));
+  cov[n] =   cov_exp_quad(time_ind, m_sd[n], time_var[n])
+      + diag_matrix(rep_vector(square(gp_sd_par),T));
   L_cov[n] = cholesky_decompose(cov[n]);
   
   for(t in 1:T) {
@@ -243,8 +251,8 @@ for(n in 1:num_legis) {
   
   B_int_free ~ normal(0,diff_reg_sd);
   A_int_free ~ normal(0,diff_abs_sd);
-  m_sd ~ exponential(2); // tight prior on GP marginal standard deviation ("bumps")
-
+  m_sd ~ inv_gamma(m_sd_par[2],1); // tight prior on GP marginal standard deviation ("bumps")
+  
   //exog_param ~ normal(0,5);
   for(b in 1:num_bills) {
   steps_votes_grm[b] ~ normal(0,5);
@@ -255,15 +263,16 @@ for(n in 1:num_legis) {
   if(time_proc!=4) {
     time_var ~ exponential(1/time_sd);
   } else {
-    time_var ~ lognormal(gp_length[1],.2);
+    time_var ~ lognormal(gp_length[1],.025);
   }
   
 
 // add correction for time-series models
 
 if(T>1 && restrict_mean==1) {
-  min(L_tp1[,restrict_mean_ind]) ~ normal(restrict_mean_val,.01);
-  //target += jacob_mean(num_legis,num_legis_real); // this is a constant as it only varies with the count of the parameters
+  //additional restriction if GP fit is used
+    (L_tp1[restrict_mean_ind[1],restrict_mean_ind[2]] - L_tp1[restrict_mean_ind[5],restrict_mean_ind[6]]) ~ normal(restrict_mean_val[1],.01);
+    (L_tp1[restrict_mean_ind[3],restrict_mean_ind[4]] - L_tp1[restrict_mean_ind[7],restrict_mean_ind[8]]) ~ normal(restrict_mean_val[2],.01);
 }
   
 

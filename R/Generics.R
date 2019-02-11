@@ -147,6 +147,9 @@ setMethod('sample_model',signature(object='idealdata'),
                                 person_sd=this_data$legis_sd,
                                 diff_high=this_data$diff_high,
                                 T=this_data$T,
+                                m_sd_par=this_data$m_sd_par,
+                                time_range=mean(diff(this_data$time_ind)),
+                                num_diff=this_data$num_diff,
                                 restrict_var=this_data$restrict_var,
                                 restrict_var_high=this_data$restrict_var_high,
                                 time_sd=this_data$time_sd,
@@ -172,8 +175,8 @@ setMethod('sample_model',signature(object='idealdata'),
                 # using the GP as it is more complicated
                 elbo_samples <- 200
                 grad_samples <- 2
-                eval_elbo <- 50
-                tol_rel_obj <- .002
+                eval_elbo <- 200
+                #tol_rel_obj <- .0005
               } else {
                 elbo_samples <- 100
                 grad_samples <- 1
@@ -182,6 +185,7 @@ setMethod('sample_model',signature(object='idealdata'),
               out_model <- vb(object@stanmodel,data=this_data,
                               tol_rel_obj=tol_rel_obj,
                               iter=20000,
+                              init=init_vals[[1]],
                               elbo_samples=elbo_samples,
                               grad_samples=grad_samples,
                               eval_elbo=eval_elbo,

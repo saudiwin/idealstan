@@ -16,7 +16,8 @@ id_estimate(idealdata = NULL, model_type = 2, inflate_zero = FALSE,
   diff_reg_sd = 1, diff_miss_sd = 1, restrict_sd = 0.01,
   restrict_mean = NULL, restrict_var = NULL,
   restrict_mean_val = NULL, restrict_mean_ind = NULL,
-  restrict_var_high = 0.1, tol_rel_obj = 1e-04, gp_sd_par = 10, ...)
+  restrict_var_high = 0.1, tol_rel_obj = 1e-04, gp_sd_par = 0.025,
+  gp_num_diff = 3, gp_m_sd_par = c(0.4, 10), gp_min_length = 0, ...)
 }
 \arguments{
 \item{idealdata}{An object produced by the \code{\link{id_make}} containing a score/vote matrix for use for estimation & plotting}
@@ -136,12 +137,25 @@ model is a random-walk time-series). If left blank, either defaults to 0.1 or is
 identification model.}
 
 \item{tol_rel_obj}{If \code{use_vb} is \code{TRUE}, this parameter sets the stopping rule for the \code{vb} algorithm. 
-It's default is \code{1e-04}, or 0.0001. A stricter threshold will require the sampler to run longer but may yield a
+It's default is 0.0005. A stricter threshold will require the sampler to run longer but may yield a
 better result in a difficult model with highly correlated parameters. Lowering the threshold should work fine for simpler
 models.}
 
-\item{gp_sd_par}{The expected value of the exponential distribution used for the 
-variance of the gaussian time process.}
+\item{gp_sd_par}{The upper limit on allowed residual variation of the Gaussian process
+prior. Increasing the limit will permit the GP to more closely follow the time points, 
+resulting in much sharper bends in the function and potentially oscillation.}
+
+\item{gp_num_diff}{The number of time points to use to calculate the length-scale prior
+that determines the level of smoothness of the GP time process. Increasing this value
+will result in greater smoothness/autocorrelation over time by selecting a greater number
+of time points over which to calculate the length-scale prior.}
+
+\item{gp_m_sd_par}{The upper limit of the marginal standard deviation of the GP time 
+process. Decreasing this value will result in smoother fits.}
+
+\item{gp_min_length}{The minimum value of the GP length-scale parameter. This is a hard
+lower limit. Increasing this value will force a smoother GP fit. It should always be less than
+\code{gp_num_diff}.}
 
 \item{...}{Additional parameters passed on to Stan's sampling engine. See \code{\link[rstan]{stan}} for more information.}
 }

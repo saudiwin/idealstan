@@ -734,14 +734,16 @@ id_plot_legis_dyn <- function(object,return_data=FALSE,
     # Note interferes with model_wrap
     if(item_plot_type=='both' && length(item_plot)>1) {
       if(model_wrap) {
-        outplot <- outplot + facet_wrap(update(wrap_id,~. + item_name + item_type),dir='v')
+        outplot <- outplot + facet_wrap(update(wrap_id,~. + item_name + item_type),dir='v',
+                                        ncol=length(pull(person_params,Model)))
       } else {
         outplot <- outplot + facet_wrap(~item_name + item_type ,dir='v')
       }
       
     } else if(item_plot_type=='both') {
       if(model_wrap) {
-        outplot <- outplot + facet_wrap(update(wrap_id,~ . + item_type),dir='v')
+        outplot <- outplot + facet_wrap(update(wrap_id,~ . + item_type),dir='v',
+                                        ncol=length(pull(person_params,Model)))
       } else {
         outplot <- outplot + facet_wrap(~item_type,dir='v')
       }
@@ -796,7 +798,8 @@ id_plot_legis_dyn <- function(object,return_data=FALSE,
   # if not already facetted, facet
   
   if(!already_facet && model_wrap) {
-    outplot <- outplot + facet_wrap(wrap_id,scales = 'free_y')
+    outplot <- outplot + facet_wrap(wrap_id,scales = 'free_y',
+                                    ncol=length(pull(person_params,Model)))
   }
   
   return(outplot)

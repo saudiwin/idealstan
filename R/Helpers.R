@@ -13,12 +13,21 @@
   
   . <- NULL
   to_use <- stanmodels[['irt_standard_noid']]
+  
+  if(this_data$time_proc==4) {
+    tol_rel_obj <- .0001
+    eval_elbo <- 200
+  } else {
+    tol_rel_obj <- .0001
+    eval_elbo <- 100
+  }
 
   
   post_modes <- rstan::vb(object=to_use,data =this_data,
                           algorithm='meanfield',
-                          tol_rel_obj=.001, # better convergence criterion than default
-                          output_samples=100)
+                          eval_elbo=eval_elbo,
+                          tol_rel_obj=tol_rel_obj, # better convergence criterion than default
+                          output_samples=200)
 
   # Test whether there is a lot of missing data
   
@@ -141,26 +150,63 @@
     # now pull the lowest low and highest high
     ideal_pts_low <- apply(ideal_pts_low,2,function(c) c[which(c==max(c))])
     ideal_pts_high <- apply(ideal_pts_high,2,function(c) c[which(c==min(c))])
-    
-    ideal_pts_mean <- rstan::extract(post_modes,'L_tp1')[[1]] %>% apply(3,mean) %>% .[new_order]
+    ideal_pts_mean <- rstan::extract(post_modes,'L_tp1')[[1]] %>% apply(c(2,3),median) %>% .[,new_order]
     ideal_pts_mean <- ideal_pts_mean * sign_flip
     time_var_restrict <-  max(apply(this_params[,grepl(pattern = 'time_var_restrict',x=all_params)],2,quantile,.95)[new_order])
     
     if(this_data$time_proc %in% c(2,3)) {
       # this is just additional for these models
-      restrict_mean_ind <- which(ideal_pts_low==max(ideal_pts_low))
+      col_high <- which(ideal_pts_mean==max(ideal_pts_mean),arr.ind=T)
+      col_low <- which(ideal_pts_mean==min(ideal_pts_mean),arr.ind=T)
+      restrict_mean_ind_high_max <- col_high
+      restrict_mean_ind_high_min <- c(which(ideal_pts_mean[,col_high[,2]]==min(ideal_pts_mean[,col_high[,2]])),
+                                      col_high[,2])
+      restrict_mean_ind_low_min <- col_low
+      restrict_mean_ind_low_max <- c(which(ideal_pts_mean[,col_low[,2]]==max(ideal_pts_mean[,col_low[,2]])),
+                                     col_low[,2])
       
     } else if(this_data$time_proc==4) {
+
       if(fixtype=='vb_full') {
-        restrict_mean_ind <- which(ideal_pts_low==max(ideal_pts_low))
+        col_high <- which(ideal_pts_mean==max(ideal_pts_mean),arr.ind=T)
+        col_low <- which(ideal_pts_mean==min(ideal_pts_mean),arr.ind=T)
+        restrict_mean_ind_high_max <- col_high
+        restrict_mean_ind_high_min <- c(which(ideal_pts_mean[,col_high[,2]]==min(ideal_pts_mean[,col_high[,2]])),
+                                        col_high[,2])
+        restrict_mean_ind_low_min <- col_low
+        restrict_mean_ind_low_max <- c(which(ideal_pts_mean[,col_low[,2]]==max(ideal_pts_mean[,col_low[,2]])),
+                                       col_low[,2])
       } else {
         # just constrain the lowest one that we fixed
-        restrict_mean_ind <- to_constrain_high
+        restrict_mean_ind_high_max <- c(which(ideal_pts_mean[,ncol(ideal_pts_mean)]==max(ideal_pts_mean[,ncol(ideal_pts_mean)])),
+                               ncol(ideal_pts_mean))
+        restrict_mean_ind_high_min <- c(which(ideal_pts_mean[,ncol(ideal_pts_mean)]==min(ideal_pts_mean[,ncol(ideal_pts_mean)])),
+                                        ncol(ideal_pts_mean))
+        restrict_mean_ind_low_min <- c(which(ideal_pts_mean[,ncol(ideal_pts_mean)-1]==min(ideal_pts_mean[,ncol(ideal_pts_mean)-1])),
+                                    ncol(ideal_pts_mean)-1)
+        restrict_mean_ind_low_max <- c(which(ideal_pts_mean[,ncol(ideal_pts_mean)-1]==max(ideal_pts_mean[,ncol(ideal_pts_mean)-1])),
+                                       ncol(ideal_pts_mean)-1)
       }
+      # need four indices for GP fixing
+      restrict_mean_ind <- c(restrict_mean_ind_high_max,
+                             restrict_mean_ind_high_min,
+                             restrict_mean_ind_low_max,
+                             restrict_mean_ind_low_min)
+      restrict_mean_val <- c(ideal_pts_mean[restrict_mean_ind[1],restrict_mean_ind[2]] -
+                             ideal_pts_mean[restrict_mean_ind[5],restrict_mean_ind[6]],
+                             ideal_pts_mean[restrict_mean_ind[3],restrict_mean_ind[4]] -
+                             ideal_pts_mean[restrict_mean_ind[7],restrict_mean_ind[8]])
       
+      # flip the differences to constrain to the correct side
+      
+      if(fixtype=='vb_partial') {
+        if(restrict_mean_val[1]<0) {
+          restrict_mean_val <- restrict_mean_val * -1
+        }
+      }
     }
 
-    object@restrict_mean_val <- ideal_pts_low[restrict_mean_ind]
+    object@restrict_mean_val <- restrict_mean_val
     object@restrict_mean_ind <- restrict_mean_ind
     object@restrict_var_high <- time_var_restrict
   }
@@ -260,222 +306,6 @@
   return(object)
   
 }
-
-#' #' Function that works with id_model to re-arrange bills or personlators to constrain for identification
-#' .id_params_constrain_guided_inflate <- function(lookat_params=NULL,restrict_params=NULL,nfix=NULL,x=NULL) {
-#' 
-#'   restrict_params <- sort(restrict_params,decreasing=TRUE)
-#'   
-#'   #Create row.names for the vote matrix to preserve order
-#'   
-#'   if(is.null(row.names(x))) {
-#'     row.names(x) <- as.character(1:nrow(x))
-#'   } 
-#'   if(is.null(colnames(x))) {
-#'     colnames(x) <- as.character(1:ncol(x))
-#'   }
-#'   
-#'   # Use different identifications depending on whether we want to do bills, personlators or both
-#'   if(('person' %in% restrict_params) && ('items' %in% restrict_params)) {
-#'     
-#'     # First pull the person fixes
-#'     person_est <- lookat_params[,grepl('L_free\\[',colnames(lookat_params))]
-#'     person_est <- person_est %>% as_data_frame %>% gather(param_name,value) %>% group_by(param_name) %>% 
-#'       summarize(avg=mean(value),high=quantile(value,0.95),low=quantile(value,0.05),sd=sd(value),interval=high-low)
-#'     
-#'     person <- arrange(person_est,desc(avg))
-#'     keep_rows <- as.numeric(stringr::str_extract(person$param_name,'[0-9]+')[1:nfix])
-#'     x <- rbind(x[-keep_rows,],x[keep_rows,])
-#'     
-#'     # Then do the bill fixes
-#'     
-#'     sigmas_est <- lookat_params[,grepl('sigma\\[',colnames(lookat_params))]
-#'     sigmas_est <- sigmas_est %>% as_data_frame %>% gather(param_name,value) %>% group_by(param_name) %>% 
-#'       summarize(avg=mean(value),high=quantile(value,0.95),low=quantile(value,0.05),sd=sd(value),interval=high-low)
-#'     
-#'     sigmas <- arrange(sigmas_est,avg)
-#'     sigmas_est_abs <- lookat_params[,grepl('sigma_abs',colnames(lookat_params))]
-#'     sigmas_est_abs <- sigmas_est_abs %>% as_data_frame %>% gather(param_name,value) %>% group_by(param_name) %>% 
-#'       summarize(avg=mean(value),high=quantile(value,0.95),low=quantile(value,0.05),sd=sd(value),interval=high-low)
-#'     
-#'     sigmas_abs <- arrange(sigmas_est_abs,avg)
-#'     if((mean(sigmas$avg[1:nfix])<mean(sigmas_abs$avg[1:nfix])) & (mean(sigmas$interval[1:nfix])<mean(sigmas_abs$interval[1:nfix]))) {
-#'       keep_cols <- as.numeric(stringr::str_extract(sigmas$param_name,'[0-9]+')[1:nfix])
-#'       param_fix <- c('person','items','sigma')
-#'     } else {
-#'       keep_cols <- as.numeric(stringr::str_extract(sigmas_abs$param_name,'[0-9]+')[1:nfix])
-#'       param_fix <- c('person','items','sigma_abs')
-#'     }
-#'     x <- cbind(x[,-keep_cols],x[,keep_cols])
-#'     
-#'     return(list(restrict=list(restrict_l=nfix,restrict_b=nfix),matrix=x,param_fix=param_fix,
-#'                 restrict_vals=c(sigmas_abs$avg[1:nfix],
-#'                                 sigmas$avg[1:nfix],
-#'                                 person$avg[1:nfix]),
-#'                 unrestricted=lookat_params,
-#'                 restrict_person=keep_rows,
-#'                 restrict_bills=keep_cols))
-#'     
-#'   } else if('person' %in% restrict_params) {
-#'     person_est <- lookat_params[,grepl('L_free\\[',colnames(lookat_params))]
-#'     person_est <- person_est %>% as_data_frame %>% gather(param_name,value) %>% group_by(param_name) %>% 
-#'       summarize(avg=mean(value),high=quantile(value,0.95),low=quantile(value,0.05),sd=sd(value),interval=high-low)
-#'     
-#'     person <- arrange(person_est,desc(avg))
-#'     keep_rows_low <- as.numeric(stringr::str_extract(person$param_name,'[0-9]+')[1:nfix])
-#'     person <- arrange(person_est,avg)
-#'     keep_rows_high <- as.numeric(stringr::str_extract(person$param_name,'[0-9]+')[1:nfix])
-#'     x <- rbind(x[-c(keep_rows_high,keep_rows_low),],x[c(keep_rows_high,keep_rows_low),])
-#'     param_fix <- 'person'
-#'     return(list(restrict=list(restrict=nfix),matrix=x,param_fix=param_fix,
-#'            restrict_vals=person$avg[1:nfix],
-#'            unrestricted=lookat_params,
-#'            restrict_person=c(keep_rows_high,keep_rows_low),
-#'            restrict_bills='None'))
-#'   } else if('items' %in% restrict_params) {
-#'     sigmas_est <- lookat_params[,grepl('sigma\\[',colnames(lookat_params))]
-#'     sigmas_est <- sigmas_est %>% as_data_frame %>% gather(param_name,value) %>% group_by(param_name) %>% 
-#'       summarize(avg=mean(value),high=quantile(value,0.95),low=quantile(value,0.05),sd=sd(value),interval=high-low)
-#'     
-#'     sigmas <- arrange(sigmas_est,avg)
-#'     sigmas_est_abs <- lookat_params[,grepl('sigma_abs',colnames(lookat_params))]
-#'     sigmas_est_abs <- sigmas_est_abs %>% as_data_frame %>% gather(param_name,value) %>% group_by(param_name) %>% 
-#'       summarize(avg=mean(value),high=quantile(value,0.95),low=quantile(value,0.05),sd=sd(value),interval=high-low)
-#'     
-#'     sigmas_abs <- arrange(sigmas_est_abs,avg)
-#'     if((mean(sigmas$avg[1:nfix])<mean(sigmas_abs$avg[1:nfix])) & (mean(sigmas$interval[1:nfix])<mean(sigmas_abs$interval[1:nfix]))) {
-#'       keep_cols <- as.numeric(stringr::str_extract(sigmas$param_name,'[0-9]+')[1:nfix])
-#'       param_fix <- c('items','sigma')
-#'     } else {
-#'       keep_cols <- as.numeric(stringr::str_extract(sigmas_abs$param_name,'[0-9]+')[1:nfix])
-#'       param_fix <- c('items','sigma_abs')
-#'     }
-#'     x <- cbind(x[,-keep_cols],x[,keep_cols])
-#'     return(list(restrict=list(restrict=nfix),matrix=x,param_fix=param_fix,
-#'            restrict_vals=c(sigmas$avg[1:nfix],
-#'                            sigmas_abs$avg[1:nfix]),
-#'            unrestricted=lookat_params,
-#'            restrict_bills=keep_cols,
-#'            restrict_person='None'))
-#'   } else {
-#'     stop('Improper identification parameters passed to the identification function.')
-#'   }
-#'   
-#'   
-#' }
-#' 
-#' .id_params_constrain_guided_2pl <- function(lookat_params=NULL,restrict_params=NULL,nfix=NULL,x=NULL) {
-#'   
-#'   restrict_params <- sort(restrict_params,decreasing=TRUE)
-#'   
-#'   #Create row.names for the vote matrix to preserve order
-#'   
-#'   if(is.null(row.names(x))) {
-#'     row.names(x) <- as.character(1:nrow(x))
-#'   } 
-#'   if(is.null(colnames(x))) {
-#'     colnames(x) <- as.character(1:ncol(x))
-#'   }
-#'   
-#'   # Use different identifications depending on whether we want to do bills, personlators or both
-#'   if(('person' %in% restrict_params) && ('items' %in% restrict_params)) {
-#'     
-#'     # First pull the person fixes
-#'     person_est <- lookat_params[,grepl('L_free\\[',colnames(lookat_params))]
-#'     person_est <- person_est %>% as_data_frame %>% gather(param_name,value) %>% group_by(param_name) %>% 
-#'       summarize(avg=mean(value),high=quantile(value,0.95),low=quantile(value,0.05),sd=sd(value),interval=high-low)
-#'     
-#'     person <- arrange(person_est,desc(avg))
-#'     keep_rows <- as.numeric(stringr::str_extract(person$param_name,'[0-9]+')[1:nfix])
-#'     x <- rbind(x[-keep_rows,],x[keep_rows,])
-#'     
-#'     # Then do the bill fixes
-#'     
-#'     sigmas_est <- lookat_params[,grepl('sigma\\[',colnames(lookat_params))]
-#'     sigmas <- sigmas_est %>% as_data_frame %>% gather(param_name,value) %>% group_by(param_name) %>% 
-#'       summarize(avg=mean(value),high=quantile(value,0.95),low=quantile(value,0.05),sd=sd(value),interval=high-low)
-#' 
-#'     keep_cols <- as.numeric(stringr::str_extract(sigmas$param_name,'[0-9]+')[1:nfix])
-#'     param_fix <- c('person','items','sigma')
-#' 
-#'     x <- cbind(x[,-keep_cols],x[,keep_cols])
-#'     
-#'     return(list(restrict=list(restrict_l=nfix,restrict_b=nfix),matrix=x,param_fix=param_fix,
-#'                 restrict_vals=c(sigmas$avg[1:nfix],
-#'                                 person$avg[1:nfix]),
-#'                 unrestricted=lookat_params,
-#'                 restrict_person=keep_rows,
-#'                 restrict_bills=keep_cols))
-#'     
-#'   } else if('person' %in% restrict_params) {
-#'     person_est <- lookat_params[,grepl('L_free\\[',colnames(lookat_params))]
-#'     person_est <- person_est %>% as_data_frame %>% gather(param_name,value) %>% group_by(param_name) %>% 
-#'       summarize(avg=mean(value),high=quantile(value,0.95),low=quantile(value,0.05),sd=sd(value),interval=high-low)
-#'     
-#'     person <- arrange(person_est,desc(avg))
-#'     keep_rows_low <- as.numeric(stringr::str_extract(person$param_name,'[0-9]+')[1:nfix])
-#'     person <- arrange(person_est,avg)
-#'     keep_rows_high <- as.numeric(stringr::str_extract(person$param_name,'[0-9]+')[1:nfix])
-#'     x <- rbind(x[-c(keep_rows_high,keep_rows_low),],x[c(keep_rows_high,keep_rows_low),])
-#'     param_fix <- 'person'
-#'     return(list(restrict=list(restrict=nfix),matrix=x,param_fix=param_fix,
-#'                 restrict_vals=person$avg[1:nfix],
-#'                 unrestricted=lookat_params,
-#'                 restrict_person=c(keep_rows_high,keep_rows_low),restrict_bills='None'))
-#'   } else if('items' %in% restrict_params) {
-#'     sigmas_est <- lookat_params[,grepl('sigma\\[',colnames(lookat_params))]
-#'     sigmas <- sigmas_est %>% as_data_frame %>% gather(param_name,value) %>% group_by(param_name) %>% 
-#'       summarize(avg=mean(value),high=quantile(value,0.95),low=quantile(value,0.05),sd=sd(value),interval=high-low)
-#' 
-#'      keep_cols <- as.numeric(stringr::str_extract(sigmas$param_name,'[0-9]+')[1:nfix])
-#'       param_fix <- c('items','sigma')
-#' 
-#'     x <- cbind(x[,-keep_cols],x[,keep_cols])
-#'     return(list(restrict=list(restrict=nfix),matrix=x,param_fix=param_fix,
-#'                 restrict_vals=sigmas$avg[1:nfix],
-#'                 unrestricted=lookat_params,
-#'                 restrict_bills=keep_cols,
-#'                 restrict_person='None'))
-#'   } else {
-#'     stop('Improper identification parameters passed to the identification function.')
-#'   }
-#'   
-#'   
-#' }
-#' 
-#' .id_params_pin_unguided_inflate <- function(restrict_params=NULL,nfix=NULL,x=NULL,
-#'                                    restrict_names=NULL,bill_names=NULL,person_names=NULL) {
-#'   
-#'   restrict_params <- sort(restrict_params,decreasing=TRUE)
-#'   
-#'   #Create row.names for the vote matrix to preserve order
-#'   
-#'   if(is.null(row.names(x))) {
-#'     row.names(x) <- as.character(1:nrow(x))
-#'   } 
-#'   if(is.null(colnames(x))) {
-#'     colnames(x) <- as.character(1:ncol(x))
-#'   }
-#'   
-#'   if(('person' %in% restrict_params) && ('items' %in% restrict_params)) {
-#'     if(length(restrict_names)<2) {
-#'       stop('You must pass both a bill and a person name to pin a parameter for both bills and persons.')
-#'     }
-#'     restrict_pos[1] <- which(restrict_names[1]==person_names)
-#'     restrict_pos[2] <- which(restrict_names[2]==bill_names)
-#'     x <- rbind(x[-restrict_pos[1],],x[restrict_pos[1],])
-#'     x <- cbind(x[,-restrict_pos[2]],x[,restrict_pos[2]])
-#'   } else if('person' %in% restrict_params) {
-#'     restrict_pos[1] <- which(restrict_names[1]==person_names)
-#'     x <- rbind(x[-restrict_pos[1],],x[restrict_pos[1],])
-#'   } else if('items' %in% restrict_params) {
-#'     restrict_pos[1] <- which(restrict_names[1]==bill_names)
-#'     x <- cbind(x[,-restrict_pos[1]],x[,restrict_pos[1]])
-#'   }
-#'   
-#'   return(list(restrict=list(matrix=x,param_fix=restrict_params,restrict_vals=restrict_pos)))
-#'   
-#' }
 
 #' Function that figures out what kind of hierarchical model (if any) is being run
 #' @noRd
@@ -700,12 +530,16 @@
 }
 
 #' Simple function to provide initial values to Stan given current values of restrict_sd
+#' @importFrom stats optimize
 #' @noRd
 .init_stan <- function(chain_id=NULL,
                        restrict_sd=NULL,
                         person_sd=NULL,
                        num_legis=NULL,
                        diff_high=NULL,
+                       m_sd_par=NULL,
+                       num_diff=NULL,
+                       time_range=NULL,
                        T=NULL,
                        restrict_var_high=NULL,
                        time_sd=NULL,
@@ -719,19 +553,36 @@
   } else {
     L_free <- array(person_start[1:(num_legis-2)])
   }
+  
+  # given upper bound on m_sd figure out mean to match real value on the real numbers
+  
+  rev_trans <- function(x,m_sd_par) {
+    m_sd_par[1]*plogis(x) - 1/m_sd_par[2]
+  }
 
   
   if(actual==TRUE) {
     # full run
     if(T>1) {
+      
+      # figure out optimized gp par
+      
+      m_sd_optim <- optimize(f=rev_trans,
+                             interval=c(0,m_sd_par[1]),
+                          m_sd_par=m_sd_par)$objective
+      
       if(restrict_var) {
         return(list(restrict_high = array(rnorm(n=1,mean=diff_high,sd=restrict_sd)),
                     L_free = L_free,
+                    m_sd=rep(m_sd_optim,num_legis),
+                    time_var=log(rep(num_diff*time_range,num_legis)),
                     L_AR1 = array(runif(n = num_legis,min = -.5,max=.5)),
                     time_var_restrict = rep(restrict_var_high/2,num_legis)))
       } else {
         return(list(restrict_high = array(rnorm(n=1,mean=diff_high,sd=restrict_sd)),
                     L_free = L_free,
+                    m_sd=rep(m_sd_optim,num_legis),
+                    time_var=log(rep(num_diff*time_range,num_legis)),
                     L_AR1 = array(runif(n = num_legis,min = -.5,max=.5)),
                     time_var = rep(time_sd,num_legis)))
       }
@@ -739,6 +590,8 @@
     } else {
       return(list(restrict_high = array(rnorm(n=1,mean=diff_high,sd=restrict_sd)),
                   L_free = L_free,
+                  m_sd=rep(m_sd_optim,num_legis),
+                  time_var=log(rep(num_diff*time_range,num_legis)),
                   L_AR1 = array(runif(n = num_legis,min = -.5,max=.5))))
     }
 

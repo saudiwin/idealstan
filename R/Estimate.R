@@ -532,6 +532,9 @@ id_make <- function(score_data=NULL,
 #' of time points over which to calculate the length-scale prior.
 #' @param gp_m_sd_par The upper limit of the marginal standard deviation of the GP time 
 #' process. Decreasing this value will result in smoother fits.
+#' @param gp_min_length The minimum value of the GP length-scale parameter. This is a hard
+#' lower limit. Increasing this value will force a smoother GP fit. It should always be less than
+#' \code{gp_num_diff}.
 #' @param ... Additional parameters passed on to Stan's sampling engine. See \code{\link[rstan]{stan}} for more information.
 #' @return A fitted \code{\link{idealstan}} object that contains posterior samples of all parameters either via full Bayesian inference
 #' or a variational approximation if \code{use_vb} is set to \code{TRUE}. This object can then be passed to the plotting functions for further analysis.
@@ -647,10 +650,11 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                         restrict_mean_val=NULL,
                         restrict_mean_ind=NULL,
                         restrict_var_high=0.1,
-                        tol_rel_obj=.0005,
-                        gp_sd_par=.5,
-                        gp_num_diff=4,
-                        gp_m_sd_par=1,
+                        tol_rel_obj=.0001,
+                        gp_sd_par=.025,
+                        gp_num_diff=3,
+                        gp_m_sd_par=c(0.4,10),
+                        gp_min_length=0,
                            ...) {
 
   
@@ -682,6 +686,13 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                            random_walk=2,
                            AR1=3,
                            GP=4)
+  
+  # set GP parameters
+  
+  if(vary_ideal_pts==4) {
+    # convert multiplicity factor to total length of the data
+    gp_num_diff <- length(unique(idealdata@score_matrix$time_id))*gp_num_diff
+  }
     
   # use either row numbers for person/legislator IDs or use group IDs (static or time-varying)
       
@@ -711,10 +722,8 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                      integer=unique(idealdata@score_matrix$time_id))
   
   # now need to generate max/min values for empirical length-scale prior in GP
-  if(vary_ideal_pts==4) {
-    gp_length <- .gp_prior(time_ind)
-  } else {
-    gp_length <- list(a=0,b=0)
+  if(gp_min_length>=gp_num_diff) {
+    stop('The parameter gp_min_length cannot be equal to or greater than gp_num_diff.')
   }
   
   max_t <- max(timepoints,na.rm=T)
@@ -857,11 +866,12 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     restrict_mean_val=idealdata@restrict_mean_val,
                     restrict_mean_ind=idealdata@restrict_mean_ind,
                     zeroes=inflate_zero,
-                    time_ind=time_ind,
+                    time_ind=as.array(time_ind),
                     time_proc=vary_ideal_pts,
                     gp_sd_par=gp_sd_par,
                     num_diff=gp_num_diff,
-                    m_sd_par=gp_m_sd_par)
+                    m_sd_par=gp_m_sd_par,
+                    min_length=gp_min_length)
 
   idealdata <- id_model(object=idealdata,fixtype=fixtype,model_type=model_type,this_data=this_data,
                         nfix=nfix,restrict_ind_high=restrict_ind_high,
@@ -967,11 +977,12 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     restrict_mean_ind=idealdata@restrict_mean_ind,
                     restrict_mean=idealdata@restrict_mean,
                     zeroes=inflate_zero,
-                    time_ind=time_ind,
+                    time_ind=as.array(time_ind),
                     time_proc=vary_ideal_pts,
                     gp_sd_par=gp_sd_par,
                     num_diff=gp_num_diff,
-                    m_sd_par=gp_m_sd_par)
+                    m_sd_par=gp_m_sd_par,
+                    min_length=gp_min_length)
 
   outobj <- sample_model(object=idealdata,nchains=nchains,niters=niters,warmup=warmup,ncores=ncores,
                          this_data=this_data,use_vb=use_vb,
