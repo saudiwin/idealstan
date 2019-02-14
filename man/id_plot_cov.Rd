@@ -9,8 +9,7 @@ id_plot_cov(object, cov_type = "person_cov", filter_cov = NULL, ...)
 \arguments{
 \item{object}{A fitted \code{idealstan} object}
 
-\item{cov_type}{Either \code{'person_cov'} for person-level hierarchical parameters,
-\code{'group_cov'} for group-level hierarchical parameters,
+\item{cov_type}{Either \code{'person_cov'} for person or group-level hierarchical parameters,
 \code{'discrim_reg_cov'} for bill/item discrimination parameters from regular (non-inflated) model, and 
 \code{'discrim_infl_cov'} for bill/item discrimination parameters from inflated model.}
 

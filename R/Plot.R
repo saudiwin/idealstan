@@ -1001,8 +1001,7 @@ id_plot_rhats <- function(obj) {
 #' column names otherwise. 
 #' 
 #' @param object A fitted \code{idealstan} object
-#' @param cov_type Either \code{'person_cov'} for person-level hierarchical parameters,
-#' \code{'group_cov'} for group-level hierarchical parameters,
+#' @param cov_type Either \code{'person_cov'} for person or group-level hierarchical parameters,
 #' \code{'discrim_reg_cov'} for bill/item discrimination parameters from regular (non-inflated) model, and 
 #' \code{'discrim_infl_cov'} for bill/item discrimination parameters from inflated model.
 #' @param filter_cov A character vector of coefficients from covariate plots to exclude from
@@ -1022,7 +1021,7 @@ id_plot_cov <- function(object,
   to_plot <- as.array(object@stan_samples,
                    pars=param_name)
   
-  if(use_groups && cov_type=='person_cov') {
+  if(object@use_groups && cov_type=='person_cov') {
     cov_type <- 'group_cov'
   }
   

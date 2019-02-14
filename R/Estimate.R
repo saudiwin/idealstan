@@ -382,15 +382,19 @@ id_make <- function(score_data=NULL,
 #'   \item Latent Space (binary response) ideal point model with missing-data inflation
 #' }
 #' 
+#' @section Time-Varying Inferece
+#' 
 #' In addition, each of these models can have time-varying ideal point (person) parameters if
 #' a column of dates is fed to the \code{\link{id_make}} function. If the option \code{vary_ideal_pts} is 
 #' set to \code{'random_walk'}, \code{id_estimate} will estimate a random-walk ideal point model where ideal points 
 #' move in a random direction. If \code{vary_ideal_pts} is set to \code{'AR1'}, a stationary ideal point model 
-#' is estimated where ideal points fluctuate around long-term mean. In general, the stationary model
-#' is preferred when the time series is of short absolute duration (such as days or hours) while 
-#' the random-walk model is preferable when the time series is of very long duration and there are no
-#' natural limits to the ideal points. Please see the package vignette and associated paper for more detail
-#' about these time-varying models.
+#' is estimated where ideal points fluctuate around long-term mean. If \code{vary_ideal_pts} 
+#' is set to \code{'GP'}, then a semi-parametric Gaussian process time-series prior will be put
+#' around the ideal points. Please see the package vignette and associated paper for more detail
+#' about these time-varying models. Both the \code{'AR1'} and \code{'GP'} models can also 
+#' accept time-varying covariates.
+#' 
+#' @section Missing Data
 #' 
 #' The inflation model used to account for missing data assumes that missingness is a 
 #' function of the persons' (legislators')
@@ -417,19 +421,33 @@ id_make <- function(score_data=NULL,
 #' Models can be either fit on the person/legislator IDs or on group-level IDs (as specified to the 
 #' \code{id_make} function). If group-level parameters should be fit, set \code{use_groups} to \code{TRUE}.
 #' 
+#' @section Covariates
+#' 
+#' Covariates can be fit on either group-level or person-level ideal point parameters as well as
+#' item discrimination parameters for either the inflated (missing) or non-inflated (observed) 
+#' models. These covariates must be columns that were included with the data fed to the 
+#' \code{\link{id_make}} function. The covariate relationships are specified as 
+#' one-sided formulas, i.e. \code{~cov1 + cov2 + cov1*cov2}. To interact covariates with the 
+#' person-level ideal points you can use \code{~cov1 + person_id + cov1*person_id} and for
+#' group-level ideal poins you can use \code{~cov1 + group_id + cov1*group_id}.
+#' 
 #' @section Identification:
 #' Identifying IRT models is challenging, and ideal point models are still more challenging 
 #' because the discrimination parameters are not constrained.
 #' As a result, more care must be taken to obtain estimates that are the same regardless of starting values. 
 #' The parameter \code{fixtype} enables you to change the type of identification used. The default, 'vb_full', 
 #' does not require any further
-#' information from you in order for the model to be fit. In this version of identification, an unidentified model is run using
+#' information from you in order for the model to be fit. In this version of identification, 
+#' an unidentified model is run using
 #' variational Bayesian inference (see \code{\link[rstan]{vb}}). The function will then select two 
 #' persons/legislators that end up on either end of the ideal point spectrum, and pin their ideal points
 #' to those specific values. This is sufficient to identify all of the static models and also the AR(1) 
-#' time-varying models. For random-walk time-varying models, identification is more difficult (see vignette).
+#' time-varying models. For random-walk time-varying models and Gaussian process
+#' models, identification is more difficult (see vignette).
 #' Setting the option \code{restrict_mean} to \code{TRUE} will implement additional identification 
-#' constraints on random-walk models.
+#' constraints on random-walk models, and is always implemented on Gaussian process models. This 
+#' option fixes the distance between high and low points of the time series based on a 
+#' variational inference run to prevent oscillation in the time series.
 #' A particularly convenient option for \code{fixtype} is \code{'vb_partial'}. In this case, the user
 #' should pass the IDs (as a character vector) of the persons to constrain high (\code{restrict_ind_high}) and
 #' low (\code{restrict_ind_low}). A model will then be fit to find the likely positions of these parameters,
@@ -621,7 +639,7 @@ id_make <- function(score_data=NULL,
 #'    \item Kubinec, R. "Generalized Ideal Point Models for Time-Varying and Missing-Data Inference". Working Paper.
 #'    \item Betancourt, Michael. "Robust Gaussian Processes in Stan". (October 2017). Case Study.
 #' }
-#' @importFrom stats dnorm dpois model.matrix qlogis relevel rpois
+#' @importFrom stats dnorm dpois model.matrix qlogis relevel rpois update
 #' @importForm utils person
 #' @export
 id_estimate <- function(idealdata=NULL,model_type=2,
@@ -660,6 +678,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                         gp_min_length=0,
                            ...) {
 
+  Model <- NULL
   
   if(use_subset==TRUE || sample_it==TRUE) {
     idealdata <- subset_ideal(idealdata,use_subset=use_subset,sample_it=sample_it,subset_group=subset_group,

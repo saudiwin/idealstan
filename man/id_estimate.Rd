@@ -17,7 +17,8 @@ id_estimate(idealdata = NULL, model_type = 2, inflate_zero = FALSE,
   restrict_mean = NULL, restrict_var = NULL,
   restrict_mean_val = NULL, restrict_mean_ind = NULL,
   restrict_var_high = 0.1, tol_rel_obj = 1e-04, gp_sd_par = 0.025,
-  gp_num_diff = 3, gp_m_sd_par = c(0.4, 10), gp_min_length = 0, ...)
+  gp_num_diff = c(3, 0.01), gp_m_sd_par = c(0.3, 10),
+  gp_min_length = 0, ...)
 }
 \arguments{
 \item{idealdata}{An object produced by the \code{\link{id_make}} containing a score/vote matrix for use for estimation & plotting}
@@ -200,66 +201,7 @@ the number of the model in the list to the \code{model_type} option to fit the m
   \item Latent Space (binary response) ideal point model with no missing data
   \item Latent Space (binary response) ideal point model with missing-data inflation
 }
-
-In addition, each of these models can have time-varying ideal point (person) parameters if
-a column of dates is fed to the \code{\link{id_make}} function. If the option \code{vary_ideal_pts} is 
-set to \code{'random_walk'}, \code{id_estimate} will estimate a random-walk ideal point model where ideal points 
-move in a random direction. If \code{vary_ideal_pts} is set to \code{'AR1'}, a stationary ideal point model 
-is estimated where ideal points fluctuate around long-term mean. In general, the stationary model
-is preferred when the time series is of short absolute duration (such as days or hours) while 
-the random-walk model is preferable when the time series is of very long duration and there are no
-natural limits to the ideal points. Please see the package vignette and associated paper for more detail
-about these time-varying models.
-
-The inflation model used to account for missing data assumes that missingness is a 
-function of the persons' (legislators')
-ideal points. In other words,the model will take into account if people with high or low ideal points
-tend to have more/less missing data on a specific item/bill. Missing data is whatever was 
-passed as \code{miss_val} to the \code{\link{id_make}} function. 
-If there isn't any relationship
-between missing data and ideal points, then the model assumes that the missingness is ignorable 
-conditional on each
-item, but it will still adjust the results to reflect these ignorable (random) missing
-values. The inflation is designed to be general enough to handle a wide array of potential
-situations where strategic social choices make missing data important to take into account.
-
-The missing data is assumed to be any possible value of the outcome. The well-known 
-zero-inflated Poisson model is a special case where missing values are known to be all zeroes. 
-To fit a zero-inflated Poisson model, change \code{inflate_zeroes} to \code{TRUE} and also 
-make sure to set the value for zero as \code{miss_val} in the \code{\link{id_make}} function.
-This will only work for outcomes that are distributed as Poisson variables (i.e., 
-unbounded integers or counts).
-
-To leave missing data out of the model, simply choose a version of the model in the list above
-that is non-inflated.
-
-Models can be either fit on the person/legislator IDs or on group-level IDs (as specified to the 
-\code{id_make} function). If group-level parameters should be fit, set \code{use_groups} to \code{TRUE}.
 }
-\section{Identification}{
-
-Identifying IRT models is challenging, and ideal point models are still more challenging 
-because the discrimination parameters are not constrained.
-As a result, more care must be taken to obtain estimates that are the same regardless of starting values. 
-The parameter \code{fixtype} enables you to change the type of identification used. The default, 'vb_full', 
-does not require any further
-information from you in order for the model to be fit. In this version of identification, an unidentified model is run using
-variational Bayesian inference (see \code{\link[rstan]{vb}}). The function will then select two 
-persons/legislators that end up on either end of the ideal point spectrum, and pin their ideal points
-to those specific values. This is sufficient to identify all of the static models and also the AR(1) 
-time-varying models. For random-walk time-varying models, identification is more difficult (see vignette).
-Setting the option \code{restrict_mean} to \code{TRUE} will implement additional identification 
-constraints on random-walk models.
-A particularly convenient option for \code{fixtype} is \code{'vb_partial'}. In this case, the user
-should pass the IDs (as a character vector) of the persons to constrain high (\code{restrict_ind_high}) and
-low (\code{restrict_ind_low}). A model will then be fit to find the likely positions of these parameters,
-which will then be used to fit an identified model. In this way, the user can achieve a certain
-shape of the ideal point distribution without needing to choose specific values ahead of time to pin
-parameters to.
-If a prior model has been estimated with the same data, the user can re-use those identification 
-settings by passing the fitted \code{idealstan} object to the \code{prior_fit} option.
-}
-
 \examples{
 # First we can simulate data for an IRT 2-PL model that is inflated for missing data
 library(ggplot2)
