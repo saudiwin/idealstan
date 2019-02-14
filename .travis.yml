@@ -38,7 +38,7 @@ matrix:
     - os: osx
       fortran: true
       osx_image: xcode10
-      r: release
+      r: devel
 
      
 before_install:
