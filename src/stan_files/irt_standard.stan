@@ -56,7 +56,7 @@ data {
   real time_ind[T]; // the actual indices/values of time points, used for Gaussian processes
   int zeroes; // whether to use traditional zero-inflation for bernoulli and poisson models
   real gp_sd_par; // residual variation in GP
-  int num_diff; // number of time points used to calculate GP length-scale prior
+  real num_diff[2]; // number of time points used to calculate GP length-scale prior
   real m_sd_par[2]; // the marginal standard deviation of the GP
   int min_length; // the minimum threshold for GP length-scale prior
 }
@@ -81,7 +81,7 @@ transformed data {
 	// set mean of log-normal distribution for GP length-scale prior
 	
 	if(time_proc==4) {
-	  gp_length = gp_prior_mean(time_ind,num_diff,min_length);
+	  gp_length = gp_prior_mean(time_ind,num_diff[1],min_length);
 	} else {
 	  gp_length = [0,0]';
 	}
@@ -263,7 +263,7 @@ for(n in 1:num_legis) {
   if(time_proc!=4) {
     time_var ~ exponential(1/time_sd);
   } else {
-    time_var ~ lognormal(gp_length[1],.025);
+    time_var ~ lognormal(gp_length[1],num_diff[2]);
   }
   
 

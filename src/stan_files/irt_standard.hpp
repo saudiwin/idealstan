@@ -522,12 +522,12 @@ struct jacob_mean_functor__ {
     }
 };
 
-template <typename T0__>
-Eigen::Matrix<typename boost::math::tools::promote_args<T0__>::type, Eigen::Dynamic,1>
+template <typename T0__, typename T1__>
+Eigen::Matrix<typename boost::math::tools::promote_args<T0__, T1__>::type, Eigen::Dynamic,1>
 gp_prior_mean(const std::vector<T0__>& x,
-                  const int& num_diff,
+                  const T1__& num_diff,
                   const int& min_length, std::ostream* pstream__) {
-    typedef typename boost::math::tools::promote_args<T0__>::type local_scalar_t__;
+    typedef typename boost::math::tools::promote_args<T0__, T1__>::type local_scalar_t__;
     typedef local_scalar_t__ fun_return_scalar_t__;
     const static bool propto__ = true;
     (void) propto__;
@@ -590,10 +590,10 @@ gp_prior_mean(const std::vector<T0__>& x,
 
 
 struct gp_prior_mean_functor__ {
-    template <typename T0__>
-        Eigen::Matrix<typename boost::math::tools::promote_args<T0__>::type, Eigen::Dynamic,1>
+    template <typename T0__, typename T1__>
+        Eigen::Matrix<typename boost::math::tools::promote_args<T0__, T1__>::type, Eigen::Dynamic,1>
     operator()(const std::vector<T0__>& x,
-                  const int& num_diff,
+                  const T1__& num_diff,
                   const int& min_length, std::ostream* pstream__) const {
         return gp_prior_mean(x, num_diff, min_length, pstream__);
     }
@@ -640,7 +640,7 @@ private:
     vector<double> time_ind;
     int zeroes;
     double gp_sd_par;
-    int num_diff;
+    vector<double> num_diff;
     vector<double> m_sd_par;
     int min_length;
     int m;
@@ -998,11 +998,16 @@ public:
             pos__ = 0;
             gp_sd_par = vals_r__[pos__++];
             current_statement_begin__ = 238;
-            context__.validate_dims("data initialization", "num_diff", "int", context__.to_vec());
-            num_diff = int(0);
-            vals_i__ = context__.vals_i("num_diff");
+            validate_non_negative_index("num_diff", "2", 2);
+            context__.validate_dims("data initialization", "num_diff", "double", context__.to_vec(2));
+            validate_non_negative_index("num_diff", "2", 2);
+            num_diff = std::vector<double>(2,double(0));
+            vals_r__ = context__.vals_r("num_diff");
             pos__ = 0;
-            num_diff = vals_i__[pos__++];
+            size_t num_diff_limit_0__ = 2;
+            for (size_t i_0__ = 0; i_0__ < num_diff_limit_0__; ++i_0__) {
+                num_diff[i_0__] = vals_r__[pos__++];
+            }
             current_statement_begin__ = 239;
             validate_non_negative_index("m_sd_par", "2", 2);
             context__.validate_dims("data initialization", "m_sd_par", "double", context__.to_vec(2));
@@ -1119,7 +1124,7 @@ public:
             if (as_bool(logical_eq(time_proc,4))) {
 
                 current_statement_begin__ = 263;
-                stan::math::assign(gp_length, gp_prior_mean(time_ind,num_diff,min_length, pstream__));
+                stan::math::assign(gp_length, gp_prior_mean(time_ind,get_base1(num_diff,1,"num_diff",1),min_length, pstream__));
             } else {
 
                 current_statement_begin__ = 265;
@@ -2264,7 +2269,7 @@ public:
             } else {
 
                 current_statement_begin__ = 579;
-                lp_accum__.add(lognormal_log<propto__>(time_var, get_base1(gp_length,1,"gp_length",1), 0.025000000000000001));
+                lp_accum__.add(lognormal_log<propto__>(time_var, get_base1(gp_length,1,"gp_length",1), get_base1(num_diff,2,"num_diff",1)));
             }
             current_statement_begin__ = 585;
             if (as_bool((primitive_value(logical_gt(T,1)) && primitive_value(logical_eq(restrict_mean,1))))) {

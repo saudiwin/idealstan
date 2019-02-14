@@ -9,11 +9,11 @@ id_estimate(idealdata = NULL, model_type = 2, inflate_zero = FALSE,
   subset_group = NULL, subset_person = NULL, sample_size = 20,
   nchains = 4, niters = 2000, use_vb = FALSE,
   restrict_ind_high = NULL, id_diff = 4, id_diff_high = 2,
-  restrict_ind_low = NULL, fixtype = "vb_full", prior_fit = NULL,
-  warmup = floor(niters/2), ncores = 4, use_groups = FALSE,
-  discrim_reg_sd = 1, discrim_miss_sd = 1, person_sd = 1,
-  time_sd = 0.1, sample_stationary = FALSE, ar_sd = 2,
-  diff_reg_sd = 1, diff_miss_sd = 1, restrict_sd = 0.01,
+  restrict_ind_low = NULL, fixtype = "vb_full", id_refresh = 0,
+  prior_fit = NULL, warmup = floor(niters/2), ncores = 4,
+  use_groups = FALSE, discrim_reg_sd = 1, discrim_miss_sd = 1,
+  person_sd = 1, time_sd = 0.1, sample_stationary = FALSE,
+  ar_sd = 2, diff_reg_sd = 1, diff_miss_sd = 1, restrict_sd = 0.01,
   restrict_mean = NULL, restrict_var = NULL,
   restrict_mean_val = NULL, restrict_mean_ind = NULL,
   restrict_var_high = 0.1, tol_rel_obj = 1e-04, gp_sd_par = 0.025,
@@ -75,6 +75,9 @@ identification model),
 and 'prior_fit' (a previous identified \code{idealstan} fit is passed to the \code{prior_fit} option and used
 as the basis for identification).
  See details for more information.}
+
+\item{id_refresh}{The number of times to report iterations from the variational run used to 
+identify models. Default is 0 (nothing output to console).}
 
 \item{prior_fit}{If a previous \code{idealstan} model was fit \emph{with the same} data, then the same
 identification constraints can be recycled from the prior fit if the \code{idealstan} object is passed 

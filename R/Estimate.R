@@ -486,6 +486,8 @@ id_make <- function(score_data=NULL,
 #' @param id_diff The fixed difference between the high/low person/legislator ideal points used to identify the model. 
 #' Set at 4 as a standard value but can be changed to any arbitrary number without affecting model results besides re-scaling.
 #' @param id_diff_high The fixed intercept of the high ideal point used to constrain the model. 
+#' @param id_refresh The number of times to report iterations from the variational run used to 
+#' identify models. Default is 0 (nothing output to console).
 #' @param sample_stationary If \code{TRUE}, the AR(1) coefficients in a time-varying model will be 
 #' sampled from an unconstrained space and then mapped back to a stationary space. Leaving this \code{TRUE} is 
 #' slower but will work better when there is limited information to identify a model. If used, the
@@ -633,6 +635,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                         id_diff_high=2,
                            restrict_ind_low=NULL,
                            fixtype='vb_full',
+                        id_refresh=0,
                         prior_fit=NULL,
                         warmup=floor(niters/2),ncores=4,
                         use_groups=FALSE,
@@ -652,8 +655,8 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                         restrict_var_high=0.1,
                         tol_rel_obj=.0001,
                         gp_sd_par=.025,
-                        gp_num_diff=3,
-                        gp_m_sd_par=c(0.4,10),
+                        gp_num_diff=c(3,0.01),
+                        gp_m_sd_par=c(0.3,10),
                         gp_min_length=0,
                            ...) {
 
@@ -691,7 +694,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   
   if(vary_ideal_pts==4) {
     # convert multiplicity factor to total length of the data
-    gp_num_diff <- length(unique(idealdata@score_matrix$time_id))*gp_num_diff
+    gp_num_diff[1] <- length(unique(idealdata@score_matrix$time_id))*gp_num_diff[1]
   }
     
   # use either row numbers for person/legislator IDs or use group IDs (static or time-varying)
@@ -722,8 +725,8 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                      integer=unique(idealdata@score_matrix$time_id))
   
   # now need to generate max/min values for empirical length-scale prior in GP
-  if(gp_min_length>=gp_num_diff) {
-    stop('The parameter gp_min_length cannot be equal to or greater than gp_num_diff.')
+  if(gp_min_length>=gp_num_diff[1]) {
+    stop('The parameter gp_min_length cannot be equal to or greater than gp_num_diff[1].')
   }
   
   max_t <- max(timepoints,na.rm=T)
@@ -871,7 +874,8 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     gp_sd_par=gp_sd_par,
                     num_diff=gp_num_diff,
                     m_sd_par=gp_m_sd_par,
-                    min_length=gp_min_length)
+                    min_length=gp_min_length,
+                    id_refresh=id_refresh)
 
   idealdata <- id_model(object=idealdata,fixtype=fixtype,model_type=model_type,this_data=this_data,
                         nfix=nfix,restrict_ind_high=restrict_ind_high,

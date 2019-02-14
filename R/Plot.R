@@ -760,8 +760,12 @@ id_plot_legis_dyn <- function(object,return_data=FALSE,
   if(plot_text==TRUE) {
     
     # need new data that scatters names around the plot
+    if(model_wrap) {
+      sampled_data <- group_by(person_params,!!as_quosure(base_id),!!as_quosure(wrap_id)) %>% sample_n(1)
+    } else {
+      sampled_data <- group_by(person_params,!!as_quosure(base_id)) %>% sample_n(1)
+    }
     
-    sampled_data <- group_by(person_params,!!as_quosure(base_id)) %>% sample_n(1)
     
     if(!is.null(highlight)) {
       

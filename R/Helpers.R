@@ -25,6 +25,7 @@
   
   post_modes <- rstan::vb(object=to_use,data =this_data,
                           algorithm='meanfield',
+                          refresh=this_data$id_refresh,
                           eval_elbo=eval_elbo,
                           tol_rel_obj=tol_rel_obj, # better convergence criterion than default
                           output_samples=200)
@@ -187,24 +188,30 @@
         restrict_mean_ind_low_max <- c(which(ideal_pts_mean[,ncol(ideal_pts_mean)-1]==max(ideal_pts_mean[,ncol(ideal_pts_mean)-1])),
                                        ncol(ideal_pts_mean)-1)
       }
-      # need four indices for GP fixing
-      restrict_mean_ind <- c(restrict_mean_ind_high_max,
-                             restrict_mean_ind_high_min,
-                             restrict_mean_ind_low_max,
-                             restrict_mean_ind_low_min)
-      restrict_mean_val <- c(ideal_pts_mean[restrict_mean_ind[1],restrict_mean_ind[2]] -
+      
+    }
+    
+    # need four indices for GP fixing
+    restrict_mean_ind <- c(restrict_mean_ind_high_max,
+                           restrict_mean_ind_high_min,
+                           restrict_mean_ind_low_max,
+                           restrict_mean_ind_low_min)
+    restrict_mean_val <- c(ideal_pts_mean[restrict_mean_ind[1],restrict_mean_ind[2]] -
                              ideal_pts_mean[restrict_mean_ind[5],restrict_mean_ind[6]],
-                             ideal_pts_mean[restrict_mean_ind[3],restrict_mean_ind[4]] -
+                           ideal_pts_mean[restrict_mean_ind[3],restrict_mean_ind[4]] -
                              ideal_pts_mean[restrict_mean_ind[7],restrict_mean_ind[8]])
-      
-      # flip the differences to constrain to the correct side
-      
-      if(fixtype=='vb_partial') {
-        if(restrict_mean_val[1]<0) {
-          restrict_mean_val <- restrict_mean_val * -1
-        }
+    
+    if(fixtype=='vb_partial' && this_data$time_proc==4) {
+      if(restrict_mean_val[1]<0) {
+        restrict_mean_val <- restrict_mean_val * -1
+      }
+    } else if(fixtype=='vb_partial' && this_data$time_proc!=4) {
+      if(sign(person[to_constrain_high])<0) {
+        restrict_mean_val <- restrict_mean_val * -1
       }
     }
+    
+    
 
     object@restrict_mean_val <- restrict_mean_val
     object@restrict_mean_ind <- restrict_mean_ind
@@ -541,6 +548,7 @@
                        num_diff=NULL,
                        time_range=NULL,
                        T=NULL,
+                       time_proc=NULL,
                        restrict_var_high=NULL,
                        time_sd=NULL,
                        restrict_var=NULL,
@@ -572,17 +580,23 @@
                           m_sd_par=m_sd_par)$objective
       
       if(restrict_var) {
-        return(list(restrict_high = array(rnorm(n=1,mean=diff_high,sd=restrict_sd)),
-                    L_free = L_free,
-                    m_sd=rep(m_sd_optim,num_legis),
-                    time_var=log(rep(num_diff*time_range,num_legis)),
-                    L_AR1 = array(runif(n = num_legis,min = -.5,max=.5)),
-                    time_var_restrict = rep(restrict_var_high/2,num_legis)))
+        if(time_proc==4) {
+          return(list(restrict_high = array(rnorm(n=1,mean=diff_high,sd=restrict_sd)),
+                      L_free = L_free,
+                      m_sd=rep(m_sd_optim,num_legis),
+                      time_var=log(rep(num_diff[1]*time_range,num_legis)),
+                      L_AR1 = array(runif(n = num_legis,min = -.5,max=.5)),
+                      time_var_restrict = rep(restrict_var_high/2,num_legis)))
+        } else {
+          return(list(restrict_high = array(rnorm(n=1,mean=diff_high,sd=restrict_sd)),
+                      L_free = L_free,
+                      L_AR1 = array(runif(n = num_legis,min = -.5,max=.5)),
+                      time_var_restrict = rep(restrict_var_high/2,num_legis)))
+        }
+        
       } else {
         return(list(restrict_high = array(rnorm(n=1,mean=diff_high,sd=restrict_sd)),
                     L_free = L_free,
-                    m_sd=rep(m_sd_optim,num_legis),
-                    time_var=log(rep(num_diff*time_range,num_legis)),
                     L_AR1 = array(runif(n = num_legis,min = -.5,max=.5)),
                     time_var = rep(time_sd,num_legis)))
       }
@@ -591,7 +605,7 @@
       return(list(restrict_high = array(rnorm(n=1,mean=diff_high,sd=restrict_sd)),
                   L_free = L_free,
                   m_sd=rep(m_sd_optim,num_legis),
-                  time_var=log(rep(num_diff*time_range,num_legis)),
+                  time_var=log(rep(num_diff[1]*time_range,num_legis)),
                   L_AR1 = array(runif(n = num_legis,min = -.5,max=.5))))
     }
 

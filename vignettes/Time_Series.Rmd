@@ -11,7 +11,7 @@ vignette: >
 
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE,warning=FALSE,fig.align = 'center',fig.width=6, fig.height=5)
+knitr::opts_chunk$set(echo = TRUE,message = FALSE,warning=FALSE,fig.align = 'center',fig.width=6, fig.height=5)
 require(idealstan)
 require(dplyr)
 require(ggplot2)
@@ -228,15 +228,19 @@ del_est_ar2 <- id_estimate(delaware_data,
             seed=84520)
 
 del_est_gp1 <- id_estimate(delaware_data,
-                model_type = 2,
-                 use_vb = T,
-                use_groups = T,
-                gp_sd_par = .5,
-                fixtype='vb_partial',
-                vary_ideal_pts='GP',
-                 restrict_ind_high = "D",
-                 restrict_ind_low="R",
-            seed=84520)
+                           model_type = 2,
+                           use_vb = T,
+                           tol_rel_obj = .0005,
+                           use_groups = T,
+                           gp_sd_par = 0.025,
+                           gp_m_sd_par =c(0.3,10),
+                           gp_num_diff=c(3,.01),
+                           gp_min_length = 0,
+                           fixtype='vb_partial',
+                           vary_ideal_pts='GP',
+                           restrict_ind_high = "D",
+                           restrict_ind_low="R",
+                            seed=84520)
 ```
 
 We can the use an option in the `id_plot_legis_dyn` function to pass in all three models as a list to see how they compare to each other over the same groups:
@@ -247,4 +251,46 @@ id_plot_legis_dyn(list(RW=del_est_rw3,
                        GP=del_est_gp1),
                   include=c('D','R'))
 ```
+
+This plot shows that are substantial divergences between the different models. Broadly speaking, the random-walk and GP models are close to each other, as we might expect given that both models impose relatively little structure on the time series. The AR model, on the other hand, constrains change over time, and it is not surprising that it shows the Democrats and Republicans much closer to each other. The advantage of the AR1 model, of course, is that it can estimate the effect of covariates on the long-term mean of the series, a very precise interpretation. 
+
+The GP model has several parameters that control the ability of the time series to wiggle or adjust to over-time change in the ideal points. These parameters are given defaults that restrict movement in the ideal points to help ensure identification. As such, they tend to be fairly conservative, and can be adjusted to see if the ideal points can handle greater variation. 
+
+The advantage of the GP model is that it combines the relatively minimalistic structure of the random walk with the ability to fit covariates on the time series. I refer the reader to the covariate vignette for more information about how to fit covariate models using `idealstan`. It is important to note, however, that the GP interpretation of a covariate is different than the AR1 covariate. In an AR1 model, the value of the covariate represents the shift in the long-term mean of the series, whereas in a GP model the covariate is a non-parametric effect of the covariate on the time series averaged over the entire series. These parameters are explained in the table below:
+
+Table: Parameters in the Gaussian Process Time-Series Model
+
+----------------------------------------------------------------------------------------------------------
+  Parameter         Description
+---------------     --------------------------------------------------------------------------------------
+`gp_sd_par`         This parameter represents residual variation in the series that the GP does not
+                    account for. As such, its default is a very low value, as increasing it will  
+                    generally increase oscillation in the series.
+
+`gp_num_diff`       This parameter is a multiplier that is used to set the prior for the length-scale 
+                    of the GP. Loosely speaking, the length-scale determines the number of times 
+                    that the time-series can cross zero, and so lowering this parameter will 
+                    decrease the length-scale and subsequently increase the number of times the series
+                    can cross zero. The length-scale is given a prior equal to the difference
+                    between the maximum and minimum length of the
+                    time series in whatever units it is recorded in (days, weeks, etc) times the
+                    parameter `gp_num_diff`. The second numeric value of this parameter represents
+                    the standard deviation of the log-normal prior of the length scale. Increasing the
+                    standard deviation will put more weight on the data in determining the amount of
+                    flexibility in the time series.
+
+`gp_m_sd_par`       This parameter has two values that set the GP's marginal standard deviation.
+                    This parameter loosely represents the amount of time-series variation in the 
+                    series. The first numeric value represents the hard upper limit for this
+                    parameter to prevent the series oscillating. The second numeric value is equal
+                    to the shape of an inverse-gamma prior defined over the interval between
+                    0 and the first numeric value (the hard upper limit). It is a weakly 
+                    informative prior that pulls values away from zero to prevent divergences.
+                    Increasing the first numeric value (the upper limit) will increase marginal
+                    standard deviation, while the second numeric value can increase marginal 
+                    standard deviation by decreasing its value, resulting in a flatter 
+                    inverse-gamma prior.
+-----------------------------------------------------------------------------------------------------------
+
+
 

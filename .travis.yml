@@ -32,7 +32,7 @@ matrix:
       env:
         - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
     - os: osx
-      fortran: false
+      fortran: true
       osx_image: xcode10
       r: release
 
