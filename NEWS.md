@@ -1,3 +1,9 @@
+#Release v0.7.0
+* Implement a Gaussian process prior for ideal points to permit semi-parametric inference
+* Update `id_plot_legis_dyn` to allow for overlay plots comparing different time 
+series models
+* Strength over-time model identification using variational inference fits
+
 #Release v0.6.0
 * Set a stricter threshold for `vb` to `1e-04` to promote more robust variational inference
 
