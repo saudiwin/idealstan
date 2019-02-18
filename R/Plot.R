@@ -469,7 +469,9 @@ id_plot_legis_var <- function(object,return_data=FALSE,
 #' which side will be voting which way. For that reason, the legislators/persons are colored by their votes/scores to
 #' make it clear.
 #' 
-#' @param object A fitted \code{idealstan} object or a 
+#' @param object A fitted \code{idealstan} object or a named list of \code{idealstan}
+#' objects if the plot is supposed to show a comparison of different fitted \code{idealstan}
+#' models (see Time Series vignette)
 #' @param return_data If true, the calculated legislator/bill data is returned along with the plot in a list
 #' @param include Specify a list of person/legislator IDs to include in the plot (all others excluded)
 #' @param item_plot The value of the item/bill for which to plot its midpoint (character value)
