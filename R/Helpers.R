@@ -604,8 +604,6 @@
     } else {
       return(list(restrict_high = array(rnorm(n=1,mean=diff_high,sd=restrict_sd)),
                   L_free = L_free,
-                  m_sd=rep(m_sd_optim,num_legis),
-                  time_var=log(rep(num_diff[1]*time_range,num_legis)),
                   L_AR1 = array(runif(n = num_legis,min = -.5,max=.5))))
     }
 

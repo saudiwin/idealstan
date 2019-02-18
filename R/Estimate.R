@@ -678,7 +678,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                         gp_min_length=0,
                            ...) {
 
-  Model <- NULL
+
   
   if(use_subset==TRUE || sample_it==TRUE) {
     idealdata <- subset_ideal(idealdata,use_subset=use_subset,sample_it=sample_it,subset_group=subset_group,
@@ -821,13 +821,13 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   if(length(idealdata@restrict_mean_val)==0 && !is.null(restrict_mean_val)) {
       idealdata@restrict_mean_val <- restrict_mean_val
   } else if(length(idealdata@restrict_mean_val)==0 && is.null(restrict_mean_val)) {
-    idealdata@restrict_mean_val <- 1
+    idealdata@restrict_mean_val <- c(1,1)
   }
     
   if(length(idealdata@restrict_mean_ind)==0 && !is.null(restrict_mean_ind)) {
       idealdata@restrict_mean_ind <- restrict_mean_ind
   } else if(length(idealdata@restrict_mean_ind)==0 && is.null(restrict_mean_ind)) {
-    idealdata@restrict_mean_ind <- 1
+    idealdata@restrict_mean_ind <- rep(1,8)
   }
     
   if(length(idealdata@restrict_mean)>0 && vary_ideal_pts==3 && !is.null(prior_fit)) {
