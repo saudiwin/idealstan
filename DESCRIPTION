@@ -9,7 +9,7 @@ Authors@R: c(person("Robert","Kubinec", role = c("aut","cre"),
               person("Ben", "Goodrich", role = "ctb"),
               person("Trustees of Columbia University",role='cph'))
 BugReports: https://github.com/saudiwin/idealstan/issues
-Description: Offers item-response theory (IRT) ideal-point estimation for binary, ordinal, counts and continuous responses with time-varying and missing-data inference. Full and approximate Bayesian sampling with 'Stan' (www.mc-stan.org). 
+Description: Offers item-response theory (IRT) ideal-point estimation for binary, ordinal, counts and continuous responses with time-varying and missing-data inference. Full and approximate Bayesian sampling with 'Stan' (<https://mc-stan.org/>). 
 License: GPL
 Depends: 
     methods,
