@@ -1,3 +1,6 @@
+#Release v0.7.1
+* Fixed bug where time series vignette did not show on CRAN screen
+
 #Release v0.7.0
 * Implement a Gaussian process prior for ideal points to permit semi-parametric inference
 * Update `id_plot_legis_dyn` to allow for overlay plots comparing different time 
