@@ -1,0 +1,5 @@
+inst/* linguist-vendored
+src/* linguist-vendored
+tools/* linguist-vendored
+package_test* linguist-documentation
+vignettes/* linguist-documentation
