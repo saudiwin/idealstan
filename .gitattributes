@@ -1,5 +1,9 @@
 inst/* linguist-vendored
-src/* linguist-vendored
+src/Makevars* linguist-vendored
+src/init.cpp linguist-vendored
+src/Modules.cpp linguist-vendored
+src/*.o linguist-vendored
+src/*.hpp linguist-vendored
 tools/* linguist-vendored
 package_test* linguist-documentation
 vignettes/* linguist-documentation
