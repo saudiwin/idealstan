@@ -72,6 +72,6 @@ miss_val='Absent')
  seed=84520)
 # We plot the variances for all the Senators
 
-id_plot_legis_var(senate114_fit,item_plot=5)
+id_plot_legis_var(senate114_fit)
 }
 }

@@ -13,7 +13,8 @@ id_plot_legis(object, return_data = FALSE, include = NULL,
   sample_persons = NULL, ...)
 }
 \arguments{
-\item{object}{A fitted \code{idealstan} object}
+\item{object}{A fitted \code{idealstan} object or a named list
+of \code{idealstan} objects to compare across models}
 
 \item{return_data}{If true, the calculated legislator/bill data is returned along with the plot in a list}
 
@@ -68,6 +69,12 @@ on the ideal point plot, showing the point at which legislators/persons are indi
 bill/item. Note that because this is an ideal point model, it is not possible to tell from the midpoint itself
 which side will be voting which way. For that reason, the legislators/persons are colored by their votes/scores to
 make it clear.
+
+To compare across multiple \code{idealstan} models, pass a named list 
+\code{list(model1=model1,model2=model2,etc)} to the \code{object} option. 
+Note that these comparisons will done by individual persons/groups, so if there are a lot of 
+persons/groups, consider using the \code{include} option to only compare a specific set
+of persons/groups.
 }
 \examples{
 

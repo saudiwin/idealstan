@@ -1,3 +1,15 @@
+#Release v0.7.1
+* Fixed bug where time series vignette did not show on CRAN screen
+
+#Release v0.7.0
+* Implement a Gaussian process prior for ideal points to permit semi-parametric inference
+* Update `id_plot_legis_dyn` to allow for overlay plots comparing different time 
+series models
+* Strength over-time model identification using variational inference fits
+
+#Release v0.6.0
+* Set a stricter threshold for `vb` to `1e-04` to promote more robust variational inference
+
 #Release v0.5.1
 * Fixed bugs in plotting functions related to plotting two groups.
 * Fixed bug in AR(1) model with restricted time variance.

@@ -382,15 +382,19 @@ id_make <- function(score_data=NULL,
 #'   \item Latent Space (binary response) ideal point model with missing-data inflation
 #' }
 #' 
+#' @section Time-Varying Inferece
+#' 
 #' In addition, each of these models can have time-varying ideal point (person) parameters if
 #' a column of dates is fed to the \code{\link{id_make}} function. If the option \code{vary_ideal_pts} is 
 #' set to \code{'random_walk'}, \code{id_estimate} will estimate a random-walk ideal point model where ideal points 
 #' move in a random direction. If \code{vary_ideal_pts} is set to \code{'AR1'}, a stationary ideal point model 
-#' is estimated where ideal points fluctuate around long-term mean. In general, the stationary model
-#' is preferred when the time series is of short absolute duration (such as days or hours) while 
-#' the random-walk model is preferable when the time series is of very long duration and there are no
-#' natural limits to the ideal points. Please see the package vignette and associated paper for more detail
-#' about these time-varying models.
+#' is estimated where ideal points fluctuate around long-term mean. If \code{vary_ideal_pts} 
+#' is set to \code{'GP'}, then a semi-parametric Gaussian process time-series prior will be put
+#' around the ideal points. Please see the package vignette and associated paper for more detail
+#' about these time-varying models. Both the \code{'AR1'} and \code{'GP'} models can also 
+#' accept time-varying covariates.
+#' 
+#' @section Missing Data
 #' 
 #' The inflation model used to account for missing data assumes that missingness is a 
 #' function of the persons' (legislators')
@@ -417,19 +421,33 @@ id_make <- function(score_data=NULL,
 #' Models can be either fit on the person/legislator IDs or on group-level IDs (as specified to the 
 #' \code{id_make} function). If group-level parameters should be fit, set \code{use_groups} to \code{TRUE}.
 #' 
+#' @section Covariates
+#' 
+#' Covariates can be fit on either group-level or person-level ideal point parameters as well as
+#' item discrimination parameters for either the inflated (missing) or non-inflated (observed) 
+#' models. These covariates must be columns that were included with the data fed to the 
+#' \code{\link{id_make}} function. The covariate relationships are specified as 
+#' one-sided formulas, i.e. \code{~cov1 + cov2 + cov1*cov2}. To interact covariates with the 
+#' person-level ideal points you can use \code{~cov1 + person_id + cov1*person_id} and for
+#' group-level ideal poins you can use \code{~cov1 + group_id + cov1*group_id}.
+#' 
 #' @section Identification:
 #' Identifying IRT models is challenging, and ideal point models are still more challenging 
 #' because the discrimination parameters are not constrained.
 #' As a result, more care must be taken to obtain estimates that are the same regardless of starting values. 
 #' The parameter \code{fixtype} enables you to change the type of identification used. The default, 'vb_full', 
 #' does not require any further
-#' information from you in order for the model to be fit. In this version of identification, an unidentified model is run using
+#' information from you in order for the model to be fit. In this version of identification, 
+#' an unidentified model is run using
 #' variational Bayesian inference (see \code{\link[rstan]{vb}}). The function will then select two 
 #' persons/legislators that end up on either end of the ideal point spectrum, and pin their ideal points
 #' to those specific values. This is sufficient to identify all of the static models and also the AR(1) 
-#' time-varying models. For random-walk time-varying models, identification is more difficult (see vignette).
+#' time-varying models. For random-walk time-varying models and Gaussian process
+#' models, identification is more difficult (see vignette).
 #' Setting the option \code{restrict_mean} to \code{TRUE} will implement additional identification 
-#' constraints on random-walk models.
+#' constraints on random-walk models, and is always implemented on Gaussian process models. This 
+#' option fixes the distance between high and low points of the time series based on a 
+#' variational inference run to prevent oscillation in the time series.
 #' A particularly convenient option for \code{fixtype} is \code{'vb_partial'}. In this case, the user
 #' should pass the IDs (as a character vector) of the persons to constrain high (\code{restrict_ind_high}) and
 #' low (\code{restrict_ind_low}). A model will then be fit to find the likely positions of these parameters,
@@ -445,9 +463,10 @@ id_make <- function(score_data=NULL,
 #' \code{TRUE} will fit a traditional zero-inflated model. To use correctly, the value for 
 #' zero must be passed as the \code{miss_val} option to \code{\link{id_make}} before
 #' running a model so that zeroes are coded as missing data.
-#' @param vary_ideal_pts Default \code{'none'}. If \code{'random_walk'} or \code{'AR1'}, a 
-#' time-varying ideal point model will be fit with either a random-walk process or an 
-#' AR1 process. See documentation for more info.
+#' @param vary_ideal_pts Default \code{'none'}. If \code{'random_walk'}, \code{'AR1'} or 
+#' \code{'GP'}, a 
+#' time-varying ideal point model will be fit with either a random-walk process, an 
+#' AR1 process or a Gaussian process. See documentation for more info.
 #' @param use_subset Whether a subset of the legislators/persons should be used instead of the full response matrix
 #' @param sample_it Whether or not to use a random subsample of the response matrix. Useful for testing.
 #' @param subset_group If person/legislative data was included in the \code{\link{id_make}} function, then you can subset by
@@ -461,6 +480,10 @@ id_make <- function(score_data=NULL,
 #' @param niters The number of iterations to run Stan's sampler. Shouldn't be set much lower than 500. See \code{\link[rstan]{stan}} for more info.
 #' @param use_vb Whether or not to use Stan's variational Bayesian inference engine instead of full Bayesian inference. Pros: it's much faster.
 #' Cons: it's not quite as accurate. See \code{\link[rstan]{vb}} for more info.
+#' @param tol_rel_obj If \code{use_vb} is \code{TRUE}, this parameter sets the stopping rule for the \code{vb} algorithm. 
+#' It's default is 0.0005. A stricter threshold will require the sampler to run longer but may yield a
+#' better result in a difficult model with highly correlated parameters. Lowering the threshold should work fine for simpler
+#' models.
 #' @param warmup The number of iterations to use to calibrate Stan's sampler on a given model. Shouldn't be less than 100. 
 #' See \code{\link[rstan]{stan}} for more info.
 #' @param ncores The number of cores in your computer to use for parallel processing in the Stan engine. 
@@ -481,6 +504,8 @@ id_make <- function(score_data=NULL,
 #' @param id_diff The fixed difference between the high/low person/legislator ideal points used to identify the model. 
 #' Set at 4 as a standard value but can be changed to any arbitrary number without affecting model results besides re-scaling.
 #' @param id_diff_high The fixed intercept of the high ideal point used to constrain the model. 
+#' @param id_refresh The number of times to report iterations from the variational run used to 
+#' identify models. Default is 0 (nothing output to console).
 #' @param sample_stationary If \code{TRUE}, the AR(1) coefficients in a time-varying model will be 
 #' sampled from an unconstrained space and then mapped back to a stationary space. Leaving this \code{TRUE} is 
 #' slower but will work better when there is limited information to identify a model. If used, the
@@ -518,6 +543,18 @@ id_make <- function(score_data=NULL,
 #' @param restrict_mean_ind For random-walk models, the ID of the person/group whose over-time
 #' mean to constrain. Should be left blank (will be set by identification model) unless you are 
 #' really sure.
+#' @param gp_sd_par The upper limit on allowed residual variation of the Gaussian process
+#' prior. Increasing the limit will permit the GP to more closely follow the time points, 
+#' resulting in much sharper bends in the function and potentially oscillation.
+#' @param gp_num_diff The number of time points to use to calculate the length-scale prior
+#' that determines the level of smoothness of the GP time process. Increasing this value
+#' will result in greater smoothness/autocorrelation over time by selecting a greater number
+#' of time points over which to calculate the length-scale prior.
+#' @param gp_m_sd_par The upper limit of the marginal standard deviation of the GP time 
+#' process. Decreasing this value will result in smoother fits.
+#' @param gp_min_length The minimum value of the GP length-scale parameter. This is a hard
+#' lower limit. Increasing this value will force a smoother GP fit. It should always be less than
+#' \code{gp_num_diff}.
 #' @param ... Additional parameters passed on to Stan's sampling engine. See \code{\link[rstan]{stan}} for more information.
 #' @return A fitted \code{\link{idealstan}} object that contains posterior samples of all parameters either via full Bayesian inference
 #' or a variational approximation if \code{use_vb} is set to \code{TRUE}. This object can then be passed to the plotting functions for further analysis.
@@ -600,8 +637,9 @@ id_make <- function(score_data=NULL,
 #'    \item Clinton, J., Jackman, S., & Rivers, D. (2004). The Statistical Analysis of Roll Call Data. \emph{The American Political Science Review}, 98(2), 355-370. doi:10.1017/S0003055404001194
 #'    \item Bafumi, J., Gelman, A., Park, D., & Kaplan, N. (2005). Practical Issues in Implementing and Understanding Bayesian Ideal Point Estimation. \emph{Political Analysis}, 13(2), 171-187. doi:10.1093/pan/mpi010
 #'    \item Kubinec, R. "Generalized Ideal Point Models for Time-Varying and Missing-Data Inference". Working Paper.
+#'    \item Betancourt, Michael. "Robust Gaussian Processes in Stan". (October 2017). Case Study.
 #' }
-#' @importFrom stats dnorm dpois model.matrix qlogis relevel rpois
+#' @importFrom stats dnorm dpois model.matrix qlogis relevel rpois update
 #' @importForm utils person
 #' @export
 id_estimate <- function(idealdata=NULL,model_type=2,
@@ -615,6 +653,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                         id_diff_high=2,
                            restrict_ind_low=NULL,
                            fixtype='vb_full',
+                        id_refresh=0,
                         prior_fit=NULL,
                         warmup=floor(niters/2),ncores=4,
                         use_groups=FALSE,
@@ -632,7 +671,13 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                         restrict_mean_val=NULL,
                         restrict_mean_ind=NULL,
                         restrict_var_high=0.1,
+                        tol_rel_obj=.0001,
+                        gp_sd_par=.025,
+                        gp_num_diff=c(3,0.01),
+                        gp_m_sd_par=c(0.3,10),
+                        gp_min_length=0,
                            ...) {
+
 
   
   if(use_subset==TRUE || sample_it==TRUE) {
@@ -653,14 +698,22 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   # change time IDs if non time-varying model is being fit
   if(vary_ideal_pts=='none') {
     idealdata@score_matrix$time_id <- 1
-    use_ar <- FALSE
     # make sure that the covariate arrays are only one time point
     idealdata@person_cov <- idealdata@person_cov[1,,,drop=F]
     idealdata@group_cov <- idealdata@group_cov[1,,,drop=F]
-  } else if(vary_ideal_pts=='AR1') {
-    use_ar <- TRUE
-  } else {
-    use_ar <- FALSE
+  } 
+  
+  vary_ideal_pts <- switch(vary_ideal_pts,
+                           none=1,
+                           random_walk=2,
+                           AR1=3,
+                           GP=4)
+  
+  # set GP parameters
+  
+  if(vary_ideal_pts==4) {
+    # convert multiplicity factor to total length of the data
+    gp_num_diff[1] <- length(unique(idealdata@score_matrix$time_id))*gp_num_diff[1]
   }
     
   # use either row numbers for person/legislator IDs or use group IDs (static or time-varying)
@@ -681,6 +734,20 @@ id_estimate <- function(idealdata=NULL,model_type=2,
 
   billpoints <- as.numeric(idealdata@score_matrix$item_id)
   timepoints <- as.numeric(factor(idealdata@score_matrix$time_id))
+  # for gaussian processes, need actual time values
+  time_ind <- switch(class(idealdata@score_matrix$time_id)[1],
+                     factor=unique(as.numeric(idealdata@score_matrix$time_id)),
+                     Date=unique(as.numeric(idealdata@score_matrix$time_id)),
+                     POSIXct=unique(as.numeric(idealdata@score_matrix$time_id)),
+                     POSIXlt=unique(as.numeric(idealdata@score_matrix$time_id)),
+                     numeric=unique(idealdata@score_matrix$time_id),
+                     integer=unique(idealdata@score_matrix$time_id))
+  
+  # now need to generate max/min values for empirical length-scale prior in GP
+  if(gp_min_length>=gp_num_diff[1]) {
+    stop('The parameter gp_min_length cannot be equal to or greater than gp_num_diff[1].')
+  }
+  
   max_t <- max(timepoints,na.rm=T)
   num_bills <- max(billpoints,na.rm=T)
 
@@ -723,7 +790,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   # set identification options
     
   if(length(idealdata@restrict_var)==0 && is.null(prior_fit) && is.null(restrict_var)) {
-      if(vary_ideal_pts %in% c('none','AR1')) {
+      if(vary_ideal_pts %in% c(1,3)) {
         idealdata@restrict_var <- FALSE
       } else {
         idealdata@restrict_var <- TRUE
@@ -733,7 +800,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
     if(!is.null(restrict_var)) {
       idealdata@restrict_var <- restrict_var
     } else {
-      if(vary_ideal_pts %in% c('none','AR1')) {
+      if(vary_ideal_pts %in% c(1,3)) {
         idealdata@restrict_var <- FALSE
       } else {
         idealdata@restrict_var <- TRUE
@@ -754,16 +821,16 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   if(length(idealdata@restrict_mean_val)==0 && !is.null(restrict_mean_val)) {
       idealdata@restrict_mean_val <- restrict_mean_val
   } else if(length(idealdata@restrict_mean_val)==0 && is.null(restrict_mean_val)) {
-    idealdata@restrict_mean_val <- 1
+    idealdata@restrict_mean_val <- c(1,1)
   }
     
   if(length(idealdata@restrict_mean_ind)==0 && !is.null(restrict_mean_ind)) {
       idealdata@restrict_mean_ind <- restrict_mean_ind
   } else if(length(idealdata@restrict_mean_ind)==0 && is.null(restrict_mean_ind)) {
-    idealdata@restrict_mean_ind <- 1
+    idealdata@restrict_mean_ind <- rep(1,8)
   }
     
-  if(length(idealdata@restrict_mean)>0 && vary_ideal_pts=='AR1' && !is.null(prior_fit)) {
+  if(length(idealdata@restrict_mean)>0 && vary_ideal_pts==3 && !is.null(prior_fit)) {
     
     # reset if a prior time-varying fit is being used
     if(is.null(restrict_mean)) {
@@ -776,7 +843,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
     idealdata@restrict_mean <- restrict_mean
       
   } else if(length(idealdata@restrict_mean)==0 && is.null(restrict_mean)) {
-    if(vary_ideal_pts %in% c('AR1','none')) {
+    if(vary_ideal_pts %in% c(1,3)) {
       idealdata@restrict_mean <- FALSE
     } else {
       idealdata@restrict_mean <- TRUE
@@ -810,7 +877,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     diff_abs_sd=diff_miss_sd,
                     legis_sd=1,
                     restrict_sd=restrict_sd,
-                    use_ar=as.integer(use_ar),
+                    time_proc=vary_ideal_pts,
                     diff=idealdata@diff,
                     diff_high=idealdata@diff_high,
                     time_sd=time_sd,
@@ -820,7 +887,14 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     restrict_mean=idealdata@restrict_mean,
                     restrict_mean_val=idealdata@restrict_mean_val,
                     restrict_mean_ind=idealdata@restrict_mean_ind,
-                    zeroes=inflate_zero)
+                    zeroes=inflate_zero,
+                    time_ind=as.array(time_ind),
+                    time_proc=vary_ideal_pts,
+                    gp_sd_par=gp_sd_par,
+                    num_diff=gp_num_diff,
+                    m_sd_par=gp_m_sd_par,
+                    min_length=gp_min_length,
+                    id_refresh=id_refresh)
 
   idealdata <- id_model(object=idealdata,fixtype=fixtype,model_type=model_type,this_data=this_data,
                         nfix=nfix,restrict_ind_high=restrict_ind_high,
@@ -850,6 +924,14 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   
   billpoints <- as.numeric(idealdata@score_matrix$item_id)
   timepoints <- as.numeric(factor(idealdata@score_matrix$time_id))
+  # for gaussian processes, need actual time values
+  time_ind <- switch(class(idealdata@score_matrix$time_id)[1],
+                     factor=unique(as.numeric(idealdata@score_matrix$time_id)),
+                     Date=unique(as.numeric(idealdata@score_matrix$time_id)),
+                     POSIXct=unique(as.numeric(idealdata@score_matrix$time_id)),
+                     POSIXlt=unique(as.numeric(idealdata@score_matrix$time_id)),
+                     numeric=unique(idealdata@score_matrix$time_id),
+                     integer=unique(idealdata@score_matrix$time_id))
   max_t <- max(timepoints,na.rm=T)
   num_bills <- max(billpoints,na.rm=T)
   
@@ -900,6 +982,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     srx_pred=idealdata@item_cov,
                     sax_pred=idealdata@item_cov_miss,
                     time=timepoints,
+                    time_proc=vary_ideal_pts,
                     model_type=model_type,
                     discrim_reg_sd=discrim_reg_sd,
                     discrim_abs_sd=discrim_miss_sd,
@@ -907,7 +990,6 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     diff_abs_sd=diff_miss_sd,
                     legis_sd=person_sd,
                     restrict_sd=restrict_sd,
-                    use_ar=as.integer(use_ar),
                     diff=idealdata@diff,
                     diff_high=idealdata@diff_high,
                     time_sd=time_sd,
@@ -917,13 +999,21 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     restrict_mean_val=idealdata@restrict_mean_val,
                     restrict_mean_ind=idealdata@restrict_mean_ind,
                     restrict_mean=idealdata@restrict_mean,
-                    zeroes=inflate_zero)
+                    zeroes=inflate_zero,
+                    time_ind=as.array(time_ind),
+                    time_proc=vary_ideal_pts,
+                    gp_sd_par=gp_sd_par,
+                    num_diff=gp_num_diff,
+                    m_sd_par=gp_m_sd_par,
+                    min_length=gp_min_length)
 
   outobj <- sample_model(object=idealdata,nchains=nchains,niters=niters,warmup=warmup,ncores=ncores,
-                         this_data=this_data,use_vb=use_vb,...)
+                         this_data=this_data,use_vb=use_vb,
+                         tol_rel_obj=tol_rel_obj,
+                         ...)
   
   outobj@model_type <- model_type
-  outobj@use_ar <- use_ar
+  outobj@time_proc <- vary_ideal_pts
   outobj@use_groups <- use_groups
   return(outobj)
   

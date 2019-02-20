@@ -59,7 +59,7 @@ setClass('idealstan',
          slots=list(score_data='idealdata',
                     to_fix='list',
                     model_type='numeric',
-                    use_ar='logical',
+                    time_proc='numeric',
                     model_code='character',
                     test_model_code='character',
                     stan_samples='stanfit',
@@ -137,7 +137,8 @@ setGeneric('sample_model',signature='object',
 
 setMethod('sample_model',signature(object='idealdata'),
           function(object,nchains=4,niters=2000,warmup=floor(niters/2),ncores=NULL,
-                   to_use=to_use,this_data=this_data,use_vb=FALSE,...) {
+                   to_use=to_use,this_data=this_data,use_vb=FALSE,
+                   tol_rel_obj=NULL,...) {
 
             
             init_vals <- lapply(1:nchains,.init_stan,
@@ -146,6 +147,10 @@ setMethod('sample_model',signature(object='idealdata'),
                                 person_sd=this_data$legis_sd,
                                 diff_high=this_data$diff_high,
                                 T=this_data$T,
+                                time_proc=this_data$time_proc,
+                                m_sd_par=this_data$m_sd_par,
+                                time_range=mean(diff(this_data$time_ind)),
+                                num_diff=this_data$num_diff,
                                 restrict_var=this_data$restrict_var,
                                 restrict_var_high=this_data$restrict_var_high,
                                 time_sd=this_data$time_sd,
@@ -162,7 +167,29 @@ setMethod('sample_model',signature(object='idealdata'),
                                     init=init_vals,
                                     ...)
             } else {
+              if(is.null(tol_rel_obj)) {
+                # set to this number for identification runs
+                tol_rel_obj <- 1e-02
+              }
+              if(this_data$time_proc==4) {
+                # increase the precision of the gradient ascent when 
+                # using the GP as it is more complicated
+                elbo_samples <- 200
+                grad_samples <- 2
+                eval_elbo <- 200
+                #tol_rel_obj <- .0005
+              } else {
+                elbo_samples <- 100
+                grad_samples <- 1
+                eval_elbo <- 100
+              }
               out_model <- vb(object@stanmodel,data=this_data,
+                              tol_rel_obj=tol_rel_obj,
+                              iter=20000,
+                              init=init_vals[[1]],
+                              elbo_samples=elbo_samples,
+                              grad_samples=grad_samples,
+                              eval_elbo=eval_elbo,
                               ...)
             }
             outobj <- new('idealstan',

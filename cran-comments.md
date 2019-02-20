@@ -4,10 +4,10 @@
 * win-builder, R devel
 
 ## R CMD check results
-There were no ERRORs or WARNINGs. 2 NOTEs:
+There were no ERRORs or WARNINGs. 3 NOTEs:
 
 * checking installed package size ... NOTE
-  installed size is  5.5Mb
+  installed size is  6.2Mb
   sub-directories of 1Mb or more:
     libs   4.1Mb
     

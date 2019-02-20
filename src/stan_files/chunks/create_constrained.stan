@@ -10,7 +10,7 @@ if(num_legis==2) {
   if(T==1) {
     num_constrain_l=2;
   } else {
-    if(use_ar==1) {
+    if(time_proc==3) {
       num_constrain_l=2;
     } else {
       num_constrain_l=2;
