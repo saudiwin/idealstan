@@ -31,9 +31,9 @@ data {
   int ll[N];
   int bb[N];
   int time[N];
-  matrix[num_legis,LX] legis_pred[T];
-  matrix[num_bills,SRX] srx_pred;
-  matrix[num_bills,SAX] sax_pred;
+  matrix[N,LX] legis_pred;
+  matrix[N,SRX] srx_pred;
+  matrix[N,SAX] sax_pred;
   real discrim_reg_sd;
   real discrim_abs_sd;
   real legis_sd;
@@ -170,18 +170,13 @@ model {
   vector[N] pi2;
 
 
-  if(T==1) {
-    L_free ~normal(legis_pred[1, 1:(num_legis), ] * legis_x, legis_sd);
-  } else {
-    L_free ~ normal(0,legis_sd);
-  }
+  L_free ~ normal(0,legis_sd);
   
   if(time_proc==4) {
     //locally create the relevant variables for processing the GP
     {
     matrix[T, T] cov[gp_N]; // zero-length if not a GP model
     matrix[T, T] L_cov[gp_N];// zero-length if not a GP model
-    vector[gp_nT] calc_values; // used for calculating covariate values for GPs
 // chunk giving a GP prior to legislators/persons
 
 for(n in 1:num_legis) {
@@ -191,12 +186,8 @@ for(n in 1:num_legis) {
   cov[n] =   cov_exp_quad(time_ind, m_sd[1], time_var[n])
       + diag_matrix(rep_vector(square(gp_sd_par),T));
   L_cov[n] = cholesky_decompose(cov[n]);
-  
-  for(t in 1:T) {
-    calc_values[t] = legis_pred[t, n, ] * legis_x;
-  }
 
-  to_vector(L_tp2[,n]) ~ multi_normal_cholesky(calc_values, L_cov[n]); 
+  to_vector(L_tp2[,n]) ~ multi_normal_cholesky(rep_vector(0,T), L_cov[n]); 
   
     
 }  

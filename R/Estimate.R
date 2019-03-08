@@ -4,7 +4,8 @@
 #' function. 
 #' 
 #' @details This function can accept either a \code{rollcall} data object from package
-#' \code{pscl} or a long data frame where one row equals one item-person (bill-legislator)
+#' \code{pscl} or 
+#' a long data frame where one row equals one item-person (bill-legislator)
 #' observation with associated outcome. The preferred method is the long data frame 
 #' as passing a long data frame permits
 #' the inclusion of a wide range of covariates in the model, such as person-varying and item-varying 
@@ -33,8 +34,12 @@
 #' data as ignorable missing data that will be removed (list-wise deletion) before estimating a
 #' model.
 #' 
+#' @section Time-Varying Models
+#' 
 #' To run a time-varying model, you need to include the name of a column with dates (or integers) that is passed 
 #' to the \code{time_id} option.
+#' 
+#' @section Continuous Outcomes
 #' 
 #' If the outcome is unbounded i.e. a continuous or an unbounded 
 #' discrete variable like Poisson, simply set \code{unbounded} to \code{TRUE}. You can ignore the
@@ -42,6 +47,19 @@
 #' a particular value as missing using \code{miss_val}, or all 
 #' missing values (\code{NA}) will be recoded to a specific value out of the range of the outcome to use
 #' for modeling the missingness.
+#' 
+#' @section Hierarchical Covariates
+#' 
+#' Covariates can be fit on the person-level ideal point parameters as well as
+#' item discrimination parameters for either the inflated (missing) or non-inflated (observed) 
+#' models. These covariates must be columns that were included with the data fed to the 
+#' \code{\link{id_make}} function. The covariate relationships are specified as 
+#' one-sided formulas, i.e. \code{~cov1 + cov2 + cov1*cov2}. To interact covariates with the 
+#' person-level ideal points you can use \code{~cov1 + person_id + cov1*person_id} and for
+#' group-level ideal poins you can use \code{~cov1 + group_id + cov1*group_id} where
+#' \code{group_id} or \code{person_id} is the same name as the name of the column 
+#' for these options that you passed to \code{id_make} (i.e., the names of the columns
+#' in the original data).
 #' 
 #' @param score_data A data frame in long form, i.e., one row in the data for each 
 #' measured score or vote in the data or a \code{rollcall} data object from package \code{pscl}.
@@ -57,9 +75,6 @@
 #' Optional, default is \code{'group_id'}. Should be integer, character or factor.
 #' @param person_cov A one-sided formula that specifies the covariates
 #' in \code{score_data} that will be used to hierarchically model the person/legislator ideal points
-#' @param group_cov A one-sided formula that specifies the covariates
-#' in \code{score_data} that will be used to hierarchically model the person/legislator ideal points 
-#' at the group level. Use this in place of \code{person_cov} if you intend to run a group-level model.
 #' @param item_cov A one-sided formula that specifies the covariates
 #' in \code{score_data} that will be used to hierarchically model the 
 #' item/bill discrimination parameters for the regular model
@@ -130,7 +145,6 @@ id_make <- function(score_data=NULL,
                     group_id='group_id',
                     simul_data=NULL,
                            person_cov=NULL,
-                    group_cov=NULL,
                   item_cov=NULL,
                            item_cov_miss=NULL,
                            miss_val=NA,high_val=NULL,low_val=NULL,middle_val=NULL,
@@ -217,82 +231,53 @@ id_make <- function(score_data=NULL,
     
     score_rename <- slice(score_rename,as.numeric(attr(personm,'dimnames')[[1]]))
     
-    if(nrow(score_rename)!=nrow(personm)) stop('Covariate matrix and data matrix not the same size.')
+    if(nrow(score_rename)!=nrow(personm)) stop('Covariate matrix and data matrix not the same size even after removing missing data.')
     
-    person_cov <- bind_cols(as_data_frame(personm),
-                            select(score_rename,!! time_id,
-                                   !!person_id))
-    
-    # convert to long form for function
-    
-    person_cov <- gather(person_cov,key = !! quo(labels),value = !!quo(variables),
-                         -!!time_id,-!!person_id) %>% 
-      distinct
-    
-    person_cov <- .create_array(input_matrix=person_cov,
-                                row_var=person_id,
-                                col_var_name=labels,
-                                col_var_value=variables,
-                                third_dim_var=time_id)
-    
-    # reorder to fit stan
-    person_cov <- aperm(person_cov,c(3,1,2))
+    score_rename <- bind_cols(score_rename,
+                              as_data_frame(personm))
+    person_cov <- names(personm)
   } else {
-    person_cov <- .create_array(matrix(rep(0,num_person),nrow=num_person,ncol=1),arr_dim=max_t)
-    person_cov <- aperm(person_cov,c(3,1,2))
-  }
-  
-  # separate parameters for group-level covariates
-  
-  if(!is.null(group_cov)) {
-    
-    groupm <- model.matrix(group_cov,data=score_data)
-    
-    # need to check for missing data and remove any missing from IDs
-    
-    score_rename <- slice(score_rename,as.numeric(attr(groupm,'dimnames')[[1]]))
-    
-    group_cov <- bind_cols(as_data_frame(groupm),
-                            select(score_rename,!! time_id,
-                                   !!group_id))
-    
-    # convert to long form for function
-    
-    group_cov <- gather(group_cov,key = !! quo(labels),value = !!quo(variables),
-                         -!!time_id,-!!group_id) %>% 
-      distinct
-    
-    group_cov <- .create_array(input_matrix=group_cov,
-                                row_var=group_id,
-                                col_var_name=labels,
-                                col_var_value=variables,
-                                third_dim_var=time_id)
-    
-    # reorder to fit stan
-    group_cov <- aperm(group_cov,c(3,1,2))
-  } else {
-    group_cov <- .create_array(matrix(rep(0,num_group),nrow=num_group,ncol=1),arr_dim=max_t)
-    group_cov <- aperm(group_cov,c(3,1,2))
+    # make a dummy column if no covariate data
+    score_rename$personcov0 <- 0
+    person_cov <- 'personcov0'
   }
   
   if(!is.null(item_cov)) {
     
-    itemm <- select(score_data, !!! all.vars(item_cov)) %>% 
-      mutate(item_id=pull(score_rename,!!item_id)) %>% 
-      distinct(!!item_id,.keep_all = T)
+    itemm <- model.matrix(item_cov,data=score_data)
     
-    item_cov <- model.matrix(item_cov,data=itemm)
+    # need to check for missing data and remove any missing from IDs
+    
+    score_rename <- slice(score_rename,as.numeric(attr(itemm,'dimnames')[[1]]))
+    
+    if(nrow(score_rename)!=nrow(itemm)) stop('Covariate matrix and data matrix not the same size even after removing missing data.')
+    
+    score_rename <- bind_cols(score_rename,
+                              as_data_frame(itemm))
+    item_cov <- names(itemm)
   } else {
-    item_cov <- matrix(rep(0,num_item),nrow=num_item,ncol=1) 
-    }
+    # make a dummy column if no covariate data
+    score_rename$itemcov0 <- 0
+    item_cov <- 'itemcov0'
+  }
+  
   if(!is.null(item_cov_miss)) {
-    itemm <- select(score_data, !!! all.vars(item_cov)) %>% 
-      mutate(item_id=pull(score_rename,!!item_id)) %>% 
-      distinct(!!item_id,.keep_all = T)
     
-    item_cov_miss <- model.matrix(item_cov_miss,data=itemm)
+    itemmissm <- model.matrix(item_cov_miss,data=score_data)
+    
+    # need to check for missing data and remove any missing from IDs
+    
+    score_rename <- slice(score_rename,as.numeric(attr(itemmissm,'dimnames')[[1]]))
+    
+    if(nrow(score_rename)!=nrow(itemmissm)) stop('Covariate matrix and data matrix not the same size even after removing missing data.')
+    
+    score_rename <- bind_cols(score_rename,
+                              as_data_frame(itemmissm))
+    item_cov_miss <- names(itemmissm)
   } else {
-    item_cov_miss <- matrix(rep(0,num_item),nrow=num_item,ncol=1) 
+    # make a dummy column if no covariate data
+    score_rename$itemcovmiss0 <- 0
+    item_cov_miss <- 'itemcovmiss0'
   }
   
   # recode score/outcome
@@ -335,7 +320,6 @@ id_make <- function(score_data=NULL,
   outobj <- new('idealdata',
       score_matrix=score_rename,
       person_cov=person_cov,
-      group_cov=group_cov,
       item_cov=item_cov,
       item_cov_miss=item_cov_miss,
       miss_val=miss_val)
@@ -423,13 +407,9 @@ id_make <- function(score_data=NULL,
 #' 
 #' @section Covariates
 #' 
-#' Covariates can be fit on either group-level or person-level ideal point parameters as well as
-#' item discrimination parameters for either the inflated (missing) or non-inflated (observed) 
-#' models. These covariates must be columns that were included with the data fed to the 
-#' \code{\link{id_make}} function. The covariate relationships are specified as 
-#' one-sided formulas, i.e. \code{~cov1 + cov2 + cov1*cov2}. To interact covariates with the 
-#' person-level ideal points you can use \code{~cov1 + person_id + cov1*person_id} and for
-#' group-level ideal poins you can use \code{~cov1 + group_id + cov1*group_id}.
+#' Covariates are included in the model if they were specified as options to the 
+#' \code{\link{id_make}} function. The covariate plots can be accessed with 
+#' \code{\link{id_plot_cov}} on a fitted \code{idealstan} model object.
 #' 
 #' @section Identification:
 #' Identifying IRT models is challenging, and ideal point models are still more challenging 
@@ -721,15 +701,9 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   if(use_groups==T) {
     legispoints <- as.numeric(idealdata@score_matrix$group_id)
     num_legis <- max(legispoints)
-    # this handles the situation in which the data is fake and only 
-    # groups are used as parameters
-    legis_pred <- idealdata@group_cov
-    lx <- dim(idealdata@group_cov)[3]
   } else {
     legispoints <- as.numeric(idealdata@score_matrix$person_id)
     num_legis <- max(legispoints)
-    legis_pred <- idealdata@person_cov
-    lx <- dim(idealdata@person_cov)[3]
   }
 
   billpoints <- as.numeric(idealdata@score_matrix$item_id)
@@ -865,10 +839,12 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     LX=lx,
                     SRX=ncol(idealdata@item_cov),
                     SAX=ncol(idealdata@item_cov_miss),
-                    legis_pred=legis_pred,
-                    group_pred=idealdata@group_cov,
-                    srx_pred=idealdata@item_cov,
-                    sax_pred=idealdata@item_cov_miss,
+                    legis_pred=as.matrix(select(idealdata@score_matrix,
+                                                vars(idealdata@person_cov))),
+                    srx_pred=as.matrix(select(idealdata@score_matrix,
+                                              vars(idealdata@item_cov))),
+                    sax_pred=as.matrix(select(idealdata@score_matrix,
+                                              vars(idealdata@item_cov_miss))),
                     time=timepoints,
                     model_type=model_type,
                     discrim_reg_sd=discrim_reg_sd,
@@ -977,10 +953,12 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     LX=lx,
                     SRX=ncol(idealdata@item_cov),
                     SAX=ncol(idealdata@item_cov_miss),
-                    legis_pred=legis_pred,
-                    group_pred=idealdata@group_cov,
-                    srx_pred=idealdata@item_cov,
-                    sax_pred=idealdata@item_cov_miss,
+                    legis_pred=as.matrix(select(idealdata@score_matrix,
+                                                vars(idealdata@person_cov))),
+                    srx_pred=as.matrix(select(idealdata@score_matrix,
+                                              vars(idealdata@item_cov))),
+                    sax_pred=as.matrix(select(idealdata@score_matrix,
+                                              vars(idealdata@item_cov_miss))),
                     time=timepoints,
                     time_proc=vary_ideal_pts,
                     model_type=model_type,

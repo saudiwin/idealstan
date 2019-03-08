@@ -8,11 +8,7 @@ for(n in 1:num_legis) {
       + diag_matrix(rep_vector(square(gp_sd[1]),T));
   L_cov[n] = cholesky_decompose(cov[n]);
   
-  for(t in 1:T) {
-    calc_values[t] = legis_pred[t, n, ] * legis_x;
-  }
-
-  to_vector(L_tp2[,n]) ~ multi_normal_cholesky(calc_values, L_cov[n]); 
+  to_vector(L_tp2[,n]) ~ multi_normal_cholesky(rep_vector(0,T), L_cov[n]); 
   
     
 }
