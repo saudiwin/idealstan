@@ -6,6 +6,7 @@
                     ncores=NULL,all_args=NULL,
                     restrict_ind_high=NULL,
                     restrict_ind_low=NULL,
+                    tol_rel_obj=NULL,
                     model_type=NULL,
                     use_groups=NULL,
                     fixtype=NULL,...) {
@@ -18,10 +19,10 @@
     tol_rel_obj <- .0001
     eval_elbo <- 200
   } else {
-    tol_rel_obj <- .0001
     eval_elbo <- 100
   }
 
+  print("(First Step): Estimating model with variational inference to identify modes to constrain.")
   
   post_modes <- rstan::vb(object=to_use,data =this_data,
                           algorithm='meanfield',

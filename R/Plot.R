@@ -1023,15 +1023,10 @@ id_plot_cov <- function(object,
   to_plot <- as.array(object@stan_samples,
                    pars=param_name)
   
-  if(object@use_groups && cov_type=='person_cov') {
-    cov_type <- 'group_cov'
-  }
-  
   # reset names of parameters
-  new_names <- switch(cov_type,person_cov=attributes(object@score_data@person_cov)$dimnames$colnames,
-                      group_cov=attributes(object@score_data@group_cov)$dimnames$colnames,
-                      discrim_reg=attributes(object@score_data@item_cov)$dimnames$colnames,
-                      discrim_abs=attributes(object@score_data@item_cov_miss)$dimnames$colnames)
+  new_names <- switch(cov_type,person_cov=object@score_data@person_cov,
+                      discrim_reg=object@score_data@item_cov,
+                      discrim_abs=object@score_data@item_cov_miss)
 
   attributes(to_plot)$dimnames$parameters <- new_names
   if(!is.null(filter_cov)) {

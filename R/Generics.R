@@ -161,9 +161,11 @@ setMethod('sample_model',signature(object='idealdata'),
               ncores <- 1
             }
             if(use_vb==FALSE) {
+              print("Estimating model with full Stan MCMC sampler.")
               out_model <- sampling(object@stanmodel,data=this_data,chains=nchains,iter=niters,cores=ncores,
                                     warmup=warmup,
                                     init=init_vals,
+                                    refresh=this_data$id_refresh,
                                     ...)
             } else {
               if(is.null(tol_rel_obj)) {
@@ -182,6 +184,7 @@ setMethod('sample_model',signature(object='idealdata'),
                 grad_samples <- 1
                 eval_elbo <- 100
               }
+              print("Estimating model with variational inference (approximation of true posterior).")
               out_model <- vb(object@stanmodel,data=this_data,
                               tol_rel_obj=tol_rel_obj,
                               iter=20000,
@@ -189,6 +192,7 @@ setMethod('sample_model',signature(object='idealdata'),
                               elbo_samples=elbo_samples,
                               grad_samples=grad_samples,
                               eval_elbo=eval_elbo,
+                              refresh=this_data$id_refresh,
                               ...)
             }
             outobj <- new('idealstan',
@@ -207,6 +211,7 @@ setGeneric('id_model',
 setMethod('id_model',signature(object='idealdata'),
           function(object,fixtype='vb',model_type=NULL,this_data=NULL,nfix=10,
                    prior_fit=NULL,
+                   tol_rel_obj=NULL,
                    restrict_ind_high=NULL,
                    restrict_ind_low=NULL,
                    ncores=NULL,
@@ -225,7 +230,8 @@ setMethod('id_model',signature(object='idealdata'),
                    model_type=model_type,
                    use_groups=use_groups,
                    fixtype=fixtype,
-                   prior_fit=prior_fit)
+                   prior_fit=prior_fit,
+                   tol_rel_obj=tol_rel_obj)
             
 
             return(object)
