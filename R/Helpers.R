@@ -235,6 +235,30 @@
   return(object)
 }
 
+#' Function to select which indices to constrain
+#' @importFrom svDialogs dlg_list
+#' @noRd
+.select_const <- function(object=NULL,
+                          const_type='item',
+                          multiple=T,
+                          title="Select one or more items to constrain high from the following list of items in your data.") {
+
+  # given inputs, create a selection window
+  
+  if(const_type=="item") {
+    out_int <- dlg_list(choices = unique(object@score_matrix$item_id),
+                        multiple=multiple,
+                        title=title)
+  } else {
+    out_int <- dlg_list(choices = unique(object@score_matrix$person_id),
+                        multiple=multiple,
+                        title=title)
+  }
+  
+  return(out_int)
+  
+}
+
 #' Function that uses a previously-identified model to maintain comparability across model types
 #' @noRd
 .prior_fit <- function(object=NULL,
