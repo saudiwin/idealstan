@@ -14,14 +14,10 @@
   
   . <- NULL
   to_use <- stanmodels[['irt_standard_noid']]
-  
-  if(this_data$time_proc==4) {
-    tol_rel_obj <- .0001
-    eval_elbo <- 200
-  } else {
-    eval_elbo <- 100
-  }
 
+  
+  eval_elbo <- 100
+  
   print("(First Step): Estimating model with variational inference to identify modes to constrain.")
   
   post_modes <- rstan::vb(object=to_use,data =this_data,
