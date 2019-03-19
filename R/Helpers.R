@@ -46,86 +46,18 @@
   # Or constrain persons instead of discriminations
   # adjust for which time point we are looking at -- use first time point person param
   person <- apply(this_params[,grepl(pattern = 'L_full',x=all_params)],2,mean)
-  
+  item <- apply(this_params[,grepl(pattern = 'sigma_reg_free',x=all_params)],2,mean)
   
   if(fixtype=='vb_full') {
     
-    # now we know which ones to constrain
-    
-    to_constrain_high <- sort(person,index.return=TRUE,decreasing=TRUE)
-    to_constrain_high <- to_constrain_high$ix[1:nfix]
-    to_constrain_low <- sort(person,index.return=TRUE)
-    to_constrain_low <- to_constrain_low$ix[1:nfix]
-    
-    # change to group parameters if index is for groups
-    
-    # now re-order the factors so that the indices will match  
-    
-    if(use_groups==T) {
-      # reorder group parameters
-      # check if there are more than 2
-      if(length(unique(object@score_matrix$group_id))>2) {
-        object@score_matrix <- mutate(ungroup(object@score_matrix), 
-                                      group_id=factor(!! quo(group_id)),
-                                      group_id= factor(!! quo(group_id),
-                                                       levels=c(levels(!! quo(group_id))[-c(to_constrain_low,
-                                                                                            to_constrain_high)],
-                                                                levels(!! quo(group_id))[c(to_constrain_low,
-                                                                                           to_constrain_high)])))
-      } else {
-        object@score_matrix <- mutate(ungroup(object@score_matrix), 
-                                      group_id=factor(!! quo(group_id)),
-                                      group_id= relevel(!! quo(group_id),
-                                                        levels(!! quo(group_id))[to_constrain_high]))
-      }
-      
-    } else {
-      if(length(unique(object@score_matrix$person_id))>2) {
-        object@score_matrix <- mutate(ungroup(object@score_matrix), 
-                                      person_id=factor(!! quo(person_id)),
-                                      person_id= factor(!! quo(person_id),
-                                                        levels=c(levels(person_id)[-c(to_constrain_low,
-                                                                                      to_constrain_high)],
-                                                                 levels(person_id)[c(to_constrain_low,
-                                                                                     to_constrain_high)])))
-      } else {
-        object@score_matrix <- mutate(ungroup(object@score_matrix), 
-                                      person_id=factor(!! quo(person_id)),
-                                      person_id= relevel(!! quo(person_id),
-                                                         levels(!! quo(person_id))[to_constrain_high]))
-      }
-      
-    }
-    
-    # what to constrain the difference to given the priors
-    diff_high <- person[to_constrain_high[1]] 
-    sign_flip <- 1 # whether we need to flip signs 
-    diff <- person[to_constrain_high[1]]  - person[to_constrain_low[1]]
+    .free_constrain(person=person,
+                    item=item,
+                    const_type=const_type,
+                    object=object)
     
   } else {
     # use partial ID (we already know which ones to constrain, just figure out diff)
-    if(use_groups) {
-      to_constrain_high <- which(levels(object@score_matrix$group_id)==restrict_ind_high)
-      to_constrain_low <- which(levels(object@score_matrix$group_id)==restrict_ind_low)
-    } else {
-      to_constrain_high <- which(levels(object@score_matrix$person_id)==restrict_ind_high)
-      to_constrain_low <- which(levels(object@score_matrix$person_id)==restrict_ind_low)
-    }
     
-    
-    diff_high <- abs(person[to_constrain_high])
-    if(sign(person[to_constrain_high])<0) {
-      sign_flip <- -1
-    } else {
-      sign_flip <- 1
-    }
-    diff <- diff_high - sign(person[to_constrain_high])*person[to_constrain_low]
-    
-    # next we are going to re-order the person IDs around the constraints
-
-    object <- .constrain_fix(object=object,restrict_ind_high = restrict_ind_high,
-                             restrict_ind_low=restrict_ind_low,
-                             use_groups=use_groups)
   }
   
   # need new order of variables
