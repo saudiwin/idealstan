@@ -7,9 +7,10 @@
 id_make(score_data = NULL, outcome = "outcome",
   person_id = "person_id", item_id = "item_id", time_id = "time_id",
   group_id = "group_id", simul_data = NULL, person_cov = NULL,
-  item_cov = NULL, item_cov_miss = NULL, miss_val = NA,
-  high_val = NULL, low_val = NULL, middle_val = NULL,
-  unbounded = FALSE, exclude_level = NA, simulation = FALSE)
+  item_cov = NULL, item_cov_miss = NULL, remove_cov_int = FALSE,
+  miss_val = NA, high_val = NULL, low_val = NULL,
+  middle_val = NULL, unbounded = FALSE, exclude_level = NA,
+  simulation = FALSE)
 }
 \arguments{
 \item{score_data}{A data frame in long form, i.e., one row in the data for each 
@@ -42,6 +43,12 @@ item/bill discrimination parameters for the regular model}
 \item{item_cov_miss}{A one-sided formula that specifies the covariates
 in the dataset that will be used to hierarchically model the item/bill discrimination parameters for the
 missing data model.}
+
+\item{remove_cov_int}{Whether to remove constituent terms from hierarchical covariates that 
+interact covariates with IDs like \code{person_id} or \code{item_id}. Set to \code{TRUE} if
+including these constituent terms would cause multi-collinearity with other terms in the model
+(such as running a group-level model with a group-level interaction or a person-level model
+with a person-level interaction).}
 
 \item{miss_val}{The value (numeric or character) that indicate missing data/absences in the data. 
 If missing data is coded as \code{NA}, 
