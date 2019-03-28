@@ -1228,3 +1228,47 @@ return(as.vector(idx))
   
 }
 
+#' Function to calculate IRFs
+#' @noRd
+.irf <- function( time=1,shock=1,
+                  adj_in=NULL,
+                  y_1=0,
+                  total_t=10,
+                  old_output=NULL) {
+  
+  # set up the exogenous shock
+  # unless the shock comes from an exogenous covariate beta_x
+  if(time==1) {
+    x_1 <- shock
+  } else {
+    x_1 <- 0
+  }
+  
+  print(paste0('Now processing time point ',time))
+  
+  # Calculate current values of y and x given posterior uncertainty
+  
+  output <- data_frame(y_shock= adj_in*y_1 + x_1,
+                       time=time,
+                       iter=1:length(adj_in))
+  
+  
+  if(!is.null(old_output)) {
+    new_output <- bind_rows(old_output,output)
+  } else {
+    new_output <- output
+  }
+  
+  # run function recursively until time limit is reached
+  
+  if(time<total_t) {
+    .irf(time=time+1,
+         adj_in=adj_in,
+         y_1=output$y_shock,
+         total_t=total_t,
+         old_output=new_output)
+  } else {
+    return(new_output)  
+  }
+}
+
