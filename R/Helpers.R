@@ -238,6 +238,11 @@
                              interval=c(0,m_sd_par[1]),
                           m_sd_par=m_sd_par)$objective
       
+      if(m_sd_optim<0) {
+        # shouldn't happen, but just in case
+        m_sd_optim <- m_sd_par[1]/2
+      }
+      
       if(restrict_var) {
         if(time_proc==4) {
           return(list(restrict_high = array(rnorm(n=1,mean=diff_high,sd=restrict_sd)),

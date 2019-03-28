@@ -175,9 +175,9 @@ setMethod('sample_model',signature(object='idealdata'),
               if(this_data$time_proc==4) {
                 # increase the precision of the gradient ascent when 
                 # using the GP as it is more complicated
-                elbo_samples <- 200
-                grad_samples <- 2
-                eval_elbo <- 200
+                elbo_samples <- 100
+                grad_samples <- 1
+                eval_elbo <- 100
                 #tol_rel_obj <- .0005
               } else {
                 elbo_samples <- 100

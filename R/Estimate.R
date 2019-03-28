@@ -749,7 +749,9 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   
   if(vary_ideal_pts==4) {
     # convert multiplicity factor to total length of the data
-    gp_num_diff[1] <- length(unique(idealdata@score_matrix$time_id))*gp_num_diff[1]
+    # use real time points instead of just counting number of points
+    gp_num_diff[1] <- (max(as.numeric(idealdata@score_matrix$time_id))-
+                         min(as.numeric(idealdata@score_matrix$time_id)))*gp_num_diff[1]
   }
     
   # use either row numbers for person/legislator IDs or use group IDs (static or time-varying)
