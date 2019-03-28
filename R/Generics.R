@@ -234,23 +234,23 @@ setMethod('id_model',signature(object='idealdata'),
                 restrict_ind_high <- .select_const(object,
                                                    const_type=const_type,
                                                    multiple=F,
-                                                   title="Select one person in your data to constrain their ideal point to high values of the latent scale.")
+                                                   title="Select one person in your data to constrain their ideal point to high values of the latent scale.")$res
                 restrict_ind_low <- .select_const(object,
                                                    const_type=const_type,
                                                    multiple=F,
-                                                   title="Select one person in your data to constrain their ideal point to low values of the latent scale.")
+                                                   title="Select one person in your data to constrain their ideal point to low values of the latent scale.")$res
               } else {
                 restrict_ind_high <- .select_const(object,
                                                    const_type=const_type,
                                                    multiple=T,
-                                                   title="Select one or more items in your data to constrain their ideal point to high values of the latent scale.")
+                                                   title="Select one or more items in your data to constrain their ideal point to high values of the latent scale.")$res
                 restrict_ind_low <- .select_const(object,
                                                    const_type=const_type,
                                                    multiple=T,
-                                                   title="Select one or more items in your data to constrain their ideal point to low values of the latent scale.")
+                                                   title="Select one or more items in your data to constrain their ideal point to low values of the latent scale.")$res
                 
               }
-              
+
               if(all(restrict_ind_low==restrict_ind_high)) {
                 stop("Please do not select the same items or persons to constrain both high and low on the latent scale.")
               }
