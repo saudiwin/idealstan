@@ -183,7 +183,7 @@ for(n in 1:num_legis) {
   
   //create covariance matrices given current values of hiearchical parameters
   
-  cov[n] =   cov_exp_quad(time_ind, m_sd[1], time_var[n])
+  cov[n] =   cov_exp_quad(time_ind, m_sd[n], time_var[n])
       + diag_matrix(rep_vector(square(gp_sd_par),T));
   L_cov[n] = cholesky_decompose(cov[n]);
 
