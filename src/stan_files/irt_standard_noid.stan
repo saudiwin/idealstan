@@ -129,8 +129,8 @@ parameters {
   ordered[m_step-1] steps_votes_grm[num_bills];
   vector[num_bills] B_int_free;
   vector[num_bills] A_int_free;
-  vector<lower=0,upper=m_sd_par[1]>[gp_1] m_sd; // marginal standard deviation for GPs
-  vector<lower=0,upper=gp_sd_par>[gp_1] gp_sd; //additional residual variation in Y for GPs
+  vector<lower=0,upper=m_sd_par[1]>[gp_N] m_sd; // marginal standard deviation for GPs
+  vector<lower=0,upper=gp_sd_par>[gp_N] gp_sd; //additional residual variation in Y for GPs
   real<lower=0> extra_sd;
   vector<lower=gp_length[2]>[num_legis] time_var; // variance for time series processes. constrained if GP
   vector<lower=0,upper=restrict_var_high>[num_legis] time_var_restrict; // optional restricted variance
@@ -184,7 +184,7 @@ for(n in 1:num_legis) {
   //create covariance matrices given current values of hiearchical parameters
   
   cov[n] =   cov_exp_quad(time_ind, m_sd[n], time_var[n])
-      + diag_matrix(rep_vector(square(gp_sd_par),T));
+      + diag_matrix(rep_vector(square(gp_sd[n]),T));
   L_cov[n] = cholesky_decompose(cov[n]);
 
   to_vector(L_tp2[,n]) ~ multi_normal_cholesky(rep_vector(0,T), L_cov[n]); 

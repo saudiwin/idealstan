@@ -1206,11 +1206,11 @@ public:
             validate_non_negative_index("A_int_free", "num_bills", num_bills);
             num_params_r__ += num_bills;
             current_statement_begin__ = 351;
-            validate_non_negative_index("m_sd", "gp_1", gp_1);
-            num_params_r__ += gp_1;
+            validate_non_negative_index("m_sd", "gp_N", gp_N);
+            num_params_r__ += gp_N;
             current_statement_begin__ = 352;
-            validate_non_negative_index("gp_sd", "gp_1", gp_1);
-            num_params_r__ += gp_1;
+            validate_non_negative_index("gp_sd", "gp_N", gp_N);
+            num_params_r__ += gp_N;
             current_statement_begin__ = 353;
             ++num_params_r__;
             current_statement_begin__ = 354;
@@ -1462,10 +1462,10 @@ public:
             throw std::runtime_error("variable m_sd missing");
         vals_r__ = context__.vals_r("m_sd");
         pos__ = 0U;
-        validate_non_negative_index("m_sd", "gp_1", gp_1);
-        context__.validate_dims("initialization", "m_sd", "vector_d", context__.to_vec(gp_1));
-        vector_d m_sd(static_cast<Eigen::VectorXd::Index>(gp_1));
-        for (int j1__ = 0U; j1__ < gp_1; ++j1__)
+        validate_non_negative_index("m_sd", "gp_N", gp_N);
+        context__.validate_dims("initialization", "m_sd", "vector_d", context__.to_vec(gp_N));
+        vector_d m_sd(static_cast<Eigen::VectorXd::Index>(gp_N));
+        for (int j1__ = 0U; j1__ < gp_N; ++j1__)
             m_sd(j1__) = vals_r__[pos__++];
         try {
             writer__.vector_lub_unconstrain(0,get_base1(m_sd_par,1,"m_sd_par",1),m_sd);
@@ -1477,10 +1477,10 @@ public:
             throw std::runtime_error("variable gp_sd missing");
         vals_r__ = context__.vals_r("gp_sd");
         pos__ = 0U;
-        validate_non_negative_index("gp_sd", "gp_1", gp_1);
-        context__.validate_dims("initialization", "gp_sd", "vector_d", context__.to_vec(gp_1));
-        vector_d gp_sd(static_cast<Eigen::VectorXd::Index>(gp_1));
-        for (int j1__ = 0U; j1__ < gp_1; ++j1__)
+        validate_non_negative_index("gp_sd", "gp_N", gp_N);
+        context__.validate_dims("initialization", "gp_sd", "vector_d", context__.to_vec(gp_N));
+        vector_d gp_sd(static_cast<Eigen::VectorXd::Index>(gp_N));
+        for (int j1__ = 0U; j1__ < gp_N; ++j1__)
             gp_sd(j1__) = vals_r__[pos__++];
         try {
             writer__.vector_lub_unconstrain(0,gp_sd_par,gp_sd);
@@ -1674,16 +1674,16 @@ public:
             Eigen::Matrix<local_scalar_t__,Eigen::Dynamic,1>  m_sd;
             (void) m_sd;  // dummy to suppress unused var warning
             if (jacobian__)
-                m_sd = in__.vector_lub_constrain(0,get_base1(m_sd_par,1,"m_sd_par",1),gp_1,lp__);
+                m_sd = in__.vector_lub_constrain(0,get_base1(m_sd_par,1,"m_sd_par",1),gp_N,lp__);
             else
-                m_sd = in__.vector_lub_constrain(0,get_base1(m_sd_par,1,"m_sd_par",1),gp_1);
+                m_sd = in__.vector_lub_constrain(0,get_base1(m_sd_par,1,"m_sd_par",1),gp_N);
 
             Eigen::Matrix<local_scalar_t__,Eigen::Dynamic,1>  gp_sd;
             (void) gp_sd;  // dummy to suppress unused var warning
             if (jacobian__)
-                gp_sd = in__.vector_lub_constrain(0,gp_sd_par,gp_1,lp__);
+                gp_sd = in__.vector_lub_constrain(0,gp_sd_par,gp_N,lp__);
             else
-                gp_sd = in__.vector_lub_constrain(0,gp_sd_par,gp_1);
+                gp_sd = in__.vector_lub_constrain(0,gp_sd_par,gp_N);
 
             local_scalar_t__ extra_sd;
             (void) extra_sd;  // dummy to suppress unused var warning
@@ -1876,7 +1876,7 @@ public:
                     current_statement_begin__ = 432;
                     stan::model::assign(cov, 
                                 stan::model::cons_list(stan::model::index_uni(n), stan::model::nil_index_list()), 
-                                add(cov_exp_quad(time_ind,get_base1(m_sd,1,"m_sd",1),get_base1(time_var,n,"time_var",1)),diag_matrix(rep_vector(square(gp_sd_par),T))), 
+                                add(cov_exp_quad(time_ind,get_base1(m_sd,n,"m_sd",1),get_base1(time_var,n,"time_var",1)),diag_matrix(rep_vector(square(get_base1(gp_sd,n,"gp_sd",1)),T))), 
                                 "assigning variable cov");
                     current_statement_begin__ = 434;
                     stan::model::assign(L_cov, 
@@ -2522,10 +2522,10 @@ public:
         dims__.push_back(num_bills);
         dimss__.push_back(dims__);
         dims__.resize(0);
-        dims__.push_back(gp_1);
+        dims__.push_back(gp_N);
         dimss__.push_back(dims__);
         dims__.resize(0);
-        dims__.push_back(gp_1);
+        dims__.push_back(gp_N);
         dimss__.push_back(dims__);
         dims__.resize(0);
         dimss__.push_back(dims__);
@@ -2585,8 +2585,8 @@ public:
         }
         vector_d B_int_free = in__.vector_constrain(num_bills);
         vector_d A_int_free = in__.vector_constrain(num_bills);
-        vector_d m_sd = in__.vector_lub_constrain(0,get_base1(m_sd_par,1,"m_sd_par",1),gp_1);
-        vector_d gp_sd = in__.vector_lub_constrain(0,gp_sd_par,gp_1);
+        vector_d m_sd = in__.vector_lub_constrain(0,get_base1(m_sd_par,1,"m_sd_par",1),gp_N);
+        vector_d gp_sd = in__.vector_lub_constrain(0,gp_sd_par,gp_N);
         double extra_sd = in__.scalar_lb_constrain(0);
         vector_d time_var = in__.vector_lb_constrain(get_base1(gp_length,2,"gp_length",1),num_legis);
         vector_d time_var_restrict = in__.vector_lub_constrain(0,restrict_var_high,num_legis);
@@ -2638,10 +2638,10 @@ public:
             for (int k_0__ = 0; k_0__ < num_bills; ++k_0__) {
             vars__.push_back(A_int_free[k_0__]);
             }
-            for (int k_0__ = 0; k_0__ < gp_1; ++k_0__) {
+            for (int k_0__ = 0; k_0__ < gp_N; ++k_0__) {
             vars__.push_back(m_sd[k_0__]);
             }
-            for (int k_0__ = 0; k_0__ < gp_1; ++k_0__) {
+            for (int k_0__ = 0; k_0__ < gp_N; ++k_0__) {
             vars__.push_back(gp_sd[k_0__]);
             }
         vars__.push_back(extra_sd);
@@ -2893,12 +2893,12 @@ public:
             param_name_stream__ << "A_int_free" << '.' << k_0__;
             param_names__.push_back(param_name_stream__.str());
         }
-        for (int k_0__ = 1; k_0__ <= gp_1; ++k_0__) {
+        for (int k_0__ = 1; k_0__ <= gp_N; ++k_0__) {
             param_name_stream__.str(std::string());
             param_name_stream__ << "m_sd" << '.' << k_0__;
             param_names__.push_back(param_name_stream__.str());
         }
-        for (int k_0__ = 1; k_0__ <= gp_1; ++k_0__) {
+        for (int k_0__ = 1; k_0__ <= gp_N; ++k_0__) {
             param_name_stream__.str(std::string());
             param_name_stream__ << "gp_sd" << '.' << k_0__;
             param_names__.push_back(param_name_stream__.str());
@@ -3019,12 +3019,12 @@ public:
             param_name_stream__ << "A_int_free" << '.' << k_0__;
             param_names__.push_back(param_name_stream__.str());
         }
-        for (int k_0__ = 1; k_0__ <= gp_1; ++k_0__) {
+        for (int k_0__ = 1; k_0__ <= gp_N; ++k_0__) {
             param_name_stream__.str(std::string());
             param_name_stream__ << "m_sd" << '.' << k_0__;
             param_names__.push_back(param_name_stream__.str());
         }
-        for (int k_0__ = 1; k_0__ <= gp_1; ++k_0__) {
+        for (int k_0__ = 1; k_0__ <= gp_N; ++k_0__) {
             param_name_stream__.str(std::string());
             param_name_stream__ << "gp_sd" << '.' << k_0__;
             param_names__.push_back(param_name_stream__.str());
