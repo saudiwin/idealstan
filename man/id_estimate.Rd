@@ -223,7 +223,7 @@ bin_irt_2pl_abs_est <- id_estimate(bin_irt_2pl_abs_sim,
                        decreasing=TRUE,
                        index=TRUE)$ix[1],
                        restrict_ind_low = 
-                       sort(bin_irt_2pl_abs_sim@simul_data$true_person
+                       sort(bin_irt_2pl_abs_sim@simul_data$true_person,
                        decreasing=FALSE,
                        index=TRUE)$ix[1],
                        fixtype='vb_partial',
@@ -260,7 +260,7 @@ high_val='Yes',
 low_val='No',
 miss_val='Absent')
 
-sen_est <- id_estimate(senate_data,
+sen_est <- id_estimate(to_idealstan,
 model_type = 2,
 use_vb = TRUE,
 fixtype='vb_partial',
