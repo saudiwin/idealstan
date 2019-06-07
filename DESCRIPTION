@@ -46,3 +46,4 @@ NeedsCompilation: yes
 SystemRequirements: GNU make
 VignetteBuilder: R.rsp
 RoxygenNote: 6.1.1
+
