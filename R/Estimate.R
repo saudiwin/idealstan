@@ -679,7 +679,7 @@ id_make <- function(score_data=NULL,
 #'    \item Betancourt, Michael. "Robust Gaussian Processes in Stan". (October 2017). Case Study.
 #' }
 #' @importFrom stats dnorm dpois model.matrix qlogis relevel rpois update
-#' @importForm utils person
+#' @importFrom utils person
 #' @export
 id_estimate <- function(idealdata=NULL,model_type=2,
                         inflate_zero=FALSE,

@@ -23,6 +23,18 @@ NULL
 ## quiets concerns of R CMD check with dplyr and NSE
 ## temporary fix, will use standard evaluation in future versions
 if(getRversion() >= "2.15.1")  utils::globalVariables(c('party',
+                                                        'iter',
+                                                        'Person',
+                                                        "time",
+                                                        "y_shock",
+                                                        "Type",
+                                                        "estimate",
+                                                        "marg_neg",
+                                                        "marg_pos",
+                                                        "mean_est",
+                                                        "low_est",
+                                                        "high_est",
+                                                        "time_label",
                                                         'bill_cov',
                                                         'param',
                                                         'value',

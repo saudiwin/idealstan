@@ -1027,7 +1027,7 @@ id_plot_rhats <- function(obj) {
 #' \code{'discrim_infl_cov'} for bill/item discrimination parameters from inflated model.
 #' @param filter_cov A character vector of coefficients from covariate plots to exclude from
 #' plotting (should be the names of coefficients as they appear in the plots)
-#' @param recalc_values A character value of length three that can be used to create
+#' @param recalc_vals A character value of length three that can be used to create
 #' a new variable that is a sum of two other variables. The first two values of the
 #' character vector are the names of these parameters, while the third value is the name
 #' of the new combined variable. Note that if the parameters are renamed, the new names
