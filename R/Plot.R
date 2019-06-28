@@ -1272,6 +1272,8 @@ id_plot_cov <- function(object,
 #' calculate IRFs
 #' @param time_calc The maximum number of time points over which to calculate the
 #' IRF
+#' @param time_label Character string specifying the type of time points (default is just
+#' \code{"Time Points"})
 #' @param line_type The line type of the IRF line (see \code{ggplot2} documentation)
 #' @param line_width The line width of the IRF line (see \code{ggplot2} documentation)
 #' @param line_alpha The line alpha (transparency) of the IRF line (see \code{ggplot2} documentation)
@@ -1289,6 +1291,7 @@ id_plot_irf <- function(object,
                         recalc_vals=F,
                         include=NULL,
                         time_calc=10,
+                        time_label="Time Points",
                         line_type=2,
                         line_width=1,
                         line_alpha=1,
