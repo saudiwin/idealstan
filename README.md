@@ -10,6 +10,15 @@ October 26, 2018
 
 Kubinec, Robert. "Generalized Ideal Point Models for Time-Varying and Missing-Data Inference". Working Paper.
 
+**To install this package from source on Windows, please add the following to a file named `Makevars.win`, which should be located in the `~/.R` directory (a directory named `.R` in the user home folder):**
+
+```
+CXX11FLAGS=-O3
+CXX14 = C:/Rtools/mingw_64/bin/g++ -m$(WIN) -std=c++1y
+CXX14FLAGS=-O3
+```
+
+## About the Package
 
 This package implements IRT (item response theory) ideal point models, which are models designed for situations in which actors make strategic choices that correlate with a unidimensional scale, such as the left-right axis in American politics. Compared to traditional IRT, ideal point models examine the polarizing influence of a set of items on a set of persons, and has simlarities to models based on Euclidean latent spaces, such as multi-dimensional scaling. For more information, I refer you to my paper presented at [StanCon 2018](https://zenodo.org/record/1284361#.W9O_5WhKhPY) and the R package vignettes that can be accessed on [CRAN](https://CRAN.R-project.org/package=idealstan).
 

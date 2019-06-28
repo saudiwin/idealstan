@@ -45,7 +45,7 @@ of covariates (plus 1 for the intercept) to change the default labels.
 To see the default labels, use the plot function with this option blank.
 The character vector should be of th form used by}
 
-\item{recalc_values}{A character value of length three that can be used to create
+\item{recalc_vals}{A character value of length three that can be used to create
 a new variable that is a sum of two other variables. The first two values of the
 character vector are the names of these parameters, while the third value is the name
 of the new combined variable. Note that if the parameters are renamed, the new names

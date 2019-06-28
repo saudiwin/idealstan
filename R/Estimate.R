@@ -622,7 +622,7 @@ id_make <- function(score_data=NULL,
 #'                        decreasing=TRUE,
 #'                        index=TRUE)$ix[1],
 #'                        restrict_ind_low = 
-#'                        sort(bin_irt_2pl_abs_sim@simul_data$true_person
+#'                        sort(bin_irt_2pl_abs_sim@simul_data$true_person,
 #'                        decreasing=FALSE,
 #'                        index=TRUE)$ix[1],
 #'                        fixtype='vb_partial',
@@ -659,7 +659,7 @@ id_make <- function(score_data=NULL,
 #' low_val='No',
 #' miss_val='Absent')
 #' 
-#' sen_est <- id_estimate(senate_data,
+#' sen_est <- id_estimate(to_idealstan,
 #' model_type = 2,
 #' use_vb = TRUE,
 #' fixtype='vb_partial',
@@ -679,7 +679,7 @@ id_make <- function(score_data=NULL,
 #'    \item Betancourt, Michael. "Robust Gaussian Processes in Stan". (October 2017). Case Study.
 #' }
 #' @importFrom stats dnorm dpois model.matrix qlogis relevel rpois update
-#' @importForm utils person
+#' @importFrom utils person
 #' @export
 id_estimate <- function(idealdata=NULL,model_type=2,
                         inflate_zero=FALSE,
@@ -737,6 +737,9 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   # change time IDs if non time-varying model is being fit
   if(vary_ideal_pts=='none') {
     idealdata@score_matrix$time_id <- 1
+    # make sure that the covariate arrays are only one time point
+    #idealdata@person_cov <- idealdata@person_cov[1,,,drop=F]
+    #idealdata@group_cov <- idealdata@group_cov[1,,,drop=F]
   } 
   
   vary_ideal_pts <- switch(vary_ideal_pts,
@@ -750,8 +753,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   if(vary_ideal_pts==4) {
     # convert multiplicity factor to total length of the data
     # use real time points instead of just counting number of points
-    gp_num_diff[1] <- (max(as.numeric(idealdata@score_matrix$time_id))-
-                         min(as.numeric(idealdata@score_matrix$time_id)))*gp_num_diff[1]
+    gp_num_diff[1] <- mean(as.numeric(idealdata@score_matrix$time_id))*gp_num_diff[1]
   }
     
   # use either row numbers for person/legislator IDs or use group IDs (static or time-varying)
