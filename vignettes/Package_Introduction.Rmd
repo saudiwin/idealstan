@@ -234,7 +234,7 @@ knitr::kable(head(item_all))
 
 ## Hierarchical Covariates
 
-Finally, we can also fit a model where we include a covariate that varies by person/legislator. To do so, we need to pass a one-sided formula to the `id_make` function to prepare the data accordingly. By way of example, we will include a model where we include an interaction between party ID (`party_code`) and the legislator's age to see if younger/older legislators are more or less conservative. 
+Finally, we can also fit a model where we include a covariate that varies by person/legislator. To do so, we need to pass a one-sided formula to the `id_make` function to prepare the data accordingly. By way of example, we will include a model where we include an interaction between party ID (`party_code`) and the legislator's age to see if younger/older legislators are more or less conservative. Because this is a static model, the effect of the covariate is averaged over all of the bills in the dataset and all the legislators in the dataset without taking into account the order or time period of the bills.
 
 **It is important to note that for static ideal point models, covariates are only defined over the legislators/persons who are not being used as constraints in the model, such as John Barasso and Elizabeth Warren in this model.**
 
@@ -261,45 +261,36 @@ sen_est_cov <- id_estimate(senate_data,
 
 ```
 
-We can then look at a plot of the covariate values:
+`idealstan` implements a form of calculating marginal effects for these hierarchical covariates. Because the ideal point model is fundamentally a measurement model with a latent scale, the marginal effects are calculated separately for each end of the latent scale. To do so, the marginal effect of the covariate on one of the outcomes is calculated first for all items/bills with positive discrimination scores and then for items/bills with negative discrimination scores. The effect of the covariate can then be interpreted as having a conditional effect on either the positive or negatively associated latent scores.
+
+For example, the following plot shows the effect of the age covariate on the probability that a senator votes yes separately for conservative bills (negative discrimination) and liberal bills (positive discrimination). In other words, the two marginal effects are for whether increasing in age is associated with casting a yes vote **when the bill is liberal** versus **when a bill is conservative**. While these two probabilities are likely to differ, they are not mirror images of each other as they depend on the model's estimates of how liberal or conservative the bills actually are. The following plot shows these marginal effects of age:
 
 ```{r cov_plot}
-id_plot_cov(sen_est_cov,cov_type='person_cov')
+id_plot_cov(sen_est_cov,cov_type='person_cov',
+            pred_outcome="Yes") +
+  ggtitle("Conditional Marginal Effect of Age on Senator's Vote Choices")
 ```
 
-Because of the scale of the plot, it can be difficult to see the values for the age interaction. However, because the plot is a `ggplot` object, we can restrict the x axis:
+
+
+
+Because of the scale of the plot, it can be difficult to see the values for the age interaction. However, because the plot is a `ggplot` object, we can restrict the x axis (we put the limits on the y axis to modify the x axis because the plot is flipped):
 
 ```{r cov_plot_small}
-id_plot_cov(sen_est_cov,cov_type='person_cov') + xlim(c(-0.25,0.25)) +
-  ggtitle('Effect of Age by Party on Ideal Point Scores in 114th Senate')
+id_plot_cov(sen_est_cov,cov_type='person_cov',pred_outcome = "Yes") + ylim(c(-0.02,0.02)) +
+  ggtitle("Conditional Marginal Effect of Age on Senator's Vote Choices")
 ```
 
-Or we can filter which parameters we want to include in the plot:
+Or we can filter which parameters we want to exclude from the plot to focus on a few specific interaction effects:
 
 ```{r cov_plot_filter}
 id_plot_cov(sen_est_cov,cov_type='person_cov',
-            filter_cov=c('age','party_codeR:age')) + 
-  ggtitle('Effect of Age by Party on Ideal Point Scores in 114th Senate')
+            filter_cov=c('age','party_codeI:age','party_codeI','(Intercept)'),
+            pred_outcome="Yes") + 
+  ggtitle("Conditional Marginal Effect of Age on Senator's Vote Choices")
 ```
 
-And we can use `ggplot2` scale functions to change the labels on the plot for the y axis:
-
-```{r cov_plot_filter_label}
-id_plot_cov(sen_est_cov,cov_type='person_cov',
-            filter_cov=c('age','party_codeR:age')) + 
-  ggtitle('Effect of Age by Party on Ideal Point Scores in 114th Senate') +
-  scale_y_discrete(breaks=c('age','party_codeR:age'),
-                   labels=c('Democrats','Republicans')) +
-  scale_x_continuous(breaks=c(-0.05,-0.025,0,0.025),
-                     labels=c('More\nConservative',
-                              '-0.025',
-                              '0',
-                              'More\nLiberal'),
-                     limits=c(-0.07,0.04))
-
-```
-
-Because these covariates are on the ideal point scale, the meaning of the scale in terms of party ideology must be kept in mind in order to interpret the plot. First, because we only have estimates for the "I" and "R" values of `party_code`, we know that the Democrats "D" are being used as the reference value. As a consequence, the coefficient for `age` is equal to the effect of age for Democrats (i.e., when the person is neither Republican or Independent). As a result, a negative value for age for Democrats corresponds to more liberalism as they are on the negative side of the scale, while a positive value for age for Republicans implies more conservatism (and vice versa). Keeping the direction of the scale in mind is crucial for understanding hierarchical covariates in ideal point models.
+Because these covariates are on the ideal point scale, the meaning of the scale in terms of party ideology must be kept in mind in order to interpret the plot. First, because we only have estimates for the "I" and "R" values of `party_code`, we know that the Democrats "D" are being used as the reference value. As a consequence, the coefficient for `age` is equal to the effect of age for Democrats (i.e., when the person is neither Republican or Independent). As a result, the way to interpret these plots is that for both Democrats and Republicans, increasing age is associated with voting for bills that are more conservative if they are Republican or more liberal if they are Democrat. In other words, younger party members show stronger ideological affiliation in terms of conservative or liberal bills (or perhaps party unity). Keeping the direction of the scale in mind is crucial for understanding hierarchical covariates in ideal point models.
 
 Of course, because this model was fit with variational inference (`use_vb=T`), the results are an approximation. It would be good to run full Bayesian inference to obtain final estimates. 
 

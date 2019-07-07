@@ -263,7 +263,7 @@ setMethod('summary',signature(object='idealstan'),
             
             options(tibble.print_max=1000,
                     tibble.print_min=100)
-            
+
 
             if(pars=='ideal_pts') {
               ideal_pts <- .prepare_legis_data(object,
@@ -368,9 +368,9 @@ setMethod('summary',signature(object='idealstan'),
                                   pars=param_name)
               
               # reset names of parameters
-              new_names <- switch(pars,person_cov=attributes(object@score_data@person_cov)$dimnames$colnames,
-                                  discrim_reg=attributes(object@score_data@item_cov)$dimnames$colnames,
-                                  discrim_abs=attributes(object@score_data@item_cov_miss)$dimnames$colnames)
+              new_names <- switch(pars,person_cov=object@score_data@person_cov,
+                                  discrim_reg=object@score_data@item_cov,
+                                  discrim_abs=object@score_data@item_cov_miss)
               
               attributes(to_sum)$dimnames$parameters <- new_names
               
