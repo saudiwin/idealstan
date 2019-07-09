@@ -19,6 +19,7 @@ Imports:
     rstan (>= 2.18.2),
     rstantools (>= 1.5.1),
     dplyr,
+    svDialogs,
     tidyr,
     stringr,
     bayesplot,
