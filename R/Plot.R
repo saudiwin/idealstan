@@ -1321,8 +1321,7 @@ id_plot_irf <- function(object,
                         use_ci=TRUE,
                         high_quantile=0.95,
                         low_quantile=0.05,
-                        calc_varying=T,
-                        ...) {
+                        calc_varying=T) {
   
   # figure out which covariate to iterate over
   
