@@ -1284,7 +1284,7 @@ id_plot_cov <- function(object,
 #' calculating credible intervals
 #' @param low_quantile The lower limit of the posterior density to use for
 #' calculating credible intervals
-#' @param recalc_values Whether to combine two variables into one through addition before
+#' @param recalc_vals Whether to combine two variables into one through addition before
 #' computing IRFs. If \code{TRUE}, two names of parameters should be passed to 
 #' \code{cov_name} or selected from the dialog list
 #' @param include A list of character names of person or group IDs for which to
