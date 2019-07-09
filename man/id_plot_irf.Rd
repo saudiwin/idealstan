@@ -10,7 +10,7 @@ id_plot_irf(object, cov_name = NULL, label_high = "Liberal",
   line_type = 2, line_width = 1, line_alpha = 1,
   line_color = "red", ci_color = "black", ci_alpha = 0.5,
   use_ci = TRUE, high_quantile = 0.95, low_quantile = 0.05,
-  calc_varying = T, ...)
+  calc_varying = T)
 }
 \arguments{
 \item{object}{A fitted \code{idealstan} object}
