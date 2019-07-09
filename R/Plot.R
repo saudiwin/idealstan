@@ -995,12 +995,30 @@ id_plot_rhats <- function(obj) {
     ylab('Parameters') +theme(panel.grid=element_blank())
 }
 
-#' Display Coefficient Plot of Hierarchical Covariates
+#' Marginal Effects Plot for Hierarchical Covariates
 #' 
-#' This function will pull the estimates of the hierarchical covariates (whether at the person or 
-#' item-discrimination level) and then plot them on a vertical coefficient plot. Names of 
-#' the parameters are taken from the levels of the factor if a categorical variable and the
-#' column names otherwise. 
+#' This function will calculate marginal effects, or the first derivative
+#' of the IRT/ideal point model with respect to the hierarchical covariate,
+#' separately for the two poles of the latent variable. These two marginal
+#' effects permit the interpretation of the effect of the covariate on 
+#' with respect to either end of the latent variable.
+#' 
+#' Because the marginal effects are always with respect to a given
+#' outcome/response, the outcome to be predicted must be specified 
+#' in \code{pred_outcome}. If it is not specified, the function
+#' will prompt you to select one of the outcome's values in the data.
+#' 
+#' The ends of the latent variable can be specified via the 
+#' \code{label_low} and \code{label_high} options, which will use those
+#' labels in the ensuing plot.
+#' 
+#' To exclude parameters from the plot, use the \code{filter_cov} option. 
+#' Note that the parameters must be specified using the underlying model 
+#' syntax (however they are labeled in the plot). You can also change
+#' the names of parameters using the \code{new_cov_names} option.
+#' 
+#' Note that the function produces a \code{ggplot2} object, which can 
+#' be further modified with \code{ggplot2} functions.
 #' 
 #' @param object A fitted \code{idealstan} object
 #' @param calc_varying Whether to marginalize covariate effects over 
@@ -1033,6 +1051,7 @@ id_plot_rhats <- function(obj) {
 #' of the new combined variable. Note that if the parameters are renamed, the new names
 #' should be used in this option.
 #' @return A \code{ggplot2} plot that can be further customized with \code{ggplot2} functions if need be.
+#' @import svDialogs
 #' @export
 id_plot_cov <- function(object,
                         calc_varying=T,

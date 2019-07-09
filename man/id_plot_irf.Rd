@@ -6,10 +6,11 @@
 \usage{
 id_plot_irf(object, cov_name = NULL, label_high = "Liberal",
   label_low = "Conservative", pred_outcome = NULL, recalc_vals = F,
-  include = NULL, time_calc = 10, line_type = 2, line_width = 1,
-  line_alpha = 1, line_color = "red", ci_color = "black",
-  ci_alpha = 0.5, use_ci = TRUE, high_quantile = 0.95,
-  low_quantile = 0.05, calc_varying = T, ...)
+  include = NULL, time_calc = 10, time_label = "Time Points",
+  line_type = 2, line_width = 1, line_alpha = 1,
+  line_color = "red", ci_color = "black", ci_alpha = 0.5,
+  use_ci = TRUE, high_quantile = 0.95, low_quantile = 0.05,
+  calc_varying = T, ...)
 }
 \arguments{
 \item{object}{A fitted \code{idealstan} object}
@@ -31,6 +32,9 @@ calculate IRFs}
 
 \item{time_calc}{The maximum number of time points over which to calculate the
 IRF}
+
+\item{time_label}{Character string specifying the type of time points (default is just
+\code{"Time Points"})}
 
 \item{line_type}{The line type of the IRF line (see \code{ggplot2} documentation)}
 

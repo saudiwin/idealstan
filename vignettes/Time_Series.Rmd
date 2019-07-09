@@ -129,6 +129,7 @@ out_d <- id_plot_legis_var(del_est_rw2,return_data = T)
 knitr::kable(head(out_d$plot_data))
 ```
 
+
 ## Stationary Model
 
 We now fit a stationary version of the model by passing `'AR1'` to `vary_ideal_pts`. By default, this model does not put a hard upper limit on the over-time variance, but rather puts a tight prior on over-time variance that biases the variances to zero. We will put a hard upper limit as there are some legislators that move across the entire ideal point space, and we don't want oscillation to occur--i.e, a legislator bouncing from one side of the ideal point spectrum to another every time point. While this behavior is entire possible within the model's assumptions, it is unrealistic in the domain we are studying--legislative behavior. For that reason I put a hard `.05` limit on the variance, however, even with this constraint, there is still some oscillation in ideal points:

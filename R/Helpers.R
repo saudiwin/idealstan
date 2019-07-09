@@ -11,7 +11,6 @@
                     use_groups=NULL,
                     fixtype=NULL,...) {
 
-  
   . <- NULL
   to_use <- stanmodels[['irt_standard_noid']]
   
@@ -148,7 +147,7 @@
     ideal_pts_high <- rstan::extract(post_modes,'L_tp1')[[1]] %>% apply(c(2,3),quantile,.99) %>% .[,new_order]
     ideal_pts_low <- ideal_pts_low*sign_flip
     ideal_pts_high <- ideal_pts_high*sign_flip
-    
+
     # now pull the lowest low and highest high
     ideal_pts_low <- apply(ideal_pts_low,2,function(c) c[which(c==max(c))])
     ideal_pts_high <- apply(ideal_pts_high,2,function(c) c[which(c==min(c))])
@@ -158,8 +157,9 @@
     
     if(this_data$time_proc %in% c(2,3)) {
       # this is just additional for these models
-      col_high <- which(ideal_pts_mean==max(ideal_pts_mean),arr.ind=T)
-      col_low <- which(ideal_pts_mean==min(ideal_pts_mean),arr.ind=T)
+      col_high <- which(ideal_pts_mean==max(ideal_pts_mean),arr.ind=T)[1,,drop=F]
+      col_low <- which(ideal_pts_mean==min(ideal_pts_mean),arr.ind=T)[1,,drop=F]
+    
       restrict_mean_ind_high_max <- col_high
       restrict_mean_ind_high_min <- c(which(ideal_pts_mean[,col_high[,2]]==min(ideal_pts_mean[,col_high[,2]])),
                                       col_high[,2])
@@ -180,13 +180,13 @@
                                        col_low[,2])
       } else {
         # just constrain the lowest one that we fixed
-        restrict_mean_ind_high_max <- c(which(ideal_pts_mean[,ncol(ideal_pts_mean)]==max(ideal_pts_mean[,ncol(ideal_pts_mean)])),
+        restrict_mean_ind_high_max <- c(which(ideal_pts_mean[,ncol(ideal_pts_mean)]==max(ideal_pts_mean[,ncol(ideal_pts_mean)]))[1],
                                ncol(ideal_pts_mean))
-        restrict_mean_ind_high_min <- c(which(ideal_pts_mean[,ncol(ideal_pts_mean)]==min(ideal_pts_mean[,ncol(ideal_pts_mean)])),
+        restrict_mean_ind_high_min <- c(which(ideal_pts_mean[,ncol(ideal_pts_mean)]==min(ideal_pts_mean[,ncol(ideal_pts_mean)]))[1],
                                         ncol(ideal_pts_mean))
-        restrict_mean_ind_low_min <- c(which(ideal_pts_mean[,ncol(ideal_pts_mean)-1]==min(ideal_pts_mean[,ncol(ideal_pts_mean)-1])),
+        restrict_mean_ind_low_min <- c(which(ideal_pts_mean[,ncol(ideal_pts_mean)-1]==min(ideal_pts_mean[,ncol(ideal_pts_mean)-1]))[1],
                                     ncol(ideal_pts_mean)-1)
-        restrict_mean_ind_low_max <- c(which(ideal_pts_mean[,ncol(ideal_pts_mean)-1]==max(ideal_pts_mean[,ncol(ideal_pts_mean)-1])),
+        restrict_mean_ind_low_max <- c(which(ideal_pts_mean[,ncol(ideal_pts_mean)-1]==max(ideal_pts_mean[,ncol(ideal_pts_mean)-1]))[1],
                                        ncol(ideal_pts_mean)-1)
       }
       

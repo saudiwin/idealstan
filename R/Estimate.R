@@ -520,7 +520,7 @@ id_make <- function(score_data=NULL,
 #' @param use_vb Whether or not to use Stan's variational Bayesian inference engine instead of full Bayesian inference. Pros: it's much faster.
 #' Cons: it's not quite as accurate. See \code{\link[rstan]{vb}} for more info.
 #' @param tol_rel_obj If \code{use_vb} is \code{TRUE}, this parameter sets the stopping rule for the \code{vb} algorithm. 
-#' It's default is 0.0005. A stricter threshold will require the sampler to run longer but may yield a
+#' It's default is 0.001. A stricter threshold will require the sampler to run longer but may yield a
 #' better result in a difficult model with highly correlated parameters. Lowering the threshold should work fine for simpler
 #' models.
 #' @param warmup The number of iterations to use to calibrate Stan's sampler on a given model. Shouldn't be less than 100. 
@@ -710,7 +710,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                         restrict_mean_val=NULL,
                         restrict_mean_ind=NULL,
                         restrict_var_high=0.1,
-                        tol_rel_obj=.0001,
+                        tol_rel_obj=.001,
                         gp_sd_par=.025,
                         gp_num_diff=c(3,0.01),
                         gp_m_sd_par=c(0.3,10),

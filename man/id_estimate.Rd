@@ -16,7 +16,7 @@ id_estimate(idealdata = NULL, model_type = 2, inflate_zero = FALSE,
   ar_sd = 2, diff_reg_sd = 1, diff_miss_sd = 1, restrict_sd = 0.01,
   restrict_mean = NULL, restrict_var = NULL,
   restrict_mean_val = NULL, restrict_mean_ind = NULL,
-  restrict_var_high = 0.1, tol_rel_obj = 1e-04, gp_sd_par = 0.025,
+  restrict_var_high = 0.1, tol_rel_obj = 0.001, gp_sd_par = 0.025,
   gp_num_diff = c(3, 0.01), gp_m_sd_par = c(0.3, 10),
   gp_min_length = 0, ...)
 }
@@ -141,7 +141,7 @@ model is a random-walk time-series). If left blank, either defaults to 0.1 or is
 identification model.}
 
 \item{tol_rel_obj}{If \code{use_vb} is \code{TRUE}, this parameter sets the stopping rule for the \code{vb} algorithm. 
-It's default is 0.0005. A stricter threshold will require the sampler to run longer but may yield a
+It's default is 0.001. A stricter threshold will require the sampler to run longer but may yield a
 better result in a difficult model with highly correlated parameters. Lowering the threshold should work fine for simpler
 models.}
 
