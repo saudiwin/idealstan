@@ -1302,6 +1302,7 @@ id_plot_cov <- function(object,
 #' @param use_ci Whether or not to plot a credible interval around the lines
 #' @return a \code{ggplot2} object that can be further customized if necessary
 #' @export
+#' @import scales
 id_plot_irf <- function(object,
                         cov_name=NULL,
                         label_high="Liberal",

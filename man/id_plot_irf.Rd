@@ -27,6 +27,10 @@ or binary models with missing data, which outcome to predict. This should
 be a character value that matches what the outcome was coded as in the data
 passed to \code{\link{id_make}}.}
 
+\item{recalc_vals}{Whether to combine two variables into one through addition before
+computing IRFs. If \code{TRUE}, two names of parameters should be passed to 
+\code{cov_name} or selected from the dialog list}
+
 \item{include}{A list of character names of person or group IDs for which to
 calculate IRFs}
 
@@ -58,10 +62,6 @@ calculating credible intervals}
 
 \item{calc_varying}{if \code{TRUE}, will calculate marginal effects of the
 covariates on each end of the latent scale (see vignette for more information)}
-
-\item{recalc_values}{Whether to combine two variables into one through addition before
-computing IRFs. If \code{TRUE}, two names of parameters should be passed to 
-\code{cov_name} or selected from the dialog list}
 }
 \value{
 a \code{ggplot2} object that can be further customized if necessary
