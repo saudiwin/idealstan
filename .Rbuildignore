@@ -16,3 +16,4 @@ test_*
 .gitattributes
 
 
+^CRAN-RELEASE$
