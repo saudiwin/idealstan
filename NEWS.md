@@ -1,3 +1,8 @@
+#Release v0.7.2
+* Updated to be compatible with most recent `rstan` (version 2.19.2).
+* Added `id_plot_cov` function for marginal effects plotting of covariates.
+* Added `id_plot_irf` for calculating impulse-response functions for AR(1) models covariates.
+
 #Release v0.7.1
 * Fixed bug where time series vignette did not show on CRAN screen
 
