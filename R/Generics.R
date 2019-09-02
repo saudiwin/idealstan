@@ -215,14 +215,43 @@ setMethod('id_model',signature(object='idealdata'),
                    restrict_ind_high=NULL,
                    restrict_ind_low=NULL,
                    ncores=NULL,
+                   const_type=NULL,
                    use_groups=NULL) {
 
             x <- object@score_matrix
-            
-            run_id <- switch(fixtype,vb_full=.vb_fix,vb_partial=.vb_fix,constrained=.constrain_fix,
-                             constrain=.constrain_fix,
-                             prior_fit=.prior_fit)
-            
+
+            if(fixtype %in% c("constrained",
+                              "constrain",
+                             "vb_partial") && is.null(restrict_ind_high)) {
+              
+              print("Interactively selecting which items or persons to constrain as they were not pre-specified.")
+              
+              if(const_type=="persons") {
+                restrict_ind_high <- .select_const(object,
+                                                   const_type=const_type,
+                                                   multiple=F,
+                                                   title="Select one person in your data to constrain their ideal point to high values of the latent scale.")$res
+                restrict_ind_low <- .select_const(object,
+                                                   const_type=const_type,
+                                                   multiple=F,
+                                                   title="Select one person in your data to constrain their ideal point to low values of the latent scale.")$res
+              } else {
+                restrict_ind_high <- .select_const(object,
+                                                   const_type=const_type,
+                                                   multiple=T,
+                                                   title="Select one or more items in your data to constrain their ideal point to high values of the latent scale.")$res
+                restrict_ind_low <- .select_const(object,
+                                                   const_type=const_type,
+                                                   multiple=T,
+                                                   title="Select one or more items in your data to constrain their ideal point to low values of the latent scale.")$res
+                
+              }
+
+              if(all(restrict_ind_low==restrict_ind_high)) {
+                stop("Please do not select the same items or persons to constrain both high and low on the latent scale.")
+              }
+              
+            }
 
             object <- run_id(object=object,this_data=this_data,nfix=nfix,
                    restrict_ind_high=restrict_ind_high,
