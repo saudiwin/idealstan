@@ -7,7 +7,7 @@ takes one user input to determine number of time points to calculate maximum dif
     vector[num_elements(x)-1] diff_elem;
     vector[2] data_out;
     real rl_mean;
-    real lower_limit;
+    
     
     for(n in 1:(num_elements(x)-1)) {
           diff_elem[n] = fabs(x[n+1] - x[n]);
@@ -15,8 +15,7 @@ takes one user input to determine number of time points to calculate maximum dif
       
     rl_mean = mean(diff_elem)*num_diff;
     
-    lower_limit=min(diff_elem)*min_length;
-    return [log(rl_mean),lower_limit]';
+    return [log(rl_mean)]';
   }
     
  

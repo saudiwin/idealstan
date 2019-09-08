@@ -688,10 +688,11 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                            subset_group=NULL,subset_person=NULL,sample_size=20,
                            nchains=4,niters=2000,use_vb=FALSE,
                            restrict_ind_high=NULL,
-                          id_diff=4,
-                        id_diff_high=2,
+                          fix_high=1,
+                          fix_low=(-1),
                            restrict_ind_low=NULL,
                            fixtype='vb_full',
+                        const_type="persons",
                         id_refresh=0,
                         prior_fit=NULL,
                         warmup=floor(niters/2),ncores=4,
@@ -712,8 +713,8 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                         restrict_var_high=0.1,
                         tol_rel_obj=.001,
                         gp_sd_par=.025,
-                        gp_num_diff=c(3,0.01),
-                        gp_m_sd_par=c(0.3,10),
+                        gp_num_diff=3,
+                        gp_m_sd_par=0.3,
                         gp_min_length=0,
                            ...) {
 
@@ -930,7 +931,10 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     num_diff=gp_num_diff,
                     m_sd_par=gp_m_sd_par,
                     min_length=gp_min_length,
-                    id_refresh=id_refresh)
+                    id_refresh=id_refresh,
+                    const_type=switch(const_type,
+                                      persons=1L,
+                                      items=2L))
 
   idealdata <- id_model(object=idealdata,fixtype=fixtype,model_type=model_type,this_data=this_data,
                         nfix=nfix,restrict_ind_high=restrict_ind_high,
@@ -938,14 +942,10 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                         ncores=ncores,
                         tol_rel_obj=tol_rel_obj,
                         use_groups=use_groups,
-                        prior_fit=prior_fit)
-
-  # if diff hasn't been set yet, set it
-  
-  if(length(idealdata@diff_high)==0) {
-      idealdata@diff <- id_diff
-      idealdata@diff_high <- id_diff_high
-  }
+                        prior_fit=prior_fit,
+                        fix_high=fix_high,
+                        fix_low=fix_low,
+                        const_type=const_type)
   
   # now run an identified run
   # repeat data formation as positions of rows/columns may have shifted
@@ -1026,9 +1026,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     diff_reg_sd=diff_reg_sd,
                     diff_abs_sd=diff_miss_sd,
                     legis_sd=person_sd,
-                    restrict_sd=restrict_sd,
-                    diff=idealdata@diff,
-                    diff_high=idealdata@diff_high,
+                    sd_fix=restrict_sd,
                     time_sd=time_sd,
                     ar_sd=ar_sd,
                     restrict_var=idealdata@restrict_var,
@@ -1043,7 +1041,14 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     num_diff=gp_num_diff,
                     m_sd_par=gp_m_sd_par,
                     min_length=gp_min_length,
-                    id_refresh=id_refresh)
+                    id_refresh=id_refresh,
+                    const_type=switch(const_type,
+                                      persons=1L,
+                                      items=2L),
+                    restrict_high=idealdata@restrict_ind_high,
+                    restrict_low=idealdata@restrict_ind_low,
+                    fix_high=idealdata@restrict_num_high,
+                    fix_low=idealdata@restrict_num_low)
 
   outobj <- sample_model(object=idealdata,nchains=nchains,niters=niters,warmup=warmup,ncores=ncores,
                          this_data=this_data,use_vb=use_vb,

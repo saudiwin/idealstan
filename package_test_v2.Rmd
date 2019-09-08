@@ -1,0 +1,935 @@
+---
+title: "Package Test Version 2: New Identification Strategy"
+output:
+  html_document: default
+  html_notebook: default
+---
+
+
+```{r setup, include=FALSE}
+
+require(idealstan)
+require(ggplot2)
+require(dplyr)
+require(tidyr)
+require(rstan)
+
+knitr::opts_chunk$set(fig.align = 'center',warning = F,message = F)
+```
+
+
+##Introduction
+
+This Rmarkdown file has a series of simulations run on the models offered in `idealstan`. It simulates a large amount of data and then checks to see if the residuals relative to the true parameters sum to zero, as well as for credible interval coverage. In general, the credible intervals aren't going to be exactly where they should be because the constraints used in estimating the models and identifying the signs aren't themselves included in the simulated data. I.e., one of the ideal points actually follows a positive continuous distribution instead of a random normal distribution once it is constrained, which introduces a slight bias in the recovery of the true parameters. This is an artifact of virtually every latent variable model, and is not of great concern as long as the credible intervals reach close to 90 percent coverage. 
+
+
+First, the standard IRT 2-PL (for this one, the absence discriminations are not a part of the model):
+
+```{r irt_binary}
+bin_irt_2pl_sim <- id_sim_gen(num_person=20,num_bills=200,ordinal=F,inflate=F,
+                              diff_sd=1,
+                              reg_discrim_sd = 1,
+                              absence_discrim_sd = 1)
+bin_irt_2pl_est <- id_estimate(idealdata=bin_irt_2pl_sim,
+                               model_type=1,
+                               restrict_ind_high = as.character(sort(bin_irt_2pl_sim@simul_data$true_person,
+                                                                     decreasing=T,
+                                                        index=T)$ix[1]),
+                               restrict_ind_low = as.character(sort(bin_irt_2pl_sim@simul_data$true_person,
+                                                                    decreasing=F, 
+                                                        index=T)$ix[1]),
+                               fixtype='constrained',
+                           person_sd = 3,
+                           discrim_miss_sd = 1,
+                           discrim_reg_sd = 1,
+                           diff_reg_sd = 1,
+                           diff_miss_sd = 1,
+                           restrict_sd=0.01,
+                           nchains=4,ncores=4)
+id_plot_rhats(bin_irt_2pl_est)
+```
+
+```{r cov_plot_irt_2pl}
+id_sim_coverage(bin_irt_2pl_est) %>% 
+  bind_rows(.id='Parameter') %>% 
+  ggplot(aes(y=avg,x=Parameter)) +
+  stat_summary(fun.args=list(mult=1.96)) + 
+  theme_minimal() 
+```
+
+Plot true versus observed values:
+
+```{r irt_2pl_plot}
+id_plot_legis(bin_irt_2pl_est,show_true = T)
+```
+
+
+```{r irt_2pl_resid}
+
+id_plot_sims(bin_irt_2pl_est,type='Residuals')
+
+```
+
+```{r irt_2pl_RMSE}
+
+id_plot_sims(bin_irt_2pl_est)
+
+```
+
+```{r irt_2pl_pred}
+
+bin_irt_2pl_est %>% 
+  id_post_pred %>% 
+  id_plot_ppc(bin_irt_2pl_est,ppc_pred=.)
+
+```
+
+
+Next, inflated 2-PL IRT (binary):
+
+```{r irt_binary_inflate}
+bin_irt_2pl_abs_sim <- id_sim_gen(num_person=20,num_bills=100,ordinal=F,inflate=T,
+                               absence_diff_mean=0)
+bin_irt_2pl_abs_est <- id_estimate(idealdata=bin_irt_2pl_abs_sim,
+                               model_type=2,
+                               restrict_ind_high = as.character(sort(bin_irt_2pl_abs_sim@simul_data$true_person,
+                                                                     decreasing=T,
+                                                        index=T)$ix[1]),
+                              restrict_ind_low = as.character(sort(bin_irt_2pl_abs_sim@simul_data$true_person,
+                                                                   decreasing=F,
+                                                        index=T)$ix[1]),
+                               fixtype='constrained',
+                              id_diff = sort(bin_irt_2pl_abs_sim@simul_data$true_person,decreasing=T)[1] -
+                             sort(bin_irt_2pl_abs_sim@simul_data$true_person,decreasing=F)[1])
+id_plot_rhats(bin_irt_2pl_abs_est)
+```
+
+Plot true versus observed values:
+
+```{r irt_2pl_abs_plot}
+id_plot_legis(bin_irt_2pl_abs_est,show_true = T)
+```
+
+```{r irt_2pl_abs_cov_plot}
+id_sim_coverage(bin_irt_2pl_abs_est) %>% 
+  bind_rows(.id='Parameter') %>% 
+  ggplot(aes(y=avg,x=Parameter)) +
+  stat_summary(fun.args=list(mult=1.96)) + 
+  theme_minimal() 
+```
+
+```{r irt_2pl_abs_resid}
+
+id_plot_sims(bin_irt_2pl_abs_est,type='Residuals')
+
+```
+
+```{r irt_2pl_abs_RMSE}
+
+id_plot_sims(bin_irt_2pl_abs_est)
+
+```
+
+```{r irt_2pl_abs_pred}
+
+bin_irt_2pl_abs_est %>% 
+  id_post_pred %>% 
+  id_plot_ppc(bin_irt_2pl_abs_est,ppc_pred=.)
+
+```
+
+
+Now we'll start with the ordinal models. First the uninflated ordinal model:
+
+```{r irt_ordinal}
+ord_irt_sim <- id_sim_gen(num_person=20,num_bills=100,inflate=F,
+                               absence_diff_mean=0,model_type='ordinal_ratingscale')
+ord_irt_est <- id_estimate(idealdata=ord_irt_sim,
+                               model_type=3,
+                               restrict_ind_high = as.character(sort(ord_irt_sim@simul_data$true_person,decreasing=T,
+                                                        index=T)$ix[1]),
+                              restrict_ind_low = as.character(sort(ord_irt_sim@simul_data$true_person,decreasing=F,
+                                                        index=T)$ix[1]),
+                               fixtype='constrained',
+                           id_diff = sort(ord_irt_sim@simul_data$true_person,decreasing=T)[1] -
+                             sort(ord_irt_sim@simul_data$true_person,decreasing=F)[1])
+id_plot_rhats(ord_irt_est)
+```
+
+Plot true versus observed values:
+
+```{r irt_ord_plot}
+id_plot_legis(ord_irt_est,show_true = T)
+```
+
+```{r irt_ord_cov_plot}
+id_sim_coverage(ord_irt_est) %>% 
+  bind_rows(.id='Parameter') %>% 
+  ggplot(aes(y=avg,x=Parameter)) +
+  stat_summary(fun.args=list(mult=1.96)) + 
+  theme_minimal() 
+```
+
+```{r ord_irt_resid}
+
+id_plot_sims(ord_irt_est,type='Residuals')
+
+```
+
+```{r ord_irt_RMSE}
+
+id_plot_sims(ord_irt_est)
+
+```
+
+```{r ord_irt_pred}
+
+ord_irt_est %>% 
+  id_post_pred %>% 
+  id_plot_ppc(ord_irt_est,ppc_pred=.)
+
+```
+
+And we will finish with the inflated ordinal model:
+
+```{r irt_ordinal_abs}
+ord_irt_abs_sim <- id_sim_gen(num_person=20,num_bills=100,inflate=T,
+                               absence_diff_mean=0,model_type='ordinal_ratingscale')
+ord_irt_abs_est <- id_estimate(idealdata=ord_irt_abs_sim,
+                               model_type=4,
+                               restrict_ind_high = as.character(sort(ord_irt_abs_sim@simul_data$true_person,
+                                                                     decreasing=T,
+                                                        index=T)$ix[1]),
+                              restrict_ind_low = as.character(sort(ord_irt_abs_sim@simul_data$true_person,
+                                                                   decreasing=F,
+                                                        index=T)$ix[1]),
+                               fixtype='constrained',id_diff =sort(ord_irt_abs_sim@simul_data$true_person,
+                                                                   decreasing=T)[1] -
+                                sort(ord_irt_abs_sim@simul_data$true_person,
+                                  decreasing=F)[1])
+id_plot_rhats(ord_irt_abs_est)
+```
+
+```{r irt_ord_abs_plot}
+id_plot_legis(ord_irt_abs_est,show_true = T)
+```
+
+```{r ord_irt_abs_cov_plot}
+id_sim_coverage(ord_irt_abs_est) %>% 
+  bind_rows(.id='Parameter') %>% 
+  ggplot(aes(y=avg,x=Parameter)) +
+  stat_summary(fun.args=list(mult=1.96)) + 
+  theme_minimal() 
+```
+
+```{r ord_irt_abs_resid}
+
+id_plot_sims(ord_irt_abs_est,type='Residuals')
+
+```
+
+```{r ord_irt_abs_RMSE}
+
+id_plot_sims(ord_irt_abs_est)
+
+```
+
+```{r ord_irt_abs_pred}
+
+ord_irt_abs_est %>% 
+  id_post_pred %>% 
+  id_plot_ppc(ord_irt_abs_est,ppc_pred=.)
+
+```
+
+We can now try the ordinal graded response version (non-inflated):
+
+```{r irt_ordinal_grm}
+ord_irt_grm_sim <- id_sim_gen(num_person=20,num_bills=100,inflate=F,
+                               absence_diff_mean=0,model_type='ordinal_grm')
+ord_irt_grm_est <- id_estimate(idealdata=ord_irt_grm_sim,
+                               model_type=5,
+                               restrict_ind_high = as.character(sort(ord_irt_grm_sim@simul_data$true_person,
+                                                                     decreasing=T,
+                                                        index=T)$ix[1]),
+                              restrict_ind_low = as.character(sort(ord_irt_grm_sim@simul_data$true_person,
+                                                                   decreasing=F,
+                                                        index=T)$ix[1]),
+                               fixtype='constrained',id_diff =sort(ord_irt_grm_sim@simul_data$true_person,
+                                                                   decreasing=T)[1] -
+                                sort(ord_irt_grm_sim@simul_data$true_person,
+                                  decreasing=F)[1])
+id_plot_rhats(ord_irt_grm_est)
+```
+
+```{r ord_irt_grm_cov_plot}
+id_sim_coverage(ord_irt_grm_est) %>% 
+  bind_rows(.id='Parameter') %>% 
+  ggplot(aes(y=avg,x=Parameter)) +
+  stat_summary(fun.args=list(mult=1.96)) + 
+  theme_minimal() 
+```
+
+```{r irt_ord_grm_plot}
+id_plot_legis(ord_irt_grm_est,show_true = T)
+```
+
+```{r ord_irt_grm_resid}
+
+id_plot_sims(ord_irt_grm_est,type='Residuals')
+
+```
+
+```{r ord_irt_grm_RMSE}
+
+id_plot_sims(ord_irt_grm_est)
+
+```
+
+```{r ord_irt_grm_pred}
+
+ord_irt_grm_est %>% 
+  id_post_pred %>% 
+  id_plot_ppc(ord_irt_grm_est,ppc_pred=.)
+
+```
+
+And now the inflated GRM:
+
+```{r irt_ordinal_grm_abs}
+ord_irt_grm_abs_sim <- id_sim_gen(num_person=20,num_bills=100,inflate=T,
+                               absence_diff_mean=0,model_type='ordinal_grm')
+ord_irt_grm_abs_est <- id_estimate(idealdata=ord_irt_grm_abs_sim,
+                               model_type=6,
+                               restrict_ind_high = as.character(sort(ord_irt_grm_abs_sim@simul_data$true_person,
+                                                                     decreasing=T,
+                                                        index=T)$ix[1]),
+                              restrict_ind_low = as.character(sort(ord_irt_grm_abs_sim@simul_data$true_person,
+                                                                   decreasing=F,
+                                                        index=T)$ix[1]),
+                               fixtype='constrained',id_diff =sort(ord_irt_grm_abs_sim@simul_data$true_person,
+                                                                   decreasing=T)[1] -
+                                sort(ord_irt_grm_abs_sim@simul_data$true_person,
+                                  decreasing=F)[1])
+id_plot_rhats(ord_irt_grm_abs_est)
+```
+
+```{r irt_ord_grm_abs_plot}
+id_plot_legis(ord_irt_grm_abs_est,show_true = T)
+```
+
+```{r ord_irt_grm_abs_cov_plot}
+id_sim_coverage(ord_irt_grm_abs_est) %>% 
+  bind_rows(.id='Parameter') %>% 
+  ggplot(aes(y=avg,x=Parameter)) +
+  stat_summary(fun.args=list(mult=1.96)) + 
+  theme_minimal() 
+```
+
+```{r ord_irt_grm_abs_resid}
+
+id_plot_sims(ord_irt_grm_abs_est,type='Residuals')
+
+```
+
+```{r ord_irt_grm_abs_RMSE}
+
+id_plot_sims(ord_irt_grm_abs_est)
+
+```
+
+```{r ord_irt_grm_abs_pred}
+
+ord_irt_grm_abs_est %>% 
+  id_post_pred %>% 
+  id_plot_ppc(ord_irt_grm_abs_est,ppc_pred=.)
+
+```
+
+# Additional Models V0.3
+
+Models I am adding to this release include the Poisson model:
+
+```{r irt_ordinal_poisson}
+ord_irt_poisson_sim <- id_sim_gen(num_person=20,num_bills=100,inflate=F,
+                               absence_diff_mean=0,model_type='poisson')
+ord_irt_poisson_est <- id_estimate(idealdata=ord_irt_poisson_sim,
+                               model_type=7,
+                               restrict_ind_high = as.character(sort(ord_irt_poisson_sim@simul_data$true_person,
+                                                                     decreasing=T,
+                                                        index=T)$ix[1]),
+                              restrict_ind_low = as.character(sort(ord_irt_poisson_sim@simul_data$true_person,
+                                                                   decreasing=F,
+                                                        index=T)$ix[1]),
+                               fixtype='constrained',id_diff =sort(ord_irt_poisson_sim@simul_data$true_person,
+                                                                   decreasing=T)[1] -
+                                sort(ord_irt_poisson_sim@simul_data$true_person,
+                                  decreasing=F)[1])
+id_plot_rhats(ord_irt_poisson_est)
+```
+
+```{r irt_poisson_plot}
+id_plot_legis(ord_irt_poisson_est,show_true = T)
+```
+
+```{r ord_irt_poisson_cov_plot}
+id_sim_coverage(ord_irt_poisson_est) %>% 
+  bind_rows(.id='Parameter') %>% 
+  ggplot(aes(y=avg,x=Parameter)) +
+  stat_summary(fun.args=list(mult=1.96)) + 
+  theme_minimal() 
+```
+
+```{r ord_irt_poisson_resid}
+
+id_plot_sims(ord_irt_poisson_est,type='Residuals')
+
+```
+
+```{r ord_irt_poisson_RMSE}
+
+id_plot_sims(ord_irt_poisson_est)
+
+```
+
+```{r ord_irt_poisson_pred}
+
+ord_irt_poisson_est %>% 
+  id_post_pred %>% 
+  id_plot_ppc(ord_irt_poisson_est,ppc_pred=.)
+
+```
+
+
+
+Now Poisson-inflated:
+
+```{r irt_abs_poisson}
+ord_irt_poisson_abs_sim <- id_sim_gen(num_person=20,num_bills=100,inflate=T,
+                               absence_diff_mean=0,model_type='poisson')
+ord_irt_poisson_abs_est <- id_estimate(idealdata=ord_irt_poisson_abs_sim,
+                               model_type=8,
+                               restrict_ind_high = as.character(sort(ord_irt_poisson_abs_sim@simul_data$true_person,
+                                                                     decreasing=T,
+                                                        index=T)$ix[1]),
+                              restrict_ind_low = as.character(sort(ord_irt_poisson_abs_sim@simul_data$true_person,
+                                                                   decreasing=F,
+                                                        index=T)$ix[1]),
+                               fixtype='constrained',id_diff =sort(ord_irt_poisson_abs_sim@simul_data$true_person,
+                                                                   decreasing=T)[1] -
+                                sort(ord_irt_poisson_abs_sim@simul_data$true_person,
+                                  decreasing=F)[1])
+id_plot_rhats(ord_irt_poisson_abs_est)
+```
+
+```{r irt_poisson_abs_plot}
+id_plot_legis(ord_irt_poisson_abs_est,show_true = T)
+```
+
+```{r ord_irt_poisson_abs_cov_plot}
+id_sim_coverage(ord_irt_poisson_abs_est) %>% 
+  bind_rows(.id='Parameter') %>% 
+  ggplot(aes(y=avg,x=Parameter)) +
+  stat_summary(fun.args=list(mult=1.96)) + 
+  theme_minimal() 
+```
+
+```{r ord_irt_poisson_abs_resid}
+
+id_plot_sims(ord_irt_poisson_abs_est,type='Residuals')
+
+```
+
+```{r ord_irt_poisson_abs_RMSE}
+
+id_plot_sims(ord_irt_poisson_abs_est)
+
+```
+
+
+
+```{r ord_irt_poisson_abs_pred}
+
+ord_irt_poisson_abs_est %>% 
+  id_post_pred %>% 
+  id_plot_ppc(ord_irt_poisson_abs_est,ppc_pred=.)
+
+```
+
+```{r ord_irt_poisson_pred_missing}
+
+ord_irt_poisson_abs_est %>% 
+  id_post_pred(output='missing') %>% 
+  id_plot_ppc(ord_irt_poisson_abs_est,ppc_pred=.)
+
+```
+
+A Normally-distributed outcome with no inflation:
+
+```{r irt_normal}
+ord_irt_normal_sim <- id_sim_gen(num_person=20,num_bills=100,ordinal=F,inflate=F,
+                               absence_diff_mean=0,model_type='normal')
+ord_irt_normal_est <- id_estimate(idealdata=ord_irt_normal_sim,
+                               model_type=9,
+                               restrict_ind_high = as.character(sort(ord_irt_normal_sim@simul_data$true_person,
+                                                                     decreasing=T,
+                                                        index=T)$ix[1]),
+                              restrict_ind_low = as.character(sort(ord_irt_normal_sim@simul_data$true_person,
+                                                                   decreasing=F,
+                                                        index=T)$ix[1]),
+                               fixtype='constrained',id_diff =sort(ord_irt_normal_sim@simul_data$true_person,
+                                                                   decreasing=T)[1] -
+                                sort(ord_irt_normal_sim@simul_data$true_person,
+                                  decreasing=F)[1])
+id_plot_rhats(ord_irt_normal_est)
+```
+
+```{r irt_normal_plot}
+id_plot_legis(ord_irt_normal_est,show_true = T)
+```
+
+```{r ord_irt_normal_cov_plot}
+id_sim_coverage(ord_irt_normal_est) %>% 
+  bind_rows(.id='Parameter') %>% 
+  ggplot(aes(y=avg,x=Parameter)) +
+  stat_summary(fun.args=list(mult=1.96)) + 
+  theme_minimal() 
+```
+
+```{r ord_irt_normal_resid}
+
+id_plot_sims(ord_irt_normal_est,type='Residuals')
+
+```
+
+```{r ord_irt_normal_RMSE}
+
+id_plot_sims(ord_irt_normal_est)
+
+```
+
+```{r ord_irt_normal_pred}
+
+ord_irt_normal_est %>% 
+  id_post_pred %>% 
+  id_plot_ppc(ord_irt_normal_est,ppc_pred=.)
+
+```
+
+A Normally-distributed outcome with inflation:
+
+
+```{r irt_normal_abs}
+ord_irt_normal_abs_sim <- id_sim_gen(num_person=20,num_bills=100,inflate=T,
+                               absence_diff_mean=0,model_type='normal')
+ord_irt_normal_abs_est <- id_estimate(idealdata=ord_irt_normal_abs_sim,
+                               model_type=10,
+                               restrict_ind_high = as.character(sort(ord_irt_normal_abs_sim@simul_data$true_person,
+                                                                     decreasing=T,
+                                                        index=T)$ix[1]),
+                              restrict_ind_low = as.character(sort(ord_irt_normal_abs_sim@simul_data$true_person,
+                                                                   decreasing=F,
+                                                        index=T)$ix[1]),
+                               fixtype='constrained',id_diff =sort(ord_irt_normal_abs_sim@simul_data$true_person,
+                                                                   decreasing=T)[1] -
+                                sort(ord_irt_normal_abs_sim@simul_data$true_person,
+                                  decreasing=F)[1])
+id_plot_rhats(ord_irt_normal_abs_est)
+```
+
+```{r irt_normal_abs_plot}
+id_plot_legis(ord_irt_normal_abs_est,show_true = T)
+```
+
+```{r ord_irt_normal_abs_cov_plot}
+id_sim_coverage(ord_irt_normal_abs_est) %>% 
+  bind_rows(.id='Parameter') %>% 
+  ggplot(aes(y=avg,x=Parameter)) +
+  stat_summary(fun.args=list(mult=1.96)) + 
+  theme_minimal() 
+```
+
+```{r ord_irt_normal_abs_resid}
+
+id_plot_sims(ord_irt_normal_abs_est,type='Residuals')
+
+```
+
+```{r ord_irt_normal_abs_RMSE}
+
+id_plot_sims(ord_irt_normal_abs_est)
+
+```
+
+```{r ord_irt_normal_abs_pred}
+
+ord_irt_normal_abs_est %>% 
+  id_post_pred %>% 
+  id_plot_ppc(ord_irt_normal_abs_est,ppc_pred=.)
+
+```
+
+```{r ord_irt_normal_abs_miss_pred}
+
+ord_irt_normal_abs_est %>% 
+  id_post_pred(output='missing') %>% 
+  id_plot_ppc(ord_irt_normal_abs_est,ppc_pred=.)
+
+```
+
+A Lognormal model with no inflation:
+
+```{r irt_lognormal}
+ord_irt_lognormal_sim <- id_sim_gen(num_person=20,num_bills=100,ordinal=F,inflate=F,
+                               absence_diff_mean=0,model_type='lognormal')
+ord_irt_lognormal_est <- id_estimate(idealdata=ord_irt_lognormal_sim,
+                               model_type=11,
+                               restrict_ind_high = as.character(sort(ord_irt_lognormal_sim@simul_data$true_person,
+                                                                     decreasing=T,
+                                                        index=T)$ix[1]),
+                              restrict_ind_low = as.character(sort(ord_irt_lognormal_sim@simul_data$true_person,
+                                                                   decreasing=F,
+                                                        index=T)$ix[1]),
+                               fixtype='constrained',id_diff =sort(ord_irt_lognormal_sim@simul_data$true_person,
+                                                                   decreasing=T)[1] -
+                                sort(ord_irt_lognormal_sim@simul_data$true_person,
+                                  decreasing=F)[1])
+id_plot_rhats(ord_irt_lognormal_est)
+```
+
+```{r irt_lognormal_plot}
+id_plot_legis(ord_irt_lognormal_est,show_true = T)
+```
+
+
+```{r ord_irt_lognormal_cov_plot}
+id_sim_coverage(ord_irt_lognormal_est) %>% 
+  bind_rows(.id='Parameter') %>% 
+  ggplot(aes(y=avg,x=Parameter)) +
+  stat_summary(fun.args=list(mult=1.96)) + 
+  theme_minimal() 
+```
+
+```{r ord_irt_lognormal_resid}
+
+id_plot_sims(ord_irt_lognormal_est,type='Residuals')
+
+```
+
+```{r ord_irt_lognormal_RMSE}
+
+id_plot_sims(ord_irt_lognormal_est)
+
+```
+
+And last but not least, a lognormal model with inflation:
+
+```{r irt_lognormal_abs}
+ord_irt_lognormal_abs_sim <- id_sim_gen(num_person=20,num_bills=100,ordinal=F,inflate=F,
+                               absence_diff_mean=0,model_type='lognormal')
+ord_irt_lognormal_abs_est <- id_estimate(idealdata=ord_irt_lognormal_abs_sim,
+                               model_type=12,
+                               restrict_ind_high = as.character(sort(ord_irt_lognormal_abs_sim@simul_data$true_person,
+                                                                     decreasing=T,
+                                                        index=T)$ix[1]),
+                              restrict_ind_low = as.character(sort(ord_irt_lognormal_abs_sim@simul_data$true_person,
+                                                                   decreasing=F,
+                                                        index=T)$ix[1]),
+                               fixtype='constrained',id_diff =sort(ord_irt_lognormal_abs_sim@simul_data$true_person,
+                                                                   decreasing=T)[1] -
+                                sort(ord_irt_lognormal_abs_sim@simul_data$true_person,
+                                  decreasing=F)[1])
+id_plot_rhats(ord_irt_lognormal_abs_est)
+```
+
+```{r irt_lognormal_abs_plot}
+id_plot_legis(ord_irt_lognormal_abs_est,show_true = T)
+```
+
+```{r ord_irt_lognormal_abs_cov_plot}
+id_sim_coverage(ord_irt_lognormal_abs_est) %>% 
+  bind_rows(.id='Parameter') %>% 
+  ggplot(aes(y=avg,x=Parameter)) +
+  stat_summary(fun.args=list(mult=1.96)) + 
+  theme_minimal() 
+```
+
+```{r ord_irt_lognormal_abs_resid}
+
+id_plot_sims(ord_irt_lognormal_abs_est,type='Residuals')
+
+```
+
+```{r ord_irt_lognormal_abs_RMSE}
+
+id_plot_sims(ord_irt_lognormal_abs_est)
+
+```
+
+## Time: Random Walk
+
+We won't test all the possible time auto-correlation settings, only a subset of them. I use an inflated binary model as it is a very common one. 
+
+While these models are identified, it appears that sometimes given the amount of data, they are only weakly identified in the posterior and Rhat values higher than 1.1 are possible (but are not evidence of multi-modality).
+
+First random walks:
+
+```{r irt_binary_time_inflate}
+bin_time_irt_2pl_abs_sim <- id_sim_gen(num_person=20,num_bills=125,ordinal=F,inflate=T,
+                               absence_diff_mean=0,time_process = 'random',time_points=25,ideal_pts_sd = 1,
+diff_sd = 1,
+                               absence_discrim_sd = 1,
+                               reg_discrim_sd = 1)
+bin_time_irt_2pl_abs_est <- id_estimate(idealdata=bin_time_irt_2pl_abs_sim,
+                               model_type=2,
+                               vary_ideal_pts = 'random_walk',
+                               restrict_ind_high = as.character(sort(bin_time_irt_2pl_abs_sim@simul_data$drift,
+                                                                     decreasing=TRUE,
+                                                        index=T)$ix[1]),
+                              restrict_ind_low = as.character(sort(bin_time_irt_2pl_abs_sim@simul_data$drift,
+                                                                   decreasing=F,
+                                                        index=T)$ix[1]),
+                               fixtype='vb_partial',
+                              id_diff = sort(bin_time_irt_2pl_abs_sim@simul_data$drift,decreasing=TRUE)[1] -
+                             sort(bin_time_irt_2pl_abs_sim@simul_data$drift,decreasing=F)[1],
+                                                      
+                             id_diff_high=sort(bin_time_irt_2pl_abs_sim@simul_data$drift,
+                                                  decreasing=TRUE)[1])
+id_plot_rhats(bin_time_irt_2pl_abs_est)
+```
+
+```{r irt_2pl_abs_time_cov_plot}
+id_sim_coverage(bin_time_irt_2pl_abs_est) %>% 
+  bind_rows(.id='Parameter') %>% 
+  ggplot(aes(y=avg,x=Parameter)) +
+  stat_summary(fun.args=list(mult=1.96)) + 
+  theme_minimal() 
+```
+
+Let's do a time-varying ideal point plot with true point overlay:
+
+```{r irt_2pl_abs_time_true_pt}
+id_plot_legis_dyn(bin_time_irt_2pl_abs_est,plot_sim = T) + facet_wrap(~person_id)
+```
+
+```{r irt_2pl_time_abs_resid}
+
+id_plot_sims(bin_time_irt_2pl_abs_est,type='Residuals')
+
+```
+
+```{r irt_2pl_time_abs_RMSE}
+
+id_plot_sims(bin_time_irt_2pl_abs_est)
+
+```
+
+## Time: AR(1)
+
+And autocorrelation:
+
+```{r irt_binary_time_ar_inflate}
+
+bin_time_ar_irt_2pl_abs_sim <- id_sim_gen(num_person=20,num_bills=200,inflate=T,
+                               absence_diff_mean=0,time_process = 'AR',time_points=50,time_sd = .2,diff_sd = 1,
+                               absence_discrim_sd = 1,
+                               reg_discrim_sd = 1)
+bin_time_ar_irt_2pl_abs_est <- id_estimate(idealdata=bin_time_ar_irt_2pl_abs_sim,
+                               model_type=2,
+                               vary_ideal_pts = 'AR1',
+                               restrict_ind_high = as.character(sort(bin_time_ar_irt_2pl_abs_sim@simul_data$drift,
+                                                                     decreasing=TRUE,
+                                                        index=TRUE)$ix[1]),
+                              restrict_ind_low = as.character(sort(bin_time_ar_irt_2pl_abs_sim@simul_data$drift,
+                                                                   decreasing=F,
+                                                        index=T)$ix[1]),
+                               fixtype='vb_partial',
+                              id_diff = sort(bin_time_ar_irt_2pl_abs_sim@simul_data$drift,
+                                                  decreasing=TRUE)[1] -
+                                sort(bin_time_ar_irt_2pl_abs_sim@simul_data$drift,
+                                               decreasing=F)[1],
+                              id_diff_high=sort(bin_time_ar_irt_2pl_abs_sim@simul_data$drift,
+                                                  decreasing=TRUE)[1])
+id_plot_rhats(bin_time_ar_irt_2pl_abs_est)
+```
+
+```{r irt_2pl_abs_time_ar_cov_plot}
+id_sim_coverage(bin_time_ar_irt_2pl_abs_est) %>% 
+  bind_rows(.id='Parameter') %>% 
+  ggplot(aes(y=avg,x=Parameter)) +
+  stat_summary(fun.args=list(mult=1.96)) + 
+  theme_minimal() 
+```
+
+Let's do a time-varying ideal point plot with true point overlay:
+
+```{r irt_2pl_abs_time_ar_true_pt}
+id_plot_legis_dyn(bin_time_ar_irt_2pl_abs_est,plot_sim = T) +facet_wrap(~person_id)
+```
+
+
+```{r irt_2pl_time_ar_abs_resid}
+
+id_plot_sims(bin_time_ar_irt_2pl_abs_est,type='Residuals')
+
+```
+
+```{r irt_2pl_time_ar_abs_RMSE}
+
+id_plot_sims(bin_time_ar_irt_2pl_abs_est)
+
+```
+
+
+## Time: Gaussian Process
+
+The Gaussian process differs in that is a non-parametric approach to time-series modeling. It can fit very flexible curves and also works on irregularly-spaced time series.
+
+
+```{r time_gp_inflate}
+
+time_gp_sim <- id_sim_gen(num_person=10,num_bills=200,inflate=T,
+                               absence_diff_mean=0,
+                          time_process = 'GP',
+                          time_points=40,
+                          time_sd = .01,
+                          diff_sd = 1,
+                               absence_discrim_sd = 1,
+                               reg_discrim_sd = 1)
+
+# a little harder to constrain, need to figure out minimums
+
+all_low <- apply(time_gp_sim@simul_data$true_person,1,min)
+
+time_gp_est <- id_estimate(idealdata=time_gp_sim,
+                               model_type=2,
+                           use_vb=F,
+                           nchains=3,niters=1000,
+                           gp_sd_par = .01,
+                           gp_m_sd_par = c(10,3),
+                           gp_num_diff = c(.1,.15),
+                               vary_ideal_pts = 'GP',
+                               restrict_ind_high = which(all_low==max(all_low)),
+                              restrict_ind_low = which(all_low==min(all_low)),
+                               fixtype='vb_partial')
+id_plot_rhats(time_gp_est)
+```
+
+```{r time_gp_cov_plot}
+id_sim_coverage(time_gp_est) %>% 
+  bind_rows(.id='Parameter') %>% 
+  ggplot(aes(y=avg,x=Parameter)) +
+  stat_summary(fun.args=list(mult=1.96)) + 
+  theme_minimal() 
+```
+
+Let's do a time-varying ideal point plot with true point overlay:
+
+```{r time_gp_true_pt}
+id_plot_legis_dyn(time_gp_est,plot_sim = T) +facet_wrap(~person_id)
+```
+
+
+```{r time_gp_abs_resid}
+
+id_plot_sims(time_gp_est,type='Residuals')
+
+```
+
+```{r time_gp_abs_RMSE}
+
+id_plot_sims(time_gp_est)
+
+```
+
+
+
+## Latent Space Model
+
+Another new addition is the latent space model, which is only a slight modification on the IRT model. 
+
+Non-inflated:
+
+```{r latent_space_noninfl}
+latent_noninfl_sim <- id_sim_gen(num_person=20,num_bills=125,ordinal=F,
+                                       inflate=F,
+                                       model_type='binary',
+                                       latent_space=T,
+                               absence_diff_mean=0,
+                               ideal_pts_sd = 1,
+                               diff_sd = 1,
+                               absence_discrim_sd = 1,
+                               reg_discrim_sd = 1)
+latent_noninfl_est <- id_estimate(idealdata=latent_noninfl_sim,
+                               model_type=13,
+                               restrict_ind_high = as.character(sort(latent_noninfl_sim@simul_data$true_person,
+                                                                     decreasing=TRUE,
+                                                        index=T)$ix[1]),
+                              restrict_ind_low = as.character(sort(latent_noninfl_sim@simul_data$true_person,
+                                                                   decreasing=F,
+                                                        index=T)$ix[1]),
+                               fixtype='constrained',
+                              id_diff = sort(latent_noninfl_sim@simul_data$true_person,decreasing=TRUE)[1] -
+                             sort(latent_noninfl_sim@simul_data$true_person,decreasing=F)[1],
+                                                      
+                             id_diff_high=sort(latent_noninfl_sim@simul_data$true_person,
+                                                  decreasing=TRUE)[1])
+id_plot_rhats(latent_noninfl_est)
+```
+
+```{r latent_noninfl_plot}
+id_plot_legis(latent_noninfl_est,show_true = T)
+```
+
+```{r latent_noninfl_plot_cov}
+id_sim_coverage(latent_noninfl_est) %>% 
+  bind_rows(.id='Parameter') %>% 
+  ggplot(aes(y=avg,x=Parameter)) +
+  stat_summary(fun.args=list(mult=1.96)) + 
+  theme_minimal() 
+```
+
+Inflated:
+
+```{r latent_space_infl}
+# you can't have too few people relative to bills
+latent_infl_sim <- id_sim_gen(num_person=20,num_bills=125,ordinal=F,
+                                       inflate=T,
+                                       model_type='binary',
+                                       latent_space=T,
+                               absence_diff_mean=0,
+                               ideal_pts_sd = 1,
+                               diff_sd = 1,
+                               absence_discrim_sd = 1,
+                               reg_discrim_sd = 1)
+latent_infl_est <- id_estimate(idealdata=latent_infl_sim,
+                               model_type=14,
+                               restrict_ind_high = as.character(sort(latent_infl_sim@simul_data$true_person,
+                                                                     decreasing=TRUE,
+                                                        index=T)$ix[1]),
+                              restrict_ind_low = as.character(sort(latent_infl_sim@simul_data$true_person,
+                                                                   decreasing=F,
+                                                        index=T)$ix[1]),
+                               fixtype='constrained',
+                              id_diff = sort(latent_infl_sim@simul_data$true_person,decreasing=TRUE)[1] -
+                             sort(latent_infl_sim@simul_data$true_person,decreasing=F)[1],
+                                                      
+                             id_diff_high=sort(latent_infl_sim@simul_data$true_person,
+                                                  decreasing=TRUE)[1],
+                              diff_reg_sd = 2,
+                             diff_miss_sd=2)
+id_plot_rhats(latent_infl_est)
+```
+
+```{r latent_infl_plot}
+id_plot_legis(latent_infl_est,show_true = T)
+```
+
+```{r latent_infl_plot_cov}
+id_sim_coverage(latent_infl_est) %>% 
+  bind_rows(.id='Parameter') %>% 
+  ggplot(aes(y=avg,x=Parameter)) +
+  stat_summary(fun.args=list(mult=1.96)) + 
+  theme_minimal() 
+```
+

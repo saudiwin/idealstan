@@ -25,7 +25,7 @@ setClass('idealdata',
                     restrict_data='list',
                     stanmodel='stanmodel',
                     param_fix='numeric',
-                    constraint_type='numeric',
+                    constraint_type='character',
                     restrict_vals='ANY',
                     subset_group='character',
                     subset_person='character',
@@ -138,20 +138,22 @@ setMethod('sample_model',signature(object='idealdata'),
           function(object,nchains=4,niters=2000,warmup=floor(niters/2),ncores=NULL,
                    to_use=to_use,this_data=this_data,use_vb=FALSE,
                    tol_rel_obj=NULL,...) {
-
             
             init_vals <- lapply(1:nchains,.init_stan,
                                 num_legis=this_data$num_legis,
+                                num_cit=this_data$num_bills,
                                 restrict_sd=this_data$restrict_sd,
                                 person_sd=this_data$legis_sd,
-                                diff_high=this_data$diff_high,
                                 T=this_data$T,
+                                const_type=this_data$const_type,
+                                fix_high=this_data$fix_high,
+                                fix_low=this_data$fix_low,
+                                restrict_ind_high=this_data$restrict_high,
+                                restrict_ind_low=this_data$restrict_low,
                                 time_proc=this_data$time_proc,
                                 m_sd_par=this_data$m_sd_par,
                                 time_range=mean(diff(this_data$time_ind)),
                                 num_diff=this_data$num_diff,
-                                restrict_var=this_data$restrict_var,
-                                restrict_var_high=this_data$restrict_var_high,
                                 time_sd=this_data$time_sd,
                                 use_ar=this_data$use_ar,
                                 person_start=object@person_start,
@@ -214,6 +216,8 @@ setMethod('id_model',signature(object='idealdata'),
                    tol_rel_obj=NULL,
                    restrict_ind_high=NULL,
                    restrict_ind_low=NULL,
+                   fix_high=NULL,
+                   fix_low=NULL,
                    ncores=NULL,
                    const_type=NULL,
                    use_groups=NULL) {
@@ -227,23 +231,23 @@ setMethod('id_model',signature(object='idealdata'),
               print("Interactively selecting which items or persons to constrain as they were not pre-specified.")
               
               if(const_type=="persons") {
-                restrict_ind_high <- .select_const(object,
+                restrict_ind_high <- as.integer(.select_const(object,
                                                    const_type=const_type,
                                                    multiple=F,
-                                                   title="Select one person in your data to constrain their ideal point to high values of the latent scale.")$res
-                restrict_ind_low <- .select_const(object,
+                                                   title="Select one person in your data to constrain their ideal point to high values of the latent scale.")$res)
+                restrict_ind_low <- as.integer(.select_const(object,
                                                    const_type=const_type,
                                                    multiple=F,
-                                                   title="Select one person in your data to constrain their ideal point to low values of the latent scale.")$res
+                                                   title="Select one person in your data to constrain their ideal point to low values of the latent scale.")$res)
               } else {
-                restrict_ind_high <- .select_const(object,
+                restrict_ind_high <- as.integer(.select_const(object,
                                                    const_type=const_type,
-                                                   multiple=T,
-                                                   title="Select one or more items in your data to constrain their ideal point to high values of the latent scale.")$res
-                restrict_ind_low <- .select_const(object,
+                                                   multiple=F,
+                                                   title="Select one item in your data to constrain its discrimination to high values of the latent scale.")$res)
+                restrict_ind_low <- as.integer(.select_const(object,
                                                    const_type=const_type,
-                                                   multiple=T,
-                                                   title="Select one or more items in your data to constrain their ideal point to low values of the latent scale.")$res
+                                                   multiple=F,
+                                                   title="Select one item in your data to constrain its discrimination to low values of the latent scale.")$res)
                 
               }
 
@@ -252,16 +256,29 @@ setMethod('id_model',signature(object='idealdata'),
               }
               
             }
+            
+            if(fixtype=="vb_full") {
+              object <- .vb_fix(object=object,this_data=this_data,nfix=nfix,
+                               restrict_ind_high=restrict_ind_high,
+                               restrict_ind_low=restrict_ind_low,
+                               ncores=ncores,
+                               model_type=model_type,
+                               use_groups=use_groups,
+                               fixtype=fixtype,
+                               prior_fit=prior_fit,
+                               tol_rel_obj=tol_rel_obj)
+            } else {
+              
+              object@restrict_num_high <- fix_high
+              object@restrict_num_low <- fix_low
+              object@restrict_ind_high <- restrict_ind_high
+              object@restrict_ind_low <- restrict_ind_low
+              object@constraint_type <- const_type
+              
+              
+            }
 
-            object <- run_id(object=object,this_data=this_data,nfix=nfix,
-                   restrict_ind_high=restrict_ind_high,
-                   restrict_ind_low=restrict_ind_low,
-                   ncores=ncores,
-                   model_type=model_type,
-                   use_groups=use_groups,
-                   fixtype=fixtype,
-                   prior_fit=prior_fit,
-                   tol_rel_obj=tol_rel_obj)
+            
             
 
             return(object)

@@ -1,4 +1,79 @@
 #' @noRd
+.vb_fix <- function(object=NULL,
+                    this_data=NULL,nfix=NULL,
+                    ncores=NULL,all_args=NULL,
+                    restrict_ind_high=NULL,
+                    restrict_ind_low=NULL,
+                    tol_rel_obj=NULL,
+                    model_type=NULL,
+                    use_groups=NULL,
+                    const_type=NULL,
+                    fixtype=NULL,...) {
+  
+  # collect additional arguments
+  if(is.null(all_args)) {
+    all_args <- list(...) 
+  } 
+
+  . <- NULL
+  to_use <- stanmodels[['irt_standard_noid']]
+  
+  if(this_data$time_proc==4) {
+    tol_rel_obj <- .001
+    eval_elbo <- 100
+  } else {
+    eval_elbo <- 100
+    tol_rel_obj <- .001
+  }
+
+  print("(First Step): Estimating model with variational inference to identify modes to constrain.")
+  
+  post_modes <- rstan::vb(object=to_use,data =this_data,
+                          algorithm='meanfield',
+                          refresh=this_data$id_refresh,
+                          eval_elbo=eval_elbo,
+                          tol_rel_obj=tol_rel_obj, # better convergence criterion than default
+                          output_samples=200)
+
+  lookat_params <- rstan::extract(post_modes,permuted=FALSE)
+  
+  this_params <- lookat_params[,1,]
+  
+  all_params <- attributes(this_params)$dimnames$parameters
+  
+  # pull out unidentified parameters
+  
+  if(const_type=="persons") {
+    person <- apply(this_params[,grepl(pattern = 'L_full',x=all_params)],2,mean)
+
+    restrict_ind_high <- which(person==max(person))[1]
+    restrict_ind_low <- which(person==min(person))[1]
+    val_high <- person[restrict_ind_high]
+    val_low <- person[restrict_ind_low]
+  } else if(const_type=="items") {
+    items <- apply(this_params[,grepl(pattern = 'sigma_free',x=all_params)],2,mean)
+
+    restrict_ind_high <- which(items==max(items))[1]
+    restrict_ind_low <- which(items==min(items))[1]
+    val_high <- items[restrict_ind_high]
+    val_low <- items[restrict_ind_low]
+    
+  }
+  
+  object@restrict_num_high <- val_high
+  object@restrict_num_low <- val_low
+  object@restrict_ind_high <- restrict_ind_high
+  object@restrict_ind_low <- restrict_ind_low
+  object@constraint_type <- const_type
+
+  return(object)
+
+  
+}
+
+
+
+#' @noRd
 .extract_samples <- function(obj=NULL,extract_type=NULL,...) {
   if(!is.null(extract_type)) {
     param <- switch(extract_type,persons='L_full',
@@ -73,11 +148,7 @@
       person_params <- as.data.frame(object@stan_samples,pars='L_full')
     } else if(type=='variance') {
       # load time-varying person variances
-      if(object@score_data@restrict_var) {
-        person_params <- as.data.frame(object@stan_samples,pars='time_var_restrict')
-      } else {
-        person_params <- as.data.frame(object@stan_samples,pars='time_var')
-      }
+        person_params <- as.data.frame(object@stan_samples,pars='time_var_full')
     }
     
     person_params <- person_params %>% gather(key = legis,value=ideal_pts) 
@@ -202,30 +273,42 @@
                        restrict_sd=NULL,
                         person_sd=NULL,
                        num_legis=NULL,
-                       diff_high=NULL,
+                       num_cit=NULL,
+                        fix_high=NULL,
+                       fix_low=NULL,
+                       restrict_ind_high=NULL,
+                       restrict_ind_low=NULL,
                        m_sd_par=NULL,
                        num_diff=NULL,
                        time_range=NULL,
+                       const_type=NULL,
                        T=NULL,
                        time_proc=NULL,
-                       restrict_var_high=NULL,
                        time_sd=NULL,
-                       restrict_var=NULL,
                        actual=TRUE,
                        use_ar=NULL,
                        person_start=NULL) {
+
+
+  L_full <- array(rnorm(n=num_legis,mean=0,sd=person_sd))
+  sigma_reg_free <- array(rnorm(n=num_cit,mean=0,sd=2))
   
-  if(length(person_start)==0 || is.null(person_start)) {
-    L_free <- array(rnorm(n=num_legis-2,mean=0,sd=person_sd))
-  } else {
-    L_free <- array(person_start[1:(num_legis-2)])
+  if(const_type==1 && !is.null(const_type)) {
+    
+    L_full[restrict_ind_high] <- fix_high
+    L_full[restrict_ind_low] <- fix_low
+    
+  } else if(const_type==2 && !is.null(const_type)) {
+
+    sigma_reg_free[restrict_ind_high] <- fix_high
+    sigma_reg_free[restrict_ind_low] <- fix_low
   }
   
   # given upper bound on m_sd figure out mean to match real value on the real numbers
   
-  rev_trans <- function(x,m_sd_par) {
-    m_sd_par[1]*plogis(x) - 1/m_sd_par[2]
-  }
+  # rev_trans <- function(x,m_sd_par) {
+  #   m_sd_par[1]*plogis(x) - 1/m_sd_par[2]
+  # }
 
   
   if(actual==TRUE) {
@@ -234,46 +317,48 @@
       
       # figure out optimized gp par
       
-      m_sd_optim <- optimize(f=rev_trans,
-                             interval=c(0,m_sd_par[1]),
-                          m_sd_par=m_sd_par)$objective
-      
-      if(m_sd_optim<0) {
-        # shouldn't happen, but just in case
-        m_sd_optim <- m_sd_par[1]/2
-      }
+      # m_sd_optim <- optimize(f=rev_trans,
+      #                        interval=c(0,m_sd_par[1]),
+      #                     m_sd_par=m_sd_par)$objective
+      # 
+      # if(m_sd_optim<0) {
+      #   # shouldn't happen, but just in case
+      #   m_sd_optim <- m_sd_par[1]/2
+      # }
       
       if(restrict_var) {
         if(time_proc==4) {
-          return(list(restrict_high = array(rnorm(n=1,mean=diff_high,sd=restrict_sd)),
-                      L_free = L_free,
-                      m_sd=rep(m_sd_optim,num_legis),
-                      time_var=log(rep(num_diff[1]*time_range,num_legis)),
+          return(list(L_full = L_full,
+                      sigma_reg_free=sigma_reg_free,
+                      m_sd=rep(m_sd_par,num_legis),
+                      time_var_gp_free=log(rep(num_diff*time_range,num_legis-1)),
                       L_AR1 = array(runif(n = num_legis,min = -.5,max=.5)),
-                      time_var_restrict = rep(restrict_var_high/2,num_legis)))
+                      time_var_free = rexp(rate=1/time_sd,n=num_legis-1)))
         } else {
-          return(list(restrict_high = array(rnorm(n=1,mean=diff_high,sd=restrict_sd)),
-                      L_free = L_free,
+          return(list(L_full = L_full,
+                      sigma_reg_free=sigma_reg_free,
                       L_AR1 = array(runif(n = num_legis,min = -.5,max=.5)),
-                      time_var_restrict = rep(restrict_var_high/2,num_legis)))
+                      time_var_free = rexp(rate=1/time_sd,n=num_legis-1)))
         }
         
       } else {
-        return(list(restrict_high = array(rnorm(n=1,mean=diff_high,sd=restrict_sd)),
-                    L_free = L_free,
+        return(list(L_full = L_full,
+                    sigma_reg_free=sigma_reg_free,
                     L_AR1 = array(runif(n = num_legis,min = -.5,max=.5)),
-                    time_var = rep(time_sd,num_legis)))
+                    time_var_free = rexp(rate=1/time_sd,n=num_legis-1)))
       }
       
     } else {
-      return(list(restrict_high = array(rnorm(n=1,mean=diff_high,sd=restrict_sd)),
-                  L_free = L_free,
+      return(list(L_full = L_full,
+                  time_var_free = rexp(rate=1/time_sd,n=num_legis-1),
+                  sigma_reg_free=sigma_reg_free,
                   L_AR1 = array(runif(n = num_legis,min = -.5,max=.5))))
     }
 
   } else {
     #identification run
-    return(list(L_free = rnorm(n=num_legis,mean=0,sd=person_sd),
+    return(list(L_full = rnorm(n=num_legis,mean=0,sd=person_sd),
+                sigma_reg_free=sigma_reg_free,
          L_AR1 = runif(n = num_legis,min = -.5,max=.5)))
   }
   
