@@ -358,7 +358,7 @@
   
   # given inputs, create a selection window
   
-  if(const_type=="item") {
+  if(const_type=="items") {
     out_int <- dlg_list(choices = unique(object@score_matrix$item_id),
                         multiple=multiple,
                         title=title)

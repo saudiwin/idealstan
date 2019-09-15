@@ -479,27 +479,39 @@ id_make <- function(score_data=NULL,
 #' information from you in order for the model to be fit. In this version of identification, 
 #' an unidentified model is run using
 #' variational Bayesian inference (see \code{\link[rstan]{vb}}). The function will then select two 
-#' persons/legislators that end up on either end of the ideal point spectrum, and pin their ideal points
-#' to those specific values. This is sufficient to identify all of the static models and also the AR(1) 
-#' time-varying models. For random-walk time-varying models and Gaussian process
-#' models, identification is more difficult (see vignette).
-#' Setting the option \code{restrict_mean} to \code{TRUE} will implement additional identification 
-#' constraints on random-walk models, and is always implemented on Gaussian process models. This 
-#' option fixes the distance between high and low points of the time series based on a 
-#' variational inference run to prevent oscillation in the time series.
-#' A particularly convenient option for \code{fixtype} is \code{'vb_partial'}. In this case, the user
-#' should pass the IDs (as a character vector) of the persons to constrain high (\code{restrict_ind_high}) and
-#' low (\code{restrict_ind_low}). A model will then be fit to find the likely positions of these parameters,
-#' which will then be used to fit an identified model. In this way, the user can achieve a certain
-#' shape of the ideal point distribution without needing to choose specific values ahead of time to pin
-#' parameters to.
-#' If a prior model has been estimated with the same data, the user can re-use those identification 
-#' settings by passing the fitted \code{idealstan} object to the \code{prior_fit} option.
-#' @param idealdata An object produced by the \code{\link{id_make}} containing a score/vote matrix for use for estimation & plotting
-#' @param model_type An integer reflecting the kind of model to be estimated. See below.
+#' persons/legislators or items/bills that end up on either end of the ideal point spectrum, 
+#' and pin their ideal points
+#' to those specific values. 
+#' To control whether persons/legislator or items/bills are constrained,
+#' the \code{const_type} can be set to either \code{"persons"} or 
+#' \code{"items"} respectively. 
+#' In many situations, it is prudent to select those persons or items 
+#' ahead of time to pin to specific values. This allows the analyst to 
+#' be more specific about what type of latent dimension is to be 
+#' estimated. To do so, the \code{fixtype} option should be set to 
+#' \code{"prefix"}. The values of the persons/items to be pinned can be passed
+#' as character values to \code{restrict_ind_high} and 
+#' \code{restrict_ind_low} to pin the high/low ends of the latent 
+#' scale respectively. Note that these should be the actual data values 
+#' passed to the \code{id_make} function. If you don't pass any values, 
+#' you will see a prompt asking you to select certain values of persons/items.
+#' 
+#' The pinned values for persons/items are set by default to +1/-1, though
+#' this can be changed using the \code{fix_high} and 
+#' \code{fix_low} options. This pinned range is sufficient to identify 
+#' all of the models
+#' implemented in idealstan, though fiddling with some parameters may be 
+#' necessary in difficult cases. For time-series models, one of the 
+#' person ideal point over-time variances is also fixed to .1, a value that
+#' can be changed using the option \code{time_sd}.
+#' @param idealdata An object produced by the \code{\link{id_make}} 
+#' containing a score/vote matrix for use for estimation & plotting
+#' @param model_type An integer reflecting the kind of model to be estimated. 
+#' See below.
 #' @param inflate_zero If the outcome is distributed as Poisson (count/unbounded integer), 
 #' setting this to 
-#' \code{TRUE} will fit a traditional zero-inflated model. To use correctly, the value for 
+#' \code{TRUE} will fit a traditional zero-inflated model. 
+#' To use correctly, the value for 
 #' zero must be passed as the \code{miss_val} option to \code{\link{id_make}} before
 #' running a model so that zeroes are coded as missing data.
 #' @param vary_ideal_pts Default \code{'none'}. If \code{'random_walk'}, \code{'AR1'} or 
@@ -527,22 +539,15 @@ id_make <- function(score_data=NULL,
 #' See \code{\link[rstan]{stan}} for more info.
 #' @param ncores The number of cores in your computer to use for parallel processing in the Stan engine. 
 #' See \code{\link[rstan]{stan}} for more info.
-#' @param fixtype Sets the particular kind of identification used on the model, could be one of 'vb_full' 
-#' (identification provided exclusively by running a variational identification model with no prior info), 
-#' 'vb_partial' (two indices of ideal points to fix are provided but the values to fix are determined by the
-#' identification model), 
-#' 'constrain' (two indices of ideal points to fix are provided--only sufficient for model if \code{restrict_var} is 
-#' \code{FALSE}, 
-#' and 'prior_fit' (a previous identified \code{idealstan} fit is passed to the \code{prior_fit} option and used
-#' as the basis for identification).
+#' @param fixtype Sets the particular kind of identification used on the model, could be either 'vb_full' 
+#' (identification provided exclusively by running a variational identification model with no prior info), or
+#' 'prefix' (two indices of ideal points or items to fix are provided to 
+#' options \code{restrict_ind_high} and \code{restrict_ind_low}).
 #'  See details for more information.
 #' @param prior_fit If a previous \code{idealstan} model was fit \emph{with the same} data, then the same
 #' identification constraints can be recycled from the prior fit if the \code{idealstan} object is passed 
 #' to this option. Note that means that all identification options, like \code{restrict_var}, will also 
 #' be the same
-#' @param id_diff The fixed difference between the high/low person/legislator ideal points used to identify the model. 
-#' Set at 4 as a standard value but can be changed to any arbitrary number without affecting model results besides re-scaling.
-#' @param id_diff_high The fixed intercept of the high ideal point used to constrain the model. 
 #' @param id_refresh The number of times to report iterations from the variational run used to 
 #' identify models. Default is 0 (nothing output to console).
 #' @param sample_stationary If \code{TRUE}, the AR(1) coefficients in a time-varying model will be 
@@ -554,34 +559,29 @@ id_make <- function(score_data=NULL,
 #' identify the model when there are few time points.
 #' @param use_groups If \code{TRUE}, group parameters from the person/legis data given in \code{\link{id_make}} will be 
 #'  estimated instead of individual parameters. 
-#' @param restrict_ind_high If \code{fixtype} is not "vb", the particular indices of legislators/persons or bills/items to constrain high
-#' @param restrict_ind_low If \code{fixtype} is not "vb", the particular indices of legislators/persons or bills/items to constrain low. 
-#' (Note: not used if values are pinned).
+#' @param const_type Whether \code{"persons"} are the parameters to be 
+#' fixed for identification (the default) or \code{"items"}. Each of these
+#' pinned parameters should be specified to \code{fix_high} and \code{fix_low}
+#' if \code{fixtype} equals \code{"prefix"}, otherwise the model will
+#' select the parameters to pin to fixed values.
+#' @param restrict_ind_high If \code{fixtype} is not "vb_full", the character value or numerical index
+#' of a legislator/person or bill/item to pin to a high value (default +1).
+#' @param restrict_ind_low If \code{fixtype} is not "vb_full", the character value or numerical index of a 
+#' legislator/person or bill/item to pin to a low value (default -1). 
+#' @param fix_high The value of which the high fixed ideal point/item should be
+#' fixed to. Default is +1.
+#' @param fix_low The value of which the high fixed ideal point/item should be
+#' fixed to. Default is -1.
 #' @param discrim_reg_sd Set the prior standard deviation of the bimodal prior for the discrimination parameters for the non-inflated model.
 #' @param discrim_miss_sd Set the prior standard deviation of the bimodal prior for the discrimination parameters for the inflated model.
 #' @param person_sd Set the prior standard deviation for the legislators (persons) parameters
-#' @param time_sd The precision (inverse variance) of the over-time component of the person/legislator
-#' parameters. A higher value will allow for less over-time variation (useful if estimates bounce too much). 
-#' Default is 4.
+#' @param time_sd The variance of the over-time component of the first person/legislator
+#' is fixed to this value as a reference. 
+#' Default is 0.1.
 #' @param diff_reg_sd Set the prior standard deviation for the bill (item) intercepts for the non-inflated model.
 #' @param diff_miss_sd Set the prior standard deviation for the bill (item) intercepts for the inflated model.
-#' @param restrict_sd Set the prior standard deviation for constrained parameters
-#' @param restrict_var Whether to limit variance to no higher than 0.5 for random-walk time series models.
-#' If left blank (the default), will be set to \code{TRUE} for random-walk models and \code{FALSE} for 
-#' AR(1) models if identification is still a challenge (note: using this for AR(1) models is 
-#' probably overkill).
-#' @param restrict_var_high The upper limit for the variance parameter (if \code{restrict_var=TRUE} & 
-#' model is a random-walk time-series). If left blank, either defaults to 0.1 or is set by 
-#' identification model.
-#' @param restrict_mean Whether or not to restrict the over-time mean of an ideal point 
-#' (additional identification measure when standard fixes don't work). \code{TRUE} by 
-#' default for random-walk models.
-#' @param restrict_mean_val For random-walk models, the mean of a time-series ideal point to constrain.
-#' Should not be set a priori (leave blank) unless you are absolutely sure. Otherwise it is set by 
-#' the identification model.
-#' @param restrict_mean_ind For random-walk models, the ID of the person/group whose over-time
-#' mean to constrain. Should be left blank (will be set by identification model) unless you are 
-#' really sure.
+#' @param restrict_sd Set the prior standard deviation for pinned parameters. This has a default of 
+#' 0.01, but could be set lower if the data is really large.
 #' @param gp_sd_par The upper limit on allowed residual variation of the Gaussian process
 #' prior. Increasing the limit will permit the GP to more closely follow the time points, 
 #' resulting in much sharper bends in the function and potentially oscillation.
@@ -625,7 +625,7 @@ id_make <- function(score_data=NULL,
 #'                        sort(bin_irt_2pl_abs_sim@simul_data$true_person,
 #'                        decreasing=FALSE,
 #'                        index=TRUE)$ix[1],
-#'                        fixtype='vb_partial',
+#'                        fixtype='prefix',
 #'                        ncores=2,
 #'                        nchains=2)
 #'                                    
@@ -662,7 +662,7 @@ id_make <- function(score_data=NULL,
 #' sen_est <- id_estimate(to_idealstan,
 #' model_type = 2,
 #' use_vb = TRUE,
-#' fixtype='vb_partial',
+#' fixtype='prefix',
 #' restrict_ind_high = "BARRASSO, John A.",
 #' restrict_ind_low = "WARREN, Elizabeth")
 #' 
@@ -706,11 +706,6 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                            diff_reg_sd=1,
                            diff_miss_sd=1,
                            restrict_sd=0.01,
-                        restrict_mean=NULL,
-                        restrict_var=NULL,
-                        restrict_mean_val=NULL,
-                        restrict_mean_ind=NULL,
-                        restrict_var_high=0.1,
                         tol_rel_obj=.001,
                         gp_sd_par=.025,
                         gp_num_diff=3,

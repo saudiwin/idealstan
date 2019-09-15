@@ -325,44 +325,32 @@
       #   # shouldn't happen, but just in case
       #   m_sd_optim <- m_sd_par[1]/2
       # }
-      
-      if(restrict_var) {
-        if(time_proc==4) {
-          return(list(L_full = L_full,
-                      sigma_reg_free=sigma_reg_free,
-                      m_sd=rep(m_sd_par,num_legis),
-                      time_var_gp_free=log(rep(num_diff*time_range,num_legis-1)),
-                      L_AR1 = array(runif(n = num_legis,min = -.5,max=.5)),
-                      time_var_free = rexp(rate=1/time_sd,n=num_legis-1)))
-        } else {
-          return(list(L_full = L_full,
-                      sigma_reg_free=sigma_reg_free,
-                      L_AR1 = array(runif(n = num_legis,min = -.5,max=.5)),
-                      time_var_free = rexp(rate=1/time_sd,n=num_legis-1)))
-        }
-        
+      if(time_proc==4) {
+        return(list(L_full = L_full,
+                    sigma_reg_free=sigma_reg_free,
+                    m_sd=rep(m_sd_par,num_legis),
+                    time_var_gp_free=log(rep(num_diff*time_range,num_legis-1)),
+                    L_AR1 = array(runif(n = num_legis,min = -.5,max=.5)),
+                    time_var_free = rexp(rate=1/time_sd,n=num_legis-1)))
       } else {
         return(list(L_full = L_full,
                     sigma_reg_free=sigma_reg_free,
                     L_AR1 = array(runif(n = num_legis,min = -.5,max=.5)),
                     time_var_free = rexp(rate=1/time_sd,n=num_legis-1)))
+        
       }
-      
-    } else {
-      return(list(L_full = L_full,
-                  time_var_free = rexp(rate=1/time_sd,n=num_legis-1),
-                  sigma_reg_free=sigma_reg_free,
-                  L_AR1 = array(runif(n = num_legis,min = -.5,max=.5))))
-    }
+          
 
   } else {
     #identification run
-    return(list(L_full = rnorm(n=num_legis,mean=0,sd=person_sd),
+    return(list(L_full = L_full,
                 sigma_reg_free=sigma_reg_free,
          L_AR1 = runif(n = num_legis,min = -.5,max=.5)))
   }
   
   
+  
+  }
   
 }
 

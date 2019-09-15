@@ -224,30 +224,28 @@ setMethod('id_model',signature(object='idealdata'),
 
             x <- object@score_matrix
 
-            if(fixtype %in% c("constrained",
-                              "constrain",
-                             "vb_partial") && is.null(restrict_ind_high)) {
+            if(fixtype %in% c("prefix") && is.null(restrict_ind_high)) {
               
               print("Interactively selecting which items or persons to constrain as they were not pre-specified.")
               
               if(const_type=="persons") {
-                restrict_ind_high <- as.integer(.select_const(object,
+                restrict_ind_high <- .select_const(object,
                                                    const_type=const_type,
                                                    multiple=F,
-                                                   title="Select one person in your data to constrain their ideal point to high values of the latent scale.")$res)
-                restrict_ind_low <- as.integer(.select_const(object,
+                                                   title="Select one person in your data to constrain their ideal point to high values of the latent scale.")$res
+                restrict_ind_low <- .select_const(object,
                                                    const_type=const_type,
                                                    multiple=F,
-                                                   title="Select one person in your data to constrain their ideal point to low values of the latent scale.")$res)
+                                                   title="Select one person in your data to constrain their ideal point to low values of the latent scale.")$res
               } else {
-                restrict_ind_high <- as.integer(.select_const(object,
+                restrict_ind_high <- .select_const(object,
                                                    const_type=const_type,
                                                    multiple=F,
-                                                   title="Select one item in your data to constrain its discrimination to high values of the latent scale.")$res)
-                restrict_ind_low <- as.integer(.select_const(object,
+                                                   title="Select one item in your data to constrain its discrimination to high values of the latent scale.")$res
+                restrict_ind_low <- .select_const(object,
                                                    const_type=const_type,
                                                    multiple=F,
-                                                   title="Select one item in your data to constrain its discrimination to low values of the latent scale.")$res)
+                                                   title="Select one item in your data to constrain its discrimination to low values of the latent scale.")$res
                 
               }
 
@@ -268,6 +266,36 @@ setMethod('id_model',signature(object='idealdata'),
                                prior_fit=prior_fit,
                                tol_rel_obj=tol_rel_obj)
             } else {
+              
+              # need to convert character to IDs
+              
+              if(is.character(restrict_ind_high)) {
+                if(const_type=="items") {
+                  restrict_ind_high <- which(levels(object@score_matrix$item_id)==restrict_ind_high)
+                } else {
+                  if(use_groups) {
+                    restrict_ind_high <- which(levels(object@score_matrix$group_id)==restrict_ind_high)
+                  } else {
+                    restrict_ind_high <- which(levels(object@score_matrix$person_id)==restrict_ind_high)
+                  }
+                  
+                }
+                
+              }
+              
+              if(is.character(restrict_ind_low)) {
+                if(const_type=="items") {
+                  restrict_ind_low <- which(levels(object@score_matrix$item_id)==restrict_ind_low)
+                } else {
+                  if(use_groups) {
+                    restrict_ind_low <- which(levels(object@score_matrix$group_id)==restrict_ind_low)
+                  } else {
+                    restrict_ind_low <- which(levels(object@score_matrix$person_id)==restrict_ind_low)
+                  }
+                  
+                }
+                
+              }
               
               object@restrict_num_high <- fix_high
               object@restrict_num_low <- fix_low

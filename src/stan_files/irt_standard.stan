@@ -140,8 +140,8 @@ if(restrict_var==1) {
 parameters {
   vector[num_bills] sigma_abs_free;
   vector[num_legis] L_full; // first T=1 params to constrain
-  vector<lower=0>[gp_N] m_sd_free; // marginal standard deviation of GP
-  vector<lower=0>[gp_N] gp_sd_free; // residual GP variation in Y
+  vector<lower=0>[gp_N_fix] m_sd_free; // marginal standard deviation of GP
+  vector<lower=0>[gp_N_fix] gp_sd_free; // residual GP variation in Y
   vector[num_legis] L_tp2[gp_nT]; // additional L_tp1 for GPs only
   vector[num_ls] ls_int; // extra intercepts for non-inflated latent space
   vector[num_legis] L_tp1_var[T-1]; // non-centered variance
