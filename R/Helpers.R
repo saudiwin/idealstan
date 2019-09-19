@@ -1271,7 +1271,9 @@ return(as.vector(idx))
 
 #' A wrapper around na_if that also works on factors
 #' @noRd
-.na_if <- function(x,to_na=NULL) {
+.na_if <- function(x,to_na=NULL,discrete_mods=NULL) {
+  
+  browser()
   if(is.factor(x)) {
     levels(x)[levels(x)==to_na] <- NA
   } else {
@@ -1343,5 +1345,14 @@ return(as.vector(idx))
   } else {
     return(new_output)  
   }
+}
+
+#' Function to create table/matrix of which rows of the data
+#' correspond to which model types.
+#' @noRd
+.make_model_mat <- function(modelpoints=NULL) {
+  
+  browser()
+  
 }
 
