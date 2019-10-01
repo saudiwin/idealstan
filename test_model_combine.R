@@ -12,7 +12,7 @@ bin_irt_2pl_sim <- id_sim_gen(num_person=10,num_bills=100,ordinal=F,inflate=F,
                               reg_discrim_sd = 1,
                               absence_discrim_sd = 1)
 
-norm_irt_2pl_sim <- id_sim_gen(num_person=10,num_bills=100,ordinal=F,inflate=F,
+ norm_irt_2pl_sim <- id_sim_gen(num_person=10,num_bills=100,ordinal=F,inflate=F,
                               model_type="normal",
                               diff_sd=1,
                               reg_discrim_sd = 1,
@@ -28,20 +28,17 @@ comb_obj@simul_data$true_person <- (comb_obj@simul_data$true_person +
 norm_irt_2pl_sim@score_matrix$item_id <- factor(as.numeric(norm_irt_2pl_sim@score_matrix$item_id) +
   max(as.numeric(bin_irt_2pl_sim@score_matrix$item_id)))
 
-norm_irt_2pl_sim@score_matrix$outcome <- factor(norm_irt_2pl_sim@score_matrix$outcome)
-
 comb_obj@score_matrix <- bind_rows(comb_obj@score_matrix,
                                    norm_irt_2pl_sim@score_matrix)
-comb_obj@score_matrix <- mutate_all(comb_obj@score_matrix,factor) %>% 
-                          mutate(model_id=c(rep(1,nrow(bin_irt_2pl_sim@score_matrix)),
-                                                rep(9,nrow(bin_irt_2pl_sim@score_matrix))),
-                                 outcome_cont=ifelse(model_id==9,outcome,NA),
-                                 outcome_disc=ifelse(model_id==1,outcome,NA))
+
+comb_obj@score_matrix <-mutate(comb_obj@score_matrix,model_id=c(rep(1,nrow(bin_irt_2pl_sim@score_matrix)),
+                                                rep(9,nrow(bin_irt_2pl_sim@score_matrix))))
 
 
 # create combined data object
 
-comb_obj_tostan <- id_make(comb_obj@score_matrix)
+comb_obj_tostan <- id_make(comb_obj@score_matrix,
+                           miss_val = c(NA,NA))
 
 # run a pretend model
 

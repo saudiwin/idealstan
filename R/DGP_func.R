@@ -59,7 +59,7 @@
     
     # Create a score dataset
     
-    out_data <- data_frame(outcome=combined,
+    out_data <- data_frame(outcome_disc=combined,
                            person_id=person_points,
                            time_id=time_points,
                            item_id=item_points,
@@ -163,7 +163,7 @@
     
     # Create a score dataset
     
-    out_data <- data_frame(outcome=combined,
+    out_data <- data_frame(outcome_disc=combined,
                            person_id=person_points,
                            time_id=time_points,
                            item_id=item_points,
@@ -307,7 +307,7 @@
     
     # Create a score dataset
     
-    out_data <- data_frame(outcome=combined,
+    out_data <- data_frame(outcome_disc=combined,
                            person_id=person_points,
                            time_id=time_points,
                            item_id=item_points,
@@ -433,7 +433,7 @@
     
     # Create a score dataset
     
-    out_data <- data_frame(outcome=combined,
+    out_data <- data_frame(outcome_cont=combined,
                            person_id=person_points,
                            time_id=time_points,
                            item_id=item_points,
@@ -514,7 +514,7 @@
     
     # Create a score dataset
     
-    out_data <- data_frame(outcome=combined,
+    out_data <- data_frame(outcome_cont=combined,
                            person_id=person_points,
                            time_id=time_points,
                            item_id=item_points,
@@ -594,7 +594,7 @@
     
     # Create a score dataset
     
-    out_data <- data_frame(outcome=combined,
+    out_data <- data_frame(outcome_cont=combined,
                            person_id=person_points,
                            time_id=time_points,
                            item_id=item_points,

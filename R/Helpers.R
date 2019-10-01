@@ -1273,7 +1273,6 @@ return(as.vector(idx))
 #' @noRd
 .na_if <- function(x,to_na=NULL,discrete_mods=NULL) {
   
-  browser()
   if(is.factor(x)) {
     levels(x)[levels(x)==to_na] <- NA
   } else {
@@ -1353,6 +1352,82 @@ return(as.vector(idx))
 .make_model_mat <- function(modelpoints=NULL) {
   
   browser()
+  
+}
+
+#' Function to figure out how to remove missing values from
+#' data before running models.
+#' @noRd
+.remove_nas <- function(Y_int=NULL,
+                        Y_cont=NULL,
+                        legispoints=NULL,
+                        billpoints=NULL,
+                        timepoints=NULL,
+                        modelpoints=NULL,
+                        idealdata=NULL) {
+  
+  
+  # need to determine which missing values should not be considered
+
+  skip_cont <- !(modelpoints %in% c(7,8,9,10,11,12))
+  skip_disc <- modelpoints %in% c(7,8,9,10,11,12)
+  
+  if(length(Y_cont)>1 && !is.na(idealdata@miss_val[2])) {
+    Y_cont[!skip_cont] <- .na_if(Y_cont[!skip_cont],idealdata@miss_val[2])
+  }
+  
+  if(length(Y_int)>1 && !is.na(idealdata@miss_val[1])) {
+    Y_int <- .na_if(Y_int,idealdata@miss_val[1])
+  }
+  
+  # now need to calculate the true remove NAs
+  
+  remove_nas <- !is.na(Y_cont) | !is.na(Y_int)
+  
+  if(length(Y_cont)>1) {
+    Y_cont <- Y_cont[remove_nas]
+    N_cont <- length(Y_cont)
+    N <- N_cont
+  } else {
+    N_cont <- array(0)
+  }
+  
+  if(length(Y_int)>1) {
+    Y_int <- Y_int[remove_nas]
+    N_int <- length(Y_int)
+    N <- N_int
+  } else {
+    N_int <- array(0L)
+  }
+  
+  legispoints <- legispoints[remove_nas]
+  billpoints <- billpoints[remove_nas]
+  timepoints <- timepoints[remove_nas]
+  modelpoints <- modelpoints[remove_nas]
+  
+  max_t <- max(timepoints,na.rm=T)
+  num_bills <- max(billpoints,na.rm=T)
+  num_legis <- max(legispoints)
+  
+  if(any(unique(modelpoints) %in% c(1,13)) && length(table(Y_int[modelpoints %in% c(1,13)]))>3) {
+    stop('Too many values in score matrix for a binary model. Choose a different model_type.')
+  } else if(any(unique(modelpoints) %in% c(2,14)) && length(table(Y_int[modelpoints %in% c(2,14)]))>4) {
+    stop("Too many values in score matrix for a binary model. Choose a different model_type.")
+  }
+  
+  return(list(Y_int=Y_int,
+              Y_cont=Y_cont,
+              legispoints=legispoints,
+              billpoints=billpoints,
+              timepoints=timepoints,
+              modelpoints=modelpoints,
+              remove_nas=remove_nas,
+              N=N,
+              max_t=max_t,
+              num_bills=num_bills,
+              num_legis=num_legis,
+              N_cont=N_cont,
+              N_int=N_int))
   
 }
 

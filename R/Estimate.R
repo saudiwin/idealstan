@@ -161,7 +161,7 @@ id_make <- function(score_data=NULL,
                   item_cov=NULL,
                            item_cov_miss=NULL,
                   remove_cov_int=FALSE,
-                           miss_val=NA,high_val=NULL,low_val=NULL,middle_val=NULL,
+                           miss_val=c(NA,NA),high_val=NULL,low_val=NULL,middle_val=NULL,
                     unbounded=FALSE,
                            exclude_level=NA,simulation=FALSE) {
   
@@ -233,7 +233,7 @@ id_make <- function(score_data=NULL,
   if(any('try-error' %in% class(test_model))) {
     score_rename$model_id <- "missing"
   } else {
-    score_rename$model_id <- test_time
+    score_rename$model_id <- test_model
   }
   
   if(any('try-error' %in% class(test_out_disc))) {
@@ -257,6 +257,7 @@ id_make <- function(score_data=NULL,
   person_id <- quo(person_id)
   time_id <- quo(time_id)
   group_id <- quo(group_id)
+  model_id <- quo(model_id)
   
   # see what the max time point is
   
@@ -264,7 +265,7 @@ id_make <- function(score_data=NULL,
   num_person <- max(as.numeric(factor(pull(score_rename,!!person_id))),na.rm=T)
   num_group <- try(max(as.numeric(factor(pull(score_rename,!!group_id)))))
   num_item <- max(as.numeric(factor(pull(score_rename,!!item_id))),na.rm=T)
-  
+
   # create data frames for all hierachical parameters
 
   if(!is.null(person_cov)) {
@@ -371,45 +372,74 @@ id_make <- function(score_data=NULL,
   }
   
   # recode score/outcome
-  if(!is.null(score_rename$outcome_disc)) {
-    
-    if(is.na(miss_val)) {
-      score_rename$outcome_disc[is.na(score_rename$outcome_disc)] <- 'Missing'
-      miss_val <- 'Missing'
+  if("outcome_disc" %in% names(score_rename)) {
+
+    if(is.na(miss_val[1])) {
+      # make NA a level, then change it
+      score_rename$outcome_disc <- addNA(score_rename$outcome_disc)
+      levels(score_rename$outcome_disc)[length(levels(score_rename$outcome_disc))] <- "Missing"
+      miss_val[1] <- 'Missing'
     }
     
     if(!is.null(high_val) && !is.null(low_val) && !is.null(middle_val)) {
 
       score_rename$outcome_disc <- factor(score_rename$outcome_disc,
-                                     levels=c(low_val,middle_val,high_val,miss_val),
+                                     levels=c(low_val,middle_val,high_val,miss_val[1]),
                                      exclude = exclude_level)
     } else if(!is.null(high_val) && !is.null(low_val)) {
       score_rename$outcome_disc <- factor(score_rename$outcome_disc,
-                                     levels=c(low_val,high_val,miss_val),
+                                     levels=c(low_val,high_val,miss_val[1]),
                                      exclude = exclude_level)
     } else {
       # variable does not need to be recoded, only move missing to the end
       score_rename$outcome_disc <- factor(score_rename$outcome_disc)
-      score_rename$outcome_disc <- fct_relevel(score_rename$outcome_disc,as.character(miss_val),after=Inf)
-    }
-  } 
-
-
-  if(!is.null(score_rename$outcome_cont)) {
-    max_val <- max(pull(score_rename,!!outcome_cont))
-    # make missing data the highest observed value
-    if(is.na(miss_val)) {
-      score_rename <- mutate(score_rename,!! quo_name(outcome_cont) := coalesce(is.na(!!outcome_cont),max_val+1L))
-    } else {
-      score_rename <- mutate(score_rename,!! quo_name(outcome_cont) := ifelse(!!outcome_cont==miss_val,max_val+1L,!!outcome_cont))
+      score_rename$outcome_disc <- fct_relevel(score_rename$outcome_disc,as.character(miss_val[1]),after=Inf)
     }
     
-    if(!is.null(miss_val)) {
-      # append if both discrete and continuous distributions used
-      miss_val <- c(miss_val,max_val+1L)
-    } else {
-      miss_val <- max_val+1L
+    # reconvert if continuous values present
+    if("outcome_cont" %in% names(score_rename)) {
+
+      levels(score_rename$outcome_disc) <- c(levels(score_rename$outcome_disc),
+                                             "Joint Posterior")
+      
+      score_rename$outcome_disc[score_rename$model_id>6 & score_rename$model_id<13] <- "Joint Posterior"
+
     }
+    
+  } 
+  
+
+
+
+  if("outcome_cont" %in% names(score_rename)) {
+
+    max_val <- max(pull(score_rename,!!outcome_cont),na.rm=T)
+    # make missing data the highest observed value
+    if(is.na(miss_val[2])) {
+
+      if("outcome_disc" %in% names(score_rename)) {
+        # only truly missing if discrete outcome also missing
+        score_rename$outcome_cont[score_rename$outcome_disc=="Joint Posterior" & !is.na(score_rename$outcome_disc)] <- coalesce(score_rename$outcome_cont[score_rename$outcome_disc=="Joint Posterior" & !is.na(score_rename$outcome_disc)],max_val+1L)
+
+        # need to set another value for not truly missing values for appended datasets
+        score_rename$outcome_cont[score_rename$outcome_disc!="Joint Posterior"] <- max_val + 2L
+      } else {
+        
+        score_rename <- mutate(score_rename,!! quo_name(outcome_cont) := coalesce(!!outcome_cont,max_val+1L))
+      }
+    } else {
+      if("outcome_disc" %in% names(score_rename)) {
+        score_rename <- mutate(score_rename,!! quo_name(outcome_cont) := ifelse(!!outcome_cont==miss_val[2] & outcome_disc=="Joint Posterior" &
+                                                                                !is.na(outcome_disc),max_val+1L,!!outcome_cont))
+        # need to set another value for not truly missing values for appended datasets
+        score_rename$outcome_cont[score_rename$outcome_disc!="Joint Posterior"] <- max_val + 2L
+      } else {
+        score_rename <- mutate(score_rename,!! quo_name(outcome_cont) := ifelse(!!outcome_cont==miss_val[2],max_val+1L,!!outcome_cont))
+      }
+      
+    }
+    
+    miss_val[2] <- max_val + 1L
   } 
   
 
@@ -797,21 +827,19 @@ id_estimate <- function(idealdata=NULL,model_type=2,
       
   if(use_groups==T) {
     legispoints <- as.numeric(idealdata@score_matrix$group_id)
-    num_legis <- max(legispoints)
   } else {
     legispoints <- as.numeric(idealdata@score_matrix$person_id)
-    num_legis <- max(legispoints)
   }
   
   # check if varying model IDs exist and replace with model type
   # if not
   
-  if(!idealdata@score_matrix$model_id[1]=="missing") {
+  if(idealdata@score_matrix$model_id[1]=="missing") {
     
     idealdata@score_matrix$model_id <- model_type
     
   } else {
-    if(!is.numeric(idealdata@score_data$model_id)) {
+    if(!is.numeric(idealdata@score_matrix$model_id)) {
       stop("Column model_id in the data is not a numeric series of 
            integers. Please pass a numeric value in the id_make function
            for model_id based on the available model types.")
@@ -834,130 +862,60 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   if(gp_min_length>=gp_num_diff[1]) {
     stop('The parameter gp_min_length cannot be equal to or greater than gp_num_diff[1].')
   }
-  
-  max_t <- max(timepoints,na.rm=T)
-  num_bills <- max(billpoints,na.rm=T)
-  
-  if(!is.null(idealdata@score_matrix$outcome_disc)) {
-    Y_int <- idealdata@score_matrix$outcome_disc
-    
-    if(mod_count==1) {
-      # check to see if we need to recode missing values from the data if the model_type doesn't handle missing data
-      if(model_type %in% c(1,3,5,7,9,11,13) && !is.na(idealdata@miss_val) && mod_count==1) {
-        Y_int <- .na_if(Y_int,idealdata@miss_val)
-      }
-      remove_nas <- !is.na(Y_int)
-      
-      # check to see if more values than there should be for the bernoulli model
-      
-      if(model_type %in% c(1,13) && length(table(Y_int))>2 && mod_count==1) {
-        stop('Too many values in score matrix for a binary model. Choose a different model_type.')
-      } else if(model_type %in% c(2,14) && length(table(Y_int))>3 && mod_count==1) {
-        stop("Too many values in score matrix for a binary model. Choose a different model_type.")
-      }
-      
-    }
-    
-    
-    
-  }
-  
-  if(!is.null(idealdata@score_matrix$outcome_cont)) {
+
+  if(("outcome_cont" %in% names(idealdata@score_matrix)) && ("outcome_disc" %in% names(idealdata@score_matrix))) {
+    Y_int <- as.numeric(idealdata@score_matrix$outcome_disc)
     Y_cont <- idealdata@score_matrix$outcome_cont
-    
-    
-    if(mod_count==1) {
-      
-      # check to see if we need to recode missing values from the data if the model_type doesn't handle missing data
-      if(model_type %in% c(7,8,9,10,11,12) && !is.na(idealdata@miss_val) && mod_count==1) {
-        Y_cont <- .na_if(Y_cont,idealdata@miss_val)
-      }
-      
-      remove_nas <- !is.na(Y_cont)
-    }
+  } else if ("outcome_cont" %in% names(idealdata@score_matrix)) {
+    Y_int <- array(0)
+    Y_cont <- idealdata@score_matrix$outcome_cont
+  } else {
+    Y_cont <- array(0)
+    Y_int <- as.numeric(idealdata@score_matrix$outcome_disc)
   }
   
   #Remove NA values, which should have been coded correctly in the make_idealdata function
   
-  
   # need to have a different way to remove missing values if multiple
   # posteriors used
-  
-      if(!is.null(Y_disc)) {
-        if(mod_count==1) {
-          Y_disc <- Y_disc[remove_nas]
-        }
-      }
-      
-      if(!is.null(Y_cont)) {
-        if(mod_count==1) {
-          Y_disc <- Y_disc[remove_nas]
-        }
-        
-      }
-      
-      
-      
-      
-      Y <- Y[remove_nas]
-      
-      legispoints <- legispoints[remove_nas]
-      billpoints <- billpoints[remove_nas]
-      timepoints <- timepoints[remove_nas]
-      modelpoints <- modelpoints[remove_nas]
-      
-      # need to calculate which missing values for which kinds of 
-      # models
-      
-      discrete_mods <- idealdata$model_id>6 & idealdata$model_id<13
-      
-      N_cont <- length(Y)
-      N_int <- 1L
-    
+  # set values for length of discrete/continuous outcomes  
+    remove_list <- .remove_nas(Y_int,
+                               Y_cont,
+                               legispoints,
+                               billpoints,
+                               timepoints,
+                               modelpoints,
+                               idealdata)
     
     # need to make a model type matrix
     
     model_type_mat <- .make_model_mat(modelpoints)
     
-   
     
-  if(model_type>8 && model_type < 13 && mod_count==1) {
-    N_cont <- length(Y)
-    N_int <- 1L
-    Y_cont <- as.numeric(Y)
-    Y_int <- array(1L)
-  } else if (mod_count==1) {
-    N_cont <- 1L
-    N_int <- length(Y)
-    Y_cont <- array(1)
-    Y_int <- as.integer(Y)
-  }
-    
-    
-  this_data <- list(N=length(Y),
-                    N_cont=N_cont,
-                    N_int=N_int,
-                    Y_int=Y_int,
-                    Y_cont=Y_cont,
-                    T=max_t,
+  this_data <- list(N=remove_list$N,
+                    N_cont=remove_list$N_cont,
+                    N_int=remove_list$N_int,
+                    Y_int=remove_list$Y_int,
+                    Y_cont=remove_list$Y_cont,
+                    T=remove_list$max_t,
                     M_row=nrow(model_type_mat),
-                    num_legis=num_legis,
-                    num_bills=num_bills,
-                    ll=legispoints,
-                    bb=billpoints,
-                    mm=modelpoints,
+                    num_legis=remove_list$num_legis,
+                    num_bills=remove_list$num_bills,
+                    ll=remove_list$legispoints,
+                    bb=remove_list$billpoints,
+                    mm=remove_list$modelpoints,
                     num_fix_high=as.integer(1),
                     num_fix_low=as.integer(1),
                     LX=length(idealdata@person_cov),
                     SRX=length(idealdata@item_cov),
                     SAX=length(idealdata@item_cov_miss),
                     legis_pred=as.matrix(select(idealdata@score_matrix,
-                                                idealdata@person_cov))[remove_nas,,drop=F],
+                                                idealdata@person_cov))[remove_list$remove_nas,,drop=F],
                     srx_pred=as.matrix(select(idealdata@score_matrix,
-                                              idealdata@item_cov))[remove_nas,,drop=F],
+                                              idealdata@item_cov))[remove_list$remove_nas,,drop=F],
                     sax_pred=as.matrix(select(idealdata@score_matrix,
-                                              idealdata@item_cov_miss))[remove_nas,,drop=F],
-                    time=timepoints,
+                                              idealdata@item_cov_miss))[remove_list$remove_nas,,drop=F],
+                    time=remove_list$timepoints,
                     model_type=model_type,
                     discrim_reg_sd=discrim_reg_sd,
                     discrim_abs_sd=discrim_miss_sd,
