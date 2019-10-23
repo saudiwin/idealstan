@@ -1349,10 +1349,57 @@ return(as.vector(idx))
 #' Function to create table/matrix of which rows of the data
 #' correspond to which model types.
 #' @noRd
-.make_model_mat <- function(modelpoints=NULL) {
+.count_cats <- function(modelpoints=NULL,
+                        billpoints=NULL,
+                        Y_int=NULL,
+                        joint_posterior=NULL) {
   
-  browser()
+
   
+  if(length(Y_int)>1 && any(unique(modelpoints) %in% c(3,4,5,6))) {
+    
+    if(is.null(joint_posterior)) {
+      joint_posterior <- max(Y_int) + 1
+    }
+    
+    # count cats for ordinal models 
+    
+    get_counts <- group_by(tibble(modelpoints,
+                                  billpoints,
+                                  Y_int),billpoints) %>% 
+      filter(modelpoints %in% c(3,4,5,6),
+             Y_int<joint_posterior) %>% 
+      group_by(modelpoints,billpoints) %>% 
+      summarize(num_cats=length(unique(Y_int))) %>% 
+      mutate(num_cats=if_else(modelpoints %in% c(3,5) & num_cats<3,
+                              3L,
+                              num_cats),
+             num_cats=if_else(modelpoints %in% c(4,6) & num_cats<4,
+                              3L,
+                              num_cats),
+             order_cats=as.numeric(factor(num_cats))) 
+    
+    num_cats <- sort(unique(get_counts$num_cats))
+    
+    # join the data back together
+    
+    out_data <- left_join(tibble(modelpoints,
+                                 billpoints,
+                                 Y_int),
+                          select(get_counts,
+                                   -num_cats),
+                            by=c("modelpoints","billpoints")) 
+    out_data$order_cats[is.na(out_data$order_cats)] <- 0L
+      
+    
+  } else {
+    
+    order_cats <- rep(0L,length(modelpoints))
+    n_cats <- 0L
+    
+  }
+  return(list(order_cats=order_cats,
+              n_cats=0L))
 }
 
 #' Function to figure out how to remove missing values from

@@ -184,6 +184,10 @@ id_sim_gen <- function(num_person=20,num_bills=50,
                      normal=.normal,
                      lognormal=.lognormal)
   
+  if(is.null(run_func)) {
+    stop("Please select one of the available options for model_type from the help file.")
+  }
+  
   outobj <- run_func(pr_absence=pr_absence,
            pr_vote=pr_vote,
            N=length(person_points),

@@ -789,10 +789,6 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   
 
     idealdata@stanmodel <- stanmodels[['irt_standard']]
-    
-  # currently fixed at one param, can change in future versions
-    
-  nfix <- 1
    
     #Using an un-identified model with variational inference, find those parameters that would be most useful for
     #constraining/pinning to have an identified model for full Bayesian inference
@@ -887,25 +883,31 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                                modelpoints,
                                idealdata)
     
-    # need to make a model type matrix
+    # need to calculate number of categories for ordinal models
     
-    model_type_mat <- .make_model_mat(modelpoints)
+    cats <- .count_cats(remove_list$modelpoints,
+                                      remove_list$billpoints,
+                                      remove_list$Y_int,
+                        idealdata@miss_val[1] + 1)
     
-    
+    browser()
   this_data <- list(N=remove_list$N,
                     N_cont=remove_list$N_cont,
                     N_int=remove_list$N_int,
                     Y_int=remove_list$Y_int,
                     Y_cont=remove_list$Y_cont,
                     T=remove_list$max_t,
-                    M_row=nrow(model_type_mat),
                     num_legis=remove_list$num_legis,
                     num_bills=remove_list$num_bills,
                     ll=remove_list$legispoints,
                     bb=remove_list$billpoints,
                     mm=remove_list$modelpoints,
+                    mod_count=length(unique(remove_list$modelpoints)),
                     num_fix_high=as.integer(1),
                     num_fix_low=as.integer(1),
+                    tot_cats=length(cats$n_cats),
+                    n_cats=cats$n_cats,
+                    order_cats=cats$order_cats,
                     LX=length(idealdata@person_cov),
                     SRX=length(idealdata@item_cov),
                     SAX=length(idealdata@item_cov_miss),
@@ -916,7 +918,6 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     sax_pred=as.matrix(select(idealdata@score_matrix,
                                               idealdata@item_cov_miss))[remove_list$remove_nas,,drop=F],
                     time=remove_list$timepoints,
-                    model_type=model_type,
                     discrim_reg_sd=discrim_reg_sd,
                     discrim_abs_sd=discrim_miss_sd,
                     diff_reg_sd=diff_reg_sd,
@@ -956,61 +957,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                         fix_low=fix_low,
                         const_type=const_type)
   
-  # now run an identified run
-  # repeat data formation as positions of rows/columns may have shifted
-  if(use_groups==T) {
-    legispoints <- as.numeric(idealdata@score_matrix$group_id)
-    num_legis <- max(legispoints)
-  } else {
-    legispoints <- as.numeric(idealdata@score_matrix$person_id)
-    num_legis <- max(legispoints)
-  }
-  
-  billpoints <- as.numeric(idealdata@score_matrix$item_id)
-  timepoints <- as.numeric(factor(idealdata@score_matrix$time_id))
-  modelpoints <- as.integer(idealdata@score_matrix$model_id)
-  # for gaussian processes, need actual time values
-  time_ind <- switch(class(idealdata@score_matrix$time_id)[1],
-                     factor=unique(as.numeric(idealdata@score_matrix$time_id)),
-                     Date=unique(as.numeric(idealdata@score_matrix$time_id)),
-                     POSIXct=unique(as.numeric(idealdata@score_matrix$time_id)),
-                     POSIXlt=unique(as.numeric(idealdata@score_matrix$time_id)),
-                     numeric=unique(idealdata@score_matrix$time_id),
-                     integer=unique(idealdata@score_matrix$time_id))
-  max_t <- max(timepoints,na.rm=T)
-  num_bills <- max(billpoints,na.rm=T)
-  
-  Y <- idealdata@score_matrix$outcome
-  
-  # check to see if we need to recode missing values from the data if the model_type doesn't handle missing data
-  if(model_type %in% c(1,3,5,7,9,11,13) & !is.na(idealdata@miss_val)) {
-    Y <- .na_if(Y,idealdata@miss_val)
-  }
-  
-  #Remove NA values, which should have been coded correctly in the make_idealdata function
-  
-  remove_nas <- !is.na(Y) & !is.na(legispoints) & !is.na(billpoints) & !is.na(timepoints)
-  Y <- Y[remove_nas]
-  legispoints <- legispoints[remove_nas]
-  billpoints <- billpoints[remove_nas]
-  timepoints <- timepoints[remove_nas]
-  modelpoints <- modelpoints[remove_nas]
-  
-  # need to make a model type matrix
-  
-  model_type_mat <- .make_model_mat(modelpoints)
-  
-  if(model_type>8 && model_type < 13) {
-    N_cont <- length(Y)
-    N_int <- 1
-    Y_cont <- as.numeric(Y)
-    Y_int <- array(1L)
-  } else {
-    N_cont <- 1
-    N_int <- length(Y)
-    Y_cont <- array(1L)
-    Y_int <- as.integer(Y)
-  }
+
   
   this_data <- list(N=length(Y),
                     N_cont=N_cont,

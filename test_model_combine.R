@@ -7,7 +7,8 @@ require(ggplot2)
 
 # to test this, we'll generate two different models then recombine
 
-bin_irt_2pl_sim <- id_sim_gen(num_person=10,num_bills=100,ordinal=F,inflate=F,
+bin_irt_2pl_sim <- id_sim_gen(num_person=10,num_bills=100,
+                              model_type="ordinal_ratingscale",inflate=F,
                               diff_sd=1,
                               reg_discrim_sd = 1,
                               absence_discrim_sd = 1)
