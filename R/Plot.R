@@ -1069,8 +1069,8 @@ id_plot_cov <- function(object,
   # determine which outcome to predict
   # iterate over model types
   
-  all_plots <- lapply(1:unique(object@score_data@score_matrix$model_id), function(m) {
-    browser()
+  all_plots <- lapply(unique(object@score_data@score_matrix$model_id), function(m) {
+
     this_data <- filter(object@score_data@score_matrix,model_id==m)
     
     # iterate over item IDs
@@ -1083,11 +1083,36 @@ id_plot_cov <- function(object,
       if(m %in% c(1,2,3,4,5,6,13,14)) {
         # ask user for predicted outcome
         pred_outcome <- svDialogs::dlg_list(levels(this_data$outcome_disc),
-                                            title="Select which level of the outcome to predict using covariates.")$res
+                                            title="Type in the number referring to the level of the outcome you want to predict using covariates.")$res
+        if(m %in% c(3,4,5,6)) {
+          # need to calculate K
+          k <- which(pred_outcome==levels(this_data$outcome_disc))
+          K <- length(levels(this_data$outcome_disc))
+        } else {
+          K <- 0
+          k <- 0
+        }
+        
+        
       } else if(m %in% c(7,8)) {
-        pred_outcome <- "Percentage Change"
+        pred_outcome <- svDialogs::dlg_list(c("Missing","Percentage Change"),
+                                            title="Type in 1 to predict probability of missing data or 2 for observed data.")$res
+        if(pred_outcome=="Missing") {
+          m <- 1
+        }
+        
+        K <- 0
+        k <- 0
       } else if(m %in% c(9,10,11,12)) {
-        pred_outcome <- "Mean"
+        pred_outcome <- svDialogs::dlg_list(c("Missing","Change in Mean Value"),
+                                            title="Type in 1 to predict probability of missing data or 2 for observed data.")$res
+        
+        if(pred_outcome=="Missing") {
+          m <- 1
+        }
+        
+        K <- 0
+        k <- 0
       }
     }
     
@@ -1098,12 +1123,12 @@ id_plot_cov <- function(object,
       pred_outcome_low <- paste0("Pr(",pred_outcome,"|",label_low,")")
       xlabel <- "Marginal Change in Probability"
     } else if(m %in% c(7,8)) {
-      pred_outcome_high <- paste0("Mean Count|",label_high)
-      pred_outcome_low <- paste0("Mean Count|",label_low)
+      pred_outcome_high <- paste0("Change in Mean Count|",label_high)
+      pred_outcome_low <- paste0("Change in Mean Count|",label_low)
       xlabel <- "Marginal Percentage Change in Mean Count"
     } else {
-      pred_outcome_high <- paste0("Mean|",label_high)
-      pred_outcome_low <- paste0("Mean|",label_low)
+      pred_outcome_high <- paste0("Change in Mean Value|",label_high)
+      pred_outcome_low <- paste0("Change in Mean Value|",label_low)
       xlabel <- "Marginal Change in Mean"
     }
     
@@ -1137,6 +1162,23 @@ id_plot_cov <- function(object,
       new_cov_names <- new_cov_names[!(new_cov_names %in% filter_cov)]
     }
     
+    # need function to calculate outcome based on model_id
+    
+    if(m %in% c(1,2)) {
+      out_func <- .cov_bern
+    } else if(m %in% c(3,4,5,6)) {
+      out_func <- .cov_ord
+    } else if(m %in% c(7,8)) {
+      out_func <- .cov_pois
+    } else if(m %in% c(9,10)) {
+      out_func <- .cov_norm
+    } else if(m %in% c(11,12)) {
+      out_func <- .cov_lnorm
+    } else if(m %in% c(13,14)) {
+      stop("Latent space parameterization not currently supported in this function.")
+      out_func <- .cov_latsp
+    }
+    
     # set up values to re-calculate
     
     if(!is.null(recalc_vals)) {
@@ -1152,21 +1194,38 @@ id_plot_cov <- function(object,
     
     if(calc_varying) {
       # get all sigmas
-      sigma_all <- rstan::extract(object@stan_samples,"sigma_reg_free")
       
-      # only take the items in this data set
-      sigma_all[[1]] <- sigma_all$sigma_reg_free[,unique(as.numeric(this_data$item_id))]
+      these_items <- unique(as.numeric(this_data$item_id))
+      
+      if(pred_outcome=="Missing") {
+        sigma_all <- rstan::extract(object@stan_samples,"sigma_abs_free")
+        # only take the items in this data set
+        sigma_all[[1]] <- sigma_all$sigma_abs_free[,these_items,drop=F]
+      } else {
+        sigma_all <- rstan::extract(object@stan_samples,"sigma_reg_free")
+        # only take the items in this data set
+        sigma_all[[1]] <- sigma_all$sigma_reg_free[,these_items,drop=F]
+      }
+      
       # iterate over posterior draws and calculate effect conditional on pos/neg discrimination
       # for all params in to_plot
       
       neg_eff <- lapply(1:nrow(sigma_all[[1]]), function(i) {
         this_discrim <- sigma_all[[1]][i,]
         
+        # if cutpoints exist, need to pull the correct one
+        
+        if(K>1) {
+          cutp <- .get_cuts_cov(k,m,i,sigma_all,K,object,these_items)
+        } else {
+          cutp <- 0
+        }
+        
         neg_discrim <- this_discrim[this_discrim<0]
         
         #calculate marginal changes in probability
         to_plot_neg <- apply(to_plot,3,function(c) {
-          mean(plogis(c[i]*neg_discrim)-0.5)
+          out_func(c[i]*neg_discrim,cutp,k,K)
         })
         tibble(estimate=to_plot_neg,
                parameter=names(to_plot_neg)) %>% 
@@ -1177,10 +1236,15 @@ id_plot_cov <- function(object,
         this_discrim <- sigma_all[[1]][i,]
         pos_discrim <- this_discrim[this_discrim>0]
         
+        if(K>1) {
+          cutp <- .get_cuts_cov(k,m,i,sigma_all,K,object,these_items)
+        } else {
+          cutp <- 0
+        }
         
         #calculate marginal changes in probability
         to_plot_neg <- apply(to_plot,3,function(c) {
-          mean(plogis(c[i]*pos_discrim)-0.5)
+          out_func(c[i]*pos_discrim,cutp,k,K)
         })
         tibble(estimate=to_plot_neg,
                parameter=names(to_plot_neg)) %>% 
@@ -1195,8 +1259,14 @@ id_plot_cov <- function(object,
           
           neg_discrim <- this_discrim[this_discrim<0]
           
+          if(K>1) {
+            cutp <- .get_cuts_cov(k,m,i,sigma_all,K,object,these_items)
+          } else {
+            cutp <- 0
+          }
+          
           #calculate marginal changes in probability
-          to_plot_neg <- mean(plogis((to_plot[i,,val1]+to_plot[i,,val2])*neg_discrim)-0.5)
+          to_plot_neg <- out_func((to_plot[i,,val1]+to_plot[i,,val2])*neg_discrim,cutp,k,K)
           
           tibble(estimate=to_plot_neg,
                  parameter=recalc_vals[3]) %>% 
@@ -1207,9 +1277,15 @@ id_plot_cov <- function(object,
           this_discrim <- sigma_all[[1]][i,]
           pos_discrim <- this_discrim[this_discrim>0]
           
+          if(K>1) {
+            cutp <- .get_cuts_cov(k,m,i,sigma_all,K,object,these_items)
+          } else {
+            cutp <- 0
+          }
+          
           
           #calculate marginal changes in probability
-          to_plot_neg <- mean(plogis((to_plot[i,,val1]+to_plot[i,,val2])*pos_discrim)-0.5)
+          to_plot_neg <- out_func((to_plot[i,,val1]+to_plot[i,,val2])*pos_discrim,cutp,k,K)
           
           tibble(estimate=to_plot_neg,
                  parameter=recalc_vals[3]) %>% 
@@ -1239,8 +1315,10 @@ id_plot_cov <- function(object,
       }
     }
     
-    return(mutate(to_plot,model_id=m))
+    return(mutate(to_plot,model_id=m,xlabel=xlabel))
   }) %>% bind_rows
+  
+  browser()
   
   sum_func <- function(this_data,high=high_quantile,
                        low=low_quantile) {
@@ -1249,28 +1327,68 @@ id_plot_cov <- function(object,
            ymax=quantile(this_data,high_quantile))
   }
   
+  # remove missing values in case there were no negative/positive discriminations
+  all_plots_sum <- group_by(all_plots,parameter,Type,model_id) %>% 
+    summarize(Median=median(estimate,na.rm=T),
+              High=quantile(estimate,high_quantile,na.rm=T),
+              Low=quantile(estimate,low_quantile,na.rm=T)) %>% 
+    filter(!is.na(Median)) %>% 
+    mutate(model_id=recode(model_id,
+                           `1`="Binary Outcome",
+                           `2`="Binary Outcome",
+                           `3`="Rating-Scale Ordinal Outcome",
+                           `4`="Rating-Scale Ordinal Outcome",
+                           `5`="Graded-Response Ordinal Outcome",
+                           `6`="Graded-Response Ordinal Outcome",
+                           `7`="Poisson Outcome",
+                           `8`="Poisson Outcome",
+                           `9`="Gaussian Outcome",
+                           `10`="Gaussian Outcome",
+                           `11`="Log-Normal Outcome",
+                           `12`="Log-Normal Outcome",
+                           `13`="Binary Outcome Latent Space",
+                           `14`="Binary Outcome Latent Space"))
+  
+
+  
     if(calc_varying) {
-    outplot <- to_plot %>% 
-      ggplot(aes(x=parameter,y=estimate)) +
-      stat_summary(fun.data=sum_func) +
+    outplot <- all_plots_sum %>% 
+      ggplot(aes(x=parameter,y=Median)) +
+      geom_pointrange(aes(ymin=Low,
+                         ymax=High)) +
       coord_flip() +
       geom_hline(yintercept=0,linetype=2) +
-      facet_wrap(~Type) +
       theme(panel.grid=element_blank(),
             panel.background = element_blank(),
             strip.background = element_blank(),
             strip.text = element_text(face="bold"),
             axis.ticks.y=element_blank()) +
       xlab("") + 
-      ylab(xlabel)
+      ylab("")
     
-    if(m %in% c(1,2,3,4,5,6,7,8,13,14)) {
-      outplot <- outplot + scale_y_continuous(labels=scales::percent)
+    if(unique(object@score_data@score_matrix$model_id)>1) {
+      
+      outplot <- outplot + facet_wrap(~Type + model_id,scales="free_x")
+      
+    } else {
+      if(unique(object@score_data@score_matrix$model_id) %in% c(1,2,3,4,5,6,7,8,13,14)) {
+        outplot <- outplot + scale_y_continuous(labels=scales::percent)
+      }
+      outplot <- outplot + facet_wrap(~Type)
     }
+    
+    
     
     return(outplot)
     
   } else {
+    
+    param_name <- switch(cov_type,person_cov='legis_x',
+                         discrim_reg_cov='sigma_reg_x',
+                         discrim_infl_cov='sigma_abs_x')
+    
+    to_plot <- as.array(object@stan_samples,
+                        pars=param_name)
     
     mcmc_intervals(to_plot) + xlab("Ideal Point Score")
   }

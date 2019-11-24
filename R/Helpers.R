@@ -1495,3 +1495,98 @@ return(as.vector(idx))
   
 }
 
+# Need functions to calculate predicted outcomes
+
+#' Bernoulli
+#' @noRd
+.cov_bern <- function(lin_val=NULL,...) {
+  
+  mean(plogis(lin_val)-0.5)
+  
+}
+
+#' Ordinal outcomes
+#' @noRd
+.cov_ord <- function(lin_val=NULL,
+                      covp=NULL,
+                      K=null,
+                      ...) {
+  if(K==1) {
+    1 - mean(plogis(lin_val - covp[,1]))
+  } else if(K>1 && K<K) {
+    mean(plogis(lin_val - covp[,1]) - plogis(lin_val - covp[,2]))
+  } else {
+    plogis(lin_val - covp[,1])
+  }
+  
+  
+}
+
+#' Poisson
+#' @noRd
+.cov_pois <- function(lin_val,...) {
+  mean(exp(lin_val))
+}
+
+#' Normal
+#' @noRd
+.cov_norm <- function(lin_val,...) {
+  mean(lin_val)
+}
+
+#' Log-Normal
+#' @noRd
+.cov_lnorm <- function(lin_val,...) {
+  mean(exp(lin_val))
+}
+
+#' Latent-Space
+#' @noRd
+.cov_latsp <- function(lin_val,...) {
+  mean(plogis(lin_val)-0.5)
+}
+
+#' How to find cutpoints for id_plot_cov function
+#' @noRd
+.get_cuts_cov <- function(k=NULL,
+                          m=NULL,
+                          i=NULL,
+                          sigma_all=NULL,
+                          K=NULL,
+                          obj=NULL,
+                          these_items=NULL) {
+  
+  
+  if(m %in% c(3,4)) {
+    
+    # easy peesy, just get the right intercept for k
+    
+    if(k==1) {
+      cutp <- as.matrix(rstan::extract(obj@stan_samples,paste0("steps_votes",K,"[",k,"]"))[[1]])
+    } else if(k>1 && k<K) {
+      cutp <- cbind(as.matrix(rstan::extract(obj@stan_samples,paste0("steps_votes",K,"[",k-1,"]"))[[1]]),
+                    as.matrix(rstan::extract(obj@stan_samples,paste0("steps_votes",K,"[",k,"]"))[[1]]))
+    } else {
+      cutp <- as.matrix(rstan::extract(obj@stan_samples,paste0("steps_votes",K,"[",k-1,"]"))[[1]])
+    }
+    
+    return(cutp)
+    
+  } else {
+    
+    # need to determine the right graded response intercept based on sigma_all then return the cutpoint
+    item_num <- these_items[i]
+    if(k==1) {
+      cutp <- as.matrix(rstan::extract(obj@stan_samples,paste0("grm_steps_votes",K,"[",item_num,",",k,"]"))[[1]])
+    } else if(k>1 && k<K) {
+      cutp <- cbind(as.matrix(rstan::extract(obj@stan_samples,paste0("steps_votes",K,"[",item_num,",",k-1,"]"))[[1]]),
+                    as.matrix(rstan::extract(obj@stan_samples,paste0("steps_votes",K,"[",item_num,",",k,"]"))[[1]]))
+    } else {
+      cutp <- as.matrix(rstan::extract(obj@stan_samples,paste0("steps_votes",K,"[",item_num,",",k-1,"]"))[[1]])
+    }
+  }
+  
+  return(cutp)
+}
+
+ 
