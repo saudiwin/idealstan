@@ -223,7 +223,7 @@ setMethod('id_model',signature(object='idealdata'),
                    use_groups=NULL) {
 
             x <- object@score_matrix
-
+            
             if(fixtype %in% c("prefix") && is.null(restrict_ind_high)) {
               
               print("Interactively selecting which items or persons to constrain as they were not pre-specified.")
@@ -260,6 +260,7 @@ setMethod('id_model',signature(object='idealdata'),
                                restrict_ind_high=restrict_ind_high,
                                restrict_ind_low=restrict_ind_low,
                                ncores=ncores,
+                               const_type=const_type,
                                model_type=model_type,
                                use_groups=use_groups,
                                fixtype=fixtype,
@@ -534,8 +535,8 @@ setGeneric('id_extract',signature='object',
 #'  
 #' @param object A fitted \code{idealstan} object (see \code{\link{id_estimate}})
 #' @param extract_type Can be one of \code{'persons'} for person/legislator ideal points,
-#' \code{'reg_discrim'} for non-inflated item (bill) discrimination scores,
-#' \code{'reg_diff'} for non-inflated item (bill) difficulty scores,
+#' \code{'obs_discrim'} for non-inflated item (bill) discrimination scores,
+#' \code{'obs_diff'} for non-inflated item (bill) difficulty scores,
 #' \code{'miss_discrim'} for inflated item (bill) discrimination scores,
 #' and \code{'miss_diff'} for inflated item (bill) difficulty scores.
 #' @param ... Any additional arguments passed on to the \code{\link[rstan]{extract}} function.

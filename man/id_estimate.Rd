@@ -8,26 +8,27 @@ id_estimate(idealdata = NULL, model_type = 2, inflate_zero = FALSE,
   vary_ideal_pts = "none", use_subset = FALSE, sample_it = FALSE,
   subset_group = NULL, subset_person = NULL, sample_size = 20,
   nchains = 4, niters = 2000, use_vb = FALSE,
-  restrict_ind_high = NULL, id_diff = 4, id_diff_high = 2,
-  restrict_ind_low = NULL, fixtype = "vb_full", id_refresh = 0,
-  prior_fit = NULL, warmup = floor(niters/2), ncores = 4,
-  use_groups = FALSE, discrim_reg_sd = 2, discrim_miss_sd = 2,
-  person_sd = 1, time_sd = 0.1, sample_stationary = FALSE,
-  ar_sd = 2, diff_reg_sd = 1, diff_miss_sd = 1, restrict_sd = 0.01,
-  restrict_mean = NULL, restrict_var = NULL,
-  restrict_mean_val = NULL, restrict_mean_ind = NULL,
-  restrict_var_high = 0.1, tol_rel_obj = 0.001, gp_sd_par = 0.025,
-  gp_num_diff = c(3, 0.01), gp_m_sd_par = c(0.3, 10),
-  gp_min_length = 0, ...)
+  restrict_ind_high = NULL, fix_high = 1, fix_low = (-1),
+  restrict_ind_low = NULL, fixtype = "vb_full",
+  const_type = "persons", id_refresh = 0, prior_fit = NULL,
+  warmup = floor(niters/2), ncores = 4, use_groups = FALSE,
+  discrim_reg_sd = 2, discrim_miss_sd = 2, person_sd = 1,
+  time_sd = 0.1, sample_stationary = FALSE, ar_sd = 2,
+  diff_reg_sd = 1, diff_miss_sd = 1, restrict_sd = 0.01,
+  tol_rel_obj = 0.001, gp_sd_par = 0.025, gp_num_diff = 3,
+  gp_m_sd_par = 0.3, gp_min_length = 0, ...)
 }
 \arguments{
-\item{idealdata}{An object produced by the \code{\link{id_make}} containing a score/vote matrix for use for estimation & plotting}
+\item{idealdata}{An object produced by the \code{\link{id_make}} 
+containing a score/vote matrix for use for estimation & plotting}
 
-\item{model_type}{An integer reflecting the kind of model to be estimated. See below.}
+\item{model_type}{An integer reflecting the kind of model to be estimated. 
+See below.}
 
 \item{inflate_zero}{If the outcome is distributed as Poisson (count/unbounded integer), 
 setting this to 
-\code{TRUE} will fit a traditional zero-inflated model. To use correctly, the value for 
+\code{TRUE} will fit a traditional zero-inflated model. 
+To use correctly, the value for 
 zero must be passed as the \code{miss_val} option to \code{\link{id_make}} before
 running a model so that zeroes are coded as missing data.}
 
@@ -57,25 +58,29 @@ the response matrix}
 \item{use_vb}{Whether or not to use Stan's variational Bayesian inference engine instead of full Bayesian inference. Pros: it's much faster.
 Cons: it's not quite as accurate. See \code{\link[rstan]{vb}} for more info.}
 
-\item{restrict_ind_high}{If \code{fixtype} is not "vb", the particular indices of legislators/persons or bills/items to constrain high}
+\item{restrict_ind_high}{If \code{fixtype} is not "vb_full", the character value or numerical index
+of a legislator/person or bill/item to pin to a high value (default +1).}
 
-\item{id_diff}{The fixed difference between the high/low person/legislator ideal points used to identify the model. 
-Set at 4 as a standard value but can be changed to any arbitrary number without affecting model results besides re-scaling.}
+\item{fix_high}{The value of which the high fixed ideal point/item should be
+fixed to. Default is +1.}
 
-\item{id_diff_high}{The fixed intercept of the high ideal point used to constrain the model.}
+\item{fix_low}{The value of which the high fixed ideal point/item should be
+fixed to. Default is -1.}
 
-\item{restrict_ind_low}{If \code{fixtype} is not "vb", the particular indices of legislators/persons or bills/items to constrain low. 
-(Note: not used if values are pinned).}
+\item{restrict_ind_low}{If \code{fixtype} is not "vb_full", the character value or numerical index of a 
+legislator/person or bill/item to pin to a low value (default -1).}
 
-\item{fixtype}{Sets the particular kind of identification used on the model, could be one of 'vb_full' 
-(identification provided exclusively by running a variational identification model with no prior info), 
-'vb_partial' (two indices of ideal points to fix are provided but the values to fix are determined by the
-identification model), 
-'constrain' (two indices of ideal points to fix are provided--only sufficient for model if \code{restrict_var} is 
-\code{FALSE}, 
-and 'prior_fit' (a previous identified \code{idealstan} fit is passed to the \code{prior_fit} option and used
-as the basis for identification).
+\item{fixtype}{Sets the particular kind of identification used on the model, could be either 'vb_full' 
+(identification provided exclusively by running a variational identification model with no prior info), or
+'prefix' (two indices of ideal points or items to fix are provided to 
+options \code{restrict_ind_high} and \code{restrict_ind_low}).
  See details for more information.}
+
+\item{const_type}{Whether \code{"persons"} are the parameters to be 
+fixed for identification (the default) or \code{"items"}. Each of these
+pinned parameters should be specified to \code{fix_high} and \code{fix_low}
+if \code{fixtype} equals \code{"prefix"}, otherwise the model will
+select the parameters to pin to fixed values.}
 
 \item{id_refresh}{The number of times to report iterations from the variational run used to 
 identify models. Default is 0 (nothing output to console).}
@@ -100,9 +105,9 @@ estimated instead of individual parameters.}
 
 \item{person_sd}{Set the prior standard deviation for the legislators (persons) parameters}
 
-\item{time_sd}{The precision (inverse variance) of the over-time component of the person/legislator
-parameters. A higher value will allow for less over-time variation (useful if estimates bounce too much). 
-Default is 4.}
+\item{time_sd}{The variance of the over-time component of the first person/legislator
+is fixed to this value as a reference. 
+Default is 0.1.}
 
 \item{sample_stationary}{If \code{TRUE}, the AR(1) coefficients in a time-varying model will be 
 sampled from an unconstrained space and then mapped back to a stationary space. Leaving this \code{TRUE} is 
@@ -117,28 +122,8 @@ identify the model when there are few time points.}
 
 \item{diff_miss_sd}{Set the prior standard deviation for the bill (item) intercepts for the inflated model.}
 
-\item{restrict_sd}{Set the prior standard deviation for constrained parameters}
-
-\item{restrict_mean}{Whether or not to restrict the over-time mean of an ideal point 
-(additional identification measure when standard fixes don't work). \code{TRUE} by 
-default for random-walk models.}
-
-\item{restrict_var}{Whether to limit variance to no higher than 0.5 for random-walk time series models.
-If left blank (the default), will be set to \code{TRUE} for random-walk models and \code{FALSE} for 
-AR(1) models if identification is still a challenge (note: using this for AR(1) models is 
-probably overkill).}
-
-\item{restrict_mean_val}{For random-walk models, the mean of a time-series ideal point to constrain.
-Should not be set a priori (leave blank) unless you are absolutely sure. Otherwise it is set by 
-the identification model.}
-
-\item{restrict_mean_ind}{For random-walk models, the ID of the person/group whose over-time
-mean to constrain. Should be left blank (will be set by identification model) unless you are 
-really sure.}
-
-\item{restrict_var_high}{The upper limit for the variance parameter (if \code{restrict_var=TRUE} & 
-model is a random-walk time-series). If left blank, either defaults to 0.1 or is set by 
-identification model.}
+\item{restrict_sd}{Set the prior standard deviation for pinned parameters. This has a default of 
+0.01, but could be set lower if the data is really large.}
 
 \item{tol_rel_obj}{If \code{use_vb} is \code{TRUE}, this parameter sets the stopping rule for the \code{vb} algorithm. 
 It's default is 0.001. A stricter threshold will require the sampler to run longer but may yield a
@@ -226,7 +211,7 @@ bin_irt_2pl_abs_est <- id_estimate(bin_irt_2pl_abs_sim,
                        sort(bin_irt_2pl_abs_sim@simul_data$true_person,
                        decreasing=FALSE,
                        index=TRUE)$ix[1],
-                       fixtype='vb_partial',
+                       fixtype='prefix',
                        ncores=2,
                        nchains=2)
                                    
@@ -263,7 +248,7 @@ miss_val='Absent')
 sen_est <- id_estimate(to_idealstan,
 model_type = 2,
 use_vb = TRUE,
-fixtype='vb_partial',
+fixtype='prefix',
 restrict_ind_high = "BARRASSO, John A.",
 restrict_ind_low = "WARREN, Elizabeth")
 

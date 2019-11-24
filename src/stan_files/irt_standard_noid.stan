@@ -4,36 +4,34 @@
 functions {
 #include /chunks/stationary_functions.stan
 #include /chunks/calc_rlnorm_gp.stan
+#include /chunks/r_in.stan
 }
 
 data {
-  int N;
+  int N; // total number of observations
   int N_int; // if outcome is an integer
   int N_cont; // if outcome is continuous
-  int T;
+  int T; // number of time points
   int Y_int[N_int]; // integer outcome
   real Y_cont[N_cont]; // continuous outcome
-  /* Use this to set the type of IRT Model to run
-  1= basic IRT 2 Pl (no inflation)
-  2= basic IRT 2 PL (with inflation)
-  3 = ratingscale IRT (no inflation)
-  4= ratingscale IRT (with inflation)
-  5 = grm IRT (no inflation)
-  6= grm IRT (with inflation)
-  7= ZIP IRT
-  */
-  int model_type;
-  int LX;
-  int SRX;
-  int SAX;
+  int y_int_miss; // missing value for integers
+  real y_cont_miss; // missing value for continuous data
+  int LX; // legislator/person covariates
+  int SRX; // observed item predictors
+  int SAX; // missing item predictors
   int<lower=1> num_legis;
   int<lower=1> num_bills;
-  int ll[N];
-  int bb[N];
-  int time[N];
+  int ll[N]; // persons/legislators id
+  int bb[N]; // items/bills id
+  int time[N]; // time point id
+  int mm[N]; // model counter id
   matrix[N,LX] legis_pred;
   matrix[N,SRX] srx_pred;
   matrix[N,SAX] sax_pred;
+  int mod_count; // total number of models
+  int tot_cats; // total number of possible ordinal outcomes
+  int n_cats[tot_cats]; // how many outcomes per outcome size int he data
+  int order_cats[N_int]; // indicator for whether an observation comes from a certain ordinal model
   real discrim_reg_sd;
   real discrim_abs_sd;
   real legis_sd;
@@ -42,8 +40,8 @@ data {
   real restrict_sd;
   real time_sd;
   real ar_sd;
-  int restrict_var;
-  real restrict_var_high;
+  //int restrict_var;
+  //real restrict_var_high;
   int time_proc;
   real time_ind[T]; // the actual indices/values of time points, used for Gaussian processes
   int zeroes; // whether to use traditional zero-inflation for bernoulli and poisson models
@@ -61,6 +59,7 @@ transformed data {
 	real m_cont;
 	int num_var_restrict;
 	int num_var_free;
+	int num_bills_grm;
 	int num_ls; // extra person params for latent space
 	int gp_N; // use for creating zero-length arrays if gp not used
 	int gp_N_fix;
@@ -92,27 +91,38 @@ transformed data {
 	  gp_oT=0;
 	}
 	
-	
 	// need to assign a type of outcome to Y based on the model (discrete or continuous)
 	// to do this we need to trick Stan into assigning to an integer. 
 	
-#include /chunks/change_outcome.stan
+	// we're going to either do this data processing step before running the model
+	// or we'll do it in the model calculation itself
+	
+//#include /chunks/change_outcome.stan
 
 // determine whether to restrict variance or not
 
-if(restrict_var==1) {
-  num_var_restrict=num_legis;
-  num_var_free=0;
-} else {
-  num_var_restrict=0;
-  num_var_free=num_legis;
-}
-
-  if(model_type==13) {
+// if(restrict_var==1) {
+//   num_var_restrict=num_legis;
+//   num_var_free=0;
+// } else {
+//   num_var_restrict=0;
+//   num_var_free=num_legis;
+// }
+  
+  // do we have a latent space model?
+  if(r_in(13,mm)==1 || r_in(14,mm)==1) {
     num_ls=num_legis;
   } else {
     num_ls=0;
   }
+  
+  // check if there are GRM models
+  
+  if(r_in(5,mm)==1 || r_in(6,mm)==1) {
+    num_bills_grm = num_bills;
+    } else {
+      num_bills_grm = 0;
+    }
 
 }
 
@@ -127,8 +137,22 @@ parameters {
   vector[LX] legis_x;
   vector[SRX] sigma_reg_x;
   vector[SAX] sigma_abs_x;
-  ordered[m_step-1] steps_votes;
-  ordered[m_step-1] steps_votes_grm[num_bills];
+  ordered[n_cats[1]-1] steps_votes3;
+  ordered[n_cats[2]-1] steps_votes4;
+  ordered[n_cats[3]-1] steps_votes5;
+  ordered[n_cats[4]-1] steps_votes6;
+  ordered[n_cats[5]-1] steps_votes7;
+  ordered[n_cats[6]-1] steps_votes8;
+  ordered[n_cats[7]-1] steps_votes9;
+  ordered[n_cats[8]-1] steps_votes10;
+  ordered[n_cats[1]-1] steps_votes_grm3[num_bills_grm];
+  ordered[n_cats[2]-1] steps_votes_grm4[num_bills_grm];
+  ordered[n_cats[3]-1] steps_votes_grm5[num_bills_grm];
+  ordered[n_cats[4]-1] steps_votes_grm6[num_bills_grm];
+  ordered[n_cats[5]-1] steps_votes_grm7[num_bills_grm];
+  ordered[n_cats[6]-1] steps_votes_grm8[num_bills_grm];
+  ordered[n_cats[7]-1] steps_votes_grm9[num_bills_grm];
+  ordered[n_cats[8]-1] steps_votes_grm10[num_bills_grm];
   vector[num_bills] B_int_free;
   vector[num_bills] A_int_free;
   vector<lower=0>[gp_N_fix] m_sd_free; // marginal standard deviation for GPs
@@ -177,9 +201,6 @@ transformed parameters {
 }
 
 model {
-  //vectors to hold model calculations
-  vector[N] pi1;
-  vector[N] pi2;
 
 
   L_full ~ normal(0,legis_sd);
@@ -221,30 +242,19 @@ for(n in 1:num_legis) {
   time_var_gp_free ~ normal(0,1);
   gp_sd_free ~ normal(0,1);
   m_sd_free ~ normal(0,1); // tight prior on GP marginal standard deviation
-  
-  if(model_type>2 && model_type<5) {
-    for(i in 1:(m_step-2)) {
-    steps_votes[i+1] - steps_votes[i] ~ normal(0,5);
-    }
-  } else {
-    steps_votes ~ normal(0,5);
-  }
+
+#include /chunks/ord_steps_calc.stan  
 
   B_int_free ~ normal(0,diff_reg_sd);
   A_int_free ~ normal(0,diff_abs_sd);
 
-  for(b in 1:num_bills) {
-  steps_votes_grm[b] ~ normal(0,5);
-  }
   
   time_var_free ~ normal(0,1);
 
   
   //model
 
-#include /chunks/model_types.stan
-
-
+#include /chunks/model_types_mm.stan
 
 }
 

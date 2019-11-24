@@ -876,7 +876,7 @@ id_plot_compare <- function(model1=NULL,model2=NULL,scale_flip=FALSE,return_data
 #' @param object A fitted \code{idealstan} object
 #' @param params Select the type of parameter from the model to plot. \code{'person'} for person/legislator ideal points,
 #'  \code{'miss_diff'} and \code{'miss_discrim'} for difficulty and discrimination parameters from the missing/inflated item/bill parameters,
-#'  and \code{'regular_diff'} and \code{'regular_discrim'} for difficulty and discrimination parameters from the non-missing/non-inflated 
+#'  and \code{'obs_diff'} and \code{'obs_discrim'} for difficulty and discrimination parameters from the non-missing/non-inflated 
 #'  item/bill parameters.
 #' @param param_labels A vector of labels equal to the number of parameters. Primarily useful if \code{return_data} is \code{TRUE}.
 #' @param dens_type Can be \code{'all'} for showing 90% HPD high, 10% HPD low and median posterior values. 
@@ -892,10 +892,10 @@ id_plot_all_hist <- function(object,params='person',param_labels=NULL,dens_type=
                           return_data=FALSE,func=median,...) {
   
   stan_params <- switch(params,
-                   miss_diff='A_int_full',
-                   miss_discrim='sigma_abs_full',
-                   regular_diff='B_int_full',
-                   regular_discrim='sigma_reg_full',
+                   miss_diff='A_int_free',
+                   miss_discrim='sigma_abs_free',
+                   obs_diff='B_int_free',
+                   obs_discrim='sigma_reg_free',
                    person='L_full')
   
   estimates <- rstan::extract(object@stan_samples,pars=stan_params,permuted=T)[[1]]
@@ -1058,6 +1058,7 @@ id_plot_cov <- function(object,
                         label_high="Liberal",
                         label_low="Conservative",
                         cov_type='person_cov',
+                        use_items="all",
                         pred_outcome = NULL,
                         high_quantile=0.95,
                         low_quantile=0.05,
@@ -1066,173 +1067,189 @@ id_plot_cov <- function(object,
                         recalc_vals=NULL) {
   
   # determine which outcome to predict
+  # iterate over model types
   
-  if(is.null(pred_outcome)) {
-    if(object@model_type %in% c(1,2,3,4,5,6,13,14)) {
-      # ask user for predicted outcome
-      pred_outcome <- svDialogs::dlg_list(levels(object@score_data@score_matrix$outcome),
-                                          title="Select which level of the outcome to predict using covariates.")$res
-    } else if(object@model_type %in% c(7,8)) {
-      pred_outcome <- "Mean Count"
-    } else if(object@model_type %in% c(9,10,11,12)) {
-      pred_outcome <- "Mean"
-    }
-  }
-  
-  # adjust labels to match predicted outcome
-  
-  if(object@model_type %in% c(1,2,3,4,5,6,13,14)) {
-    pred_outcome_high <- paste0("Pr(",pred_outcome,"|",label_high,")")
-    pred_outcome_low <- paste0("Pr(",pred_outcome,"|",label_low,")")
-    xlabel <- "Marginal Change in Probability"
-  } else if(object@model_type %in% c(7,8)) {
-    pred_outcome_high <- paste0("Mean Count|",label_high)
-    pred_outcome_low <- paste0("Mean Count|",label_low)
-    xlabel <- "Marginal Change in Mean Count"
-  } else {
-    pred_outcome_high <- paste0("Mean|",label_high)
-    pred_outcome_low <- paste0("Mean|",label_low)
-    xlabel <- "Marginal Change in Mean"
-  }
-  
-  # pull hierarchical covariates
-  
-  param_name <- switch(cov_type,person_cov='legis_x',
-                       discrim_reg_cov='sigma_reg_x',
-                       discrim_infl_cov='sigma_abs_x')
-  
-  to_plot <- as.array(object@stan_samples,
-                      pars=param_name)
-  
-  # reset names of parameters
-  new_names <- switch(cov_type,person_cov=object@score_data@person_cov,
-                      discrim_reg=object@score_data@item_cov,
-                      discrim_abs=object@score_data@item_cov_miss)
-  
-  # recode these names if user supplies option
-  
-  if(!is.null(new_cov_names)) {
-    new_names <- recode(new_names,!!!new_cov_names)
-  }
-  
-  attributes(to_plot)$dimnames$parameters <- new_names
-  
-  # remove unwanted coefficients
-  
-  if(!is.null(filter_cov)) {
-    to_plot <- to_plot[,,!(new_names %in% filter_cov),drop=F]
-    new_names <- new_names[!(new_names %in% filter_cov)]
-    new_cov_names <- new_cov_names[!(new_cov_names %in% filter_cov)]
-  }
-  
-  # set up values to re-calculate
-  
-  if(!is.null(recalc_vals)) {
-    if(length(recalc_vals)!=3) {
-      stop("Option recalc_vals can only be a character vector of length 3 indicating which two variables to add together and their name.")
-    }
-    val1 <- which(attributes(to_plot)$dimnames$parameters==recalc_vals[1])
-    val2 <- which(attributes(to_plot)$dimnames$parameters==recalc_vals[2])
-    if(is.null(val1) || is.null(val2)) {
-      stop("The parameter names you passed to re-calculate did not match existing parameters. Please be sure to use recoded parameter names not original parameter names.")
-    }
-  }
-  
-  if(calc_varying) {
-    # get all sigmas
-    sigma_all <- rstan::extract(object@stan_samples,"sigma_reg_free")
+  all_plots <- lapply(1:unique(object@score_data@score_matrix$model_id), function(m) {
+    browser()
+    this_data <- filter(object@score_data@score_matrix,model_id==m)
     
-    # iterate over posterior draws and calculate effect conditional on pos/neg discrimination
-    # for all params in to_plot
+    # iterate over item IDs
     
-    neg_eff <- lapply(1:nrow(sigma_all[[1]]), function(i) {
-      this_discrim <- sigma_all[[1]][i,]
-      
-      neg_discrim <- this_discrim[this_discrim<0]
-      
-      #calculate marginal changes in probability
-      to_plot_neg <- apply(to_plot,3,function(c) {
-        mean(plogis(c[i]*neg_discrim)-0.5)
-      })
-      tibble(estimate=to_plot_neg,
-             parameter=names(to_plot_neg)) %>% 
-        mutate(Type=pred_outcome_low)
-    }) %>% bind_rows
+    if(!(use_items=="all")) {
+      this_data <- filter(this_data,item_id %in% use_items)
+    } 
     
-    pos_eff <- lapply(1:nrow(sigma_all[[1]]), function(i) {
-      this_discrim <- sigma_all[[1]][i,]
-      pos_discrim <- this_discrim[this_discrim>0]
-      
-      
-      #calculate marginal changes in probability
-      to_plot_neg <- apply(to_plot,3,function(c) {
-        mean(plogis(c[i]*pos_discrim)-0.5)
-      })
-      tibble(estimate=to_plot_neg,
-             parameter=names(to_plot_neg)) %>% 
-        mutate(Type=pred_outcome_high)
-    }) %>% bind_rows
+    if(is.null(pred_outcome)) {
+      if(m %in% c(1,2,3,4,5,6,13,14)) {
+        # ask user for predicted outcome
+        pred_outcome <- svDialogs::dlg_list(levels(this_data$outcome_disc),
+                                            title="Select which level of the outcome to predict using covariates.")$res
+      } else if(m %in% c(7,8)) {
+        pred_outcome <- "Percentage Change"
+      } else if(m %in% c(9,10,11,12)) {
+        pred_outcome <- "Mean"
+      }
+    }
+    
+    # adjust labels to match predicted outcome
+    
+    if(m %in% c(1,2,3,4,5,6,13,14)) {
+      pred_outcome_high <- paste0("Pr(",pred_outcome,"|",label_high,")")
+      pred_outcome_low <- paste0("Pr(",pred_outcome,"|",label_low,")")
+      xlabel <- "Marginal Change in Probability"
+    } else if(m %in% c(7,8)) {
+      pred_outcome_high <- paste0("Mean Count|",label_high)
+      pred_outcome_low <- paste0("Mean Count|",label_low)
+      xlabel <- "Marginal Percentage Change in Mean Count"
+    } else {
+      pred_outcome_high <- paste0("Mean|",label_high)
+      pred_outcome_low <- paste0("Mean|",label_low)
+      xlabel <- "Marginal Change in Mean"
+    }
+    
+    # pull hierarchical covariates
+    
+    param_name <- switch(cov_type,person_cov='legis_x',
+                         discrim_reg_cov='sigma_reg_x',
+                         discrim_infl_cov='sigma_abs_x')
+    
+    to_plot <- as.array(object@stan_samples,
+                        pars=param_name)
+    
+    # reset names of parameters
+    new_names <- switch(cov_type,person_cov=object@score_data@person_cov,
+                        discrim_reg=object@score_data@item_cov,
+                        discrim_abs=object@score_data@item_cov_miss)
+    
+    # recode these names if user supplies option
+    
+    if(!is.null(new_cov_names)) {
+      new_names <- recode(new_names,!!!new_cov_names)
+    }
+    
+    attributes(to_plot)$dimnames$parameters <- new_names
+    
+    # remove unwanted coefficients
+    
+    if(!is.null(filter_cov)) {
+      to_plot <- to_plot[,,!(new_names %in% filter_cov),drop=F]
+      new_names <- new_names[!(new_names %in% filter_cov)]
+      new_cov_names <- new_cov_names[!(new_cov_names %in% filter_cov)]
+    }
+    
+    # set up values to re-calculate
     
     if(!is.null(recalc_vals)) {
-      # do the same for re-calculated values
+      if(length(recalc_vals)!=3) {
+        stop("Option recalc_vals can only be a character vector of length 3 indicating which two variables to add together and their name.")
+      }
+      val1 <- which(attributes(to_plot)$dimnames$parameters==recalc_vals[1])
+      val2 <- which(attributes(to_plot)$dimnames$parameters==recalc_vals[2])
+      if(is.null(val1) || is.null(val2)) {
+        stop("The parameter names you passed to re-calculate did not match existing parameters. Please be sure to use recoded parameter names not original parameter names.")
+      }
+    }
+    
+    if(calc_varying) {
+      # get all sigmas
+      sigma_all <- rstan::extract(object@stan_samples,"sigma_reg_free")
       
-      neg_eff_recalc <- lapply(1:nrow(sigma_all[[1]]), function(i) {
+      # only take the items in this data set
+      sigma_all[[1]] <- sigma_all$sigma_reg_free[,unique(as.numeric(this_data$item_id))]
+      # iterate over posterior draws and calculate effect conditional on pos/neg discrimination
+      # for all params in to_plot
+      
+      neg_eff <- lapply(1:nrow(sigma_all[[1]]), function(i) {
         this_discrim <- sigma_all[[1]][i,]
         
         neg_discrim <- this_discrim[this_discrim<0]
         
         #calculate marginal changes in probability
-        to_plot_neg <- mean(plogis((to_plot[i,,val1]+to_plot[i,,val2])*neg_discrim)-0.5)
-        
+        to_plot_neg <- apply(to_plot,3,function(c) {
+          mean(plogis(c[i]*neg_discrim)-0.5)
+        })
         tibble(estimate=to_plot_neg,
-               parameter=recalc_vals[3]) %>% 
+               parameter=names(to_plot_neg)) %>% 
           mutate(Type=pred_outcome_low)
       }) %>% bind_rows
       
-      pos_eff_recalc <- lapply(1:nrow(sigma_all[[1]]), function(i) {
+      pos_eff <- lapply(1:nrow(sigma_all[[1]]), function(i) {
         this_discrim <- sigma_all[[1]][i,]
         pos_discrim <- this_discrim[this_discrim>0]
         
         
         #calculate marginal changes in probability
-        to_plot_neg <- mean(plogis((to_plot[i,,val1]+to_plot[i,,val2])*pos_discrim)-0.5)
-        
+        to_plot_neg <- apply(to_plot,3,function(c) {
+          mean(plogis(c[i]*pos_discrim)-0.5)
+        })
         tibble(estimate=to_plot_neg,
-               parameter=recalc_vals[3]) %>% 
+               parameter=names(to_plot_neg)) %>% 
           mutate(Type=pred_outcome_high)
       }) %>% bind_rows
-    }
-    
-    if(!is.null(recalc_vals)) {
-      to_plot <- bind_rows(neg_eff,
-                           pos_eff,
-                           neg_eff_recalc,
-                           pos_eff_recalc)
-    } else {
-      to_plot <- bind_rows(neg_eff,
-                           pos_eff)
-    }
-    
-    
-    
-    sum_func <- function(this_data,high=high_quantile,
-                         low=low_quantile) {
-      tibble(y=median(this_data),
-             ymin=quantile(this_data,low_quantile),
-             ymax=quantile(this_data,high_quantile))
-    }
-    
-    # if new levels exist, reorder
-    
-    if(!is.null(new_cov_names)) {
-      if(is.null(recalc_vals)) {
-        to_plot$parameter <- fct_relevel(factor(to_plot$parameter),rev(new_cov_names))
-      } else {
-        to_plot$parameter <- fct_relevel(factor(to_plot$parameter),c(rev(new_cov_names),recalc_vals[3]))
+      
+      if(!is.null(recalc_vals)) {
+        # do the same for re-calculated values
+        
+        neg_eff_recalc <- lapply(1:nrow(sigma_all[[1]]), function(i) {
+          this_discrim <- sigma_all[[1]][i,]
+          
+          neg_discrim <- this_discrim[this_discrim<0]
+          
+          #calculate marginal changes in probability
+          to_plot_neg <- mean(plogis((to_plot[i,,val1]+to_plot[i,,val2])*neg_discrim)-0.5)
+          
+          tibble(estimate=to_plot_neg,
+                 parameter=recalc_vals[3]) %>% 
+            mutate(Type=pred_outcome_low)
+        }) %>% bind_rows
+        
+        pos_eff_recalc <- lapply(1:nrow(sigma_all[[1]]), function(i) {
+          this_discrim <- sigma_all[[1]][i,]
+          pos_discrim <- this_discrim[this_discrim>0]
+          
+          
+          #calculate marginal changes in probability
+          to_plot_neg <- mean(plogis((to_plot[i,,val1]+to_plot[i,,val2])*pos_discrim)-0.5)
+          
+          tibble(estimate=to_plot_neg,
+                 parameter=recalc_vals[3]) %>% 
+            mutate(Type=pred_outcome_high)
+        }) %>% bind_rows
       }
       
+      if(!is.null(recalc_vals)) {
+        to_plot <- bind_rows(neg_eff,
+                             pos_eff,
+                             neg_eff_recalc,
+                             pos_eff_recalc)
+      } else {
+        to_plot <- bind_rows(neg_eff,
+                             pos_eff)
+      }
+      
+      # if new levels exist, reorder
+      
+      if(!is.null(new_cov_names)) {
+        if(is.null(recalc_vals)) {
+          to_plot$parameter <- fct_relevel(factor(to_plot$parameter),rev(new_cov_names))
+        } else {
+          to_plot$parameter <- fct_relevel(factor(to_plot$parameter),c(rev(new_cov_names),recalc_vals[3]))
+        }
+        
+      }
     }
     
+    return(mutate(to_plot,model_id=m))
+  }) %>% bind_rows
+  
+  sum_func <- function(this_data,high=high_quantile,
+                       low=low_quantile) {
+    tibble(y=median(this_data),
+           ymin=quantile(this_data,low_quantile),
+           ymax=quantile(this_data,high_quantile))
+  }
+  
+    if(calc_varying) {
     outplot <- to_plot %>% 
       ggplot(aes(x=parameter,y=estimate)) +
       stat_summary(fun.data=sum_func) +
@@ -1247,7 +1264,7 @@ id_plot_cov <- function(object,
       xlab("") + 
       ylab(xlabel)
     
-    if(object@model_type %in% c(1,2,3,4,5,6,13,14)) {
+    if(m %in% c(1,2,3,4,5,6,7,8,13,14)) {
       outplot <- outplot + scale_y_continuous(labels=scales::percent)
     }
     
@@ -1328,24 +1345,24 @@ id_plot_irf <- function(object,
   # determine which outcome to predict
   
   if(is.null(pred_outcome)) {
-    if(object@model_type %in% c(1,2,3,4,5,6,13,14)) {
+    if(m %in% c(1,2,3,4,5,6,13,14)) {
       # ask user for predicted outcome
       pred_outcome <- svDialogs::dlg_list(levels(object@score_data@score_matrix$outcome),
                                           title="Select which level of the outcome to predict using covariates.")$res
-    } else if(object@model_type %in% c(7,8)) {
+    } else if(m %in% c(7,8)) {
       pred_outcome <- "Mean Count"
-    } else if(object@model_type %in% c(9,10,11,12)) {
+    } else if(m %in% c(9,10,11,12)) {
       pred_outcome <- "Mean"
     }
   }
   
   # adjust labels to match predicted outcome
   
-  if(object@model_type %in% c(1,2,3,4,5,6,13,14)) {
+  if(m %in% c(1,2,3,4,5,6,13,14)) {
     pred_outcome_high <- paste0("Pr(",pred_outcome,"|",label_high,")")
     pred_outcome_low <- paste0("Pr(",pred_outcome,"|",label_low,")")
     xlabel <- "Marginal Change in Probability"
-  } else if(object@model_type %in% c(7,8)) {
+  } else if(m %in% c(7,8)) {
     pred_outcome_high <- paste0("Mean Count|",label_high)
     pred_outcome_low <- paste0("Mean Count|",label_low)
     xlabel <- "Marginal Change in Mean Count"

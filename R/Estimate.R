@@ -211,12 +211,26 @@ id_make <- function(score_data=NULL,
     mutate(item_id=factor(!! quo(item_id)),
            person_id=factor(!! quo(person_id)))
   
+  # need to test model number one first
+  
+  test_model <- try(pull(score_data,!!model_id),silent=TRUE)
+  
+  if(any('try-error' %in% class(test_model))) {
+    score_rename$model_id <- "missing"
+  } else {
+    score_rename$model_id <- test_model
+    # need to sort by integer vs. continuous
+    score_rename$discrete <- as.numeric(score_rename$model_id %in% c(1,2,3,4,5,6,7,8,13,14))
+    score_data$discrete <- as.numeric(score_rename$model_id %in% c(1,2,3,4,5,6,7,8,13,14))
+    score_rename <- arrange(score_rename,desc(discrete))
+    score_data <- arrange(score_data,desc(discrete))
+  }
+  
   # if time or group IDs don't exist, make dummies
   
   test_group <- try(factor(pull(score_data,!!group_id)),silent=TRUE)
   test_time <- try(pull(score_data,!!time_id),silent=TRUE)
-  test_model <- try(pull(score_data,!!model_id),silent=TRUE)
-  test_out_disc <- try(pull(score_data,!!outcome_disc),silent=TRUE)
+  test_out_disc <- try(factor(pull(score_data,!!outcome_disc)),silent=TRUE)
   test_out_cont <- try(pull(score_data,!!outcome_cont),silent=TRUE)
   
   if(any('try-error' %in% class(test_group))) {
@@ -228,12 +242,6 @@ id_make <- function(score_data=NULL,
     score_rename$time_id <- 1
   } else {
     score_rename$time_id <- test_time
-  }
-  
-  if(any('try-error' %in% class(test_model))) {
-    score_rename$model_id <- "missing"
-  } else {
-    score_rename$model_id <- test_model
   }
   
   if(any('try-error' %in% class(test_out_disc))) {
@@ -860,14 +868,14 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   }
 
   if(("outcome_cont" %in% names(idealdata@score_matrix)) && ("outcome_disc" %in% names(idealdata@score_matrix))) {
-    Y_int <- as.numeric(idealdata@score_matrix$outcome_disc)
-    Y_cont <- idealdata@score_matrix$outcome_cont
+    Y_int <- idealdata@score_matrix$outcome_disc[idealdata@score_matrix$discrete==1]
+    Y_cont <- idealdata@score_matrix$outcome_cont[idealdata@score_matrix$discrete==0]
   } else if ("outcome_cont" %in% names(idealdata@score_matrix)) {
     Y_int <- array(0)
-    Y_cont <- idealdata@score_matrix$outcome_cont
+    Y_cont <- idealdata@score_matrix$outcome_cont[idealdata@score_matrix$discrete==0]
   } else {
     Y_cont <- array(0)
-    Y_int <- as.numeric(idealdata@score_matrix$outcome_disc)
+    Y_int <- idealdata@score_matrix$outcome_disc[idealdata@score_matrix$discrete==1]
   }
   
   #Remove NA values, which should have been coded correctly in the make_idealdata function
@@ -877,6 +885,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   # set values for length of discrete/continuous outcomes  
     remove_list <- .remove_nas(Y_int,
                                Y_cont,
+                               discrete=idealdata@score_matrix$discrete,
                                legispoints,
                                billpoints,
                                timepoints,
@@ -888,14 +897,15 @@ id_estimate <- function(idealdata=NULL,model_type=2,
     cats <- .count_cats(remove_list$modelpoints,
                                       remove_list$billpoints,
                                       remove_list$Y_int,
-                        idealdata@miss_val[1] + 1)
-    
-    browser()
+                        remove_list$discrete)
+
   this_data <- list(N=remove_list$N,
                     N_cont=remove_list$N_cont,
                     N_int=remove_list$N_int,
                     Y_int=remove_list$Y_int,
                     Y_cont=remove_list$Y_cont,
+                    y_int_miss=max(remove_list$Y_int),
+                    y_cont_miss=max(remove_list$Y_cont),
                     T=remove_list$max_t,
                     num_legis=remove_list$num_legis,
                     num_bills=remove_list$num_bills,
@@ -908,6 +918,8 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     tot_cats=length(cats$n_cats),
                     n_cats=cats$n_cats,
                     order_cats=cats$order_cats,
+                    num_bills_grm=ifelse(any(remove_list$modelpoints %in% c(5,6)),
+                                          remove_list$num_bills,0L),
                     LX=length(idealdata@person_cov),
                     SRX=length(idealdata@item_cov),
                     SAX=length(idealdata@item_cov_miss),
@@ -946,7 +958,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                                       persons=1L,
                                       items=2L))
 
-  idealdata <- id_model(object=idealdata,fixtype=fixtype,model_type=model_type,this_data=this_data,
+  idealdata <- id_model(object=idealdata,fixtype=fixtype,this_data=this_data,
                         nfix=nfix,restrict_ind_high=restrict_ind_high,
                         restrict_ind_low=restrict_ind_low,
                         ncores=ncores,
@@ -959,32 +971,38 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   
 
   
-  this_data <- list(N=length(Y),
-                    N_cont=N_cont,
-                    N_int=N_int,
-                    Y_int=Y_int,
-                    Y_cont=Y_cont,
-                    T=max_t,
-                    M_row=nrow(model_type_mat),
-                    num_legis=num_legis,
-                    num_bills=num_bills,
-                    ll=legispoints,
-                    bb=billpoints,
-                    mm=modelpoints,
+  this_data <- list(N=remove_list$N,
+                    N_cont=remove_list$N_cont,
+                    N_int=remove_list$N_int,
+                    Y_int=remove_list$Y_int,
+                    Y_cont=remove_list$Y_cont,
+                    y_int_miss=max(remove_list$Y_int),
+                    y_cont_miss=max(remove_list$Y_cont),
+                    T=remove_list$max_t,
+                    num_legis=remove_list$num_legis,
+                    num_bills=remove_list$num_bills,
+                    ll=remove_list$legispoints,
+                    bb=remove_list$billpoints,
+                    mm=remove_list$modelpoints,
+                    mod_count=length(unique(remove_list$modelpoints)),
+                    tot_cats=length(cats$n_cats),
+                    n_cats=cats$n_cats,
+                    order_cats=cats$order_cats,
+                    num_bills_grm=ifelse(any(remove_list$modelpoints %in% c(5,6)),
+                                          remove_list$num_bills,0L),
                     num_fix_high=as.integer(1),
                     num_fix_low=as.integer(1),
                     LX=length(idealdata@person_cov),
                     SRX=length(idealdata@item_cov),
                     SAX=length(idealdata@item_cov_miss),
                     legis_pred=as.matrix(select(idealdata@score_matrix,
-                                                idealdata@person_cov))[remove_nas,,drop=F],
+                                                idealdata@person_cov))[remove_list$remove_nas,,drop=F],
                     srx_pred=as.matrix(select(idealdata@score_matrix,
-                                              idealdata@item_cov))[remove_nas,,drop=F],
+                                              idealdata@item_cov))[remove_list$remove_nas,,drop=F],
                     sax_pred=as.matrix(select(idealdata@score_matrix,
-                                              idealdata@item_cov_miss))[remove_nas,,drop=F],
+                                              idealdata@item_cov_miss))[remove_list$remove_nas,,drop=F],
                     time=timepoints,
                     time_proc=vary_ideal_pts,
-                    model_type=model_type,
                     discrim_reg_sd=discrim_reg_sd,
                     discrim_abs_sd=discrim_miss_sd,
                     diff_reg_sd=diff_reg_sd,

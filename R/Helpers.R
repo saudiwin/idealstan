@@ -27,7 +27,7 @@
   }
 
   print("(First Step): Estimating model with variational inference to identify modes to constrain.")
-  
+
   post_modes <- rstan::vb(object=to_use,data =this_data,
                           algorithm='meanfield',
                           refresh=this_data$id_refresh,
@@ -51,7 +51,7 @@
     val_high <- person[restrict_ind_high]
     val_low <- person[restrict_ind_low]
   } else if(const_type=="items") {
-    items <- apply(this_params[,grepl(pattern = 'sigma_free',x=all_params)],2,mean)
+    items <- apply(this_params[,grepl(pattern = 'sigma_reg_free',x=all_params)],2,mean)
 
     restrict_ind_high <- which(items==max(items))[1]
     restrict_ind_low <- which(items==min(items))[1]
@@ -77,14 +77,14 @@
 .extract_samples <- function(obj=NULL,extract_type=NULL,...) {
   if(!is.null(extract_type)) {
     param <- switch(extract_type,persons='L_full',
-                    reg_discrim='sigma_reg_full',
-                    miss_discrim='sigma_abs_full',
-                    reg_diff='B_int_full',
-                    miss_diff='A_int_full',
-                    cutpoints='steps_votes')
-    rstan::extract(obj@stan_samples,pars=param,...)
+                    reg_discrim='sigma_reg_free',
+                    miss_discrim='sigma_abs_free',
+                    reg_diff='B_int_free',
+                    miss_diff='A_int_free',
+                    cutpoints='steps_votes3')
+    as.data.frame(obj@stan_samples,pars=param,...)
   } else {
-    rstan::extract(obj@stan_samples,...)
+    as.data.frame(obj@stan_samples,...)
   }
   
   
@@ -1352,23 +1352,15 @@ return(as.vector(idx))
 .count_cats <- function(modelpoints=NULL,
                         billpoints=NULL,
                         Y_int=NULL,
-                        joint_posterior=NULL) {
-  
-
+                        discrete=NULL) {
   
   if(length(Y_int)>1 && any(unique(modelpoints) %in% c(3,4,5,6))) {
     
-    if(is.null(joint_posterior)) {
-      joint_posterior <- max(Y_int) + 1
-    }
-    
     # count cats for ordinal models 
     
-    get_counts <- group_by(tibble(modelpoints,
-                                  billpoints,
+    get_counts <- group_by(tibble(modelpoints=modelpoints[discrete==1],
+                                  billpoints=billpoints[discrete==1],
                                   Y_int),billpoints) %>% 
-      filter(modelpoints %in% c(3,4,5,6),
-             Y_int<joint_posterior) %>% 
       group_by(modelpoints,billpoints) %>% 
       summarize(num_cats=length(unique(Y_int))) %>% 
       mutate(num_cats=if_else(modelpoints %in% c(3,5) & num_cats<3,
@@ -1381,10 +1373,14 @@ return(as.vector(idx))
     
     num_cats <- sort(unique(get_counts$num_cats))
     
+    # need to zero out non-present categories
+    
+    n_cats <- ifelse(3:10 %in% num_cats,3:10,1L)
+    
     # join the data back together
     
-    out_data <- left_join(tibble(modelpoints,
-                                 billpoints,
+    out_data <- left_join(tibble(modelpoints=modelpoints[discrete==1],
+                                 billpoints=billpoints[discrete==1],
                                  Y_int),
                           select(get_counts,
                                    -num_cats),
@@ -1394,12 +1390,12 @@ return(as.vector(idx))
     
   } else {
     
-    order_cats <- rep(0L,length(modelpoints))
-    n_cats <- 0L
+    out_data <- tibble(order_cats=rep(0L,length(modelpoints[discrete==1])))
+    n_cats <- rep(1L,length(3:10))
     
   }
-  return(list(order_cats=order_cats,
-              n_cats=0L))
+  return(list(order_cats=out_data$order_cats,
+              n_cats=n_cats))
 }
 
 #' Function to figure out how to remove missing values from
@@ -1407,6 +1403,7 @@ return(as.vector(idx))
 #' @noRd
 .remove_nas <- function(Y_int=NULL,
                         Y_cont=NULL,
+                        discrete=NULL,
                         legispoints=NULL,
                         billpoints=NULL,
                         timepoints=NULL,
@@ -1415,42 +1412,54 @@ return(as.vector(idx))
   
   
   # need to determine which missing values should not be considered
+  # only remove missing values if non-inflated model is used
 
-  skip_cont <- !(modelpoints %in% c(7,8,9,10,11,12))
-  skip_disc <- modelpoints %in% c(7,8,9,10,11,12)
-  
   if(length(Y_cont)>1 && !is.na(idealdata@miss_val[2])) {
-    Y_cont[!skip_cont] <- .na_if(Y_cont[!skip_cont],idealdata@miss_val[2])
+    Y_cont <- ifelse(modelpoints[discrete==0] %in% c(10,12),
+                      Y_cont,
+                      .na_if(Y_cont,idealdata@miss_val[2]))
   }
   
   if(length(Y_int)>1 && !is.na(idealdata@miss_val[1])) {
-    Y_int <- .na_if(Y_int,idealdata@miss_val[1])
+    Y_int <- ifelse(modelpoints[discrete==1] %in% c(2,
+                                       4,
+                                       6,
+                                       8,
+                                       14),
+                    Y_int,
+                    .na_if(Y_int,idealdata@miss_val[1]))
   }
   
   # now need to calculate the true remove NAs
   
-  remove_nas <- !is.na(Y_cont) | !is.na(Y_int)
+  remove_nas_cont <- !is.na(Y_cont)
+  remove_nas_int <- !is.na(Y_int)
+  
+  # this works because the data were sorted in id_make
+  remove_nas <- c(remove_nas_int,
+                  remove_nas_cont)
   
   if(length(Y_cont)>1) {
-    Y_cont <- Y_cont[remove_nas]
+    Y_cont <- Y_cont[remove_nas_cont]
     N_cont <- length(Y_cont)
-    N <- N_cont
   } else {
     N_cont <- array(0)
   }
   
   if(length(Y_int)>1) {
-    Y_int <- Y_int[remove_nas]
+    Y_int <- Y_int[remove_nas_int]
     N_int <- length(Y_int)
-    N <- N_int
   } else {
     N_int <- array(0L)
   }
+  
+  N <- as.integer(N_int + N_cont)
   
   legispoints <- legispoints[remove_nas]
   billpoints <- billpoints[remove_nas]
   timepoints <- timepoints[remove_nas]
   modelpoints <- modelpoints[remove_nas]
+  discrete <- discrete[remove_nas]
   
   max_t <- max(timepoints,na.rm=T)
   num_bills <- max(billpoints,na.rm=T)
@@ -1462,6 +1471,13 @@ return(as.vector(idx))
     stop("Too many values in score matrix for a binary model. Choose a different model_type.")
   }
   
+  # Need to recode Y_int to adjust binary responses (should be 0/1)
+    Y_int <- as.numeric(Y_int)
+
+    Y_int[modelpoints[discrete==1] %in% c(1,2)] <- if_else(Y_int[modelpoints[discrete==1] %in% c(1,2)] %in% c(1,2),
+                                              Y_int[modelpoints[discrete==1]  %in% c(1,2)] - 1L,
+                                              Y_int[modelpoints[discrete==1]  %in% c(1,2)])
+  
   return(list(Y_int=Y_int,
               Y_cont=Y_cont,
               legispoints=legispoints,
@@ -1470,6 +1486,7 @@ return(as.vector(idx))
               modelpoints=modelpoints,
               remove_nas=remove_nas,
               N=N,
+              discrete=discrete,
               max_t=max_t,
               num_bills=num_bills,
               num_legis=num_legis,

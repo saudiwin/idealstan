@@ -6,37 +6,34 @@ functions {
 #include /chunks/jacobians.stan
 #include /chunks/calc_rlnorm_gp.stan
 #include /chunks/id_params.stan
+#include /chunks/r_in.stan
 }
 
 data {
-  int N;
+  int N; // total number of observations
   int N_int; // if outcome is an integer
   int N_cont; // if outcome is continuous
-  int T;
+  int T; // number of time points
   int Y_int[N_int]; // integer outcome
   real Y_cont[N_cont]; // continuous outcome
-
-  /* Use this to set the type of IRT Model to run
-  1= basic IRT 2 Pl (no inflation)
-  2= basic IRT 2 PL (with inflation)
-  3 = ratingscale IRT (no inflation)
-  4= ratingscale IRT (with inflation)
-  5 = grm IRT (no inflation)
-  6= grm IRT (with inflation)
-  7= ZIP IRT
-  */
-  int model_type;
-  int LX;
-  int SRX;
-  int SAX;
+  int y_int_miss; // missing value for integers
+  real y_cont_miss; // missing value for continuous data
+  int LX; // legislator/person covariates
+  int SRX; // observed item predictors
+  int SAX; // missing item predictors
   int<lower=1> num_legis;
   int<lower=1> num_bills;
-  int ll[N];
-  int bb[N];
-  int time[N];
+  int ll[N]; // persons/legislators id
+  int bb[N]; // items/bills id
+  int time[N]; // time point id
+  int mm[N]; // model counter id
   matrix[N,LX] legis_pred;
   matrix[N,SRX] srx_pred;
   matrix[N,SAX] sax_pred;
+  int mod_count; // total number of models
+  int tot_cats; // total number of possible ordinal outcomes
+  int n_cats[tot_cats]; // how many outcomes per outcome size int he data
+  int order_cats[N_int]; // indicator for whether an observation comes from a certain ordinal model
   int const_type; // whether to constrain persons (1) or item discriminations (2)
   int restrict_high; // position of high valued fixed parameter
   int restrict_low; // position of low valued fixed parameter
@@ -52,11 +49,11 @@ data {
   real ar_sd;
   int sample_stationary;
   real time_sd;
-  int restrict_var;
-  real restrict_var_high;
-  real restrict_mean_val[2];
-  int restrict_mean_ind[8];
-  int restrict_mean;
+  //int restrict_var;
+  //real restrict_var_high;
+  //real restrict_mean_val[2];
+  //int restrict_mean_ind[8];
+  //int restrict_mean;
   int time_proc;
   real time_ind[T]; // the actual indices/values of time points, used for Gaussian processes
   int zeroes; // whether to use traditional zero-inflation for bernoulli and poisson models
@@ -73,8 +70,8 @@ transformed data {
 	int absence[N]; // need to create absence indicator
 	int num_constrain_l;
 	int Y_new[N];
-	int num_var_free; // whether to restrict variance parameters
-	int num_var_restrict;
+	//int num_var_free; // whether to restrict variance parameters
+	//int num_var_restrict;
 	real num_legis_real; // used to adjust jacobian for mean restriction
 	int num_ls; // extra person params for latent space
 	int gp_N; // use for creating zero-length arrays if gp not used
@@ -83,6 +80,7 @@ transformed data {
 	int gp_nT; // used to make L_tp1 go to model block if GPs are used
 	int gp_oT; // used to make L_tp1 go to model block if GPs are used
 	vector[1] gp_length; 
+	int num_bills_grm;
 	
 	// set mean of log-normal distribution for GP length-scale prior
 	
@@ -112,28 +110,37 @@ transformed data {
 	// need to assign a type of outcome to Y based on the model (discrete or continuous)
 	// to do this we need to trick Stan into assigning to an integer. 
 	
-#include /chunks/change_outcome.stan
+//#include /chunks/change_outcome.stan
 	
   //determine how many and which parameters to constrain
 #include /chunks/create_constrained.stan
 
 // determine whether to restrict variance or not
 
-if(restrict_var==1) {
-  num_var_restrict=num_legis;
-  num_var_free=0;
-} else {
-  num_var_restrict=0;
-  num_var_free=num_legis;
-}
+// if(restrict_var==1) {
+//   num_var_restrict=num_legis;
+//   num_var_free=0;
+// } else {
+//   num_var_restrict=0;
+//   num_var_free=num_legis;
+// }
 
   num_legis_real = num_legis; // promote N to type real
   
-  if(model_type==13) {
+  // do we have a latent space model?
+  if(r_in(13,mm)==1 || r_in(14,mm)==1) {
     num_ls=num_legis;
   } else {
     num_ls=0;
   }
+  
+  // check if there are GRM models
+  
+  if(r_in(5,mm)==1 || r_in(6,mm)==1) {
+    num_bills_grm = num_bills;
+    } else {
+      num_bills_grm = 0;
+    }
   
 }
 
@@ -153,8 +160,22 @@ parameters {
   vector[SAX] sigma_abs_x;
   vector[num_bills] B_int_free;
   vector[num_bills] A_int_free;
-  ordered[m_step-1] steps_votes;
-  ordered[m_step-1] steps_votes_grm[num_bills];
+  ordered[n_cats[1]-1] steps_votes3;
+  ordered[n_cats[2]-1] steps_votes4;
+  ordered[n_cats[3]-1] steps_votes5;
+  ordered[n_cats[4]-1] steps_votes6;
+  ordered[n_cats[5]-1] steps_votes7;
+  ordered[n_cats[6]-1] steps_votes8;
+  ordered[n_cats[7]-1] steps_votes9;
+  ordered[n_cats[8]-1] steps_votes10;
+  ordered[n_cats[1]-1] steps_votes_grm3[num_bills_grm];
+  ordered[n_cats[2]-1] steps_votes_grm4[num_bills_grm];
+  ordered[n_cats[3]-1] steps_votes_grm5[num_bills_grm];
+  ordered[n_cats[4]-1] steps_votes_grm6[num_bills_grm];
+  ordered[n_cats[5]-1] steps_votes_grm7[num_bills_grm];
+  ordered[n_cats[6]-1] steps_votes_grm8[num_bills_grm];
+  ordered[n_cats[7]-1] steps_votes_grm9[num_bills_grm];
+  ordered[n_cats[8]-1] steps_votes_grm10[num_bills_grm];
   real<lower=0> extra_sd;
   //real<lower=-.9,upper=.9> ar_fix;
   vector[gp_N_fix] time_var_gp_free;
@@ -205,9 +226,7 @@ transformed parameters {
 }
 
 model {
-  //vectors to hold model calculations
-  vector[N] pi1;
-  vector[N] pi2;
+  
   legis_x ~ normal(0,5);
   sigma_abs_x ~ normal(0,5);
   sigma_reg_x ~ normal(0,5);
@@ -216,13 +235,7 @@ model {
   m_sd_free ~ normal(0,2);
   L_AR1 ~ normal(0,ar_sd);
 
-  if(model_type>2 && model_type<5) {
-     for(i in 1:(m_step-2)) {
-    steps_votes[i+1] - steps_votes[i] ~ normal(0,5);
-  }
-  } else {
-    steps_votes ~ normal(0,5);
-  }
+#include /chunks/ord_steps_calc.stan  
   
   if(time_proc==4) {
     {
@@ -255,23 +268,12 @@ for(n in 1:num_legis) {
   A_int_free ~ normal(0,diff_abs_sd);
   //m_sd_free ~ inv_gamma(m_sd_par[2],1); // tight prior on GP marginal standard deviation ("bumps")
   
-  //exog_param ~ normal(0,5);
-  for(b in 1:num_bills) {
-  steps_votes_grm[b] ~ normal(0,5);
-  }
-  
 
   time_var_free ~ normal(0,1); // tight-ish prior on additional variances
   time_var_gp_free ~ normal(0,1); // tight-ish prior on additional variances
   
 
 // add correction for time-series models
-
-// if(T>1 && restrict_mean==1) {
-//   //additional restriction if GP fit is used
-//     (L_tp1[restrict_mean_ind[1],restrict_mean_ind[2]] - L_tp1[restrict_mean_ind[5],restrict_mean_ind[6]]) ~ normal(restrict_mean_val[1],.01);
-//     (L_tp1[restrict_mean_ind[3],restrict_mean_ind[4]] - L_tp1[restrict_mean_ind[7],restrict_mean_ind[8]]) ~ normal(restrict_mean_val[2],.01);
-// }
   
 
   //priors for legislators and bill parameters
@@ -279,7 +281,7 @@ for(n in 1:num_legis) {
 
   //all model types
 
-#include /chunks/model_types.stan
+#include /chunks/model_types_mm.stan
 
 }
 generated quantities {
