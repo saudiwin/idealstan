@@ -5,6 +5,7 @@ functions {
 #include /chunks/stationary_functions.stan
 #include /chunks/calc_rlnorm_gp.stan
 #include /chunks/r_in.stan
+#include /chunks/map_rect.stan
 }
 
 data {

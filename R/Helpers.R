@@ -1589,4 +1589,11 @@ return(as.vector(idx))
   return(cutp)
 }
 
- 
+#' Function to square data for map_rect
+#' @noRd
+.pad_data <- function(this_data) {
+  
+  browser()
+  
+  
+}

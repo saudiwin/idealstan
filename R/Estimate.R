@@ -589,6 +589,15 @@ id_make <- function(score_data=NULL,
 #' To use correctly, the value for 
 #' zero must be passed as the \code{miss_val} option to \code{\link{id_make}} before
 #' running a model so that zeroes are coded as missing data.
+#' @param within_chain This parameter determines whether Stan's within-chain
+#' parallelization scheme is used for estimation. The parameter can take three values:
+#' \code{"none"} for no within-chain parallelization,
+#' \code{"threads"} for shared-memory parallelization,
+#' and \code{"mpi"} for using the MPI library for 
+#' parallelization (this requires sampling in \code{cmdstan},
+#' see vignette for details). Generally speaking, \code{"mpi"} is
+#' more efficient parallelization that can be used on computer
+#' clusters to estimate very large models.
 #' @param vary_ideal_pts Default \code{'none'}. If \code{'random_walk'}, \code{'AR1'} or 
 #' \code{'GP'}, a 
 #' time-varying ideal point model will be fit with either a random-walk process, an 
@@ -613,7 +622,9 @@ id_make <- function(score_data=NULL,
 #' @param warmup The number of iterations to use to calibrate Stan's sampler on a given model. Shouldn't be less than 100. 
 #' See \code{\link[rstan]{stan}} for more info.
 #' @param ncores The number of cores in your computer to use for parallel processing in the Stan engine. 
-#' See \code{\link[rstan]{stan}} for more info.
+#' See \code{\link[rstan]{stan}} for more info. If \code{within_chain} is set to
+#' \code{"threads"}, this parameter will determine the number of threads 
+#' (independent processes) used for within-chain parallelization.
 #' @param fixtype Sets the particular kind of identification used on the model, could be either 'vb_full' 
 #' (identification provided exclusively by running a variational identification model with no prior info), or
 #' 'prefix' (two indices of ideal points or items to fix are provided to 
@@ -759,6 +770,7 @@ id_make <- function(score_data=NULL,
 id_estimate <- function(idealdata=NULL,model_type=2,
                         inflate_zero=FALSE,
                         vary_ideal_pts='none',
+                        map_rect="none",
                         use_subset=FALSE,sample_it=FALSE,
                            subset_group=NULL,subset_person=NULL,sample_size=20,
                            nchains=4,niters=2000,use_vb=FALSE,
@@ -848,6 +860,15 @@ id_estimate <- function(idealdata=NULL,model_type=2,
            integers. Please pass a numeric value in the id_make function
            for model_id based on the available model types.")
     }
+  }
+  
+  # need to create new data if map_rect is in operation 
+  # and we have missing values / ragged arrays
+  
+  if(within_chain %in% c("threads","mpi")) {
+    
+    idealdata@score_matrix <- .pad_data(idealdata@score_matrix)
+    
   }
 
   billpoints <- as.numeric(idealdata@score_matrix$item_id)
