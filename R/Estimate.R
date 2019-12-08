@@ -598,6 +598,10 @@ id_make <- function(score_data=NULL,
 #' see vignette for details). Generally speaking, \code{"mpi"} is
 #' more efficient parallelization that can be used on computer
 #' clusters to estimate very large models.
+#' @param map_over_id This parameter identifies which ID variable to use to construct the 
+#' shards for within-chain parallelization. It defaults to \code{"persons"} but can also take
+#' a value of \code{"items"}. It is recommended to select whichever variable has more
+#' distinct values to improve parallelization.
 #' @param vary_ideal_pts Default \code{'none'}. If \code{'random_walk'}, \code{'AR1'} or 
 #' \code{'GP'}, a 
 #' time-varying ideal point model will be fit with either a random-walk process, an 
@@ -770,7 +774,8 @@ id_make <- function(score_data=NULL,
 id_estimate <- function(idealdata=NULL,model_type=2,
                         inflate_zero=FALSE,
                         vary_ideal_pts='none',
-                        map_rect="none",
+                        within_chain="none",
+                        map_over_id='persons',
                         use_subset=FALSE,sample_it=FALSE,
                            subset_group=NULL,subset_person=NULL,sample_size=20,
                            nchains=4,niters=2000,use_vb=FALSE,
@@ -838,14 +843,6 @@ id_estimate <- function(idealdata=NULL,model_type=2,
     # use real time points instead of just counting number of points
     gp_num_diff[1] <- mean(as.numeric(idealdata@score_matrix$time_id))*gp_num_diff[1]
   }
-    
-  # use either row numbers for person/legislator IDs or use group IDs (static or time-varying)
-      
-  if(use_groups==T) {
-    legispoints <- as.numeric(idealdata@score_matrix$group_id)
-  } else {
-    legispoints <- as.numeric(idealdata@score_matrix$person_id)
-  }
   
   # check if varying model IDs exist and replace with model type
   # if not
@@ -853,6 +850,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   if(idealdata@score_matrix$model_id[1]=="missing") {
     
     idealdata@score_matrix$model_id <- model_type
+    idealdata@score_matrix$discrete <- as.numeric(model_type %in% c(1,2,3,4,5,6,7,8,13,14))
     
   } else {
     if(!is.numeric(idealdata@score_matrix$model_id)) {
@@ -869,6 +867,16 @@ id_estimate <- function(idealdata=NULL,model_type=2,
     
     idealdata@score_matrix <- .pad_data(idealdata@score_matrix)
     
+  } else {
+    idealdata@score_matrix$pad_id <- 1
+  }
+  
+  # use either row numbers for person/legislator IDs or use group IDs (static or time-varying)
+  
+  if(use_groups==T) {
+    legispoints <- as.numeric(idealdata@score_matrix$group_id)
+  } else {
+    legispoints <- as.numeric(idealdata@score_matrix$person_id)
   }
 
   billpoints <- as.numeric(idealdata@score_matrix$item_id)
@@ -887,17 +895,32 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   if(gp_min_length>=gp_num_diff[1]) {
     stop('The parameter gp_min_length cannot be equal to or greater than gp_num_diff[1].')
   }
-
-  if(("outcome_cont" %in% names(idealdata@score_matrix)) && ("outcome_disc" %in% names(idealdata@score_matrix))) {
-    Y_int <- idealdata@score_matrix$outcome_disc[idealdata@score_matrix$discrete==1]
-    Y_cont <- idealdata@score_matrix$outcome_cont[idealdata@score_matrix$discrete==0]
-  } else if ("outcome_cont" %in% names(idealdata@score_matrix)) {
-    Y_int <- array(0)
-    Y_cont <- idealdata@score_matrix$outcome_cont[idealdata@score_matrix$discrete==0]
+  if(within_chain=="none") {
+    if(("outcome_cont" %in% names(idealdata@score_matrix)) && ("outcome_disc" %in% names(idealdata@score_matrix))) {
+      Y_int <- idealdata@score_matrix$outcome_disc[idealdata@score_matrix$discrete==1]
+      Y_cont <- idealdata@score_matrix$outcome_cont[idealdata@score_matrix$discrete==0]
+    } else if ("outcome_cont" %in% names(idealdata@score_matrix)) {
+      Y_int <- array(0)
+      Y_cont <- idealdata@score_matrix$outcome_cont[idealdata@score_matrix$discrete==0]
+    } else {
+      Y_cont <- array(0)
+      Y_int <- idealdata@score_matrix$outcome_disc[idealdata@score_matrix$discrete==1]
+    }
   } else {
-    Y_cont <- array(0)
-    Y_int <- idealdata@score_matrix$outcome_disc[idealdata@score_matrix$discrete==1]
+    # we don't want Y_int or Y_cont to be shorter than the overall data
+    # the pad_id can take care of situations where one or the other doesn't exist
+    if(("outcome_cont" %in% names(idealdata@score_matrix)) && ("outcome_disc" %in% names(idealdata@score_matrix))) {
+      Y_int <- idealdata@score_matrix$outcome_disc
+      Y_cont <- idealdata@score_matrix$outcome_cont
+    } else if ("outcome_cont" %in% names(idealdata@score_matrix)) {
+      Y_int <- array(0)
+      Y_cont <- idealdata@score_matrix$outcome_cont
+    } else {
+      Y_cont <- array(0)
+      Y_int <- idealdata@score_matrix$outcome_disc
+    }
   }
+  
   
   #Remove NA values, which should have been coded correctly in the make_idealdata function
   
@@ -906,19 +929,15 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   # set values for length of discrete/continuous outcomes  
     remove_list <- .remove_nas(Y_int,
                                Y_cont,
+                               pad_id=idealdata@score_matrix$pad_id,
+                               within_chain=within_chain,
+                               map_over_id=map_over_id,
                                discrete=idealdata@score_matrix$discrete,
                                legispoints,
                                billpoints,
                                timepoints,
                                modelpoints,
                                idealdata)
-    
-    # need to calculate number of categories for ordinal models
-    
-    cats <- .count_cats(remove_list$modelpoints,
-                                      remove_list$billpoints,
-                                      remove_list$Y_int,
-                        remove_list$discrete)
 
   this_data <- list(N=remove_list$N,
                     N_cont=remove_list$N_cont,
@@ -927,6 +946,14 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     Y_cont=remove_list$Y_cont,
                     y_int_miss=max(remove_list$Y_int),
                     y_cont_miss=max(remove_list$Y_cont),
+                    S=dim(remove_list$all_int_array)[2],
+                    S_int=dim(remove_list$all_int_array)[1],
+                    S_cont=dim(remove_list$to_shards_cont_array)[1],
+                    S_type=as.numeric(map_over_id=="persons"),
+                    int_shards=remove_list$all_int_array,
+                    cont_shards=remove_list$to_shards_cont_array,
+                    pad_id=remove_list$pad_id,
+                    within_chain=as.numeric(within_chain!="none"),
                     T=remove_list$max_t,
                     num_legis=remove_list$num_legis,
                     num_bills=remove_list$num_bills,
@@ -936,9 +963,9 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     mod_count=length(unique(remove_list$modelpoints)),
                     num_fix_high=as.integer(1),
                     num_fix_low=as.integer(1),
-                    tot_cats=length(cats$n_cats),
-                    n_cats=cats$n_cats,
-                    order_cats=cats$order_cats,
+                    tot_cats=length(remove_list$n_cats),
+                    n_cats=remove_list$n_cats,
+                    order_cats=remove_list$order_cats,
                     num_bills_grm=ifelse(any(remove_list$modelpoints %in% c(5,6)),
                                           remove_list$num_bills,0L),
                     LX=length(idealdata@person_cov),
@@ -999,6 +1026,14 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     Y_cont=remove_list$Y_cont,
                     y_int_miss=max(remove_list$Y_int),
                     y_cont_miss=max(remove_list$Y_cont),
+                    S=dim(remove_list$all_int_array)[2],
+                    S_int=dim(remove_list$all_int_array)[1],
+                    S_cont=dim(remove_list$to_shards_cont_array)[1],
+                    S_type=as.numeric(map_over_id=="persons"),
+                    int_shards=remove_list$all_int_array,
+                    cont_shards=remove_list$to_shards_cont_array,
+                    pad_id=remove_list$pad_id,
+                    within_chain=as.numeric(within_chain!="none"),
                     T=remove_list$max_t,
                     num_legis=remove_list$num_legis,
                     num_bills=remove_list$num_bills,
@@ -1006,9 +1041,9 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     bb=remove_list$billpoints,
                     mm=remove_list$modelpoints,
                     mod_count=length(unique(remove_list$modelpoints)),
-                    tot_cats=length(cats$n_cats),
-                    n_cats=cats$n_cats,
-                    order_cats=cats$order_cats,
+                    tot_cats=length(remove_list$n_cats),
+                    n_cats=remove_list$n_cats,
+                    order_cats=remove_list$order_cats,
                     num_bills_grm=ifelse(any(remove_list$modelpoints %in% c(5,6)),
                                           remove_list$num_bills,0L),
                     num_fix_high=as.integer(1),

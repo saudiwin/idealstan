@@ -16,6 +16,8 @@ data {
   int T; // number of time points
   int Y_int[N_int]; // integer outcome
   real Y_cont[N_cont]; // continuous outcome
+  int pad_id[N]; // values padded for map_rect
+  int within_chain; // whether to use map_rect
   int y_int_miss; // missing value for integers
   real y_cont_miss; // missing value for continuous data
   int LX; // legislator/person covariates

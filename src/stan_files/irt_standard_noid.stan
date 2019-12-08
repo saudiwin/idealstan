@@ -14,9 +14,16 @@ data {
   int N_cont; // if outcome is continuous
   int T; // number of time points
   int Y_int[N_int]; // integer outcome
+  int within_chain; // whether to use map_rect
   real Y_cont[N_cont]; // continuous outcome
   int y_int_miss; // missing value for integers
   real y_cont_miss; // missing value for continuous data
+  int S; // number of shards
+  int S_int; // shard length for integers
+  int S_cont; // shard length for reals
+  int S_type; // whether shards are based on persons or items
+  int int_shards[S,S_int]; // integer shards
+  int cont_shards[S,S_cont]; // real shards
   int LX; // legislator/person covariates
   int SRX; // observed item predictors
   int SAX; // missing item predictors
