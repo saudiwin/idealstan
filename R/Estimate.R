@@ -938,17 +938,17 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                                timepoints,
                                modelpoints,
                                idealdata)
-
+    
   this_data <- list(N=remove_list$N,
                     N_cont=remove_list$N_cont,
                     N_int=remove_list$N_int,
                     Y_int=remove_list$Y_int,
                     Y_cont=remove_list$Y_cont,
-                    y_int_miss=max(remove_list$Y_int),
-                    y_cont_miss=max(remove_list$Y_cont),
-                    S=dim(remove_list$all_int_array)[2],
-                    S_int=dim(remove_list$all_int_array)[1],
-                    S_cont=dim(remove_list$to_shards_cont_array)[1],
+                    y_int_miss=remove_list$y_int_miss,
+                    y_cont_miss=remove_list$y_cont_miss,
+                    S=dim(remove_list$all_int_array)[1],
+                    S_int=dim(remove_list$all_int_array)[2],
+                    S_cont=dim(remove_list$to_shards_cont_array)[2],
                     S_type=as.numeric(map_over_id=="persons"),
                     int_shards=remove_list$all_int_array,
                     cont_shards=remove_list$to_shards_cont_array,
@@ -957,26 +957,27 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     T=remove_list$max_t,
                     num_legis=remove_list$num_legis,
                     num_bills=remove_list$num_bills,
+                    num_ls=remove_list$num_ls,
+                    num_bills_grm=remove_list$num_bills_grm,
                     ll=remove_list$legispoints,
                     bb=remove_list$billpoints,
                     mm=remove_list$modelpoints,
                     mod_count=length(unique(remove_list$modelpoints)),
                     num_fix_high=as.integer(1),
                     num_fix_low=as.integer(1),
-                    tot_cats=length(remove_list$n_cats),
-                    n_cats=remove_list$n_cats,
-                    order_cats=remove_list$order_cats,
+                    tot_cats=length(remove_list$n_cats_rat),
+                    n_cats_rat=remove_list$n_cats_rat,
+                    n_cats_grm=remove_list$n_cats_grm,
+                    order_cats_rat=remove_list$order_cats_rat,
+                    order_cats_grm=remove_list$order_cats_grm,
                     num_bills_grm=ifelse(any(remove_list$modelpoints %in% c(5,6)),
                                           remove_list$num_bills,0L),
-                    LX=length(idealdata@person_cov),
-                    SRX=length(idealdata@item_cov),
-                    SAX=length(idealdata@item_cov_miss),
-                    legis_pred=as.matrix(select(idealdata@score_matrix,
-                                                idealdata@person_cov))[remove_list$remove_nas,,drop=F],
-                    srx_pred=as.matrix(select(idealdata@score_matrix,
-                                              idealdata@item_cov))[remove_list$remove_nas,,drop=F],
-                    sax_pred=as.matrix(select(idealdata@score_matrix,
-                                              idealdata@item_cov_miss))[remove_list$remove_nas,,drop=F],
+                    LX=remove_list$LX,
+                    SRX=remove_list$SRX,
+                    SAX=remove_list$SAX,
+                    legis_pred=remove_list$legis_pred,
+                    srx_pred=remove_list$srx_pred,
+                    sax_pred=remove_list$sax_pred,
                     time=remove_list$timepoints,
                     discrim_reg_sd=discrim_reg_sd,
                     discrim_abs_sd=discrim_miss_sd,
@@ -1024,11 +1025,11 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     N_int=remove_list$N_int,
                     Y_int=remove_list$Y_int,
                     Y_cont=remove_list$Y_cont,
-                    y_int_miss=max(remove_list$Y_int),
-                    y_cont_miss=max(remove_list$Y_cont),
-                    S=dim(remove_list$all_int_array)[2],
-                    S_int=dim(remove_list$all_int_array)[1],
-                    S_cont=dim(remove_list$to_shards_cont_array)[1],
+                    y_int_miss=remove_list$y_int_miss,
+                    y_cont_miss=remove_list$y_cont_miss,
+                    S=dim(remove_list$all_int_array)[1],
+                    S_int=dim(remove_list$all_int_array)[2],
+                    S_cont=dim(remove_list$to_shards_cont_array)[2],
                     S_type=as.numeric(map_over_id=="persons"),
                     int_shards=remove_list$all_int_array,
                     cont_shards=remove_list$to_shards_cont_array,
@@ -1037,27 +1038,28 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     T=remove_list$max_t,
                     num_legis=remove_list$num_legis,
                     num_bills=remove_list$num_bills,
+                    num_ls=remove_list$num_ls,
+                    num_bills_grm=remove_list$num_bills_grm,
                     ll=remove_list$legispoints,
                     bb=remove_list$billpoints,
                     mm=remove_list$modelpoints,
                     mod_count=length(unique(remove_list$modelpoints)),
-                    tot_cats=length(remove_list$n_cats),
-                    n_cats=remove_list$n_cats,
-                    order_cats=remove_list$order_cats,
-                    num_bills_grm=ifelse(any(remove_list$modelpoints %in% c(5,6)),
-                                          remove_list$num_bills,0L),
                     num_fix_high=as.integer(1),
                     num_fix_low=as.integer(1),
-                    LX=length(idealdata@person_cov),
-                    SRX=length(idealdata@item_cov),
-                    SAX=length(idealdata@item_cov_miss),
-                    legis_pred=as.matrix(select(idealdata@score_matrix,
-                                                idealdata@person_cov))[remove_list$remove_nas,,drop=F],
-                    srx_pred=as.matrix(select(idealdata@score_matrix,
-                                              idealdata@item_cov))[remove_list$remove_nas,,drop=F],
-                    sax_pred=as.matrix(select(idealdata@score_matrix,
-                                              idealdata@item_cov_miss))[remove_list$remove_nas,,drop=F],
-                    time=timepoints,
+                    tot_cats=length(remove_list$n_cats_rat),
+                    n_cats_rat=remove_list$n_cats_rat,
+                    n_cats_grm=remove_list$n_cats_grm,
+                    order_cats_rat=remove_list$order_cats_rat,
+                    order_cats_grm=remove_list$order_cats_grm,
+                    num_bills_grm=ifelse(any(remove_list$modelpoints %in% c(5,6)),
+                                         remove_list$num_bills,0L),
+                    LX=remove_list$LX,
+                    SRX=remove_list$SRX,
+                    SAX=remove_list$SAX,
+                    legis_pred=remove_list$legis_pred,
+                    srx_pred=remove_list$srx_pred,
+                    sax_pred=remove_list$sax_pred,
+                    time=remove_list$timepoints,
                     time_proc=vary_ideal_pts,
                     discrim_reg_sd=discrim_reg_sd,
                     discrim_abs_sd=discrim_miss_sd,
@@ -1087,11 +1089,44 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     restrict_low=idealdata@restrict_ind_low,
                     fix_high=idealdata@restrict_num_high,
                     fix_low=idealdata@restrict_num_low)
+  
+  # need to check for the type of parallelization
+  
+  if(within_chain=="threads") {
+    Sys.setenv(STAN_NUM_THREADS = ncores)
+    ncores <- 1
+    
+    # check to make sure they have the compile flags set right 
+    
+    check_R_setup <- try(readLines("~/.R/Makevars"))
+    
+    if("try-error" %in% check_R_setup) {
+      warning("You do not seem to have a Makevars file set up in the .R directory in your user home folder.\n
+              This may prevent within-chain parallelization from working correctly if an appropriate 
+              Makevars file did not exist when idealstan was installed (compiled).")
+    } else if(all(!grepl(x=check_R_setup,pattern="DSTAN_THREADS"))) {
+      warning("You do not seem to have the right flags set in your ~/.R/Makevars file. Consider adding the\n
+              following before installing idealstan to ensure that within-chain parallelization with\n
+              threading will work: CXX14FLAGS += -DSTAN_THREADS.")
+    }
+    
+    outobj <- sample_model(object=idealdata,nchains=nchains,niters=niters,warmup=warmup,ncores=ncores,
+                           this_data=this_data,use_vb=use_vb,
+                           tol_rel_obj=tol_rel_obj,
+                           ...)
+    
+  } else if(within_chain=="mpi") {
+    
+    # we can't do mpi natively, so let's export to cmdstan to run on a cluster
+    
+  } else {
+    outobj <- sample_model(object=idealdata,nchains=nchains,niters=niters,warmup=warmup,ncores=ncores,
+                           this_data=this_data,use_vb=use_vb,
+                           tol_rel_obj=tol_rel_obj,
+                           ...)
+  }
 
-  outobj <- sample_model(object=idealdata,nchains=nchains,niters=niters,warmup=warmup,ncores=ncores,
-                         this_data=this_data,use_vb=use_vb,
-                         tol_rel_obj=tol_rel_obj,
-                         ...)
+  
   
   outobj@model_type <- model_type
   outobj@time_proc <- vary_ideal_pts

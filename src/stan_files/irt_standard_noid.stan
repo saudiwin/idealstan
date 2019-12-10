@@ -23,12 +23,14 @@ data {
   int S_cont; // shard length for reals
   int S_type; // whether shards are based on persons or items
   int int_shards[S,S_int]; // integer shards
-  int cont_shards[S,S_cont]; // real shards
+  real cont_shards[S,S_cont]; // real shards
   int LX; // legislator/person covariates
   int SRX; // observed item predictors
   int SAX; // missing item predictors
   int<lower=1> num_legis;
   int<lower=1> num_bills;
+  int num_bills_grm;
+  int num_ls;
   int ll[N]; // persons/legislators id
   int bb[N]; // items/bills id
   int time[N]; // time point id
@@ -38,8 +40,10 @@ data {
   matrix[N,SAX] sax_pred;
   int mod_count; // total number of models
   int tot_cats; // total number of possible ordinal outcomes
-  int n_cats[tot_cats]; // how many outcomes per outcome size int he data
-  int order_cats[N_int]; // indicator for whether an observation comes from a certain ordinal model
+  int n_cats_rat[tot_cats]; // how many outcomes per outcome size int he data
+  int n_cats_grm[tot_cats]; // how many outcomes per outcome size int he data
+  int order_cats_rat[N_int]; // indicator for whether an observation comes from a certain ordinal model
+  int order_cats_grm[N_int]; // indicator for whether an observation comes from a certain ordinal model
   real discrim_reg_sd;
   real discrim_abs_sd;
   real legis_sd;
@@ -62,13 +66,13 @@ data {
 transformed data {
 	int m;                         // missing value
 	int m_step; // number of ordinal categories
-	int absence[N]; // need to create absence indicator
-	int Y_new[N];
+	int vP; // number of varying parameters per shard
+	int dP; // number of static parameters per shard
 	real m_cont;
 	int num_var_restrict;
 	int num_var_free;
-	int num_bills_grm;
-	int num_ls; // extra person params for latent space
+	//int num_bills_grm;
+	//int num_ls; // extra person params for latent space
 	int gp_N; // use for creating zero-length arrays if gp not used
 	int gp_N_fix;
 	int gp_1; // zero-length gp-related scalars
@@ -99,6 +103,23 @@ transformed data {
 	  gp_oT=0;
 	}
 	
+	if(within_chain==1) {
+	  if(S_type==1) {
+	    // if we map over people, then only one varying parameter per shard
+	    vP = 1*T;
+	    // include one extra for the extra_sd parameter
+	    dP = 4*num_bills + num_ls + (sum(n_cats_rat) - 8) + (sum(n_cats_grm) - 8)*num_bills_grm + LX + SRX + SAX + 1;
+	  } else {
+	    // 6 parameters for all item parameters
+	    vP = 4; 
+	    dP = num_legis*T + num_ls + (sum(n_cats_rat) - 8) + (sum(n_cats_grm) - 8)*num_bills_grm + LX + SRX + SAX + 1;
+	  }
+	  
+	} else {
+	  vP = 0;
+	  dP = 0;
+	}
+	
 	// need to assign a type of outcome to Y based on the model (discrete or continuous)
 	// to do this we need to trick Stan into assigning to an integer. 
 	
@@ -116,21 +137,6 @@ transformed data {
 //   num_var_restrict=0;
 //   num_var_free=num_legis;
 // }
-  
-  // do we have a latent space model?
-  if(r_in(13,mm)==1 || r_in(14,mm)==1) {
-    num_ls=num_legis;
-  } else {
-    num_ls=0;
-  }
-  
-  // check if there are GRM models
-  
-  if(r_in(5,mm)==1 || r_in(6,mm)==1) {
-    num_bills_grm = num_bills;
-    } else {
-      num_bills_grm = 0;
-    }
 
 }
 
@@ -145,22 +151,22 @@ parameters {
   vector[LX] legis_x;
   vector[SRX] sigma_reg_x;
   vector[SAX] sigma_abs_x;
-  ordered[n_cats[1]-1] steps_votes3;
-  ordered[n_cats[2]-1] steps_votes4;
-  ordered[n_cats[3]-1] steps_votes5;
-  ordered[n_cats[4]-1] steps_votes6;
-  ordered[n_cats[5]-1] steps_votes7;
-  ordered[n_cats[6]-1] steps_votes8;
-  ordered[n_cats[7]-1] steps_votes9;
-  ordered[n_cats[8]-1] steps_votes10;
-  ordered[n_cats[1]-1] steps_votes_grm3[num_bills_grm];
-  ordered[n_cats[2]-1] steps_votes_grm4[num_bills_grm];
-  ordered[n_cats[3]-1] steps_votes_grm5[num_bills_grm];
-  ordered[n_cats[4]-1] steps_votes_grm6[num_bills_grm];
-  ordered[n_cats[5]-1] steps_votes_grm7[num_bills_grm];
-  ordered[n_cats[6]-1] steps_votes_grm8[num_bills_grm];
-  ordered[n_cats[7]-1] steps_votes_grm9[num_bills_grm];
-  ordered[n_cats[8]-1] steps_votes_grm10[num_bills_grm];
+  ordered[n_cats_rat[1]-1] steps_votes3;
+  ordered[n_cats_rat[2]-1] steps_votes4;
+  ordered[n_cats_rat[3]-1] steps_votes5;
+  ordered[n_cats_rat[4]-1] steps_votes6;
+  ordered[n_cats_rat[5]-1] steps_votes7;
+  ordered[n_cats_rat[6]-1] steps_votes8;
+  ordered[n_cats_rat[7]-1] steps_votes9;
+  ordered[n_cats_rat[8]-1] steps_votes10;
+  ordered[n_cats_grm[1]-1] steps_votes_grm3[num_bills_grm];
+  ordered[n_cats_grm[2]-1] steps_votes_grm4[num_bills_grm];
+  ordered[n_cats_grm[3]-1] steps_votes_grm5[num_bills_grm];
+  ordered[n_cats_grm[4]-1] steps_votes_grm6[num_bills_grm];
+  ordered[n_cats_grm[5]-1] steps_votes_grm7[num_bills_grm];
+  ordered[n_cats_grm[6]-1] steps_votes_grm8[num_bills_grm];
+  ordered[n_cats_grm[7]-1] steps_votes_grm9[num_bills_grm];
+  ordered[n_cats_grm[8]-1] steps_votes_grm10[num_bills_grm];
   vector[num_bills] B_int_free;
   vector[num_bills] A_int_free;
   vector<lower=0>[gp_N_fix] m_sd_free; // marginal standard deviation for GPs
@@ -177,6 +183,8 @@ transformed parameters {
   vector[gp_N] m_sd_full;
   vector[gp_N] gp_sd_full;
   vector[num_legis] L_tp1[T]; // all other params can float
+  vector[vP] varparams[S]; // varying parameters if map_rect
+  vector[dP] dparams; // stacked (constant parameters) if map_rect
   
   
   time_var_full = append_row([time_sd]',time_var_free);
@@ -206,6 +214,13 @@ transformed parameters {
   } else {
     L_tp1[1] = L_full;
   }
+  
+  // create map_rect parameters only if S>0
+  
+  if(S>0) {
+#include /chunks/map_build_params.stan
+  }
+  
 }
 
 model {
@@ -242,8 +257,8 @@ for(n in 1:num_legis) {
   sigma_abs_free ~ normal(0,discrim_abs_sd);
   sigma_reg_free ~ normal(0,discrim_reg_sd);
   legis_x ~ normal(0,5);
-  sigma_reg_x ~ normal(srx_pred[num_bills, ] * sigma_reg_x,5);
-  sigma_abs_x ~ normal(sax_pred[num_bills, ] * sigma_abs_x,5);
+  sigma_reg_x ~ normal(0,5);
+  sigma_abs_x ~ normal(0,5);
   L_AR1 ~ normal(0,ar_sd); // these parameters shouldn't get too big
   ls_int ~ normal(0,legis_sd);
   extra_sd ~ exponential(1);
@@ -259,10 +274,13 @@ for(n in 1:num_legis) {
   
   time_var_free ~ normal(0,1);
 
-  
-  //model
+// use map_rect or don't use map_rect
+if(within_chain==1) {
+  target += sum(map_rect(overT,dparams,varparams,cont_shards,int_shards));
+} else {
+#include /chunks/model_types_mm.stan 
+}
 
-#include /chunks/model_types_mm.stan
 
 }
 
