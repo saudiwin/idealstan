@@ -206,7 +206,6 @@ transformed parameters {
   vector[vP] varparams[S]; // varying parameters if map_rect
   vector[dP] dparams; // stacked (constant parameters) if map_rect
   
-  
   time_var_full = append_row([time_sd]',time_var_free);
   
 

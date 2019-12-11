@@ -1625,16 +1625,16 @@ return(as.vector(idx))
     LX <- length(idealdata@person_cov)
     SRX <- length(idealdata@item_cov)
     SAX <- length(idealdata@item_cov_miss)
-    if(!is.inf(max(Y_int))) {
+    if(!is.infinite(max(Y_int))) {
       y_int_miss <- max(Y_int)
     } else {
       y_int_miss <- 0
     }
     
-    if(!is.inf(max(Y_cont))) {
-      y_int_cont <- max(Y_cont)
+    if(!is.infinite(max(Y_cont))) {
+      y_cont_miss <- max(Y_cont)
     } else {
-      y_int_cont <- 0
+      y_cont_miss <- 0
     }
     
   } else {

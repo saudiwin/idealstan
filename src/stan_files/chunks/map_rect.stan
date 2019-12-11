@@ -26,7 +26,7 @@
               
               int Y_int[N_int] = allintdata[(skip+1):(N_int+skip)];
               int bb[S_type ? N_int: 0]; // one of these will be zero depending on how we mapped it
-              int ll[S_type ? N_int: 0];
+              int ll[S_type ? 0: N_int];
               int time[N_int] = allintdata[((2*N_int+skip)+1):(3*N_int+skip)];
               int mm[N_int] = allintdata[((3*N_int+skip)+1):(4*N_int+skip)];
               int order_cats_rat[N_int] = allintdata[((4*N_int+skip)+1):(5*N_int+skip)];
@@ -47,7 +47,7 @@
               
               real log_prob = 0; // for incrementing log posterior within the shard
               
-              vector[S_type ? T : (num_legis*T)] L_full; // T is always 1 or greater
+              vector[S_type ? T : num_legis] L_full; // T is always 1 or greater
               matrix[T,S_type ? 0 : num_legis] L_tp1; // does not exist if persons are mapped over
               vector[S_type ? num_bills : 1] sigma_reg_free; // only 1 if items are mapped over
               vector[S_type ? num_bills : 1] sigma_abs_free;
@@ -105,9 +105,9 @@
                 A_int_free[1] = s_pars[4];
                 
                 if(T==1) {
-                  L_full = allparams[(num_elements(allparams)-num_legis-1):num_elements(allparams)];
+                  L_full = allparams[(num_elements(allparams)-num_legis+1):num_elements(allparams)];
                 } else {
-                  L_tp1 = to_matrix(allparams[(num_elements(allparams)-(T*num_legis)-1):num_elements(allparams)],T,num_legis);
+                  L_tp1 = to_matrix(allparams[(num_elements(allparams)-(T*num_legis)+1):num_elements(allparams)],T,num_legis);
                 }
                 
                 skip_param = 0; // person parameters appended to the end of the vector

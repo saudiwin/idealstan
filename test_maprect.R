@@ -21,7 +21,7 @@ Sys.setenv(STAN_NUM_THREADS = 1)
 map_rect_est <- system.time(id_estimate(idealdata=bin_irt_2pl_sim,
                                model_type=1,
                                within_chain="threads",
-                               map_over_id="persons",
+                               map_over_id="items",
                                fixtype='prefix',
                                restrict_ind_high = which(bin_irt_2pl_sim@simul_data$true_person==max(bin_irt_2pl_sim@simul_data$true_person)),
                                restrict_ind_low=which(bin_irt_2pl_sim@simul_data$true_person==min(bin_irt_2pl_sim@simul_data$true_person)),
