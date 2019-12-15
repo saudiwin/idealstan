@@ -262,7 +262,7 @@ id_sim_gen <- function(num_person=20,num_bills=50,
                 low_par=low_par,
                 high_par_est=high_par_est,
                 low_par_est=low_par_est))
-    browser()
+
   })
   
   

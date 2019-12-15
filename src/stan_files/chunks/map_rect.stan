@@ -25,7 +25,7 @@
               // pull outcomes 
               
               int Y_int[N_int] = allintdata[(skip+1):(N_int+skip)];
-              int bb[S_type ? N_int: 0]; // one of these will be zero depending on how we mapped it
+              int bb[S_type ? N_int: 1]; // one of these will be zero depending on how we mapped it
               int ll[S_type ? 0: N_int];
               int time[N_int] = allintdata[((2*N_int+skip)+1):(3*N_int+skip)];
               int mm[N_int] = allintdata[((3*N_int+skip)+1):(4*N_int+skip)];
@@ -95,6 +95,8 @@
                 skip_param = 4*num_bills;
                 
               } else {
+                
+                bb[1] = allintdata[size(allintdata)]; // need bb for grm models
                 
                 ll = allintdata[(N_int+skip+1):(2*N_int+skip)];
                 

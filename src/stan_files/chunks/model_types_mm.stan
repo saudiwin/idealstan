@@ -102,114 +102,98 @@ if(N_int>0) {
     if(order_cats_rat[n]==3) {
       if(Y_int[n]>order_cats_rat[n]) {
         // missing
-        target += ordered_logistic_lpmf(1|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_full[ll[n]] + legis_pred[n,]*legis_x) - 
-                                 A_int_free[bb[n]],
-              steps_votes3);
+        target += bernoulli_logit_lpmf(1|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_full[ll[n]] + legis_pred[n,]*legis_x) - 
+                                 A_int_free[bb[n]]);
       } else {
         //observed
         target += ordered_logistic_lpmf(Y_int[n]|(sigma_reg_free[bb[n]] + srx_pred[n,]*sigma_reg_x) *  (L_full[ll[n]] + legis_pred[n,]*legis_x) - B_int_free[bb[n]],
               steps_votes3);
-        target += ordered_logistic_lpmf(0|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_full[ll[n]] + legis_pred[n,]*legis_x) - 
-                                 A_int_free[bb[n]],
-              steps_votes3);
+        target += bernoulli_logit_lpmf(0|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_full[ll[n]] + legis_pred[n,]*legis_x) - 
+                                 A_int_free[bb[n]]);
       }
     } else if(order_cats_rat[n]==4) {
       if(Y_int[n]>order_cats_rat[n]) {
         // missing
-        target += ordered_logistic_lpmf(1|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_full[ll[n]] + legis_pred[n,]*legis_x) - 
-                                 A_int_free[bb[n]],
-              steps_votes4);
+        target += bernoulli_logit_lpmf(1|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_full[ll[n]] + legis_pred[n,]*legis_x) - 
+                                 A_int_free[bb[n]]);
       } else {
         //observed
         target += ordered_logistic_lpmf(Y_int[n]|(sigma_reg_free[bb[n]] + srx_pred[n,]*sigma_reg_x) *  (L_full[ll[n]] + legis_pred[n,]*legis_x) - B_int_free[bb[n]],
               steps_votes4);
-        target += ordered_logistic_lpmf(0|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_full[ll[n]] + legis_pred[n,]*legis_x) - 
-                                 A_int_free[bb[n]],
-              steps_votes4);
+        target += bernoulli_logit_lpmf(0|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_full[ll[n]] + legis_pred[n,]*legis_x) - 
+                                 A_int_free[bb[n]]);
       }
     } else if(order_cats_rat[n]==5) {
      if(Y_int[n]>order_cats_rat[n]) {
         // missing
-        target += ordered_logistic_lpmf(1|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_full[ll[n]] + legis_pred[n,]*legis_x) - 
-                                 A_int_free[bb[n]],
-              steps_votes5);
+        target += bernoulli_logit_lpmf(1|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_full[ll[n]] + legis_pred[n,]*legis_x) - 
+                                 A_int_free[bb[n]]);
       } else {
         //observed
         target += ordered_logistic_lpmf(Y_int[n]|(sigma_reg_free[bb[n]] + srx_pred[n,]*sigma_reg_x) *  (L_full[ll[n]] + legis_pred[n,]*legis_x) - B_int_free[bb[n]],
               steps_votes5);
-        target += ordered_logistic_lpmf(0|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_full[ll[n]] + legis_pred[n,]*legis_x) - 
-                                 A_int_free[bb[n]],
-              steps_votes5);
+        target += bernoulli_logit_lpmf(0|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_full[ll[n]] + legis_pred[n,]*legis_x) - 
+                                 A_int_free[bb[n]]);
       }
     }else if(order_cats_rat[n]==6) {
       if(Y_int[n]>order_cats_rat[n]) {
         // missing
-        target += ordered_logistic_lpmf(1|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_full[ll[n]] + legis_pred[n,]*legis_x) - 
-                                 A_int_free[bb[n]],
-              steps_votes6);
+        target += bernoulli_logit_lpmf(1|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_full[ll[n]] + legis_pred[n,]*legis_x) - 
+                                 A_int_free[bb[n]]);
       } else {
         //observed
         target += ordered_logistic_lpmf(Y_int[n]|(sigma_reg_free[bb[n]] + srx_pred[n,]*sigma_reg_x) *  (L_full[ll[n]] + legis_pred[n,]*legis_x) - B_int_free[bb[n]],
               steps_votes6);
-        target += ordered_logistic_lpmf(0|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_full[ll[n]] + legis_pred[n,]*legis_x) - 
-                                 A_int_free[bb[n]],
-              steps_votes6);
+        target += bernoulli_logit_lpmf(0|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_full[ll[n]] + legis_pred[n,]*legis_x) - 
+                                 A_int_free[bb[n]]);
       }
     }else if(order_cats_rat[n]==7) {
       if(Y_int[n]>order_cats_rat[n]) {
         // missing
-        target += ordered_logistic_lpmf(1|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_full[ll[n]] + legis_pred[n,]*legis_x) - 
-                                 A_int_free[bb[n]],
-              steps_votes7);
+        target += bernoulli_logit_lpmf(1|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_full[ll[n]] + legis_pred[n,]*legis_x) - 
+                                 A_int_free[bb[n]]);
       } else {
         //observed
         target += ordered_logistic_lpmf(Y_int[n]|(sigma_reg_free[bb[n]] + srx_pred[n,]*sigma_reg_x) *  (L_full[ll[n]] + legis_pred[n,]*legis_x) - B_int_free[bb[n]],
               steps_votes7);
-        target += ordered_logistic_lpmf(0|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_full[ll[n]] + legis_pred[n,]*legis_x) - 
-                                 A_int_free[bb[n]],
-              steps_votes7);
+        target += bernoulli_logit_lpmf(0|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_full[ll[n]] + legis_pred[n,]*legis_x) - 
+                                 A_int_free[bb[n]]);
       }
     }else if(order_cats_rat[n]==8) {
       if(Y_int[n]>order_cats_rat[n]) {
         // missing
-        target += ordered_logistic_lpmf(1|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_full[ll[n]] + legis_pred[n,]*legis_x) - 
-                                 A_int_free[bb[n]],
-              steps_votes8);
+        target += bernoulli_logit_lpmf(1|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_full[ll[n]] + legis_pred[n,]*legis_x) - 
+                                 A_int_free[bb[n]]);
       } else {
         //observed
         target += ordered_logistic_lpmf(Y_int[n]|(sigma_reg_free[bb[n]] + srx_pred[n,]*sigma_reg_x) *  (L_full[ll[n]] + legis_pred[n,]*legis_x) - B_int_free[bb[n]],
               steps_votes8);
-        target += ordered_logistic_lpmf(0|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_full[ll[n]] + legis_pred[n,]*legis_x) - 
-                                 A_int_free[bb[n]],
-              steps_votes8);
+        target += bernoulli_logit_lpmf(0|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_full[ll[n]] + legis_pred[n,]*legis_x) - 
+                                 A_int_free[bb[n]]);
       }
     }else if(order_cats_rat[n]==9) {
       if(Y_int[n]>order_cats_rat[n]) {
         // missing
-        target += ordered_logistic_lpmf(1|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_full[ll[n]] + legis_pred[n,]*legis_x) - 
-                                 A_int_free[bb[n]],
-              steps_votes9);
+        target += bernoulli_logit_lpmf(1|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_full[ll[n]] + legis_pred[n,]*legis_x) - 
+                                 A_int_free[bb[n]]);
       } else {
         //observed
         target += ordered_logistic_lpmf(Y_int[n]|(sigma_reg_free[bb[n]] + srx_pred[n,]*sigma_reg_x) *  (L_full[ll[n]] + legis_pred[n,]*legis_x) - B_int_free[bb[n]],
               steps_votes9);
-        target += ordered_logistic_lpmf(0|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_full[ll[n]] + legis_pred[n,]*legis_x) - 
-                                 A_int_free[bb[n]],
-              steps_votes9);
+        target += bernoulli_logit_lpmf(0|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_full[ll[n]] + legis_pred[n,]*legis_x) - 
+                                 A_int_free[bb[n]]);
       }
     }else if(order_cats_rat[n]==10) {
       if(Y_int[n]>order_cats_rat[n]) {
         // missing
-        target += ordered_logistic_lpmf(1|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_full[ll[n]] + legis_pred[n,]*legis_x) - 
-                                 A_int_free[bb[n]],
-              steps_votes10);
+        target += bernoulli_logit_lpmf(1|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_full[ll[n]] + legis_pred[n,]*legis_x) - 
+                                 A_int_free[bb[n]]);
       } else {
         //observed
         target += ordered_logistic_lpmf(Y_int[n]|(sigma_reg_free[bb[n]] + srx_pred[n,]*sigma_reg_x) *  (L_full[ll[n]] + legis_pred[n,]*legis_x) - B_int_free[bb[n]],
               steps_votes10);
-        target += ordered_logistic_lpmf(0|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_full[ll[n]] + legis_pred[n,]*legis_x) - 
-                                 A_int_free[bb[n]],
-              steps_votes10);
+        target += bernoulli_logit_lpmf(0|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_full[ll[n]] + legis_pred[n,]*legis_x) - 
+                                 A_int_free[bb[n]]);
       }
     }
   } else {
@@ -217,114 +201,98 @@ if(N_int>0) {
     if(order_cats_rat[n]==3) {
       if(Y_int[n]>order_cats_rat[n]) {
         // missing
-        target += ordered_logistic_lpmf(1|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_tp1[time[n],ll[n]] + legis_pred[n,]*legis_x) - 
-                                 A_int_free[bb[n]],
-              steps_votes3);
+        target += bernoulli_logit_lpmf(1|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_tp1[time[n],ll[n]] + legis_pred[n,]*legis_x) - 
+                                 A_int_free[bb[n]]);
       } else {
         //observed
         target += ordered_logistic_lpmf(Y_int[n]|(sigma_reg_free[bb[n]] + srx_pred[n,]*sigma_reg_x) *  (L_tp1[time[n],ll[n]] + legis_pred[n,]*legis_x) - B_int_free[bb[n]],
               steps_votes3);
-        target += ordered_logistic_lpmf(0|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_tp1[time[n],ll[n]] + legis_pred[n,]*legis_x) - 
-                                 A_int_free[bb[n]],
-              steps_votes3);
+        target += bernoulli_logit_lpmf(0|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_tp1[time[n],ll[n]] + legis_pred[n,]*legis_x) - 
+                                 A_int_free[bb[n]]);
       }
     } else if(order_cats_rat[n]==4) {
       if(Y_int[n]>order_cats_rat[n]) {
         // missing
-        target += ordered_logistic_lpmf(1|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_tp1[time[n],ll[n]] + legis_pred[n,]*legis_x) - 
-                                 A_int_free[bb[n]],
-              steps_votes4);
+        target += bernoulli_logit_lpmf(1|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_tp1[time[n],ll[n]] + legis_pred[n,]*legis_x) - 
+                                 A_int_free[bb[n]]);
       } else {
         //observed
         target += ordered_logistic_lpmf(Y_int[n]|(sigma_reg_free[bb[n]] + srx_pred[n,]*sigma_reg_x) *  (L_tp1[time[n],ll[n]] + legis_pred[n,]*legis_x) - B_int_free[bb[n]],
               steps_votes4);
-        target += ordered_logistic_lpmf(0|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_tp1[time[n],ll[n]] + legis_pred[n,]*legis_x) - 
-                                 A_int_free[bb[n]],
-              steps_votes4);
+        target += bernoulli_logit_lpmf(0|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_tp1[time[n],ll[n]] + legis_pred[n,]*legis_x) - 
+                                 A_int_free[bb[n]]);
       }
     } else if(order_cats_rat[n]==5) {
      if(Y_int[n]>order_cats_rat[n]) {
         // missing
-        target += ordered_logistic_lpmf(1|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_tp1[time[n],ll[n]] + legis_pred[n,]*legis_x) - 
-                                 A_int_free[bb[n]],
-              steps_votes5);
+        target += bernoulli_logit_lpmf(1|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_tp1[time[n],ll[n]] + legis_pred[n,]*legis_x) - 
+                                 A_int_free[bb[n]]);
       } else {
         //observed
         target += ordered_logistic_lpmf(Y_int[n]|(sigma_reg_free[bb[n]] + srx_pred[n,]*sigma_reg_x) *  (L_tp1[time[n],ll[n]] + legis_pred[n,]*legis_x) - B_int_free[bb[n]],
               steps_votes5);
-        target += ordered_logistic_lpmf(0|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_tp1[time[n],ll[n]] + legis_pred[n,]*legis_x) - 
-                                 A_int_free[bb[n]],
-              steps_votes5);
+        target += bernoulli_logit_lpmf(0|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_tp1[time[n],ll[n]] + legis_pred[n,]*legis_x) - 
+                                 A_int_free[bb[n]]);
       }
     }else if(order_cats_rat[n]==6) {
       if(Y_int[n]>order_cats_rat[n]) {
         // missing
-        target += ordered_logistic_lpmf(1|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_tp1[time[n],ll[n]] + legis_pred[n,]*legis_x) - 
-                                 A_int_free[bb[n]],
-              steps_votes6);
+        target += bernoulli_logit_lpmf(1|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_tp1[time[n],ll[n]] + legis_pred[n,]*legis_x) - 
+                                 A_int_free[bb[n]]);
       } else {
         //observed
         target += ordered_logistic_lpmf(Y_int[n]|(sigma_reg_free[bb[n]] + srx_pred[n,]*sigma_reg_x) *  (L_tp1[time[n],ll[n]] + legis_pred[n,]*legis_x) - B_int_free[bb[n]],
               steps_votes6);
-        target += ordered_logistic_lpmf(0|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_tp1[time[n],ll[n]] + legis_pred[n,]*legis_x) - 
-                                 A_int_free[bb[n]],
-              steps_votes6);
+        target += bernoulli_logit_lpmf(0|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_tp1[time[n],ll[n]] + legis_pred[n,]*legis_x) - 
+                                 A_int_free[bb[n]]);
       }
     }else if(order_cats_rat[n]==7) {
       if(Y_int[n]>order_cats_rat[n]) {
         // missing
-        target += ordered_logistic_lpmf(1|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_tp1[time[n],ll[n]] + legis_pred[n,]*legis_x) - 
-                                 A_int_free[bb[n]],
-              steps_votes7);
+        target += bernoulli_logit_lpmf(1|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_tp1[time[n],ll[n]] + legis_pred[n,]*legis_x) - 
+                                 A_int_free[bb[n]]);
       } else {
         //observed
         target += ordered_logistic_lpmf(Y_int[n]|(sigma_reg_free[bb[n]] + srx_pred[n,]*sigma_reg_x) *  (L_tp1[time[n],ll[n]] + legis_pred[n,]*legis_x) - B_int_free[bb[n]],
               steps_votes7);
-        target += ordered_logistic_lpmf(0|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_tp1[time[n],ll[n]] + legis_pred[n,]*legis_x) - 
-                                 A_int_free[bb[n]],
-              steps_votes7);
+        target += bernoulli_logit_lpmf(0|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_tp1[time[n],ll[n]] + legis_pred[n,]*legis_x) - 
+                                 A_int_free[bb[n]]);
       }
     }else if(order_cats_rat[n]==8) {
       if(Y_int[n]>order_cats_rat[n]) {
         // missing
-        target += ordered_logistic_lpmf(1|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_tp1[time[n],ll[n]] + legis_pred[n,]*legis_x) - 
-                                 A_int_free[bb[n]],
-              steps_votes8);
+        target += bernoulli_logit_lpmf(1|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_tp1[time[n],ll[n]] + legis_pred[n,]*legis_x) - 
+                                 A_int_free[bb[n]]);
       } else {
         //observed
         target += ordered_logistic_lpmf(Y_int[n]|(sigma_reg_free[bb[n]] + srx_pred[n,]*sigma_reg_x) *  (L_tp1[time[n],ll[n]] + legis_pred[n,]*legis_x) - B_int_free[bb[n]],
               steps_votes8);
-        target += ordered_logistic_lpmf(0|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_tp1[time[n],ll[n]] + legis_pred[n,]*legis_x) - 
-                                 A_int_free[bb[n]],
-              steps_votes8);
+        target += bernoulli_logit_lpmf(0|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_tp1[time[n],ll[n]] + legis_pred[n,]*legis_x) - 
+                                 A_int_free[bb[n]]);
       }
     }else if(order_cats_rat[n]==9) {
       if(Y_int[n]>order_cats_rat[n]) {
         // missing
-        target += ordered_logistic_lpmf(1|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_tp1[time[n],ll[n]] + legis_pred[n,]*legis_x) - 
-                                 A_int_free[bb[n]],
-              steps_votes9);
+        target += bernoulli_logit_lpmf(1|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_tp1[time[n],ll[n]] + legis_pred[n,]*legis_x) - 
+                                 A_int_free[bb[n]]);
       } else {
         //observed
         target += ordered_logistic_lpmf(Y_int[n]|(sigma_reg_free[bb[n]] + srx_pred[n,]*sigma_reg_x) *  (L_tp1[time[n],ll[n]] + legis_pred[n,]*legis_x) - B_int_free[bb[n]],
               steps_votes9);
-        target += ordered_logistic_lpmf(0|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_tp1[time[n],ll[n]] + legis_pred[n,]*legis_x) - 
-                                 A_int_free[bb[n]],
-              steps_votes9);
+        target += bernoulli_logit_lpmf(0|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_tp1[time[n],ll[n]] + legis_pred[n,]*legis_x) - 
+                                 A_int_free[bb[n]]);
       }
     }else if(order_cats_rat[n]==10) {
       if(Y_int[n]>order_cats_rat[n]) {
         // missing
-        target += ordered_logistic_lpmf(1|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_tp1[time[n],ll[n]] + legis_pred[n,]*legis_x) - 
-                                 A_int_free[bb[n]],
-              steps_votes10);
+        target += bernoulli_logit_lpmf(1|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_tp1[time[n],ll[n]] + legis_pred[n,]*legis_x) - 
+                                 A_int_free[bb[n]]);
       } else {
         //observed
         target += ordered_logistic_lpmf(Y_int[n]|(sigma_reg_free[bb[n]] + srx_pred[n,]*sigma_reg_x) *  (L_tp1[time[n],ll[n]] + legis_pred[n,]*legis_x) - B_int_free[bb[n]],
               steps_votes10);
-        target += ordered_logistic_lpmf(0|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_tp1[time[n],ll[n]] + legis_pred[n,]*legis_x) - 
-                                 A_int_free[bb[n]],
-              steps_votes10);
+        target += bernoulli_logit_lpmf(0|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_tp1[time[n],ll[n]] + legis_pred[n,]*legis_x) - 
+                                 A_int_free[bb[n]]);
       }
     }
   }
@@ -396,114 +364,98 @@ if(T==1) {
   if(order_cats_grm[n]==3) {
     if(Y_int[n]>order_cats_grm[n]) {
       // missing
-      target += ordered_logistic_lpmf(1|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_full[ll[n]] + legis_pred[n,]*legis_x) - 
-                                        A_int_free[bb[n]],
-                                      steps_votes_grm3[bb[n]]);
+      target += bernoulli_logit_lpmf(1|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_full[ll[n]] + legis_pred[n,]*legis_x) - 
+                                        A_int_free[bb[n]]);
     } else {
       //observed
       target += ordered_logistic_lpmf(Y_int[n]|(sigma_reg_free[bb[n]] + srx_pred[n,]*sigma_reg_x) *  (L_full[ll[n]] + legis_pred[n,]*legis_x) - B_int_free[bb[n]],
                                       steps_votes_grm3[bb[n]]);
-      target += ordered_logistic_lpmf(0|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_full[ll[n]] + legis_pred[n,]*legis_x) - 
-                                        A_int_free[bb[n]],
-                                      steps_votes_grm3[bb[n]]);
+      target += bernoulli_logit_lpmf(0|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_full[ll[n]] + legis_pred[n,]*legis_x) - 
+                                        A_int_free[bb[n]]);
     }
   } else if(order_cats_grm[n]==4) {
     if(Y_int[n]>order_cats_grm[n]) {
       // missing
-      target += ordered_logistic_lpmf(1|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_full[ll[n]] + legis_pred[n,]*legis_x) - 
-                                        A_int_free[bb[n]],
-                                      steps_votes_grm4[bb[n]]);
+      target += bernoulli_logit_lpmf(1|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_full[ll[n]] + legis_pred[n,]*legis_x) - 
+                                        A_int_free[bb[n]]);
     } else {
       //observed
       target += ordered_logistic_lpmf(Y_int[n]|(sigma_reg_free[bb[n]] + srx_pred[n,]*sigma_reg_x) *  (L_full[ll[n]] + legis_pred[n,]*legis_x) - B_int_free[bb[n]],
                                       steps_votes_grm4[bb[n]]);
-      target += ordered_logistic_lpmf(0|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_full[ll[n]] + legis_pred[n,]*legis_x) - 
-                                        A_int_free[bb[n]],
-                                      steps_votes_grm4[bb[n]]);
+      target += bernoulli_logit_lpmf(0|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_full[ll[n]] + legis_pred[n,]*legis_x) - 
+                                        A_int_free[bb[n]]);
     }
   } else if(order_cats_grm[n]==5) {
     if(Y_int[n]>order_cats_grm[n]) {
       // missing
-      target += ordered_logistic_lpmf(1|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_full[ll[n]] + legis_pred[n,]*legis_x) - 
-                                        A_int_free[bb[n]],
-                                      steps_votes_grm5[bb[n]]);
+      target += bernoulli_logit_lpmf(1|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_full[ll[n]] + legis_pred[n,]*legis_x) - 
+                                        A_int_free[bb[n]]);
     } else {
       //observed
       target += ordered_logistic_lpmf(Y_int[n]|(sigma_reg_free[bb[n]] + srx_pred[n,]*sigma_reg_x) *  (L_full[ll[n]] + legis_pred[n,]*legis_x) - B_int_free[bb[n]],
                                       steps_votes_grm5[bb[n]]);
-      target += ordered_logistic_lpmf(0|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_full[ll[n]] + legis_pred[n,]*legis_x) - 
-                                        A_int_free[bb[n]],
-                                      steps_votes_grm5[bb[n]]);
+      target += bernoulli_logit_lpmf(0|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_full[ll[n]] + legis_pred[n,]*legis_x) - 
+                                        A_int_free[bb[n]]);
     }
   }else if(order_cats_grm[n]==6) {
     if(Y_int[n]>order_cats_grm[n]) {
       // missing
-      target += ordered_logistic_lpmf(1|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_full[ll[n]] + legis_pred[n,]*legis_x) - 
-                                        A_int_free[bb[n]],
-                                      steps_votes_grm6[bb[n]]);
+      target += bernoulli_logit_lpmf(1|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_full[ll[n]] + legis_pred[n,]*legis_x) - 
+                                        A_int_free[bb[n]]);
     } else {
       //observed
       target += ordered_logistic_lpmf(Y_int[n]|(sigma_reg_free[bb[n]] + srx_pred[n,]*sigma_reg_x) *  (L_full[ll[n]] + legis_pred[n,]*legis_x) - B_int_free[bb[n]],
                                       steps_votes_grm6[bb[n]]);
-      target += ordered_logistic_lpmf(0|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_full[ll[n]] + legis_pred[n,]*legis_x) - 
-                                        A_int_free[bb[n]],
-                                      steps_votes_grm6[bb[n]]);
+      target += bernoulli_logit_lpmf(0|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_full[ll[n]] + legis_pred[n,]*legis_x) - 
+                                        A_int_free[bb[n]]);
     }
   }else if(order_cats_grm[n]==7) {
     if(Y_int[n]>order_cats_grm[n]) {
       // missing
-      target += ordered_logistic_lpmf(1|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_full[ll[n]] + legis_pred[n,]*legis_x) - 
-                                        A_int_free[bb[n]],
-                                      steps_votes_grm7[bb[n]]);
+      target += bernoulli_logit_lpmf(1|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_full[ll[n]] + legis_pred[n,]*legis_x) - 
+                                        A_int_free[bb[n]]);
     } else {
       //observed
       target += ordered_logistic_lpmf(Y_int[n]|(sigma_reg_free[bb[n]] + srx_pred[n,]*sigma_reg_x) *  (L_full[ll[n]] + legis_pred[n,]*legis_x) - B_int_free[bb[n]],
                                       steps_votes_grm7[bb[n]]);
-      target += ordered_logistic_lpmf(0|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_full[ll[n]] + legis_pred[n,]*legis_x) - 
-                                        A_int_free[bb[n]],
-                                      steps_votes_grm7[bb[n]]);
+      target += bernoulli_logit_lpmf(0|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_full[ll[n]] + legis_pred[n,]*legis_x) - 
+                                        A_int_free[bb[n]]);
     }
   }else if(order_cats_grm[n]==8) {
     if(Y_int[n]>order_cats_grm[n]) {
       // missing
-      target += ordered_logistic_lpmf(1|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_full[ll[n]] + legis_pred[n,]*legis_x) - 
-                                        A_int_free[bb[n]],
-                                      steps_votes_grm8[bb[n]]);
+      target += bernoulli_logit_lpmf(1|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_full[ll[n]] + legis_pred[n,]*legis_x) - 
+                                        A_int_free[bb[n]]);
     } else {
       //observed
       target += ordered_logistic_lpmf(Y_int[n]|(sigma_reg_free[bb[n]] + srx_pred[n,]*sigma_reg_x) *  (L_full[ll[n]] + legis_pred[n,]*legis_x) - B_int_free[bb[n]],
                                       steps_votes_grm8[bb[n]]);
-      target += ordered_logistic_lpmf(0|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_full[ll[n]] + legis_pred[n,]*legis_x) - 
-                                        A_int_free[bb[n]],
-                                      steps_votes_grm8[bb[n]]);
+      target += bernoulli_logit_lpmf(0|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_full[ll[n]] + legis_pred[n,]*legis_x) - 
+                                        A_int_free[bb[n]]);
     }
   }else if(order_cats_grm[n]==9) {
     if(Y_int[n]>order_cats_grm[n]) {
       // missing
-      target += ordered_logistic_lpmf(1|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_full[ll[n]] + legis_pred[n,]*legis_x) - 
-                                        A_int_free[bb[n]],
-                                      steps_votes_grm9[bb[n]]);
+      target += bernoulli_logit_lpmf(1|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_full[ll[n]] + legis_pred[n,]*legis_x) - 
+                                        A_int_free[bb[n]]);
     } else {
       //observed
       target += ordered_logistic_lpmf(Y_int[n]|(sigma_reg_free[bb[n]] + srx_pred[n,]*sigma_reg_x) *  (L_full[ll[n]] + legis_pred[n,]*legis_x) - B_int_free[bb[n]],
                                       steps_votes_grm9[bb[n]]);
-      target += ordered_logistic_lpmf(0|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_full[ll[n]] + legis_pred[n,]*legis_x) - 
-                                        A_int_free[bb[n]],
-                                      steps_votes_grm9[bb[n]]);
+      target += bernoulli_logit_lpmf(0|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_full[ll[n]] + legis_pred[n,]*legis_x) - 
+                                        A_int_free[bb[n]]);
     }
   }else if(order_cats_grm[n]==10) {
     if(Y_int[n]>order_cats_grm[n]) {
       // missing
-      target += ordered_logistic_lpmf(1|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_full[ll[n]] + legis_pred[n,]*legis_x) - 
-                                        A_int_free[bb[n]],
-                                      steps_votes_grm10[bb[n]]);
+      target += bernoulli_logit_lpmf(1|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_full[ll[n]] + legis_pred[n,]*legis_x) - 
+                                        A_int_free[bb[n]]);
     } else {
       //observed
       target += ordered_logistic_lpmf(Y_int[n]|(sigma_reg_free[bb[n]] + srx_pred[n,]*sigma_reg_x) *  (L_full[ll[n]] + legis_pred[n,]*legis_x) - B_int_free[bb[n]],
                                       steps_votes_grm10[bb[n]]);
-      target += ordered_logistic_lpmf(0|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_full[ll[n]] + legis_pred[n,]*legis_x) - 
-                                        A_int_free[bb[n]],
-                                      steps_votes_grm10[bb[n]]);
+      target += bernoulli_logit_lpmf(0|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_full[ll[n]] + legis_pred[n,]*legis_x) - 
+                                        A_int_free[bb[n]]);
     }
   }
 } else {
@@ -511,114 +463,98 @@ if(T==1) {
   if(order_cats_grm[n]==3) {
     if(Y_int[n]>y_int_miss) {
       // missing
-      target += ordered_logistic_lpmf(1|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_tp1[time[n],ll[n]] + legis_pred[n,]*legis_x) - 
-                                        A_int_free[bb[n]],
-                                      steps_votes_grm3[bb[n]]);
+      target += bernoulli_logit_lpmf(1|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_tp1[time[n],ll[n]] + legis_pred[n,]*legis_x) - 
+                                        A_int_free[bb[n]]);
     } else {
       //observed
       target += ordered_logistic_lpmf(Y_int[n]|(sigma_reg_free[bb[n]] + srx_pred[n,]*sigma_reg_x) *  (L_tp1[time[n],ll[n]] + legis_pred[n,]*legis_x) - B_int_free[bb[n]],
                                       steps_votes_grm3[bb[n]]);
-      target += ordered_logistic_lpmf(0|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_tp1[time[n],ll[n]] + legis_pred[n,]*legis_x) - 
-                                        A_int_free[bb[n]],
-                                      steps_votes_grm3[bb[n]]);
+      target += bernoulli_logit_lpmf(0|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_tp1[time[n],ll[n]] + legis_pred[n,]*legis_x) - 
+                                        A_int_free[bb[n]]);
     }
   } else if(order_cats_grm[n]==4) {
     if(Y_int[n]>y_int_miss) {
       // missing
-      target += ordered_logistic_lpmf(1|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_tp1[time[n],ll[n]] + legis_pred[n,]*legis_x) - 
-                                        A_int_free[bb[n]],
-                                      steps_votes_grm4[bb[n]]);
+      target += bernoulli_logit_lpmf(1|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_tp1[time[n],ll[n]] + legis_pred[n,]*legis_x) - 
+                                        A_int_free[bb[n]]);
     } else {
       //observed
       target += ordered_logistic_lpmf(Y_int[n]|(sigma_reg_free[bb[n]] + srx_pred[n,]*sigma_reg_x) *  (L_tp1[time[n],ll[n]] + legis_pred[n,]*legis_x) - B_int_free[bb[n]],
                                       steps_votes_grm4[bb[n]]);
-      target += ordered_logistic_lpmf(0|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_tp1[time[n],ll[n]] + legis_pred[n,]*legis_x) - 
-                                        A_int_free[bb[n]],
-                                      steps_votes_grm4[bb[n]]);
+      target += bernoulli_logit_lpmf(0|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_tp1[time[n],ll[n]] + legis_pred[n,]*legis_x) - 
+                                        A_int_free[bb[n]]);
     }
   } else if(order_cats_grm[n]==5) {
     if(Y_int[n]>y_int_miss) {
       // missing
-      target += ordered_logistic_lpmf(1|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_tp1[time[n],ll[n]] + legis_pred[n,]*legis_x) - 
-                                        A_int_free[bb[n]],
-                                      steps_votes_grm5[bb[n]]);
+      target += bernoulli_logit_lpmf(1|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_tp1[time[n],ll[n]] + legis_pred[n,]*legis_x) - 
+                                        A_int_free[bb[n]]);
     } else {
       //observed
       target += ordered_logistic_lpmf(Y_int[n]|(sigma_reg_free[bb[n]] + srx_pred[n,]*sigma_reg_x) *  (L_tp1[time[n],ll[n]] + legis_pred[n,]*legis_x) - B_int_free[bb[n]],
                                       steps_votes_grm5[bb[n]]);
-      target += ordered_logistic_lpmf(0|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_tp1[time[n],ll[n]] + legis_pred[n,]*legis_x) - 
-                                        A_int_free[bb[n]],
-                                      steps_votes_grm5[bb[n]]);
+      target += bernoulli_logit_lpmf(0|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_tp1[time[n],ll[n]] + legis_pred[n,]*legis_x) - 
+                                        A_int_free[bb[n]]);
     }
   }else if(order_cats_grm[n]==6) {
     if(Y_int[n]>y_int_miss) {
       // missing
-      target += ordered_logistic_lpmf(1|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_tp1[time[n],ll[n]] + legis_pred[n,]*legis_x) - 
-                                        A_int_free[bb[n]],
-                                      steps_votes_grm6[bb[n]]);
+      target += bernoulli_logit_lpmf(1|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_tp1[time[n],ll[n]] + legis_pred[n,]*legis_x) - 
+                                        A_int_free[bb[n]]);
     } else {
       //observed
       target += ordered_logistic_lpmf(Y_int[n]|(sigma_reg_free[bb[n]] + srx_pred[n,]*sigma_reg_x) *  (L_tp1[time[n],ll[n]] + legis_pred[n,]*legis_x) - B_int_free[bb[n]],
                                       steps_votes_grm6[bb[n]]);
-      target += ordered_logistic_lpmf(0|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_tp1[time[n],ll[n]] + legis_pred[n,]*legis_x) - 
-                                        A_int_free[bb[n]],
-                                      steps_votes_grm6[bb[n]]);
+      target += bernoulli_logit_lpmf(0|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_tp1[time[n],ll[n]] + legis_pred[n,]*legis_x) - 
+                                        A_int_free[bb[n]]);
     }
   }else if(order_cats_grm[n]==7) {
     if(Y_int[n]>y_int_miss) {
       // missing
-      target += ordered_logistic_lpmf(1|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_tp1[time[n],ll[n]] + legis_pred[n,]*legis_x) - 
-                                        A_int_free[bb[n]],
-                                      steps_votes_grm7[bb[n]]);
+      target += bernoulli_logit_lpmf(1|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_tp1[time[n],ll[n]] + legis_pred[n,]*legis_x) - 
+                                        A_int_free[bb[n]]);
     } else {
       //observed
       target += ordered_logistic_lpmf(Y_int[n]|(sigma_reg_free[bb[n]] + srx_pred[n,]*sigma_reg_x) *  (L_tp1[time[n],ll[n]] + legis_pred[n,]*legis_x) - B_int_free[bb[n]],
                                       steps_votes_grm7[bb[n]]);
-      target += ordered_logistic_lpmf(0|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_tp1[time[n],ll[n]] + legis_pred[n,]*legis_x) - 
-                                        A_int_free[bb[n]],
-                                      steps_votes_grm7[bb[n]]);
+      target += bernoulli_logit_lpmf(0|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_tp1[time[n],ll[n]] + legis_pred[n,]*legis_x) - 
+                                        A_int_free[bb[n]]);
     }
   }else if(order_cats_grm[n]==8) {
     if(Y_int[n]>y_int_miss) {
       // missing
-      target += ordered_logistic_lpmf(1|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_tp1[time[n],ll[n]] + legis_pred[n,]*legis_x) - 
-                                        A_int_free[bb[n]],
-                                      steps_votes_grm8[bb[n]]);
+      target += bernoulli_logit_lpmf(1|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_tp1[time[n],ll[n]] + legis_pred[n,]*legis_x) - 
+                                        A_int_free[bb[n]]);
     } else {
       //observed
       target += ordered_logistic_lpmf(Y_int[n]|(sigma_reg_free[bb[n]] + srx_pred[n,]*sigma_reg_x) *  (L_tp1[time[n],ll[n]] + legis_pred[n,]*legis_x) - B_int_free[bb[n]],
                                       steps_votes_grm8[bb[n]]);
-      target += ordered_logistic_lpmf(0|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_tp1[time[n],ll[n]] + legis_pred[n,]*legis_x) - 
-                                        A_int_free[bb[n]],
-                                      steps_votes_grm8[bb[n]]);
+      target += bernoulli_logit_lpmf(0|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_tp1[time[n],ll[n]] + legis_pred[n,]*legis_x) - 
+                                        A_int_free[bb[n]]);
     }
   }else if(order_cats_grm[n]==9) {
     if(Y_int[n]>y_int_miss) {
       // missing
-      target += ordered_logistic_lpmf(1|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_tp1[time[n],ll[n]] + legis_pred[n,]*legis_x) - 
-                                        A_int_free[bb[n]],
-                                      steps_votes_grm9[bb[n]]);
+      target += bernoulli_logit_lpmf(1|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_tp1[time[n],ll[n]] + legis_pred[n,]*legis_x) - 
+                                        A_int_free[bb[n]]);
     } else {
       //observed
       target += ordered_logistic_lpmf(Y_int[n]|(sigma_reg_free[bb[n]] + srx_pred[n,]*sigma_reg_x) *  (L_tp1[time[n],ll[n]] + legis_pred[n,]*legis_x) - B_int_free[bb[n]],
                                       steps_votes_grm9[bb[n]]);
-      target += ordered_logistic_lpmf(0|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_tp1[time[n],ll[n]] + legis_pred[n,]*legis_x) - 
-                                        A_int_free[bb[n]],
-                                      steps_votes_grm9[bb[n]]);
+      target += bernoulli_logit_lpmf(0|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_tp1[time[n],ll[n]] + legis_pred[n,]*legis_x) - 
+                                        A_int_free[bb[n]]);
     }
   }else if(order_cats_grm[n]==10) {
     if(Y_int[n]>y_int_miss) {
       // missing
-      target += ordered_logistic_lpmf(1|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_tp1[time[n],ll[n]] + legis_pred[n,]*legis_x) - 
-                                        A_int_free[bb[n]],
-                                      steps_votes_grm10[bb[n]]);
+      target += bernoulli_logit_lpmf(1|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_tp1[time[n],ll[n]] + legis_pred[n,]*legis_x) - 
+                                        A_int_free[bb[n]]);
     } else {
       //observed
       target += ordered_logistic_lpmf(Y_int[n]|(sigma_reg_free[bb[n]] + srx_pred[n,]*sigma_reg_x) *  (L_tp1[time[n],ll[n]] + legis_pred[n,]*legis_x) - B_int_free[bb[n]],
                                       steps_votes_grm10[bb[n]]);
-      target += ordered_logistic_lpmf(0|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_tp1[time[n],ll[n]] + legis_pred[n,]*legis_x) - 
-                                        A_int_free[bb[n]],
-                                      steps_votes_grm10[bb[n]]);
+      target += bernoulli_logit_lpmf(0|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_tp1[time[n],ll[n]] + legis_pred[n,]*legis_x) - 
+                                        A_int_free[bb[n]]);
     }
   }
 }
@@ -642,11 +578,11 @@ if(T==1) {
         // observed data 
         if(T==1) {
           target += poisson_log_lpmf(Y_int[n]|(sigma_reg_free[bb[n]] + srx_pred[n,]*sigma_reg_x) *  (L_full[ll[n]] + legis_pred[n,]*legis_x) - B_int_free[bb[n]]);
-          target += poisson_log_lpmf(0|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_full[ll[n]] + legis_pred[n,]*legis_x) - 
+          target += bernoulli_logit_lpmf(0|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_full[ll[n]] + legis_pred[n,]*legis_x) - 
                                  A_int_free[bb[n]]);
         } else {
           target += poisson_log_lpmf(Y_int[n]|(sigma_reg_free[bb[n]] + srx_pred[n,]*sigma_reg_x) *  (L_tp1[time[n],ll[n]] + legis_pred[n,]*legis_x) - B_int_free[bb[n]]);
-          target += poisson_log_lpmf(0|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_tp1[time[n],ll[n]] + legis_pred[n,]*legis_x) - 
+          target += bernoulli_logit_lpmf(0|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_tp1[time[n],ll[n]] + legis_pred[n,]*legis_x) - 
                                  A_int_free[bb[n]]);
         }
         

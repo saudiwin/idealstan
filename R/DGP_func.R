@@ -13,7 +13,6 @@
                     time_points=NULL,
                     type='simulate',
                     outcome=NULL,
-                    miss_val=NULL,
                     latent_space=NULL,
                     ...)
                     {
@@ -33,7 +32,7 @@
   } else if(type=='log_lik') {
     if(inflate) {
       over_iters <- sapply(1:ncol(pr_vote), function(c) {
-        outdens <- ifelse(outcome==miss_val, 
+        outdens <- ifelse(is.na(outcome), 
                           dbinom(1,size = 1,prob=pr_absence[,c]*mul_fac,log=T),
                           dbinom(outcome-1,size=1,prob=pr_vote[,c]*mul_fac,log=T))
       })
@@ -55,7 +54,7 @@
   }
   
   if(type=='simulate') {
-    combined <- if_else((pr_absence*mul_fac)<(runif(N)+pr_boost),votes,2)
+    combined <- ifelse((pr_absence*mul_fac)<(runif(N)+pr_boost),votes,NA)
     
     # Create a score dataset
     
@@ -65,11 +64,7 @@
                            item_id=item_points,
                            group_id='G')
     
-    out_data <- id_make(score_data=out_data,
-                        miss_val = 2,
-                        high_val = 1,
-                        low_val = 0,
-                        middle_val = NULL)
+    out_data <- id_make(score_data=out_data)
     
     return(out_data) 
   } else if(type=='predict') {
@@ -95,7 +90,6 @@
                     type='simulate',
                     y=NULL,
                     outcome=NULL,
-                    miss_val=NULL,
                     ...)
 {
   
@@ -159,7 +153,7 @@
       return(sample(1:(length(this_cut)+1),size=1,prob=c(pr_bottom,mid_prs,pr_top)))
     })
     
-    combined <- if_else(pr_absence<(runif(N)+pr_boost),votes,as.integer(ordinal_outcomes)+1L)
+    combined <- ifelse(pr_absence<(runif(N)+pr_boost),votes,NA)
     
     # Create a score dataset
     
@@ -169,11 +163,7 @@
                            item_id=item_points,
                            group_id='G')
     
-    out_data <- id_make(score_data=out_data,
-                        miss_val = as.integer(ordinal_outcomes)+1,
-                        high_val = ordinal_outcomes,
-                        low_val = 1,
-                        middle_val = 2:(ordinal_outcomes-1))
+    out_data <- id_make(score_data=out_data)
     
     return(out_data) 
   } else if(type=='predict') {
@@ -221,7 +211,7 @@
       # remove top category for vote prediction
       out_num[out_num==max(out_num)] <- max(out_num) - 1
       over_iters <- sapply(1:ncol(pr_vote), function(c) {
-        outdens <- ifelse(outcome==miss_val, 
+        outdens <- ifelse(is.na(outcome), 
                           dbinom(1,size = 1,prob=pr_absence[,c],log=T),
                           log(over_iters[out_num,,c]))
       })
@@ -249,7 +239,6 @@
                          cutpoints=NULL,
                          type='simulate',
                          outcome=NULL,
-                         miss_val=NULL,
                                  ...)
 {
   
@@ -303,7 +292,7 @@
     
     # remove pr of absence if model is not inflated
     
-    combined <- if_else(pr_absence<(runif(N)+pr_boost),votes,as.integer(ordinal_outcomes)+1L)
+    combined <- ifelse(pr_absence<(runif(N)+pr_boost),votes,NA)
     
     # Create a score dataset
     
@@ -313,11 +302,7 @@
                            item_id=item_points,
                            group_id='G')
     
-    out_data <- id_make(score_data=out_data,
-                        miss_val = as.integer(ordinal_outcomes)+1,
-                        high_val = ordinal_outcomes,
-                        low_val = 1,
-                        middle_val = 2:(ordinal_outcomes-1))
+    out_data <- id_make(score_data=out_data)
     
     return(out_data)                      
   } else if(type=='predict') {
@@ -366,7 +351,7 @@
       # remove top category for vote prediction
       out_num[out_num==max(out_num)] <- max(out_num) - 1
       over_iters <- sapply(1:ncol(pr_vote), function(c) {
-        outdens <- ifelse(outcome==miss_val, 
+        outdens <- ifelse(is.na(outcome), 
                           dbinom(1,size = 1,prob=pr_absence[,c],log=T),
                           log(over_iters[out_num,,c]))
       })
@@ -394,7 +379,6 @@
                     type='simulate',
                     output=NULL,
                     outcome=NULL,
-                    miss_val=NULL,
                     ...)
 {
 
@@ -406,7 +390,7 @@
   } else if(type=='log_lik') {
     if(inflate) {
       over_iters <- sapply(1:ncol(pr_vote), function(c) {
-        outdens <- ifelse(outcome==miss_val, 
+        outdens <- ifelse(is.na(outcome), 
                           dbinom(1,size = 1,prob=pr_absence[,c],log=T),
                           dpois(outcome,lambda=exp(pr_vote[,c]),log=T))
       })
@@ -429,7 +413,7 @@
   
   if(type=='simulate') {
 
-    combined <- if_else(pr_absence<(runif(N)+pr_boost),votes,as.integer(max(votes)+1))
+    combined <- ifelse(pr_absence<(runif(N)+pr_boost),votes,NA)
     
     # Create a score dataset
     
@@ -440,8 +424,6 @@
                            group_id='G')
     
     out_data <- id_make(score_data=out_data,
-                        middle_val = NULL,
-                        miss_val=max(votes)+1,
                         unbounded=T)
     
     return(out_data) 
@@ -474,7 +456,6 @@
                     type='simulate',
                     output='observed',
                     outcome=NULL,
-                    miss_val=NULL,
                      ...)
 {
 
@@ -487,7 +468,7 @@
   } else if(type=='log_lik') {
     if(inflate) {
       over_iters <- sapply(1:ncol(pr_vote), function(c) {
-        outdens <- ifelse(outcome==miss_val, 
+        outdens <- ifelse(is.na(outcome), 
                           dbinom(1,size = 1,prob=pr_absence[,c],log=T),
                           dnorm(outcome,mean=pr_vote[,c],sd=sigma_sd[c],log=T))
       })
@@ -510,7 +491,7 @@
   
   if(type=='simulate') {
     
-    combined <- if_else(pr_absence<(runif(N)+pr_boost),votes,max(votes)+1)
+    combined <- ifelse(pr_absence<(runif(N)+pr_boost),votes,NA)
     
     # Create a score dataset
     
@@ -521,8 +502,6 @@
                            group_id='G')
     
     out_data <- id_make(score_data=out_data,
-                        middle_val = NULL,
-                        miss_val=max(votes)+1,
                         unbounded=T)
     
     return(out_data) 
@@ -555,7 +534,6 @@
                     type='simulate',
                     output='observed',
                     outcome=NULL,
-                    miss_val=NULL,
                     ...)
 {
   
@@ -567,7 +545,7 @@
   } else if(type=='log_lik') {
     if(inflate) {
       over_iters <- sapply(1:ncol(pr_vote), function(c) {
-        outdens <- ifelse(outcome==miss_val, 
+        outdens <- ifelse(is.na(outcomel), 
                           dbinom(1,size = 1,prob=pr_absence[,c],log=T),
                           dnorm(outcome,mean=pr_vote[,c],sd=sigma_sd[c],log=T))
       })
@@ -590,7 +568,7 @@
   
   if(type=='simulate') {
     
-    combined <- if_else(pr_absence<(runif(N)+pr_boost),votes,max(votes)+1)
+    combined <- ifelse(pr_absence<(runif(N)+pr_boost),votes,NA)
     
     # Create a score dataset
     
@@ -601,8 +579,6 @@
                            group_id='G')
     
     out_data <- id_make(score_data=out_data,
-                        middle_val = NULL,
-                        miss_val=max(votes)+1,
                         unbounded=T)
     
     return(out_data) 
