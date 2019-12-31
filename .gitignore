@@ -16,3 +16,5 @@ bfg-1.12.16.jar
 src-i386
 src-x64
 *.Rproj
+*.o
+*.hpp
