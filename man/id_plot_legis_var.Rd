@@ -4,11 +4,22 @@
 \alias{id_plot_legis_var}
 \title{Plot Legislator/Person Over-time Variances}
 \usage{
-id_plot_legis_var(object, return_data = FALSE, include = NULL,
-  high_limit = 0.95, low_limit = 0.05, text_size_label = 2,
-  text_size_group = 2.5, point_size = 1, hjust_length = -0.7,
-  person_labels = TRUE, group_labels = F, person_ci_alpha = 0.1,
-  group_color = TRUE, ...)
+id_plot_legis_var(
+  object,
+  return_data = FALSE,
+  include = NULL,
+  high_limit = 0.95,
+  low_limit = 0.05,
+  text_size_label = 2,
+  text_size_group = 2.5,
+  point_size = 1,
+  hjust_length = -0.7,
+  person_labels = TRUE,
+  group_labels = F,
+  person_ci_alpha = 0.1,
+  group_color = TRUE,
+  ...
+)
 }
 \arguments{
 \item{object}{A fitted \code{idealstan} object}

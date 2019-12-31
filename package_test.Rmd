@@ -985,7 +985,7 @@ num_person <- 20
   
   drift <- rnorm(n=num_person,mean=0,sd=1)
   
-  time_points <- rep(1:time,each=num_bills/time_points)
+  time_points <- rep(1:time,each=num_bills/time)
       
   ideal_pts <- lapply(1:num_person, function(i) {
         this_person <- .gen_ts_data(t=time,
@@ -1450,7 +1450,7 @@ num_person <- 20
   
   combine_data <- id_make(to_id_make)
 
-  combine_data_est_map <- id_estimate(combine_data,nchains=4,ncores = 20,fixtype = "prefix",restrict_ind_high = as.character(sort(ideal_pts[,1],
+  combine_data_est_map <- id_estimate(combine_data,nchains=2,ncores = 5,fixtype = "prefix",restrict_ind_high = as.character(sort(ideal_pts[,1],
                                                                      decreasing=T,
                                                         index=T)$ix[1]),
                                restrict_ind_low = as.character(sort(ideal_pts[,1],

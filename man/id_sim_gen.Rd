@@ -4,12 +4,24 @@
 \alias{id_sim_gen}
 \title{Simulate IRT ideal point data}
 \usage{
-id_sim_gen(num_person = 20, num_bills = 50, model_type = "binary",
-  latent_space = FALSE, absence_discrim_sd = 2,
-  absence_diff_mean = 0.5, reg_discrim_sd = 2, diff_sd = 0.25,
-  time_points = 1, time_process = "random", time_sd = 0.1,
-  ideal_pts_sd = 1, prior_type = "gaussian", ordinal_outcomes = 3,
-  inflate = FALSE, sigma_sd = 1)
+id_sim_gen(
+  num_person = 20,
+  num_bills = 50,
+  model_type = "binary",
+  latent_space = FALSE,
+  absence_discrim_sd = 2,
+  absence_diff_mean = 0.5,
+  reg_discrim_sd = 2,
+  diff_sd = 0.25,
+  time_points = 1,
+  time_process = "random",
+  time_sd = 0.1,
+  ideal_pts_sd = 1,
+  prior_type = "gaussian",
+  ordinal_outcomes = 3,
+  inflate = FALSE,
+  sigma_sd = 1
+)
 }
 \arguments{
 \item{num_person}{The number of persons/persons}

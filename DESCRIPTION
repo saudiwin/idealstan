@@ -30,7 +30,8 @@ Imports:
     shinystan,
     gghighlight,
     forcats,
-    ggrepel
+    ggrepel,
+    jsonlite
 Suggests:
     pscl,
     loo,
@@ -47,5 +48,4 @@ LazyData: true
 NeedsCompilation: yes
 SystemRequirements: GNU make
 VignetteBuilder: R.rsp
-RoxygenNote: 6.1.1
-
+RoxygenNote: 7.0.2

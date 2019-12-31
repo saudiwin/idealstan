@@ -4,10 +4,20 @@
 \alias{id_plot_cov}
 \title{Marginal Effects Plot for Hierarchical Covariates}
 \usage{
-id_plot_cov(object, calc_varying = T, label_high = "Liberal",
-  label_low = "Conservative", cov_type = "person_cov",
-  pred_outcome = NULL, high_quantile = 0.95, low_quantile = 0.05,
-  filter_cov = NULL, new_cov_names = NULL, recalc_vals = NULL)
+id_plot_cov(
+  object,
+  calc_varying = T,
+  label_high = "Liberal",
+  label_low = "Conservative",
+  cov_type = "person_cov",
+  use_items = "all",
+  pred_outcome = NULL,
+  high_quantile = 0.95,
+  low_quantile = 0.05,
+  filter_cov = NULL,
+  new_cov_names = NULL,
+  recalc_vals = NULL
+)
 }
 \arguments{
 \item{object}{A fitted \code{idealstan} object}

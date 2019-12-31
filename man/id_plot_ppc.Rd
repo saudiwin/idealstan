@@ -16,3 +16,6 @@ This function is the generic method for generating posterior distributions
 from a fitted \code{idealstan} model. Functions are documented in the 
 actual method.
 }
+\details{
+
+}

@@ -5,10 +5,18 @@
 \title{Function to compare two fitted idealstan models by plotting ideal points. Assumes that underlying data
 is the same for both models.}
 \usage{
-id_plot_compare(model1 = NULL, model2 = NULL, scale_flip = FALSE,
-  return_data = FALSE, labels = NULL, hjust = -0.1,
-  palette = "Set1", color_direction = 1, text_size_label = 2,
-  rescale = FALSE)
+id_plot_compare(
+  model1 = NULL,
+  model2 = NULL,
+  scale_flip = FALSE,
+  return_data = FALSE,
+  labels = NULL,
+  hjust = -0.1,
+  palette = "Set1",
+  color_direction = 1,
+  text_size_label = 2,
+  rescale = FALSE
+)
 }
 \arguments{
 \item{model1}{The first model to compare}

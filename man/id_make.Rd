@@ -4,14 +4,25 @@
 \alias{id_make}
 \title{Create data to run IRT model}
 \usage{
-id_make(score_data = NULL, outcome_disc = "outcome_disc",
-  outcome_cont = "outcome_cont", person_id = "person_id",
-  item_id = "item_id", time_id = "time_id", group_id = "group_id",
-  model_id = "model_id", simul_data = NULL, person_cov = NULL,
-  item_cov = NULL, item_cov_miss = NULL, remove_cov_int = FALSE,
-  miss_val = c(NA, NA), high_val = NULL, low_val = NULL,
-  middle_val = NULL, unbounded = FALSE, exclude_level = NA,
-  simulation = FALSE)
+id_make(
+  score_data = NULL,
+  outcome_disc = "outcome_disc",
+  outcome_cont = "outcome_cont",
+  person_id = "person_id",
+  item_id = "item_id",
+  time_id = "time_id",
+  group_id = "group_id",
+  model_id = "model_id",
+  ordered_id = "ordered_id",
+  simul_data = NULL,
+  person_cov = NULL,
+  item_cov = NULL,
+  item_cov_miss = NULL,
+  remove_cov_int = FALSE,
+  unbounded = FALSE,
+  exclude_level = NA,
+  simulation = FALSE
+)
 }
 \arguments{
 \item{score_data}{A data frame in long form, i.e., one row in the data for each 
@@ -55,23 +66,6 @@ interact covariates with IDs like \code{person_id} or \code{item_id}. Set to \co
 including these constituent terms would cause multi-collinearity with other terms in the model
 (such as running a group-level model with a group-level interaction or a person-level model
 with a person-level interaction).}
-
-\item{miss_val}{The value (numeric or character) that indicate missing data/absences in the data. 
-If missing data is coded as \code{NA}, 
- simply leave this parameter at the default, \code{NA}.}
-
-\item{high_val}{The value (numeric or character) that indicate the highest discrete outcome possible, 
-such as yes in a vote dataset or correct in a test examination.}
-
-\item{low_val}{The value (numeric or character) that indicates the lowest discrete outcome possible, 
-such as no votes in a vote dataset or incorrect in a test examination.}
-
-\item{middle_val}{The value (numeric or character) that indicate values 
-between the lowest and highest categories, such as abstention in voting data or 
-"Neither Agree nor Disagree" in Likert scales.
- If there are multiple possible values, 
- pass along a numeric or character vector of all such values in correct order (lower to higher values).
- If there are no middle values (binary outcome), leave empty.}
 
 \item{unbounded}{Whether or not the outcome/response is unbounded (i.e., continuous or
 Poisson). If it is, \code{miss_val} 

@@ -4,19 +4,49 @@
 \alias{id_estimate}
 \title{Estimate an \code{idealstan} model}
 \usage{
-id_estimate(idealdata = NULL, model_type = 2, inflate_zero = FALSE,
-  vary_ideal_pts = "none", use_subset = FALSE, sample_it = FALSE,
-  subset_group = NULL, subset_person = NULL, sample_size = 20,
-  nchains = 4, niters = 2000, use_vb = FALSE,
-  restrict_ind_high = NULL, fix_high = 1, fix_low = (-1),
-  restrict_ind_low = NULL, fixtype = "vb_full",
-  const_type = "persons", id_refresh = 0, prior_fit = NULL,
-  warmup = floor(niters/2), ncores = 4, use_groups = FALSE,
-  discrim_reg_sd = 2, discrim_miss_sd = 2, person_sd = 1,
-  time_sd = 0.1, sample_stationary = FALSE, ar_sd = 2,
-  diff_reg_sd = 1, diff_miss_sd = 1, restrict_sd = 0.01,
-  tol_rel_obj = 0.001, gp_sd_par = 0.025, gp_num_diff = 3,
-  gp_m_sd_par = 0.3, gp_min_length = 0, ...)
+id_estimate(
+  idealdata = NULL,
+  model_type = 2,
+  inflate_zero = FALSE,
+  vary_ideal_pts = "none",
+  within_chain = "none",
+  map_over_id = "persons",
+  mpi_export = NULL,
+  use_subset = FALSE,
+  sample_it = FALSE,
+  subset_group = NULL,
+  subset_person = NULL,
+  sample_size = 20,
+  nchains = 4,
+  niters = 2000,
+  use_vb = FALSE,
+  restrict_ind_high = NULL,
+  fix_high = 1,
+  fix_low = (-1),
+  restrict_ind_low = NULL,
+  fixtype = "vb_full",
+  const_type = "persons",
+  id_refresh = 0,
+  prior_fit = NULL,
+  warmup = floor(niters/2),
+  ncores = 4,
+  use_groups = FALSE,
+  discrim_reg_sd = 2,
+  discrim_miss_sd = 2,
+  person_sd = 1,
+  time_sd = 0.1,
+  sample_stationary = FALSE,
+  ar_sd = 2,
+  diff_reg_sd = 1,
+  diff_miss_sd = 1,
+  restrict_sd = 0.01,
+  tol_rel_obj = 0.001,
+  gp_sd_par = 0.025,
+  gp_num_diff = 3,
+  gp_m_sd_par = 0.3,
+  gp_min_length = 0,
+  ...
+)
 }
 \arguments{
 \item{idealdata}{An object produced by the \code{\link{id_make}} 
@@ -36,6 +66,25 @@ running a model so that zeroes are coded as missing data.}
 \code{'GP'}, a 
 time-varying ideal point model will be fit with either a random-walk process, an 
 AR1 process or a Gaussian process. See documentation for more info.}
+
+\item{within_chain}{This parameter determines whether Stan's within-chain
+parallelization scheme is used for estimation. The parameter can take three values:
+\code{"none"} for no within-chain parallelization,
+\code{"threads"} for shared-memory parallelization,
+and \code{"mpi"} for using the MPI library for 
+parallelization (this requires sampling in \code{cmdstan},
+see vignette for details). Generally speaking, \code{"mpi"} is
+more efficient parallelization that can be used on computer
+clusters to estimate very large models.}
+
+\item{map_over_id}{This parameter identifies which ID variable to use to construct the 
+shards for within-chain parallelization. It defaults to \code{"persons"} but can also take
+a value of \code{"items"}. It is recommended to select whichever variable has more
+distinct values to improve parallelization.}
+
+\item{mpi_export}{If \code{within_chains="mpi"}, this parameter should refer to the 
+directory where the necessary data and Stan code will be exported to. If missing, 
+an interactive dialogue will prompt the user for a directory.}
 
 \item{use_subset}{Whether a subset of the legislators/persons should be used instead of the full response matrix}
 
@@ -94,7 +143,9 @@ be the same}
 See \code{\link[rstan]{stan}} for more info.}
 
 \item{ncores}{The number of cores in your computer to use for parallel processing in the Stan engine. 
-See \code{\link[rstan]{stan}} for more info.}
+See \code{\link[rstan]{stan}} for more info. If \code{within_chain} is set to
+\code{"threads"}, this parameter will determine the number of threads 
+(independent processes) used for within-chain parallelization.}
 
 \item{use_groups}{If \code{TRUE}, group parameters from the person/legis data given in \code{\link{id_make}} will be 
 estimated instead of individual parameters.}
@@ -187,6 +238,43 @@ the number of the model in the list to the \code{model_type} option to fit the m
   \item Latent Space (binary response) ideal point model with missing-data inflation
 }
 }
+\section{Identification}{
+
+Identifying IRT models is challenging, and ideal point models are still more challenging 
+because the discrimination parameters are not constrained.
+As a result, more care must be taken to obtain estimates that are the same regardless of starting values. 
+The parameter \code{fixtype} enables you to change the type of identification used. The default, 'vb_full', 
+does not require any further
+information from you in order for the model to be fit. In this version of identification, 
+an unidentified model is run using
+variational Bayesian inference (see \code{\link[rstan]{vb}}). The function will then select two 
+persons/legislators or items/bills that end up on either end of the ideal point spectrum, 
+and pin their ideal points
+to those specific values. 
+To control whether persons/legislator or items/bills are constrained,
+the \code{const_type} can be set to either \code{"persons"} or 
+\code{"items"} respectively. 
+In many situations, it is prudent to select those persons or items 
+ahead of time to pin to specific values. This allows the analyst to 
+be more specific about what type of latent dimension is to be 
+estimated. To do so, the \code{fixtype} option should be set to 
+\code{"prefix"}. The values of the persons/items to be pinned can be passed
+as character values to \code{restrict_ind_high} and 
+\code{restrict_ind_low} to pin the high/low ends of the latent 
+scale respectively. Note that these should be the actual data values 
+passed to the \code{id_make} function. If you don't pass any values, 
+you will see a prompt asking you to select certain values of persons/items.
+
+The pinned values for persons/items are set by default to +1/-1, though
+this can be changed using the \code{fix_high} and 
+\code{fix_low} options. This pinned range is sufficient to identify 
+all of the models
+implemented in idealstan, though fiddling with some parameters may be 
+necessary in difficult cases. For time-series models, one of the 
+person ideal point over-time variances is also fixed to .1, a value that
+can be changed using the option \code{time_sd}.
+}
+
 \examples{
 # First we can simulate data for an IRT 2-PL model that is inflated for missing data
 library(ggplot2)

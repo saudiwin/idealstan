@@ -37,9 +37,9 @@ data {
   int bb[N]; // items/bills id
   int time[N]; // time point id
   int mm[N]; // model counter id
-  matrix[N,LX] legis_pred;
-  matrix[N,SRX] srx_pred;
-  matrix[N,SAX] sax_pred;
+  matrix[N,(N>0) ? LX:0] legis_pred;
+  matrix[N,(N>0) ? SRX:0] srx_pred;
+  matrix[N,(N>0) ? SAX:0] sax_pred;
   int mod_count; // total number of models
   int tot_cats; // total number of possible ordinal outcomes
   int n_cats_rat[tot_cats]; // how many outcomes per outcome size int he data
@@ -57,9 +57,8 @@ data {
   real legis_sd;
   real diff_abs_sd;
   real diff_reg_sd;
-  real restrict_sd;
+  //real restrict_sd;
   real ar_sd;
-  int sample_stationary;
   real time_sd;
   //int restrict_var;
   //real restrict_var_high;

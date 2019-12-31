@@ -77,9 +77,9 @@
 .extract_samples <- function(obj=NULL,extract_type=NULL,...) {
   if(!is.null(extract_type)) {
     param <- switch(extract_type,persons='L_full',
-                    reg_discrim='sigma_reg_free',
+                    obs_discrim='sigma_reg_free',
                     miss_discrim='sigma_abs_free',
-                    reg_diff='B_int_free',
+                    obs_diff='B_int_free',
                     miss_diff='A_int_free',
                     cutpoints='steps_votes3')
     as.data.frame(obj@stan_samples,pars=param,...)
@@ -1499,6 +1499,8 @@ return(as.vector(idx))
                         modelpoints=NULL,
                         ordered_id=NULL,
                         idealdata=NULL) {
+  
+
 
   # need to determine which missing values should not be considered
   # only remove missing values if non-inflated model is used
@@ -1632,13 +1634,13 @@ return(as.vector(idx))
     SRX <- length(idealdata@item_cov)
     SAX <- length(idealdata@item_cov_miss)
     if(!is.infinite(max(Y_int))) {
-      y_int_miss <- max(Y_int[discrete==1])
+      y_int_miss <- max(Y_int)
     } else {
       y_int_miss <- 0
     }
     
     if(!is.infinite(max(Y_cont))) {
-      y_cont_miss <- max(Y_cont[discrete==0])
+      y_cont_miss <- max(Y_cont)
     } else {
       y_cont_miss <- 0
     }
@@ -1647,7 +1649,7 @@ return(as.vector(idx))
     
     # we just want to add missing values to the pad_id
     # leave everything the same length
-    
+
     pad_id[!remove_nas] <- 1
     
     if(length(Y_cont)>1) {
@@ -1656,6 +1658,7 @@ return(as.vector(idx))
       N <- N_cont
     } else {
       N_cont <- array(0)
+      Y_cont <- 0
     }
     
     if(length(Y_int)>1) {
@@ -1664,6 +1667,7 @@ return(as.vector(idx))
       N <- N_int
     } else {
       N_int <- array(0L)
+      Y_int <- 0
     }
     
     
@@ -1689,10 +1693,6 @@ return(as.vector(idx))
     # if((max(Y_int_map[modelpoints==1])>1 && !is.infinite(max(Y_int_map[modelpoints==1]))) || (max(Y_int_map[modelpoints==2])>2 && !is.infinite(max(Y_int_map[modelpoints==2])))) {
     #   Y_int_map[modelpoints[discrete==1] %in% c(1,2)] <- Y_int_map[modelpoints[discrete==1]  %in% c(1,2)] - 1L
     # }
-    
-    
-    y_int_miss <- max(Y_int_map[discrete==1 & pad_id==0])
-    y_cont_miss <- max(Y_cont_map[discrete==0 & pad_id==0])
   }
   
   max_t <- max(timepoints,na.rm=T)
@@ -1771,7 +1771,7 @@ return(as.vector(idx))
   # now stratify everything by number of shards = number of items
 
   if(within_chain!="none") {
-    
+
     # Y_int_map will rep at 0 if length 1
 
     to_shards_int <- tibble(Y_int_map,
@@ -1792,6 +1792,19 @@ return(as.vector(idx))
       bind_cols(select(idealdata@score_matrix,idealdata@person_cov),
                 select(idealdata@score_matrix,idealdata@item_cov),
                 select(idealdata@score_matrix,idealdata@item_cov_miss))
+    
+    # create max values
+    if(sum(discrete==1 & pad_id==0)>0) {
+      y_int_miss <- max(to_shards_int$Y_int_map[discrete==1 & pad_id==0])
+    } else {
+      y_int_miss <- 0
+    }
+    if(sum(discrete==0 & pad_id==0)>0) {
+      y_cont_miss <- max(to_shards_cont$Y_cont_map[discrete==0 & pad_id==0])
+    } else {
+      y_cont_miss <- 0
+    }
+    
     
     
     if(map_over_id=="persons") {
@@ -1843,8 +1856,8 @@ return(as.vector(idx))
     all_int_array <- rbind(matrix(c(rep(as.numeric(map_over_id=="persons"),K),
                                     rep(nrow(to_shards_int_array)/length(unique(to_shards_int$variable)),K), # pass along shard size for N
                                     rep(nrow(to_shards_cont_array)/length(unique(to_shards_cont$variable)),K),# pass along shard size for N
-                                    rep(max(Y_int_map),K),
-                                    rep(max(Y_cont_map),K),
+                                    rep(y_int_miss,K),
+                                    rep(y_cont_miss,K),
                                      rep(max(legispoints),K),
                                      rep(max(billpoints),K),
                                     rep(num_ls,K),
@@ -1867,11 +1880,11 @@ return(as.vector(idx))
     SRX <- length(idealdata@item_cov)
     SAX <- length(idealdata@item_cov_miss)
     
-    legis_pred <- array(dim=c(0,LX)) + 0L
+    legis_pred <- array(dim=c(0,0)) + 0L
     
-    srx_pred <- array(dim=c(0,SRX)) + 0L
+    srx_pred <- array(dim=c(0,0)) + 0L
     
-    sax_pred <- array(dim=c(0,SAX)) + 0L
+    sax_pred <- array(dim=c(0,0)) + 0L
     
     # need to zero out IDs
     

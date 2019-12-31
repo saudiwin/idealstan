@@ -14,3 +14,6 @@ id_extract(object, ...)
 \description{
 This is a generic function.
 }
+\details{
+
+}

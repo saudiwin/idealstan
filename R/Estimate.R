@@ -647,6 +647,9 @@ id_make <- function(score_data=NULL,
 #' identification constraints can be recycled from the prior fit if the \code{idealstan} object is passed 
 #' to this option. Note that means that all identification options, like \code{restrict_var}, will also 
 #' be the same
+#' @param mpi_export If \code{within_chains="mpi"}, this parameter should refer to the 
+#' directory where the necessary data and Stan code will be exported to. If missing, 
+#' an interactive dialogue will prompt the user for a directory. 
 #' @param id_refresh The number of times to report iterations from the variational run used to 
 #' identify models. Default is 0 (nothing output to console).
 #' @param sample_stationary If \code{TRUE}, the AR(1) coefficients in a time-varying model will be 
@@ -779,12 +782,14 @@ id_make <- function(score_data=NULL,
 #' }
 #' @importFrom stats dnorm dpois model.matrix qlogis relevel rpois update
 #' @importFrom utils person
+#' @importFrom  jsonlite unbox write_json
 #' @export
 id_estimate <- function(idealdata=NULL,model_type=2,
                         inflate_zero=FALSE,
                         vary_ideal_pts='none',
                         within_chain="none",
                         map_over_id='persons',
+                        mpi_export=NULL,
                         use_subset=FALSE,sample_it=FALSE,
                            subset_group=NULL,subset_person=NULL,sample_size=20,
                            nchains=4,niters=2000,use_vb=FALSE,
@@ -800,7 +805,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                         use_groups=FALSE,
                            discrim_reg_sd=2,
                            discrim_miss_sd=2,
-                           person_sd=1,
+                           person_sd=3,
                         time_sd=.1,
                         sample_stationary=FALSE,
                         ar_sd=2,
@@ -872,13 +877,13 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   # check if ordinal categories exist in the data if model_id>1
   
   if(length(unique(idealdata@score_matrix$model_id))>1) {
-    if(any(c(3,4,5,6)) %in% idealdata@score_matrix$model_id) {
+    if(any(c(3,4,5,6) %in% idealdata@score_matrix$model_id)) {
       if(is.null(idealdata@score_matrix$ordered_id) | !is.numeric(idealdata@score_matrix$ordered_id)) {
         stop("If you have an ordered categorical variable in a multi-distribution model, you must include a column in the data with the number of ordered categories for each row in the data.\n
              See id_make documentation for more info.")
       }
     }
-  } else if(any(c(3,4,5,6)) %in% idealdata@score_matrix$model_id) {
+  } else if(any(c(3,4,5,6) %in% idealdata@score_matrix$model_id)) {
     idealdata@score_matrix$ordered_id <- length(unique(Y_int[!is.na(Y_int)]))
   } else {
     idealdata@score_matrix$ordered_id <- 0
@@ -1100,7 +1105,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     restrict_mean_val=idealdata@restrict_mean_val,
                     restrict_mean_ind=idealdata@restrict_mean_ind,
                     restrict_mean=idealdata@restrict_mean,
-                    zeroes=inflate_zero,
+                    zeroes=as.numeric(inflate_zero),
                     time_ind=as.array(time_ind),
                     time_proc=vary_ideal_pts,
                     gp_sd_par=gp_sd_par,
@@ -1144,6 +1149,47 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   } else if(within_chain=="mpi") {
     
     # we can't do mpi natively, so let's export to cmdstan to run on a cluster
+
+    if(is.null(mpi_export)) {
+      print("Please choose a folder to store the exported data and stan code for MPI.")
+      mpi_export <- rstudioapi::selectDirectory(caption="Choose a directory to export code and data for running MPI in cmdstan:")
+    }
+    
+    # need to unbox all singleton vectors then write out to JSON (much faster)
+    
+    # this_data <- lapply(this_data, function (x) {
+    #   if(length(x)==1) {
+    #     x <- unbox(x)
+    #   }
+    #   x
+    # })
+    
+    #write_json(this_data,paste0(mpi_export,"/idealstan_mpi_data.json"))
+
+    # need to stan_rdump because of zero-length 2-d arrays
+    
+    stan_rdump(ls(this_data),file=paste0(mpi_export,"/idealstan_mpi_data.R"),
+                           envir = list2env(this_data))
+    
+    writeLines(idealdata@stanmodel@model_code,con=file(paste0(mpi_export,"/idealstan_stan_code.stan")))
+    
+    saveRDS(idealdata,paste0(mpi_export,"/idealdata_object.rds"))
+    
+    # save extra necessary parameters
+    
+    saveRDS(list(vary_ideal_pts=vary_ideal_pts,
+                 use_groups=use_groups,
+                 model_type=model_type,
+                 use_vb=use_vb),
+            paste0(mpi_export,"/extra_params.rds"))
+    
+    # need all the chunks
+    dir.create(paste0(mpi_export,"/chunks"),showWarnings=FALSE)
+    chunks <- system.file("chunks",package="idealstan")
+    chunks_files <- list.files(chunks,full.names=T)
+    file.copy(chunks_files,to=paste0(mpi_export,"/chunks"))
+    
+    return("You will need to run the model in cmdstan yourself and load the resulting data back in to R with the id_load_mpi function. See vignette for details.")
     
   } else {
     outobj <- sample_model(object=idealdata,nchains=nchains,niters=niters,warmup=warmup,ncores=ncores,
@@ -1157,6 +1203,50 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   outobj@model_type <- model_type
   outobj@time_proc <- vary_ideal_pts
   outobj@use_groups <- use_groups
+  return(outobj)
+  
+}
+
+#' Load Results from CMDstan to Idealstan Object
+#' 
+#' Given the location of the folder of seralized data from id_estimate,
+#' and the name of the CSV output from a CMDstan run, 
+#' this function will load the original idealstan data and the 
+#' Markov samples to create an idealstan object that can be 
+#' used for further analysis with idealstan functions.
+#' 
+#' @param folder The location of the folder (full file path) 
+#' that was given to the \code{id_estimate} function to 
+#' export idealstan data
+#' @param samples The full file path to the CSV output
+#' from the successful CMDstan run
+#' @export
+id_load_mpi <- function(folder=NULL,
+                          samples=NULL) {
+  
+  
+  # first load the original idealdata object
+  
+  idealdata <- readRDS(paste0(folder,"/idealdata_object.rds"))
+  
+  extra_params <- readRDS(paste0(folder,"/extra_params.rds"))
+  
+  print("Loading CSV samples. May take some time.")
+  
+  stan_samples <- read_stan_csv(samples)
+  
+  # make an idealstan object
+  
+  outobj <- new('idealstan',
+                score_data=idealdata,
+                model_code=idealdata@stanmodel@model_code,
+                stan_samples=stan_samples,
+                use_vb=extra_params$use_vb)
+  
+  outobj@model_type <- extra_params$model_type
+  outobj@time_proc <- extra_params$vary_ideal_pts
+  outobj@use_groups <- extra_params$use_groups
+  
   return(outobj)
   
 }

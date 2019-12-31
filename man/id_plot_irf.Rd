@@ -4,13 +4,27 @@
 \alias{id_plot_irf}
 \title{Generate Impulse Response Functions for Covariates}
 \usage{
-id_plot_irf(object, cov_name = NULL, label_high = "Liberal",
-  label_low = "Conservative", pred_outcome = NULL, recalc_vals = F,
-  include = NULL, time_calc = 10, time_label = "Time Points",
-  line_type = 2, line_width = 1, line_alpha = 1,
-  line_color = "red", ci_color = "black", ci_alpha = 0.5,
-  use_ci = TRUE, high_quantile = 0.95, low_quantile = 0.05,
-  calc_varying = T)
+id_plot_irf(
+  object,
+  cov_name = NULL,
+  label_high = "Liberal",
+  label_low = "Conservative",
+  pred_outcome = NULL,
+  recalc_vals = F,
+  include = NULL,
+  time_calc = 10,
+  time_label = "Time Points",
+  line_type = 2,
+  line_width = 1,
+  line_alpha = 1,
+  line_color = "red",
+  ci_color = "black",
+  ci_alpha = 0.5,
+  use_ci = TRUE,
+  high_quantile = 0.95,
+  low_quantile = 0.05,
+  calc_varying = T
+)
 }
 \arguments{
 \item{object}{A fitted \code{idealstan} object}
