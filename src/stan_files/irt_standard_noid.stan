@@ -119,24 +119,6 @@ transformed data {
 	  vP = 0;
 	  dP = 0;
 	}
-	
-	// need to assign a type of outcome to Y based on the model (discrete or continuous)
-	// to do this we need to trick Stan into assigning to an integer. 
-	
-	// we're going to either do this data processing step before running the model
-	// or we'll do it in the model calculation itself
-	
-//#include /chunks/change_outcome.stan
-
-// determine whether to restrict variance or not
-
-// if(restrict_var==1) {
-//   num_var_restrict=num_legis;
-//   num_var_free=0;
-// } else {
-//   num_var_restrict=0;
-//   num_var_free=num_legis;
-// }
 
 }
 
@@ -144,9 +126,9 @@ parameters {
   vector[num_bills] sigma_abs_free;
   vector[num_legis] L_full;
   vector[num_ls] ls_int; // extra intercepts for non-inflated latent space
-  vector[num_legis] L_tp1_var[T-1]; // non-centered variance
+  vector[T>1 ? num_legis : 0] L_tp1_var[T-1]; // non-centered variance
   vector[num_legis] L_tp2[gp_nT]; // additional L_tp1 for GPs only
-  vector<lower=-0.99,upper=0.99>[num_legis] L_AR1; // AR-1 parameters for AR-1 model
+  vector<lower=-0.99,upper=0.99>[(T>1 && time_proc==3) ? num_legis : 0] L_AR1; // AR-1 parameters for AR-1 model
   vector[num_bills] sigma_reg_free;
   vector[LX] legis_x;
   vector[SRX] sigma_reg_x;
@@ -173,21 +155,23 @@ parameters {
   vector<lower=0>[gp_N_fix] gp_sd_free; //additional residual variation in Y for GPs
   real<lower=0> extra_sd;
   vector[gp_N_fix] time_var_gp_free; // variance for time series processes. constrained if GP
-  vector<lower=0>[num_legis-1] time_var_free; // optional restricted variance
+  vector<lower=0>[T>1 ? num_legis-1 : 0] time_var_free; // optional restricted variance
 }
 
 transformed parameters {
   
-  vector[num_legis] time_var_full;
+  vector[T>1 ? num_legis : 0] time_var_full;
   vector[gp_N] time_var_gp_full;
   vector[gp_N] m_sd_full;
   vector[gp_N] gp_sd_full;
-  vector[num_legis] L_tp1[T]; // all other params can float
+  vector[T>1 ? num_legis : 0] L_tp1[T]; // all other params can float
   vector[vP] varparams[S]; // varying parameters if map_rect
   vector[dP] dparams; // stacked (constant parameters) if map_rect
   
   
-  time_var_full = append_row([time_sd]',time_var_free);
+  if(T>1) {
+    time_var_full = append_row([time_sd]',time_var_free);
+  }
   
   
   if(T>1) {
@@ -224,11 +208,8 @@ transformed parameters {
 }
 
 model {
-
-
-  L_full ~ normal(0,legis_sd);
   
-  if(time_proc==4) {
+  if(time_proc==4 && (within_chain==0 || (within_chain==1 && S_type==0)) && T>1) {
     {
     matrix[T, T] cov[gp_N]; // zero-length if not a GP model
     matrix[T, T] L_cov[gp_N];// zero-length if not a GP model
@@ -249,8 +230,10 @@ for(n in 1:num_legis) {
     }
   }
   
-  for(t in 1:(T-1)) {
-    L_tp1_var[t] ~ normal(0,1);
+  if(T>1 && time_proc!=4 && (within_chain==0 || (within_chain==1 && S_type==0))) {
+    for(t in 1:(T-1)) {
+      L_tp1_var[t] ~ normal(0,1);
+    }
   }
 
 
@@ -259,20 +242,29 @@ for(n in 1:num_legis) {
   legis_x ~ normal(0,5);
   sigma_reg_x ~ normal(0,5);
   sigma_abs_x ~ normal(0,5);
-  L_AR1 ~ normal(0,ar_sd); // these parameters shouldn't get too big
-  ls_int ~ normal(0,legis_sd);
+  if(time_proc==3 && (within_chain==0 || (within_chain==1 && S_type==0)) && T>1) {
+    L_AR1 ~ normal(0,ar_sd); // these parameters shouldn't get too big
+  }
+  
+  if(within_chain==0 || (within_chain==1 && S_type==0)) {
+    L_full ~ normal(0,legis_sd);
+    ls_int ~ normal(0,legis_sd);
+  }
+  
   extra_sd ~ exponential(1);
-  time_var_gp_free ~ normal(0,1);
-  gp_sd_free ~ normal(0,1);
-  m_sd_free ~ normal(0,1); // tight prior on GP marginal standard deviation
 
 #include /chunks/ord_steps_calc.stan  
 
   B_int_free ~ normal(0,diff_reg_sd);
   A_int_free ~ normal(0,diff_abs_sd);
 
+  if(T>1 && (within_chain==0 || (within_chain==1 && S_type==0))) {
+    time_var_free ~ normal(0,1); // tight-ish prior on additional variances
+    time_var_gp_free ~ normal(0,1); // tight-ish prior on additional variances
+    gp_sd_free ~ normal(0,2);
+    m_sd_free ~ normal(0,2);
+  }
   
-  time_var_free ~ normal(0,1);
 
 // use map_rect or don't use map_rect
 if(within_chain==1) {

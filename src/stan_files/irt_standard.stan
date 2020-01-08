@@ -163,8 +163,8 @@ parameters {
   vector<lower=0>[gp_N_fix] gp_sd_free; // residual GP variation in Y
   vector[num_legis] L_tp2[gp_nT]; // additional L_tp1 for GPs only
   vector[num_ls] ls_int; // extra intercepts for non-inflated latent space
-  vector[num_legis] L_tp1_var[T-1]; // non-centered variance
-  vector<lower=-.99,upper=.99>[num_legis] L_AR1; // AR-1 parameters for AR-1 model
+  vector[T>1 ? num_legis : 0] L_tp1_var[T-1]; // non-centered variance
+  vector<lower=-.99,upper=.99>[(T>1 && time_proc==3) ? num_legis : 0] L_AR1; // AR-1 parameters for AR-1 model
   vector[num_bills] sigma_reg_free;
   //vector[1] restrict_high;
   vector[LX] legis_x;
@@ -191,13 +191,13 @@ parameters {
   real<lower=0> extra_sd;
   //real<lower=-.9,upper=.9> ar_fix;
   vector[gp_N_fix] time_var_gp_free;
-  vector<lower=0>[num_legis-1] time_var_free;
+  vector<lower=0>[T>1 ? num_legis-1 : 0] time_var_free;
   
 }
 
 transformed parameters {
 
-  vector[num_legis] L_tp1[T];
+  vector[T>1 ? num_legis : 0] L_tp1[T];
   vector[num_legis] time_var_full;
   vector[gp_N] time_var_gp_full;
   vector[gp_N] m_sd_full;
@@ -205,16 +205,15 @@ transformed parameters {
   vector[vP] varparams[S]; // varying parameters if map_rect
   vector[dP] dparams; // stacked (constant parameters) if map_rect
   
-  time_var_full = append_row([time_sd]',time_var_free);
-  
-
-  //L_AR1 = append_row(L_AR1_free,ar_fix);
+  if(T>1) {
+    time_var_full = append_row([time_sd]',time_var_free);
+  }
   
     //combine constrained and unconstrained parameters
     //#include /chunks/build_params_v2.stan
 
-  
-  if(T>1) {
+  if(within_chain==0 || (within_chain==1 && S_type==0)) {
+    if(T>1) {
     if(time_proc==3) {
       // in AR model, intercepts are constant over time
 #include /chunks/l_hier_ar1_prior.stan
@@ -230,12 +229,10 @@ transformed parameters {
                               gp_sd_free);
       time_var_gp_full = append_row(gp_length,
                                       time_var_gp_free);
-    } else  {
-      L_tp1[1] = L_full;
-    } 
-  } else {
-    L_tp1[1] = L_full;
+    }  
+  } 
   }
+
   
     // create map_rect parameters only if S>0
   
@@ -250,13 +247,15 @@ model {
   sigma_abs_x ~ normal(0,5);
   sigma_reg_x ~ normal(0,5);
   extra_sd ~ exponential(1);
-  gp_sd_free ~ normal(0,2);
-  m_sd_free ~ normal(0,2);
-  L_AR1 ~ normal(0,ar_sd);
+  
+  if(time_proc==3 && (within_chain==0 || (within_chain==1 && S_type==0)) && T>1) {
+    L_AR1 ~ normal(0,ar_sd);
+  }
+  
 
 #include /chunks/ord_steps_calc.stan  
   
-  if(time_proc==4) {
+  if(time_proc==4 && (within_chain==0 || (within_chain==1 && S_type==0)) && T>1)  {
     {
     matrix[T, T] cov[gp_N]; // zero-length if not a GP model
     matrix[T, T] L_cov[gp_N];// zero-length if not a GP model
@@ -276,27 +275,41 @@ for(n in 1:num_legis) {
 }
     }
   }
-  
-  for(t in 1:(T-1)) {
-    L_tp1_var[t] ~ normal(0,1);
+  if(T>1 && time_proc!=4 && (within_chain==1 && S_type==0)) {
+    for(t in 1:(T-1)) {
+      L_tp1_var[t] ~ normal(0,1);
+    }
   }
-    
-  ls_int ~ normal(0,legis_sd);
+  
+  if(within_chain==0 || (within_chain==1 && S_type==0))  {
+    ls_int ~ normal(0,legis_sd);
+  }
+  
   
   B_int_free ~ normal(0,diff_reg_sd);
   A_int_free ~ normal(0,diff_abs_sd);
   //m_sd_free ~ inv_gamma(m_sd_par[2],1); // tight prior on GP marginal standard deviation ("bumps")
   
-
-  time_var_free ~ normal(0,1); // tight-ish prior on additional variances
-  time_var_gp_free ~ normal(0,1); // tight-ish prior on additional variances
+  if(T>1 && (within_chain==0 || (within_chain==1 && S_type==0))) {
+    time_var_free ~ normal(0,1); // tight-ish prior on additional variances
+    time_var_gp_free ~ normal(0,1); // tight-ish prior on additional variances
+    gp_sd_free ~ normal(0,2);
+    m_sd_free ~ normal(0,2);
+  }
   
 
 // add correction for time-series models
   
 
   //priors for legislators and bill parameters
-#include /chunks/fix_priors.stan
+  
+if(within_chain==1 && S_type==1) {
+  // don't create priors for persons if map_rect is used on persons
+  sigma_reg_free~normal(0, discrim_reg_sd);
+} else {
+#include /chunks/fix_priors.stan  
+} 
+
 
   //all model types
 
