@@ -329,14 +329,19 @@
         return(list(L_full = L_full,
                     sigma_reg_free=sigma_reg_free,
                     m_sd=rep(m_sd_par,num_legis),
-                    time_var_gp_free=log(rep(num_diff*time_range,num_legis-1)),
-                    L_AR1 = array(runif(n = num_legis,min = -.5,max=.5)),
-                    time_var_free = rexp(rate=1/time_sd,n=num_legis-1)))
-      } else {
+                    time_var_gp_free=log(rep(num_diff*time_range,num_legis-1))))
+      } else if(time_proc==3) {
         return(list(L_full = L_full,
-                    sigma_reg_free=sigma_reg_free,
                     L_AR1 = array(runif(n = num_legis,min = -.5,max=.5)),
                     time_var_free = rexp(rate=1/time_sd,n=num_legis-1)))
+        
+        } else if(time_proc==2) {
+          return(list(L_full = L_full,
+                      time_var_free = rexp(rate=1/time_sd,n=num_legis-1)))
+          } else {
+            
+        return(list(L_full = L_full,
+                    sigma_reg_free=sigma_reg_free))
         
       }
           
@@ -344,8 +349,7 @@
   } else {
     #identification run
     return(list(L_full = L_full,
-                sigma_reg_free=sigma_reg_free,
-         L_AR1 = runif(n = num_legis,min = -.5,max=.5)))
+                sigma_reg_free=sigma_reg_free))
   }
   
   
@@ -1498,7 +1502,25 @@ return(as.vector(idx))
                         timepoints=NULL,
                         modelpoints=NULL,
                         ordered_id=NULL,
-                        idealdata=NULL) {
+                        idealdata=NULL,
+                        time_ind=NULL,
+                        time_proc=NULL,
+                        gp_sd_par=NULL,
+                        num_diff=NULL,
+                        m_sd_par=NULL,
+                        min_length=NULL,
+                        const_type=NULL,
+                        legis_sd=NULL,
+                        restrict_sd=NULL,
+                        restrict_high=NULL,
+                        restrict_low=NULL,
+                        ar_sd=NULL,
+                        diff_reg_sd=NULL,
+                        diff_miss_sd=NULL,
+                        discrim_reg_sd=NULL,
+                        discrim_miss_sd=NULL,
+                        fix_high=NULL,
+                        fix_low=NULL) {
   
 
 
@@ -1673,7 +1695,7 @@ return(as.vector(idx))
     
     
     # now replace all the values with 0 and switch to map_rect IDs
-    
+
     Y_cont_map <- Y_cont
     N_cont_map <- N_cont
     Y_int_map <- Y_int
@@ -1788,10 +1810,17 @@ return(as.vector(idx))
       Y_cont_map <- rep(Y_cont_map,nrow(idealdata@score_matrix))
     }
     
+    if(length(time_ind==1)) {
+      tibble_time <- tibble(time_ind=rep(time_ind,nrow(idealdata@score_matrix)))
+    } else {
+      tibble_time <- tibble(time_ind=time_ind)
+    }
+    
     to_shards_cont <- tibble(Y_cont_map) %>% 
       bind_cols(select(idealdata@score_matrix,idealdata@person_cov),
                 select(idealdata@score_matrix,idealdata@item_cov),
-                select(idealdata@score_matrix,idealdata@item_cov_miss))
+                select(idealdata@score_matrix,idealdata@item_cov_miss),
+                tibble_time)
     
     # create max values
     if(sum(discrete==1 & pad_id==0)>0) {
@@ -1854,8 +1883,8 @@ return(as.vector(idx))
     K <- ncol(to_shards_int_array)
 
     all_int_array <- rbind(matrix(c(rep(as.numeric(map_over_id=="persons"),K),
-                                    rep(nrow(to_shards_int_array)/length(unique(to_shards_int$variable)),K), # pass along shard size for N
                                     rep(nrow(to_shards_cont_array)/length(unique(to_shards_cont$variable)),K),# pass along shard size for N
+                                    rep(nrow(to_shards_int_array)/length(unique(to_shards_int$variable)),K), # pass along shard size for N
                                     rep(y_int_miss,K),
                                     rep(y_cont_miss,K),
                                      rep(max(legispoints),K),
@@ -1868,10 +1897,33 @@ return(as.vector(idx))
                                     rep(length(idealdata@item_cov_miss),K),
                                     rep(n_cats_rat,each=K),
                                     rep(n_cats_grm,each=K),
-                                    c(1:K)),ncol=K,byrow = T),
+                                    c(1:K),
+                                    rep(time_proc,K),
+                                    rep(const_type,K),
+                                    rep(restrict_high,K),
+                                    rep(restrict_low,K),
+                                    rep(fix_high,K),
+                                    rep(fix_low,K)),ncol=K,byrow = T),
                             to_shards_int_array)
     
     all_int_array <- apply(all_int_array,2,as.integer)
+    
+    # add additional values for real array
+    
+    Q <- ncol(to_shards_cont_array)
+    
+    all_cont_array <- rbind(to_shards_cont_array,
+                            matrix(c(rep(ar_sd,Q),
+                                     rep(diff_reg_sd,Q),
+                                     rep(diff_miss_sd,Q),
+                                     rep(discrim_reg_sd,Q),
+                                     rep(discrim_miss_sd,Q),
+                                     rep(legis_sd,Q),
+                                     rep(restrict_sd,Q),
+                                     rep(gp_sd_par,Q),
+                                     rep(m_sd_par,Q),
+                                     rep(num_diff,Q),
+                                     rep(min_length,Q)),ncol=Q,byrow=T))
     
     # empty values for covariates
     # add zero to avoid converting to logical matrix
@@ -1905,7 +1957,7 @@ return(as.vector(idx))
                 modelpoints=modelpoints,
                 remove_nas=remove_nas,
                 all_int_array=t(all_int_array),
-                to_shards_cont_array=t(to_shards_cont_array),
+                to_shards_cont_array=t(all_cont_array),
                 N_map=N_map,
                 Y_int_map=Y_int_map,
                 Y_cont_map=Y_cont_map,
@@ -2033,11 +2085,11 @@ return(as.vector(idx))
 #' Function to square data for map_rect
 #' @noRd
 .pad_data <- function(this_data,map_over_id=NULL) {
-  
+
   # need to use a separate indicator for padded values 
   # need to show that data is complete by person and item
   
-  this_data <- tidyr::complete(this_data,nesting(person_id,item_id,time_id))
+  this_data <- tidyr::complete(this_data,person_id,item_id,time_id)
   
   
   # now need a market and replace NAs with 0

@@ -1142,17 +1142,12 @@ bin_irt_2pl_par <- id_estimate(idealdata=bin_irt_2pl_sim_par,
                                                                     decreasing=F, 
                                                         index=T)$ix[1]),
                                fixtype='prefix',
-                           id_diff = sort(bin_irt_2pl_sim@simul_data$true_person,decreasing=T)[1] -
-                             sort(bin_irt_2pl_sim@simul_data$true_person,decreasing=F)[1],
-                           id_diff_high=sort(bin_irt_2pl_sim@simul_data$true_person,
-                                                                     decreasing=T,
-                                                        index=T)$x[1],
                            person_sd = 3,
                            discrim_miss_sd = 1,
                            discrim_reg_sd = 1,
                            diff_reg_sd = 1,
                            diff_miss_sd = 1,
-                           nchains=1,ncores=8)
+                           nchains=1,ncores=5)
 id_plot_rhats(bin_irt_2pl_par)
 ```
 

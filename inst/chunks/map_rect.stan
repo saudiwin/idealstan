@@ -18,15 +18,22 @@
               int SAX = allintdata[13];
               int n_cats_rat[8] = allintdata[14:21];
               int n_cats_grm[8] = allintdata[22:29];
+              int time_proc = allintdata[31];
+              int const_type = allintdata[32];
+              int restrict_high = allintdata[33];
+              int restrict_low = allintdata[34];
+              int fix_high = allintdata[35];
+              int fix_low = allintdata[36];
               
-              int skip = 30; // IDs to skip in integer array
+              
+              int skip = 36; // IDs to skip in integer array
               int skip_param; // number to skip depending on which param is mapped over
               
               // pull outcomes 
               
               int Y_int[N_int] = allintdata[(skip+1):(N_int+skip)];
               int bb[S_type ? N_int: 1]; // one of these will be zero depending on how we mapped it
-              int ll[S_type ? 0: N_int];
+              int ll[S_type ? 1: N_int];
               int time[N_int] = allintdata[((2*N_int+skip)+1):(3*N_int+skip)];
               int mm[N_int] = allintdata[((3*N_int+skip)+1):(4*N_int+skip)];
               int order_cats_rat[N_int] = allintdata[((4*N_int+skip)+1):(5*N_int+skip)];
@@ -40,15 +47,29 @@
               matrix[N_cont,LX] legis_pred = to_matrix(allcontdata[(N_cont+1):(LX*N_cont+N_cont)],N_cont,LX);
               matrix[N_cont,SRX] srx_pred = to_matrix(allcontdata[(LX*N_cont + N_cont+1):(LX*N_cont + SRX*N_cont + N_cont)],N_cont,SRX);
               matrix[N_cont,SAX] sax_pred = to_matrix(allcontdata[(LX*N_cont + SRX*N_cont + N_cont+1):(LX*N_cont + SRX*N_cont + SAX*N_cont + N_cont)],N_cont,SAX);
-              
+              int cont_skip = LX*N_cont + SRX*N_cont + SAX*N_cont + N_cont;
+              real ar_sd = allcontdata[cont_skip+1];
+              real diff_reg_sd = allcontdata[cont_skip+2];
+              real diff_abs_sd = allcontdata[cont_skip+3];
+              real discrim_reg_sd = allcontdata[cont_skip+4];
+              real discrim_abs_sd = allcontdata[cont_skip+5];
+              real legis_sd = allcontdata[cont_skip+6];
+              real restrict_sd = allcontdata[cont_skip+7];
+              real gp_sd_par = allcontdata[cont_skip+8];
+              real m_sd_par = allcontdata[cont_skip+9];
+              real num_diff = allcontdata[cont_skip+10];
+              real min_length = allcontdata[cont_skip+11];
+              real time_ind[T] = allcontdata[(size(allcontdata)-T+1):(size(allcontdata))];
               // create covariates
               // depends on whether persons or items are mapped over
               // use conditional operator to determine size of vectors
               
               real log_prob = 0; // for incrementing log posterior within the shard
               
-              vector[S_type ? T : num_legis] L_full; // T is always 1 or greater
+              vector[S_type ? 1 : num_legis] L_full; // Always equal to 1 if persons are mapped over regardless of T
               matrix[T,S_type ? 0 : num_legis] L_tp1; // does not exist if persons are mapped over
+              vector[(S_type && T>1) ? T : 0] L_tp2; // hold computed time series
+              vector[(S_type && T>1) ? T : 0] L_tp1_var; // for non-centering
               vector[S_type ? num_bills : 1] sigma_reg_free; // only 1 if items are mapped over
               vector[S_type ? num_bills : 1] sigma_abs_free;
               vector[S_type ? num_bills : 1] B_int_free;
@@ -56,7 +77,12 @@
               vector[LX] legis_x;
               vector[SRX] sigma_reg_x;
               vector[SAX] sigma_abs_x;
-              vector[num_ls] ls_int;
+              vector[S_type ? 1 : num_ls] ls_int;
+              real time_var_full = 0;
+              real L_AR1 = 0;
+              real m_sd_full = 0;
+              real gp_sd_full = 0;
+              real time_var_gp_full = 0;
               
               // all of our ordered categories, oh hurray
               
@@ -84,8 +110,33 @@
               if(S_type==1) {
                 
                 bb = allintdata[(N_int+skip+1):(2*N_int+skip)];
+                ll[1] = allintdata[30]; // for identification
                 
-                L_full = s_pars;
+                if(num_ls>0) {
+                  num_ls = 1;
+                  ls_int[1] = s_pars[T+1];
+                }
+                
+                if(T>1) {
+                  if(time_proc==2) {
+                    L_full = [s_pars[1]]';
+                    L_tp1_var = s_pars[2:(T+1)];
+                    time_var_full = s_pars[T+2+num_ls];
+                  } else if(time_proc==3) {
+                    L_full = [s_pars[1]]';
+                    L_tp1_var = s_pars[2:(T+1)];
+                    L_AR1 = s_pars[T+2+num_ls];
+                    time_var_full = s_pars[T+3+num_ls];
+                  } else if(time_proc==4) {
+                    L_tp2 = s_pars[1:T];
+                    m_sd_full = s_pars[T+1+num_ls];
+                    gp_sd_full = s_pars[T+2+num_ls];
+                    time_var_gp_full = s_pars[T+3+num_ls];
+                  }
+                } else {
+                  L_full = [s_pars[T]]';
+                }
+                
                 
                 sigma_reg_free = allparams[1:num_bills];
                 B_int_free = allparams[(num_bills+1):(2*num_bills)];
@@ -93,10 +144,11 @@
                 A_int_free = allparams[((3*num_bills)+1):(4*num_bills)];
                 
                 skip_param = 4*num_bills;
+                //num_ls=0;
                 
               } else {
                 
-                bb[1] = allintdata[skip]; // need bb for grm models
+                bb[1] = allintdata[30]; // need bb for grm models
                 
                 ll = allintdata[(N_int+skip+1):(2*N_int+skip)];
                 
@@ -106,19 +158,29 @@
                 sigma_abs_free[1] = s_pars[3];
                 A_int_free[1] = s_pars[4];
                 
+                // add priors for free params
+                
+                log_prob += normal_lpdf(B_int_free|0,diff_reg_sd) +
+                              normal_lpdf(A_int_free|0,diff_abs_sd) +
+                              normal_lpdf(sigma_abs_free|0,discrim_abs_sd);
+                
+                
                 if(T==1) {
                   L_full = allparams[(num_elements(allparams)-num_legis+1):num_elements(allparams)];
                 } else {
                   L_tp1 = to_matrix(allparams[(num_elements(allparams)-(T*num_legis)+1):num_elements(allparams)],T,num_legis);
                 }
                 
+              
+                
                 skip_param = 0; // person parameters appended to the end of the vector
+                    //only used for latent space modeling
+                if(num_ls>0) {
+                  ls_int = allparams[(skip_param+1):(skip_param+num_ls)];
+                }
               }
               
-              //only used for latent space modeling
-              if(num_ls>0) {
-                ls_int = allparams[(skip_param+1):(skip_param+num_ls)];
-              }
+              
               // hierarchical covariates
               legis_x = allparams[(1+skip_param+num_ls+sum(n_cats_rat)-8):(skip_param+num_ls+sum(n_cats_rat)-8+LX)];
               sigma_reg_x = allparams[(1+skip_param+num_ls+sum(n_cats_rat)-8+LX):(skip_param+num_ls+sum(n_cats_rat)-8+LX+SRX)];
@@ -132,7 +194,74 @@
             // now we are going to use the actual modeling code except adjust it to return a log probability vector
             // increment with addition on the log scale
             
+            
+            
             if(S_type==1) {
+              
+              // need to do priors for legislators
+              	
+            if(T>1) {
+              if(time_proc==3) {
+                // in AR model, intercepts are constant over time
+                  for(t in 1:T) {
+                    
+                    if(t==1) {
+                      L_tp2[t] = L_full[1];
+                    } else {
+                      L_tp2[t] = L_full[1] + L_AR1 * L_tp2[t - 1] + time_var_full * L_tp1_var[t-1];
+                    }
+                  
+                  
+                  }
+                  
+                  log_prob += normal_lpdf(L_AR1|0,ar_sd);
+                  log_prob += normal_lpdf(L_tp1_var|0,1);
+                  log_prob += normal_lpdf(time_var_full|0,1); // tight-ish prior on additional variances
+
+                
+                } else if(time_proc==2){
+      // in RW model, intercepts are used for first time period
+                  for(t in 1:T) {
+                      if(t==1) {
+                        L_tp2[t]  = L_full[1];
+                      } else {
+                          L_tp2[t] = L_tp2[t-1] + time_var_full * L_tp1_var[t-1];
+                        
+                      }
+                      
+                  }
+                  
+                  log_prob += normal_lpdf(L_tp1_var|0,1);
+                  log_prob += normal_lpdf(time_var_full|0,1); // tight-ish prior on additional variances
+
+              } else if(time_proc==4) {
+        
+                matrix[T, T] cov; // zero-length if not a GP model
+                matrix[T, T] L_cov;// zero-length if not a GP model
+            // chunk giving a GP prior to legislators/persons
+
+              
+              //create covariance matrices given current values of hiearchical parameters
+              
+              cov =   cov_exp_quad(time_ind, m_sd_full, time_var_gp_full)
+                  + diag_matrix(rep_vector(square(gp_sd_full),T));
+              L_cov = cholesky_decompose(cov);
+            
+              log_prob += multi_normal_cholesky_lpdf(L_tp2|rep_vector(0,T) + L_full, L_cov); 
+              log_prob += normal_lpdf(time_var_gp_full|0,1); // tight-ish prior on additional variances
+              log_prob += normal_lpdf(gp_sd_full|0,2);
+              log_prob += normal_lpdf(m_sd_full|0,2);
+      
+          }
+        
+          
+      } 
+// constrain priors
+#include /chunks/fix_priors_maprect.stan
+          
+          
+              
+              
               // map over person IDs
 #include /chunks/model_types_mm_map_persons.stan              
             } else {

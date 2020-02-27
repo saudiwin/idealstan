@@ -3,9 +3,83 @@ if(S_type==1) {
       
       for(s in 1:S) {
         if(T==1) {
-          varparams[s] = [L_full[s]]';
+          
+          if(num_ls>0) {
+            varparams[s] = [L_full[s],ls_int[s]]';
+          } else {
+            varparams[s] = [L_full[s]]';
+          }
+          
+          
         } else {
-          varparams[s] = to_vector(L_tp1[1:T,s]);
+          if(time_proc==4) {
+            if(s==1) {
+              if(num_ls>0) {
+                varparams[s] = append_row(to_vector(L_tp2[1:T,s]),
+                              [ls_int[s],m_sd_par,gp_sd_par,gp_length[1]]');
+              } else {
+                varparams[s] = append_row(to_vector(L_tp2[1:T,s]),
+                              [m_sd_par,gp_sd_par,gp_length[1]]');
+              }
+              
+            } else {
+              if(num_ls>0) {
+                varparams[s] = append_row(to_vector(L_tp2[1:T,s]),
+                                [ls_int[s],m_sd_free[s-1],gp_sd_free[s],time_var_gp_free[s]]');
+              } else {
+                varparams[s] = append_row(to_vector(L_tp2[1:T,s]),
+                                [m_sd_free[s-1],gp_sd_free[s],time_var_gp_free[s]]');
+              }
+              
+            }
+            
+          } else {
+            if(time_proc==3) {
+              // AR(1)
+              if(s==1) {
+                if(num_ls>0) {
+                  varparams[s] = append_row(L_full[s],append_row(rep_vector(0,T),
+                                [ls_int[s],L_AR1[s],time_sd]'));
+                } else {
+                  varparams[s] = append_row(L_full[s],append_row(rep_vector(0,T),
+                                [L_AR1[s],time_sd]'));
+                }
+                
+              } else {
+                if(num_ls>0) {
+                  varparams[s] = append_row(L_full[s],append_row(to_vector(L_tp1_var[1:T,s-1]),
+                                [ls_int[s],L_AR1[s],time_var_free[s-1]]'));
+                } else {
+                  varparams[s] = append_row(L_full[s],append_row(to_vector(L_tp1_var[1:T,s-1]),
+                                [L_AR1[s],time_var_free[s-1]]'));
+                }
+                
+              }
+              
+            } else {
+              // random walk
+              if(s==1) {
+                if(num_ls>0) {
+                  varparams[s] = append_row(L_full[s],append_row(rep_vector(0,T),
+                                          [ls_int[s],time_sd]'));
+                } else {
+                  varparams[s] = append_row(L_full[s],append_row(rep_vector(0,T),
+                                          [time_sd]'));
+                }
+                
+              } else {
+                if(num_ls>0) {
+                  varparams[s] = append_row(L_full[s],append_row(to_vector(L_tp1_var[1:T,s-1]),
+                                          [ls_int[s],time_var_free[s-1]]'));
+                } else {
+                  varparams[s] = append_row(L_full[s],append_row(to_vector(L_tp1_var[1:T,s-1]),
+                                          [time_var_free[s-1]]'));
+                }
+                
+              }
+            }
+          }
+          
         }
         
       } 
@@ -13,7 +87,6 @@ if(S_type==1) {
       dparams[1:(dP-(sum(n_cats_grm)-8)*num_bills_grm)] = append_row(sigma_reg_free,append_row(B_int_free,
                                            append_row(sigma_abs_free,
                                            append_row(A_int_free,
-                                           append_row(ls_int,
                                            append_row(steps_votes3,
                                            append_row(steps_votes4,
                                            append_row(steps_votes5,
@@ -24,7 +97,7 @@ if(S_type==1) {
                                            append_row(steps_votes10,
                                            append_row(legis_x,
                                            append_row(sigma_reg_x,
-                                           append_row(sigma_abs_x,extra_sd))))))))))))))));
+                                           append_row(sigma_abs_x,extra_sd)))))))))))))));
       
     } else {
       // map over items 

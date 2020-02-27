@@ -106,9 +106,17 @@ transformed data {
 	if(within_chain==1) {
 	  if(S_type==1) {
 	    // if we map over people, then only one varying parameter per shard
-	    vP = 1*T;
+	    if(time_proc==4) {
+	      vP = 1*T + 4;
+	    } else if(time_proc==3) {
+	      vP = 1*T + 3;
+	    } else if(time_proc==2) {
+	      vP = 1*T + 2;
+	    } else if(T==1) {
+	      vP = 1;
+	    }
 	    // include one extra for the extra_sd parameter
-	    dP = 4*num_bills + num_ls + (sum(n_cats_rat) - 8) + (sum(n_cats_grm) - 8)*num_bills_grm + LX + SRX + SAX + 1;
+	    dP = 4*num_bills + (sum(n_cats_rat) - 8) + (sum(n_cats_grm) - 8)*num_bills_grm + LX + SRX + SAX + 1;
 	  } else {
 	    // 6 parameters for all item parameters
 	    vP = 4; 
@@ -155,7 +163,7 @@ parameters {
   vector<lower=0>[gp_N_fix] gp_sd_free; //additional residual variation in Y for GPs
   real<lower=0> extra_sd;
   vector[gp_N_fix] time_var_gp_free; // variance for time series processes. constrained if GP
-  vector<lower=0>[T>1 ? num_legis-1 : 0] time_var_free; // optional restricted variance
+  vector<lower=0>[(T>1 && time_proc!=4) ? num_legis-1 : 0] time_var_free;
 }
 
 transformed parameters {
@@ -223,7 +231,7 @@ for(n in 1:num_legis) {
       + diag_matrix(rep_vector(square(gp_sd_full[n]),T));
   L_cov[n] = cholesky_decompose(cov[n]);
 
-  to_vector(L_tp2[,n]) ~ multi_normal_cholesky(rep_vector(0,T), L_cov[n]); 
+  to_vector(L_tp2[,n]) ~ multi_normal_cholesky(rep_vector(0,T) + L_full[n], L_cov[n]); 
   
     
 }

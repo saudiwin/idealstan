@@ -158,6 +158,9 @@ setMethod('sample_model',signature(object='idealdata'),
                                 use_ar=this_data$use_ar,
                                 person_start=object@person_start,
                                 actual=TRUE)
+            
+            
+
 
             if(is.null(ncores)) {
               ncores <- 1
