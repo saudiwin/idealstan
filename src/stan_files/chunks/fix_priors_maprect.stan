@@ -26,8 +26,8 @@
     
   }
 
-  print(L_full);
-  print(log_prob);
+  //print(L_full);
+  //print(log_prob);
   
 
 

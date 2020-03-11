@@ -273,6 +273,8 @@
                        restrict_sd=NULL,
                         person_sd=NULL,
                        num_legis=NULL,
+                       legis_labels=NULL,
+                       item_labels=NULL,
                        num_cit=NULL,
                         fix_high=NULL,
                        fix_low=NULL,
@@ -289,9 +291,17 @@
                        use_ar=NULL,
                        person_start=NULL) {
 
-
   L_full <- array(rnorm(n=num_legis,mean=0,sd=person_sd))
   sigma_reg_free <- array(rnorm(n=num_cit,mean=0,sd=2))
+  sigma_abs_free <- array(rnorm(n=num_cit,mean=0,sd=2))
+  A_int_free <- array(rnorm(n=num_cit,mean=0,sd=2))
+  B_int_free <- array(rnorm(n=num_cit,mean=0,sd=2))
+  
+  names(L_full) <- legis_labels
+  names(sigma_reg_free) <- paste0("Obs_Discrim_",item_labels)
+  names(sigma_abs_free) <- paste0("Miss_Discrim_",item_labels)
+  names(A_int_free) <- paste0("Obs_Difficulty_",item_labels)
+  names(B_int_free) <- paste0("Miss_Difficulty_",item_labels)
   
   if(const_type==1 && !is.null(const_type)) {
     
@@ -328,20 +338,34 @@
       if(time_proc==4) {
         return(list(L_full = L_full,
                     sigma_reg_free=sigma_reg_free,
+                    sigma_abs_free=sigma_abs_free,
+                    A_int_free=A_int_free,
+                    B_int_free=B_int_free,
                     m_sd=rep(m_sd_par,num_legis),
                     time_var_gp_free=log(rep(num_diff*time_range,num_legis-1))))
       } else if(time_proc==3) {
         return(list(L_full = L_full,
                     L_AR1 = array(runif(n = num_legis,min = -.5,max=.5)),
-                    time_var_free = rexp(rate=1/time_sd,n=num_legis-1)))
+                    time_var_free = rexp(rate=1/time_sd,n=num_legis-1),
+                    sigma_reg_free=sigma_reg_free,
+                    sigma_abs_free=sigma_abs_free,
+                    A_int_free=A_int_free,
+                    B_int_free=B_int_free))
         
         } else if(time_proc==2) {
           return(list(L_full = L_full,
-                      time_var_free = rexp(rate=1/time_sd,n=num_legis-1)))
+                      time_var_free = rexp(rate=1/time_sd,n=num_legis-1),
+                      sigma_reg_free=sigma_reg_free,
+                      sigma_abs_free=sigma_abs_free,
+                      A_int_free=A_int_free,
+                      B_int_free=B_int_free))
           } else {
             
         return(list(L_full = L_full,
-                    sigma_reg_free=sigma_reg_free))
+                    sigma_reg_free=sigma_reg_free,
+                    sigma_abs_free=sigma_abs_free,
+                    A_int_free=A_int_free,
+                    B_int_free=B_int_free))
         
       }
           
@@ -349,7 +373,10 @@
   } else {
     #identification run
     return(list(L_full = L_full,
-                sigma_reg_free=sigma_reg_free))
+                sigma_reg_free=sigma_reg_free,
+                sigma_abs_free=sigma_abs_free,
+                A_int_free=A_int_free,
+                B_int_free=B_int_free))
   }
   
   
@@ -1521,8 +1548,6 @@ return(as.vector(idx))
                         discrim_miss_sd=NULL,
                         fix_high=NULL,
                         fix_low=NULL) {
-  
-
 
   # need to determine which missing values should not be considered
   # only remove missing values if non-inflated model is used
@@ -1539,10 +1564,10 @@ return(as.vector(idx))
                        .na_if(Y_cont[discrete==0],idealdata@miss_val[2],pad_id=pad_id[discrete==0]))
     }
   }
-  
+
   if(length(Y_int)>1 && !is.na(idealdata@miss_val[1])) {
     if(within_chain=="none") {
-      Y_int <- ifelse(modelpoints[discrete==1] %in% c(0,2,
+      Y_int <- if_else(modelpoints[discrete==1] %in% c(0,2,
                                                       4,
                                                       6,
                                                       8,
@@ -1550,7 +1575,7 @@ return(as.vector(idx))
                       Y_int,
                       .na_if(Y_int,idealdata@miss_val[1]))
     } else {
-      pad_id[discrete==1] <- ifelse(modelpoints[discrete==1] %in% c(0,2,
+      pad_id[discrete==1] <- if_else(modelpoints[discrete==1] %in% c(0,2,
                                                       4,
                                                       6,
                                                       8,
@@ -1561,8 +1586,8 @@ return(as.vector(idx))
     
     # need to downward adjust Y_int
     # convert from factor back to numeric as we have dealt with missing data
-    
-    Y_int <- as.numeric(Y_int) - 1L
+    # drop unused levels
+    Y_int <- as.numeric(factor(Y_int)) - 1L
     
   }
 
@@ -1632,7 +1657,7 @@ return(as.vector(idx))
     # use zero values for map_rect stuff
     
     all_int_array <- array(dim=c(0,0)) + 0L
-    to_shards_cont_array <- array(dim=c(0,0)) + 0L
+    all_cont_array <- array(dim=c(0,0)) + 0L
     
     Y_cont_map <- 0
     N_cont_map <- 0
@@ -1737,11 +1762,11 @@ return(as.vector(idx))
   
   
   # now need to determine number of categories
-  
+
   # need to calculate number of categories for ordinal models
   if(within_chain=="none") {
-    order_cats_rat <- ordered_id[discrete==1 & remove_nas_int]
-    order_cats_grm <- ordered_id[discrete==1 & remove_nas_int]
+    order_cats_rat <- ordered_id[discrete==1 & remove_nas]
+    order_cats_grm <- ordered_id[discrete==1 & remove_nas]
     
     if(any(modelpoints %in% c(3,4))) {
       n_cats_rat <- unique(order_cats_rat)

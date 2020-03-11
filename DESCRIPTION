@@ -14,7 +14,8 @@ License: GPL
 Depends: 
     methods,
     R (>= 3.4.0),
-    Rcpp (>= 0.12.18)
+    Rcpp (>= 0.12.18),
+    RcppParallel (>= 4.4.4)
 Imports: 
     rstan (>= 2.18.2),
     rstantools (>= 1.5.1),
@@ -38,11 +39,11 @@ Suggests:
     lubridate,
     R.rsp
 LinkingTo: 
-    StanHeaders (>= 2.18.0), 
-    rstan (>= 2.18.2), 
-    BH (>= 1.66), 
-    Rcpp (>= 0.12.7), 
-    RcppEigen (>= 0.3.3.3.0)
+    Rcpp (>= 0.12.0),
+    RcppEigen (>= 0.3.3.3.0),
+    BH (>= 1.72.0-2),
+    StanHeaders (>= 2.19.0),
+    RcppParallel
 Encoding: UTF-8
 LazyData: true
 NeedsCompilation: yes

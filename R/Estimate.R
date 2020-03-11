@@ -825,7 +825,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
     idealdata <- subset_ideal(idealdata,use_subset=use_subset,sample_it=sample_it,subset_group=subset_group,
                               subset_person=subset_person,sample_size=sample_size)
   }
-  
+   
 
     idealdata@stanmodel <- stanmodels[['irt_standard']]
    
@@ -883,8 +883,6 @@ id_estimate <- function(idealdata=NULL,model_type=2,
              See id_make documentation for more info.")
       }
     }
-  } else if(any(c(3,4,5,6) %in% idealdata@score_matrix$model_id)) {
-    idealdata@score_matrix$ordered_id <- length(unique(Y_int[!is.na(Y_int)]))
   } else {
     idealdata@score_matrix$ordered_id <- 0
   }
@@ -1179,7 +1177,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     fix_low=idealdata@restrict_num_low)
   
   # need to check for the type of parallelization
-  
+
   if(within_chain=="threads") {
     Sys.setenv(STAN_NUM_THREADS = ncores)
     ncores <- 1

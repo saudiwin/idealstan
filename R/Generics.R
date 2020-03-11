@@ -138,9 +138,11 @@ setMethod('sample_model',signature(object='idealdata'),
           function(object,nchains=4,niters=2000,warmup=floor(niters/2),ncores=NULL,
                    to_use=to_use,this_data=this_data,use_vb=FALSE,
                    tol_rel_obj=NULL,...) {
-            
+
             init_vals <- lapply(1:nchains,.init_stan,
                                 num_legis=this_data$num_legis,
+                                legis_labels=levels(object@score_matrix$person_id),
+                                item_labels=levels(object@score_matrix$item_id),
                                 num_cit=this_data$num_bills,
                                 restrict_sd=this_data$restrict_sd,
                                 person_sd=this_data$legis_sd,
@@ -158,8 +160,6 @@ setMethod('sample_model',signature(object='idealdata'),
                                 use_ar=this_data$use_ar,
                                 person_start=object@person_start,
                                 actual=TRUE)
-            
-            
 
 
             if(is.null(ncores)) {
@@ -226,6 +226,7 @@ setMethod('id_model',signature(object='idealdata'),
                    use_groups=NULL) {
 
             x <- object@score_matrix
+  
             
             if(fixtype %in% c("prefix") && is.null(restrict_ind_high)) {
               

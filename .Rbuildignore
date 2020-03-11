@@ -14,6 +14,8 @@ psis_vb_diagnostic*
 cran-comments.md
 test_*
 .gitattributes
+rcppExports.cpp
+stanExports_*
 
 
 ^CRAN-RELEASE$

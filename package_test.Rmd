@@ -1122,7 +1122,7 @@ We don't need to repeat all models for this test. Only a subset, particularly or
 As an initial test, we'll do the 2-Pl binary with no missing data:
 
 ```{r irt_binary_par}
-bin_irt_2pl_sim_par <- id_sim_gen(num_person=20,num_bills=200,ordinal=F,inflate=F,
+bin_irt_2pl_sim_par <- id_sim_gen(num_person=5,num_bills=200,ordinal=F,inflate=F,
                               diff_sd=1,
                               reg_discrim_sd = 1,
                               absence_discrim_sd = 1)
@@ -1141,13 +1141,18 @@ bin_irt_2pl_par <- id_estimate(idealdata=bin_irt_2pl_sim_par,
                                restrict_ind_low = as.character(sort(bin_irt_2pl_sim_par@simul_data$true_person,
                                                                     decreasing=F, 
                                                         index=T)$ix[1]),
+                               fix_high=sort(bin_irt_2pl_sim_par@simul_data$true_person,
+                                                                     decreasing=T)[1],
+                               fix_low=sort(bin_irt_2pl_sim_par@simul_data$true_person,
+                                                                     decreasing=F)[1],
                                fixtype='prefix',
                            person_sd = 3,
+                           id_refresh = 200,
                            discrim_miss_sd = 1,
                            discrim_reg_sd = 1,
                            diff_reg_sd = 1,
-                           diff_miss_sd = 1,
-                           nchains=1,ncores=5)
+                           diff_miss_sd = 1,niters = 1000,
+                           nchains=2,ncores=5)
 id_plot_rhats(bin_irt_2pl_par)
 ```
 
@@ -1196,16 +1201,17 @@ ord_irt_abs_sim_par@score_matrix <- sample_frac(ord_irt_abs_sim_par@score_matrix
 
 ord_irt_abs_par <- id_estimate(idealdata=ord_irt_abs_sim_par,
                                model_type=4,
-                               nchains=1,ncores=8,within_chain="threads",
-                               restrict_ind_high = as.character(sort(ord_irt_abs_sim@simul_data$true_person,
+                               nchains=1,ncores=5,within_chain="threads",
+                               restrict_ind_high = as.character(sort(ord_irt_abs_sim_par@simul_data$true_person,
                                                                      decreasing=T,
                                                         index=T)$ix[1]),
-                              restrict_ind_low = as.character(sort(ord_irt_abs_sim@simul_data$true_person,
+                              restrict_ind_low = as.character(sort(ord_irt_abs_sim_par@simul_data$true_person,
                                                                    decreasing=F,
                                                         index=T)$ix[1]),
-                               fixtype='prefix',id_diff =sort(ord_irt_abs_sim@simul_data$true_person,
-                                                                   decreasing=T)[1] -
-                                sort(ord_irt_abs_sim@simul_data$true_person,
+                               fixtype='prefix',
+                              fix_high=sort(ord_irt_abs_sim_par@simul_data$true_person,
+                                                                   decreasing=T)[1],
+                              fix_low=sort(ord_irt_abs_sim_par@simul_data$true_person,
                                   decreasing=F)[1])
 id_plot_rhats(ord_irt_abs_par)
 ```
@@ -1236,7 +1242,7 @@ id_plot_sims(ord_irt_abs_par)
 
 ```{r ord_irt_abs_pred_par}
 
-ord_irt_abs_est %>% 
+  ord_irt_abs_par %>% 
   id_post_pred %>% 
   id_plot_ppc(ord_irt_abs_par,ppc_pred=.)
 
@@ -1250,15 +1256,14 @@ ord_irt_grm_sim_par <- id_sim_gen(num_person=20,num_bills=100,inflate=F,
 ord_irt_grm_par <- id_estimate(idealdata=ord_irt_grm_sim_par,
                                model_type=5,
                                nchains=1,ncores=8,within_chain="threads",
-                               restrict_ind_high = as.character(sort(ord_irt_grm_sim@simul_data$true_person,
+                               restrict_ind_high = as.character(sort(ord_irt_grm_sim_par@simul_data$true_person,
                                                                      decreasing=T,
                                                         index=T)$ix[1]),
-                              restrict_ind_low = as.character(sort(ord_irt_grm_sim@simul_data$true_person,
+                              restrict_ind_low = as.character(sort(ord_irt_grm_sim_par@simul_data$true_person,
                                                                    decreasing=F,
                                                         index=T)$ix[1]),
-                               fixtype='prefix',id_diff =sort(ord_irt_grm_sim@simul_data$true_person,
-                                                                   decreasing=T)[1] -
-                                sort(ord_irt_grm_sim@simul_data$true_person,
+                               fixtype='prefix',fix_high=sort(ord_irt_grm_sim_par@simul_data$true_person,
+                                                                   decreasing=T)[1], fix_low=sort(ord_irt_grm_sim_par@simul_data$true_person,
                                   decreasing=F)[1])
 id_plot_rhats(ord_irt_grm_par)
 ```

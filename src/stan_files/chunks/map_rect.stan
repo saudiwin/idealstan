@@ -260,13 +260,15 @@
 // constrain priors
 #include /chunks/fix_priors_maprect.stan
           
-          
+      //print(log_prob);   
               
               
               // map over person IDs
 #include /chunks/model_types_mm_map_persons.stan              
             } else {
               //map over items
+// constrain priors
+#include /chunks/fix_priors_maprect.stan
 #include /chunks/model_types_mm_map_items.stan              
             }
                   

@@ -126,7 +126,11 @@ transformed data {
 	    } else if(time_proc==2) {
 	      vP = 1*T + 2;
 	    } else if(T==1) {
-	      vP = 2;
+	      if(num_ls==0) {
+	         vP = 1;
+	      } else {
+	        vP = 2;
+	      }
 	    }
 	    
 	    // include one extra for the extra_sd parameter
@@ -207,7 +211,7 @@ parameters {
 transformed parameters {
 
   vector[T>1 ? num_legis : 0] L_tp1[T];
-  vector[num_legis] time_var_full;
+  vector[T>1 ? num_legis : 0] time_var_full;
   vector[gp_N] time_var_gp_full;
   vector[gp_N] m_sd_full;
   vector[gp_N] gp_sd_full;
@@ -294,9 +298,6 @@ for(n in 1:num_legis) {
     ls_int ~ normal(0,legis_sd);
   }
   
-  
-  B_int_free ~ normal(0,diff_reg_sd);
-  A_int_free ~ normal(0,diff_abs_sd);
   //m_sd_free ~ inv_gamma(m_sd_par[2],1); // tight prior on GP marginal standard deviation ("bumps")
   
   if(T>1 && (within_chain==0 || (within_chain==1 && S_type==0))) {
@@ -314,10 +315,18 @@ for(n in 1:num_legis) {
   
 if(within_chain==1 && S_type==1) {
   // don't create priors for persons if map_rect is used on persons
-  sigma_reg_free~normal(0, discrim_reg_sd);
+  sigma_reg_free ~ normal(0, discrim_reg_sd);
+  sigma_abs_free ~ normal(0,discrim_abs_sd);
+  B_int_free ~ normal(0,diff_reg_sd);
+  A_int_free ~ normal(0,diff_abs_sd);
+} else if(within_chain==1 && S_type==0) {
+  // don't create priors for items
+  L_full ~ normal(0,legis_sd);
 } else {
-#include /chunks/fix_priors.stan  
-} 
+  B_int_free ~ normal(0,diff_reg_sd);
+  A_int_free ~ normal(0,diff_abs_sd);
+#include /chunks/fix_priors.stan   
+}
 
 
   //all model types
@@ -325,8 +334,11 @@ if(within_chain==1 && S_type==1) {
 // use map_rect or don't use map_rect
 if(within_chain==1) {
   target += sum(map_rect(overT,dparams,varparams,cont_shards,int_shards));
+  // print("log density before =", target());
+  // print(sum(map_rect(overT,dparams,varparams,cont_shards,int_shards)));
+  // print("log density after =", target());
 } else {
-#include /chunks/model_types_mm.stan 
+//#include /chunks/model_types_mm.stan 
 }
 
 }
