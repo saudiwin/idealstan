@@ -51,7 +51,11 @@ if(n_cats_rat[8]>1) {
 if(num_bills_grm>1) {
   if(n_cats_grm[1]>1) {
     for(b in 1:num_bills_grm) {
-        to_vector(steps_votes_grm3[b]) ~ normal(0,5);
+        for(i in 1:(n_cats_grm[1]-2)) {
+          print(n_cats_grm[1]-2);
+          print(i);
+          //steps_votes_grm3[b,i+1] -  steps_votes_grm3[b,i] ~ normal(0,5);
+        }
       }
   } 
   if(n_cats_grm[2]>1) {
@@ -61,7 +65,11 @@ if(num_bills_grm>1) {
   } 
   if(n_cats_grm[3]>1) {
     for(b in 1:num_bills_grm) {
-     to_vector(steps_votes_grm5[b]) ~ normal(0,5);
+      for(i in 1:(n_cats_grm[3]-2)) {
+        print(n_cats_grm[3]-2);
+          print(i);
+        //steps_votes_grm5[b,i+1] -  steps_votes_grm5[b,i] ~ normal(0,5);
+      }
     }
   } 
   if(n_cats_grm[4]>1) {

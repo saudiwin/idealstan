@@ -43,7 +43,8 @@ LinkingTo:
     RcppEigen (>= 0.3.3.3.0),
     BH (>= 1.72.0-2),
     StanHeaders (>= 2.19.0),
-    RcppParallel
+    RcppParallel,
+    rstan
 Encoding: UTF-8
 LazyData: true
 NeedsCompilation: yes

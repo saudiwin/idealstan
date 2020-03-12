@@ -5,6 +5,7 @@ Meta
 .RData
 .Ruserdata
 .DS_Store
+src/*.o
 src/*.so
 src/*.dll
 *.rds
@@ -17,6 +18,3 @@ src-x64
 *.Rproj
 *.o
 *.hpp
-*.cc
-*.cpp
-*.h
