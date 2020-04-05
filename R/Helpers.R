@@ -1831,7 +1831,7 @@ return(as.vector(idx))
                           pad_id,
                           discrete)
     
-    if(Y_cont_map==0) {
+    if(Y_cont_map[1]==0) {
       Y_cont_map <- rep(Y_cont_map,nrow(idealdata@score_matrix))
     }
     
@@ -2109,12 +2109,37 @@ return(as.vector(idx))
 
 #' Function to square data for map_rect
 #' @noRd
-.pad_data <- function(this_data,map_over_id=NULL) {
+.pad_data <- function(this_data,map_over_id=NULL,use_groups=FALSE) {
 
   # need to use a separate indicator for padded values 
   # need to show that data is complete by person and item
   
-  this_data <- tidyr::complete(this_data,person_id,item_id,time_id)
+  if(use_groups) {
+    this_data <- tidyr::complete(this_data,group_id,item_id,time_id)
+  } else {
+    this_data <- tidyr::complete(this_data,person_id,item_id,time_id)
+  }
+  
+  # if we have duplicate observations by group/person, need to pad some more
+  # need to add a counter to deal with unique rows issues (need one unique row per ID)
+  
+  if(use_groups) {
+    
+    this_data <- group_by(this_data,group_id,item_id,time_id) %>% 
+      mutate(unique_row=1:n())
+    
+    this_data <- tidyr::complete(ungroup(this_data),group_id,item_id,time_id,unique_row) %>% 
+      select(-unique_row)
+    
+  } else {
+    this_data <- group_by(this_data,person_id,item_id,time_id) %>% 
+      mutate(unique_row=1:n())
+    
+    this_data <- tidyr::complete(ungroup(this_data),person_id,item_id,time_id,unique_row) %>% 
+      select(-unique_row)
+    
+  }
+  
   
   
   # now need a market and replace NAs with 0

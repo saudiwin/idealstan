@@ -892,7 +892,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   
   if(within_chain %in% c("threads","mpi")) {
     
-    idealdata@score_matrix <- .pad_data(idealdata@score_matrix,map_over_id)
+    idealdata@score_matrix <- .pad_data(idealdata@score_matrix,map_over_id,use_groups=use_groups)
     
   } else {
     idealdata@score_matrix$pad_id <- 1
