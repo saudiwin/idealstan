@@ -288,7 +288,7 @@ for(n in 1:num_legis) {
 }
     }
   }
-  if(T>1 && time_proc!=4 && (within_chain==1 && S_type==0)) {
+  if(T>1 && time_proc!=4 && (within_chain==0 || (within_chain==1 && S_type==0))) {
     for(t in 1:(T-1)) {
       L_tp1_var[t] ~ normal(0,1);
     }
@@ -338,7 +338,7 @@ if(within_chain==1) {
   // print(sum(map_rect(overT,dparams,varparams,cont_shards,int_shards)));
   // print("log density after =", target());
 } else {
-//#include /chunks/model_types_mm.stan 
+#include /chunks/model_types_mm.stan 
 }
 
 }

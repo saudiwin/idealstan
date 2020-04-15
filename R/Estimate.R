@@ -907,7 +907,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   }
 
   billpoints <- as.numeric(idealdata@score_matrix$item_id)
-  timepoints <- as.numeric(factor(idealdata@score_matrix$time_id))
+  timepoints <- as.numeric(factor(as.numeric(idealdata@score_matrix$time_id)))
   modelpoints <- as.integer(idealdata@score_matrix$model_id)
   ordered_id <- as.integer(idealdata@score_matrix$ordered_id)
   # for gaussian processes, need actual time values
