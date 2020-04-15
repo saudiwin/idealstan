@@ -923,6 +923,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   if(gp_min_length>=gp_num_diff[1]) {
     stop('The parameter gp_min_length cannot be equal to or greater than gp_num_diff[1].')
   }
+  browser()
   if(within_chain=="none") {
     if(("outcome_cont" %in% names(idealdata@score_matrix)) && ("outcome_disc" %in% names(idealdata@score_matrix))) {
       Y_int <- idealdata@score_matrix$outcome_disc[idealdata@score_matrix$discrete==1]
@@ -987,7 +988,6 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                                restrict_low=idealdata@restrict_ind_low,
                                fix_high=idealdata@restrict_num_high,
                                fix_low=idealdata@restrict_num_low)
-                               
     
   this_data <- list(N=remove_list$N,
                     N_cont=remove_list$N_cont,
@@ -1247,6 +1247,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
     return("You will need to run the model in cmdstan yourself and load the resulting data back in to R with the id_load_mpi function. See vignette for details.")
     
   } else {
+    
     outobj <- sample_model(object=idealdata,nchains=nchains,niters=niters,warmup=warmup,ncores=ncores,
                            this_data=this_data,use_vb=use_vb,
                            tol_rel_obj=tol_rel_obj,

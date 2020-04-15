@@ -167,6 +167,7 @@ setMethod('sample_model',signature(object='idealdata'),
             }
             if(use_vb==FALSE) {
               print("Estimating model with full Stan MCMC sampler.")
+              
               out_model <- sampling(object@stanmodel,data=this_data,chains=nchains,iter=niters,cores=ncores,
                                     warmup=warmup,
                                     init=init_vals,

@@ -1548,6 +1548,7 @@ return(as.vector(idx))
                         discrim_miss_sd=NULL,
                         fix_high=NULL,
                         fix_low=NULL) {
+  
 
   # need to determine which missing values should not be considered
   # only remove missing values if non-inflated model is used
@@ -1556,7 +1557,7 @@ return(as.vector(idx))
     if(within_chain=="none") {
       Y_cont <- ifelse(modelpoints[discrete==0] %in% c(10,12),
                        Y_cont,
-                       .na_if(Y_cont,idealdata@miss_val[2]))
+                       .na_if(Y_cont,as.numeric(idealdata@miss_val[2])))
     } else {
       # this is how to set a missing record if we want a square matrix for map_rect
       pad_id[discrete==0] <- ifelse(modelpoints[discrete==0] %in% c(10,12),
@@ -1587,7 +1588,13 @@ return(as.vector(idx))
     # need to downward adjust Y_int
     # convert from factor back to numeric as we have dealt with missing data
     # drop unused levels
-    Y_int <- as.numeric(factor(Y_int)) - 1L
+    Y_int <- as.numeric(factor(Y_int))
+    
+    if(any(c(1,2) %in% modelpoints)) {
+      Y_int <- ifelse(Y_int<3, Y_int - 1L,Y_int)
+    }
+    
+    
     
   }
 
