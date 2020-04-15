@@ -1748,7 +1748,7 @@ return(as.vector(idx))
     #   Y_int_map[modelpoints[discrete==1] %in% c(1,2)] <- Y_int_map[modelpoints[discrete==1]  %in% c(1,2)] - 1L
     # }
   }
-  
+
   max_t <- max(timepoints,na.rm=T)
   num_bills <- max(billpoints,na.rm=T)
   num_legis <- max(legispoints)
@@ -1842,12 +1842,23 @@ return(as.vector(idx))
       Y_cont_map <- rep(Y_cont_map,nrow(idealdata@score_matrix))
     }
     
-    if(length(time_ind==1)) {
+    if(length(time_ind)==1) {
       tibble_time <- tibble(time_ind=rep(time_ind,nrow(idealdata@score_matrix)))
     } else {
+      
+      # need a different kind of time_ind
+      
+      time_ind <- switch(class(idealdata@score_matrix$time_id)[1],
+                         factor=as.numeric(idealdata@score_matrix$time_id),
+                         Date=as.numeric(idealdata@score_matrix$time_id),
+                         POSIXct=as.numeric(idealdata@score_matrix$time_id),
+                         POSIXlt=as.numeric(idealdata@score_matrix$time_id),
+                         numeric=idealdata@score_matrix$time_id,
+                         integer=idealdata@score_matrix$time_id)
+      
       tibble_time <- tibble(time_ind=time_ind)
     }
-    
+
     to_shards_cont <- tibble(Y_cont_map) %>% 
       bind_cols(select(idealdata@score_matrix,idealdata@person_cov),
                 select(idealdata@score_matrix,idealdata@item_cov),
@@ -2117,18 +2128,11 @@ return(as.vector(idx))
 #' Function to square data for map_rect
 #' @noRd
 .pad_data <- function(this_data,map_over_id=NULL,use_groups=FALSE) {
-
-  # need to use a separate indicator for padded values 
-  # need to show that data is complete by person and item
-  
-  if(use_groups) {
-    this_data <- tidyr::complete(this_data,group_id,item_id,time_id)
-  } else {
-    this_data <- tidyr::complete(this_data,person_id,item_id,time_id)
-  }
   
   # if we have duplicate observations by group/person, need to pad some more
   # need to add a counter to deal with unique rows issues (need one unique row per ID)
+  
+  this_data <- distinct(this_data,person_id,item_id,time_id,.keep_all=T)
   
   if(use_groups) {
     
@@ -2147,17 +2151,20 @@ return(as.vector(idx))
     
   }
   
-  
-  
-  # now need a market and replace NAs with 0
+  # now need a marker and replace NAs with 0
   
   this_data$pad_id <- as.numeric(is.na(this_data$model_id))
   
   this_data <- lapply(this_data, function(c) {
+
     if(is.factor(c)) {
       c <- addNA(c)
-      levels(c)[length(levels(c))] <- 0
-    } else {
+      levels(c)[length(levels(c))] <- levels(c)[length(levels(c))-1]
+    } else if(is.Date(c) || is.POSIXct(c) || is.POSIXlt(c)) {
+      
+      c[is.na(c)] <- min(c,na.rm=T)
+      
+      } else {
       c[is.na(c)] <- 0
     }
     return(c)

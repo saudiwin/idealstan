@@ -25,10 +25,10 @@ if(S_type==1) {
             } else {
               if(num_ls>0) {
                 varparams[s] = append_row(to_vector(L_tp2[1:T,s]),
-                                [ls_int[s],m_sd_free[s-1],gp_sd_free[s],time_var_gp_free[s]]');
+                                [ls_int[s],m_sd_free[s-1],gp_sd_free[s-1],time_var_gp_free[s-1]]');
               } else {
                 varparams[s] = append_row(to_vector(L_tp2[1:T,s]),
-                                [m_sd_free[s-1],gp_sd_free[s],time_var_gp_free[s]]');
+                                [m_sd_free[s-1],gp_sd_free[s-1],time_var_gp_free[s-1]]');
               }
               
             }
@@ -38,19 +38,19 @@ if(S_type==1) {
               // AR(1)
               if(s==1) {
                 if(num_ls>0) {
-                  varparams[s] = append_row(L_full[s],append_row(rep_vector(0,T),
+                  varparams[s] = append_row([L_full[s],0]',append_row(to_vector(L_tp1_var[1:(T-1),s]),
                                 [ls_int[s],L_AR1[s],time_sd]'));
                 } else {
-                  varparams[s] = append_row(L_full[s],append_row(rep_vector(0,T),
+                  varparams[s] = append_row([L_full[s],0]',append_row(to_vector(L_tp1_var[1:(T-1),s]),
                                 [L_AR1[s],time_sd]'));
                 }
                 
               } else {
                 if(num_ls>0) {
-                  varparams[s] = append_row(L_full[s],append_row(to_vector(L_tp1_var[1:T,s-1]),
+                  varparams[s] = append_row([L_full[s],0]',append_row(to_vector(L_tp1_var[1:(T-1),s]),
                                 [ls_int[s],L_AR1[s],time_var_free[s-1]]'));
                 } else {
-                  varparams[s] = append_row(L_full[s],append_row(to_vector(L_tp1_var[1:T,s-1]),
+                  varparams[s] = append_row([L_full[s],0]',append_row(to_vector(L_tp1_var[1:(T-1),s]),
                                 [L_AR1[s],time_var_free[s-1]]'));
                 }
                 
@@ -64,16 +64,16 @@ if(S_type==1) {
                                           [ls_int[s],time_sd]'));
                 } else {
                   varparams[s] = append_row(L_full[s],append_row(rep_vector(0,T),
-                                          [time_sd]'));
+                                          time_sd));
                 }
                 
               } else {
                 if(num_ls>0) {
-                  varparams[s] = append_row(L_full[s],append_row(to_vector(L_tp1_var[1:T,s-1]),
+                  varparams[s] = append_row(L_full[s],append_row(to_vector(L_tp1_var[1:(T-1),s]),
                                           [ls_int[s],time_var_free[s-1]]'));
                 } else {
-                  varparams[s] = append_row(L_full[s],append_row(to_vector(L_tp1_var[1:T,s-1]),
-                                          [time_var_free[s-1]]'));
+                  varparams[s] = append_row(L_full[s],append_row(to_vector(L_tp1_var[1:(T-1),s]),
+                                          time_var_free[s-1]));
                 }
                 
               }
