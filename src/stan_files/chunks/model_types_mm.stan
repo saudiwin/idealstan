@@ -364,13 +364,13 @@ if(T==1) {
   if(order_cats_grm[n]==3) {
     if(Y_int[n]>order_cats_grm[n]) {
       // missing
-      target += bernoulli_logit_lpmf(1|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_full[ll[n]] + legis_pred[n,]*legis_x) - 
+      target += bernoulli_logit_lpmf(1|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_full[ll[n]] + legis_pred[n,]*legis_x) -
                                         A_int_free[bb[n]]);
     } else {
       //observed
       target += ordered_logistic_lpmf(Y_int[n]|(sigma_reg_free[bb[n]] + srx_pred[n,]*sigma_reg_x) *  (L_full[ll[n]] + legis_pred[n,]*legis_x) - B_int_free[bb[n]],
                                       steps_votes_grm3[bb[n]]);
-      target += bernoulli_logit_lpmf(0|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_full[ll[n]] + legis_pred[n,]*legis_x) - 
+      target += bernoulli_logit_lpmf(0|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_full[ll[n]] + legis_pred[n,]*legis_x) -
                                         A_int_free[bb[n]]);
     }
   } else if(order_cats_grm[n]==4) {
@@ -680,6 +680,10 @@ if(N_cont>0) {
 } else if(mm[n]==11) {
   //lognormal no inflation
   
+  if(Y_cont[n-N_int]==0) {
+    print("Warning: you have zero values for a log-normal distribution variable. You must remove them or use another distribution, like Normal or Poisson.")
+  }
+  
       if(T==1) {
         target += lognormal_lpdf(Y_cont[n-N_int]|exp((sigma_reg_free[bb[n]] + srx_pred[n,]*sigma_reg_x) *  (L_full[ll[n]] + legis_pred[n,]*legis_x) - B_int_free[bb[n]]),
                                   extra_sd);
@@ -691,9 +695,14 @@ if(N_cont>0) {
 } else if(mm[n]==12) {
   //hurdle lognormal
   
+  if(Y_cont[n-N_int]==0) {
+    print("Warning: you have zero values for a log-normal distribution variable. You must remove them or use another distribution, like Normal or Poisson.")
+  }
+  
       if(Y_cont[n-N_int]<y_cont_miss) {
         // observed data 
         if(T==1) {
+          
           target += lognormal_lpdf(Y_cont[n-N_int]|exp((sigma_reg_free[bb[n]] + srx_pred[n,]*sigma_reg_x) *  (L_full[ll[n]] + legis_pred[n,]*legis_x) - B_int_free[bb[n]]),
                                   extra_sd);
           target += bernoulli_logit_lpmf(0|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_full[ll[n]] + legis_pred[n,]*legis_x) - 
