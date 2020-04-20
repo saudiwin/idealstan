@@ -850,6 +850,10 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   
   mod_count <- length(unique(idealdata@score_matrix$model_id))
   
+  if(length(unique(idealdata@score_matrix$ordered_id))>1) {
+    mod_count <- mod_count + length(unique(idealdata@score_matrix$ordered_id)) - 1
+  }
+  
   # set GP parameters
   
   if(vary_ideal_pts==4) {
@@ -876,7 +880,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   
   # check if ordinal categories exist in the data if model_id>1
   
-  if(length(unique(idealdata@score_matrix$model_id))>1) {
+  if(length(unique(idealdata@score_matrix$model_id))>1 || length(unique(idealdata@score_matrix$ordered_id))>1) {
     if(any(c(3,4,5,6) %in% idealdata@score_matrix$model_id)) {
       if(is.null(idealdata@score_matrix$ordered_id) | !is.numeric(idealdata@score_matrix$ordered_id)) {
         stop("If you have an ordered categorical variable in a multi-distribution model, you must include a column in the data with the number of ordered categories for each row in the data.\n
@@ -923,7 +927,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   if(gp_min_length>=gp_num_diff[1]) {
     stop('The parameter gp_min_length cannot be equal to or greater than gp_num_diff[1].')
   }
-  browser()
+
   if(within_chain=="none") {
     if(("outcome_cont" %in% names(idealdata@score_matrix)) && ("outcome_disc" %in% names(idealdata@score_matrix))) {
       Y_int <- idealdata@score_matrix$outcome_disc[idealdata@score_matrix$discrete==1]

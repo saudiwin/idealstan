@@ -4,12 +4,12 @@ if(n_cats_rat[1]>1) {
 
     vector[n_cats_rat[1]-1] spacing;
     for(i in 1:(n_cats_rat[1]-1))
-      spacing[i] = -5 + 10/n_cats_rat[1]*i;
+      spacing[i] = -5 + (10/n_cats_rat[1])*i;
       
-    steps_votes3[1] ~ normal(spacing[1],3);
+    //steps_votes3[1] ~ normal(spacing[1],5);
     
     for(i in 1:(n_cats_rat[1]-2))
-        steps_votes3[i+1] - steps_votes3[i] ~ exponential(1/(spacing[i+1] - spacing[i]));  
+        steps_votes3[i+1] - steps_votes3[i] ~ normal(0,5);  
 
 } 
 
@@ -17,12 +17,12 @@ if(n_cats_rat[2]>1) {
 
     vector[n_cats_rat[2]-1] spacing;
     for(i in 1:(n_cats_rat[2]-1))
-      spacing[i] = -5 + 10/n_cats_rat[2]*i;
+      spacing[i] = -5 + (10/n_cats_rat[2])*i;
       
-    steps_votes4[1] ~ normal(spacing[1],3);
+    //steps_votes3[1] ~ normal(spacing[1],5);
     
     for(i in 1:(n_cats_rat[2]-2))
-        steps_votes4[i+1] - steps_votes4[i] ~ exponential(1/(spacing[i+1] - spacing[i]));  
+        steps_votes4[i+1] - steps_votes4[i] ~ normal(0,5);   
 
 
 } 
