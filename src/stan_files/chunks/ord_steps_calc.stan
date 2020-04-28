@@ -36,7 +36,7 @@ if(n_cats_rat[3]>1) {
     steps_votes5[1] ~ normal(spacing[1],3);
     
     for(i in 1:(n_cats_rat[3]-2))
-        steps_votes5[i+1] - steps_votes5[i] ~ exponential(1/(spacing[i+1] - spacing[i]));  
+        steps_votes5[i+1] - steps_votes5[i] ~ normal(0,5); 
 
 
 } 
@@ -50,7 +50,7 @@ if(n_cats_rat[4]>1) {
     steps_votes6[1] ~ normal(spacing[1],3);
     
     for(i in 1:(n_cats_rat[4]-2))
-        steps_votes6[i+1] - steps_votes6[i] ~ exponential(1/(spacing[i+1] - spacing[i]));  
+        steps_votes6[i+1] - steps_votes6[i] ~ normal(0,5); 
 
 
 } 
@@ -64,7 +64,7 @@ if(n_cats_rat[5]>1) {
     steps_votes7[1] ~ normal(spacing[1],3);
     
     for(i in 1:(n_cats_rat[5]-2))
-        steps_votes7[i+1] - steps_votes7[i] ~ exponential(1/(spacing[i+1] - spacing[i]));  
+        steps_votes7[i+1] - steps_votes7[i] ~ normal(0,5);  
 
 
 } 
@@ -78,7 +78,7 @@ if(n_cats_rat[6]>1) {
     steps_votes8[1] ~ normal(spacing[1],3);
     
     for(i in 1:(n_cats_rat[6]-2))
-        steps_votes8[i+1] - steps_votes8[i] ~ exponential(1/(spacing[i+1] - spacing[i]));  
+        steps_votes8[i+1] - steps_votes8[i] ~ normal(0,5); 
 
 
 } 
@@ -92,7 +92,7 @@ if(n_cats_rat[7]>1) {
     steps_votes9[1] ~ normal(spacing[1],3);
     
     for(i in 1:(n_cats_rat[7]-2))
-        steps_votes9[i+1] - steps_votes9[i] ~ exponential(1/(spacing[i+1] - spacing[i]));  
+        steps_votes9[i+1] - steps_votes9[i] ~ normal(0,5);  
 
 
 } 
@@ -106,7 +106,7 @@ if(n_cats_rat[8]>1) {
     steps_votes10[1] ~ normal(spacing[1],3);
     
     for(i in 1:(n_cats_rat[8]-2))
-        steps_votes10[i+1] - steps_votes10[i] ~ exponential(1/(spacing[i+1] - spacing[i]));  
+        steps_votes10[i+1] - steps_votes10[i] ~ normal(0,5);  
 
 
 }
