@@ -47,7 +47,8 @@
               matrix[N_cont,LX] legis_pred = to_matrix(allcontdata[(N_cont+1):(LX*N_cont+N_cont)],N_cont,LX);
               matrix[N_cont,SRX] srx_pred = to_matrix(allcontdata[(LX*N_cont + N_cont+1):(LX*N_cont + SRX*N_cont + N_cont)],N_cont,SRX);
               matrix[N_cont,SAX] sax_pred = to_matrix(allcontdata[(LX*N_cont + SRX*N_cont + N_cont+1):(LX*N_cont + SRX*N_cont + SAX*N_cont + N_cont)],N_cont,SAX);
-              int cont_skip = LX*N_cont + SRX*N_cont + SAX*N_cont + N_cont;
+              real time_ind[N_cont] = allcontdata[(LX*N_cont + SRX*N_cont + SAX*N_cont + N_cont+1):(LX*N_cont + SRX*N_cont + SAX*N_cont + 2*N_cont)];
+              int cont_skip = LX*N_cont + SRX*N_cont + SAX*N_cont + 2*N_cont;
               real ar_sd = allcontdata[cont_skip+1];
               real diff_reg_sd = allcontdata[cont_skip+2];
               real diff_abs_sd = allcontdata[cont_skip+3];
@@ -59,7 +60,7 @@
               real m_sd_par = allcontdata[cont_skip+9];
               real num_diff = allcontdata[cont_skip+10];
               real min_length = allcontdata[cont_skip+11];
-              real time_ind[T] = allcontdata[(size(allcontdata)-T+1):(size(allcontdata))];
+              
               // create covariates
               // depends on whether persons or items are mapped over
               // use conditional operator to determine size of vectors
@@ -259,13 +260,15 @@
 // constrain priors
 #include /chunks/fix_priors_maprect.stan
           
-          
+      //print(log_prob);   
               
               
               // map over person IDs
 #include /chunks/model_types_mm_map_persons.stan              
             } else {
               //map over items
+// constrain priors
+#include /chunks/fix_priors_maprect.stan
 #include /chunks/model_types_mm_map_items.stan              
             }
                   

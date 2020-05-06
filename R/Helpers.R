@@ -2132,7 +2132,7 @@ return(as.vector(idx))
   # if we have duplicate observations by group/person, need to pad some more
   # need to add a counter to deal with unique rows issues (need one unique row per ID)
   
-  this_data <- distinct(this_data,person_id,item_id,time_id,.keep_all=T)
+  
   
   if(use_groups) {
     
@@ -2143,6 +2143,11 @@ return(as.vector(idx))
       select(-unique_row)
     
   } else {
+    
+    if(nrow(distinct(this_data,person_id,item_id,time_id,.keep_all=T))!=nrow(this_data)) {
+      warning("You may have duplicate observations by person_id, time_id and item_id in your data.")
+    }
+    
     this_data <- group_by(this_data,person_id,item_id,time_id) %>% 
       mutate(unique_row=1:n())
     
