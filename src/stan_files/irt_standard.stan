@@ -210,15 +210,15 @@ parameters {
 
 transformed parameters {
 
-  vector[T>1 ? num_legis : 0] L_tp1[T];
-  vector[T>1 ? num_legis : 0] time_var_full;
+  vector[(T>1 && ((within_chain==1 && S_type!=1) || (within_chain==0))) ? num_legis : 0] L_tp1[T];
+  vector[(T>1 && ((within_chain==1 && S_type!=1) || (within_chain==0))) ? num_legis : 0] time_var_full;
   vector[gp_N] time_var_gp_full;
   vector[gp_N] m_sd_full;
   vector[gp_N] gp_sd_full;
   vector[vP] varparams[S]; // varying parameters if map_rect
   vector[dP] dparams; // stacked (constant parameters) if map_rect
   
-  if(T>1) {
+  if((T>1 && ((within_chain==1 && S_type!=1) || (within_chain==0)))) {
     time_var_full = append_row([time_sd]',time_var_free);
   }
   
@@ -260,6 +260,8 @@ model {
   sigma_abs_x ~ normal(0,5);
   sigma_reg_x ~ normal(0,5);
   extra_sd ~ exponential(1);
+  
+  //print(legis_x);
   
   if(time_proc==3 && (within_chain==0 || (within_chain==1 && S_type==0)) && T>1) {
     L_AR1 ~ normal(0,ar_sd);

@@ -25,10 +25,10 @@ if(S_type==1) {
             } else {
               if(num_ls>0) {
                 varparams[s] = append_row(to_vector(L_tp2[1:T,s]),
-                                [ls_int[s],m_sd_free[s-1],gp_sd_free[s],time_var_gp_free[s]]');
+                                [ls_int[s],m_sd_free[s-1],gp_sd_free[s-1],time_var_gp_free[s-1]]');
               } else {
                 varparams[s] = append_row(to_vector(L_tp2[1:T,s]),
-                                [m_sd_free[s-1],gp_sd_free[s],time_var_gp_free[s]]');
+                                [m_sd_free[s-1],gp_sd_free[s-1],time_var_gp_free[s-1]]');
               }
               
             }
@@ -38,19 +38,19 @@ if(S_type==1) {
               // AR(1)
               if(s==1) {
                 if(num_ls>0) {
-                  varparams[s] = append_row(L_full[s],append_row(rep_vector(0,T),
+                  varparams[s] = append_row([L_full[s],0]',append_row(to_vector(L_tp1_var[1:(T-1),s]),
                                 [ls_int[s],L_AR1[s],time_sd]'));
                 } else {
-                  varparams[s] = append_row(L_full[s],append_row(rep_vector(0,T),
+                  varparams[s] = append_row([L_full[s],0]',append_row(to_vector(L_tp1_var[1:(T-1),s]),
                                 [L_AR1[s],time_sd]'));
                 }
                 
               } else {
                 if(num_ls>0) {
-                  varparams[s] = append_row(L_full[s],append_row(to_vector(L_tp1_var[1:T,s-1]),
+                  varparams[s] = append_row([L_full[s],0]',append_row(to_vector(L_tp1_var[1:(T-1),s]),
                                 [ls_int[s],L_AR1[s],time_var_free[s-1]]'));
                 } else {
-                  varparams[s] = append_row(L_full[s],append_row(to_vector(L_tp1_var[1:T,s-1]),
+                  varparams[s] = append_row([L_full[s],0]',append_row(to_vector(L_tp1_var[1:(T-1),s]),
                                 [L_AR1[s],time_var_free[s-1]]'));
                 }
                 
@@ -64,16 +64,16 @@ if(S_type==1) {
                                           [ls_int[s],time_sd]'));
                 } else {
                   varparams[s] = append_row(L_full[s],append_row(rep_vector(0,T),
-                                          [time_sd]'));
+                                          time_sd));
                 }
                 
               } else {
                 if(num_ls>0) {
-                  varparams[s] = append_row(L_full[s],append_row(to_vector(L_tp1_var[1:T,s-1]),
+                  varparams[s] = append_row(L_full[s],append_row(to_vector(L_tp1_var[1:(T-1),s]),
                                           [ls_int[s],time_var_free[s-1]]'));
                 } else {
-                  varparams[s] = append_row(L_full[s],append_row(to_vector(L_tp1_var[1:T,s-1]),
-                                          [time_var_free[s-1]]'));
+                  varparams[s] = append_row(L_full[s],append_row(to_vector(L_tp1_var[1:(T-1),s]),
+                                          time_var_free[s-1]));
                 }
                 
               }
@@ -133,57 +133,57 @@ if(S_type==1) {
     }
     
     if(n_cats_grm[1]-1>0) {
-      for(c in 1:3) {
-        dparams[(skip+1):(skip+num_bills_grm)] = steps_votes_grm3[c,1:num_bills_grm];
+      for(c in 1:2) {
+        dparams[(skip+1):(skip+num_bills_grm)] = to_vector(steps_votes_grm3[1:num_bills_grm,c]);
         skip += num_bills_grm;
       }
     }
     
     if(n_cats_grm[2]-1>0) {
-      for(c in 1:4) {
-        dparams[(skip+1):(skip+num_bills_grm)] = steps_votes_grm4[c,1:num_bills_grm];
+      for(c in 1:3) {
+        dparams[(skip+1):(skip+num_bills_grm)] = to_vector(steps_votes_grm4[1:num_bills_grm,c]);
         skip += num_bills_grm;
       }
     }
     
     if(n_cats_grm[3]-1>0) {
-      for(c in 1:5) {
-        dparams[(skip+1):(skip+num_bills_grm)] = steps_votes_grm5[c,1:num_bills_grm];
+      for(c in 1:4) {
+        dparams[(skip+1):(skip+num_bills_grm)] = to_vector(steps_votes_grm5[1:num_bills_grm,c]);
         skip += num_bills_grm;
       }
     }
     
     if(n_cats_grm[4]-1>0) {
-      for(c in 1:6) {
-        dparams[(skip+1):(skip+num_bills_grm)] = steps_votes_grm6[c,1:num_bills_grm];
+      for(c in 1:5) {
+        dparams[(skip+1):(skip+num_bills_grm)] = to_vector(steps_votes_grm6[1:num_bills_grm,c]);
         skip += num_bills_grm;
       }
     }
     
     if(n_cats_grm[5]-1>0) {
-      for(c in 1:7) {
-        dparams[(skip+1):(skip+num_bills_grm)] = steps_votes_grm7[c,1:num_bills_grm];
+      for(c in 1:6) {
+        dparams[(skip+1):(skip+num_bills_grm)] = to_vector(steps_votes_grm7[1:num_bills_grm,c]);
         skip += num_bills_grm;
       }
     }
     
     if(n_cats_grm[6]-1>0) {
-      for(c in 1:8) {
-        dparams[(skip+1):(skip+num_bills_grm)] = steps_votes_grm8[c,1:num_bills_grm];
+      for(c in 1:7) {
+        dparams[(skip+1):(skip+num_bills_grm)] = to_vector(steps_votes_grm8[1:num_bills_grm,c]);
         skip += num_bills_grm;
       }
     }
     
     if(n_cats_grm[7]-1>0) {
-      for(c in 1:9) {
-        dparams[(skip+1):(skip+num_bills_grm)] = steps_votes_grm9[c,1:num_bills_grm];
+      for(c in 1:8) {
+        dparams[(skip+1):(skip+num_bills_grm)] = to_vector(steps_votes_grm9[1:num_bills_grm,c]);
         skip += num_bills_grm;
       }
     }
     
     if(n_cats_grm[8]-1>0) {
-      for(c in 1:10) {
-        dparams[(skip+1):(skip+num_bills_grm)] = steps_votes_grm10[c,1:num_bills_grm];
+      for(c in 1:9) {
+        dparams[(skip+1):(skip+num_bills_grm)] = to_vector(steps_votes_grm10[1:num_bills_grm,c]);
         skip += num_bills_grm;
       }
     }

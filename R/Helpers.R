@@ -1582,7 +1582,7 @@ return(as.vector(idx))
                                                       8,
                                                       14),
                       pad_id[discrete==1],
-                      .na_if(Y_int[discrete==1],idealdata@miss_val[1],pad_id=pad_id[discrete==1]))
+                      as.numeric(.na_if(Y_int[discrete==1],idealdata@miss_val[1],pad_id=pad_id[discrete==1])))
     }
     
     # need to downward adjust Y_int

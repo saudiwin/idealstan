@@ -21,10 +21,6 @@ for(n in 1:N_int) {
       //2 PL no inflation
       
       if(T==1) {
-        print(sigma_reg_free);
-        print(B_int_free);
-        print(srx_pred);
-        print(legis_pred);
         log_prob += bernoulli_logit_lpmf(Y_int[n]|(sigma_reg_free[bb[n]] + srx_pred[n,]*sigma_reg_x) *  (L_full[1] + legis_pred[n,]*legis_x) - B_int_free[bb[n]]);
       } else {
         log_prob += bernoulli_logit_lpmf(Y_int[n]|(sigma_reg_free[bb[n]] + srx_pred[n,]*sigma_reg_x) *  (L_tp2[time[n]] + legis_pred[n,]*legis_x) - B_int_free[bb[n]]);
