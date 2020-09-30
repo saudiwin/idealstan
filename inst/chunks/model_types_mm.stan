@@ -681,7 +681,11 @@ if(N_cont>0) {
   //lognormal no inflation
   
   if(Y_cont[n-N_int]==0) {
+<<<<<<< HEAD
     print("Warning: you have zero values for a log-normal distribution variable. You must remove them or use another distribution, like Normal or Poisson.")
+=======
+    print("Warning: you have zero values for a log-normal distribution variable. You must remove them or use another distribution, like Normal or Poisson.");
+>>>>>>> 90c3bb11668c0021e5e49bb42f6ee5695093ee43
   }
   
       if(T==1) {
@@ -696,7 +700,11 @@ if(N_cont>0) {
   //hurdle lognormal
   
   if(Y_cont[n-N_int]==0) {
+<<<<<<< HEAD
     print("Warning: you have zero values for a log-normal distribution variable. You must remove them or use another distribution, like Normal or Poisson.")
+=======
+    print("Warning: you have zero values for a log-normal distribution variable. You must remove them or use another distribution, like Normal or Poisson.");
+>>>>>>> 90c3bb11668c0021e5e49bb42f6ee5695093ee43
   }
   
       if(Y_cont[n-N_int]<y_cont_miss) {

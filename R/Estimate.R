@@ -788,7 +788,6 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                         inflate_zero=FALSE,
                         vary_ideal_pts='none',
                         within_chain="none",
-                        map_over_id='persons',
                         mpi_export=NULL,
                         use_subset=FALSE,sample_it=FALSE,
                            subset_group=NULL,subset_person=NULL,sample_size=20,
@@ -854,6 +853,8 @@ id_estimate <- function(idealdata=NULL,model_type=2,
     mod_count <- mod_count + length(unique(idealdata@score_matrix$ordered_id)) - 1
   }
   
+  
+  
   # set GP parameters
   
   if(vary_ideal_pts==4) {
@@ -896,7 +897,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   
   if(within_chain %in% c("threads","mpi")) {
     
-    idealdata@score_matrix <- .pad_data(idealdata@score_matrix,map_over_id,use_groups=use_groups)
+    idealdata@score_matrix <- .pad_data(idealdata@score_matrix,const_type,use_groups=use_groups)
     
   } else {
     idealdata@score_matrix$pad_id <- 1
@@ -964,7 +965,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                                Y_cont,
                                pad_id=idealdata@score_matrix$pad_id,
                                within_chain=within_chain,
-                               map_over_id=map_over_id,
+                               map_over_id=const_type,
                                discrete=idealdata@score_matrix$discrete,
                                legispoints,
                                billpoints,
@@ -1003,7 +1004,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     S=dim(remove_list$all_int_array)[1],
                     S_int=dim(remove_list$all_int_array)[2],
                     S_cont=dim(remove_list$to_shards_cont_array)[2],
-                    S_type=as.numeric(map_over_id=="persons"),
+                    S_type=as.numeric(const_type=="persons"),
                     int_shards=remove_list$all_int_array,
                     cont_shards=remove_list$to_shards_cont_array,
                     pad_id=remove_list$pad_id,
@@ -1079,7 +1080,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                              Y_cont,
                              pad_id=idealdata@score_matrix$pad_id,
                              within_chain=within_chain,
-                             map_over_id=map_over_id,
+                             map_over_id=const_type,
                              discrete=idealdata@score_matrix$discrete,
                              legispoints,
                              billpoints,
@@ -1120,7 +1121,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     S=dim(remove_list$all_int_array)[1],
                     S_int=dim(remove_list$all_int_array)[2],
                     S_cont=dim(remove_list$to_shards_cont_array)[2],
-                    S_type=as.numeric(map_over_id=="persons"),
+                    S_type=as.numeric(const_type=="persons"),
                     int_shards=remove_list$all_int_array,
                     cont_shards=remove_list$to_shards_cont_array,
                     pad_id=remove_list$pad_id,
@@ -1246,7 +1247,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
     dir.create(paste0(mpi_export,"/chunks"),showWarnings=FALSE)
     chunks <- system.file("chunks",package="idealstan")
     chunks_files <- list.files(chunks,full.names=T)
-    file.copy(chunks_files,to=paste0(mpi_export,"/chunks"))
+    file.copy(chunks_files,to=paste0(mpi_export,"/chunks"),overwrite = T)
     
     return("You will need to run the model in cmdstan yourself and load the resulting data back in to R with the id_load_mpi function. See vignette for details.")
     
