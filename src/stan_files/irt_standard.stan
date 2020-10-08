@@ -7,7 +7,7 @@ functions {
 #include /chunks/calc_rlnorm_gp.stan
 #include /chunks/id_params.stan
 #include /chunks/r_in.stan
-#include /chunks/map_rect.stan
+#include /chunks/reduce_sum.stan
 }
 
 data {
@@ -57,9 +57,10 @@ data {
   real legis_sd;
   real diff_abs_sd;
   real diff_reg_sd;
-  //real restrict_sd;
+  real restrict_sd;
   real ar_sd;
   real time_sd;
+  int sum_vals[S,3]; // what to loop over for reduce sum
   //int restrict_var;
   //real restrict_var_high;
   //real restrict_mean_val[2];
@@ -256,6 +257,8 @@ transformed parameters {
 
 model {
   
+  int grainsize = 1;
+  
   legis_x ~ normal(0,5);
   sigma_abs_x ~ normal(0,5);
   sigma_reg_x ~ normal(0,5);
@@ -337,10 +340,77 @@ if(within_chain==1 && S_type==1) {
 
 // use map_rect or don't use map_rect
 if(within_chain==1) {
-  target += sum(map_rect(overT,dparams,varparams,cont_shards,int_shards));
-  // print("log density before =", target());
-  // print(sum(map_rect(overT,dparams,varparams,cont_shards,int_shards)));
-  // print("log density after =", target());
+  target += reduce_sum_static(partial_sum, sum_vals,
+                     grainsize,
+                     int Y_int[],
+        int Y_cont[],
+        matrix srx_pred,
+        matrix sax_pred,
+        matrix legis_pred,
+        int bb[],
+        int ll[],
+        int time[],
+        int mm[],
+        real time_ind[],
+        int n_cats_rat[],
+        int mod_count, // total number of models
+        int tot_cats, // total number of possible ordinal outcomes
+        int n_cats_grm[tot_cats],
+        int order_cats_rat[N_int],
+        int order_cats_grm[N_int],
+        int const_type,
+        int restrict_high,
+        int restrict_low,
+        real fix_high,
+        real fix_low,
+        real sd_fix,
+        real discrim_reg_sd,
+        real discrim_abs_sd;
+        real legis_sd,
+        real diff_abs_sd,
+        real diff_reg_sd,
+        real ar_sd,
+        real time_sd,
+        int time_proc,
+        int zeroes, // whether to use traditional zero-inflation for bernoulli and poisson models
+        real gp_sd_par, // residual variation in GP
+        real num_diff, // number of time points used to calculate GP length-scale prior
+        real m_sd_par, // the marginal standard deviation of the GP
+        int min_length, // the minimum threshold for GP length-scale prior,
+        // now the parameters
+        vector sigma_abs_free,
+        vector L_full, // first T=1 params to constrain
+        vector m_sd_free, // marginal standard deviation of GP
+        vector gp_sd_free, // residual GP variation in Y
+        vector L_tp2[], // additional L_tp1 for GPs only
+        vector ls_int, // extra intercepts for non-inflated latent space
+        vector L_tp1_var[], // non-centered variance
+        vector L_AR1, // AR-1 parameters for AR-1 model
+        vector sigma_reg_free,
+        vector legis_x,
+        vector sigma_reg_x,
+        vector sigma_abs_x,
+        vector B_int_free,
+        vector A_int_free,
+        ordered steps_votes3,
+        ordered steps_votes4,
+        ordered steps_votes5,
+        ordered steps_votes6,
+        ordered steps_votes7,
+        ordered steps_votes8,
+        ordered steps_votes9,
+        ordered steps_votes10,
+        ordered steps_votes_grm3,
+        ordered steps_votes_grm4,
+        ordered steps_votes_grm5,
+        ordered steps_votes_grm6,
+        ordered steps_votes_grm7,
+        ordered steps_votes_grm8,
+        ordered steps_votes_grm9,
+        ordered steps_votes_grm10,
+        real extra_sd,
+        vector time_var_gp_free,
+        vector time_var_free)
 } else {
 #include /chunks/model_types_mm.stan 
 }
