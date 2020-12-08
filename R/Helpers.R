@@ -102,7 +102,9 @@
   
   if(length(unique(object@score_data@score_matrix$time_id))>1 && type!='variance') {
     
-    person_params <- as.data.frame(object@stan_samples,pars='L_tp1')
+    person_params <- object@stan_samples$draws('L_tp1') %>% as_draws_df %>% 
+      dplyr::select(-`.chain`,-`.iteration`,-`.draw`)
+    
     if(aggregate) {
       person_params <- person_params %>% gather(key = legis,value=ideal_pts) %>% 
         group_by(legis) %>% 
@@ -145,10 +147,12 @@
   } else {
     # need to match estimated parameters to original IDs
     if(type=='ideal_pts') {
-      person_params <- as.data.frame(object@stan_samples,pars='L_full')
+      person_params <- object@stan_samples$draws('L_full') %>% as_draws_df %>% 
+        dplyr::select(-`.chain`,-`.iteration`,-`.draw`)
     } else if(type=='variance') {
       # load time-varying person variances
-        person_params <- as.data.frame(object@stan_samples,pars='time_var_full')
+        person_params <- object@stan_samples$draws('time_var_full') %>% as_draws_df %>% 
+          dplyr::select(-`.chain`,-`.iteration`,-`.draw`)
     }
     
     person_params <- person_params %>% gather(key = legis,value=ideal_pts) 
@@ -1518,11 +1522,9 @@ return(as.vector(idx))
 #' Function to figure out how to remove missing values from
 #' data before running models.
 #' @noRd
-.remove_nas <- function(Y_int=NULL,
+.remove_nas <- function( Y_int=NULL,
                         Y_cont=NULL,
-                        pad_id=NULL,
                         within_chain=NULL,
-                        map_over_id=NULL,
                         discrete=NULL,
                         legispoints=NULL,
                         billpoints=NULL,
@@ -1554,20 +1556,14 @@ return(as.vector(idx))
   # only remove missing values if non-inflated model is used
 
   if(length(Y_cont)>1 && !is.na(idealdata@miss_val[2])) {
-    if(within_chain=="none") {
+
       Y_cont <- ifelse(modelpoints[discrete==0] %in% c(10,12),
                        Y_cont,
                        .na_if(Y_cont,as.numeric(idealdata@miss_val[2])))
-    } else {
-      # this is how to set a missing record if we want a square matrix for map_rect
-      pad_id[discrete==0] <- ifelse(modelpoints[discrete==0] %in% c(10,12),
-                       pad_id[discrete==0],
-                       .na_if(Y_cont[discrete==0],idealdata@miss_val[2],pad_id=pad_id[discrete==0]))
-    }
   }
 
   if(length(Y_int)>1 && !is.na(idealdata@miss_val[1])) {
-    if(within_chain=="none") {
+
       Y_int <- if_else(modelpoints[discrete==1] %in% c(0,2,
                                                       4,
                                                       6,
@@ -1575,15 +1571,7 @@ return(as.vector(idx))
                                                       14),
                       Y_int,
                       .na_if(Y_int,idealdata@miss_val[1]))
-    } else {
-      pad_id[discrete==1] <- if_else(modelpoints[discrete==1] %in% c(0,2,
-                                                      4,
-                                                      6,
-                                                      8,
-                                                      14),
-                      pad_id[discrete==1],
-                      as.numeric(.na_if(Y_int[discrete==1],idealdata@miss_val[1],pad_id=pad_id[discrete==1])))
-    }
+      
     
     # need to downward adjust Y_int
     # convert from factor back to numeric as we have dealt with missing data
@@ -1597,6 +1585,9 @@ return(as.vector(idx))
     
     
   }
+  
+  idealdata@Y_int <- Y_int
+  idealdata@Y_cont <- Y_cont
 
   # now need to calculate the true remove NAs
   # if within chain, we by definition won't have any NAs
@@ -1605,12 +1596,9 @@ return(as.vector(idx))
 
   # this works because the data were sorted in id_make
   if(length(Y_cont)>1 && length(Y_int)>1) {
-    if(within_chain=="none") {
+
       remove_nas <- c(remove_nas_int,
                       remove_nas_cont)
-    } else {
-      remove_nas <- remove_nas_int | remove_nas_cont
-    }
     
   } else if(length(Y_cont)>1) {
     remove_nas <- remove_nas_cont
@@ -1618,8 +1606,6 @@ return(as.vector(idx))
     remove_nas <- remove_nas_int
   }
    
-  
-  if(within_chain=="none") {
     if(length(Y_cont)>1) {
       Y_cont <- Y_cont[remove_nas_cont]
       N_cont <- length(Y_cont)
@@ -1644,7 +1630,6 @@ return(as.vector(idx))
     modelpoints <- modelpoints[remove_nas]
     ordered_id <- ordered_id[remove_nas]
     discrete <- discrete[remove_nas]
-    pad_id <- pad_id[remove_nas]
     
     # no padding necessary
     
@@ -1698,56 +1683,7 @@ return(as.vector(idx))
     } else {
       y_cont_miss <- 0
     }
-    
-  } else {
-    
-    # we just want to add missing values to the pad_id
-    # leave everything the same length
-
-    pad_id[!remove_nas] <- 1
-    
-    if(length(Y_cont)>1) {
-      Y_cont <- Y_cont
-      N_cont <- length(Y_cont)
-      N <- N_cont
-    } else {
-      N_cont <- array(0)
-      Y_cont <- 0
-    }
-    
-    if(length(Y_int)>1) {
-      Y_int <- Y_int
-      N_int <- length(Y_int)
-      N <- N_int
-    } else {
-      N_int <- array(0L)
-      Y_int <- 0
-    }
-    
-    
-    
-    # now replace all the values with 0 and switch to map_rect IDs
-
-    Y_cont_map <- Y_cont
-    N_cont_map <- N_cont
-    Y_int_map <- Y_int
-    N_int_map <- N_int
-    N_cont_map <- N_cont
-    N_map <- as.integer(N_int + N_cont)
-    
-    Y_cont <- array(dim=0)
-    N_cont <- 0L
-    Y_int <- array(dim=0)
-    N_int <- 0L
-    N <- 0L
-    
-    # Need to recode Y_int to adjust binary responses (should be 0/1)
-    Y_int_map <- as.numeric(Y_int_map)
-    
-    # if((max(Y_int_map[modelpoints==1])>1 && !is.infinite(max(Y_int_map[modelpoints==1]))) || (max(Y_int_map[modelpoints==2])>2 && !is.infinite(max(Y_int_map[modelpoints==2])))) {
-    #   Y_int_map[modelpoints[discrete==1] %in% c(1,2)] <- Y_int_map[modelpoints[discrete==1]  %in% c(1,2)] - 1L
-    # }
-  }
+ 
 
   max_t <- max(timepoints,na.rm=T)
   num_bills <- max(billpoints,na.rm=T)
@@ -1771,7 +1707,7 @@ return(as.vector(idx))
   # now need to determine number of categories
 
   # need to calculate number of categories for ordinal models
-  if(within_chain=="none") {
+
     order_cats_rat <- ordered_id[discrete==1 & remove_nas]
     order_cats_grm <- ordered_id[discrete==1 & remove_nas]
     
@@ -1786,24 +1722,6 @@ return(as.vector(idx))
     } else {
       n_cats_grm <- 0
     }
-    
-  } else {
-    
-    order_cats_rat <- ordered_id
-    order_cats_grm <- ordered_id
-    
-    if(any(modelpoints %in% c(3,4))) {
-      n_cats_rat <- unique(order_cats_rat[pad_id==0])
-    } else {
-      n_cats_rat <- 0
-    }
-    
-    if(any(modelpoints %in% c(5,6))) {
-      n_cats_grm <- unique(order_cats_grm[pad_id==0])
-    } else {
-      n_cats_grm <- 0
-    }
-  }
   
   n_cats_rat <- sapply(3:10,function(s) {
     if(s %in% n_cats_rat) {
@@ -1822,190 +1740,19 @@ return(as.vector(idx))
   })
   
 
-  # now stratify everything by number of shards = number of items
-
-  if(within_chain!="none") {
-
-    # Y_int_map will rep at 0 if length 1
-
-    to_shards_int <- tibble(Y_int_map,
-                          legispoints,
-                          billpoints,
-                          timepoints,
-                          modelpoints,
-                          order_cats_rat,
-                          order_cats_grm,
-                          pad_id,
-                          discrete)
-    
-    if(Y_cont_map[1]==0) {
-      Y_cont_map <- rep(Y_cont_map,nrow(idealdata@score_matrix))
-    }
     
     if(length(time_ind)==1) {
       tibble_time <- tibble(time_ind=rep(time_ind,nrow(idealdata@score_matrix)))
-    } else {
-      
-      # need a different kind of time_ind
-      
-      time_ind <- switch(class(idealdata@score_matrix$time_id)[1],
-                         factor=as.numeric(idealdata@score_matrix$time_id),
-                         Date=as.numeric(idealdata@score_matrix$time_id),
-                         POSIXct=as.numeric(idealdata@score_matrix$time_id),
-                         POSIXlt=as.numeric(idealdata@score_matrix$time_id),
-                         numeric=idealdata@score_matrix$time_id,
-                         integer=idealdata@score_matrix$time_id)
-      
-      tibble_time <- tibble(time_ind=time_ind)
     }
-
-    to_shards_cont <- tibble(Y_cont_map) %>% 
-      bind_cols(select(idealdata@score_matrix,idealdata@person_cov),
-                select(idealdata@score_matrix,idealdata@item_cov),
-                select(idealdata@score_matrix,idealdata@item_cov_miss),
-                tibble_time)
-    
-    # create max values
-    if(sum(discrete==1 & pad_id==0)>0) {
-      y_int_miss <- max(to_shards_int$Y_int_map[discrete==1 & pad_id==0])
-    } else {
-      y_int_miss <- 0
-    }
-    if(sum(discrete==0 & pad_id==0)>0) {
-      y_cont_miss <- max(to_shards_cont$Y_cont_map[discrete==0 & pad_id==0])
-    } else {
-      y_cont_miss <- 0
-    }
-    
-    
-    
-    if(map_over_id=="persons") {
-      to_shards_int <- to_shards_int %>% 
-        gather(key = "variable",value="index",-legispoints)
-      
-      to_shards_int_split <- to_shards_int %>% 
-        split(f=to_shards_int$legispoints) %>% 
-        lapply(function(d) d$index)
-      
-      to_shards_int_array <- abind::abind(to_shards_int_split,along=2)
-      
-      to_shards_cont$legispoints <- legispoints
-      
-      to_shards_cont <- to_shards_cont %>% 
-        gather(key = "variable",value="index",-legispoints)
-      
-      to_shards_cont_split <- to_shards_cont %>% 
-        split(f=to_shards_cont$legispoints) %>% 
-        lapply(function(d) d$index)
-      
-      to_shards_cont_array <- abind::abind(to_shards_cont_split,along=2)
-      
-    } else {
-      to_shards_int <- to_shards_int %>% 
-        gather(key = "variable",value="index",-billpoints)
-      
-      to_shards_int_split <- to_shards_int %>% 
-        split(f=to_shards_int$billpoints) %>% 
-        lapply(function(d) d$index)
-      
-      to_shards_int_array <- abind::abind(to_shards_int_split,along=2)
-      
-      to_shards_cont$billpoints <- billpoints
-      
-      to_shards_cont <- to_shards_cont %>% 
-        gather(key = "variable",value="index",-billpoints)
-      
-      to_shards_cont_split <- to_shards_cont %>% 
-        split(f=to_shards_cont$billpoints) %>% 
-        lapply(function(d) d$index)
-      
-      to_shards_cont_array <- abind::abind(to_shards_cont_split,along=2)
-    }
-    
-    # create matrix of IDs to pass along with data
-    K <- ncol(to_shards_int_array)
-
-    all_int_array <- rbind(matrix(c(rep(as.numeric(map_over_id=="persons"),K),
-                                    rep(nrow(to_shards_cont_array)/length(unique(to_shards_cont$variable)),K),# pass along shard size for N
-                                    rep(nrow(to_shards_int_array)/length(unique(to_shards_int$variable)),K), # pass along shard size for N
-                                    rep(y_int_miss,K),
-                                    rep(y_cont_miss,K),
-                                     rep(max(legispoints),K),
-                                     rep(max(billpoints),K),
-                                    rep(num_ls,K),
-                                    rep(max(timepoints),K),
-                                    rep(length(unique(modelpoints)),K),
-                                    rep(length(idealdata@person_cov),K),
-                                    rep(length(idealdata@item_cov),K),
-                                    rep(length(idealdata@item_cov_miss),K),
-                                    rep(n_cats_rat,each=K),
-                                    rep(n_cats_grm,each=K),
-                                    c(1:K),
-                                    rep(time_proc,K),
-                                    rep(const_type,K),
-                                    rep(restrict_high,K),
-                                    rep(restrict_low,K),
-                                    rep(fix_high,K),
-                                    rep(fix_low,K)),ncol=K,byrow = T),
-                            to_shards_int_array)
-    
-    all_int_array <- apply(all_int_array,2,as.integer)
-    
-    # add additional values for real array
-    
-    Q <- ncol(to_shards_cont_array)
-    
-    all_cont_array <- rbind(to_shards_cont_array,
-                            matrix(c(rep(ar_sd,Q),
-                                     rep(diff_reg_sd,Q),
-                                     rep(diff_miss_sd,Q),
-                                     rep(discrim_reg_sd,Q),
-                                     rep(discrim_miss_sd,Q),
-                                     rep(legis_sd,Q),
-                                     rep(restrict_sd,Q),
-                                     rep(gp_sd_par,Q),
-                                     rep(m_sd_par,Q),
-                                     rep(num_diff,Q),
-                                     rep(min_length,Q)),ncol=Q,byrow=T))
-    
-    # empty values for covariates
-    # add zero to avoid converting to logical matrix
-    
-    LX <- length(idealdata@person_cov)
-    SRX <- length(idealdata@item_cov)
-    SAX <- length(idealdata@item_cov_miss)
-    
-    legis_pred <- array(dim=c(0,0)) + 0L
-    
-    srx_pred <- array(dim=c(0,0)) + 0L
-    
-    sax_pred <- array(dim=c(0,0)) + 0L
-    
-    # need to zero out IDs
-    
-    legispoints <- array(dim=0) + 0L
-    modelpoints <- array(dim=0) + 0L
-    timepoints <- array(dim=0) + 0L
-    billpoints <- array(dim=0) + 0L
-    order_cats_grm <- array(dim=0) + 0L
-    order_cats_rat <- array(dim=0) + 0L
-  }
+  
   
     return(list(Y_int=Y_int,
                 Y_cont=Y_cont,
-                pad_id=pad_id,
                 legispoints=legispoints,
                 billpoints=billpoints,
                 timepoints=timepoints,
                 modelpoints=modelpoints,
                 remove_nas=remove_nas,
-                all_int_array=t(all_int_array),
-                to_shards_cont_array=t(all_cont_array),
-                N_map=N_map,
-                Y_int_map=Y_int_map,
-                Y_cont_map=Y_cont_map,
-                N_int_map=N_int_map,
-                N_cont_map=N_cont_map,
                 N=N,
                 y_cont_miss=y_cont_miss,
                 y_int_miss=y_int_miss,
@@ -2026,7 +1773,8 @@ return(as.vector(idx))
                 sax_pred=sax_pred,
                 LX=LX,
                 SRX=SRX,
-                SAX=SAX))
+                SAX=SAX,
+                idealdata=idealdata))
   
   
 }
@@ -2127,54 +1875,57 @@ return(as.vector(idx))
 
 #' Function to square data for map_rect
 #' @noRd
-.pad_data <- function(this_data,map_over_id=NULL,use_groups=FALSE) {
+.make_sum_vals <- function(this_data,const_type=NULL,use_groups=FALSE) {
   
-  # if we have duplicate observations by group/person, need to pad some more
-  # need to add a counter to deal with unique rows issues (need one unique row per ID)
+  # need a matrix equal to each ID and row number for where it starts/ends
   
-  
-  
-  if(use_groups) {
-    
-    this_data <- group_by(this_data,group_id,item_id,time_id) %>% 
-      mutate(unique_row=1:n())
-    
-    this_data <- tidyr::complete(ungroup(this_data),group_id,item_id,time_id,unique_row) %>% 
-      select(-unique_row)
-    
+  if(const_type=="persons") {
+    if(use_groups) {
+      
+      this_data <- dplyr::arrange(this_data, desc(discrete), group_id) 
+      
+      sum_vals <- this_data %>% 
+        mutate(rownum=row_number()) %>% 
+        group_by(discrete,group_id) %>% 
+        filter(row_number() %in% c(1,n())) %>% 
+        select(group_id,rownum) %>% 
+        mutate(type=c("start","end")) %>% 
+        spread(key="type",value = "rownum") %>% 
+        ungroup %>% 
+        select(group_id,start,end)
+      
+      
+    } else {
+      
+      this_data <- dplyr::arrange(this_data, desc(discrete),person_id)
+        
+        sum_vals <- this_data %>% 
+          mutate(rownum=row_number()) %>% 
+          group_by(discrete,person_id) %>% 
+          filter(row_number() %in% c(1,n())) %>% 
+          select(person_id,rownum) %>% 
+          mutate(type=c("start","end")) %>% 
+          spread(key="type",value = "rownum") %>% 
+          ungroup %>% 
+          select(person_id,start,end)
+      
+    }
   } else {
     
-    if(nrow(distinct(this_data,person_id,item_id,time_id,.keep_all=T))!=nrow(this_data)) {
-      warning("You may have duplicate observations by person_id, time_id and item_id in your data.")
-    }
+    this_data <- dplyr::arrange(this_data, desc(discrete),item_id)
     
-    this_data <- group_by(this_data,person_id,item_id,time_id) %>% 
-      mutate(unique_row=1:n())
-    
-    this_data <- tidyr::complete(ungroup(this_data),person_id,item_id,time_id,unique_row) %>% 
-      select(-unique_row)
+    sum_vals <- this_data %>% 
+      mutate(rownum=row_number()) %>% 
+      group_by(item_id) %>% 
+      filter(row_number() %in% c(1,n())) %>% 
+      select(item_id,rownum) %>% 
+      mutate(type=c("start","end")) %>% 
+      spread(key="type",value = "rownum") %>% 
+      ungroup %>% 
+      select(item_id,start,end)
     
   }
   
-  # now need a marker and replace NAs with 0
-  
-  this_data$pad_id <- as.numeric(is.na(this_data$model_id))
-  
-  this_data <- lapply(this_data, function(c) {
-
-    if(is.factor(c)) {
-      c <- addNA(c)
-      levels(c)[length(levels(c))] <- levels(c)[length(levels(c))-1]
-    } else if(is.Date(c) || is.POSIXct(c) || is.POSIXlt(c)) {
-      
-      c[is.na(c)] <- min(c,na.rm=T)
-      
-      } else {
-      c[is.na(c)] <- 0
-    }
-    return(c)
-  }) %>% dplyr::as_tibble(.)
-  
-  return(this_data)
+  return(list(sum_vals=sum_vals,this_data=this_data))
   
 }

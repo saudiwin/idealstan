@@ -4,7 +4,9 @@
 \name{delaware}
 \alias{delaware}
 \title{Rollcall vote data for Delaware State Legislature}
-\format{A long data frame with one row for every vote cast by a legislator.}
+\format{
+A long data frame with one row for every vote cast by a legislator.
+}
 \source{
 \url{https://www.cambridge.org/core/journals/american-political-science-review/article/ideological-mapping-of-american-legislatures/8E1192C22AA0B9F9B56167998A41CAB0}
 }

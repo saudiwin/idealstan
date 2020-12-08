@@ -10,7 +10,6 @@ id_estimate(
   inflate_zero = FALSE,
   vary_ideal_pts = "none",
   within_chain = "none",
-  map_over_id = "persons",
   mpi_export = NULL,
   use_subset = FALSE,
   sample_it = FALSE,
@@ -18,7 +17,7 @@ id_estimate(
   subset_person = NULL,
   sample_size = 20,
   nchains = 4,
-  niters = 2000,
+  niters = 1000,
   use_vb = FALSE,
   restrict_ind_high = NULL,
   fix_high = 1,
@@ -28,12 +27,12 @@ id_estimate(
   const_type = "persons",
   id_refresh = 0,
   prior_fit = NULL,
-  warmup = floor(niters/2),
+  warmup = 1000,
   ncores = 4,
   use_groups = FALSE,
   discrim_reg_sd = 2,
   discrim_miss_sd = 2,
-  person_sd = 1,
+  person_sd = 3,
   time_sd = 0.1,
   sample_stationary = FALSE,
   ar_sd = 2,
@@ -45,6 +44,8 @@ id_estimate(
   gp_num_diff = 3,
   gp_m_sd_par = 0.3,
   gp_min_length = 0,
+  cmdstan_path_user = NULL,
+  map_over_id = "persons",
   ...
 )
 }
@@ -76,11 +77,6 @@ parallelization (this requires sampling in \code{cmdstan},
 see vignette for details). Generally speaking, \code{"mpi"} is
 more efficient parallelization that can be used on computer
 clusters to estimate very large models.}
-
-\item{map_over_id}{This parameter identifies which ID variable to use to construct the 
-shards for within-chain parallelization. It defaults to \code{"persons"} but can also take
-a value of \code{"items"}. It is recommended to select whichever variable has more
-distinct values to improve parallelization.}
 
 \item{mpi_export}{If \code{within_chains="mpi"}, this parameter should refer to the 
 directory where the necessary data and Stan code will be exported to. If missing, 
@@ -196,6 +192,15 @@ process. Decreasing this value will result in smoother fits.}
 \item{gp_min_length}{The minimum value of the GP length-scale parameter. This is a hard
 lower limit. Increasing this value will force a smoother GP fit. It should always be less than
 \code{gp_num_diff}.}
+
+\item{cmdstan_path_user}{Default is NULL, and so will default to whatever is set in
+\code{cmdstanr} package. Specify a file path  here to use a different \code{cmdtstan}
+installation.}
+
+\item{map_over_id}{This parameter identifies which ID variable to use to construct the 
+shards for within-chain parallelization. It defaults to \code{"persons"} but can also take
+a value of \code{"items"}. It is recommended to select whichever variable has more
+distinct values to improve parallelization.}
 
 \item{...}{Additional parameters passed on to Stan's sampling engine. See \code{\link[rstan]{stan}} for more information.}
 }

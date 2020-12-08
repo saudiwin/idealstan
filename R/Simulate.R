@@ -35,6 +35,7 @@
 #' \code{\link{id_estimate}} function to run a model. It can also be used in the simulation
 #' plotting functions.
 #' @seealso \code{\link{id_plot_sims}} for plotting fitted models versus true values.
+#' @import posterior
 #' @export
 id_sim_gen <- function(num_person=20,num_bills=50,
                        model_type='binary',
@@ -89,18 +90,37 @@ id_sim_gen <- function(num_person=20,num_bills=50,
   } else if(time_points>1) {
     # if more than 1 time point, generate via an AR, random-walk or GP process
     if(time_process=='GP') {
+      
+      ideal_pts_mean <- prior_func(params=list(N=num_person,mean=0,sd=ideal_pts_sd))
       ar_adj <- runif(n=num_person,2.5,5.5) # rho parameter in GPs
       drift <- 0.5 # marginal standard deviation
       simu_data <- list(N=num_person,
                         T=time_points,
                         x=1:time_points,
+                        ideal_pts=ideal_pts_mean,
                         rho=ar_adj,
                         alpha=drift,
                         sigma=time_sd)
       # loop over persons and construct GP with stan code
-      simu_fit <- sampling(stanmodels[['sim_gp']], data=simu_data, iter=1,
-                       chains=1, seed=494838, algorithm="Fixed_param")
-      ideal_pts <- rstan::extract(simu_fit)$Y[1,,]
+      
+      stan_code <- system.file("stan_files","sim_gp.stan",
+                            package="idealstan")
+      
+      simu_mod <- stan_code %>% 
+        cmdstan_model(include_paths=dirname(stan_code))
+      
+      simu_fit <- simu_mod$sample(data=simu_data, iter_sampling=1,
+                                  chains=1, fixed_param=T)
+      
+      ideal_pts <- simu_fit$draws("Y") %>% as_draws_df %>% 
+        select(-`.iteration`,-`.draw`,-`.chain`) %>% 
+        gather(key="variable",value="value") %>% 
+        mutate(person=as.numeric(stringr::str_extract(variable,"(?<=\\[)[0-9]+")),
+               time=as.numeric(stringr::str_extract(variable,"(?<=,)[0-9]+"))) %>% 
+        select(-variable) %>% 
+        spread("time","value") %>% 
+        select(-person) %>% 
+        as.matrix
       
     } else {
       ideal_t1 <- prior_func(params=list(N=num_person,mean=0,sd=ideal_pts_sd))
@@ -210,6 +230,8 @@ id_sim_gen <- function(num_person=20,num_bills=50,
                                        true_person=ideal_pts,
                                        true_reg_discrim=reg_discrim,
                                        true_abs_discrim=absence_discrim,
+                                  true_person_mean=ideal_pts_mean,
+                            time_sd=time_sd,
                             drift=drift,
                             ar_adj=ar_adj)
 
@@ -329,29 +351,42 @@ id_sim_gen <- function(num_person=20,num_bills=50,
 #' @param rep Over how many replicates to calculate RMSE? Currently can only be 1
 #' @export
 id_sim_rmse <- function(obj,rep=1) {
-  all_params <- rstan::extract(obj@stan_samples)
+  
   
   all_true <- obj@score_data@simul_data
   
   if(length(unique(as.numeric(obj@score_data@score_matrix$time_id)))>1) {
     true_person <- all_true$true_person[as.numeric(levels(obj@score_data@score_matrix$person_id)),]
-    person_est <- all_params$L_tp1
+    person_est <- obj@stan_samples$draws("L_tp1") %>% as_draws_matrix()
   } else {
     true_person <- all_true$true_person[as.numeric(levels(obj@score_data@score_matrix$person_id))]
-    person_est <- all_params$L_full
+    person_est <- obj@stan_samples$draws("L_full") %>% as_draws_matrix()
   }
   true_sigma_reg <- all_true$true_reg_discrim
   true_sigma_abs <- all_true$true_abs_discrim
   
   over_params <- function(est_param,true_param) {
-  
-  if(class(est_param)=='array') {
-    param_length <- dim(est_param)[3]
-    all_rmse <- sapply(1:param_length, function(i) {
-      this_param <- sqrt((est_param[,,i] - true_param[i])^2)
-    })
-  } else if(class(est_param)=='matrix') {
+    
     param_length <- ncol(est_param)
+  
+  if(class(true_param)=='matrix') {
+    
+    num_person <- length(unique(as.numeric(obj@score_data@score_matrix$person_id)))
+    time <- length(unique(as.numeric(obj@score_data@score_matrix$time_id)))
+    
+    # make grid to loop over for person and time
+    
+    person_time <- expand.grid(1:time,1:num_person)
+    
+    all_rmse <- sapply(1:nrow(person_time), function(i) {
+      
+      this_param <- sqrt((est_param[,i] - true_param[person_time$Var2[i],person_time$Var1[i]])^2)
+      
+      return(this_param)
+    })
+    
+  } else if(class(true_param)=='numeric') {
+    
     all_rmse <- sapply(1:param_length, function(i) {
       this_param <- sqrt((est_param[,i] - true_param[i])^2)
     })
@@ -371,8 +406,10 @@ id_sim_rmse <- function(obj,rep=1) {
   
   
   out_data <- list(`Ideal Points`=over_params(person_est,true_person),
-                   `Absence Discrimination`=over_params(all_params$sigma_abs_free,true_sigma_abs),
-                   `Item Discrimination`=over_params(all_params$sigma_reg_free,true_sigma_reg))
+                   `Absence Discriminations`=over_params(as_draws_matrix(obj@stan_samples$draws("sigma_abs_free")),
+                                                         true_sigma_abs),
+                   `Item Discrimations`=over_params(as_draws_matrix(obj@stan_samples$draws("sigma_reg_free")),
+                                                    true_sigma_reg))
   
   return(out_data)
 
@@ -385,39 +422,40 @@ id_sim_rmse <- function(obj,rep=1) {
 #' @param quantiles What the quantile coverage of the high posterior density interval should be
 #' @export
 id_sim_coverage <- function(obj,rep=1,quantiles=c(.95,.05)) {
-
-  all_params <- rstan::extract(obj@stan_samples)
   
   all_true <- obj@score_data@simul_data
   
   if(length(unique(as.numeric(obj@score_data@score_matrix$time_id)))>1) {
     true_person <- all_true$true_person[as.numeric(levels(obj@score_data@score_matrix$person_id)),]
-    person_est <- all_params$L_tp1
+    person_est <- obj@stan_samples$draws("L_tp1") %>% as_draws_matrix()
   } else {
     true_person <- all_true$true_person[as.numeric(levels(obj@score_data@score_matrix$person_id))]
-    person_est <- all_params$L_full
+    person_est <- obj@stan_samples$draws("L_full") %>% as_draws_matrix()
   }
   
   true_sigma_reg <- all_true$true_reg_discrim
   true_sigma_abs <- all_true$true_abs_discrim
   
   over_params <- function(est_param,true_param) {
-
-    if(class(est_param)=='array') {
-      param_length <- dim(est_param)[3]
-      time <- dim(est_param)[2]
-      high <- apply(est_param,c(2,3), quantile,quantiles[1])
-      low <- apply(est_param,c(2,3), quantile,quantiles[2])
-      all_covs <- sapply(1:param_length, function(i) {
-        over_time <- sapply(1:time,function(t) {
-          this_sd <- apply(est_param,c(2,3), sd)
-          #this_param <- (true_param[i] < (true_param[i]+1.96*this_sd)) && (true_param[i] > (true_param[i]-1.96*this_sd))
-          this_param <- (true_param[i,t] < high[t,i]) && (true_param[i,t] >low[t,i])
-        })
+    
+    if(class(true_param)=="matrix") {
+      
+      num_person <- length(unique(as.numeric(obj@score_data@score_matrix$person_id)))
+      time <- length(unique(as.numeric(obj@score_data@score_matrix$time_id)))
+      high <- apply(est_param,2, quantile,quantiles[1])
+      low <- apply(est_param,2, quantile,quantiles[2])
+      
+      # make grid to loop over for person and time
+      
+      person_time <- expand.grid(1:time,1:num_person)
+      
+      all_covs <- sapply(1:nrow(person_time), function(i) {
         
-        return(over_time)
+        this_param <- (true_param[person_time$Var2[i],person_time$Var1[i]] < high[i]) && (true_param[person_time$Var2[i],person_time$Var1[i]] >low[i])
+        
+        return(this_param)
       })
-    } else if(class(est_param)=='matrix') {
+    } else if(class(true_param)=="numeric") {
       param_length <- ncol(est_param)
       all_covs <- sapply(1:param_length, function(i) {
          high <- quantile(est_param[,i],.95)
@@ -432,7 +470,8 @@ id_sim_coverage <- function(obj,rep=1,quantiles=c(.95,.05)) {
     return(all_covs)
   }
 
-  total_iters <- obj@stan_samples@stan_args[[1]]$iter-obj@stan_samples@stan_args[[1]]$warmup
+  total_iters <- nrow(as_draws_matrix(obj@stan_samples$draws("L_full")))
+  
   if(rep<total_iters) {
     to_iters <- sample(1:total_iters,rep)
   } else {
@@ -444,8 +483,10 @@ id_sim_coverage <- function(obj,rep=1,quantiles=c(.95,.05)) {
   #                         true_param=true_person)
 
     out_data <- list(`Person Ideal Points`=over_params(person_est,true_person),
-                     `Absence Discriminations`=over_params(all_params$sigma_abs_free,true_sigma_abs),
-                     `Item Discrimations`=over_params(all_params$sigma_reg_free,true_sigma_reg))
+                     `Absence Discriminations`=over_params(as_draws_matrix(obj@stan_samples$draws("sigma_abs_free")),
+                                                           true_sigma_abs),
+                     `Item Discrimations`=over_params(as_draws_matrix(obj@stan_samples$draws("sigma_reg_free")),
+                                                      true_sigma_reg))
 
 
   
@@ -459,30 +500,43 @@ id_sim_coverage <- function(obj,rep=1,quantiles=c(.95,.05)) {
 #' @export
 id_sim_resid <- function(obj,rep=1) {
   
-  all_params <- rstan::extract(obj@stan_samples)
-  
   all_true <- obj@score_data@simul_data
   
   if(length(unique(as.numeric(obj@score_data@score_matrix$time_id)))>1) {
     true_person <- all_true$true_person[as.numeric(levels(obj@score_data@score_matrix$person_id)),]
-    person_est <- all_params$L_tp1
+    person_est <- obj@stan_samples$draws("L_tp1") %>% as_draws_matrix()
   } else {
     true_person <- all_true$true_person[as.numeric(levels(obj@score_data@score_matrix$person_id))]
-    person_est <- all_params$L_full
+    person_est <- obj@stan_samples$draws("L_full") %>% as_draws_matrix()
   }
   
   true_sigma_reg <- all_true$true_reg_discrim
   true_sigma_abs <- all_true$true_abs_discrim
   
+  
+  
   over_params <- function(est_param,true_param) {
-
-  if(class(est_param)=='array') {
-    param_length <- dim(est_param)[3]
-    all_resid <- sapply(1:param_length, function(i) {
-      this_param <- (est_param[,,i] - true_param[i])
-    })
-  } else if(class(est_param)=='matrix') {
+    
     param_length <- ncol(est_param)
+
+  if(class(true_param)=='matrix') {
+    
+    num_person <- length(unique(as.numeric(obj@score_data@score_matrix$person_id)))
+    time <- length(unique(as.numeric(obj@score_data@score_matrix$time_id)))
+    
+    # make grid to loop over for person and time
+    
+    person_time <- expand.grid(1:time,1:num_person)
+    
+    all_resid <- sapply(1:nrow(person_time), function(i) {
+      
+      this_param <- est_param[,i] - true_param[person_time$Var2[i],person_time$Var1[i]]
+      
+      return(this_param)
+    })
+    
+  } else if(class(true_param)=='numeric') {
+    
     all_resid <- sapply(1:param_length, function(i) {
       this_param <- (est_param[,i] - true_param[i])
     })
@@ -504,8 +558,8 @@ id_sim_resid <- function(obj,rep=1) {
   }
   
   out_data <- list(`Ideal Points`=over_params(person_est,true_person),
-                   `Absence Discrimination`=over_params(all_params$sigma_abs_free,true_sigma_abs),
-                   `Item Discrimination`=over_params(all_params$sigma_reg_free,true_sigma_reg))
+                   `Absence Discrimination`=over_params(as_draws_matrix(obj@stan_samples$draws("sigma_abs_free")),true_sigma_abs),
+                   `Item Discrimination`=over_params(as_draws_matrix(obj@stan_samples$draws("sigma_reg_free")),true_sigma_reg))
   
   return(out_data)
 

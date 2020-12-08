@@ -291,9 +291,8 @@ id_plot_legis <- function(object,return_data=FALSE,
   # Add theme elements
   
   outplot <- outplot  +  ylab("") + xlab("") +
-    theme(axis.text.y=element_blank(),panel.grid.major.y = element_blank(),
-          strip.background = element_blank(),
-          panel.background = element_blank()) + coord_flip() 
+    theme_tufte() +
+    theme(axis.text.y=element_blank()) + coord_flip() 
   
   if(model_wrap) {
     # facet by groups/persons
@@ -985,14 +984,17 @@ id_plot_sims <- function(sims,type='RMSE') {
 #' This plotting function displays a histogram of the Rhat values of all parameters in an \code{idealstan} model.
 #' 
 #' @param obj A fitted \code{idealstan} object.
-#' 
+#' @importFrom ggthemes theme_tufte
 #' @export
 id_plot_rhats <- function(obj) {
   # first get all summaries
-  get_out <- rstan::summary(obj@stan_samples)$summary
-  data_frame(Rhats=get_out[,'Rhat']) %>% 
-    ggplot(aes(x=Rhats)) + theme_minimal() + geom_histogram() +
-    ylab('Parameters') +theme(panel.grid=element_blank())
+  obj@summary %>% 
+    ggplot(aes(x=rhat)) + theme_tufte() + geom_histogram() +
+    ylab('Parameters') +
+    xlab("Rhat") +
+    labs(caption=stringr::str_wrap("Plot shows a histogram of model parameter Rhat values. Values below 1.1 generally indicate convergence across multiple chains. Values close to 1.0 are preferred.",
+                                   width=60)) +
+    ggtitle("Distribution of Rhat Values from Fitted Idealstan Model")
 }
 
 #' Marginal Effects Plot for Hierarchical Covariates

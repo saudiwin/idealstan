@@ -4,7 +4,9 @@
 \name{senate114}
 \alias{senate114}
 \title{Rollcall vote data for 114th Senate}
-\format{A long data frame with one row for every vote cast by a Senator.}
+\format{
+A long data frame with one row for every vote cast by a Senator.
+}
 \source{
 \url{http://www.voteview.com/}
 }

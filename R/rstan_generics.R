@@ -54,12 +54,9 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
 
   n_votes <- nrow(object@score_data@score_matrix)
   
-  if(object@stan_samples@stan_args[[1]]$method != 'variational') {
-    n_iters <- (object@stan_samples@stan_args[[1]]$iter-object@stan_samples@stan_args[[1]]$warmup)*length(object@stan_samples@stan_args)
-  } else {
-    # there is no warmup for VB
-    n_iters <- dim(object@stan_samples)[1]
-  }
+
+  n_iters <- nrow(as_draws_matrix(object@stan_samples$draws("L_full")))
+
 
   if(!is.null(sample_scores) && type!='log_lik') {
     this_sample <- sample(1:n_votes,sample_scores)
@@ -77,13 +74,49 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
   
   print(paste0('Processing posterior replications for ',n_votes,' scores using ',draws,
                ' posterior samples out of a total of ',n_iters, ' samples.'))
-  
 
-  y <- object@score_data@score_matrix$outcome[this_sample]
-  # check to see if we need to recode missing values from the data if the model_type doesn't handle missing data
-  if(object@model_type %in% c(1,3,5,7,9,11,13) & !is.null(object@score_data@miss_val)) {
-    y <- .na_if(y,object@score_data@miss_val)
+  if(length(object@score_data@Y_cont)>1) {
+    Y_cont <- object@score_data@Y_cont[this_sample]
+  } else {
+    Y_cont <- object@score_data@Y_cont
   }
+  
+  if(length(object@score_data@Y_int)>1) {
+    Y_int <- object@score_data@Y_int[this_sample]
+  } else {
+    Y_int <- object@score_data@Y_int
+  }
+  
+  modelpoints <- object@score_data@score_matrix$model_id[this_sample]
+  discrete <- object@score_data@score_matrix$discrete[this_sample]
+  ordered_id <- object@score_data@score_matrix$ordered_id[this_sample]
+  
+  # check to see if we need to recode missing values from the data if the model_type doesn't handle missing data
+  
+  remove_nas_cont <- !is.na(Y_cont)
+  remove_nas_int <- !is.na(Y_int)
+  
+  if(length(Y_cont)>1 && length(Y_int)>1) {
+    
+    remove_nas <- c(remove_nas_int,
+                    remove_nas_cont)
+    
+  } else if(length(Y_cont)>1) {
+    remove_nas <- remove_nas_cont
+  } else {
+    remove_nas <- remove_nas_int
+  }
+  
+  if(length(Y_cont)>1) {
+    Y_cont <- Y_cont[remove_nas_cont]
+    N_cont <- length(Y_cont)
+  }
+  
+  if(length(Y_int)>1) {
+    Y_int <- Y_int[remove_nas_int]
+    N_int <- length(Y_int)
+  }
+  
   if(object@use_groups) {
     person_points <- as.numeric(object@score_data@score_matrix$group_id)[this_sample]
   } else {
@@ -93,130 +126,294 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
   bill_points <- as.numeric(object@score_data@score_matrix$item_id)[this_sample]
   time_points <- as.numeric(factor(object@score_data@score_matrix$time_id))[this_sample]
   
-  remove_nas <- !is.na(y) & !is.na(person_points) & !is.na(bill_points) & !is.na(time_points)
-  y <- y[remove_nas]
-  
-  if(is.factor(y)) {
-    miss_val <- which(levels(y)==object@score_data@miss_val)
-    y <- as.numeric(y)
-  }
-  
-  
-  max_val <- max(y)
   bill_points <- bill_points[remove_nas]
   time_points <- time_points[remove_nas]
+  modelpoints <- modelpoints[remove_nas]
+  ordered_id <- ordered_id[remove_nas]
+  discrete <- discrete[remove_nas]
   person_points <- person_points[remove_nas]
   
-  model_type <- object@model_type
-  latent_space <- model_type %in% c(13,14)
-  inflate <- model_type %in% c(2,4,6,8,10,12,14)
   # we can do the initial processing here
   
   # loop over posterior iterations
-  
-  L_tp1 <- .extract_nonp(object@stan_samples,'L_tp1')[[1]]
-  A_int_free <- .extract_nonp(object@stan_samples,'A_int_free')[[1]]
-  B_int_free <- .extract_nonp(object@stan_samples,'B_int_free')[[1]]
-  sigma_abs_free <- .extract_nonp(object@stan_samples,'sigma_abs_free')[[1]]
-  sigma_reg_free <- .extract_nonp(object@stan_samples,'sigma_reg_free')[[1]]
-  
+  if(length(unique(object@score_data@score_matrix$time_id))>1) {
+    L_tp1 <- object@stan_samples$draws('L_tp1')
+  }
+  L_full <- object@stan_samples$draws('L_full') %>% as_draws_matrix()
+  A_int_free <- object@stan_samples$draws('A_int_free') %>% as_draws_matrix()
+  B_int_free <- object@stan_samples$draws('B_int_free') %>% as_draws_matrix()
+  sigma_abs_free <- object@stan_samples$draws('sigma_abs_free') %>% as_draws_matrix()
+  sigma_reg_free <- object@stan_samples$draws('sigma_reg_free') %>% as_draws_matrix()
 
-  pr_absence_iter <- sapply(these_draws, function(d) {
-    if(latent_space) {
-      # use latent-space formulation for likelihood
-      pr_absence <- sapply(1:length(person_points),function(n) {
-        -sqrt((L_tp1[d,time_points[n],person_points[n]] - A_int_free[d,bill_points[n]])^2)
-      }) %>% plogis()
-    } else {
-      # use IRT formulation for likelihood
-      pr_absence <- sapply(1:length(person_points),function(n) {
-        L_tp1[d,time_points[n],person_points[n]]*sigma_abs_free[d,bill_points[n]] - A_int_free[d,bill_points[n]]
-      }) %>% plogis()
+  # loop over model IDs
+  
+  out_prs <- lapply(unique(modelpoints), function(m) {
+    
+    latent_space <- m %in% c(13,14)
+    
+    inflate <- m %in% c(2,4,6,8,10,12,14)
+    
+    print(paste0("Now on model ",m))
+    
+    if(length(unique(object@score_data@score_matrix$time_id))>1) {
       
-    }
-    return(pr_absence)
-  })
-
-  pr_vote_iter <- sapply(these_draws, function(d) {
-    if(latent_space) {
-      if(inflate) {
-        pr_vote <- sapply(1:length(person_points),function(n) {
-          -sqrt((L_tp1[d,time_points[n],person_points[n]] - B_int_free[d,bill_points[n]])^2)
-        }) %>% plogis()
-      } else {
-        # latent space non-inflated formulation is different
-        pr_vote <- sapply(1:length(person_points),function(n) {
-          sigma_reg_free[d,bill_points[n]] + sigma_abs_free[d,bill_points[n]] -
-            sqrt((L_tp1[d,time_points[n],person_points[n]] - B_int_free[d,bill_points[n]])^2)
-        }) %>% plogis()
-      }
+      pr_absence_iter <- sapply(these_draws, function(d) {
+        if(latent_space) {
+          # use latent-space formulation for likelihood
+          pr_absence <- sapply(which(modelpoints==m),function(n) {
+            -sqrt((L_tp1[d,time_points[n],person_points[n]] - A_int_free[d,bill_points[n]])^2)
+          }) %>% plogis()
+        } else {
+          # use IRT formulation for likelihood
+          pr_absence <- sapply(which(modelpoints==m),function(n) {
+            L_tp1[d,time_points[n],person_points[n]]*sigma_abs_free[d,bill_points[n]] - A_int_free[d,bill_points[n]]
+          }) %>% plogis()
+          
+        }
+        return(pr_absence)
+      })
       
+      pr_vote_iter <- sapply(these_draws, function(d) {
+        if(latent_space) {
+          if(inflate) {
+            pr_vote <- sapply(which(modelpoints==m),function(n) {
+              -sqrt((L_tp1[d,time_points[n],person_points[n]] - B_int_free[d,bill_points[n]])^2)
+            }) %>% plogis()
+          } else {
+            # latent space non-inflated formulation is different
+            pr_vote <- sapply(which(modelpoints==m),function(n) {
+              sigma_reg_free[d,bill_points[n]] + sigma_abs_free[d,bill_points[n]] -
+                sqrt((L_tp1[d,time_points[n],person_points[n]] - B_int_free[d,bill_points[n]])^2)
+            }) %>% plogis()
+          }
+          
+        } else {
+          pr_vote <- sapply(which(modelpoints==m),function(n) {
+            L_tp1[d,time_points[n],person_points[n]]*sigma_reg_free[d,bill_points[n]] - B_int_free[d,bill_points[n]]
+          }) %>% plogis()
+        }
+        
+        return(pr_vote)
+      })
     } else {
-      pr_vote <- sapply(1:length(person_points),function(n) {
-        L_tp1[d,time_points[n],person_points[n]]*sigma_reg_free[d,bill_points[n]] - B_int_free[d,bill_points[n]]
-      }) %>% plogis()
+      
+      pr_absence_iter <- sapply(these_draws, function(d) {
+        if(latent_space) {
+          # use latent-space formulation for likelihood
+          pr_absence <- sapply(which(modelpoints==m),function(n) {
+            -sqrt((L_full[d,person_points[n]] - A_int_free[d,bill_points[n]])^2)
+          }) %>% plogis()
+        } else {
+          # use IRT formulation for likelihood
+          pr_absence <- sapply(which(modelpoints==m),function(n) {
+            L_full[d,person_points[n]]*sigma_abs_free[d,bill_points[n]] - A_int_free[d,bill_points[n]]
+          }) %>% plogis()
+          
+        }
+        return(pr_absence)
+      })
+      
+      pr_vote_iter <- sapply(these_draws, function(d) {
+        if(latent_space) {
+          if(inflate) {
+            pr_vote <- sapply(which(modelpoints==m),function(n) {
+              -sqrt((L_full[d,person_points[n]] - B_int_free[d,bill_points[n]])^2)
+            }) %>% plogis()
+          } else {
+            # latent space non-inflated formulation is different
+            pr_vote <- sapply(which(modelpoints==m),function(n) {
+              sigma_reg_free[d,bill_points[n]] + sigma_abs_free[d,bill_points[n]] -
+                sqrt((L_full[d,person_points[n]] - B_int_free[d,bill_points[n]])^2)
+            }) %>% plogis()
+          }
+          
+        } else {
+          pr_vote <- sapply(which(modelpoints==m),function(n) {
+            L_full[d,person_points[n]]*sigma_reg_free[d,bill_points[n]] - B_int_free[d,bill_points[n]]
+          }) %>% plogis()
+        }
+        
+        return(pr_vote)
+      })
+      
     }
     
-    return(pr_vote)
+    return(list(pr_vote=pr_vote_iter,pr_absence=pr_absence_iter,model_id=m))
   })
 
-  
-  rep_func <- switch(as.character(model_type),
-                     `1`=.binary,
-                     `2`=.binary,
-                     `3`=.ordinal_ratingscale,
-                     `4`=.ordinal_ratingscale,
-                     `5`=.ordinal_grm,
-                     `6`=.ordinal_grm,
-                     `7`=.poisson,
-                     `8`=.poisson,
-                     `9`=.normal,
-                     `10`=.normal,
-                     `11`=.lognormal,
-                     `12`=.lognormal,
-                     `13`=.binary,
-                     `14`=.binary)
-  
-  # pass along cutpoints as well
+    out_mods <- lapply(out_prs, function(m) {
+      
+      rep_func <- switch(as.character(m$model_id),
+             `1`=.binary,
+             `2`=.binary,
+             `3`=.ordinal_ratingscale,
+             `4`=.ordinal_ratingscale,
+             `5`=.ordinal_grm,
+             `6`=.ordinal_grm,
+             `7`=.poisson,
+             `8`=.poisson,
+             `9`=.normal,
+             `10`=.normal,
+             `11`=.lognormal,
+             `12`=.lognormal,
+             `13`=.binary,
+             `14`=.binary)
 
-  if(model_type %in% c(3,4)) {
-    cutpoints <- .extract_nonp(object@stan_samples,'steps_votes')[[1]]
-    cutpoints <- cutpoints[these_draws,]
-  } else if(model_type %in% c(5,6)) {
-    cutpoints <- .extract_nonp(object@stan_samples,'steps_votes_grm')[[1]]
-    cutpoints <- cutpoints[these_draws,,]
+      if(m$model_id %in% c(3,4,5,6)) {
+        
+       if(m$model_id %in% c(3,4)) {
+         
+         over_id <- object@score_data@n_cats_rat
+       } else {
+         
+         over_id <- object@score_data@n_cats_grm
+       }
+         
+         over_ordered <- lapply(1:length(over_id), function(i) {
+           
+           if(object@score_data@n_cats_rat[i]>1) {
+             cuts <- object@score_data@n_cats_rat[i]
+           } else {
+             return(NULL)
+           }
+
+             outcome <- Y_int[modelpoints==m$model_id && ordered_id==cuts]
+             miss_val <- object@score_data@miss_val[1]
+           
+           if(m$model_id %in% c(3,4)) {
+             cutpoints <- object@stan_samples$draws(paste0('steps_votes',cuts)) %>% as_draws_matrix()
+             cutpoints <- cutpoints[these_draws,]
+           } else if(m$model_id %in% c(5,6)) {
+             cutpoints <- object@stan_samples$draws(paste0('steps_votes_grm',cuts)) %>% as_draws_matrix()
+             cutpoints <- cutpoints[these_draws,]
+           } 
+             
+             out_predict <- rep_func(pr_absence=m$pr_absence,
+                                     pr_vote=m$pr_vote,
+                                     N=length(person_points[modelpoints==m$model_id]),
+                                     ordinal_outcomes=length(unique(object@score_data@score_matrix$outcome[modelpoints==m$model_id])),
+                                     inflate=m$model_id %in% c(2,4,6,8,10,12,14),
+                                     latent_space=m$model_id %in% c(13,14),
+                                     time_points=time_points[modelpoints==m$model_id],
+                                     item_points=bill_points[modelpoints==m$model_id],
+                                     max_val=max_val,
+                                     outcome=outcome,
+                                     miss_val=miss_val,
+                                     person_points=person_points[modelpoints==m$model_id],
+                                     sigma_sd=as_draws_matrix(object@stan_samples$draws('extra_sd'))[these_draws,],
+                                     cutpoints=cutpoints,
+                                     type=type,
+                                     output=output)
+             
+             # set attributes to pass along sample info
+             #attr(out_predict,'chain_order') <- attr(L_tp1,'chain_order')[these_draws]
+             attr(out_predict,'this_sample') <- this_sample
+
+             attr(out_predict,"data") <- list(person_id=person_points[modelpoints==m$model_id],
+                                                group_id=person_points[modelpoints==m$model_id],
+                                                item_id=bill_points[modelpoints==m$model_id],
+                                                time_id=time_points[modelpoints==m$model_id],
+                                                Y_int=Y_int[modelpoints==m$model_id],
+                                                cutpoints=cutpoints,
+                                                Y_cont=Y_cont)
+
+             attr(out_predict,'model') <- m$model_id
+             attr(out_predict,"order_id") <- cuts
+             attr(out_predict,"output_type") <- "discrete"
+             
+             
+             if(type=='predict') {
+               class(out_predict) <- c('matrix','ppd')
+             } else if(type=='log_lik') {
+               class(out_predict) <- c('matrix','log_lik')
+             }
+             
+             return(out_predict)
+         })
+         
+         # remove NULLs
+         
+         over_ordered <- Filter(Negate(is.null), over_ordered)
+         
+         # return embedded list, flatten later
+         
+         return(over_ordered)
+         
+      } else {
+        
+        if(m$model_id %in% c(1,2,3,4,5,6,7,8,13,14)) {
+          outcome <- Y_int[modelpoints==m$model_id]
+          miss_val <- object@score_data@miss_val[1]
+        } else {
+          outcome <- Y_cont[modelpoints==m$model_id]
+          miss_val <- object@score_data@miss_val[2]
+        }
+        
+      
+      out_predict <- rep_func(pr_absence=m$pr_absence,
+                              pr_vote=m$pr_vote,
+                              N=length(person_points[modelpoints==m$model_id]),
+                              ordinal_outcomes=length(unique(object@score_data@score_matrix$outcome[modelpoints==m$model_id])),
+                              inflate=m$model_id %in% c(2,4,6,8,10,12,14),
+                              latent_space=m$model_id %in% c(13,14),
+                              time_points=time_points[modelpoints==m$model_id],
+                              item_points=bill_points[modelpoints==m$model_id],
+                              max_val=max_val,
+                              outcome=outcome,
+                              miss_val=miss_val,
+                              person_points=person_points[modelpoints==m$model_id],
+                              sigma_sd=as_draws_matrix(object@stan_samples$draws('extra_sd'))[these_draws,],
+                              cutpoints=NULL,
+                              type=type,
+                              output=output)
+      
+      # set attributes to pass along sample info
+      #attr(out_predict,'chain_order') <- attr(L_tp1,'chain_order')[these_draws]
+      attr(out_predict,'this_sample') <- this_sample
+      
+      if(length(Y_int)>1) {
+        attr(out_predict,"data") <- list(person_id=person_points[modelpoints==m$model_id],
+                                         group_id=person_points[modelpoints==m$model_id],
+                                         item_id=bill_points[modelpoints==m$model_id],
+                                         time_id=time_points[modelpoints==m$model_id],
+                                         Y_int=Y_int[modelpoints==m$model_id],
+                                         Y_cont=Y_cont)
+      } else {
+        attr(out_predict,"data") <- list(person_id=person_points[modelpoints==m$model_id],
+                                         group_id=person_points[modelpoints==m$model_id],
+                                         item_id=bill_points[modelpoints==m$model_id],
+                                         time_id=time_points[modelpoints==m$model_id],
+                                         Y_cont=Y_cont[modelpoints==m$model_id],
+                                         Y_int=Y_int)
+      }
+      
+      attr(out_predict,'model') <- m$model_id
+      attr(out_predict,"order_id") <- NULL
+      
+      if(m$model_id %in% c(1,2,3,4,5,6,7,8,13,14)) {
+        attr(out_predict,"output_type") <- "discrete"
+      } else {
+        attr(out_predict,"output_type") <- "continuous"
+      }
+      
+      if(type=='predict') {
+        class(out_predict) <- c('matrix','ppd')
+      } else if(type=='log_lik') {
+        class(out_predict) <- c('matrix','log_lik')
+      }
+      
+      return(out_predict)
+      
+      }
+      
+  })
+    
+  if(any(c(3,4,5,6) %in% unique(modelpoints))) {
+    return(unlist(out_mods,recursive = F))
   } else {
-    cutpoints <- 1
+    return(out_mods)
   }
-  
-  out_predict <- rep_func(pr_absence=pr_absence_iter,
-                          pr_vote=pr_vote_iter,
-                          N=length(person_points),
-                          ordinal_outcomes=length(unique(object@score_data@score_matrix$outcome)),
-                          inflate=inflate,
-                          latent_space=latent_space,
-                          time_points=time_points,
-                          item_points=bill_points,
-                          max_val=max_val,
-                          outcome=y,
-                          miss_val=miss_val,
-                          person_points=person_points,
-                          sigma_sd=.extract_nonp(object@stan_samples,'extra_sd')[[1]][these_draws],
-                          cutpoints=cutpoints,
-                          type=type,
-                          output=output)
-
-  # set attributes to pass along sample info
-  attr(out_predict,'chain_order') <- attr(L_tp1,'chain_order')[these_draws]
-  attr(out_predict,'this_sample') <- this_sample
-  
-  if(type=='predict') {
-    class(out_predict) <- c('matrix','ppd')
-  } else if(type=='log_lik') {
-    class(out_predict) <- c('matrix','log_lik')
-  }
-  
-  return(out_predict)
+    
 })
 
 #' Plot Posterior Predictive Distribution for \code{idealstan} Objects
@@ -272,129 +469,251 @@ setGeneric('id_plot_ppc',signature='object',
 #' @param ppc_pred The output of the \code{\link{id_post_pred}} function on a fitted idealstan object
 #' @param group A character vector of the person or group IDs 
 #' over which to subset the predictive distribution
-#' @param item A character vector of item IDs to subset the posterior distribution
 #' @param ... Other arguments passed on to \code{\link[bayesplot]{ppc_bars}}
 #' @export
 setMethod('id_plot_ppc',signature(object='idealstan'),function(object,
                                                                   ppc_pred=NULL,
                                                                  group=NULL,
                                                                     item=NULL,...) {
-
-  this_sample <- attr(ppc_pred,'this_sample')
-
-  # create grouping variable
-  if(!is.null(group)) {
-    if(object@use_groups) {
-      group_var <- factor(object@score_data@score_matrix$group_id, levels=group)
-    } else {
-      group_var <- factor(object@score_data@score_matrix$person_id, levels=group)
-    }
-    grouped <- T
-  } else if(!is.null(item)) {
-    group_var <- factor(object@score_data@score_matrix$item_id, levels=item)
-    grouped <- T
-  } else {
-    grouped <- F
+  
+  if(is.null(ppc_pred)) {
+    stop("Please first use the function id_post_pred and pass the result to the ppc_pred argument to use this function.")
   }
   
-  y <- object@score_data@score_matrix$outcome[this_sample]
-  # check to see if we need to recode missing values from the data if the model_type doesn't handle missing data
-  if(object@model_type %in% c(1,3,5,7,9,11,13) & !is.null(object@score_data@miss_val)) {
-    y <- .na_if(y,object@score_data@miss_val)
-  }
-  
-  if(object@use_groups) {
-    person_points <- as.numeric(object@score_data@score_matrix$group_id)[this_sample]
-  } else {
-    person_points <- as.numeric(object@score_data@score_matrix$person_id)[this_sample]
-  }
-  
-  bill_points <- as.numeric(object@score_data@score_matrix$item_id)[this_sample]
-  time_points <- as.numeric(object@score_data@score_matrix$time_id)[this_sample]
-  
-  remove_nas <- !is.na(y) & !is.na(person_points) & !is.na(bill_points) & !is.na(time_points)
-  y <- y[remove_nas]
-  bill_points <- bill_points[remove_nas]
-  time_points <- time_points[remove_nas]
-  person_points <- person_points[remove_nas]
-  if(!is.null(group)) {
-    group_var <- group_var[remove_nas]
-    # create a second one for the grouping variable
-    remove_nas_group <- !is.na(group)
-  }
-  
-  
-  
-  
-  if(!is.null(item) && !is.null(group))
-    stop('Please only specify an index to item or person, not both.')
-  
-  if(attr(ppc_pred,'output')=='all') {
-    y <- as.numeric(y)
-    if(grouped) {
-      
-      bayesplot::ppc_bars_grouped(y=y[remove_nas_group],yrep=ppc_pred[,remove_nas_group],
-                                  group=group_var[remove_nas_group],...)
-      
-    } else {
-        bayesplot::ppc_bars(y=y,yrep=ppc_pred,...)
-      
-      
-    }
-  } else if(attr(ppc_pred,'output')=='observed') {
-    # only show observed data for yrep
-    y <- .na_if(y,object@score_data@miss_val)
-    to_remove <- !is.na(y)
-    y <- y[to_remove]
-    if(!is.null(group)) {
-      group_var <- group_var[to_remove]
-      remove_nas_group <- !is.na(group_var)
-    }
-    y <- as.numeric(y)
-    if(attr(ppc_pred,'output_type')=='continuous') {
-      ppc_pred <- ppc_pred[,to_remove]
-      #unbounded observed outcomes (i.e., continuous)
-      if(grouped) {
-        bayesplot::ppc_violin_grouped(y=y[remove_nas_group],yrep=ppc_pred[,remove_nas_group],
-                                      group=group_var[remove_nas_group],
-                                      ...)
-      } else {
-        bayesplot::ppc_dens_overlay(y=y,yrep=ppc_pred,...)
-      }
-      
-    } else if(attr(ppc_pred,'output_type')=='discrete') {
-      ppc_pred <- ppc_pred[,to_remove]
-  
-      if(grouped) {
-        
-        bayesplot::ppc_bars_grouped(y=y[remove_nas_group],yrep=ppc_pred[,remove_nas_group],
-                                    group=group_var[remove_nas_group],...)
-        
-      } else {
-          bayesplot::ppc_bars(y=y,yrep=ppc_pred,...)
-      }
-    }
-
+  if(length(ppc_pred)==1) {
     
-  } else if(attr(ppc_pred,'output')=='missing') {
-
-    y <- .na_if(y,object@score_data@miss_val)
-    y <- as.numeric(is.na(y))
-    if(grouped) {
-      
-      bayesplot::ppc_bars_grouped(y=y[remove_nas_group],yrep=ppc_pred[,remove_nas_group],
-                                  group=group_var[remove_nas_group],...)
-      
+    this_plot <- ppc_pred[[1]]
+    
+    all_data <- attr(this_plot,"data")
+    
+    group_id <- all_data$group_id
+    person_points <- all_data$person_id
+    bill_points <- all_data$item_id
+    time_points <- all_data$time_id
+    
+    if(length(all_data$Y_int)>1) {
+      y <- all_data$Y_int
     } else {
-
-        bayesplot::ppc_bars(y=y,yrep=ppc_pred,...)
-      
+      y <- all_data$Y_cont
     }
+    
+    # only one model, create a standard plot
+    
+    this_sample <- attr(this_plot,'this_sample')
+    
+    # create grouping variable
+    if(!is.null(group)) {
+      if(object@use_groups) {
+        group_var <- group_id
+      } else {
+        group_var <- person_points
+      }
+      grouped <- T
+    } else {
+      grouped <- F
+    }
+  
+    if(attr(this_plot,'output')=='all') {
+      y <- as.numeric(y)
+      if(grouped) {
+        
+       out_plot <- bayesplot::ppc_bars_grouped(y=as.numeric(factor(y)),yrep=this_plot,
+                                    group=group_var,...)
+        
+      } else {
+        out_plot <- bayesplot::ppc_bars(y=as.numeric(factor(y)),yrep=this_plot,...)
+        
+        
+      }
+    } else if(attr(this_plot,'output')=='observed') {
+      # only show observed data for yrep
+      
+      if(length(all_data$Y_int)>1) {
+        to_remove <- !(y==object@score_data@miss_val[1])
+      } else {
+        to_remove <- !(y==object@score_data@miss_val[2])
+      }
+      
+      y <- y[to_remove]
+      if(!is.null(group)) {
+        group_var <- group_var[to_remove]
+      }
+      y <- as.numeric(y)
+
+      save_att <- attributes(this_plot)
+      save_att$dim <- NULL
+      this_plot <- this_plot[,to_remove]
+      save_att$dim <- dim(this_plot)
+      attributes(this_plot) <- save_att
+
+      if(attr(this_plot,'output_type')=='continuous') {
+        
+        #unbounded observed outcomes (i.e., continuous)
+        if(grouped) {
+          out_plot <- bayesplot::ppc_violin_grouped(y=y,yrep=this_plot,
+                                        group=group_var,
+                                        ...)
+        } else {
+          out_plot <- bayesplot::ppc_dens_overlay(y=y,yrep=this_plot,...)
+        }
+        
+      } else if(attr(this_plot,'output_type')=='discrete') {
+        
+        if(grouped) {
+          
+          out_plot <- bayesplot::ppc_bars_grouped(y=as.numeric(factor(y)),yrep=this_plot,
+                                      group=group_var,...)
+          
+        } else {
+          out_plot <- bayesplot::ppc_bars(y=as.numeric(factor(y)),yrep=this_plot,...)
+        }
+      }
+      
+      
+    } else if(attr(this_plot,'output')=='missing') {
+      
+      if(length(all_data$Y_int)>1) {
+        y <- as.numeric(y==object@score_data@miss_val[1])
+      } else {
+        y <- as.numeric(y==object@score_data@miss_val[2])
+      }
+
+      if(grouped) {
+        
+        out_plot <- bayesplot::ppc_bars_grouped(y=as.numeric(factor(y)),yrep=this_plot,
+                                    group=group_var,...)
+        
+      } else {
+        
+        out_plot <- bayesplot::ppc_bars(y=as.numeric(factor(y)),yrep=this_plot,...)
+        
+      }
+    }
+    
+    print(out_plot)
+    
+    return(invisible(out_plot))
+    
+  } else {
+    
+    # many models, loop over plots
+    
+    all_plots <- lapply(ppc_pred, function (this_plot) {
+      
+      all_data <- attr(this_plot,"data")
+      
+      group_id <- all_data$group_id
+      person_points <- all_data$person_id
+      bill_points <- all_data$item_id
+      time_points <- all_data$time_id
+      
+      if(length(all_data$Y_int)>1) {
+        y <- all_data$Y_int
+      } else {
+        y <- all_data$Y_cont
+      }
+      
+      # only one model, create a standard plot
+      
+      this_sample <- attr(this_plot,'this_sample')
+      
+      # create grouping variable
+      if(!is.null(group)) {
+        if(object@use_groups) {
+          group_var <- group_id
+        } else {
+          group_var <- person_points
+        }
+        grouped <- T
+      } else {
+        grouped <- F
+      }
+      
+      if(attr(this_plot,'output')=='all') {
+        y <- as.numeric(y)
+        if(grouped) {
+          
+          out_plot <- bayesplot::ppc_bars_grouped(y=as.numeric(factor(y)),yrep=this_plot,
+                                                  group=group_var,...)
+          
+        } else {
+          out_plot <- bayesplot::ppc_bars(y=as.numeric(factor(y)),yrep=this_plot,...)
+          
+          
+        }
+      } else if(attr(this_plot,'output')=='observed') {
+        # only show observed data for yrep
+        if(length(all_data$Y_int>1)) {
+          to_remove <- y==object@score_data@miss_val[1]
+        } else {
+          to_remove <- y==object@score_data@miss_val[2]
+        }
+        
+        y <- y[to_remove]
+        if(!is.null(group)) {
+          group_var <- group_var[to_remove]
+        }
+        y <- as.numeric(y)
+        
+        save_att <- attributes(this_plot)
+        save_att$dim <- NULL
+        this_plot <- this_plot[,to_remove]
+        save_att$dim <- dim(this_plot)
+        attributes(this_plot) <- save_att
+        
+        if(attr(this_plot,'output_type')=='continuous') {
+          
+          #unbounded observed outcomes (i.e., continuous)
+          if(grouped) {
+            out_plot <- bayesplot::ppc_violin_grouped(y=y,yrep=this_plot,
+                                                      group=group_var,
+                                                      ...)
+          } else {
+            out_plot <- bayesplot::ppc_dens_overlay(y=y,yrep=this_plot,...)
+          }
+          
+        } else if(attr(this_plot,'output_type')=='discrete') {
+          
+          if(grouped) {
+            
+            out_plot <- bayesplot::ppc_bars_grouped(y=as.numeric(factor(y)),yrep=this_plot,
+                                                    group=group_var,...)
+            
+          } else {
+            out_plot <- bayesplot::ppc_bars(y=as.numeric(factor(y)),yrep=this_plot,...)
+          }
+        }
+        
+        
+      } else if(attr(this_plot,'output')=='missing') {
+        
+        if(length(all_data$Y_int>1)) {
+          y <- as.numeric(y==object@score_data@miss_val[1])
+        } else {
+          y <- as.numeric(y==object@score_data@miss_val[2])
+        }
+        
+        if(grouped) {
+          
+          out_plot <- bayesplot::ppc_bars_grouped(y=as.numeric(factor(y)),yrep=this_plot,
+                                                  group=group_var,...)
+          
+        } else {
+          
+          out_plot <- bayesplot::ppc_bars(y=as.numeric(factor(y)),yrep=this_plot,...)
+          
+        }
+      }
+      
+      print(out_plot)
+      
+      invisible(readline(prompt="Press [enter] to see next plot"))
+      
+    })
+    
   }
   
-
-  
-
+  return(invisible(all_plots))
   
 })
 

@@ -8,11 +8,7 @@
 #' @docType package
 #' @name idealstan
 #' @aliases idealstan-package
-#' @useDynLib idealstan, .registration = TRUE
 #' @import methods
-#' @import Rcpp
-#' @import rstantools
-#' @importFrom rstan sampling
 #' @references \enumerate{
 #'    \item Kubinec, Robert. Generalized Ideal Point Models for Time-Varying and Missing-Data Inference. Working Paper.
 #'    \item Clinton, J., Jackman, S., & Rivers, D. (2004). The Statistical Analysis of Roll Call Data. \emph{The American Political Science Review}, 98(2), 355-370. doi:10.1017/S0003055404001194

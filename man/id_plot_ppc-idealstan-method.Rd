@@ -14,8 +14,6 @@
 \item{group}{A character vector of the person or group IDs 
 over which to subset the predictive distribution}
 
-\item{item}{A character vector of item IDs to subset the posterior distribution}
-
 \item{...}{Other arguments passed on to \code{\link[bayesplot]{ppc_bars}}}
 }
 \description{

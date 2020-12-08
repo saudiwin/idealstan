@@ -161,6 +161,7 @@
                            person_id=person_points,
                            time_id=time_points,
                            item_id=item_points,
+                           ordered_id=ordinal_outcomes,
                            group_id='G')
     
     out_data <- id_make(score_data=out_data)
@@ -298,6 +299,7 @@
     
     out_data <- data_frame(outcome_disc=combined,
                            person_id=person_points,
+                           ordered_id=ordinal_outcomes,
                            time_id=time_points,
                            item_id=item_points,
                            group_id='G')
@@ -417,7 +419,7 @@
     
     # Create a score dataset
     
-    out_data <- data_frame(outcome_cont=combined,
+    out_data <- data_frame(outcome_disc=combined,
                            person_id=person_points,
                            time_id=time_points,
                            item_id=item_points,

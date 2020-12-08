@@ -104,16 +104,13 @@
 #' @return A \code{idealdata} object that can then be used in the \code{\link{id_estimate}} function 
 #' to fit a model.
 #' @export
-#' @import rstan
 #' @import dplyr
 #' @importFrom tidyr gather spread
 #' @import bayesplot
-#' @import rstantools
 #' @import Rcpp
 #' @import methods
 #' @importFrom stats dbinom median plogis quantile reorder rexp rlnorm runif sd step rnorm
 #' @importFrom utils person
-#' @useDynLib idealstan, .registration = TRUE
 #' @examples 
 #' # You can either use a pscl rollcall object or a vote/score matrix 
 #' # where persons/legislators are in the rows
@@ -696,6 +693,9 @@ id_make <- function(score_data=NULL,
 #' @param gp_min_length The minimum value of the GP length-scale parameter. This is a hard
 #' lower limit. Increasing this value will force a smoother GP fit. It should always be less than
 #' \code{gp_num_diff}.
+#' @param cmdstan_path_user Default is NULL, and so will default to whatever is set in
+#' \code{cmdstanr} package. Specify a file path  here to use a different \code{cmdtstan}
+#' installation.
 #' @param ... Additional parameters passed on to Stan's sampling engine. See \code{\link[rstan]{stan}} for more information.
 #' @return A fitted \code{\link{idealstan}} object that contains posterior samples of all parameters either via full Bayesian inference
 #' or a variational approximation if \code{use_vb} is set to \code{TRUE}. This object can then be passed to the plotting functions for further analysis.
@@ -783,6 +783,7 @@ id_make <- function(score_data=NULL,
 #' @importFrom stats dnorm dpois model.matrix qlogis relevel rpois update
 #' @importFrom utils person
 #' @importFrom  jsonlite unbox write_json
+#' @import cmdstanr
 #' @export
 id_estimate <- function(idealdata=NULL,model_type=2,
                         inflate_zero=FALSE,
@@ -791,7 +792,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                         mpi_export=NULL,
                         use_subset=FALSE,sample_it=FALSE,
                            subset_group=NULL,subset_person=NULL,sample_size=20,
-                           nchains=4,niters=2000,use_vb=FALSE,
+                           nchains=4,niters=1000,use_vb=FALSE,
                            restrict_ind_high=NULL,
                           fix_high=1,
                           fix_low=(-1),
@@ -800,7 +801,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                         const_type="persons",
                         id_refresh=0,
                         prior_fit=NULL,
-                        warmup=floor(niters/2),ncores=4,
+                        warmup=1000,ncores=4,
                         use_groups=FALSE,
                            discrim_reg_sd=2,
                            discrim_miss_sd=2,
@@ -816,6 +817,8 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                         gp_num_diff=3,
                         gp_m_sd_par=0.3,
                         gp_min_length=0,
+                        cmdstan_path_user=NULL,
+                        map_over_id="persons",
                            ...) {
 
 
@@ -824,10 +827,31 @@ id_estimate <- function(idealdata=NULL,model_type=2,
     idealdata <- subset_ideal(idealdata,use_subset=use_subset,sample_it=sample_it,subset_group=subset_group,
                               subset_person=subset_person,sample_size=sample_size)
   }
-   
-
-    idealdata@stanmodel <- stanmodels[['irt_standard']]
-   
+  
+    # set path if user specifies
+  
+    set_cmdstan_path(cmdstan_path_user)
+    
+    stan_code <- system.file("stan_files","irt_standard.stan",
+                             package="idealstan")
+    
+    stan_code_map <- system.file("stan_files","irt_standard_map.stan",
+                             package="idealstan")
+      
+    print("Compiling model. Will take some time if this is first time package is used.")
+    print("Have you thought about donating to relief for victims for Yemen's famine?")
+    print("Check out https://www.unicef.org/emergencies/yemen-crisis for more info.")
+      
+      
+    idealdata@stanmodel_map <- stan_code_map %>%
+        cmdstan_model(include_paths=dirname(stan_code_map),
+                      cpp_options = list(stan_threads = TRUE,
+                                         STAN_CPP_OPTIMS=TRUE))
+    
+    idealdata@stanmodel <- stan_code %>%
+      cmdstan_model(include_paths=dirname(stan_code),
+                    cpp_options=list(STAN_CPP_OPTIMS=TRUE))
+    
     #Using an un-identified model with variational inference, find those parameters that would be most useful for
     #constraining/pinning to have an identified model for full Bayesian inference
   
@@ -857,12 +881,6 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   
   # set GP parameters
   
-  if(vary_ideal_pts==4) {
-    # convert multiplicity factor to total length of the data
-    # use real time points instead of just counting number of points
-    gp_num_diff[1] <- mean(as.numeric(idealdata@score_matrix$time_id))*gp_num_diff[1]
-  }
-  
   # check if varying model IDs exist and replace with model type
   # if not
   
@@ -881,14 +899,12 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   
   # check if ordinal categories exist in the data if model_id>1
   
-  if(length(unique(idealdata@score_matrix$model_id))>1 || length(unique(idealdata@score_matrix$ordered_id))>1) {
-    if(any(c(3,4,5,6) %in% idealdata@score_matrix$model_id)) {
-      if(is.null(idealdata@score_matrix$ordered_id) | !is.numeric(idealdata@score_matrix$ordered_id)) {
+  if(any(c(3,4,5,6) %in% idealdata@score_matrix$model_id)) {
+      if(is.null(idealdata@score_matrix$ordered_id) || !is.numeric(idealdata@score_matrix$ordered_id)) {
         stop("If you have an ordered categorical variable in a multi-distribution model, you must include a column in the data with the number of ordered categories for each row in the data.\n
              See id_make documentation for more info.")
       }
-    }
-  } else {
+    } else {
     idealdata@score_matrix$ordered_id <- 0
   }
   
@@ -896,12 +912,27 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   # and we have missing values / ragged arrays
   
   if(within_chain %in% c("threads","mpi")) {
+
+    out_list <- .make_sum_vals(idealdata@score_matrix,map_over_id,use_groups=use_groups)
     
-    idealdata@score_matrix <- .pad_data(idealdata@score_matrix,const_type,use_groups=use_groups)
+    sum_vals <- out_list$sum_vals
     
+    # make sure data is re-sorted by ID
+    
+    idealdata@score_matrix <- out_list$this_data
+
   } else {
-    idealdata@score_matrix$pad_id <- 1
+    
+    # dummy data
+    sum_vals <- matrix(nrow=0,ncol=3)
+    
   }
+  
+  
+  
+  # need number of shards
+  
+  S <- nrow(sum_vals)
   
   # use either row numbers for person/legislator IDs or use group IDs (static or time-varying)
   
@@ -929,7 +960,6 @@ id_estimate <- function(idealdata=NULL,model_type=2,
     stop('The parameter gp_min_length cannot be equal to or greater than gp_num_diff[1].')
   }
 
-  if(within_chain=="none") {
     if(("outcome_cont" %in% names(idealdata@score_matrix)) && ("outcome_disc" %in% names(idealdata@score_matrix))) {
       Y_int <- idealdata@score_matrix$outcome_disc[idealdata@score_matrix$discrete==1]
       Y_cont <- idealdata@score_matrix$outcome_cont[idealdata@score_matrix$discrete==0]
@@ -940,32 +970,16 @@ id_estimate <- function(idealdata=NULL,model_type=2,
       Y_cont <- array(0)
       Y_int <- idealdata@score_matrix$outcome_disc[idealdata@score_matrix$discrete==1]
     }
-  } else {
-    # we don't want Y_int or Y_cont to be shorter than the overall data
-    # the pad_id can take care of situations where one or the other doesn't exist
-    if(("outcome_cont" %in% names(idealdata@score_matrix)) && ("outcome_disc" %in% names(idealdata@score_matrix))) {
-      Y_int <- idealdata@score_matrix$outcome_disc
-      Y_cont <- idealdata@score_matrix$outcome_cont
-    } else if ("outcome_cont" %in% names(idealdata@score_matrix)) {
-      Y_int <- array(0)
-      Y_cont <- idealdata@score_matrix$outcome_cont
-    } else {
-      Y_cont <- array(0)
-      Y_int <- idealdata@score_matrix$outcome_disc
-    }
-  }
   
   
   #Remove NA values, which should have been coded correctly in the make_idealdata function
-  
+
   # need to have a different way to remove missing values if multiple
   # posteriors used
   # set values for length of discrete/continuous outcomes  
     remove_list <- .remove_nas(Y_int,
                                Y_cont,
-                               pad_id=idealdata@score_matrix$pad_id,
                                within_chain=within_chain,
-                               map_over_id=const_type,
                                discrete=idealdata@score_matrix$discrete,
                                legispoints,
                                billpoints,
@@ -1001,13 +1015,9 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     Y_cont=remove_list$Y_cont,
                     y_int_miss=remove_list$y_int_miss,
                     y_cont_miss=remove_list$y_cont_miss,
-                    S=dim(remove_list$all_int_array)[1],
-                    S_int=dim(remove_list$all_int_array)[2],
-                    S_cont=dim(remove_list$to_shards_cont_array)[2],
-                    S_type=as.numeric(const_type=="persons"),
-                    int_shards=remove_list$all_int_array,
-                    cont_shards=remove_list$to_shards_cont_array,
-                    pad_id=remove_list$pad_id,
+                    S=nrow(sum_vals),
+                    S_type=as.numeric(map_over_id=="persons"),
+                    sum_vals=sum_vals,
                     within_chain=as.numeric(within_chain!="none"),
                     T=remove_list$max_t,
                     num_legis=remove_list$num_legis,
@@ -1041,8 +1051,6 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     legis_sd=1,
                     restrict_sd=restrict_sd,
                     time_proc=vary_ideal_pts,
-                    diff=idealdata@diff,
-                    diff_high=idealdata@diff_high,
                     time_sd=time_sd,
                     ar_sd=ar_sd,
                     restrict_var=idealdata@restrict_var,
@@ -1078,9 +1086,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   
   remove_list <- .remove_nas(Y_int,
                              Y_cont,
-                             pad_id=idealdata@score_matrix$pad_id,
                              within_chain=within_chain,
-                             map_over_id=const_type,
                              discrete=idealdata@score_matrix$discrete,
                              legispoints,
                              billpoints,
@@ -1092,7 +1098,6 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                              time_proc=vary_ideal_pts,
                              ar_sd=ar_sd,
                              gp_sd_par=gp_sd_par,
-                             num_diff=gp_num_diff,
                              m_sd_par=gp_m_sd_par,
                              min_length=gp_min_length,
                              const_type=switch(const_type,
@@ -1109,7 +1114,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                              fix_high=idealdata@restrict_num_high,
                              fix_low=idealdata@restrict_num_low)
   
-
+  idealdata <- remove_list$idealdata
   
   this_data <- list(N=remove_list$N,
                     N_cont=remove_list$N_cont,
@@ -1118,13 +1123,8 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     Y_cont=remove_list$Y_cont,
                     y_int_miss=remove_list$y_int_miss,
                     y_cont_miss=remove_list$y_cont_miss,
-                    S=dim(remove_list$all_int_array)[1],
-                    S_int=dim(remove_list$all_int_array)[2],
-                    S_cont=dim(remove_list$to_shards_cont_array)[2],
-                    S_type=as.numeric(const_type=="persons"),
-                    int_shards=remove_list$all_int_array,
-                    cont_shards=remove_list$to_shards_cont_array,
-                    pad_id=remove_list$pad_id,
+                    S=nrow(sum_vals),
+                    S_type=as.numeric(map_over_id=="persons"),
                     within_chain=as.numeric(within_chain!="none"),
                     T=remove_list$max_t,
                     num_legis=remove_list$num_legis,
@@ -1157,7 +1157,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     diff_reg_sd=diff_reg_sd,
                     diff_abs_sd=diff_miss_sd,
                     legis_sd=person_sd,
-                    sd_fix=restrict_sd,
+                    restrict_sd=restrict_sd,
                     time_sd=time_sd,
                     ar_sd=ar_sd,
                     restrict_var=idealdata@restrict_var,
@@ -1169,41 +1169,33 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     time_ind=as.array(time_ind),
                     time_proc=vary_ideal_pts,
                     gp_sd_par=gp_sd_par,
-                    num_diff=gp_num_diff,
                     m_sd_par=gp_m_sd_par,
                     min_length=gp_min_length,
                     id_refresh=id_refresh,
+                    sum_vals=sum_vals,
                     const_type=switch(const_type,
                                       persons=1L,
                                       items=2L),
                     restrict_high=idealdata@restrict_ind_high,
                     restrict_low=idealdata@restrict_ind_low,
                     fix_high=idealdata@restrict_num_high,
-                    fix_low=idealdata@restrict_num_low)
+                    fix_low=idealdata@restrict_num_low,
+                    num_diff=gp_num_diff)
   
+  # need to save n_cats
+  
+  idealdata@n_cats_rat <- remove_list$n_cats_rat
+  idealdata@n_cats_grm <- remove_list$n_cats_grm
+  idealdata@order_cats_rat <- remove_list$order_cats_rat
+  idealdata@order_cats_grm <- remove_list$order_cats_grm
+
   # need to check for the type of parallelization
 
-  if(within_chain=="threads") {
-    Sys.setenv(STAN_NUM_THREADS = ncores)
-    ncores <- 1
-    
-    # check to make sure they have the compile flags set right 
-    
-    check_R_setup <- try(readLines("~/.R/Makevars"))
-    
-    if("try-error" %in% check_R_setup) {
-      warning("You do not seem to have a Makevars file set up in the .R directory in your user home folder.\n
-              This may prevent within-chain parallelization from working correctly if an appropriate 
-              Makevars file did not exist when idealstan was installed (compiled).")
-    } else if(all(!grepl(x=check_R_setup,pattern="DSTAN_THREADS"))) {
-      warning("You do not seem to have the right flags set in your ~/.R/Makevars file. Consider adding the\n
-              following before installing idealstan to ensure that within-chain parallelization with\n
-              threading will work: CXX14FLAGS += -DSTAN_THREADS.")
-    }
+  if(within_chain %in% c("threads","none")) {
     
     outobj <- sample_model(object=idealdata,nchains=nchains,niters=niters,warmup=warmup,ncores=ncores,
                            this_data=this_data,use_vb=use_vb,
-                           tol_rel_obj=tol_rel_obj,
+                           tol_rel_obj=tol_rel_obj,within_chain=within_chain,
                            ...)
     
   } else if(within_chain=="mpi") {
@@ -1251,13 +1243,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
     
     return("You will need to run the model in cmdstan yourself and load the resulting data back in to R with the id_load_mpi function. See vignette for details.")
     
-  } else {
-    
-    outobj <- sample_model(object=idealdata,nchains=nchains,niters=niters,warmup=warmup,ncores=ncores,
-                           this_data=this_data,use_vb=use_vb,
-                           tol_rel_obj=tol_rel_obj,
-                           ...)
-  }
+  } 
 
   
   

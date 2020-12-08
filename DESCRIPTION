@@ -1,8 +1,8 @@
 Package: idealstan
 Type: Package
 Title: Generalized IRT Ideal Point Models with 'Stan'
-Version: 0.7.2
-Date: 2019-07-08
+Version: 1.0
+Date: 2020-12-25
 Authors@R: c(person("Robert","Kubinec", role = c("aut","cre"),
                      email = "rmk7@nyu.edu"),
               person("Jonah", "Gabry", role = "ctb"),
@@ -13,12 +13,8 @@ Description: Offers item-response theory (IRT) ideal-point estimation for binary
 License: GPL
 Depends: 
     methods,
-    R (>= 3.4.0),
-    Rcpp (>= 0.12.18),
-    RcppParallel (>= 4.4.4)
+    R (>= 3.4.0)
 Imports: 
-    rstan (>= 2.18.2),
-    rstantools (>= 1.5.1),
     dplyr,
     svDialogs,
     scales,
@@ -38,16 +34,9 @@ Suggests:
     loo,
     lubridate,
     R.rsp
-LinkingTo: 
-    Rcpp (>= 0.12.0),
-    RcppEigen (>= 0.3.3.3.0),
-    BH (>= 1.72.0-2),
-    StanHeaders (>= 2.19.0),
-    RcppParallel,
-    rstan
 Encoding: UTF-8
 LazyData: true
 NeedsCompilation: yes
 SystemRequirements: GNU make
 VignetteBuilder: R.rsp
-RoxygenNote: 7.0.2
+RoxygenNote: 7.1.1

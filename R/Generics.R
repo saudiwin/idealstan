@@ -23,7 +23,12 @@ setClass('idealdata',
                     miss_val='ANY',
                     restrict_count='numeric',
                     restrict_data='list',
-                    stanmodel='stanmodel',
+                    stanmodel='ANY',
+                    stanmodel_map="ANY",
+                    n_cats_rat="ANY",
+                    n_cats_grm="ANY",
+                    order_cats_rat="ANY",
+                    order_cats_grm="ANY",
                     param_fix='numeric',
                     constraint_type='character',
                     restrict_vals='ANY',
@@ -45,7 +50,9 @@ setClass('idealdata',
                     restrict_mean_val='numeric',
                     restrict_mean_ind='numeric',
                     restrict_mean='logical',
-                    person_start='numeric'))
+                    person_start='numeric',
+                    Y_int="ANY",
+                    Y_cont="ANY"))
 
 
 #' Results of \code{\link{id_estimate}} function
@@ -57,11 +64,12 @@ setClass('idealdata',
 setClass('idealstan',
          slots=list(score_data='idealdata',
                     to_fix='list',
+                    summary="ANY",
                     model_type='numeric',
                     time_proc='numeric',
                     model_code='character',
                     test_model_code='character',
-                    stan_samples='stanfit',
+                    stan_samples='ANY',
                     use_vb='logical',
                     use_groups='logical',
                     simulation='logical'))
@@ -136,7 +144,7 @@ setGeneric('sample_model',signature='object',
 
 setMethod('sample_model',signature(object='idealdata'),
           function(object,nchains=4,niters=2000,warmup=floor(niters/2),ncores=NULL,
-                   to_use=to_use,this_data=this_data,use_vb=FALSE,
+                   to_use=to_use,this_data=this_data,use_vb=FALSE,within_chain=NULL,
                    tol_rel_obj=NULL,...) {
             
             init_vals <- lapply(1:nchains,.init_stan,
@@ -168,11 +176,24 @@ setMethod('sample_model',signature(object='idealdata'),
             if(use_vb==FALSE) {
               print("Estimating model with full Stan MCMC sampler.")
               
-              out_model <- sampling(object@stanmodel,data=this_data,chains=nchains,iter=niters,cores=ncores,
-                                    warmup=warmup,
-                                    init=init_vals,
-                                    refresh=this_data$id_refresh,
-                                    ...)
+              if(within_chain=="threads") {
+
+                out_model <- object@stanmodel_map$sample(data=this_data,chains=nchains,iter_sampling=niters,
+                                                     threads_per_chain=ncores,
+                                                     iter_warmup=warmup,
+                                                     init=init_vals,
+                                                     refresh=this_data$id_refresh,
+                                                     ...)
+              } else {
+                out_model <- object@stanmodel$sample(data=this_data,chains=nchains,iter_sampling=niters,
+                                                     parallel_chains=ncores,
+                                                     iter_warmup=warmup,
+                                                     init=init_vals,
+                                                     refresh=this_data$id_refresh,
+                                                     ...)
+              }
+              
+              
             } else {
               if(is.null(tol_rel_obj)) {
                 # set to this number for identification runs
@@ -191,7 +212,7 @@ setMethod('sample_model',signature(object='idealdata'),
                 eval_elbo <- 100
               }
               print("Estimating model with variational inference (approximation of true posterior).")
-              out_model <- vb(object@stanmodel,data=this_data,
+              out_model <- object@stanmodel$variational(data=this_data,
                               tol_rel_obj=tol_rel_obj,
                               iter=20000,
                               init=init_vals[[1]],
@@ -201,11 +222,26 @@ setMethod('sample_model',signature(object='idealdata'),
                               refresh=this_data$id_refresh,
                               ...)
             }
+            
             outobj <- new('idealstan',
                           score_data=object,
-                          model_code=object@stanmodel@model_code,
+                          model_code=object@stanmodel$code(),
                           stan_samples=out_model,
                           use_vb=use_vb)
+            
+            # add safe summaries
+            
+            to_sum <- outobj@stan_samples$summary(variables=NULL,
+                                                  ~quantile(.x, probs = c(0.05, 0.95),na.rm=T),
+                                                  rhat=rhat,~mean(.x,na.rm=T),
+                                                  median=median,ess_bulk,ess_tail) 
+            
+            names(to_sum) <- c("variable","upper","lower","rhat",
+                               "mean","median","ess_bulk","ess_tail")
+            
+            to_sum <- select(to_sum,variable,lower,mean,median,upper,rhat,ess_bulk,ess_tail)
+            
+            outobj@summary <- to_sum
             
             return(outobj)
           })
