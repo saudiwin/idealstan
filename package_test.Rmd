@@ -26,8 +26,7 @@ This Rmarkdown file has a series of simulations run on the models offered in `id
 First, the standard IRT 2-PL (for this one, the absence discriminations are not a part of the model):
 
 ```{r irt_binary}
-bin_irt_2pl_sim <- id_sim_gen(num_person=20,num_bills=200,ordinal=F,inflate=F,
-                              diff_sd=1,
+bin_irt_2pl_sim <- id_sim_gen(num_person=20,num_bills=200,diff_sd=1,
                               reg_discrim_sd = 1,
                               absence_discrim_sd = 1)
 bin_irt_2pl_est <- id_estimate(idealdata=bin_irt_2pl_sim,
@@ -39,18 +38,14 @@ bin_irt_2pl_est <- id_estimate(idealdata=bin_irt_2pl_sim,
                                                                     decreasing=F, 
                                                         index=T)$ix[1]),
                                fixtype='constrained',
-                           id_diff = sort(bin_irt_2pl_sim@simul_data$true_person,decreasing=T)[1] -
-                             sort(bin_irt_2pl_sim@simul_data$true_person,decreasing=F)[1],
-                           id_diff_high=sort(bin_irt_2pl_sim@simul_data$true_person,
-                                                                     decreasing=T,
-                                                        index=T)$x[1],
+                           within_chain="threads",
                            person_sd = 3,
                            discrim_miss_sd = 1,
                            discrim_reg_sd = 1,
                            diff_reg_sd = 1,
                            diff_miss_sd = 1,
-                           restrict_sd=0.01,
-                           nchains=4,ncores=4)
+                           restrict_sd=0.01,niter=500,warmup=500,
+                           nchains=1,ncores=4,id_refresh=100)
 id_plot_rhats(bin_irt_2pl_est)
 ```
 
@@ -83,8 +78,9 @@ id_plot_sims(bin_irt_2pl_est)
 
 ```{r irt_2pl_pred}
 
-bin_irt_2pl_est %>% 
-  id_post_pred %>% 
+post_pred <- bin_irt_2pl_est %>% 
+  id_post_pred(output="missing")
+post_pred %>% 
   id_plot_ppc(bin_irt_2pl_est,ppc_pred=.)
 
 ```
@@ -103,10 +99,7 @@ bin_irt_2pl_abs_est <- id_estimate(idealdata=bin_irt_2pl_abs_sim,
                               restrict_ind_low = as.character(sort(bin_irt_2pl_abs_sim@simul_data$true_person,
                                                                    decreasing=F,
                                                         index=T)$ix[1]),
-                               fixtype='constrained',
-                              id_diff = sort(bin_irt_2pl_abs_sim@simul_data$true_person,decreasing=T)[1] -
-                             sort(bin_irt_2pl_abs_sim@simul_data$true_person,decreasing=F)[1])
-id_plot_rhats(bin_irt_2pl_abs_est)
+                               fixtype='constrained')
 ```
 
 Plot true versus observed values:
@@ -149,15 +142,14 @@ Now we'll start with the ordinal models. First the uninflated ordinal model:
 ```{r irt_ordinal}
 ord_irt_sim <- id_sim_gen(num_person=20,num_bills=100,inflate=F,
                                absence_diff_mean=0,model_type='ordinal_ratingscale')
+
 ord_irt_est <- id_estimate(idealdata=ord_irt_sim,
                                model_type=3,
                                restrict_ind_high = as.character(sort(ord_irt_sim@simul_data$true_person,decreasing=T,
                                                         index=T)$ix[1]),
                               restrict_ind_low = as.character(sort(ord_irt_sim@simul_data$true_person,decreasing=F,
                                                         index=T)$ix[1]),
-                               fixtype='constrained',
-                           id_diff = sort(ord_irt_sim@simul_data$true_person,decreasing=T)[1] -
-                             sort(ord_irt_sim@simul_data$true_person,decreasing=F)[1])
+                               fixtype='constrained',id_refresh=100)
 id_plot_rhats(ord_irt_est)
 ```
 
@@ -208,10 +200,7 @@ ord_irt_abs_est <- id_estimate(idealdata=ord_irt_abs_sim,
                               restrict_ind_low = as.character(sort(ord_irt_abs_sim@simul_data$true_person,
                                                                    decreasing=F,
                                                         index=T)$ix[1]),
-                               fixtype='constrained',id_diff =sort(ord_irt_abs_sim@simul_data$true_person,
-                                                                   decreasing=T)[1] -
-                                sort(ord_irt_abs_sim@simul_data$true_person,
-                                  decreasing=F)[1])
+                               fixtype='constrained')
 id_plot_rhats(ord_irt_abs_est)
 ```
 
@@ -260,10 +249,7 @@ ord_irt_grm_est <- id_estimate(idealdata=ord_irt_grm_sim,
                               restrict_ind_low = as.character(sort(ord_irt_grm_sim@simul_data$true_person,
                                                                    decreasing=F,
                                                         index=T)$ix[1]),
-                               fixtype='constrained',id_diff =sort(ord_irt_grm_sim@simul_data$true_person,
-                                                                   decreasing=T)[1] -
-                                sort(ord_irt_grm_sim@simul_data$true_person,
-                                  decreasing=F)[1])
+                               fixtype='constrained')
 id_plot_rhats(ord_irt_grm_est)
 ```
 
@@ -312,10 +298,7 @@ ord_irt_grm_abs_est <- id_estimate(idealdata=ord_irt_grm_abs_sim,
                               restrict_ind_low = as.character(sort(ord_irt_grm_abs_sim@simul_data$true_person,
                                                                    decreasing=F,
                                                         index=T)$ix[1]),
-                               fixtype='constrained',id_diff =sort(ord_irt_grm_abs_sim@simul_data$true_person,
-                                                                   decreasing=T)[1] -
-                                sort(ord_irt_grm_abs_sim@simul_data$true_person,
-                                  decreasing=F)[1])
+                               fixtype='constrained')
 id_plot_rhats(ord_irt_grm_abs_est)
 ```
 
@@ -366,10 +349,7 @@ ord_irt_poisson_est <- id_estimate(idealdata=ord_irt_poisson_sim,
                               restrict_ind_low = as.character(sort(ord_irt_poisson_sim@simul_data$true_person,
                                                                    decreasing=F,
                                                         index=T)$ix[1]),
-                               fixtype='constrained',id_diff =sort(ord_irt_poisson_sim@simul_data$true_person,
-                                                                   decreasing=T)[1] -
-                                sort(ord_irt_poisson_sim@simul_data$true_person,
-                                  decreasing=F)[1])
+                               fixtype='constrained')
 id_plot_rhats(ord_irt_poisson_est)
 ```
 
@@ -420,10 +400,7 @@ ord_irt_poisson_abs_est <- id_estimate(idealdata=ord_irt_poisson_abs_sim,
                               restrict_ind_low = as.character(sort(ord_irt_poisson_abs_sim@simul_data$true_person,
                                                                    decreasing=F,
                                                         index=T)$ix[1]),
-                               fixtype='constrained',id_diff =sort(ord_irt_poisson_abs_sim@simul_data$true_person,
-                                                                   decreasing=T)[1] -
-                                sort(ord_irt_poisson_abs_sim@simul_data$true_person,
-                                  decreasing=F)[1])
+                               fixtype='constrained')
 id_plot_rhats(ord_irt_poisson_abs_est)
 ```
 
@@ -482,10 +459,7 @@ ord_irt_normal_est <- id_estimate(idealdata=ord_irt_normal_sim,
                               restrict_ind_low = as.character(sort(ord_irt_normal_sim@simul_data$true_person,
                                                                    decreasing=F,
                                                         index=T)$ix[1]),
-                               fixtype='constrained',id_diff =sort(ord_irt_normal_sim@simul_data$true_person,
-                                                                   decreasing=T)[1] -
-                                sort(ord_irt_normal_sim@simul_data$true_person,
-                                  decreasing=F)[1])
+                               fixtype='constrained')
 id_plot_rhats(ord_irt_normal_est)
 ```
 
@@ -535,10 +509,7 @@ ord_irt_normal_abs_est <- id_estimate(idealdata=ord_irt_normal_abs_sim,
                               restrict_ind_low = as.character(sort(ord_irt_normal_abs_sim@simul_data$true_person,
                                                                    decreasing=F,
                                                         index=T)$ix[1]),
-                               fixtype='constrained',id_diff =sort(ord_irt_normal_abs_sim@simul_data$true_person,
-                                                                   decreasing=T)[1] -
-                                sort(ord_irt_normal_abs_sim@simul_data$true_person,
-                                  decreasing=F)[1])
+                               fixtype='constrained')
 id_plot_rhats(ord_irt_normal_abs_est)
 ```
 
@@ -595,10 +566,7 @@ ord_irt_lognormal_est <- id_estimate(idealdata=ord_irt_lognormal_sim,
                               restrict_ind_low = as.character(sort(ord_irt_lognormal_sim@simul_data$true_person,
                                                                    decreasing=F,
                                                         index=T)$ix[1]),
-                               fixtype='constrained',id_diff =sort(ord_irt_lognormal_sim@simul_data$true_person,
-                                                                   decreasing=T)[1] -
-                                sort(ord_irt_lognormal_sim@simul_data$true_person,
-                                  decreasing=F)[1])
+                               fixtype='constrained')
 id_plot_rhats(ord_irt_lognormal_est)
 ```
 
@@ -640,10 +608,7 @@ ord_irt_lognormal_abs_est <- id_estimate(idealdata=ord_irt_lognormal_abs_sim,
                               restrict_ind_low = as.character(sort(ord_irt_lognormal_abs_sim@simul_data$true_person,
                                                                    decreasing=F,
                                                         index=T)$ix[1]),
-                               fixtype='constrained',id_diff =sort(ord_irt_lognormal_abs_sim@simul_data$true_person,
-                                                                   decreasing=T)[1] -
-                                sort(ord_irt_lognormal_abs_sim@simul_data$true_person,
-                                  decreasing=F)[1])
+                               fixtype='constrained')
 id_plot_rhats(ord_irt_lognormal_abs_est)
 ```
 
@@ -686,7 +651,8 @@ diff_sd = 1,
                                absence_discrim_sd = 1,
                                reg_discrim_sd = 1)
 bin_time_irt_2pl_abs_est <- id_estimate(idealdata=bin_time_irt_2pl_abs_sim,
-                               model_type=2,
+                               model_type=2,nchains = 1,
+                               within_chain="threads",
                                vary_ideal_pts = 'random_walk',
                                restrict_ind_high = as.character(sort(bin_time_irt_2pl_abs_sim@simul_data$drift,
                                                                      decreasing=TRUE,
@@ -694,12 +660,7 @@ bin_time_irt_2pl_abs_est <- id_estimate(idealdata=bin_time_irt_2pl_abs_sim,
                               restrict_ind_low = as.character(sort(bin_time_irt_2pl_abs_sim@simul_data$drift,
                                                                    decreasing=F,
                                                         index=T)$ix[1]),
-                               fixtype='vb_partial',
-                              id_diff = sort(bin_time_irt_2pl_abs_sim@simul_data$drift,decreasing=TRUE)[1] -
-                             sort(bin_time_irt_2pl_abs_sim@simul_data$drift,decreasing=F)[1],
-                                                      
-                             id_diff_high=sort(bin_time_irt_2pl_abs_sim@simul_data$drift,
-                                                  decreasing=TRUE)[1])
+                               fixtype='constrained',id_refresh = 100)
 id_plot_rhats(bin_time_irt_2pl_abs_est)
 ```
 
@@ -714,7 +675,7 @@ id_sim_coverage(bin_time_irt_2pl_abs_est) %>%
 Let's do a time-varying ideal point plot with true point overlay:
 
 ```{r irt_2pl_abs_time_true_pt}
-id_plot_legis_dyn(bin_time_irt_2pl_abs_est,plot_sim = T) + facet_wrap(~person_id)
+id_plot_legis_dyn(bin_time_irt_2pl_abs_est,plot_sim = T) + facet_wrap(~person_id,scales="free_y")
 ```
 
 ```{r irt_2pl_time_abs_resid}
@@ -735,26 +696,21 @@ And autocorrelation:
 
 ```{r irt_binary_time_ar_inflate}
 
-bin_time_ar_irt_2pl_abs_sim <- id_sim_gen(num_person=20,num_bills=200,inflate=T,
-                               absence_diff_mean=0,time_process = 'AR',time_points=50,time_sd = .2,diff_sd = 1,
+bin_time_ar_irt_2pl_abs_sim <- id_sim_gen(num_person=10,num_bills=100,inflate=T,
+                               absence_diff_mean=0,time_process = 'AR',time_points=20,time_sd = .2,diff_sd = 1,
                                absence_discrim_sd = 1,
                                reg_discrim_sd = 1)
 bin_time_ar_irt_2pl_abs_est <- id_estimate(idealdata=bin_time_ar_irt_2pl_abs_sim,
                                model_type=2,
                                vary_ideal_pts = 'AR1',
+                               within_chain="threads",nchains=1,
                                restrict_ind_high = as.character(sort(bin_time_ar_irt_2pl_abs_sim@simul_data$drift,
                                                                      decreasing=TRUE,
                                                         index=TRUE)$ix[1]),
                               restrict_ind_low = as.character(sort(bin_time_ar_irt_2pl_abs_sim@simul_data$drift,
                                                                    decreasing=F,
                                                         index=T)$ix[1]),
-                               fixtype='vb_partial',
-                              id_diff = sort(bin_time_ar_irt_2pl_abs_sim@simul_data$drift,
-                                                  decreasing=TRUE)[1] -
-                                sort(bin_time_ar_irt_2pl_abs_sim@simul_data$drift,
-                                               decreasing=F)[1],
-                              id_diff_high=sort(bin_time_ar_irt_2pl_abs_sim@simul_data$drift,
-                                                  decreasing=TRUE)[1])
+                               fixtype='constrained',id_refresh = 100)
 id_plot_rhats(bin_time_ar_irt_2pl_abs_est)
 ```
 
@@ -769,7 +725,7 @@ id_sim_coverage(bin_time_ar_irt_2pl_abs_est) %>%
 Let's do a time-varying ideal point plot with true point overlay:
 
 ```{r irt_2pl_abs_time_ar_true_pt}
-id_plot_legis_dyn(bin_time_ar_irt_2pl_abs_est,plot_sim = T) +facet_wrap(~person_id)
+id_plot_legis_dyn(bin_time_ar_irt_2pl_abs_est,plot_sim = T) +facet_wrap(~person_id,scales="free_y")
 ```
 
 
@@ -808,15 +764,20 @@ all_low <- apply(time_gp_sim@simul_data$true_person,1,min)
 
 time_gp_est <- id_estimate(idealdata=time_gp_sim,
                                model_type=2,
-                           use_vb=F,
-                           nchains=3,niters=1000,
-                           gp_sd_par = .01,
-                           gp_m_sd_par = c(10,3),
-                           gp_num_diff = c(.1,.15),
+                           use_vb=F,id_refresh=100,
+                           nchains=1,niters=500,
                                vary_ideal_pts = 'GP',
-                               restrict_ind_high = which(all_low==max(all_low)),
-                              restrict_ind_low = which(all_low==min(all_low)),
-                               fixtype='vb_partial')
+                          within_chain="threads",
+restrict_ind_high = as.character(sort(time_gp_sim@simul_data$true_person_mean,
+                                                                     decreasing=TRUE,
+                                                        index=TRUE)$ix[1]),
+                              restrict_ind_low = as.character(sort(time_gp_sim@simul_data$true_person_mean,
+                                                                   decreasing=F,
+                                                        index=T)$ix[1]),
+              gp_sd_par=1e-10,
+              gp_m_sd_par = time_gp_sim@simul_data$drift,
+              
+                               fixtype='constrained')
 id_plot_rhats(time_gp_est)
 ```
 
@@ -873,12 +834,7 @@ latent_noninfl_est <- id_estimate(idealdata=latent_noninfl_sim,
                               restrict_ind_low = as.character(sort(latent_noninfl_sim@simul_data$true_person,
                                                                    decreasing=F,
                                                         index=T)$ix[1]),
-                               fixtype='constrained',
-                              id_diff = sort(latent_noninfl_sim@simul_data$true_person,decreasing=TRUE)[1] -
-                             sort(latent_noninfl_sim@simul_data$true_person,decreasing=F)[1],
-                                                      
-                             id_diff_high=sort(latent_noninfl_sim@simul_data$true_person,
-                                                  decreasing=TRUE)[1])
+                               fixtype='constrained')
 id_plot_rhats(latent_noninfl_est)
 ```
 
@@ -916,11 +872,6 @@ latent_infl_est <- id_estimate(idealdata=latent_infl_sim,
                                                                    decreasing=F,
                                                         index=T)$ix[1]),
                                fixtype='constrained',
-                              id_diff = sort(latent_infl_sim@simul_data$true_person,decreasing=TRUE)[1] -
-                             sort(latent_infl_sim@simul_data$true_person,decreasing=F)[1],
-                                                      
-                             id_diff_high=sort(latent_infl_sim@simul_data$true_person,
-                                                  decreasing=TRUE)[1],
                               diff_reg_sd = 2,
                              diff_miss_sd=2)
 id_plot_rhats(latent_infl_est)
