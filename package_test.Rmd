@@ -703,7 +703,7 @@ bin_time_ar_irt_2pl_abs_sim <- id_sim_gen(num_person=10,num_bills=100,inflate=T,
 bin_time_ar_irt_2pl_abs_est <- id_estimate(idealdata=bin_time_ar_irt_2pl_abs_sim,
                                model_type=2,
                                vary_ideal_pts = 'AR1',
-                               within_chain="threads",nchains=1,
+                               within_chain="threads",nchains=3,
                                restrict_ind_high = as.character(sort(bin_time_ar_irt_2pl_abs_sim@simul_data$drift,
                                                                      decreasing=TRUE,
                                                         index=TRUE)$ix[1]),
@@ -758,14 +758,10 @@ time_gp_sim <- id_sim_gen(num_person=10,num_bills=200,inflate=T,
                                absence_discrim_sd = 1,
                                reg_discrim_sd = 1)
 
-# a little harder to constrain, need to figure out minimums
-
-all_low <- apply(time_gp_sim@simul_data$true_person,1,min)
-
 time_gp_est <- id_estimate(idealdata=time_gp_sim,
                                model_type=2,
                            use_vb=F,id_refresh=100,
-                           nchains=1,niters=500,
+                           nchains=3,niters=500,
                                vary_ideal_pts = 'GP',
                           within_chain="threads",
 restrict_ind_high = as.character(sort(time_gp_sim@simul_data$true_person_mean,
@@ -792,7 +788,7 @@ id_sim_coverage(time_gp_est) %>%
 Let's do a time-varying ideal point plot with true point overlay:
 
 ```{r time_gp_true_pt}
-id_plot_legis_dyn(time_gp_est,plot_sim = T) +facet_wrap(~person_id)
+id_plot_legis_dyn(time_gp_est,plot_sim = T) +facet_wrap(~person_id,scales="free")
 ```
 
 

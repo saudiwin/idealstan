@@ -66,7 +66,6 @@ real partial_sum(int[,] y_slice,
         vector L_full, // first T=1 params to constrain
         vector m_sd_free, // marginal standard deviation of GP
         vector gp_sd_free, // residual GP variation in Y
-        vector[] L_tp2, // additional L_tp1 for GPs only
         vector ls_int, // extra intercepts for non-inflated latent space
         vector[] L_tp1_var, // non-centered variance
         vector L_AR1, // AR-1 parameters for AR-1 model
@@ -99,10 +98,13 @@ real partial_sum(int[,] y_slice,
         vector gp_sd_full,
         vector time_var_full,
         vector[] L_tp1,
-        vector time_var_free) {
+        vector time_var_free,
+        vector gp_length,
+        real m_sd_par) {
   
   // big loop over states
   real log_prob = 0;
+  vector[T>1 ? T : 0] lt; // time-varying person parameter if mapped over persons
   
   for(r in 1:size(y_slice)) {
     
@@ -143,50 +145,7 @@ real partial_sum(int[,] y_slice,
       }
 
 
-    }
-
-    if(S_type==1) {
-
-      // priors if persons
-      
-      // if(s>1 && size(time_var_free)>0) {
-      //   
-      //     log_prob += normal_lpdf(time_var_free[s-1]|0,1); // tight-ish prior on additional variances
-      // 
-      // }
-      // 
-      // if(size(time_var_gp_free)>0 && s>1) {
-      //   log_prob += normal_lpdf(time_var_gp_free[s-1]|0,1); // tight-ish prior on additional variances
-      //   log_prob += normal_lpdf(gp_sd_free[s-1]|0,2);
-      //   log_prob += normal_lpdf(m_sd_free[s-1]|0,2);
-      // }
-      // 
-      // if(time_proc==3 && T>1) {
-      //   log_prob += normal_lpdf(L_AR1[s]|0,ar_sd);
-      // }
-      // 
-      // if(T>1 && time_proc!=4) {
-      //   for(t in 1:(T-1)) {
-      //     log_prob += normal_lpdf(L_tp1_var[t,s]|0,1);
-      //   }
-      // } else if(time_proc==4 && T>1) {
-      //   {
-      //     matrix[T, T] cov; // zero-length if not a GP model
-      //     matrix[T, T] L_cov;// zero-length if not a GP model
-      //     // chunk giving a GP prior to legislators/persons
-      //       //create covariance matrices given current values of hiearchical parameters
-      // 
-      //       cov =   cov_exp_quad(time_ind, m_sd_full[s], time_var_full[s])
-      //       + diag_matrix(rep_vector(square(gp_sd_full[s]),T));
-      //       L_cov = cholesky_decompose(cov);
-      // 
-      //       log_prob += multi_normal_cholesky_lpdf(to_vector(L_tp2[,s])|rep_vector(0,T) + L_full[s], L_cov);
-      // 
-      // 
-      //     }
-      //   }
-
-    } else {
+    } else if(S_type==0 && const_type==1) {
 
       // priors if items
 
@@ -195,7 +154,67 @@ real partial_sum(int[,] y_slice,
       log_prob += normal_lpdf(B_int_free[s]|0,diff_reg_sd);
       log_prob += normal_lpdf(A_int_free[s]|0,diff_abs_sd);
 
+    } else if(const_type==2 && S_type==1) {
+      
+      log_prob += normal_lpdf(L_full[s]|0,legis_sd);
+      
     }
+
+    if(S_type==1 && T>1) {
+
+      // priors for time-varying persons
+      
+      if(s>1 && num_elements(time_var_free)>0) {
+
+          log_prob += normal_lpdf(time_var_free[s-1]|0,1); // tight-ish prior on additional variances
+
+      }
+      
+      if(time_proc!=4) {
+          
+        log_prob += normal_lpdf(to_vector(L_tp1_var[,s])|0,1);
+
+      } 
+
+      if(num_elements(time_var_gp_free)>0 && s>1) {
+        log_prob += normal_lpdf(time_var_gp_free[s-1]|0,5); // tight-ish prior on additional variances
+        log_prob += normal_lpdf(gp_sd_free[s-1]|0,5);
+        log_prob += normal_lpdf(m_sd_free[s-1]|0,5);
+      }
+
+      if(time_proc==3) {
+        log_prob += normal_lpdf(L_AR1[s]|0,ar_sd);
+#include /chunks/l_hier_ar1_prior_map.stan
+      } else if(time_proc==2) {
+#include /chunks/l_hier_prior_map.stan        
+      }
+      
+      if(time_proc==4) {
+        {
+          matrix[T, T] cov; // zero-length if not a GP model
+          matrix[T, T] L_cov;// zero-length if not a GP model
+          // chunk giving a GP prior to legislators/persons
+            //create covariance matrices given current values of hiearchical parameters
+            if(s==1) {
+              cov =   cov_exp_quad(time_ind, m_sd_par, gp_length[1])
+            + diag_matrix(rep_vector(square(gp_sd_full[1]),T));
+            } else {
+              cov =   cov_exp_quad(time_ind, m_sd_free[s-1], time_var_gp_free[s-1])
+            + diag_matrix(rep_vector(square(gp_sd_full[1]),T));
+            }
+            
+            L_cov = cholesky_decompose(cov);
+
+            log_prob += multi_normal_cholesky_lpdf(to_vector(L_tp1_var[,s])|rep_vector(0,T) + L_full[s], L_cov);
+
+
+          }
+          
+          lt = to_vector(L_tp1_var[,s]);
+        }
+        
+
+    } 
 
     if(S_type==1) {
 #include /chunks/model_types_mm_map_persons.stan
@@ -256,11 +275,6 @@ data {
   real ar_sd;
   real time_sd;
   int sum_vals[S,3]; // what to loop over for reduce sum
-  //int restrict_var;
-  //real restrict_var_high;
-  //real restrict_mean_val[2];
-  //int restrict_mean_ind[8];
-  //int restrict_mean;
   int time_proc;
   real time_ind[T]; // the actual indices/values of time points, used for Gaussian processes
   int zeroes; // whether to use traditional zero-inflation for bernoulli and poisson models
@@ -284,8 +298,6 @@ transformed data {
 	int gp_nT; // used to make L_tp1 go to model block if GPs are used
 	int gp_oT; // used to make L_tp1 go to model block if GPs are used
 	vector[1] gp_length; 
-	int vP;
-	int dP;
 	
 	// set mean of log-normal distribution for GP length-scale prior
 	
@@ -310,36 +322,6 @@ transformed data {
 	  gp_1=1;
 	  gp_nT=T;
 	  gp_oT=0;
-	}
-	
-	if(within_chain==1) {
-	  if(S_type==1) {
-	    // if we map over people, then only one varying parameter per shard
-	    if(time_proc==4) {
-	      vP = 1*T + 4;
-	    } else if(time_proc==3) {
-	      vP = 1*T + 3;
-	    } else if(time_proc==2) {
-	      vP = 1*T + 2;
-	    } else if(T==1) {
-	      if(num_ls==0) {
-	         vP = 1;
-	      } else {
-	        vP = 2;
-	      }
-	    }
-	    
-	    // include one extra for the extra_sd parameter
-	    dP = 4*num_bills + (sum(n_cats_rat) - 8) + (sum(n_cats_grm) - 8)*num_bills_grm + LX + SRX + SAX + 1;
-	  } else {
-	    // 6 parameters for all item parameters
-	    vP = 4; 
-	    dP = num_legis*T + num_ls + (sum(n_cats_rat) - 8) + (sum(n_cats_grm) - 8)*num_bills_grm + LX + SRX + SAX + 1;
-	  }
-	  
-	} else {
-	  vP = 0;
-	  dP = 0;
 	}
 	
 	// need to assign a type of outcome to Y based on the model (discrete or continuous)
@@ -370,12 +352,10 @@ parameters {
   vector[num_legis] L_full; // first T=1 params to constrain
   vector<lower=0>[gp_N_fix] m_sd_free; // marginal standard deviation of GP
   vector<lower=0>[gp_N_fix] gp_sd_free; // residual GP variation in Y
-  vector[num_legis] L_tp2[gp_nT]; // additional L_tp1 for GPs only
   vector[num_ls] ls_int; // extra intercepts for non-inflated latent space
-  vector[T>1 ? num_legis : 0] L_tp1_var[T-1]; // non-centered variance
+  vector[T>1 ? num_legis : 0] L_tp1_var[(time_proc!=4) ? (T-1) : T]; // non-centered variance
   vector<lower=-.99,upper=.99>[(T>1 && time_proc==3) ? num_legis : 0] L_AR1; // AR-1 parameters for AR-1 model
   vector[num_bills] sigma_reg_free;
-  //vector[1] restrict_high;
   vector[LX] legis_x;
   vector[SRX] sigma_reg_x;
   vector[SAX] sigma_abs_x;
@@ -398,7 +378,6 @@ parameters {
   ordered[n_cats_grm[7]-1] steps_votes_grm9[num_bills_grm];
   ordered[n_cats_grm[8]-1] steps_votes_grm10[num_bills_grm];
   real<lower=0> extra_sd;
-  //real<lower=-.9,upper=.9> ar_fix;
   vector[gp_N_fix] time_var_gp_free;
   vector<lower=0>[(T>1 && time_proc!=4) ? num_legis-1 : 0] time_var_free;
   
@@ -406,20 +385,20 @@ parameters {
 
 transformed parameters {
 
-  vector[T>1 ? num_legis : 0] L_tp1[T];
-  vector[(T>1 && time_proc!=4) ? num_legis : 0] time_var_full;
-  vector[gp_N] time_var_gp_full;
-  vector[gp_N] m_sd_full;
-  vector[gp_N] gp_sd_full;
+  vector[(T>1 && S_type==0) ? num_legis : 0] L_tp1[T];
+  vector[(T>1 && S_type==0 && time_proc!=4) ? num_legis : 0] time_var_full;
+  vector[S_type==0 ? gp_N : 0] time_var_gp_full;
+  vector[S_type==0 ? gp_N : 0] m_sd_full;
+  vector[S_type==0 ? gp_N : 0] gp_sd_full;
   
-  if((T>1 && time_proc!=4)) {
+  if(T>1 && time_proc!=4 && S_type==0) {
     time_var_full = append_row([time_sd]',time_var_free);
   }
   
     //combine constrained and unconstrained parameters
     //#include /chunks/build_params_v2.stan
 
-  if(T>1) {
+  if(T>1 && S_type==0) {
     if(time_proc==3) {
       // in AR model, intercepts are constant over time
 #include /chunks/l_hier_ar1_prior.stan
@@ -427,14 +406,15 @@ transformed parameters {
       // in RW model, intercepts are used for first time period
 #include /chunks/l_hier_prior.stan
     } else if(time_proc==4) {
-      L_tp1 = L_tp2; // just copy over the variables, saves code if costs a bit of extra memory
-                      // should be manageable memory loss
       m_sd_full = append_row([m_sd_par]',
                               m_sd_free);
       gp_sd_full = append_row([gp_sd_par]',
                               gp_sd_free);
       time_var_gp_full = append_row(gp_length,
                                       time_var_gp_free);
+      
+      L_tp1 = L_tp1_var;
+      
     }  
   } 
 
@@ -450,16 +430,14 @@ model {
   sigma_reg_x ~ normal(0,5);
   extra_sd ~ exponential(1);
   
-  //print(legis_x);
-  
-  if(time_proc==3 && within_chain==0 && T>1) {
+  if(time_proc==3 && S_type==0 && T>1) {
     L_AR1 ~ normal(0,ar_sd);
   }
   
 
 #include /chunks/ord_steps_calc.stan  
   
-  if(time_proc==4 && within_chain==0 && T>1)  {
+  if(time_proc==4 && S_type==0 && T>1)  {
     {
     matrix[T, T] cov[gp_N]; // zero-length if not a GP model
     matrix[T, T] L_cov[gp_N];// zero-length if not a GP model
@@ -473,7 +451,7 @@ for(n in 1:num_legis) {
       + diag_matrix(rep_vector(square(gp_sd_full[n]),T));
   L_cov[n] = cholesky_decompose(cov[n]);
 
-  to_vector(L_tp2[,n]) ~ multi_normal_cholesky(rep_vector(0,T) + L_full[n], L_cov[n]); 
+  to_vector(L_tp1_var[,n]) ~ multi_normal_cholesky(rep_vector(0,T) + L_full[n], L_cov[n]); 
   
     
 }
@@ -481,52 +459,67 @@ for(n in 1:num_legis) {
   }
   
   
-  if(T>1 && time_proc!=4 && within_chain==0) {
+  if(T>1 && time_proc!=4 && S_type==0) {
     for(t in 1:(T-1)) {
       L_tp1_var[t] ~ normal(0,1);
     }
   }
   
-  if(within_chain==0)  {
+  if(S_type==0)  {
     ls_int ~ normal(0,legis_sd);
   }
   
-  //m_sd_free ~ inv_gamma(m_sd_par[2],1); // tight prior on GP marginal standard deviation ("bumps")
-  
-  if(T>1 && within_chain==0) {
+  if(T>1 && S_type==0) {
     time_var_free ~ normal(0,1); // tight-ish prior on additional variances
     time_var_gp_free ~ normal(0,1); // tight-ish prior on additional variances
     gp_sd_free ~ normal(0,2);
     m_sd_free ~ normal(0,2);
   }
-  
 
-// add correction for time-series models
+  //priors for parameters not included in reduce_sum
   
-
-  //priors for legislators and bill parameters
-  
-if(within_chain==1 && S_type==1) {
+if(S_type==1 && const_type==1) {
   // don't create priors for persons if map_rect is used on persons
   sigma_reg_free ~ normal(0, discrim_reg_sd);
   sigma_abs_free ~ normal(0,discrim_abs_sd);
   B_int_free ~ normal(0,diff_reg_sd);
   A_int_free ~ normal(0,diff_abs_sd);
-} else if(within_chain==1 && S_type==0) {
+} else if(S_type==1 && const_type==2) {
   // don't create priors for items
   L_full ~ normal(0,legis_sd);
-} else {
   B_int_free ~ normal(0,diff_reg_sd);
   A_int_free ~ normal(0,diff_abs_sd);
-#include /chunks/fix_priors.stan   
+  
+  target += id_params(sigma_reg_free,
+                        restrict_high,
+                        restrict_low,
+                        fix_high,
+                        fix_low,
+                        restrict_sd,
+                        0,
+                        discrim_reg_sd);
+  
+} else if(S_type==0 && const_type==1) {
+
+  target += id_params(L_full,
+                        restrict_high,
+                        restrict_low,
+                        fix_high,
+                        fix_low,
+                        restrict_sd,
+                        0,
+                        legis_sd);  
+  
+} else if(S_type==0 && const_type==2) {
+  
+  L_full ~ normal(0,legis_sd);
+  
 }
 
 
   //all model types
 
-// use map_rect or don't use map_rect
-if(within_chain==1) {
-  target += reduce_sum_static(partial_sum, 
+  target += reduce_sum(partial_sum, 
                       sum_vals,
                      grainsize,
                      T,
@@ -574,7 +567,6 @@ if(within_chain==1) {
         L_full, // first T=1 params to constrain
         m_sd_free, // marginal standard deviation of GP
         gp_sd_free, // residual GP variation in Y
-        L_tp2, // additional L_tp1 for GPs only
         ls_int, // extra intercepts for non-inflated latent space
         L_tp1_var, // non-centered variance
         L_AR1, // AR-1 parameters for AR-1 model
@@ -607,10 +599,9 @@ if(within_chain==1) {
         gp_sd_full,
         time_var_full,
         L_tp1,
-        time_var_free);
-} else {
-#include /chunks/model_types_mm.stan 
-}
+        time_var_free,
+        gp_length,
+        m_sd_par);
 
 }
 generated quantities {

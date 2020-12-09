@@ -82,6 +82,8 @@ id_sim_gen <- function(num_person=20,num_bills=50,
   #absence_discrim <- prior_func(params=list(N=num_bills,mean=1,sd=absence_discrim_sd)) * if_else(runif(num_bills-1)>0.5,1,-1)
   absence_discrim <- prior_func(params=list(N=num_bills,mean=0,sd=absence_discrim_sd))
   # person ideal points common to both types of models (absence and regular)
+  
+  ideal_pts_mean <- NULL
 
   if(time_points==1) {
     ideal_pts <- as.matrix(prior_func(params=list(N=num_person,mean=0,sd=ideal_pts_sd)))

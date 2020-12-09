@@ -911,8 +911,6 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   # need to create new data if map_rect is in operation 
   # and we have missing values / ragged arrays
   
-  if(within_chain %in% c("threads","mpi")) {
-
     out_list <- .make_sum_vals(idealdata@score_matrix,map_over_id,use_groups=use_groups)
     
     sum_vals <- out_list$sum_vals
@@ -921,12 +919,6 @@ id_estimate <- function(idealdata=NULL,model_type=2,
     
     idealdata@score_matrix <- out_list$this_data
 
-  } else {
-    
-    # dummy data
-    sum_vals <- matrix(nrow=0,ncol=3)
-    
-  }
   
   
   
@@ -979,7 +971,6 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   # set values for length of discrete/continuous outcomes  
     remove_list <- .remove_nas(Y_int,
                                Y_cont,
-                               within_chain=within_chain,
                                discrete=idealdata@score_matrix$discrete,
                                legispoints,
                                billpoints,
@@ -1086,7 +1077,6 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   
   remove_list <- .remove_nas(Y_int,
                              Y_cont,
-                             within_chain=within_chain,
                              discrete=idealdata@score_matrix$discrete,
                              legispoints,
                              billpoints,

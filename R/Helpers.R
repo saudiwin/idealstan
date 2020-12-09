@@ -1524,7 +1524,6 @@ return(as.vector(idx))
 #' @noRd
 .remove_nas <- function( Y_int=NULL,
                         Y_cont=NULL,
-                        within_chain=NULL,
                         discrete=NULL,
                         legispoints=NULL,
                         billpoints=NULL,
