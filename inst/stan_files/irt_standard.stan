@@ -99,8 +99,7 @@ real partial_sum(int[,] y_slice,
         vector time_var_full,
         vector[] L_tp1,
         vector time_var_free,
-        vector gp_length,
-        real m_sd_par) {
+        vector gp_length) {
   
   // big loop over states
   real log_prob = 0;
@@ -164,53 +163,51 @@ real partial_sum(int[,] y_slice,
 
       // priors for time-varying persons
       
-      if(s>1 && num_elements(time_var_free)>0) {
+      if(time_proc!=4) {
+          
+        log_prob += normal_lpdf(to_vector(L_tp1_var[1:T,s])|0,1);
+        
+        if(s>1) {
 
           log_prob += normal_lpdf(time_var_free[s-1]|0,1); // tight-ish prior on additional variances
 
-      }
-      
-      if(time_proc!=4) {
-          
-        log_prob += normal_lpdf(to_vector(L_tp1_var[,s])|0,1);
+        }
 
       } 
-
-      if(num_elements(time_var_gp_free)>0 && s>1) {
-        log_prob += normal_lpdf(time_var_gp_free[s-1]|0,5); // tight-ish prior on additional variances
-        log_prob += normal_lpdf(gp_sd_free[s-1]|0,5);
-        log_prob += normal_lpdf(m_sd_free[s-1]|0,5);
-      }
 
       if(time_proc==3) {
         log_prob += normal_lpdf(L_AR1[s]|0,ar_sd);
 #include /chunks/l_hier_ar1_prior_map.stan
       } else if(time_proc==2) {
 #include /chunks/l_hier_prior_map.stan        
-      }
-      
-      if(time_proc==4) {
+      } else if(time_proc==4) {
+        
+        if(s>1) {
+            log_prob += normal_lpdf(time_var_gp_free[s-1]|0,5); // tight-ish prior on additional variances
+            log_prob += normal_lpdf(gp_sd_free[s-1]|0,5);
+            log_prob += normal_lpdf(m_sd_free[s-1]|0,5);
+        }
+        
+        
         {
           matrix[T, T] cov; // zero-length if not a GP model
           matrix[T, T] L_cov;// zero-length if not a GP model
           // chunk giving a GP prior to legislators/persons
             //create covariance matrices given current values of hiearchical parameters
             if(s==1) {
-              cov =   cov_exp_quad(time_ind, m_sd_par, gp_length[1])
-            + diag_matrix(rep_vector(square(gp_sd_full[1]),T));
+              cov =   cov_exp_quad(time_ind, m_sd_par, gp_length[1]) + diag_matrix(rep_vector(square(gp_sd_par),T));
             } else {
-              cov =   cov_exp_quad(time_ind, m_sd_free[s-1], time_var_gp_free[s-1])
-            + diag_matrix(rep_vector(square(gp_sd_full[1]),T));
+              cov =   cov_exp_quad(time_ind, m_sd_free[s-1], time_var_gp_free[s-1]) + diag_matrix(rep_vector(square(gp_sd_par),T));
             }
-            
+
             L_cov = cholesky_decompose(cov);
 
-            log_prob += multi_normal_cholesky_lpdf(to_vector(L_tp1_var[,s])|rep_vector(0,T) + L_full[s], L_cov);
+            log_prob += multi_normal_cholesky_lpdf(to_vector(L_tp1_var[1:T,s])|rep_vector(0,T) + L_full[s], L_cov);
 
 
           }
           
-          lt = to_vector(L_tp1_var[,s]);
+          lt = to_vector(L_tp1_var[1:T,s]);
         }
         
 
@@ -330,17 +327,9 @@ transformed data {
 //#include /chunks/change_outcome.stan
 	
   //determine how many and which parameters to constrain
-#include /chunks/create_constrained.stan
+//#include /chunks/create_constrained.stan
 
 // determine whether to restrict variance or not
-
-// if(restrict_var==1) {
-//   num_var_restrict=num_legis;
-//   num_var_free=0;
-// } else {
-//   num_var_restrict=0;
-//   num_var_free=num_legis;
-// }
 
   num_legis_real = num_legis; // promote N to type real
   
@@ -451,7 +440,7 @@ for(n in 1:num_legis) {
       + diag_matrix(rep_vector(square(gp_sd_full[n]),T));
   L_cov[n] = cholesky_decompose(cov[n]);
 
-  to_vector(L_tp1_var[,n]) ~ multi_normal_cholesky(rep_vector(0,T) + L_full[n], L_cov[n]); 
+  to_vector(L_tp1_var[1:T,n]) ~ multi_normal_cholesky(rep_vector(0,T) + L_full[n], L_cov[n]); 
   
     
 }
@@ -519,7 +508,7 @@ if(S_type==1 && const_type==1) {
 
   //all model types
 
-  target += reduce_sum(partial_sum, 
+  target += reduce_sum(partial_sum,
                       sum_vals,
                      grainsize,
                      T,
@@ -600,8 +589,7 @@ if(S_type==1 && const_type==1) {
         time_var_full,
         L_tp1,
         time_var_free,
-        gp_length,
-        m_sd_par);
+        gp_length);
 
 }
 generated quantities {

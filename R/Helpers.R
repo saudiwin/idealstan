@@ -1928,3 +1928,13 @@ return(as.vector(idx))
   return(list(sum_vals=sum_vals,this_data=this_data))
   
 }
+
+
+#' Need new function to re-create time-varying ideal points given reduce sum
+#' @noRd
+.get_varying <- function(obj) {
+  
+  browser()
+  
+  
+}

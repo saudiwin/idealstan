@@ -749,10 +749,10 @@ The Gaussian process differs in that is a non-parametric approach to time-series
 
 ```{r time_gp_inflate}
 
-time_gp_sim <- id_sim_gen(num_person=10,num_bills=200,inflate=T,
+time_gp_sim <- id_sim_gen(num_person=10,num_bills=100,inflate=T,
                                absence_diff_mean=0,
                           time_process = 'GP',
-                          time_points=40,
+                          time_points=20,
                           time_sd = .01,
                           diff_sd = 1,
                                absence_discrim_sd = 1,
@@ -761,7 +761,7 @@ time_gp_sim <- id_sim_gen(num_person=10,num_bills=200,inflate=T,
 time_gp_est <- id_estimate(idealdata=time_gp_sim,
                                model_type=2,
                            use_vb=F,id_refresh=100,
-                           nchains=3,niters=500,
+                           nchains=1,niters=500,
                                vary_ideal_pts = 'GP',
                           within_chain="threads",
 restrict_ind_high = as.character(sort(time_gp_sim@simul_data$true_person_mean,
@@ -770,7 +770,7 @@ restrict_ind_high = as.character(sort(time_gp_sim@simul_data$true_person_mean,
                               restrict_ind_low = as.character(sort(time_gp_sim@simul_data$true_person_mean,
                                                                    decreasing=F,
                                                         index=T)$ix[1]),
-              gp_sd_par=1e-10,
+              gp_sd_par=1e-05,
               gp_m_sd_par = time_gp_sim@simul_data$drift,
               
                                fixtype='constrained')

@@ -569,10 +569,10 @@ if(T==1) {
       print(legis_pred[n,]);
       print(legis_x);
       if(T==1) {
-        //log_prob += poisson_log_lpmf(Y_int[n]|(sigma_reg_free[bb[n]] + srx_pred[n,]*sigma_reg_x) *  (L_full[s] + legis_pred[n,]*legis_x) - B_int_free[bb[n]]);
+        log_prob += poisson_log_lpmf(Y_int[n]|(sigma_reg_free[bb[n]] + srx_pred[n,]*sigma_reg_x) *  (L_full[s] + legis_pred[n,]*legis_x) - B_int_free[bb[n]]);
       } else {
-        //log_prob += poisson_log_lpmf(Y_int[n]|(sigma_reg_free[bb[n]] + srx_pred[n,]*sigma_reg_x) *  (lt[time[n]] + legis_pred[n,]*legis_x) - B_int_free[bb[n]]);
-        //log_prob += poisson_log_lpmf(Y_int[n]|(sigma_reg_free[bb[n]]) *  (lt[time[n]] + legis_x) - B_int_free[bb[n]]);
+        log_prob += poisson_log_lpmf(Y_int[n]|(sigma_reg_free[bb[n]] + srx_pred[n,]*sigma_reg_x) *  (lt[time[n]] + legis_pred[n,]*legis_x) - B_int_free[bb[n]]);
+        log_prob += poisson_log_lpmf(Y_int[n]|(sigma_reg_free[bb[n]]) *  (lt[time[n]] + legis_x) - B_int_free[bb[n]]);
       }
         
         
