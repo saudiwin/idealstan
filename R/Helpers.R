@@ -102,8 +102,21 @@
   
   if(length(unique(object@score_data@score_matrix$time_id))>1 && type!='variance') {
     
-    person_params <- object@stan_samples$draws('L_tp1') %>% as_draws_df %>% 
-      dplyr::select(-`.chain`,-`.iteration`,-`.draw`)
+    person_params <- .get_varying(object) 
+    
+    if("draws_matrix" %in% class(person_params)) {
+      
+      person_params <- person_params %>% 
+        as_draws_df %>% 
+        dplyr::select(-`.chain`,-`.iteration`,-`.draw`)
+      
+    } else {
+      
+      person_params <- as_tibble(person_params)
+      
+    }
+    
+   
     
     if(aggregate) {
       person_params <- person_params %>% gather(key = legis,value=ideal_pts) %>% 
@@ -346,7 +359,7 @@
                     A_int_free=A_int_free,
                     B_int_free=B_int_free,
                     m_sd=rep(m_sd_par,num_legis),
-                    time_var_gp_free=log(rep(num_diff*time_range,num_legis-1))))
+                    time_var_gp_free=log(rep(num_diff*time_range,num_legis))))
       } else if(time_proc==3) {
         return(list(L_full = L_full,
                     L_AR1 = array(runif(n = num_legis,min = -.5,max=.5)),
@@ -1402,9 +1415,7 @@ return(as.vector(idx))
                         within_chain=NULL,
                         pad_id=NULL) {
 
-  
-  if(within_chain=="none") {
-    if(length(Y_int)>1 && any(unique(modelpoints) %in% c(3,4,5,6))) {
+  if(length(Y_int)>1 && any(unique(modelpoints) %in% c(3,4,5,6))) {
       
       # count cats for ordinal models 
       
@@ -1455,63 +1466,6 @@ return(as.vector(idx))
       n_cats_rat <- rep(1L,length(3:10))
       n_cats_grm <- rep(1L,length(3:10))
     }
-  } else {
-    if(length(Y_int)>1 && any(unique(modelpoints) %in% c(3,4,5,6))) {
-      
-      # count cats for ordinal models 
-      
-      get_counts <- group_by(tibble(modelpoints,
-                                    billpoints,
-                                    pad_id,
-                                    discrete,
-                                    Y_int),billpoints) %>% 
-        group_by(modelpoints,billpoints) %>% 
-        summarize(num_cats=length(unique(Y_int[pad_id==1 & discrete==1]))) %>% 
-        mutate(num_cats_rat=if_else(modelpoints==3 & num_cats<3,
-                                    3L,
-                                    num_cats),
-               num_cats_rat=if_else(modelpoints==4 & num_cats<4,
-                                    3L,
-                                    num_cats_rat),
-               order_cats_rat=as.numeric(factor(num_cats_rat)),
-               num_cats_grm=if_else(modelpoints==5 & num_cats<3,
-                                    3L,
-                                    num_cats),
-               num_cats_grm=if_else(modelpoints==6 & num_cats<4,
-                                    3L,
-                                    num_cats_grm),
-               order_cats_grm=as.numeric(factor(num_cats_grm))) 
-      
-      num_cats_rat <- sort(unique(get_counts$num_cats_rat))
-      num_cats_grm <- sort(unique(get_counts$num_cats_grm))
-      
-      # need to zero out non-present categories
-      
-      n_cats_rat <- ifelse(3:10 %in% num_cats_rat,3:10,1L)
-      n_cats_grm <- ifelse(3:10 %in% num_cats_grm,3:10,1L)
-      
-      # join the data back together
-      
-      out_data <- left_join(tibble(modelpoints=modelpoints,
-                                   billpoints=billpoints,
-                                   Y_int),
-                            select(get_counts,
-                                   -num_cats_rat,
-                                   -num_cats_grm),
-                            by=c("modelpoints","billpoints")) 
-      out_data$order_cats_grm[is.na(out_data$order_cats_grm)] <- 0L
-      out_data$order_cats_rat[is.na(out_data$order_cats_rat)] <- 0L
-      
-      
-    } else {
-      
-      out_data <- tibble(order_cats_grm=rep(0L,length(modelpoints)),
-                         order_cats_rat=rep(0L,length(modelpoints)))
-      n_cats_rat <- rep(1L,length(3:10))
-      n_cats_grm <- rep(1L,length(3:10))
-      
-    }
-  }
   
   return(list(order_cats_rat=out_data$order_cats_rat,
               order_cats_grm=out_data$order_cats_grm,
@@ -1934,7 +1888,316 @@ return(as.vector(idx))
 #' @noRd
 .get_varying <- function(obj) {
   
-  browser()
+  if(obj@map_over_id=="items") {
+    
+    # needs to be in the same format, varying in T then person
+    
+    all_time <- obj@stan_samples$draws("L_tp1") %>% as_draws_matrix()
+    
+  } else {
+    
+    L_tp1_var <- obj@stan_samples$draws("L_tp1_var") %>% as_draws_matrix()
+    
+    if(obj@time_proc==2) {
+      
+      L_full <- obj@stan_samples$draws("L_full") %>% as_draws_matrix()
+      
+      time_var_free <- obj@stan_samples$draws("time_var_free") %>% as_draws_matrix()
+      
+      #make a grid, time varying fastest
+      
+      time_grid <- expand.grid(1:length(unique(obj@score_data@score_matrix$time_id)),
+                               unique(as.numeric(obj@score_data@score_matrix$person_id))) %>% 
+        filter(Var1!=max(Var1))
+      
+      time_func <- function(t=NULL,
+                            points=NULL,
+                            prior_est=NULL,
+                            time_var_free=NULL,
+                            initial=NULL,
+                            L_full=NULL,
+                            p=NULL,
+                            L_tp1_var=NULL) {
+        
+        if(p>1) {
+          if(t==2) {
+            
+            prior_est <- initial + time_var_free[,p-1]*L_tp1_var[,(time_grid$Var1==(t-1) & time_grid$Var2==p)]
+            
+            prior_est <- cbind(initial,prior_est)
+            
+          } else {
+            
+            this_t <- prior_est[,t-1]  + time_var_free[,p-1]*L_tp1_var[,(time_grid$Var1==(t-1) & time_grid$Var2==p)]
+            prior_est <- cbind(prior_est,this_t)
+            
+            
+          }
+          
+          if(t<max(points)) { 
+            
+            time_func(t=t+1,
+                      points=points,
+                      prior_est=prior_est,
+                      time_var_free=time_var_free,
+                      p=p,
+                      L_full=L_full,
+                      L_tp1_var=L_tp1_var)
+          } else {
+            # break recursion
+            
+            out_d <- as_tibble(prior_est) 
+            names(out_d) <- as.character(1:length(unique(obj@score_data@score_matrix$time_id)))
+            
+            out_d <- mutate(out_d,person_id=p,
+                            iter=1:n())
+            
+            return(out_d)
+          }
+          
+        } else {
+          
+          if(t==2) {
+            
+            prior_est <- initial + obj@time_sd*L_tp1_var[,(time_grid$Var1==(t-1) & time_grid$Var2==p)]
+            
+            prior_est <- cbind(initial,prior_est)
+            
+          } else {
+            
+            this_t <- prior_est[,t-1]  + obj@time_sd*L_tp1_var[,(time_grid$Var1==(t-1) & time_grid$Var2==p)]
+            prior_est <- cbind(prior_est,this_t)
+            
+            
+          }
+          
+          if(t<max(points)) { 
+            
+            time_func(t=t+1,
+                      points=points,
+                      prior_est=prior_est,
+                      time_var_free=time_var_free,
+                      p=p,
+                      L_full=L_full,
+                      L_tp1_var=L_tp1_var)
+          } else {
+            # break recursion
+            
+            out_d <- as_tibble(prior_est) 
+            names(out_d) <- as.character(1:length(unique(obj@score_data@score_matrix$time_id)))
+            
+            out_d <- mutate(out_d,person_id=p,
+                            iter=1:n())
+            
+            return(out_d)
+          }
+          
+        }
+        
+        
+        # we don't do anything here because we need to return results from the
+        # enclosing function call above
+        
+      }
+      
+      all_time <- lapply(unique(as.numeric(obj@score_data@score_matrix$person_id)), 
+                         function (p) {
+        
+        initial <- L_full[,p]
+        
+          time_func(t=2,
+                           points=as.numeric(unique(obj@score_data@score_matrix$time_id)),
+                           time_var_free=time_var_free,
+                           initial=initial,
+                           p=p,
+                           L_tp1_var=L_tp1_var)
+          
+          
+        }) %>% bind_rows()
+      
+      # need to reformat by spreading in correct manner
+      # one row per sample
+      # make joint time-person IDs
+      
+      all_time <- gather(all_time,"time_id",value="estimate",
+                         -person_id,-iter) %>% 
+        mutate(time_id=as.numeric(time_id)) %>% 
+        arrange(person_id,time_id) %>% 
+        unite(col='key',time_id,person_id) %>% 
+        mutate(key2=factor(key,levels=unique(key)),
+               key3=as.numeric(key2)) %>% 
+        select(-key,-key2) %>% 
+        spread(key="key3",value="estimate") %>% 
+        select(-iter) %>% 
+        as.matrix
+      
+      time_grid <- expand.grid(1:length(unique(obj@score_data@score_matrix$time_id)),
+                               unique(as.numeric(obj@score_data@score_matrix$person_id)))
+      
+      colnames(all_time) <- paste0("L_tp1[",time_grid$Var1,",",time_grid$Var2,"]")
+
+      
+    } else if(obj@time_proc==3) {
+      
+      L_full <- obj@stan_samples$draws("L_full") %>% as_draws_matrix()
+      
+      time_var_free <- obj@stan_samples$draws("time_var_free") %>% as_draws_matrix()
+      
+      L_AR1 <- obj@stan_samples$draws("L_AR1") %>% as_draws_matrix()
+      
+      #make a grid, time varying fastest
+      
+      time_grid <- expand.grid(1:length(unique(obj@score_data@score_matrix$time_id)),
+                               unique(as.numeric(obj@score_data@score_matrix$person_id))) %>% 
+        filter(Var1!=max(Var1))
+      
+      # what we use for the recursion
+      
+      time_func <- function(t=NULL,
+                            points=NULL,
+                            prior_est=NULL,
+                            time_var_free=NULL,
+                            initial=NULL,
+                            L_AR1=NULL,
+                            L_full=NULL,
+                            p=NULL,
+                            L_tp1_var=NULL) {
+
+          if(p>1) {
+            if(t==2) {
+              
+              prior_est <- L_full[,p] + L_AR1[,p]*initial + time_var_free[,p-1]*L_tp1_var[,(time_grid$Var1==(t-1) & time_grid$Var2==p)]
+              
+              prior_est <- cbind(initial,prior_est)
+              
+            } else {
+              
+              this_t <- L_full[,p] + L_AR1[,p]*prior_est[,t-1]  + time_var_free[,p-1]*L_tp1_var[,(time_grid$Var1==(t-1) & time_grid$Var2==p)]
+              prior_est <- cbind(prior_est,this_t)
+              
+              
+            }
+            
+            if(t<max(points)) { 
+              
+              time_func(t=t+1,
+                        points=points,
+                        prior_est=prior_est,
+                        time_var_free=time_var_free,
+                        p=p,
+                        L_AR1=L_AR1,
+                        L_full=L_full,
+                        L_tp1_var=L_tp1_var)
+            } else {
+              # break recursion
+              
+              out_d <- as_tibble(prior_est) 
+              names(out_d) <- as.character(1:length(unique(obj@score_data@score_matrix$time_id)))
+              
+              out_d <- mutate(out_d,person_id=p,
+                              iter=1:n())
+              
+              return(out_d)
+            }
+            
+          } else {
+            
+            if(t==2) {
+              
+              prior_est <- L_full[,p] + L_AR1[,p]*initial + obj@time_sd*L_tp1_var[,(time_grid$Var1==(t-1) & time_grid$Var2==p)]
+              
+              prior_est <- cbind(initial,prior_est)
+              
+            } else {
+              
+              this_t <- L_full[,p] + L_AR1[,p]*prior_est[,t-1]  + obj@time_sd*L_tp1_var[,(time_grid$Var1==(t-1) & time_grid$Var2==p)]
+              prior_est <- cbind(prior_est,this_t)
+              
+              
+            }
+            
+            if(t<max(points)) { 
+            
+              time_func(t=t+1,
+                        points=points,
+                        prior_est=prior_est,
+                        time_var_free=time_var_free,
+                        p=p,
+                        L_AR1=L_AR1,
+                        L_full=L_full,
+                        L_tp1_var=L_tp1_var)
+            } else {
+              # break recursion
+              
+              out_d <- as_tibble(prior_est) 
+              names(out_d) <- as.character(1:length(unique(obj@score_data@score_matrix$time_id)))
+              
+              out_d <- mutate(out_d,person_id=p,
+                              iter=1:n())
+              
+              return(out_d)
+            }
+            
+          }
+        
+        
+        # we don't do anything here because we need to return results from the
+        # enclosing function call above
+        
+      }
+      
+      all_time <- lapply(unique(as.numeric(obj@score_data@score_matrix$person_id)), 
+                         function (p) {
+                           
+                           initial <- L_full[,p]
+                           
+                           out_d <- time_func(t=2,
+                                     points=1:length(unique(obj@score_data@score_matrix$time_id)),
+                                     time_var_free=time_var_free,
+                                     initial=initial,
+                                     p=p,
+                                     L_full=L_full,
+                                     L_AR1=L_AR1,
+                                     L_tp1_var=L_tp1_var)
+                           
+                           return(out_d)
+                           
+                         }) %>% bind_rows()
+      
+      # need to reformat by spreading in correct manner
+      # one row per sample
+      # make joint time-person IDs
+      
+      all_time <- gather(all_time,"time_id",value="estimate",
+                         -person_id,-iter) %>% 
+                  mutate(time_id=as.numeric(time_id)) %>% 
+                  arrange(person_id,time_id) %>% 
+                  unite(col='key',time_id,person_id) %>% 
+                  mutate(key2=factor(key,levels=unique(key)),
+                         key3=as.numeric(key2)) %>% 
+                  select(-key,-key2) %>% 
+                  spread(key="key3",value="estimate") %>% 
+        select(-iter) %>% 
+        as.matrix
+      
+      time_grid <- expand.grid(1:length(unique(obj@score_data@score_matrix$time_id)),
+                               unique(as.numeric(obj@score_data@score_matrix$person_id)))
+      
+      colnames(all_time) <- paste0("L_tp1[",time_grid$Var1,",",time_grid$Var2,"]")
+
+      
+    } else if(obj@time_proc==4) {
+      
+      all_time <- L_tp1_var <- obj@stan_samples$draws("L_tp1_var") %>% as_draws_matrix()
+      
+    }
+    
+    return(all_time)
+  }
+  
+  
+  
+  
   
   
 }

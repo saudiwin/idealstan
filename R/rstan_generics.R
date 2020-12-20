@@ -137,7 +137,7 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
   
   # loop over posterior iterations
   if(length(unique(object@score_data@score_matrix$time_id))>1) {
-    L_tp1 <- object@stan_samples$draws('L_tp1')
+    L_tp1 <- .get_varying(object)
   }
   L_full <- object@stan_samples$draws('L_full') %>% as_draws_matrix()
   A_int_free <- object@stan_samples$draws('A_int_free') %>% as_draws_matrix()

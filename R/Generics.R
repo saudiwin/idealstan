@@ -69,6 +69,8 @@ setClass('idealstan',
                     time_proc='numeric',
                     model_code='character',
                     test_model_code='character',
+                    map_over_id="character",
+                    time_sd="numeric",
                     stan_samples='ANY',
                     use_vb='logical',
                     use_groups='logical',
@@ -145,6 +147,7 @@ setGeneric('sample_model',signature='object',
 setMethod('sample_model',signature(object='idealdata'),
           function(object,nchains=4,niters=2000,warmup=floor(niters/2),ncores=NULL,
                    to_use=to_use,this_data=this_data,use_vb=FALSE,within_chain=NULL,
+                   save_files=NULL,
                    tol_rel_obj=NULL,...) {
             
             init_vals <- lapply(1:nchains,.init_stan,
@@ -176,12 +179,17 @@ setMethod('sample_model',signature(object='idealdata'),
             if(use_vb==FALSE) {
               print("Estimating model with full Stan MCMC sampler.")
               
+              if(is.null(save_files)) {
+                save_files <- system.file("csv_files",package="idealstan")
+              } 
+              
               if(within_chain=="threads") {
-
+                browser()
                 out_model <- object@stanmodel_map$sample(data=this_data,chains=nchains,iter_sampling=niters,
                                                      threads_per_chain=ncores,
                                                      iter_warmup=warmup,
                                                      init=init_vals,
+                                                     output_dir=save_files,
                                                      refresh=this_data$id_refresh,
                                                      ...)
               } else {
@@ -189,6 +197,7 @@ setMethod('sample_model',signature(object='idealdata'),
                                                      parallel_chains=ncores,
                                                      iter_warmup=warmup,
                                                      init=init_vals,
+                                                     output_dir=save_files,
                                                      refresh=this_data$id_refresh,
                                                      ...)
               }

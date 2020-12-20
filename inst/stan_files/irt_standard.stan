@@ -65,7 +65,7 @@ real partial_sum(int[,] y_slice,
         vector sigma_abs_free,
         vector L_full, // first T=1 params to constrain
         vector m_sd_free, // marginal standard deviation of GP
-        vector gp_sd_free, // residual GP variation in Y
+        real gp_sd_free, // residual GP variation in Y
         vector ls_int, // extra intercepts for non-inflated latent space
         vector[] L_tp1_var, // non-centered variance
         vector L_AR1, // AR-1 parameters for AR-1 model
@@ -92,11 +92,7 @@ real partial_sum(int[,] y_slice,
         vector[] steps_votes_grm9,
         vector[] steps_votes_grm10,
         real extra_sd,
-        vector time_var_gp_full,
         vector time_var_gp_free,
-        vector m_sd_full,
-        vector gp_sd_full,
-        vector time_var_full,
         vector[] L_tp1,
         vector time_var_free,
         vector gp_length) {
@@ -165,7 +161,7 @@ real partial_sum(int[,] y_slice,
       
       if(time_proc!=4) {
           
-        log_prob += normal_lpdf(to_vector(L_tp1_var[1:T,s])|0,1);
+        log_prob += normal_lpdf(to_vector(L_tp1_var[,s])|0,1);
         
         if(s>1) {
 
@@ -182,32 +178,36 @@ real partial_sum(int[,] y_slice,
 #include /chunks/l_hier_prior_map.stan        
       } else if(time_proc==4) {
         
+            log_prob += inv_gamma_lpdf(time_var_gp_free[s]|5,5); 
+            log_prob += exponential_lpdf(gp_sd_free|1);
+        
         if(s>1) {
-            log_prob += normal_lpdf(time_var_gp_free[s-1]|0,5); // tight-ish prior on additional variances
-            log_prob += normal_lpdf(gp_sd_free[s-1]|0,5);
-            log_prob += normal_lpdf(m_sd_free[s-1]|0,5);
+            log_prob += exponential_lpdf(m_sd_free[s-1]|1);
         }
         
         
         {
           matrix[T, T] cov; // zero-length if not a GP model
           matrix[T, T] L_cov;// zero-length if not a GP model
+          real time_ind_center[T]; // mean-center time index
+          
           // chunk giving a GP prior to legislators/persons
             //create covariance matrices given current values of hiearchical parameters
             if(s==1) {
-              cov =   cov_exp_quad(time_ind, m_sd_par, gp_length[1]) + diag_matrix(rep_vector(square(gp_sd_par),T));
+              //cov =   cov_exp_quad(time_ind, m_sd_par, gp_length[1]) + diag_matrix(rep_vector(square(gp_sd_par),T));
+              cov =   cov_exp_quad(time_ind, m_sd_par, time_var_gp_free[s]) + diag_matrix(rep_vector(gp_sd_free,T));
             } else {
-              cov =   cov_exp_quad(time_ind, m_sd_free[s-1], time_var_gp_free[s-1]) + diag_matrix(rep_vector(square(gp_sd_par),T));
+              cov =   cov_exp_quad(time_ind, m_sd_free[s-1], time_var_gp_free[s]) + diag_matrix(rep_vector(gp_sd_free,T));
             }
 
             L_cov = cholesky_decompose(cov);
 
-            log_prob += multi_normal_cholesky_lpdf(to_vector(L_tp1_var[1:T,s])|rep_vector(0,T) + L_full[s], L_cov);
+            log_prob += multi_normal_cholesky_lpdf(to_vector(L_tp1_var[,s])|rep_vector(0,T) + L_full[s], L_cov);
 
 
           }
           
-          lt = to_vector(L_tp1_var[1:T,s]);
+          lt = to_vector(L_tp1_var[,s]);
         }
         
 
@@ -320,16 +320,6 @@ transformed data {
 	  gp_nT=T;
 	  gp_oT=0;
 	}
-	
-	// need to assign a type of outcome to Y based on the model (discrete or continuous)
-	// to do this we need to trick Stan into assigning to an integer. 
-	
-//#include /chunks/change_outcome.stan
-	
-  //determine how many and which parameters to constrain
-//#include /chunks/create_constrained.stan
-
-// determine whether to restrict variance or not
 
   num_legis_real = num_legis; // promote N to type real
   
@@ -340,7 +330,7 @@ parameters {
   vector[num_bills] sigma_abs_free;
   vector[num_legis] L_full; // first T=1 params to constrain
   vector<lower=0>[gp_N_fix] m_sd_free; // marginal standard deviation of GP
-  vector<lower=0>[gp_N_fix] gp_sd_free; // residual GP variation in Y
+  real<lower=0> gp_sd_free; // residual GP variation in Y
   vector[num_ls] ls_int; // extra intercepts for non-inflated latent space
   vector[T>1 ? num_legis : 0] L_tp1_var[(time_proc!=4) ? (T-1) : T]; // non-centered variance
   vector<lower=-.99,upper=.99>[(T>1 && time_proc==3) ? num_legis : 0] L_AR1; // AR-1 parameters for AR-1 model
@@ -367,7 +357,7 @@ parameters {
   ordered[n_cats_grm[7]-1] steps_votes_grm9[num_bills_grm];
   ordered[n_cats_grm[8]-1] steps_votes_grm10[num_bills_grm];
   real<lower=0> extra_sd;
-  vector[gp_N_fix] time_var_gp_free;
+  vector<lower=0>[gp_N] time_var_gp_free;
   vector<lower=0>[(T>1 && time_proc!=4) ? num_legis-1 : 0] time_var_free;
   
 }
@@ -376,9 +366,9 @@ transformed parameters {
 
   vector[(T>1 && S_type==0) ? num_legis : 0] L_tp1[T];
   vector[(T>1 && S_type==0 && time_proc!=4) ? num_legis : 0] time_var_full;
-  vector[S_type==0 ? gp_N : 0] time_var_gp_full;
+  //vector[S_type==0 ? gp_N : 0] time_var_gp_full;
   vector[S_type==0 ? gp_N : 0] m_sd_full;
-  vector[S_type==0 ? gp_N : 0] gp_sd_full;
+  //vector[S_type==0 ? gp_N : 0] gp_sd_full;
   
   if(T>1 && time_proc!=4 && S_type==0) {
     time_var_full = append_row([time_sd]',time_var_free);
@@ -397,10 +387,10 @@ transformed parameters {
     } else if(time_proc==4) {
       m_sd_full = append_row([m_sd_par]',
                               m_sd_free);
-      gp_sd_full = append_row([gp_sd_par]',
-                              gp_sd_free);
-      time_var_gp_full = append_row(gp_length,
-                                      time_var_gp_free);
+      // gp_sd_full = append_row([gp_sd_par]',
+      //                         gp_sd_free);
+      // time_var_gp_full = append_row(gp_length,
+      //                                 time_var_gp_free);
       
       L_tp1 = L_tp1_var;
       
@@ -436,8 +426,8 @@ for(n in 1:num_legis) {
   
   //create covariance matrices given current values of hiearchical parameters
   
-  cov[n] =   cov_exp_quad(time_ind, m_sd_full[n], time_var_full[n])
-      + diag_matrix(rep_vector(square(gp_sd_full[n]),T));
+  cov[n] =   cov_exp_quad(time_ind, m_sd_full[n], time_var_free[n])
+      + diag_matrix(rep_vector(gp_sd_free,T));
   L_cov[n] = cholesky_decompose(cov[n]);
 
   to_vector(L_tp1_var[1:T,n]) ~ multi_normal_cholesky(rep_vector(0,T) + L_full[n], L_cov[n]); 
@@ -460,9 +450,9 @@ for(n in 1:num_legis) {
   
   if(T>1 && S_type==0) {
     time_var_free ~ normal(0,1); // tight-ish prior on additional variances
-    time_var_gp_free ~ normal(0,1); // tight-ish prior on additional variances
-    gp_sd_free ~ normal(0,2);
-    m_sd_free ~ normal(0,2);
+    time_var_gp_free ~ inv_gamma(5,5); // tight-ish prior on additional variances
+    gp_sd_free ~ exponential(1);
+    m_sd_free ~ exponential(1);
   }
 
   //priors for parameters not included in reduce_sum
@@ -582,11 +572,7 @@ if(S_type==1 && const_type==1) {
         steps_votes_grm9,
         steps_votes_grm10,
         extra_sd,
-        time_var_gp_full,
         time_var_gp_free,
-        m_sd_full,
-        gp_sd_full,
-        time_var_full,
         L_tp1,
         time_var_free,
         gp_length);

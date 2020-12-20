@@ -278,8 +278,10 @@ id_make <- function(score_data=NULL,
   # create data frames for all hierachical parameters
 
   if(!is.null(person_cov)) {
+    
+    # drop intercept
 
-    personm <- model.matrix(person_cov,data=score_data)
+    personm <- model.matrix(person_cov,data=score_data)[,-1]
     
     # need to check for missing data and remove any missing from IDs
     
@@ -313,7 +315,7 @@ id_make <- function(score_data=NULL,
   
   if(!is.null(item_cov)) {
     
-    itemm <- model.matrix(item_cov,data=score_data)
+    itemm <- model.matrix(item_cov,data=score_data)[,-1]
     
     # need to check for missing data and remove any missing from IDs
     
@@ -348,7 +350,7 @@ id_make <- function(score_data=NULL,
   
   if(!is.null(item_cov_miss)) {
     
-    itemmissm <- model.matrix(item_cov_miss,data=score_data)
+    itemmissm <- model.matrix(item_cov_miss,data=score_data)[,-1]
     
     # need to check for missing data and remove any missing from IDs
     
@@ -696,6 +698,8 @@ id_make <- function(score_data=NULL,
 #' @param cmdstan_path_user Default is NULL, and so will default to whatever is set in
 #' \code{cmdstanr} package. Specify a file path  here to use a different \code{cmdtstan}
 #' installation.
+#' @param save_files The location to save CSV files with MCMC draws from \code{cmdstanr}. 
+#' The default is \code{NULL}, which will use a folder in the package directory.
 #' @param ... Additional parameters passed on to Stan's sampling engine. See \code{\link[rstan]{stan}} for more information.
 #' @return A fitted \code{\link{idealstan}} object that contains posterior samples of all parameters either via full Bayesian inference
 #' or a variational approximation if \code{use_vb} is set to \code{TRUE}. This object can then be passed to the plotting functions for further analysis.
@@ -819,6 +823,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                         gp_min_length=0,
                         cmdstan_path_user=NULL,
                         map_over_id="persons",
+                        save_files=NULL,
                            ...) {
 
 
@@ -837,12 +842,15 @@ id_estimate <- function(idealdata=NULL,model_type=2,
     
     stan_code_map <- system.file("stan_files","irt_standard_map.stan",
                              package="idealstan")
+    
+    if(!file.exists(system.file("stan_files","irt_standard",
+                                package="idealstan"))) {
+      print("Compiling model. Will take some time as this is the first time package is used.")
+      print("Have you thought about donating to relief for victims for Yemen's famine?")
+      print("Check out https://www.unicef.org/emergencies/yemen-crisis for more info.")
+    }
       
-    print("Compiling model. Will take some time if this is first time package is used.")
-    print("Have you thought about donating to relief for victims for Yemen's famine?")
-    print("Check out https://www.unicef.org/emergencies/yemen-crisis for more info.")
-      
-      
+    
     idealdata@stanmodel_map <- stan_code_map %>%
         cmdstan_model(include_paths=dirname(stan_code_map),
                       cpp_options = list(stan_threads = TRUE,
@@ -1230,6 +1238,8 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   outobj@model_type <- model_type
   outobj@time_proc <- vary_ideal_pts
   outobj@use_groups <- use_groups
+  outobj@map_over_id <- map_over_id
+  outobj@time_sd <- time_sd
   return(outobj)
   
 }

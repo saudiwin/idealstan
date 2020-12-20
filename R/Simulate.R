@@ -359,7 +359,7 @@ id_sim_rmse <- function(obj,rep=1) {
   
   if(length(unique(as.numeric(obj@score_data@score_matrix$time_id)))>1) {
     true_person <- all_true$true_person[as.numeric(levels(obj@score_data@score_matrix$person_id)),]
-    person_est <- obj@stan_samples$draws("L_tp1") %>% as_draws_matrix()
+    person_est <- .get_varying(obj)
   } else {
     true_person <- all_true$true_person[as.numeric(levels(obj@score_data@score_matrix$person_id))]
     person_est <- obj@stan_samples$draws("L_full") %>% as_draws_matrix()
@@ -506,7 +506,7 @@ id_sim_resid <- function(obj,rep=1) {
   
   if(length(unique(as.numeric(obj@score_data@score_matrix$time_id)))>1) {
     true_person <- all_true$true_person[as.numeric(levels(obj@score_data@score_matrix$person_id)),]
-    person_est <- obj@stan_samples$draws("L_tp1") %>% as_draws_matrix()
+    person_est <- .get_varying(obj)
   } else {
     true_person <- all_true$true_person[as.numeric(levels(obj@score_data@score_matrix$person_id))]
     person_est <- obj@stan_samples$draws("L_full") %>% as_draws_matrix()
