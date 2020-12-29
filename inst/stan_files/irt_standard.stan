@@ -48,7 +48,8 @@ real partial_sum(int[,] y_slice,
         int restrict_low,
         real fix_high,
         real fix_low,
-        real restrict_sd,
+        real restrict_sd_high,
+        real restrict_sd_low,
         real discrim_reg_sd,
         real discrim_abs_sd,
         real legis_sd,
@@ -65,7 +66,7 @@ real partial_sum(int[,] y_slice,
         vector sigma_abs_free,
         vector L_full, // first T=1 params to constrain
         vector m_sd_free, // marginal standard deviation of GP
-        real gp_sd_free, // residual GP variation in Y
+        vector gp_sd_free, // residual GP variation in Y
         vector ls_int, // extra intercepts for non-inflated latent space
         vector[] L_tp1_var, // non-centered variance
         vector L_AR1, // AR-1 parameters for AR-1 model
@@ -121,9 +122,9 @@ real partial_sum(int[,] y_slice,
       // determine whether mapped parameter is restricted
 
       if(s==restrict_high) {
-        log_prob += normal_lpdf(L_full[s]|fix_high,restrict_sd);
+        log_prob += normal_lpdf(L_full[s]|fix_high,restrict_sd_high);
       } else if(s==restrict_low) {
-        log_prob += normal_lpdf(L_full[s]|fix_low,restrict_sd);
+        log_prob += normal_lpdf(L_full[s]|fix_low,restrict_sd_low);
       } else {
         log_prob += normal_lpdf(L_full[s]|0,legis_sd);
       }
@@ -132,9 +133,9 @@ real partial_sum(int[,] y_slice,
     } else if(S_type==0 && const_type==2) {
 
       if(s==restrict_high) {
-        log_prob += normal_lpdf(sigma_reg_free[s]|fix_high,restrict_sd);
+        log_prob += normal_lpdf(sigma_reg_free[s]|fix_high,restrict_sd_high);
       } else if(s==restrict_low) {
-        log_prob += normal_lpdf(sigma_reg_free[s]|fix_low,restrict_sd);
+        log_prob += normal_lpdf(sigma_reg_free[s]|fix_low,restrict_sd_low);
       } else {
         log_prob += normal_lpdf(sigma_reg_free[s]|0,discrim_reg_sd);
       }
@@ -179,7 +180,6 @@ real partial_sum(int[,] y_slice,
       } else if(time_proc==4) {
         
             log_prob += inv_gamma_lpdf(time_var_gp_free[s]|5,5); 
-            log_prob += exponential_lpdf(gp_sd_free|1);
         
         if(s>1) {
             log_prob += exponential_lpdf(m_sd_free[s-1]|1);
@@ -189,15 +189,18 @@ real partial_sum(int[,] y_slice,
         {
           matrix[T, T] cov; // zero-length if not a GP model
           matrix[T, T] L_cov;// zero-length if not a GP model
-          real time_ind_center[T]; // mean-center time index
+          real time_ind_center[T];
+          
+          for(t in 1:T) 
+            time_ind_center[t] = time_ind[t] - mean(time_ind);
           
           // chunk giving a GP prior to legislators/persons
             //create covariance matrices given current values of hiearchical parameters
             if(s==1) {
               //cov =   cov_exp_quad(time_ind, m_sd_par, gp_length[1]) + diag_matrix(rep_vector(square(gp_sd_par),T));
-              cov =   cov_exp_quad(time_ind, m_sd_par, time_var_gp_free[s]) + diag_matrix(rep_vector(gp_sd_free,T));
+              cov =   cov_exp_quad(time_ind_center, m_sd_par, time_var_gp_free[s]) + diag_matrix(rep_vector(gp_sd_free[1],T));
             } else {
-              cov =   cov_exp_quad(time_ind, m_sd_free[s-1], time_var_gp_free[s]) + diag_matrix(rep_vector(gp_sd_free,T));
+              cov =   cov_exp_quad(time_ind_center, m_sd_free[s-1], time_var_gp_free[s]) + diag_matrix(rep_vector(gp_sd_free[1],T));
             }
 
             L_cov = cholesky_decompose(cov);
@@ -268,7 +271,8 @@ data {
   real legis_sd;
   real diff_abs_sd;
   real diff_reg_sd;
-  real restrict_sd;
+  real<lower=0> restrict_sd_high;
+  real<lower=0> restrict_sd_low;
   real ar_sd;
   real time_sd;
   int sum_vals[S,3]; // what to loop over for reduce sum
@@ -330,7 +334,7 @@ parameters {
   vector[num_bills] sigma_abs_free;
   vector[num_legis] L_full; // first T=1 params to constrain
   vector<lower=0>[gp_N_fix] m_sd_free; // marginal standard deviation of GP
-  real<lower=0> gp_sd_free; // residual GP variation in Y
+  vector<lower=0>[time_proc==4 ? 1 : 0] gp_sd_free; // residual GP variation in Y
   vector[num_ls] ls_int; // extra intercepts for non-inflated latent space
   vector[T>1 ? num_legis : 0] L_tp1_var[(time_proc!=4) ? (T-1) : T]; // non-centered variance
   vector<lower=-.99,upper=.99>[(T>1 && time_proc==3) ? num_legis : 0] L_AR1; // AR-1 parameters for AR-1 model
@@ -427,7 +431,7 @@ for(n in 1:num_legis) {
   //create covariance matrices given current values of hiearchical parameters
   
   cov[n] =   cov_exp_quad(time_ind, m_sd_full[n], time_var_free[n])
-      + diag_matrix(rep_vector(gp_sd_free,T));
+      + diag_matrix(rep_vector(gp_sd_free[1],T));
   L_cov[n] = cholesky_decompose(cov[n]);
 
   to_vector(L_tp1_var[1:T,n]) ~ multi_normal_cholesky(rep_vector(0,T) + L_full[n], L_cov[n]); 
@@ -448,48 +452,55 @@ for(n in 1:num_legis) {
     ls_int ~ normal(0,legis_sd);
   }
   
+  gp_sd_free ~ exponential(1); // length 1
+  
   if(T>1 && S_type==0) {
     time_var_free ~ normal(0,1); // tight-ish prior on additional variances
     time_var_gp_free ~ inv_gamma(5,5); // tight-ish prior on additional variances
-    gp_sd_free ~ exponential(1);
     m_sd_free ~ exponential(1);
   }
 
   //priors for parameters not included in reduce_sum
   
 if(S_type==1 && const_type==1) {
-  // don't create priors for persons if map_rect is used on persons
+  // both ID and map for persons
   sigma_reg_free ~ normal(0, discrim_reg_sd);
   sigma_abs_free ~ normal(0,discrim_abs_sd);
   B_int_free ~ normal(0,diff_reg_sd);
   A_int_free ~ normal(0,diff_abs_sd);
 } else if(S_type==1 && const_type==2) {
-  // don't create priors for items
-  L_full ~ normal(0,legis_sd);
+  // map persons, ID items
   B_int_free ~ normal(0,diff_reg_sd);
   A_int_free ~ normal(0,diff_abs_sd);
+  sigma_abs_free ~ normal(0,discrim_abs_sd);
   
   target += id_params(sigma_reg_free,
                         restrict_high,
                         restrict_low,
                         fix_high,
                         fix_low,
-                        restrict_sd,
+                        restrict_sd_high,
+                        restrict_sd_low,
                         0,
                         discrim_reg_sd);
   
 } else if(S_type==0 && const_type==1) {
+  
+  // map items, ID persons
 
   target += id_params(L_full,
                         restrict_high,
                         restrict_low,
                         fix_high,
                         fix_low,
-                        restrict_sd,
+                        restrict_sd_high,
+                        restrict_sd_low,
                         0,
                         legis_sd);  
   
 } else if(S_type==0 && const_type==2) {
+  
+  // map items, ID items
   
   L_full ~ normal(0,legis_sd);
   
@@ -528,7 +539,8 @@ if(S_type==1 && const_type==1) {
         restrict_low,
         fix_high,
         fix_low,
-        restrict_sd,
+        restrict_sd_high,
+        restrict_sd_low,
         discrim_reg_sd,
         discrim_abs_sd,
         legis_sd,

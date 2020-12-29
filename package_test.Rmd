@@ -703,13 +703,13 @@ bin_time_ar_irt_2pl_abs_sim <- id_sim_gen(num_person=10,num_bills=100,inflate=T,
 bin_time_ar_irt_2pl_abs_est <- id_estimate(idealdata=bin_time_ar_irt_2pl_abs_sim,
                                model_type=2,
                                vary_ideal_pts = 'AR1',
-                               within_chain="threads",nchains=3,
+                               within_chain="none",nchains=3,ncores = 3,
                                restrict_ind_high = as.character(sort(bin_time_ar_irt_2pl_abs_sim@simul_data$drift,
                                                                      decreasing=TRUE,
                                                         index=TRUE)$ix[1]),
                               restrict_ind_low = as.character(sort(bin_time_ar_irt_2pl_abs_sim@simul_data$drift,
                                                                    decreasing=F,
-                                                        index=T)$ix[1]),
+                                                        index=T)$ix[1]),restrict_sd_high = 1,
                                fixtype='constrained',id_refresh = 100)
 id_plot_rhats(bin_time_ar_irt_2pl_abs_est)
 ```

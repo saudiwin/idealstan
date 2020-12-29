@@ -155,7 +155,8 @@ setMethod('sample_model',signature(object='idealdata'),
                                 legis_labels=levels(object@score_matrix$person_id)[1:this_data$num_legis],
                                 item_labels=levels(object@score_matrix$item_id)[1:this_data$num_bills],
                                 num_cit=this_data$num_bills,
-                                restrict_sd=this_data$restrict_sd,
+                                restrict_sd_high=this_data$restrict_sd_high,
+                                restrict_sd_low=this_data$restrict_sd_low,
                                 person_sd=this_data$legis_sd,
                                 T=this_data$T,
                                 const_type=this_data$const_type,
@@ -184,7 +185,7 @@ setMethod('sample_model',signature(object='idealdata'),
               } 
               
               if(within_chain=="threads") {
-                browser()
+
                 out_model <- object@stanmodel_map$sample(data=this_data,chains=nchains,iter_sampling=niters,
                                                      threads_per_chain=ncores,
                                                      iter_warmup=warmup,

@@ -287,7 +287,8 @@
 #' @importFrom stats optimize
 #' @noRd
 .init_stan <- function(chain_id=NULL,
-                       restrict_sd=NULL,
+                       restrict_sd_high=NULL,
+                       restrict_sd_low=NULL,
                         person_sd=NULL,
                        num_legis=NULL,
                        legis_labels=NULL,
@@ -1493,7 +1494,8 @@ return(as.vector(idx))
                         min_length=NULL,
                         const_type=NULL,
                         legis_sd=NULL,
-                        restrict_sd=NULL,
+                        restrict_sd_high=NULL,
+                        restrict_sd_low=NULL,
                         restrict_high=NULL,
                         restrict_low=NULL,
                         ar_sd=NULL,
@@ -1828,11 +1830,11 @@ return(as.vector(idx))
 
 #' Function to square data for map_rect
 #' @noRd
-.make_sum_vals <- function(this_data,const_type=NULL,use_groups=FALSE) {
+.make_sum_vals <- function(this_data,map_over_id=NULL,use_groups=FALSE) {
   
   # need a matrix equal to each ID and row number for where it starts/ends
   
-  if(const_type=="persons") {
+  if(map_over_id=="persons") {
     if(use_groups) {
       
       this_data <- dplyr::arrange(this_data, desc(discrete), group_id) 
@@ -1860,7 +1862,8 @@ return(as.vector(idx))
           mutate(type=c("start","end")) %>% 
           spread(key="type",value = "rownum") %>% 
           ungroup %>% 
-          select(person_id,start,end)
+          select(person_id,start,end) %>% 
+          mutate(person_id=as.numeric(person_id))
       
     }
   } else {
@@ -1875,7 +1878,8 @@ return(as.vector(idx))
       mutate(type=c("start","end")) %>% 
       spread(key="type",value = "rownum") %>% 
       ungroup %>% 
-      select(item_id,start,end)
+      select(item_id,start,end) %>% 
+      mutate(item_id=as.numeric(item_id))
     
   }
   
@@ -2006,7 +2010,7 @@ return(as.vector(idx))
         initial <- L_full[,p]
         
           time_func(t=2,
-                           points=as.numeric(unique(obj@score_data@score_matrix$time_id)),
+                           points=1:length(unique(obj@score_data@score_matrix$time_id)),
                            time_var_free=time_var_free,
                            initial=initial,
                            p=p,

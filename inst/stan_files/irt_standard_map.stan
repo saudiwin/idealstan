@@ -48,7 +48,8 @@ real partial_sum(int[,] y_slice,
         int restrict_low,
         real fix_high,
         real fix_low,
-        real restrict_sd,
+        real restrict_sd_high,
+        real restrict_sd_low,
         real discrim_reg_sd,
         real discrim_abs_sd,
         real legis_sd,
@@ -121,9 +122,9 @@ real partial_sum(int[,] y_slice,
       // determine whether mapped parameter is restricted
 
       if(s==restrict_high) {
-        log_prob += normal_lpdf(L_full[s]|fix_high,restrict_sd);
+        log_prob += normal_lpdf(L_full[s]|fix_high,restrict_sd_high);
       } else if(s==restrict_low) {
-        log_prob += normal_lpdf(L_full[s]|fix_low,restrict_sd);
+        log_prob += normal_lpdf(L_full[s]|fix_low,restrict_sd_low);
       } else {
         log_prob += normal_lpdf(L_full[s]|0,legis_sd);
       }
@@ -132,9 +133,9 @@ real partial_sum(int[,] y_slice,
     } else if(S_type==0 && const_type==2) {
 
       if(s==restrict_high) {
-        log_prob += normal_lpdf(sigma_reg_free[s]|fix_high,restrict_sd);
+        log_prob += normal_lpdf(sigma_reg_free[s]|fix_high,restrict_sd_high);
       } else if(s==restrict_low) {
-        log_prob += normal_lpdf(sigma_reg_free[s]|fix_low,restrict_sd);
+        log_prob += normal_lpdf(sigma_reg_free[s]|fix_low,restrict_sd_low);
       } else {
         log_prob += normal_lpdf(sigma_reg_free[s]|0,discrim_reg_sd);
       }
@@ -270,7 +271,8 @@ data {
   real legis_sd;
   real diff_abs_sd;
   real diff_reg_sd;
-  real restrict_sd;
+  real<lower=0> restrict_sd_high;
+  real<lower=0> restrict_sd_low;
   real ar_sd;
   real time_sd;
   int sum_vals[S,3]; // what to loop over for reduce sum
@@ -477,7 +479,8 @@ if(S_type==1 && const_type==1) {
                         restrict_low,
                         fix_high,
                         fix_low,
-                        restrict_sd,
+                        restrict_sd_high,
+                        restrict_sd_low,
                         0,
                         discrim_reg_sd);
   
@@ -490,7 +493,8 @@ if(S_type==1 && const_type==1) {
                         restrict_low,
                         fix_high,
                         fix_low,
-                        restrict_sd,
+                        restrict_sd_high,
+                        restrict_sd_low,
                         0,
                         legis_sd);  
   
@@ -535,7 +539,8 @@ if(S_type==1 && const_type==1) {
         restrict_low,
         fix_high,
         fix_low,
-        restrict_sd,
+        restrict_sd_high,
+        restrict_sd_low,
         discrim_reg_sd,
         discrim_abs_sd,
         legis_sd,

@@ -5,7 +5,8 @@ By constraining two parameters to almost-fixed values (very low SD)
 real id_params(vector p, int high, int low, 
                   real fix_high, 
                   real fix_low,
-                  real sd_fix,
+                  real sd_fix_high,
+                  real sd_fix_low,
                   real mean_val,
                   real sd_val) {
     
@@ -20,7 +21,7 @@ real id_params(vector p, int high, int low,
         prob_dens += normal_lpdf(p[1:(low-1)]|mean_val,sd_val);
       }
       
-      prob_dens += normal_lpdf(p[low]|fix_low,sd_fix);
+      prob_dens += normal_lpdf(p[low]|fix_low,sd_fix_low);
       
         if(high>(low+1)) {
           prob_dens += normal_lpdf(p[(low+1):(high-1)]|mean_val,
@@ -28,7 +29,7 @@ real id_params(vector p, int high, int low,
           }
           
       prob_dens += normal_lpdf(p[high]|fix_high,
-                                        sd_fix);
+                                        sd_fix_high);
                                         
         if(high<N) {
           prob_dens += normal_lpdf(p[(high+1):N]|mean_val,sd_val);
@@ -42,7 +43,7 @@ real id_params(vector p, int high, int low,
         prob_dens += normal_lpdf(p[1:(high-1)]|mean_val,sd_val);
       }
       
-      prob_dens += normal_lpdf(p[high]|fix_high,sd_fix);
+      prob_dens += normal_lpdf(p[high]|fix_high,sd_fix_high);
       
         if(low>(high+1)) {
           prob_dens += normal_lpdf(p[(high+1):(low-1)]|mean_val,
@@ -50,7 +51,7 @@ real id_params(vector p, int high, int low,
           }
           
       prob_dens += normal_lpdf(p[low]|fix_low,
-                                        sd_fix);
+                                        sd_fix_low);
         if(low<N) {
           prob_dens += normal_lpdf(p[(low+1):N]|mean_val,sd_val);
         }
