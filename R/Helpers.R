@@ -359,8 +359,7 @@
                     sigma_abs_free=sigma_abs_free,
                     A_int_free=A_int_free,
                     B_int_free=B_int_free,
-                    m_sd=rep(m_sd_par,num_legis),
-                    time_var_gp_free=log(rep(num_diff*time_range,num_legis))))
+                    m_sd=rep(m_sd_par,num_legis)))
       } else if(time_proc==3) {
         return(list(L_full = L_full,
                     L_AR1 = array(runif(n = num_legis,min = -.5,max=.5)),
@@ -1552,8 +1551,7 @@ return(as.vector(idx))
   # this works because the data were sorted in id_make
   if(length(Y_cont)>1 && length(Y_int)>1) {
 
-      remove_nas <- c(remove_nas_int,
-                      remove_nas_cont)
+      remove_nas <- remove_nas_int | remove_nas_cont
     
   } else if(length(Y_cont)>1) {
     remove_nas <- remove_nas_cont
@@ -1577,7 +1575,7 @@ return(as.vector(idx))
       Y_int <- array(dim=c(0)) + 0L
     }
     
-    N <- as.integer(N_int + N_cont)
+    N <- pmax(N_int, N_cont)
     
     legispoints <- legispoints[remove_nas]
     billpoints <- billpoints[remove_nas]
@@ -1837,33 +1835,38 @@ return(as.vector(idx))
   if(map_over_id=="persons") {
     if(use_groups) {
       
-      this_data <- dplyr::arrange(this_data, desc(discrete), group_id) 
+      this_data <- dplyr::arrange(this_data, group_id,desc(discrete)) 
       
       sum_vals <- this_data %>% 
         mutate(rownum=row_number()) %>% 
-        group_by(discrete,group_id) %>% 
+        group_by(group_id) %>% 
+        arrange(group_id,desc(discrete)) %>% 
         filter(row_number() %in% c(1,n())) %>% 
         select(group_id,rownum) %>% 
-        mutate(type=c("start","end")) %>% 
+        mutate(type=c("start","end")[1:n()]) %>% 
         spread(key="type",value = "rownum") %>% 
         ungroup %>% 
-        select(group_id,start,end)
+        select(group_id,start,end) %>% 
+        mutate(group_id=as.numeric(group_id),
+               end=coalesce(end,start))
       
       
     } else {
       
-      this_data <- dplyr::arrange(this_data, desc(discrete),person_id)
+      this_data <- dplyr::arrange(this_data,person_id,desc(discrete))
         
         sum_vals <- this_data %>% 
           mutate(rownum=row_number()) %>% 
-          group_by(discrete,person_id) %>% 
+          group_by(person_id) %>% 
+          arrange(person_id,desc(discrete)) %>% 
           filter(row_number() %in% c(1,n())) %>% 
           select(person_id,rownum) %>% 
-          mutate(type=c("start","end")) %>% 
+          mutate(type=c("start","end")[1:n()]) %>% 
           spread(key="type",value = "rownum") %>% 
           ungroup %>% 
           select(person_id,start,end) %>% 
-          mutate(person_id=as.numeric(person_id))
+          mutate(person_id=as.numeric(person_id),
+                 end=coalesce(end,start))
       
     }
   } else {
@@ -1875,11 +1878,12 @@ return(as.vector(idx))
       group_by(item_id) %>% 
       filter(row_number() %in% c(1,n())) %>% 
       select(item_id,rownum) %>% 
-      mutate(type=c("start","end")) %>% 
+      mutate(type=c("start","end")[1:n()]) %>% 
       spread(key="type",value = "rownum") %>% 
       ungroup %>% 
       select(item_id,start,end) %>% 
-      mutate(item_id=as.numeric(item_id))
+      mutate(item_id=as.numeric(item_id),
+             end=coalesce(end,start))
     
   }
   

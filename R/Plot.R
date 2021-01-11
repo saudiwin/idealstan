@@ -46,6 +46,7 @@
 #' @import lazyeval
 #' @importFrom rlang parse_quosure as_quosure
 #' @import ggrepel
+#' @import ggthemes
 #' @export
 #' @examples 
 #' 

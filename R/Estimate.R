@@ -212,11 +212,6 @@ id_make <- function(score_data=NULL,
     score_rename$model_id <- "missing"
   } else {
     score_rename$model_id <- test_model
-    # need to sort by integer vs. continuous
-    score_rename$discrete <- as.numeric(score_rename$model_id %in% c(1,2,3,4,5,6,7,8,13,14))
-    score_data$discrete <- as.numeric(score_rename$model_id %in% c(1,2,3,4,5,6,7,8,13,14))
-    score_rename <- arrange(score_rename,desc(discrete))
-    score_data <- arrange(score_data,desc(discrete))
   }
   
   # if time or group IDs don't exist, make dummies
@@ -281,7 +276,7 @@ id_make <- function(score_data=NULL,
     
     # drop intercept
 
-    personm <- model.matrix(person_cov,data=score_data)[,-1]
+    personm <- model.matrix(person_cov,data=score_data)
     
     # need to check for missing data and remove any missing from IDs
     
@@ -458,6 +453,12 @@ id_make <- function(score_data=NULL,
     miss_val[2] <- max_val + 1L
   } 
   
+  
+  
+  # need to sort by integer vs. continuous
+  score_rename$discrete <- as.numeric(score_rename$model_id %in% c(1,2,3,4,5,6,7,8,13,14))
+  score_rename <- arrange(score_rename,desc(discrete),person_id,item_id)
+  
 
   outobj <- new('idealdata',
       score_matrix=score_rename,
@@ -606,6 +607,9 @@ id_make <- function(score_data=NULL,
 #' see vignette for details). Generally speaking, \code{"mpi"} is
 #' more efficient parallelization that can be used on computer
 #' clusters to estimate very large models.
+#' @param grainsize The grainsize parameter for the \code{reduce_sum} 
+#' function used for within-chain parallelization. The default is 1, 
+#' which means 1 chunk (item or person) per core. Set to -1. to use
 #' @param map_over_id This parameter identifies which ID variable to use to construct the 
 #' shards for within-chain parallelization. It defaults to \code{"persons"} but can also take
 #' a value of \code{"items"}. It is recommended to select whichever variable has more
@@ -700,8 +704,15 @@ id_make <- function(score_data=NULL,
 #' @param cmdstan_path_user Default is NULL, and so will default to whatever is set in
 #' \code{cmdstanr} package. Specify a file path  here to use a different \code{cmdtstan}
 #' installation.
+#' @param gpu Whether a GPU is available to speed computation (primarily for GP 
+#' time-varying models).
 #' @param save_files The location to save CSV files with MCMC draws from \code{cmdstanr}. 
 #' The default is \code{NULL}, which will use a folder in the package directory.
+#' @param pos_discrim Whether all discrimination parameters should be constrained to be
+#' positive. If so, the model reduces to a traditional IRT model in which all items 
+#' positively predict ability. Setting this to \code{TRUE} will also eliminate the need
+#' to use other parameters for identification, though the options should still be 
+#' specified to prevent errors.
 #' @param ... Additional parameters passed on to Stan's sampling engine. See \code{\link[rstan]{stan}} for more information.
 #' @return A fitted \code{\link{idealstan}} object that contains posterior samples of all parameters either via full Bayesian inference
 #' or a variational approximation if \code{use_vb} is set to \code{TRUE}. This object can then be passed to the plotting functions for further analysis.
@@ -795,6 +806,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                         inflate_zero=FALSE,
                         vary_ideal_pts='none',
                         within_chain="none",
+                        grainsize=1,
                         mpi_export=NULL,
                         use_subset=FALSE,sample_it=FALSE,
                            subset_group=NULL,subset_person=NULL,sample_size=20,
@@ -825,8 +837,10 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                         gp_m_sd_par=0.3,
                         gp_min_length=0,
                         cmdstan_path_user=NULL,
+                        gpu=FALSE,
                         map_over_id="persons",
                         save_files=NULL,
+                        pos_discrim=FALSE,
                            ...) {
 
 
@@ -846,6 +860,9 @@ id_estimate <- function(idealdata=NULL,model_type=2,
     stan_code_map <- system.file("stan_files","irt_standard_map.stan",
                              package="idealstan")
     
+    stan_code_gpu <- system.file("stan_files","irt_standard_gpu.stan",
+                                 package="idealstan")
+    
     if(!file.exists(system.file("stan_files","irt_standard",
                                 package="idealstan"))) {
       print("Compiling model. Will take some time as this is the first time package is used.")
@@ -858,6 +875,14 @@ id_estimate <- function(idealdata=NULL,model_type=2,
         cmdstan_model(include_paths=dirname(stan_code_map),
                       cpp_options = list(stan_threads = TRUE,
                                          STAN_CPP_OPTIMS=TRUE))
+    
+    idealdata@stanmodel_gpu <- stan_code_gpu %>%
+      cmdstan_model(include_paths=dirname(stan_code_map),
+                    cpp_options = list(stan_threads = TRUE,
+                                       STAN_CPP_OPTIMS=TRUE,
+                                       STAN_OPENCL=TRUE,
+                                       opencl_platform_id = 0,
+                                       opencl_device_id = 0))
     
     idealdata@stanmodel <- stan_code %>%
       cmdstan_model(include_paths=dirname(stan_code),
@@ -964,14 +989,14 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   }
 
     if(("outcome_cont" %in% names(idealdata@score_matrix)) && ("outcome_disc" %in% names(idealdata@score_matrix))) {
-      Y_int <- idealdata@score_matrix$outcome_disc[idealdata@score_matrix$discrete==1]
-      Y_cont <- idealdata@score_matrix$outcome_cont[idealdata@score_matrix$discrete==0]
+      Y_int <- idealdata@score_matrix$outcome_disc
+      Y_cont <- idealdata@score_matrix$outcome_cont
     } else if ("outcome_cont" %in% names(idealdata@score_matrix)) {
       Y_int <- array(0)
-      Y_cont <- idealdata@score_matrix$outcome_cont[idealdata@score_matrix$discrete==0]
+      Y_cont <- idealdata@score_matrix$outcome_cont
     } else {
       Y_cont <- array(0)
-      Y_int <- idealdata@score_matrix$outcome_disc[idealdata@score_matrix$discrete==1]
+      Y_int <- idealdata@score_matrix$outcome_disc
     }
   
   
@@ -1175,7 +1200,8 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     restrict_low=idealdata@restrict_ind_low,
                     fix_high=idealdata@restrict_num_high,
                     fix_low=idealdata@restrict_num_low,
-                    num_diff=gp_num_diff)
+                    num_diff=gp_num_diff,
+                    pos_discrim=as.integer(pos_discrim))
   
   # need to save n_cats
   
@@ -1190,6 +1216,8 @@ id_estimate <- function(idealdata=NULL,model_type=2,
     
     outobj <- sample_model(object=idealdata,nchains=nchains,niters=niters,warmup=warmup,ncores=ncores,
                            this_data=this_data,use_vb=use_vb,
+                           gpu=gpu,
+                           save_files=save_files,
                            tol_rel_obj=tol_rel_obj,within_chain=within_chain,
                            ...)
     

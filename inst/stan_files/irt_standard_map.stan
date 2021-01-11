@@ -22,6 +22,7 @@ int r_in(int pos,int[] pos_var) {
 real partial_sum(int[,] y_slice,
         int start, int end,
         int T,
+        int pos_discrim,
         int gp_N,
         int num_legis,
         int[] Y_int,
@@ -70,7 +71,7 @@ real partial_sum(int[,] y_slice,
         vector ls_int, // extra intercepts for non-inflated latent space
         vector[] L_tp1_var, // non-centered variance
         vector L_AR1, // AR-1 parameters for AR-1 model
-        vector sigma_reg_free,
+        vector sigma_reg_full,
         vector legis_x,
         vector sigma_reg_x,
         vector sigma_abs_x,
@@ -120,32 +121,40 @@ real partial_sum(int[,] y_slice,
 
     if(const_type==1 && S_type==1) {
       // determine whether mapped parameter is restricted
-
-      if(s==restrict_high) {
-        log_prob += normal_lpdf(L_full[s]|fix_high,restrict_sd_high);
-      } else if(s==restrict_low) {
-        log_prob += normal_lpdf(L_full[s]|fix_low,restrict_sd_low);
-      } else {
-        log_prob += normal_lpdf(L_full[s]|0,legis_sd);
-      }
-
-
+        if(pos_discrim==0) {
+          if(s==restrict_high) {
+            log_prob += normal_lpdf(L_full[s]|fix_high,restrict_sd_high);
+          } else if(s==restrict_low) {
+            log_prob += normal_lpdf(L_full[s]|fix_low,restrict_sd_low);
+          } else {
+            log_prob += normal_lpdf(L_full[s]|0,legis_sd);
+          }
+        } else {
+          log_prob += normal_lpdf(L_full[s]|0,legis_sd);
+        }
+      
     } else if(S_type==0 && const_type==2) {
-
-      if(s==restrict_high) {
-        log_prob += normal_lpdf(sigma_reg_free[s]|fix_high,restrict_sd_high);
-      } else if(s==restrict_low) {
-        log_prob += normal_lpdf(sigma_reg_free[s]|fix_low,restrict_sd_low);
+      
+      if(pos_discrim==0) {
+        if(s==restrict_high) {
+          log_prob += normal_lpdf(sigma_reg_full[s]|fix_high,restrict_sd_high);
+        } else if(s==restrict_low) {
+          log_prob += normal_lpdf(sigma_reg_full[s]|fix_low,restrict_sd_low);
+        } else {
+          log_prob += normal_lpdf(sigma_reg_full[s]|0,discrim_reg_sd);
+        }
       } else {
-        log_prob += normal_lpdf(sigma_reg_free[s]|0,discrim_reg_sd);
+        log_prob += normal_lpdf(sigma_reg_full[s]|0,discrim_reg_sd);
       }
+
+      
 
 
     } else if(S_type==0 && const_type==1) {
 
       // priors if items
 
-      log_prob += normal_lpdf(sigma_reg_free[s]|0, discrim_reg_sd);
+      log_prob += normal_lpdf(sigma_reg_full[s]|0, discrim_reg_sd);
       log_prob += normal_lpdf(sigma_abs_free[s]|0,discrim_abs_sd);
       log_prob += normal_lpdf(B_int_free[s]|0,diff_reg_sd);
       log_prob += normal_lpdf(A_int_free[s]|0,diff_abs_sd);
@@ -234,10 +243,12 @@ data {
   int N_int; // if outcome is an integer
   int N_cont; // if outcome is continuous
   int T; // number of time points
+  int grainsize,
   int Y_int[N_int]; // integer outcome
   int within_chain; // whether to use map_rect
   real Y_cont[N_cont]; // continuous outcome
   int y_int_miss; // missing value for integers
+  int<lower=0, upper=1> pos_discrim; // whether to constrain all discrimination parameters to be positive (removes need for further identification conditions)
   real y_cont_miss; // missing value for continuous data
   int S;
   int S_type; // whether shards are based on persons or items
@@ -338,7 +349,8 @@ parameters {
   vector[num_ls] ls_int; // extra intercepts for non-inflated latent space
   vector[T>1 ? num_legis : 0] L_tp1_var[(time_proc!=4) ? (T-1) : T]; // non-centered variance
   vector<lower=-.99,upper=.99>[(T>1 && time_proc==3) ? num_legis : 0] L_AR1; // AR-1 parameters for AR-1 model
-  vector[num_bills] sigma_reg_free;
+  vector[pos_discrim == 0 ? num_bills : 0] sigma_reg_free;
+  vector<lower=0>[pos_discrim == 1 ? num_bills : 0] sigma_reg_pos;
   vector[LX] legis_x;
   vector[SRX] sigma_reg_x;
   vector[SAX] sigma_abs_x;
@@ -369,6 +381,7 @@ parameters {
 transformed parameters {
 
   vector[(T>1 && S_type==0) ? num_legis : 0] L_tp1[T];
+  vector[num_bills] sigma_reg_full;
   vector[(T>1 && S_type==0 && time_proc!=4) ? num_legis : 0] time_var_full;
   //vector[S_type==0 ? gp_N : 0] time_var_gp_full;
   vector[S_type==0 ? gp_N : 0] m_sd_full;
@@ -376,6 +389,12 @@ transformed parameters {
   
   if(T>1 && time_proc!=4 && S_type==0) {
     time_var_full = append_row([time_sd]',time_var_free);
+  }
+  
+  if(pos_discrim==0) {
+    sigma_reg_full = sigma_reg_free;
+  } else {
+    sigma_reg_full = sigma_reg_pos;
   }
   
     //combine constrained and unconstrained parameters
@@ -405,8 +424,6 @@ transformed parameters {
 }
 
 model {
-  
-  int grainsize = 1;
   
   legis_x ~ normal(0,5);
   sigma_abs_x ~ normal(0,5);
@@ -465,6 +482,7 @@ for(n in 1:num_legis) {
 if(S_type==1 && const_type==1) {
   // both ID and map for persons
   sigma_reg_free ~ normal(0, discrim_reg_sd);
+  sigma_reg_pos ~ exponential(discrim_reg_sd);
   sigma_abs_free ~ normal(0,discrim_abs_sd);
   B_int_free ~ normal(0,diff_reg_sd);
   A_int_free ~ normal(0,diff_abs_sd);
@@ -474,7 +492,8 @@ if(S_type==1 && const_type==1) {
   A_int_free ~ normal(0,diff_abs_sd);
   sigma_abs_free ~ normal(0,discrim_abs_sd);
   
-  target += id_params(sigma_reg_free,
+  if(pos_discrim==0) {
+    target += id_params(sigma_reg_free,
                         restrict_high,
                         restrict_low,
                         fix_high,
@@ -483,12 +502,17 @@ if(S_type==1 && const_type==1) {
                         restrict_sd_low,
                         0,
                         discrim_reg_sd);
+  } else {
+    sigma_reg_pos ~ exponential(discrim_reg_sd);
+  }
+  
+  
   
 } else if(S_type==0 && const_type==1) {
   
   // map items, ID persons
-
-  target += id_params(L_full,
+  if(pos_discrim==0) {
+    target += id_params(L_full,
                         restrict_high,
                         restrict_low,
                         fix_high,
@@ -496,7 +520,11 @@ if(S_type==1 && const_type==1) {
                         restrict_sd_high,
                         restrict_sd_low,
                         0,
-                        legis_sd);  
+                        legis_sd); 
+  } else {
+    L_full ~ normal(0,legis_sd);
+  }
+   
   
 } else if(S_type==0 && const_type==2) {
   
@@ -513,6 +541,7 @@ if(S_type==1 && const_type==1) {
                       sum_vals,
                      grainsize,
                      T,
+                     pos_discrim,
                      gp_N,
                      num_legis,
                      Y_int,
@@ -561,7 +590,7 @@ if(S_type==1 && const_type==1) {
         ls_int, // extra intercepts for non-inflated latent space
         L_tp1_var, // non-centered variance
         L_AR1, // AR-1 parameters for AR-1 model
-        sigma_reg_free,
+        sigma_reg_full,
         legis_x,
         sigma_reg_x,
         sigma_abs_x,

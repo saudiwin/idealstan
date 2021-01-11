@@ -25,6 +25,7 @@ setClass('idealdata',
                     restrict_data='list',
                     stanmodel='ANY',
                     stanmodel_map="ANY",
+                    stanmodel_gpu='ANY',
                     n_cats_rat="ANY",
                     n_cats_grm="ANY",
                     order_cats_rat="ANY",
@@ -147,7 +148,7 @@ setGeneric('sample_model',signature='object',
 setMethod('sample_model',signature(object='idealdata'),
           function(object,nchains=4,niters=2000,warmup=floor(niters/2),ncores=NULL,
                    to_use=to_use,this_data=this_data,use_vb=FALSE,within_chain=NULL,
-                   save_files=NULL,
+                   save_files=NULL,gpu=FALSE,
                    tol_rel_obj=NULL,...) {
             
             init_vals <- lapply(1:nchains,.init_stan,
@@ -185,14 +186,25 @@ setMethod('sample_model',signature(object='idealdata'),
               } 
               
               if(within_chain=="threads") {
+                
+                if(gpu) {
+                  out_model <- object@stanmodel_gpu$sample(data=this_data,chains=nchains,iter_sampling=niters,
+                                                           threads_per_chain=ncores,
+                                                           iter_warmup=warmup,
+                                                           init=init_vals,
+                                                           output_dir=save_files,
+                                                           refresh=this_data$id_refresh,
+                                                           ...)
+                } else {
+                  out_model <- object@stanmodel_map$sample(data=this_data,chains=nchains,iter_sampling=niters,
+                                                           threads_per_chain=ncores,
+                                                           iter_warmup=warmup,
+                                                           init=init_vals,
+                                                           output_dir=save_files,
+                                                           refresh=this_data$id_refresh,
+                                                           ...)
+                }
 
-                out_model <- object@stanmodel_map$sample(data=this_data,chains=nchains,iter_sampling=niters,
-                                                     threads_per_chain=ncores,
-                                                     iter_warmup=warmup,
-                                                     init=init_vals,
-                                                     output_dir=save_files,
-                                                     refresh=this_data$id_refresh,
-                                                     ...)
               } else {
                 out_model <- object@stanmodel$sample(data=this_data,chains=nchains,iter_sampling=niters,
                                                      parallel_chains=ncores,
