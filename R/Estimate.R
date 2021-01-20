@@ -1202,15 +1202,6 @@ id_estimate <- function(idealdata=NULL,model_type=2,
       mpi_export <- rstudioapi::selectDirectory(caption="Choose a directory to export code and data for running MPI in cmdstan:")
     }
     
-    # need to unbox all singleton vectors then write out to JSON (much faster)
-    
-    # this_data <- lapply(this_data, function (x) {
-    #   if(length(x)==1) {
-    #     x <- unbox(x)
-    #   }
-    #   x
-    # })
-    
     #write_json(this_data,paste0(mpi_export,"/idealstan_mpi_data.json"))
 
     # need to stan_rdump because of zero-length 2-d arrays
@@ -1239,58 +1230,74 @@ id_estimate <- function(idealdata=NULL,model_type=2,
     return("You will need to run the model in cmdstan yourself and load the resulting data back in to R with the id_load_mpi function. See vignette for details.")
     
   } 
-
-  
-  
-  outobj@model_type <- model_type
-  outobj@time_proc <- vary_ideal_pts
-  outobj@use_groups <- use_groups
-  outobj@map_over_id <- map_over_id
-  outobj@time_sd <- time_sd
-  return(outobj)
-  
-}
-
-#' Load Results from CMDstan to Idealstan Object
-#' 
-#' Given the location of the folder of seralized data from id_estimate,
-#' and the name of the CSV output from a CMDstan run, 
-#' this function will load the original idealstan data and the 
-#' Markov samples to create an idealstan object that can be 
-#' used for further analysis with idealstan functions.
-#' 
-#' @param folder The location of the folder (full file path) 
-#' that was given to the \code{id_estimate} function to 
-#' export idealstan data
-#' @param samples The full file path to the CSV output
-#' from the successful CMDstan run
-#' @export
-id_load_mpi <- function(folder=NULL,
-                          samples=NULL) {
-  
-  
-  # first load the original idealdata object
-  
-  idealdata <- readRDS(paste0(folder,"/idealdata_object.rds"))
-  
-  extra_params <- readRDS(paste0(folder,"/extra_params.rds"))
-  
-  print("Loading CSV samples. May take some time.")
-  
-  stan_samples <- read_stan_csv(samples)
-  
-  # make an idealstan object
-  
-  outobj <- new('idealstan',
-                score_data=idealdata,
-                model_code=idealdata@stanmodel@model_code,
-                stan_samples=stan_samples,
-                use_vb=extra_params$use_vb)
   
   outobj@model_type <- extra_params$model_type
   outobj@time_proc <- extra_params$vary_ideal_pts
   outobj@use_groups <- extra_params$use_groups
   
+  outobj@model_type <- model_type
+  outobj@time_proc <- vary_ideal_pts
+  outobj@use_groups <- use_groups
+  outobj@map_over_id <- extra_params$map_over_id
+  outobj@time_sd <- extra_params$time_sd
   return(outobj)
   
 }
+
+#' Reconstitute an idealstan object after an MPI/cluster run
+#' 
+#' This convenience function takes as input a file location storing the results of a 
+#' MPI/cluster run. 
+#' 
+#' Given the CSV output from cmdstan and the original files exported 
+#' from the \code{id_estimate} function, this function will create an \code{idealstan}
+#' object which can be further analyzed with other \code{idealstan} package helper
+#' functions.
+#'  
+#' @param object A fitted \code{idealstan} object (see \code{\link{id_estimate}})
+#' @param file_loc A string with the location of the original files exported by 
+#' \code{id_estimate}
+#' @param csv_name A vector of character names of CSV files with posterior estimates from 
+#' \code{cmdstan}. Should be located in the same place as \code{file_loc}.
+#' @importFrom posterior summarize_draws
+#' @export
+id_rebuild_mpi <- function(file_loc=NULL,
+                   csv_name=NULL) {
+
+            
+            if(is.null(file_loc)) {
+              file_loc <- rstudioapi::selectDirectory(caption="Choose the directory containing relevant files to rebuild object:")
+            }
+            
+            all_csvs <- read_cmdstan_csv(paste0(file_loc,"/",csv_name))
+            
+            object <- readRDS(paste0(file_loc,"/","idealdata_object.rds"))
+            
+            extra_params <- readRDS(paste0(file_loc,"/",extra_params.rds))
+            
+            outobj <- new('idealstan',
+                          score_data=object,
+                          model_code=readLines(paste0(file_loc,"/","idealstan_stan_code.stan")),
+                          stan_samples=all_csvs,
+                          use_vb=F)
+            
+            # add safe summaries
+            
+            to_sum <- summarize_draws(outobj@stan_samples$post_warmup_draws)
+            
+            to_sum <- select(to_sum,variable,lower="q95",mean,median,upper="q5",rhat,ess_bulk,ess_tail)
+            
+            outobj@summary <- to_sum
+            
+            outobj@mpi <- T
+            
+            outobj@model_type <- extra_params$model_type
+            outobj@time_proc <- extra_params$vary_ideal_pts
+            outobj@use_groups <- extra_params$use_groups
+            outobj@map_over_id <- extra_params$map_over_id
+            outobj@time_sd <- extra_params$time_sd
+            
+            return(outobj)
+            
+            
+  }

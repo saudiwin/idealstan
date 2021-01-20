@@ -160,12 +160,37 @@
   } else {
     # need to match estimated parameters to original IDs
     if(type=='ideal_pts') {
-      person_params <- object@stan_samples$draws('L_full') %>% as_draws_df %>% 
-        dplyr::select(-`.chain`,-`.iteration`,-`.draw`)
+      
+      if(object@mpi) {
+        
+        person_params <- subset_draws(object@stan_samples,'L_full') %>% as_draws_df %>% 
+          dplyr::select(-`.chain`,-`.iteration`,-`.draw`)
+        
+      } else {
+        
+        person_params <- object@stan_samples$draws('L_full') %>% as_draws_df %>% 
+          dplyr::select(-`.chain`,-`.iteration`,-`.draw`)
+        
+      }
+      
+      
     } else if(type=='variance') {
-      # load time-varying person variances
+      
+      if(object@mpi) {
+        
+        # load time-varying person variances
+        person_params <- subset_draws(object@stan_samples,'time_var_full') %>% as_draws_df %>% 
+          dplyr::select(-`.chain`,-`.iteration`,-`.draw`)
+        
+      } else {
+        
+        # load time-varying person variances
         person_params <- object@stan_samples$draws('time_var_full') %>% as_draws_df %>% 
           dplyr::select(-`.chain`,-`.iteration`,-`.draw`)
+        
+      }
+      
+      
     }
     
     person_params <- person_params %>% gather(key = legis,value=ideal_pts) 
@@ -1896,17 +1921,45 @@ return(as.vector(idx))
     
     # needs to be in the same format, varying in T then person
     
-    all_time <- obj@stan_samples$draws("L_tp1") %>% as_draws_matrix()
+    if(obj@mpi) {
+      
+      all_time <- subset_draws(obj@stan_samples,"L_tp1") %>% as_draws_matrix()
+      
+    } else {
+      
+      all_time <- obj@stan_samples$draws("L_tp1") %>% as_draws_matrix()
+      
+    }
     
   } else {
     
-    L_tp1_var <- obj@stan_samples$draws("L_tp1_var") %>% as_draws_matrix()
+    if(obj@mpi) {
+      
+      L_tp1_var <- subset_draws(obj@stan_samples,"L_tp1_var") %>% as_draws_matrix()
+  
+    } else {
+      
+      L_tp1_var <- obj@stan_samples$draws("L_tp1_var") %>% as_draws_matrix()
+      
+    }
+    
+    
     
     if(obj@time_proc==2) {
       
-      L_full <- obj@stan_samples$draws("L_full") %>% as_draws_matrix()
-      
-      time_var_free <- obj@stan_samples$draws("time_var_free") %>% as_draws_matrix()
+      if(obj@mpi) {
+        
+        L_full <- subset_draws(obj@stan_samples,"L_full") %>% as_draws_matrix()
+        
+        time_var_free <- subset_draws(obj@stan_samples,"time_var_free") %>% as_draws_matrix()
+        
+      } else {
+        
+        L_full <- obj@stan_samples$draws("L_full") %>% as_draws_matrix()
+        
+        time_var_free <- obj@stan_samples$draws("time_var_free") %>% as_draws_matrix()
+        
+      }
       
       #make a grid, time varying fastest
       
@@ -2043,11 +2096,23 @@ return(as.vector(idx))
       
     } else if(obj@time_proc==3) {
       
-      L_full <- obj@stan_samples$draws("L_full") %>% as_draws_matrix()
-      
-      time_var_free <- obj@stan_samples$draws("time_var_free") %>% as_draws_matrix()
-      
-      L_AR1 <- obj@stan_samples$draws("L_AR1") %>% as_draws_matrix()
+      if(obj@mpi) {
+        
+        L_full <- subset_draws(obj@stan_samples,"L_full") %>% as_draws_matrix()
+        
+        time_var_free <- subset_draws(obj@stan_samples,"time_var_free") %>% as_draws_matrix()
+        
+        L_AR1 <- subset_draws(obj@stan_samples,"L_AR1") %>% as_draws_matrix()
+        
+      } else {
+        
+        L_full <- obj@stan_samples$draws("L_full") %>% as_draws_matrix()
+        
+        time_var_free <- obj@stan_samples$draws("time_var_free") %>% as_draws_matrix()
+        
+        L_AR1 <- obj@stan_samples$draws("L_AR1") %>% as_draws_matrix()
+        
+      }
       
       #make a grid, time varying fastest
       
