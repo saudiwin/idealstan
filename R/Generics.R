@@ -189,7 +189,8 @@ setMethod('sample_model',signature(object='idealdata'),
                 
                 if(gpu) {
                   out_model <- object@stanmodel_gpu$sample(data=this_data,chains=nchains,iter_sampling=niters,
-                                                           threads_per_chain=ncores,
+                                                           parallel_chains=nchains,
+                                                           threads_per_chain=floor(ncores/nchains),
                                                            iter_warmup=warmup,
                                                            init=init_vals,
                                                            output_dir=save_files,
@@ -197,7 +198,8 @@ setMethod('sample_model',signature(object='idealdata'),
                                                            ...)
                 } else {
                   out_model <- object@stanmodel_map$sample(data=this_data,chains=nchains,iter_sampling=niters,
-                                                           threads_per_chain=ncores,
+                                                           parallel_chains=nchains,
+                                                           threads_per_chain=floor(ncores/nchains),
                                                            iter_warmup=warmup,
                                                            init=init_vals,
                                                            output_dir=save_files,

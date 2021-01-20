@@ -276,7 +276,7 @@ id_make <- function(score_data=NULL,
     
     # drop intercept
 
-    personm <- model.matrix(person_cov,data=score_data)
+    personm <- model.matrix(person_cov,data=score_data)[,-1,drop=FALSE]
     
     # need to check for missing data and remove any missing from IDs
     
@@ -287,13 +287,15 @@ id_make <- function(score_data=NULL,
     # need to remove any constituent terms for IDs from the model matrix to avoid collinearity with 
     # model parameters
     
-    check_ids <- sapply(orig_id, function(c) {
+    check_ids <- sapply(unique(score_rename$person_id), function(c) {
       check_all <- grepl(x=colnames(personm),
                          pattern=c)
       check_all_colon <- grepl(x=colnames(personm),
-                               pattern=":")
-      check_all & !check_all_colon
-    }) %>% apply(1,any)
+                               pattern=paste0(c,":","|",":",c))
+      matrix(check_all & !check_all_colon,nrow=length(check_all))
+    },simplify = F) %>% 
+      do.call(rbind, .) %>% 
+      apply(2,any)
     
     if(remove_cov_int) {
       personm <- personm[,!check_ids] 
@@ -310,7 +312,7 @@ id_make <- function(score_data=NULL,
   
   if(!is.null(item_cov)) {
     
-    itemm <- model.matrix(item_cov,data=score_data)[,-1]
+    itemm <- model.matrix(item_cov,data=score_data)[,-1,drop=F]
     
     # need to check for missing data and remove any missing from IDs
     
@@ -321,13 +323,15 @@ id_make <- function(score_data=NULL,
     # need to remove any constituent terms for IDs from the model matrix to avoid collinearity with 
     # model parameters
     
-    check_ids <- sapply(orig_id, function(c) {
+    check_ids <- sapply(unique(score_rename$item_id), function(c) {
       check_all <- grepl(x=colnames(itemm),
                          pattern=c)
       check_all_colon <- grepl(x=colnames(itemm),
-                               pattern=":")
-      check_all & !check_all_colon
-    }) %>% apply(1,any)
+                               pattern=paste0(c,":","|",":",c))
+      matrix(check_all & !check_all_colon,nrow=length(check_all))
+    },simplify = F) %>% 
+      do.call(rbind, .) %>% 
+      apply(2,any)
     
     if(remove_cov_int) {
       itemm <- itemm[,!check_ids]
@@ -345,7 +349,7 @@ id_make <- function(score_data=NULL,
   
   if(!is.null(item_cov_miss)) {
     
-    itemmissm <- model.matrix(item_cov_miss,data=score_data)[,-1]
+    itemmissm <- model.matrix(item_cov_miss,data=score_data)[,-1,drop=FALSE]
     
     # need to check for missing data and remove any missing from IDs
     
@@ -356,13 +360,15 @@ id_make <- function(score_data=NULL,
     # need to remove any constituent terms for IDs from the model matrix to avoid collinearity with 
     # model parameters
     
-    check_ids <- sapply(orig_id, function(c) {
+    check_ids <- sapply(unique(score_rename$item_id), function(c) {
       check_all <- grepl(x=colnames(itemmissm),
                          pattern=c)
       check_all_colon <- grepl(x=colnames(itemmissm),
-                               pattern=":")
-      check_all & !check_all_colon
-    }) %>% apply(1,any)
+                               pattern=paste0(c,":","|",":",c))
+      matrix(check_all & !check_all_colon,nrow=length(check_all))
+    },simplify = F) %>% 
+      do.call(rbind, .) %>% 
+      apply(2,any)
     
     if(remove_cov_int) {
       itemmissm <- itemmissm[,!check_ids]
@@ -799,7 +805,6 @@ id_make <- function(score_data=NULL,
 #' }
 #' @importFrom stats dnorm dpois model.matrix qlogis relevel rpois update
 #' @importFrom utils person
-#' @importFrom  jsonlite unbox write_json
 #' @import cmdstanr
 #' @export
 id_estimate <- function(idealdata=NULL,model_type=2,
@@ -1045,7 +1050,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     y_cont_miss=remove_list$y_cont_miss,
                     S=nrow(sum_vals),
                     S_type=as.numeric(map_over_id=="persons"),
-                    sum_vals=sum_vals,
+                    sum_vals=as.matrix(sum_vals),
                     within_chain=as.numeric(within_chain!="none"),
                     T=remove_list$max_t,
                     num_legis=remove_list$num_legis,
@@ -1092,7 +1097,8 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     id_refresh=id_refresh,
                     const_type=switch(const_type,
                                       persons=1L,
-                                      items=2L))
+                                      items=2L),
+                    grainsize=grainsize)
 
   idealdata <- id_model(object=idealdata,fixtype=fixtype,this_data=this_data,
                         nfix=nfix,restrict_ind_high=restrict_ind_high,
@@ -1192,7 +1198,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     m_sd_par=gp_m_sd_par,
                     min_length=gp_min_length,
                     id_refresh=id_refresh,
-                    sum_vals=sum_vals,
+                    sum_vals=as.matrix(sum_vals),
                     const_type=switch(const_type,
                                       persons=1L,
                                       items=2L),
@@ -1201,7 +1207,8 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     fix_high=idealdata@restrict_num_high,
                     fix_low=idealdata@restrict_num_low,
                     num_diff=gp_num_diff,
-                    pos_discrim=as.integer(pos_discrim))
+                    pos_discrim=as.integer(pos_discrim),
+                    grainsize=grainsize)
   
   # need to save n_cats
   
@@ -1239,14 +1246,14 @@ id_estimate <- function(idealdata=NULL,model_type=2,
     #   x
     # })
     
-    #write_json(this_data,paste0(mpi_export,"/idealstan_mpi_data.json"))
+    write_stan_json(this_data,paste0(mpi_export,"/idealstan_mpi_data.json"))
 
     # need to stan_rdump because of zero-length 2-d arrays
     
-    stan_rdump(ls(this_data),file=paste0(mpi_export,"/idealstan_mpi_data.R"),
-                           envir = list2env(this_data))
+    # stan_rdump(ls(this_data),file=paste0(mpi_export,"/idealstan_mpi_data.R"),
+    #                        envir = list2env(this_data))
     
-    writeLines(idealdata@stanmodel@model_code,con=file(paste0(mpi_export,"/idealstan_stan_code.stan")))
+    writeLines(idealdata@stanmodel$code(),con=file(paste0(mpi_export,"/idealstan_stan_code.stan")))
     
     saveRDS(idealdata,paste0(mpi_export,"/idealdata_object.rds"))
     
@@ -1260,7 +1267,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
     
     # need all the chunks
     dir.create(paste0(mpi_export,"/chunks"),showWarnings=FALSE)
-    chunks <- system.file("chunks",package="idealstan")
+    chunks <- system.file("stan_files/chunks",package="idealstan")
     chunks_files <- list.files(chunks,full.names=T)
     file.copy(chunks_files,to=paste0(mpi_export,"/chunks"),overwrite = T)
     

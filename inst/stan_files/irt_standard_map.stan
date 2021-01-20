@@ -243,7 +243,7 @@ data {
   int N_int; // if outcome is an integer
   int N_cont; // if outcome is continuous
   int T; // number of time points
-  int grainsize,
+  int grainsize;
   int Y_int[N_int]; // integer outcome
   int within_chain; // whether to use map_rect
   real Y_cont[N_cont]; // continuous outcome
@@ -537,7 +537,7 @@ if(S_type==1 && const_type==1) {
 
   //all model types
 
-  target += reduce_sum(partial_sum,
+  target += reduce_sum_static(partial_sum,
                       sum_vals,
                      grainsize,
                      T,

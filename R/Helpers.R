@@ -1319,24 +1319,15 @@ return(as.vector(idx))
 
 #' A wrapper around na_if that also works on factors
 #' @noRd
-.na_if <- function(x,to_na=NULL,discrete_mods=NULL,pad_id=NULL) {
+.na_if <- function(x,to_na=NULL,discrete_mods=NULL) {
   
-  if(is.null(pad_id)) {
     if(is.factor(x)) {
       levels(x)[levels(x)==to_na] <- NA
     } else {
       x <- na_if(x,to_na)
     }
+  
     return(x)
-  } else {
-    if(is.factor(x)) {
-      levels(x)[levels(x)==to_na] <- NA
-    } else {
-      x <- na_if(x,to_na)
-    }
-    pad_id <- ifelse(is.na(x),1L,pad_id)
-    return(pad_id)
-  }
   
 }
 
@@ -1511,14 +1502,14 @@ return(as.vector(idx))
 
   if(length(Y_cont)>1 && !is.na(idealdata@miss_val[2])) {
 
-      Y_cont <- ifelse(modelpoints[discrete==0] %in% c(10,12),
+      Y_cont <- ifelse(modelpoints %in% c(10,12),
                        Y_cont,
                        .na_if(Y_cont,as.numeric(idealdata@miss_val[2])))
   }
 
   if(length(Y_int)>1 && !is.na(idealdata@miss_val[1])) {
 
-      Y_int <- if_else(modelpoints[discrete==1] %in% c(0,2,
+      Y_int <- if_else(modelpoints %in% c(0,2,
                                                       4,
                                                       6,
                                                       8,
@@ -1622,9 +1613,10 @@ return(as.vector(idx))
     sax_pred <- as.matrix(select(idealdata@score_matrix,
                                  idealdata@item_cov_miss))[remove_nas,,drop=F]
     
-    LX <- length(idealdata@person_cov)
-    SRX <- length(idealdata@item_cov)
-    SAX <- length(idealdata@item_cov_miss)
+    LX <- ncol(legis_pred)
+    SRX <- ncol(srx_pred)
+    SAX <- ncol(sax_pred)
+    
     if(!is.infinite(max(Y_int))) {
       y_int_miss <- max(Y_int)
     } else {
@@ -1661,8 +1653,8 @@ return(as.vector(idx))
 
   # need to calculate number of categories for ordinal models
 
-    order_cats_rat <- ordered_id[discrete==1 & remove_nas]
-    order_cats_grm <- ordered_id[discrete==1 & remove_nas]
+    order_cats_rat <- ordered_id[remove_nas]
+    order_cats_grm <- ordered_id[remove_nas]
     
     if(any(modelpoints %in% c(3,4))) {
       n_cats_rat <- unique(order_cats_rat)
