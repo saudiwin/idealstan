@@ -10,6 +10,7 @@ id_estimate(
   inflate_zero = FALSE,
   vary_ideal_pts = "none",
   within_chain = "none",
+  grainsize = 1,
   mpi_export = NULL,
   use_subset = FALSE,
   sample_it = FALSE,
@@ -38,14 +39,18 @@ id_estimate(
   ar_sd = 2,
   diff_reg_sd = 1,
   diff_miss_sd = 1,
-  restrict_sd = 0.01,
+  restrict_sd_high = 0.01,
+  restrict_sd_low = 0.01,
   tol_rel_obj = 0.001,
   gp_sd_par = 0.025,
   gp_num_diff = 3,
   gp_m_sd_par = 0.3,
   gp_min_length = 0,
   cmdstan_path_user = NULL,
+  gpu = FALSE,
   map_over_id = "persons",
+  save_files = NULL,
+  pos_discrim = FALSE,
   ...
 )
 }
@@ -77,6 +82,10 @@ parallelization (this requires sampling in \code{cmdstan},
 see vignette for details). Generally speaking, \code{"mpi"} is
 more efficient parallelization that can be used on computer
 clusters to estimate very large models.}
+
+\item{grainsize}{The grainsize parameter for the \code{reduce_sum} 
+function used for within-chain parallelization. The default is 1, 
+which means 1 chunk (item or person) per core. Set to -1. to use}
 
 \item{mpi_export}{If \code{within_chains="mpi"}, this parameter should refer to the 
 directory where the necessary data and Stan code will be exported to. If missing, 
@@ -169,7 +178,10 @@ identify the model when there are few time points.}
 
 \item{diff_miss_sd}{Set the prior standard deviation for the bill (item) intercepts for the inflated model.}
 
-\item{restrict_sd}{Set the prior standard deviation for pinned parameters. This has a default of 
+\item{restrict_sd_high}{Set the prior standard deviation for pinned parameters. This has a default of 
+0.01, but could be set lower if the data is really large.}
+
+\item{restrict_sd_low}{Set the prior standard deviation for pinned parameters. This has a default of 
 0.01, but could be set lower if the data is really large.}
 
 \item{tol_rel_obj}{If \code{use_vb} is \code{TRUE}, this parameter sets the stopping rule for the \code{vb} algorithm. 
@@ -197,10 +209,22 @@ lower limit. Increasing this value will force a smoother GP fit. It should alway
 \code{cmdstanr} package. Specify a file path  here to use a different \code{cmdtstan}
 installation.}
 
+\item{gpu}{Whether a GPU is available to speed computation (primarily for GP 
+time-varying models).}
+
 \item{map_over_id}{This parameter identifies which ID variable to use to construct the 
 shards for within-chain parallelization. It defaults to \code{"persons"} but can also take
 a value of \code{"items"}. It is recommended to select whichever variable has more
 distinct values to improve parallelization.}
+
+\item{save_files}{The location to save CSV files with MCMC draws from \code{cmdstanr}. 
+The default is \code{NULL}, which will use a folder in the package directory.}
+
+\item{pos_discrim}{Whether all discrimination parameters should be constrained to be
+positive. If so, the model reduces to a traditional IRT model in which all items 
+positively predict ability. Setting this to \code{TRUE} will also eliminate the need
+to use other parameters for identification, though the options should still be 
+specified to prevent errors.}
 
 \item{...}{Additional parameters passed on to Stan's sampling engine. See \code{\link[rstan]{stan}} for more information.}
 }
