@@ -171,7 +171,8 @@ real partial_sum(int[,] y_slice,
       
       if(time_proc!=4) {
           
-        log_prob += normal_lpdf(to_vector(L_tp1_var[,s])|0,1);
+        log_prob += normal_lpdf(to_vector(L_tp1_var[1,s])|0,5);  
+        log_prob += normal_lpdf(to_vector(L_tp1_var[2:T,s])|0,1);
         
         if(s>1) {
 
@@ -347,7 +348,7 @@ parameters {
   vector<lower=0>[gp_N_fix] m_sd_free; // marginal standard deviation of GP
   vector<lower=0>[time_proc==4 ? 1 : 0] gp_sd_free; // residual GP variation in Y
   vector[num_ls] ls_int; // extra intercepts for non-inflated latent space
-  vector[T>1 ? num_legis : 0] L_tp1_var[(time_proc!=4) ? (T-1) : T]; // non-centered variance
+  vector[T>1 ? num_legis : 0] L_tp1_var[T]; // non-centered variance
   vector<lower=-.99,upper=.99>[(T>1 && time_proc==3) ? num_legis : 0] L_AR1; // AR-1 parameters for AR-1 model
   vector[pos_discrim == 0 ? num_bills : 0] sigma_reg_free;
   vector<lower=0>[pos_discrim == 1 ? num_bills : 0] sigma_reg_pos;
@@ -460,7 +461,10 @@ for(n in 1:num_legis) {
   
   
   if(T>1 && time_proc!=4 && S_type==0) {
-    for(t in 1:(T-1)) {
+    
+    L_tp1_var[1] ~ normal(0,5);
+    
+    for(t in 2:T) {
       L_tp1_var[t] ~ normal(0,1);
     }
   }

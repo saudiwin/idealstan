@@ -9,7 +9,7 @@ for(t in 1:T) {
     
       if(s==1) {
         
-        lt[t] = L_full[s] + L_AR1[s]*lt[t-1] + time_sd * L_tp1_var[t-1,s];
+        lt[t] = L_tp1_var[t,s];
         
       } else {
         
