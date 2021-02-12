@@ -57,7 +57,6 @@ real partial_sum(int[,] y_slice,
         real diff_abs_sd,
         real diff_reg_sd,
         real ar_sd,
-        int restrict_var,
         real time_sd,
         int time_proc,
         int zeroes, // whether to use traditional zero-inflation for bernoulli and poisson models
@@ -308,6 +307,7 @@ data {
   real<lower=0> restrict_sd_low;
   real ar_sd;
   real time_sd;
+  int restrict_var; // whether to fix the over-time variance of the first person to a value
   int sum_vals[S,3]; // what to loop over for reduce sum
   int time_proc;
   real time_ind[T]; // the actual indices/values of time points, used for Gaussian processes

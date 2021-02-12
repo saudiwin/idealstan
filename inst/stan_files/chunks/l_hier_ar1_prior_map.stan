@@ -9,7 +9,7 @@ for(t in 1:T) {
     
   } else {
     
-    if(restrict_var=1) {
+    if(restrict_var==1) {
       
       if(s==1) {
         
