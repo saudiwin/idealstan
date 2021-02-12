@@ -719,6 +719,9 @@ id_make <- function(score_data=NULL,
 #' positively predict ability. Setting this to \code{TRUE} will also eliminate the need
 #' to use other parameters for identification, though the options should still be 
 #' specified to prevent errors.
+#' @param het_var Whether to use a separate variance parameter for each item if using
+#' Normal or Log-Normal distributions that have variance parameters. Defaults to TRUE and
+#' should be set to FALSE only if all items have a similar variance.
 #' @param ... Additional parameters passed on to Stan's sampling engine. See \code{\link[rstan]{stan}} for more information.
 #' @return A fitted \code{\link{idealstan}} object that contains posterior samples of all parameters either via full Bayesian inference
 #' or a variational approximation if \code{use_vb} is set to \code{TRUE}. This object can then be passed to the plotting functions for further analysis.
@@ -830,6 +833,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                            discrim_miss_sd=2,
                            person_sd=3,
                         time_sd=.1,
+                        restrict_var=TRUE,
                         sample_stationary=FALSE,
                         ar_sd=2,
                            diff_reg_sd=1,
@@ -846,6 +850,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                         map_over_id="persons",
                         save_files=NULL,
                         pos_discrim=FALSE,
+                        het_var=TRUE,
                            ...) {
 
 
@@ -1041,6 +1046,28 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                                fix_high=idealdata@restrict_num_high,
                                fix_low=idealdata@restrict_num_low)
     
+    # check for heterogenous variances
+
+    if(het_var) {
+      
+      num_var <- length(unique(idealdata@score_matrix$item_id[idealdata@score_matrix$model_id %in% c(9,10,11,12)]))
+      
+      mod_items <- distinct(select(idealdata@score_matrix,item_id,model_id))
+      
+      mod_items <- mutate(mod_items,cont=model_id %in% c(9,10,11,12)) %>% 
+        group_by(cont) %>% 
+        mutate(num_var=1:n())
+      
+      type_het_var <- mod_items$num_var
+      
+    } else {
+      
+      num_var <- 1
+      
+      type_het_var <- rep(num_var, length(unique(billpoints)))
+      
+    }
+    
   this_data <- list(N=remove_list$N,
                     N_cont=remove_list$N_cont,
                     N_int=remove_list$N_int,
@@ -1049,6 +1076,8 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     y_int_miss=remove_list$y_int_miss,
                     y_cont_miss=remove_list$y_cont_miss,
                     S=nrow(sum_vals),
+                    num_var=num_var,
+                    type_het_var=type_het_var,
                     S_type=as.numeric(map_over_id=="persons"),
                     sum_vals=as.matrix(sum_vals),
                     within_chain=as.numeric(within_chain!="none"),
@@ -1085,6 +1114,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     restrict_sd_high=restrict_sd_high,
                     restrict_sd_low=restrict_sd_low,
                     time_proc=vary_ideal_pts,
+                    restrict_var=restrict_var,
                     time_sd=time_sd,
                     ar_sd=ar_sd,
                     zeroes=inflate_zero,
@@ -1153,6 +1183,8 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     Y_cont=remove_list$Y_cont,
                     y_int_miss=remove_list$y_int_miss,
                     y_cont_miss=remove_list$y_cont_miss,
+                    num_var=num_var,
+                    type_het_var=type_het_var,
                     S=nrow(sum_vals),
                     S_type=as.numeric(map_over_id=="persons"),
                     within_chain=as.numeric(within_chain!="none"),
@@ -1190,6 +1222,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     restrict_sd_high=restrict_sd_high,
                     restrict_sd_low=restrict_sd_low,
                     time_sd=time_sd,
+                    restrict_var=restrict_var,
                     ar_sd=ar_sd,
                     zeroes=as.numeric(inflate_zero),
                     time_ind=as.array(time_ind),
@@ -1263,15 +1296,18 @@ id_estimate <- function(idealdata=NULL,model_type=2,
     
   } 
   
-  outobj@model_type <- extra_params$model_type
-  outobj@time_proc <- extra_params$vary_ideal_pts
-  outobj@use_groups <- extra_params$use_groups
-  
   outobj@model_type <- model_type
   outobj@time_proc <- vary_ideal_pts
   outobj@use_groups <- use_groups
-  outobj@map_over_id <- extra_params$map_over_id
-  outobj@time_sd <- extra_params$time_sd
+  outobj@map_over_id <- map_over_id
+  outobj@time_sd <- time_sd
+  outobj@restrict_var <- restrict_var
+  
+  # need to recalculate legis points if time series used
+  if(this_data$T>1) {
+    outobj@time_varying <- .get_varying(outobj)
+  }
+  
   return(outobj)
   
 }

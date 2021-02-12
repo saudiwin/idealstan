@@ -72,11 +72,12 @@ setClass('idealstan',
                     test_model_code='character',
                     map_over_id="character",
                     time_sd="numeric",
+                    time_varying="ANY",
+                    restrict_var="logical",
                     stan_samples='ANY',
                     use_vb='logical',
                     use_groups='logical',
-                    simulation='logical',
-                    mpi='logical'))
+                    simulation='logical'))
 
 setGeneric('subset_ideal',signature='object',
            function(object,...) standardGeneric('subset_ideal'))
@@ -695,6 +696,4 @@ setMethod('stan_trace',signature(object='idealstan'),
             
         rstan::stan_trace(object@stan_samples,pars = par)
           })
-
-
 

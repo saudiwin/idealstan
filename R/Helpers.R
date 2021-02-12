@@ -102,7 +102,7 @@
   
   if(length(unique(object@score_data@score_matrix$time_id))>1 && type!='variance') {
     
-    person_params <- .get_varying(object) 
+    person_params <- object@time_varying 
     
     if("draws_matrix" %in% class(person_params)) {
       
@@ -161,35 +161,18 @@
     # need to match estimated parameters to original IDs
     if(type=='ideal_pts') {
       
-      if(object@mpi) {
-        
-        person_params <- subset_draws(object@stan_samples,'L_full') %>% as_draws_df %>% 
-          dplyr::select(-`.chain`,-`.iteration`,-`.draw`)
-        
-      } else {
         
         person_params <- object@stan_samples$draws('L_full') %>% as_draws_df %>% 
           dplyr::select(-`.chain`,-`.iteration`,-`.draw`)
-        
-      }
       
       
     } else if(type=='variance') {
       
-      if(object@mpi) {
         
         # load time-varying person variances
-        person_params <- subset_draws(object@stan_samples,'time_var_full') %>% as_draws_df %>% 
+        person_params <- object@stan_samples$draws('time_var_free') %>% as_draws_df %>% 
           dplyr::select(-`.chain`,-`.iteration`,-`.draw`)
         
-      } else {
-        
-        # load time-varying person variances
-        person_params <- object@stan_samples$draws('time_var_full') %>% as_draws_df %>% 
-          dplyr::select(-`.chain`,-`.iteration`,-`.draw`)
-        
-      }
-      
       
     }
     
@@ -199,7 +182,7 @@
     person_ids <- data_frame(long_name=person_params$legis) %>% 
       distinct
     legis_nums <- stringr::str_extract_all(person_ids$long_name,'[0-9]+',simplify=T)
-    person_ids <-   mutate(person_ids,id_num=as.numeric(legis_nums))
+    person_ids <-   mutate(person_ids,id_num=as.numeric(legis_nums)+1)
     
     person_data <- distinct(select(object@score_data@score_matrix,
                                    person_id,group_id))
@@ -1916,24 +1899,10 @@ return(as.vector(idx))
   if(obj@map_over_id=="items") {
     
     # needs to be in the same format, varying in T then person
-    
-    if(obj@mpi) {
-      
-      all_time <- subset_draws(obj@stan_samples$post_warmup_draws,"L_tp1") %>% as_draws_matrix()
-      
-    } else {
       
       all_time <- obj@stan_samples$draws("L_tp1") %>% as_draws_matrix()
-      
-    }
     
   } else {
-    
-    if(obj@mpi) {
-      
-      L_tp1_var <- subset_draws(obj@stan_samples$post_warmup_draws,"L_tp1_var") %>% as_draws_matrix()
-  
-    } else {
       
       L_tp1_var <- obj@stan_samples$draws("L_tp1_var") %>% as_draws_matrix()
       
@@ -1943,19 +1912,10 @@ return(as.vector(idx))
     
     if(obj@time_proc==2) {
       
-      if(obj@mpi) {
-        
-        L_full <- subset_draws(obj@stan_samples$post_warmup_draws,"L_full") %>% as_draws_matrix()
-        
-        time_var_free <- subset_draws(obj@stan_samples$post_warmup_draws,"time_var_free") %>% as_draws_matrix()
-        
-      } else {
         
         L_full <- obj@stan_samples$draws("L_full") %>% as_draws_matrix()
         
         time_var_free <- obj@stan_samples$draws("time_var_free") %>% as_draws_matrix()
-        
-      }
       
       #make a grid, time varying fastest
       
@@ -2091,16 +2051,6 @@ return(as.vector(idx))
 
       
     } else if(obj@time_proc==3) {
-      
-      if(obj@mpi) {
-        
-        L_full <- subset_draws(obj@stan_samples$post_warmup_draws,"L_full") %>% as_draws_matrix()
-        
-        time_var_free <- subset_draws(obj@stan_samples$post_warmup_draws,"time_var_free") %>% as_draws_matrix()
-        
-        L_AR1 <- subset_draws(obj@stan_samples$post_warmup_draws,"L_AR1") %>% as_draws_matrix()
-        
-      } else {
         
         L_full <- obj@stan_samples$draws("L_full") %>% as_draws_matrix()
         
@@ -2108,14 +2058,10 @@ return(as.vector(idx))
         
         L_AR1 <- obj@stan_samples$draws("L_AR1") %>% as_draws_matrix()
         
-      }
-      
       #make a grid, time varying fastest
       
       time_grid <- expand.grid(1:length(unique(obj@score_data@score_matrix$time_id)),
-                               unique(as.numeric(obj@score_data@score_matrix$person_id))) %>% 
-        filter(Var1!=max(Var1))
-      
+                               unique(as.numeric(obj@score_data@score_matrix$person_id)))
       # what we use for the recursion
       
       time_func <- function(t=NULL,
@@ -2129,15 +2075,16 @@ return(as.vector(idx))
                             L_tp1_var=NULL) {
 
           if(p>1) {
+            
             if(t==2) {
               
-              prior_est <- L_full[,p] + L_AR1[,p]*initial + time_var_free[,p-1]*L_tp1_var[,(time_grid$Var1==(t-1) & time_grid$Var2==p)]
+              prior_est <- L_full[,p] + L_AR1[,p]*initial + time_var_free[,p-1]*L_tp1_var[,(time_grid$Var1==t & time_grid$Var2==p)]
               
               prior_est <- cbind(initial,prior_est)
               
             } else {
               
-              this_t <- L_full[,p] + L_AR1[,p]*prior_est[,t-1]  + time_var_free[,p-1]*L_tp1_var[,(time_grid$Var1==(t-1) & time_grid$Var2==p)]
+              this_t <- L_full[,p] + L_AR1[,p]*prior_est[,t-1]  + time_var_free[,p-1]*L_tp1_var[,(time_grid$Var1==t & time_grid$Var2==p)]
               prior_est <- cbind(prior_est,this_t)
               
               
@@ -2169,13 +2116,13 @@ return(as.vector(idx))
             
             if(t==2) {
               
-              prior_est <- L_full[,p] + L_AR1[,p]*initial + obj@time_sd*L_tp1_var[,(time_grid$Var1==(t-1) & time_grid$Var2==p)]
+              prior_est <- L_full[,p] + L_AR1[,p]*initial + obj@time_sd*L_tp1_var[,(time_grid$Var1==t & time_grid$Var2==p)]
               
               prior_est <- cbind(initial,prior_est)
               
             } else {
               
-              this_t <- L_full[,p] + L_AR1[,p]*prior_est[,t-1]  + obj@time_sd*L_tp1_var[,(time_grid$Var1==(t-1) & time_grid$Var2==p)]
+              this_t <- L_full[,p] + L_AR1[,p]*prior_est[,t-1]  + obj@time_sd*L_tp1_var[,(time_grid$Var1==t & time_grid$Var2==p)]
               prior_est <- cbind(prior_est,this_t)
               
               
@@ -2214,7 +2161,7 @@ return(as.vector(idx))
       all_time <- lapply(unique(as.numeric(obj@score_data@score_matrix$person_id)), 
                          function (p) {
                            
-                           initial <- L_full[,p]
+                           initial <- L_tp1_var[,(time_grid$Var1==1 & time_grid$Var2==p)]
                            
                            out_d <- time_func(t=2,
                                      points=1:length(unique(obj@score_data@score_matrix$time_id)),
@@ -2259,10 +2206,3 @@ return(as.vector(idx))
     
     return(all_time)
   }
-  
-  
-  
-  
-  
-  
-}

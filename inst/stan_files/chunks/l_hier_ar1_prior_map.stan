@@ -4,19 +4,29 @@
 for(t in 1:T) {
   
   if(t==1) {
-    lt[t] = L_full[s];
+    
+    lt[t] = L_tp1_var[t,s];
+    
   } else {
     
+    if(restrict_var=1) {
+      
       if(s==1) {
         
-        lt[t] = L_tp1_var[t,s];
+        lt[t] = L_full[s] + L_AR1[s]*lt[t-1] + time_sd * L_tp1_var[t-1,s];
         
       } else {
         
         lt[t] = L_full[s] + L_AR1[s]*lt[t-1] + time_var_free[s-1] * L_tp1_var[t-1,s];
         
       }
+      
+    } else {
         
+        lt[t] = L_full[s] + L_AR1[s]*lt[t-1] + time_var_free[s] * L_tp1_var[t-1,s];
+      
+    }
+     
     
   }
   

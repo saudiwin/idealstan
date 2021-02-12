@@ -57,6 +57,7 @@ real partial_sum(int[,] y_slice,
         real diff_abs_sd,
         real diff_reg_sd,
         real ar_sd,
+        int restrict_var,
         real time_sd,
         int time_proc,
         int zeroes, // whether to use traditional zero-inflation for bernoulli and poisson models
@@ -93,11 +94,14 @@ real partial_sum(int[,] y_slice,
         vector[] steps_votes_grm8,
         vector[] steps_votes_grm9,
         vector[] steps_votes_grm10,
-        real extra_sd,
+        vector extra_sd,
         vector time_var_gp_free,
         vector[] L_tp1,
         vector time_var_free,
-        vector gp_length) {
+        vector gp_length,
+        int het_var,
+        int[] type_het_var,
+        int restrict_var) {
   
   // big loop over states
   real log_prob = 0;
@@ -108,6 +112,7 @@ real partial_sum(int[,] y_slice,
     int s;
     int start2;
     int end2;
+    int this_var = 1;
 
     s = y_slice[r,1];
     start2 = y_slice[r,2];
@@ -144,17 +149,25 @@ real partial_sum(int[,] y_slice,
           log_prob += normal_lpdf(sigma_reg_full[s]|0,discrim_reg_sd);
         }
       } else {
-        log_prob += normal_lpdf(sigma_reg_full[s]|0,discrim_reg_sd);
+        log_prob += exponential_lpdf(sigma_reg_full[s]|1/discrim_reg_sd);
       }
-
       
-
+      log_prob += normal_lpdf(B_int_free[s]|0,diff_reg_sd);
+      log_prob += normal_lpdf(A_int_free[s]|0,diff_abs_sd);
 
     } else if(S_type==0 && const_type==1) {
 
       // priors if items
-
-      log_prob += normal_lpdf(sigma_reg_full[s]|0, discrim_reg_sd);
+      if(pos_discrim==0) { 
+        
+        log_prob += normal_lpdf(sigma_reg_full[s]|0,discrim_reg_sd);
+        
+      } else {
+        
+        log_prob += exponential_lpdf(sigma_reg_full[s]|1/discrim_reg_sd);
+        
+      }
+      
       log_prob += normal_lpdf(sigma_abs_free[s]|0,discrim_abs_sd);
       log_prob += normal_lpdf(B_int_free[s]|0,diff_reg_sd);
       log_prob += normal_lpdf(A_int_free[s]|0,diff_abs_sd);
@@ -171,14 +184,22 @@ real partial_sum(int[,] y_slice,
       
       if(time_proc!=4) {
           
-        log_prob += normal_lpdf(to_vector(L_tp1_var[1,s])|0,5);  
+        log_prob += normal_lpdf(L_tp1_var[1,s]|0,5);  
         log_prob += normal_lpdf(to_vector(L_tp1_var[2:T,s])|0,1);
         
-        if(s>1) {
+        if(restrict_var==1) {
+          if(s>1) {
 
           log_prob += normal_lpdf(time_var_free[s-1]|0,1); // tight-ish prior on additional variances
 
+          }
+        } else {
+          
+          log_prob += normal_lpdf(time_var_free[s]|0,1);
+          
         }
+        
+        
 
       } 
 
@@ -295,6 +316,8 @@ data {
   real num_diff; // number of time points used to calculate GP length-scale prior
   real m_sd_par; // the marginal standard deviation of the GP
   int min_length; // the minimum threshold for GP length-scale prior
+  int num_var;
+  int type_het_var[num_bills];
 }
 
 transformed data {
@@ -373,9 +396,9 @@ parameters {
   ordered[n_cats_grm[6]-1] steps_votes_grm8[num_bills_grm];
   ordered[n_cats_grm[7]-1] steps_votes_grm9[num_bills_grm];
   ordered[n_cats_grm[8]-1] steps_votes_grm10[num_bills_grm];
-  real<lower=0> extra_sd;
+  vector<lower=0>[num_var] extra_sd;
   vector<lower=0>[gp_N] time_var_gp_free;
-  vector<lower=0>[(T>1 && time_proc!=4) ? num_legis-1 : 0] time_var_free;
+  vector<lower=0>[(T>1 && time_proc!=4 && restrict_var==1) ? num_legis-1 : (T>1 && time_proc!=4 && restrict_var==0 ? num_legis : 0)] time_var_free;
   
 }
 
@@ -486,7 +509,7 @@ for(n in 1:num_legis) {
 if(S_type==1 && const_type==1) {
   // both ID and map for persons
   sigma_reg_free ~ normal(0, discrim_reg_sd);
-  sigma_reg_pos ~ exponential(discrim_reg_sd);
+  sigma_reg_pos ~ exponential(1/discrim_reg_sd);
   sigma_abs_free ~ normal(0,discrim_abs_sd);
   B_int_free ~ normal(0,diff_reg_sd);
   A_int_free ~ normal(0,diff_abs_sd);
@@ -507,7 +530,7 @@ if(S_type==1 && const_type==1) {
                         0,
                         discrim_reg_sd);
   } else {
-    sigma_reg_pos ~ exponential(discrim_reg_sd);
+    sigma_reg_pos ~ exponential(1/discrim_reg_sd);
   }
   
   
@@ -620,7 +643,10 @@ if(S_type==1 && const_type==1) {
         time_var_gp_free,
         L_tp1,
         time_var_free,
-        gp_length);
+        gp_length,
+        num_var,
+        type_het_var,
+        restrict_var);
 
 }
 generated quantities {

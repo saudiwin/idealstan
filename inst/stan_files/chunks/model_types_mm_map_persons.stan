@@ -644,10 +644,10 @@ if(T==1) {
       
       if(T==1) {
         log_prob += normal_lpdf(Y_cont[n]|(sigma_reg_full[bb[n]] + srx_pred[n,]*sigma_reg_x) *  (L_full[s] + legis_pred[n,]*legis_x) - B_int_free[bb[n]],
-        extra_sd);
+        extra_sd[type_het_var[bb[n]]]);
       } else {
         log_prob += normal_lpdf(Y_cont[n]|(sigma_reg_full[bb[n]] + srx_pred[n,]*sigma_reg_x) *  (lt[time[n]] + legis_pred[n,]*legis_x) - B_int_free[bb[n]],
-        extra_sd);
+        extra_sd[type_het_var[bb[n]]]);
       }
       
       
@@ -659,12 +659,12 @@ if(T==1) {
         // observed data 
         if(T==1) {
           log_prob += normal_lpdf(Y_cont[n]|(sigma_reg_full[bb[n]] + srx_pred[n,]*sigma_reg_x) *  (L_full[s] + legis_pred[n,]*legis_x) - B_int_free[bb[n]],
-          extra_sd);
+          extra_sd[type_het_var[bb[n]]]);
           log_prob += bernoulli_logit_lpmf(0|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_full[s] + legis_pred[n,]*legis_x) - 
           A_int_free[bb[n]]);
         } else {
           log_prob += normal_lpdf(Y_cont[n]|(sigma_reg_full[bb[n]] + srx_pred[n,]*sigma_reg_x) *  (lt[time[n]] + legis_pred[n,]*legis_x) - B_int_free[bb[n]],
-          extra_sd);
+          extra_sd[type_het_var[bb[n]]]);
           log_prob += bernoulli_logit_lpmf(0|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (lt[time[n]] + legis_pred[n,]*legis_x) - 
           A_int_free[bb[n]]);
         }
@@ -685,10 +685,10 @@ if(T==1) {
       
       if(T==1) {
         log_prob += lognormal_lpdf(Y_cont[n]|exp((sigma_reg_full[bb[n]] + srx_pred[n,]*sigma_reg_x) *  (L_full[s] + legis_pred[n,]*legis_x) - B_int_free[bb[n]]),
-        extra_sd);
+        extra_sd[type_het_var[bb[n]]]);
       } else {
         log_prob += lognormal_lpdf(Y_cont[n]|exp((sigma_reg_full[bb[n]] + srx_pred[n,]*sigma_reg_x) *  (lt[time[n]] + legis_pred[n,]*legis_x) - B_int_free[bb[n]]),
-        extra_sd);
+        extra_sd[type_het_var[bb[n]]]);
       }
       
     } else if(mm[n]==12) {
@@ -698,12 +698,12 @@ if(T==1) {
         // observed data 
         if(T==1) {
           log_prob += lognormal_lpdf(Y_cont[n]|exp((sigma_reg_full[bb[n]] + srx_pred[n,]*sigma_reg_x) *  (L_full[s] + legis_pred[n,]*legis_x) - B_int_free[bb[n]]),
-          extra_sd);
+          extra_sd[type_het_var[bb[n]]]);
           log_prob += bernoulli_logit_lpmf(0|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_full[s] + legis_pred[n,]*legis_x) - 
           A_int_free[bb[n]]);
         } else {
           log_prob += lognormal_lpdf(Y_cont[n]|exp((sigma_reg_full[bb[n]] + srx_pred[n,]*sigma_reg_x) *  (lt[time[n]] + legis_pred[n,]*legis_x) - B_int_free[bb[n]]),
-          extra_sd);
+          extra_sd[type_het_var[bb[n]]]);
           log_prob += bernoulli_logit_lpmf(0|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (lt[time[n]] + legis_pred[n,]*legis_x) - 
           A_int_free[bb[n]]);
         }
@@ -719,6 +719,13 @@ if(T==1) {
         }
       }
     }
+    
+    
+  // if(r_in(mm[n],{9,10,11,12})==1 && het_var>1) {
+  // 
+  //   this_item = bb[n];
+  // 
+  // } else if(r_in(mm[n],{9,10,11,12})==1 && het_var>1 && this_item==)
   
 } // end of for loop
 

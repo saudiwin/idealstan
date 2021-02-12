@@ -51,6 +51,7 @@ id_estimate(
   map_over_id = "persons",
   save_files = NULL,
   pos_discrim = FALSE,
+  het_var = TRUE,
   ...
 )
 }
@@ -225,6 +226,10 @@ positive. If so, the model reduces to a traditional IRT model in which all items
 positively predict ability. Setting this to \code{TRUE} will also eliminate the need
 to use other parameters for identification, though the options should still be 
 specified to prevent errors.}
+
+\item{het_var}{Whether to use a separate variance parameter for each item if using
+Normal or Log-Normal distributions that have variance parameters. Defaults to TRUE and
+should be set to FALSE only if all items have a similar variance.}
 
 \item{...}{Additional parameters passed on to Stan's sampling engine. See \code{\link[rstan]{stan}} for more information.}
 }
