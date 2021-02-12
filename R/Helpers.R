@@ -1531,12 +1531,8 @@ return(as.vector(idx))
     # drop unused levels
     Y_int <- as.numeric(factor(Y_int))
     
-    if(any(c(1,2) %in% modelpoints)) {
-      Y_int <- ifelse(Y_int<3, Y_int - 1L,Y_int)
-    }
-    
-    
-    
+    Y_int[modelpoints %in% c(1,2)] <- Y_int - 1
+
   }
   
   idealdata@Y_int <- Y_int
@@ -1584,13 +1580,6 @@ return(as.vector(idx))
     discrete <- discrete[remove_nas]
     
     # no padding necessary
-    
-    # Need to recode Y_int to adjust binary responses (should be 0/1)
-    Y_int <- as.numeric(Y_int)
-    
-    # Y_int[modelpoints[discrete==1] %in% c(1,2)] <- if_else(Y_int[modelpoints[discrete==1] %in% c(1,2)] %in% c(1,2),
-    #                                                        Y_int[modelpoints[discrete==1]  %in% c(1,2)] - 1L,
-    #                                                        Y_int[modelpoints[discrete==1]  %in% c(1,2)])
     
     if(any(unique(modelpoints) %in% c(1,13)) && length(table(Y_int[modelpoints %in% c(1,13)]))>3) {
       stop('Too many values in score matrix for a binary model. Choose a different model_type.')
