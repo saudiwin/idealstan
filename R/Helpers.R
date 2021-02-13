@@ -1921,16 +1921,29 @@ return(as.vector(idx))
                             p=NULL,
                             L_tp1_var=NULL) {
         
+        if(obj@restrict_var) {
+          
+          time_sd <- obj@time_sd
+          p_time <- p - 1
+          
+        } else {
+          
+          time_sd <- time_var_free[,p]
+          p_time <- p
+          
+        }
+        
         if(p>1) {
+          
           if(t==2) {
             
-            prior_est <- initial + time_var_free[,p-1]*L_tp1_var[,(time_grid$Var1==(t-1) & time_grid$Var2==p)]
+            prior_est <- initial + time_var_free[,p_time]*L_tp1_var[,(time_grid$Var1==(t-1) & time_grid$Var2==p)]
             
             prior_est <- cbind(initial,prior_est)
             
           } else {
             
-            this_t <- prior_est[,t-1]  + time_var_free[,p-1]*L_tp1_var[,(time_grid$Var1==(t-1) & time_grid$Var2==p)]
+            this_t <- prior_est[,t-1]  + time_var_free[,p_time]*L_tp1_var[,(time_grid$Var1==(t-1) & time_grid$Var2==p)]
             prior_est <- cbind(prior_est,this_t)
             
             
@@ -1961,13 +1974,13 @@ return(as.vector(idx))
           
           if(t==2) {
             
-            prior_est <- initial + obj@time_sd*L_tp1_var[,(time_grid$Var1==(t-1) & time_grid$Var2==p)]
+            prior_est <- initial + time_sd*L_tp1_var[,(time_grid$Var1==(t-1) & time_grid$Var2==p)]
             
             prior_est <- cbind(initial,prior_est)
             
           } else {
             
-            this_t <- prior_est[,t-1]  + obj@time_sd*L_tp1_var[,(time_grid$Var1==(t-1) & time_grid$Var2==p)]
+            this_t <- prior_est[,t-1]  + time_sd*L_tp1_var[,(time_grid$Var1==(t-1) & time_grid$Var2==p)]
             prior_est <- cbind(prior_est,this_t)
             
             
@@ -2051,6 +2064,7 @@ return(as.vector(idx))
       
       time_grid <- expand.grid(1:length(unique(obj@score_data@score_matrix$time_id)),
                                unique(as.numeric(obj@score_data@score_matrix$person_id)))
+      
       # what we use for the recursion
       
       time_func <- function(t=NULL,
@@ -2062,18 +2076,32 @@ return(as.vector(idx))
                             L_full=NULL,
                             p=NULL,
                             L_tp1_var=NULL) {
+        
+          
+        if(obj@restrict_var) {
+          
+          time_sd <- obj@time_sd
+          p_time <- p - 1
+          
+        } else {
+          
+          time_sd <- time_var_free[,p]
+          p_time <- p
+          
+        }
+        
 
           if(p>1) {
             
             if(t==2) {
               
-              prior_est <- L_full[,p] + L_AR1[,p]*initial + time_var_free[,p-1]*L_tp1_var[,(time_grid$Var1==t & time_grid$Var2==p)]
+              prior_est <- L_full[,p] + L_AR1[,p]*initial + time_var_free[,p_time]*L_tp1_var[,(time_grid$Var1==t & time_grid$Var2==p)]
               
               prior_est <- cbind(initial,prior_est)
               
             } else {
               
-              this_t <- L_full[,p] + L_AR1[,p]*prior_est[,t-1]  + time_var_free[,p-1]*L_tp1_var[,(time_grid$Var1==t & time_grid$Var2==p)]
+              this_t <- L_full[,p] + L_AR1[,p]*prior_est[,t-1]  + time_var_free[,p_time]*L_tp1_var[,(time_grid$Var1==t & time_grid$Var2==p)]
               prior_est <- cbind(prior_est,this_t)
               
               
@@ -2105,13 +2133,13 @@ return(as.vector(idx))
             
             if(t==2) {
               
-              prior_est <- L_full[,p] + L_AR1[,p]*initial + obj@time_sd*L_tp1_var[,(time_grid$Var1==t & time_grid$Var2==p)]
+              prior_est <- L_full[,p] + L_AR1[,p]*initial + time_sd*L_tp1_var[,(time_grid$Var1==t & time_grid$Var2==p)]
               
               prior_est <- cbind(initial,prior_est)
               
             } else {
               
-              this_t <- L_full[,p] + L_AR1[,p]*prior_est[,t-1]  + obj@time_sd*L_tp1_var[,(time_grid$Var1==t & time_grid$Var2==p)]
+              this_t <- L_full[,p] + L_AR1[,p]*prior_est[,t-1]  + time_sd*L_tp1_var[,(time_grid$Var1==t & time_grid$Var2==p)]
               prior_est <- cbind(prior_est,this_t)
               
               
