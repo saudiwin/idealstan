@@ -1531,7 +1531,7 @@ return(as.vector(idx))
     # drop unused levels
     Y_int <- as.numeric(factor(Y_int))
     
-    Y_int[modelpoints %in% c(1,2)] <- Y_int - 1
+    Y_int[modelpoints %in% c(1,2) & Y_int<3] <- Y_int[modelpoints %in% c(1,2)  & Y_int<3] - 1
 
   }
   
@@ -1615,7 +1615,21 @@ return(as.vector(idx))
     SAX <- ncol(sax_pred)
     
     if(!is.infinite(max(Y_int))) {
-      y_int_miss <- max(Y_int)
+      
+      if(N_cont>0) {
+        
+        # Top level is always joint posterior
+        
+        y_int_miss <- max(Y_int) - 1
+        
+      } else {
+        
+        y_int_miss <- max(Y_int)
+        
+      }
+      
+      
+      
     } else {
       y_int_miss <- 0
     }
