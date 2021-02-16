@@ -1663,9 +1663,20 @@ return(as.vector(idx))
   # now need to determine number of categories
 
   # need to calculate number of categories for ordinal models
-
+  
+  if(N_int>0) {
+    
     order_cats_rat <- ordered_id[remove_nas]
     order_cats_grm <- ordered_id[remove_nas]
+    
+  } else {
+    
+    order_cats_rat <- array(dim=c(0)) + 0L
+    order_cats_grm <- array(dim=c(0)) + 0L
+    
+  }
+
+    
     
     if(any(modelpoints %in% c(3,4))) {
       n_cats_rat <- unique(order_cats_rat)
@@ -1838,12 +1849,11 @@ return(as.vector(idx))
   if(map_over_id=="persons") {
     if(use_groups) {
       
-      this_data <- dplyr::arrange(this_data, group_id,desc(discrete)) 
+      this_data <- dplyr::arrange(this_data, group_id,time_id) 
       
       sum_vals <- this_data %>% 
         mutate(rownum=row_number()) %>% 
         group_by(group_id) %>% 
-        arrange(group_id,desc(discrete)) %>% 
         filter(row_number() %in% c(1,n())) %>% 
         select(group_id,rownum) %>% 
         mutate(type=c("start","end")[1:n()]) %>% 
@@ -1856,12 +1866,11 @@ return(as.vector(idx))
       
     } else {
       
-      this_data <- dplyr::arrange(this_data,person_id,desc(discrete))
+      this_data <- dplyr::arrange(this_data,person_id,time_id)
         
         sum_vals <- this_data %>% 
           mutate(rownum=row_number()) %>% 
           group_by(person_id) %>% 
-          arrange(person_id,desc(discrete)) %>% 
           filter(row_number() %in% c(1,n())) %>% 
           select(person_id,rownum) %>% 
           mutate(type=c("start","end")[1:n()]) %>% 
@@ -1874,7 +1883,7 @@ return(as.vector(idx))
     }
   } else {
     
-    this_data <- dplyr::arrange(this_data, desc(discrete),item_id)
+    this_data <- dplyr::arrange(this_data, item_id, time_id)
     
     sum_vals <- this_data %>% 
       mutate(rownum=row_number()) %>% 
@@ -1898,6 +1907,7 @@ return(as.vector(idx))
 #' Need new function to re-create time-varying ideal points given reduce sum
 #' @noRd
 .get_varying <- function(obj) {
+  
   
   if(obj@map_over_id=="items") {
     
@@ -1923,8 +1933,7 @@ return(as.vector(idx))
       #make a grid, time varying fastest
       
       time_grid <- expand.grid(1:length(unique(obj@score_data@score_matrix$time_id)),
-                               unique(as.numeric(obj@score_data@score_matrix$person_id))) %>% 
-        filter(Var1!=max(Var1))
+                               unique(as.numeric(obj@score_data@score_matrix$person_id)))
       
       time_func <- function(t=NULL,
                             points=NULL,

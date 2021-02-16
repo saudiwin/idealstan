@@ -187,14 +187,16 @@ real partial_sum(int[,] y_slice,
         log_prob += normal_lpdf(to_vector(L_tp1_var[2:T,s])|0,1);
         
         if(restrict_var==1) {
+          
           if(s>1) {
 
-          log_prob += normal_lpdf(time_var_free[s-1]|0,1); // tight-ish prior on additional variances
+          log_prob += exponential_lpdf(time_var_free[s-1]|.1); // tight-ish prior on additional variances
 
           }
+          
         } else {
           
-          log_prob += normal_lpdf(time_var_free[s]|0,1);
+          log_prob += exponential_lpdf(time_var_free[s]|.1);
           
         }
         
@@ -499,7 +501,7 @@ for(n in 1:num_legis) {
   gp_sd_free ~ exponential(1); // length 1
   
   if(T>1 && S_type==0) {
-    time_var_free ~ normal(0,1); // tight-ish prior on additional variances
+    time_var_free ~ exponential(.1); // tight-ish prior on additional variances
     time_var_gp_free ~ inv_gamma(5,5); // tight-ish prior on additional variances
     m_sd_free ~ exponential(1);
   }

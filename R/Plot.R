@@ -674,6 +674,21 @@ id_plot_legis_dyn <- function(object,return_data=FALSE,
     
   }
   
+  # check for very large numbers
+  
+  if(any(person_params$high_pt>1e6)) {
+    warnings("Very large person ideal points detected. Removing from plot, likely a sign of model misfit.")
+    person_params <- filter(person_params, high_pt<1e6,low_pt>(-1e6))
+  }
+  
+  # fix missing labels
+  
+  person_params <- group_by(person_params, legis) %>% 
+                      fill(person_id, time_id, group_id, group_id_num,
+                        .direction = "downup") %>% 
+    group_by(time_point) %>% 
+    fill(time_id,.direction="downup")
+  
   
   # plot CIs first for background
   
