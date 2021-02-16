@@ -28,7 +28,9 @@ Imports:
     gghighlight,
     forcats,
     ggrepel,
-    jsonlite
+    jsonlite,
+    abind,
+    ggthemes
 Suggests:
     pscl,
     loo,
