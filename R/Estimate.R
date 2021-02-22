@@ -852,6 +852,13 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                         pos_discrim=FALSE,
                         het_var=TRUE,
                            ...) {
+  
+  
+  # check to make sure cmdstanr is working
+  
+  if(is.null(cmdstanr::cmdstan_version())) {
+    print("You need to install cmdstan with cmdstanr to compile models. Use the function install_cmdstan() in the cmdstanr package.")
+  }
 
 
   
