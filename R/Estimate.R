@@ -1183,6 +1183,28 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   
   idealdata <- remove_list$idealdata
   
+  # check for heterogenous variances
+  
+  if(het_var) {
+    
+    num_var <- length(unique(idealdata@score_matrix$item_id[idealdata@score_matrix$model_id %in% c(9,10,11,12)]))
+    
+    mod_items <- distinct(select(idealdata@score_matrix,item_id,model_id))
+    
+    mod_items <- mutate(mod_items,cont=model_id %in% c(9,10,11,12)) %>% 
+      group_by(cont) %>% 
+      mutate(num_var=1:n())
+    
+    type_het_var <- mod_items$num_var
+    
+  } else {
+    
+    num_var <- 1
+    
+    type_het_var <- rep(num_var, length(unique(billpoints)))
+    
+  }
+  
   this_data <- list(N=remove_list$N,
                     N_cont=remove_list$N_cont,
                     N_int=remove_list$N_int,

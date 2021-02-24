@@ -182,9 +182,13 @@ real partial_sum(int[,] y_slice,
       // priors for time-varying persons
       
       if(time_proc!=4) {
+        
+        if(T<50) {
           
-        log_prob += normal_lpdf(L_tp1_var[1,s]|0,5);  
-        log_prob += normal_lpdf(to_vector(L_tp1_var[2:T,s])|0,1);
+          log_prob += normal_lpdf(L_tp1_var[1,s]|0,5);  
+          log_prob += normal_lpdf(to_vector(L_tp1_var[2:T,s])|0,1);
+        
+        }
         
         if(restrict_var==1) {
           
