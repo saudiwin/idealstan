@@ -2,7 +2,7 @@
 
 //add basic integrated time-series prior
 
-if(T<50) {
+if(T<center_cutoff) {
   
   //non-centered time series
   
@@ -44,27 +44,26 @@ if(T<50) {
   
   //centered time series
   
+  lt = to_vector(L_tp1_var[,s]);
+  
   if(restrict_var==1) {
     
     if(s==1) {
       
-      log_prob += normal_lpdf(L_tp1_var[2:T,s]|L_AR1[s]*L_tp1_var[1:(T-1),s],time_sd]));
+      log_prob += normal_lpdf(lt[2:T]|L_full[s] + L_AR1[s]*lt[1:(T-1)],time_sd);
       
       
     } else {
       
-      log_prob += normal_lpdf(L_tp1_var[2:T,s]|L_AR1[s]*L_tp1_var[1:(T-1),s],time_var_free[s-1]));
+      log_prob += normal_lpdf(lt[2:T]|L_full[s] + L_AR1[s]*lt[1:(T-1)],time_var_free[s-1]);
       
     }
     
   } else {
     
-    log_prob += normal_lpdf(L_tp1_var[2:T,s]|L_AR1[s]*L_tp1_var[1:(T-1),s],time_var_free[s]));
+    log_prob += normal_lpdf(lt[2:T]|L_full[s] + L_AR1[s]*lt[1:(T-1)],time_var_free[s]);
     
   }
-  
-  
-  
-  lt = to_vector(L_tp1_var[1:T,s]);
+
   
 }

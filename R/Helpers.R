@@ -1927,13 +1927,10 @@ return(as.vector(idx))
     
   } else {
       
-      L_tp1_var <- obj@stan_samples$draws("L_tp1_var") %>% as_draws_matrix()
-      
-    }
+    L_tp1_var <- obj@stan_samples$draws("L_tp1_var") %>% as_draws_matrix()
     
     
-    
-    if(obj@time_proc==2 && length(unique(obj@score_data@score_matrix$time_id))>50) {
+    if(obj@time_proc==2 && length(unique(obj@score_data@score_matrix$time_id))<50) {
       
         
         L_full <- obj@stan_samples$draws("L_full") %>% as_draws_matrix()
@@ -2051,7 +2048,7 @@ return(as.vector(idx))
       all_time <- lapply(unique(as.numeric(obj@score_data@score_matrix$person_id)), 
                          function (p) {
         
-        initial <- L_full[,p]
+          initial <- L_tp1_var[,(time_grid$Var1==1 & time_grid$Var2==p)]
         
           time_func(t=2,
                            points=1:length(unique(obj@score_data@score_matrix$time_id)),
@@ -2255,6 +2252,8 @@ return(as.vector(idx))
       all_time <- L_tp1_var <- obj@stan_samples$draws("L_tp1_var") %>% as_draws_matrix()
       
     } 
+    
+  } # end of if statement differentiating between mapping over items vs. persons
     
     return(all_time)
   }

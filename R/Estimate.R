@@ -689,6 +689,12 @@ id_make <- function(score_data=NULL,
 #' @param time_sd The variance of the over-time component of the first person/legislator
 #' is fixed to this value as a reference. 
 #' Default is 0.1.
+#' @param time_center_cutoff The number of time points above which
+#' the model will employ a centered time series approach for AR(1)
+#' and random walk models. Below this number the model will employ a 
+#' non-centered approach. The default is 50 time points, which is 
+#' relatively arbitrary and higher values may be better if sampling
+#' quality is poor above the threshold.
 #' @param diff_reg_sd Set the prior standard deviation for the bill (item) intercepts for the non-inflated model.
 #' @param diff_miss_sd Set the prior standard deviation for the bill (item) intercepts for the inflated model.
 #' @param restrict_sd_high Set the prior standard deviation for pinned parameters. This has a default of 
@@ -833,6 +839,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                            discrim_miss_sd=2,
                            person_sd=3,
                         time_sd=.1,
+                        time_center_cutoff=50,
                         restrict_var=TRUE,
                         sample_stationary=FALSE,
                         ar_sd=2,
@@ -1123,6 +1130,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     time_proc=vary_ideal_pts,
                     restrict_var=restrict_var,
                     time_sd=time_sd,
+                    center_cutoff=as.integer(time_center_cutoff),
                     ar_sd=ar_sd,
                     zeroes=inflate_zero,
                     time_ind=as.array(time_ind),
@@ -1251,6 +1259,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     restrict_sd_high=restrict_sd_high,
                     restrict_sd_low=restrict_sd_low,
                     time_sd=time_sd,
+                    center_cutoff=as.integer(time_center_cutoff),
                     restrict_var=restrict_var,
                     ar_sd=ar_sd,
                     zeroes=as.numeric(inflate_zero),
