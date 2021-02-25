@@ -1064,15 +1064,17 @@ id_estimate <- function(idealdata=NULL,model_type=2,
 
     if(het_var) {
       
-      num_var <- length(unique(idealdata@score_matrix$item_id[idealdata@score_matrix$model_id %in% c(9,10,11,12)]))
+      num_var <- length(unique(remove_list$billpoints[remove_list$modelpoints %in% c(9,10,11,12)]))
       
-      mod_items <- distinct(select(idealdata@score_matrix,item_id,model_id))
+      mod_items <- tibble(model_id=remove_list$modelpoints,
+                          item_id=remove_list$billpoints) %>% 
+        distinct
       
       mod_items <- mutate(mod_items,cont=model_id %in% c(9,10,11,12)) %>% 
         group_by(cont) %>% 
         mutate(num_var=1:n())
       
-      type_het_var <- mod_items$num_var
+      type_het_var <- arrange(mod_items, item_id) %>% pull(num_var)
       
     } else {
       
@@ -1195,15 +1197,17 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   
   if(het_var) {
     
-    num_var <- length(unique(idealdata@score_matrix$item_id[idealdata@score_matrix$model_id %in% c(9,10,11,12)]))
+    num_var <- length(unique(remove_list$billpoints[remove_list$modelpoints %in% c(9,10,11,12)]))
     
-    mod_items <- distinct(select(idealdata@score_matrix,item_id,model_id))
+    mod_items <- tibble(model_id=this_data$mm,
+                        item_id=this_data$bb) %>% 
+      distinct
     
     mod_items <- mutate(mod_items,cont=model_id %in% c(9,10,11,12)) %>% 
       group_by(cont) %>% 
       mutate(num_var=1:n())
     
-    type_het_var <- mod_items$num_var
+    type_het_var <- arrange(mod_items, item_id) %>% pull(num_var)
     
   } else {
     
