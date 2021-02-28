@@ -182,7 +182,7 @@
     person_ids <- data_frame(long_name=person_params$legis) %>% 
       distinct
     legis_nums <- stringr::str_extract_all(person_ids$long_name,'[0-9]+',simplify=T)
-    person_ids <-   mutate(person_ids,id_num=as.numeric(legis_nums)+1)
+    person_ids <-   mutate(person_ids,id_num=as.numeric(legis_nums))
     
     person_data <- distinct(select(object@score_data@score_matrix,
                                    person_id,group_id))
