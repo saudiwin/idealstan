@@ -639,15 +639,17 @@ if(T==1) {
       
       // next iterate over the continuous types
       
+      int this_sd = type_het_var[bb[n]];
+      
       
       //normal no inflation
       
       if(T==1) {
         log_prob += normal_lpdf(Y_cont[n]|(sigma_reg_full[bb[n]] + srx_pred[n,]*sigma_reg_x) *  (L_full[s] + legis_pred[n,]*legis_x) - B_int_free[bb[n]],
-        extra_sd[type_het_var[bb[n]]]);
+        extra_sd[this_sd]);
       } else {
         log_prob += normal_lpdf(Y_cont[n]|(sigma_reg_full[bb[n]] + srx_pred[n,]*sigma_reg_x) *  (lt[time[n]] + legis_pred[n,]*legis_x) - B_int_free[bb[n]],
-        extra_sd[type_het_var[bb[n]]]);
+        extra_sd[this_sd]);
       }
       
       
@@ -655,16 +657,18 @@ if(T==1) {
     } else if(mm[n]==10) {
       //normal hurdle
       
+      int this_sd = type_het_var[bb[n]];
+      
       if(Y_cont[n]<y_cont_miss) {
         // observed data 
         if(T==1) {
           log_prob += normal_lpdf(Y_cont[n]|(sigma_reg_full[bb[n]] + srx_pred[n,]*sigma_reg_x) *  (L_full[s] + legis_pred[n,]*legis_x) - B_int_free[bb[n]],
-          extra_sd[type_het_var[bb[n]]]);
+          extra_sd[this_sd]);
           log_prob += bernoulli_logit_lpmf(0|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_full[s] + legis_pred[n,]*legis_x) - 
           A_int_free[bb[n]]);
         } else {
           log_prob += normal_lpdf(Y_cont[n]|(sigma_reg_full[bb[n]] + srx_pred[n,]*sigma_reg_x) *  (lt[time[n]] + legis_pred[n,]*legis_x) - B_int_free[bb[n]],
-          extra_sd[type_het_var[bb[n]]]);
+          extra_sd[this_sd]);
           log_prob += bernoulli_logit_lpmf(0|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (lt[time[n]] + legis_pred[n,]*legis_x) - 
           A_int_free[bb[n]]);
         }
@@ -683,27 +687,32 @@ if(T==1) {
     } else if(mm[n]==11) {
       //lognormal no inflation
       
+      int this_sd = type_het_var[bb[n]];
+      
       if(T==1) {
         log_prob += lognormal_lpdf(Y_cont[n]|exp((sigma_reg_full[bb[n]] + srx_pred[n,]*sigma_reg_x) *  (L_full[s] + legis_pred[n,]*legis_x) - B_int_free[bb[n]]),
-        extra_sd[type_het_var[bb[n]]]);
+        extra_sd[this_sd]);
       } else {
         log_prob += lognormal_lpdf(Y_cont[n]|exp((sigma_reg_full[bb[n]] + srx_pred[n,]*sigma_reg_x) *  (lt[time[n]] + legis_pred[n,]*legis_x) - B_int_free[bb[n]]),
-        extra_sd[type_het_var[bb[n]]]);
+        extra_sd[this_sd]);
       }
       
     } else if(mm[n]==12) {
       //hurdle lognormal
       
+            
+      int this_sd = type_het_var[bb[n]];
+      
       if(Y_cont[n]<y_cont_miss) {
         // observed data 
         if(T==1) {
           log_prob += lognormal_lpdf(Y_cont[n]|exp((sigma_reg_full[bb[n]] + srx_pred[n,]*sigma_reg_x) *  (L_full[s] + legis_pred[n,]*legis_x) - B_int_free[bb[n]]),
-          extra_sd[type_het_var[bb[n]]]);
+          extra_sd[this_sd]);
           log_prob += bernoulli_logit_lpmf(0|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (L_full[s] + legis_pred[n,]*legis_x) - 
           A_int_free[bb[n]]);
         } else {
           log_prob += lognormal_lpdf(Y_cont[n]|exp((sigma_reg_full[bb[n]] + srx_pred[n,]*sigma_reg_x) *  (lt[time[n]] + legis_pred[n,]*legis_x) - B_int_free[bb[n]]),
-          extra_sd[type_het_var[bb[n]]]);
+          extra_sd[this_sd]);
           log_prob += bernoulli_logit_lpmf(0|(sigma_abs_free[bb[n]] + sax_pred[n,]*sigma_abs_x) * (lt[time[n]] + legis_pred[n,]*legis_x) - 
           A_int_free[bb[n]]);
         }

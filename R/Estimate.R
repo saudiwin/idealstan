@@ -689,6 +689,12 @@ id_make <- function(score_data=NULL,
 #' @param time_sd The variance of the over-time component of the first person/legislator
 #' is fixed to this value as a reference. 
 #' Default is 0.1.
+#' @param time_center_cutoff The number of time points above which
+#' the model will employ a centered time series approach for AR(1)
+#' and random walk models. Below this number the model will employ a 
+#' non-centered approach. The default is 50 time points, which is 
+#' relatively arbitrary and higher values may be better if sampling
+#' quality is poor above the threshold.
 #' @param diff_reg_sd Set the prior standard deviation for the bill (item) intercepts for the non-inflated model.
 #' @param diff_miss_sd Set the prior standard deviation for the bill (item) intercepts for the inflated model.
 #' @param restrict_sd_high Set the prior standard deviation for pinned parameters. This has a default of 
@@ -833,6 +839,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                            discrim_miss_sd=2,
                            person_sd=3,
                         time_sd=.1,
+                        time_center_cutoff=50,
                         restrict_var=TRUE,
                         sample_stationary=FALSE,
                         ar_sd=2,
@@ -1057,15 +1064,17 @@ id_estimate <- function(idealdata=NULL,model_type=2,
 
     if(het_var) {
       
-      num_var <- length(unique(idealdata@score_matrix$item_id[idealdata@score_matrix$model_id %in% c(9,10,11,12)]))
+      num_var <- length(unique(remove_list$billpoints[remove_list$modelpoints %in% c(9,10,11,12)]))
       
-      mod_items <- distinct(select(idealdata@score_matrix,item_id,model_id))
+      mod_items <- tibble(model_id=remove_list$modelpoints,
+                          item_id=remove_list$billpoints) %>% 
+        distinct
       
       mod_items <- mutate(mod_items,cont=model_id %in% c(9,10,11,12)) %>% 
         group_by(cont) %>% 
         mutate(num_var=1:n())
       
-      type_het_var <- mod_items$num_var
+      type_het_var <- arrange(mod_items, item_id) %>% pull(num_var)
       
     } else {
       
@@ -1123,6 +1132,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     time_proc=vary_ideal_pts,
                     restrict_var=restrict_var,
                     time_sd=time_sd,
+                    center_cutoff=as.integer(time_center_cutoff),
                     ar_sd=ar_sd,
                     zeroes=inflate_zero,
                     time_ind=as.array(time_ind),
@@ -1183,6 +1193,30 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   
   idealdata <- remove_list$idealdata
   
+  # check for heterogenous variances
+  
+  if(het_var) {
+    
+    num_var <- length(unique(remove_list$billpoints[remove_list$modelpoints %in% c(9,10,11,12)]))
+    
+    mod_items <- tibble(model_id=this_data$mm,
+                        item_id=this_data$bb) %>% 
+      distinct
+    
+    mod_items <- mutate(mod_items,cont=model_id %in% c(9,10,11,12)) %>% 
+      group_by(cont) %>% 
+      mutate(num_var=1:n())
+    
+    type_het_var <- arrange(mod_items, item_id) %>% pull(num_var)
+    
+  } else {
+    
+    num_var <- 1
+    
+    type_het_var <- rep(num_var, length(unique(billpoints)))
+    
+  }
+  
   this_data <- list(N=remove_list$N,
                     N_cont=remove_list$N_cont,
                     N_int=remove_list$N_int,
@@ -1229,6 +1263,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     restrict_sd_high=restrict_sd_high,
                     restrict_sd_low=restrict_sd_low,
                     time_sd=time_sd,
+                    center_cutoff=as.integer(time_center_cutoff),
                     restrict_var=restrict_var,
                     ar_sd=ar_sd,
                     zeroes=as.numeric(inflate_zero),

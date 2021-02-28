@@ -1,7 +1,10 @@
 // chunk giving a hiearchical TS prior to legislators/persons
 
 //add basic integrated time-series prior
-for(t in 1:T) {
+
+if(T<center_cutoff) {
+  
+  for(t in 1:T) {
   
   if(t==1) {
     L_tp1[t] = L_tp1_var[t];
@@ -10,4 +13,12 @@ for(t in 1:T) {
   }
 
 
+  }
+  
+} else {
+  
+  L_tp1 = L_tp1_var;
+  
 }
+
+

@@ -1529,9 +1529,19 @@ return(as.vector(idx))
     # need to downward adjust Y_int
     # convert from factor back to numeric as we have dealt with missing data
     # drop unused levels
-    Y_int <- as.numeric(factor(Y_int))
+    # need to get back to zero index
+    if(levels(Y_int)[1]=="0") {
+      
+      Y_int <- as.numeric(Y_int) - 1
+      
+    } else {
+      
+      Y_int <- as.numeric(Y_int)
+      
+    }
     
-    Y_int[modelpoints %in% c(1,2) & Y_int<3] <- Y_int[modelpoints %in% c(1,2)  & Y_int<3] - 1
+    
+    #Y_int[modelpoints %in% c(1,2) & Y_int<3] <- Y_int[modelpoints %in% c(1,2)  & Y_int<3] - 1
 
   }
   
@@ -1917,13 +1927,10 @@ return(as.vector(idx))
     
   } else {
       
-      L_tp1_var <- obj@stan_samples$draws("L_tp1_var") %>% as_draws_matrix()
-      
-    }
+    L_tp1_var <- obj@stan_samples$draws("L_tp1_var") %>% as_draws_matrix()
     
     
-    
-    if(obj@time_proc==2) {
+    if(obj@time_proc==2 && length(unique(obj@score_data@score_matrix$time_id))<50) {
       
         
         L_full <- obj@stan_samples$draws("L_full") %>% as_draws_matrix()
@@ -2041,7 +2048,7 @@ return(as.vector(idx))
       all_time <- lapply(unique(as.numeric(obj@score_data@score_matrix$person_id)), 
                          function (p) {
         
-        initial <- L_full[,p]
+          initial <- L_tp1_var[,(time_grid$Var1==1 & time_grid$Var2==p)]
         
           time_func(t=2,
                            points=1:length(unique(obj@score_data@score_matrix$time_id)),
@@ -2075,7 +2082,7 @@ return(as.vector(idx))
       colnames(all_time) <- paste0("L_tp1[",time_grid$Var1,",",time_grid$Var2,"]")
 
       
-    } else if(obj@time_proc==3) {
+    } else if(obj@time_proc==3  && length(unique(obj@score_data@score_matrix$time_id))>50) {
         
         L_full <- obj@stan_samples$draws("L_full") %>% as_draws_matrix()
         
@@ -2238,11 +2245,15 @@ return(as.vector(idx))
       colnames(all_time) <- paste0("L_tp1[",time_grid$Var1,",",time_grid$Var2,"]")
 
       
-    } else if(obj@time_proc==4) {
+    } else {
+      
+      # GP or random walk and AR(1) but with centered time series   
       
       all_time <- L_tp1_var <- obj@stan_samples$draws("L_tp1_var") %>% as_draws_matrix()
       
-    }
+    } 
+    
+  } # end of if statement differentiating between mapping over items vs. persons
     
     return(all_time)
   }

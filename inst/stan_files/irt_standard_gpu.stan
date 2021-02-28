@@ -47,6 +47,7 @@ real partial_sum(int[,] y_slice,
         int const_type,
         int restrict_high,
         int restrict_low,
+        int center_cutoff,
         real fix_high,
         real fix_low,
         real restrict_sd_high,
@@ -127,11 +128,28 @@ real partial_sum(int[,] y_slice,
       // determine whether mapped parameter is restricted
         if(pos_discrim==0) {
           if(s==restrict_high) {
-            log_prob += normal_lpdf(L_full[s]|fix_high,restrict_sd_high);
+            if(time_proc==2) {
+              //centered
+              log_prob += normal_lpdf(L_tp1_var[1,s]|fix_high,restrict_sd_high);
+            } else {
+              log_prob += normal_lpdf(L_full[s]|fix_high,restrict_sd_high);
+            }
           } else if(s==restrict_low) {
-            log_prob += normal_lpdf(L_full[s]|fix_low,restrict_sd_low);
+            if(time_proc==2) {
+              //centered
+              log_prob += normal_lpdf(L_tp1_var[1,s]|fix_low,restrict_sd_low);
+            } else {
+              log_prob += normal_lpdf(L_full[s]|fix_low,restrict_sd_low);
+            }
+            
           } else {
-            log_prob += normal_lpdf(L_full[s]|0,legis_sd);
+            
+            if(time_proc==2) {
+              log_prob += normal_lpdf(L_tp1_var[1,s]|0,legis_sd);
+            } else {
+              log_prob += normal_lpdf(L_full[s]|0,legis_sd);
+            }
+            
           }
         } else {
           log_prob += normal_lpdf(L_full[s]|0,legis_sd);
@@ -152,6 +170,7 @@ real partial_sum(int[,] y_slice,
       }
       
       log_prob += normal_lpdf(B_int_free[s]|0,diff_reg_sd);
+      log_prob += normal_lpdf(sigma_abs_free[s]|0,discrim_abs_sd);
       log_prob += normal_lpdf(A_int_free[s]|0,diff_abs_sd);
 
     } else if(S_type==0 && const_type==1) {
@@ -182,9 +201,16 @@ real partial_sum(int[,] y_slice,
       // priors for time-varying persons
       
       if(time_proc!=4) {
-          
-        log_prob += normal_lpdf(L_tp1_var[1,s]|0,5);  
-        log_prob += normal_lpdf(to_vector(L_tp1_var[2:T,s])|0,1);
+        
+        if(const_type!=1 && time_proc!=2) {
+          log_prob += normal_lpdf(L_tp1_var[1,s]|0,5);
+        }
+        
+        if(T<center_cutoff) {
+      
+          log_prob += normal_lpdf(to_vector(L_tp1_var[2:T,s])|0,1);
+        
+        }
         
         if(restrict_var==1) {
           
@@ -309,6 +335,7 @@ data {
   real<lower=0> restrict_sd_low;
   real ar_sd;
   real time_sd;
+  int<lower=2> center_cutoff;
   int restrict_var; // whether to fix the over-time variance of the first person to a value
   int sum_vals[S,3]; // what to loop over for reduce sum
   int time_proc;
@@ -487,11 +514,55 @@ for(n in 1:num_legis) {
   
   if(T>1 && time_proc!=4 && S_type==0) {
     
-    L_tp1_var[1] ~ normal(0,5);
-    
-    for(t in 2:T) {
-      L_tp1_var[t] ~ normal(0,1);
+    if(const_type!=1 && time_proc!=2) {
+      L_tp1_var[1] ~ normal(0,5);
     }
+    
+    if(T<center_cutoff) {
+    
+      for(t in 2:T) {
+        L_tp1_var[t] ~ normal(0,1);
+      }
+      
+      
+    } else {
+      
+      if(time_proc==2) {
+        
+        if(restrict_var==1) {
+          
+          for(n in 1:num_legis) 
+              L_tp1_var[2:T,n] ~ normal(L_tp1_var[1:(T-1),n],time_var_full[n]);
+
+            
+          } else {
+          
+          for(n in 1:num_legis)
+                L_tp1_var[2:T,n] ~ normal(L_tp1_var[1:(T-1),n],time_var_free[n]);
+          
+        }
+        
+      } else if(time_proc==3) {
+        
+        if(restrict_var==1) {
+          
+          for(n in 1:num_legis) 
+              L_tp1_var[2:T,n] ~ normal(L_full[n] + L_AR1[n]*to_vector(L_tp1_var[1:(T-1),n]),time_var_full[n]);
+                
+          
+        } else {
+          
+          for(n in 1:num_legis)
+                L_tp1_var[2:T,n] ~ normal(L_full[n] + L_AR1[n]*to_vector(L_tp1_var[1:(T-1),n]),time_var_free[n]);
+          
+        }
+        
+        
+      }
+      
+    }
+    
+    
   }
   
   if(S_type==0)  {
@@ -541,7 +612,10 @@ if(S_type==1 && const_type==1) {
   
   // map items, ID persons
   if(pos_discrim==0) {
-    target += id_params(L_full,
+    
+    if(time_proc==2) {
+      
+      target += id_params(to_vector(L_tp1_var[1,1:num_legis]),
                         restrict_high,
                         restrict_low,
                         fix_high,
@@ -550,6 +624,24 @@ if(S_type==1 && const_type==1) {
                         restrict_sd_low,
                         0,
                         legis_sd); 
+      
+      
+      
+    } else {
+      
+      target += id_params(L_full,
+                        restrict_high,
+                        restrict_low,
+                        fix_high,
+                        fix_low,
+                        restrict_sd_high,
+                        restrict_sd_low,
+                        0,
+                        legis_sd); 
+      
+      
+    }
+    
   } else {
     L_full ~ normal(0,legis_sd);
   }
@@ -595,6 +687,7 @@ if(S_type==1 && const_type==1) {
         const_type,
         restrict_high,
         restrict_low,
+        center_cutoff,
         fix_high,
         fix_low,
         restrict_sd_high,
