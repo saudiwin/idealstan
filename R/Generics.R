@@ -6,7 +6,7 @@
 #' @seealso \code{\link{id_make}} to create an \code{idealdata} object suitable for estimation with \code{id_estimate}.
 #' @export
 setClass('idealdata',
-         slots=list(score_matrix='data.frame',
+         slots=list(score_matrix='ANY',
                     person_data='data.frame',
                     group_vals='ANY',
                     group_varying='logical',
