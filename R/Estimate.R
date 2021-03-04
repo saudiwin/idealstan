@@ -875,8 +875,15 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   }
   
     # set path if user specifies
+    if(!is.null(cmdstan_path_user))
+          set_cmdstan_path(cmdstan_path_user)
   
-    set_cmdstan_path(cmdstan_path_user)
+    if(!file.exists(system.file("stan_files","irt_standard",
+                                package="idealstan"))) {
+      print("Compiling model. Will take some time as this is the first time package is used.")
+      print("Have you thought about donating to relief for victims for Yemen's famine?")
+      print("Check out https://www.unicef.org/emergencies/yemen-crisis for more info.")
+    }
     
     stan_code <- system.file("stan_files","irt_standard.stan",
                              package="idealstan")
@@ -886,13 +893,6 @@ id_estimate <- function(idealdata=NULL,model_type=2,
     
     stan_code_gpu <- system.file("stan_files","irt_standard_gpu.stan",
                                  package="idealstan")
-    
-    if(!file.exists(system.file("stan_files","irt_standard",
-                                package="idealstan"))) {
-      print("Compiling model. Will take some time as this is the first time package is used.")
-      print("Have you thought about donating to relief for victims for Yemen's famine?")
-      print("Check out https://www.unicef.org/emergencies/yemen-crisis for more info.")
-    }
       
     
     idealdata@stanmodel_map <- stan_code_map %>%

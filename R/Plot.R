@@ -683,13 +683,6 @@ id_plot_legis_dyn <- function(object,return_data=FALSE,
   
   # fix missing labels
   
-  person_params <- group_by(person_params, legis) %>% 
-                      fill(person_id, time_id, group_id, group_id_num,
-                        .direction = "downup") %>% 
-    group_by(time_point) %>% 
-    fill(time_id,.direction="downup")
-  
-  
   # plot CIs first for background
   
   if(use_ci==T) {
