@@ -658,7 +658,7 @@ if(S_type==1 && const_type==1) {
 
   //all model types
 
-  target += reduce_sum_static(partial_sum,
+  target += reduce_sum(partial_sum,
                       sum_vals,
                      grainsize,
                      T,
