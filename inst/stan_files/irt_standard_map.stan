@@ -113,10 +113,16 @@ real partial_sum(int[,] y_slice,
     int start2;
     int end2;
     int this_var = 1;
+    
+    vector[y_slice[r,3] - y_slice[r,2] + 1] legis_calc; // store calculations for hierarchical covariates
+    vector[y_slice[r,3] - y_slice[r,2] + 1] sigma_reg_calc;
+    vector[y_slice[r,3] - y_slice[r,2] + 1] sigma_abs_calc;
 
     s = y_slice[r,1];
     start2 = y_slice[r,2];
     end2 = y_slice[r,3];
+    
+    
 
     // create covariates
     // depends on whether persons or items are mapped over
@@ -272,7 +278,26 @@ real partial_sum(int[,] y_slice,
         }
         
 
-    } 
+    }
+    
+    // do calculations
+    if(cols(legis_pred)>0) {
+      legis_calc = legis_pred[start2:end2,]*legis_x;
+    } else {
+      legis_calc = rep_vector(0.0,end2 - start2 + 1);
+    }
+    
+    if(cols(srx_pred)>0) {
+      sigma_reg_calc = srx_pred[start2:end2,]*sigma_reg_x;
+    } else {
+      sigma_reg_calc = rep_vector(0.0,end2 - start2 + 1);
+    }
+    
+    if(cols(sax_pred)>0) {
+      sigma_abs_calc = sax_pred[start2:end2,]*sigma_abs_x;
+    } else {
+      sigma_abs_calc = rep_vector(0.0,end2 - start2 + 1);
+    }
 
     if(S_type==1) {
 #include /chunks/model_types_mm_map_persons.stan
