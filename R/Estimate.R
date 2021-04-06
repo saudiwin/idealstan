@@ -613,6 +613,16 @@ id_make <- function(score_data=NULL,
 #' see vignette for details). Generally speaking, \code{"mpi"} is
 #' more efficient parallelization that can be used on computer
 #' clusters to estimate very large models.
+#' @param keep_param A list with logical values for different categories of paremeters which
+#' should/should not be kept following estimation. Can be any/all of \code{person_int} for 
+#' the person-level intercepts (static ideal points), 
+#' \code{person_vary} for person-varying ideal points,
+#' \code{item} for observed item parameters (discriminations/intercepts),
+#' \code{item_miss} for missing item parameters (discriminations/intercepts),
+#' and \code{extra} for other parameters (hierarchical covariates, ordinal intercepts, etc.).
+#' Takes the form \code{list(person_int=TRUE,person_vary=TRUE,item=TRUE,item_miss=TRUE,extra=TRUE)}.
+#' If any are missing in the list, it is assumed that those parameters will be excluded.
+#' If \code{NULL} (default), will save all parameters in output.
 #' @param grainsize The grainsize parameter for the \code{reduce_sum} 
 #' function used for within-chain parallelization. The default is 1, 
 #' which means 1 chunk (item or person) per core. Set to -1. to use
@@ -820,6 +830,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                         inflate_zero=FALSE,
                         vary_ideal_pts='none',
                         within_chain="none",
+                        keep_params=NULL,
                         grainsize=1,
                         mpi_export=NULL,
                         use_subset=FALSE,sample_it=FALSE,
@@ -1300,6 +1311,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                            this_data=this_data,use_vb=use_vb,
                            gpu=gpu,
                            save_files=save_files,
+                           keep_param=keep_param,
                            tol_rel_obj=tol_rel_obj,within_chain=within_chain,
                            ...)
     
@@ -1346,7 +1358,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   outobj@restrict_var <- restrict_var
   
   # need to recalculate legis points if time series used
-  if(this_data$T>1) {
+  if(this_data$T>1 && ((!is.null(keep_param$person_vary) && keep_param$person_vary) || is.null(keep_param))) {
     outobj@time_varying <- .get_varying(outobj)
   }
   
