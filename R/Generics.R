@@ -72,9 +72,11 @@ setClass('idealstan',
                     test_model_code='character',
                     map_over_id="character",
                     time_sd="numeric",
+                    diagnostics="ANY",
                     time_varying="ANY",
                     restrict_var="logical",
                     stan_samples='ANY',
+                    keep_param='ANY',
                     use_vb='logical',
                     use_groups='logical',
                     simulation='logical'))
@@ -150,6 +152,7 @@ setGeneric('sample_model',signature='object',
 setMethod('sample_model',signature(object='idealdata'),
           function(object,nchains=4,niters=2000,warmup=floor(niters/2),ncores=NULL,
                    to_use=to_use,this_data=this_data,use_vb=FALSE,within_chain=NULL,
+                   keep_param=keep_param,
                    save_files=NULL,gpu=FALSE,
                    tol_rel_obj=NULL,...) {
             
@@ -175,6 +178,124 @@ setMethod('sample_model',signature(object='idealdata'),
                                 use_ar=this_data$use_ar,
                                 person_start=object@person_start,
                                 actual=TRUE)
+            
+            if(!is.null(keep_param)) {
+              
+              # check for logical vectors
+              
+              check_type <- sapply(keep_param, is.logical)
+              
+              stopifnot("Please only use TRUE/FALSE values for keep parameter option"=check_type)
+              
+              keep_vars <- "lp__"
+              
+              if(!is.null(keep_param$person_vary)) {
+                
+                if(keep_param$person_vary) {
+                  
+                  if(this_data$time_proc==2) {
+                    
+                    if(this_data$S_type!=0) {
+                      keep_vars <- c(keep_vars,"L_tp1_var","time_var_free",
+                                     "L_full")
+                    } else {
+                      keep_vars <- c(keep_vars,"L_tp1","time_var_full","time_var_free",
+                                     "L_full")
+                      
+                    }
+
+                    
+                  } else if(this_data$time_proc==3) {
+                    
+                    if(this_data$S_type!=0) {
+                      keep_vars <- c(keep_vars,"L_tp1_var","time_var_free","L_AR1",
+                                     "L_full")
+                    } else {
+                      keep_vars <- c(keep_vars,"L_tp1","time_var_full","time_var_free",
+                                     "L_full","L_AR1")
+                      
+                    }
+                    
+                  } else if(this_data$time_proc==4) {
+                    
+                    if(this_data$S_type!=0) {
+                      
+                      keep_vars <- c(keep_vars,"L_tp1_var","time_var_free","L_AR1",
+                                     "time_var_gp_free","m_sd_free","gp_sd_free",
+                                     "L_full")
+                      
+                    } else {
+                      
+                      keep_vars <- c(keep_vars,"L_tp1","L_tp1_var","time_var_free","L_AR1","time_var_full",
+                                     "m_sd_full","m_sd_free","gp_sd_free",
+                                     "time_var_gp_free",
+                                     "L_full")
+                      
+                      
+                    }
+                  }
+                  
+                }
+                
+              } else if(!is.null(keep_param$person_int)) {
+                
+                # figure out which people to keep in the estimation
+                
+                if(keep_param$person_int && (is.null(keep_param$person_vary) || !keep_param$person_vary)) {
+                  
+                  keep_vars <- c(keep_vars,"L_full")
+                  
+                }
+                
+              } 
+              
+              if(!is.null(keep_param$item)) {
+                
+                if(keep_param$item) {
+                  
+                  keep_vars <- c(keep_vars,"sigma_reg_full","B_int_free")
+                  
+                }
+                
+              } 
+              
+              if(!is.null(keep_param$item_miss)) {
+                
+                if(keep_param$item_miss) {
+                  
+                  keep_vars <- c(keep_vars,"sigma_abs_free","A_int_free")
+                  
+                }
+                
+              } 
+              
+              if(!is.null(keep_param$extra)) {
+                
+                if(keep_param$extra) {
+                  
+                  if(object@score_data@person_cov!="personcov0") {
+                    
+                    keep_vars <- c(keep_vars,"legis_x")
+                    
+                  }
+                  
+                  if(object@score_data@item_cov!="itemcov0") {
+                    
+                    keep_vars <- c(keep_vars,"sigma_reg_x")
+                    
+                  }
+                  
+                  if(object@score_data@item_cov_miss!="itemcovmiss0") {
+                    
+                    keep_vars <- c(keep_vars,"sigma_abs_x")
+                    
+                  }
+                  
+                }
+                
+              }
+               
+            }
 
 
             if(is.null(ncores)) {
@@ -252,12 +373,20 @@ setMethod('sample_model',signature(object='idealdata'),
             outobj <- new('idealstan',
                           score_data=object,
                           model_code=object@stanmodel$code(),
-                          stan_samples=out_model,
                           use_vb=use_vb)
             
             # add safe summaries
             
-            to_sum <- outobj@stan_samples$summary(variables=NULL,
+            # need to use keep_param to filter items/persons in case we need to
+            # remove some of them
+            
+            if(!is.null(keep_param)) {
+              
+              keep_vars <- NULL
+              
+            }
+            
+            to_sum <- out_model$summary(variables=keep_vars,
                                                   ~quantile(.x, probs = c(0.05, 0.95),na.rm=T),
                                                   rhat=rhat,~mean(.x,na.rm=T),
                                                   median=median,ess_bulk,ess_tail) 
@@ -268,6 +397,12 @@ setMethod('sample_model',signature(object='idealdata'),
             to_sum <- select(to_sum,variable,lower,mean,median,upper,rhat,ess_bulk,ess_tail)
             
             outobj@summary <- to_sum
+            
+            outobj@diagnostics <- out_model$sampler_diagnostics()
+            
+            outobj@stan_samples <- out_model
+            
+            outobj@keep_param <- keep_param
             
             return(outobj)
           })
