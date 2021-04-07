@@ -152,7 +152,7 @@ setGeneric('sample_model',signature='object',
 setMethod('sample_model',signature(object='idealdata'),
           function(object,nchains=4,niters=2000,warmup=floor(niters/2),ncores=NULL,
                    to_use=to_use,this_data=this_data,use_vb=FALSE,within_chain=NULL,
-                   keep_param=keep_param,
+                   keep_param=NULL,
                    save_files=NULL,gpu=FALSE,
                    tol_rel_obj=NULL,...) {
             
