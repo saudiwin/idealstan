@@ -273,19 +273,19 @@ setMethod('sample_model',signature(object='idealdata'),
                 
                 if(keep_param$extra) {
                   
-                  if(object@score_data@person_cov!="personcov0") {
+                  if(object@person_cov!="personcov0") {
                     
                     keep_vars <- c(keep_vars,"legis_x")
                     
                   }
                   
-                  if(object@score_data@item_cov!="itemcov0") {
+                  if(object@item_cov!="itemcov0") {
                     
                     keep_vars <- c(keep_vars,"sigma_reg_x")
                     
                   }
                   
-                  if(object@score_data@item_cov_miss!="itemcovmiss0") {
+                  if(object@item_cov_miss!="itemcovmiss0") {
                     
                     keep_vars <- c(keep_vars,"sigma_abs_x")
                     
@@ -577,7 +577,7 @@ setMethod('summary',signature(object='idealstan'),
             if(pars=='items') {
 
               # a bit trickier with item points
-              item_plot <- levels(object@score_data@score_matrix$item_id)
+              item_plot <- levels(object@score_matrix$item_id)
               if(object@model_type %in% c(1,2) || (object@model_type>6 && object@model_type<13)) {
                 # binary models and continuous
                 item_points <- lapply(item_plot,.item_plot_binary,object=object,
@@ -645,9 +645,9 @@ setMethod('summary',signature(object='idealstan'),
                                   pars=param_name)
               
               # reset names of parameters
-              new_names <- switch(pars,person_cov=object@score_data@person_cov,
-                                  discrim_reg=object@score_data@item_cov,
-                                  discrim_abs=object@score_data@item_cov_miss)
+              new_names <- switch(pars,person_cov=object@person_cov,
+                                  discrim_reg=object@item_cov,
+                                  discrim_abs=object@item_cov_miss)
               
               attributes(to_sum)$dimnames$parameters <- new_names
               
