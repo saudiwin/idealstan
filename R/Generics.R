@@ -360,7 +360,7 @@ setMethod('sample_model',signature(object='idealdata'),
             
             outobj <- new('idealstan',
                           score_data=object,
-                          model_code=object@stanmodel$code(),
+                          model_code=object@stanmodel_map$code(),
                           use_vb=use_vb)
             
             # add safe summaries
@@ -368,7 +368,7 @@ setMethod('sample_model',signature(object='idealdata'),
             # need to use keep_param to filter items/persons in case we need to
             # remove some of them
             
-            if(!is.null(keep_param)) {
+            if(is.null(keep_param)) {
               
               keep_vars <- NULL
               
