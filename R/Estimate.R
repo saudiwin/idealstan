@@ -604,15 +604,6 @@ id_make <- function(score_data=NULL,
 #' To use correctly, the value for 
 #' zero must be passed as the \code{miss_val} option to \code{\link{id_make}} before
 #' running a model so that zeroes are coded as missing data.
-#' @param within_chain This parameter determines whether Stan's within-chain
-#' parallelization scheme is used for estimation. The parameter can take three values:
-#' \code{"none"} for no within-chain parallelization,
-#' \code{"threads"} for shared-memory parallelization,
-#' and \code{"mpi"} for using the MPI library for 
-#' parallelization (this requires sampling in \code{cmdstan},
-#' see vignette for details). Generally speaking, \code{"mpi"} is
-#' more efficient parallelization that can be used on computer
-#' clusters to estimate very large models.
 #' @param keep_param A list with logical values for different categories of paremeters which
 #' should/should not be kept following estimation. Can be any/all of \code{person_int} for 
 #' the person-level intercepts (static ideal points), 
@@ -829,7 +820,6 @@ id_make <- function(score_data=NULL,
 id_estimate <- function(idealdata=NULL,model_type=2,
                         inflate_zero=FALSE,
                         vary_ideal_pts='none',
-                        within_chain="none",
                         keep_param=NULL,
                         grainsize=1,
                         mpi_export=NULL,
@@ -896,8 +886,8 @@ id_estimate <- function(idealdata=NULL,model_type=2,
       print("Check out https://www.unicef.org/emergencies/yemen-crisis for more info.")
     }
     
-    stan_code <- system.file("stan_files","irt_standard.stan",
-                             package="idealstan")
+    # stan_code <- system.file("stan_files","irt_standard.stan",
+    #                          package="idealstan")
     
     stan_code_map <- system.file("stan_files","irt_standard_map.stan",
                              package="idealstan")
@@ -918,10 +908,6 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                                        STAN_OPENCL=TRUE,
                                        opencl_platform_id = 0,
                                        opencl_device_id = 0))
-    
-    idealdata@stanmodel <- stan_code %>%
-      cmdstan_model(include_paths=dirname(stan_code),
-                    cpp_options=list(STAN_CPP_OPTIMS=TRUE))
     
     #Using an un-identified model with variational inference, find those parameters that would be most useful for
     #constraining/pinning to have an identified model for full Bayesian inference
@@ -966,6 +952,20 @@ id_estimate <- function(idealdata=NULL,model_type=2,
            integers. Please pass a numeric value in the id_make function
            for model_id based on the available model types.")
     }
+  }
+  
+  if((!(all(c(restrict_ind_high,restrict_ind_low) %in% unique(idealdata@score_matrix$person_id))) && !use_groups) && const_type=="persons") {
+    
+    stop("Your restricted persons/items are not in the data.")
+    
+  } else if(!(all(c(restrict_ind_high,restrict_ind_low) %in% unique(idealdata@score_matrix$item_id))) && const_type=="items") {
+    
+    stop("Your restricted persons/items are not in the data.")
+    
+  } else if((!(all(c(restrict_ind_high,restrict_ind_low) %in% unique(idealdata@score_matrix$group_id)))  && use_groups) && const_type=="persons") {
+    
+    stop("Your restricted persons/items are not in the data.")
+    
   }
   
   # check if ordinal categories exist in the data if model_id>1
@@ -1107,7 +1107,6 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     type_het_var=type_het_var,
                     S_type=as.numeric(map_over_id=="persons"),
                     sum_vals=as.matrix(sum_vals),
-                    within_chain=as.numeric(within_chain!="none"),
                     T=remove_list$max_t,
                     num_legis=remove_list$num_legis,
                     num_bills=remove_list$num_bills,
@@ -1239,7 +1238,6 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     type_het_var=type_het_var,
                     S=nrow(sum_vals),
                     S_type=as.numeric(map_over_id=="persons"),
-                    within_chain=as.numeric(within_chain!="none"),
                     T=remove_list$max_t,
                     num_legis=remove_list$num_legis,
                     num_bills=remove_list$num_bills,
@@ -1303,10 +1301,6 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   idealdata@order_cats_rat <- remove_list$order_cats_rat
   idealdata@order_cats_grm <- remove_list$order_cats_grm
 
-  # need to check for the type of parallelization
-
-  if(within_chain %in% c("threads","none")) {
-    
     outobj <- sample_model(object=idealdata,nchains=nchains,niters=niters,warmup=warmup,ncores=ncores,
                            this_data=this_data,use_vb=use_vb,
                            gpu=gpu,
@@ -1314,41 +1308,43 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                            keep_param=keep_param,
                            tol_rel_obj=tol_rel_obj,within_chain=within_chain,
                            ...)
-    
-  } else if(within_chain=="mpi") {
-    
-    # we can't do mpi natively, so let's export to cmdstan to run on a cluster
-
-    if(is.null(mpi_export)) {
-      print("Please choose a folder to store the exported data and stan code for MPI.")
-      mpi_export <- rstudioapi::selectDirectory(caption="Choose a directory to export code and data for running MPI in cmdstan:")
-    }
-    
-    write_stan_json(this_data,paste0(mpi_export,"/idealstan_mpi_data.json"))
-
-    writeLines(idealdata@stanmodel$code(),con=file(paste0(mpi_export,"/idealstan_stan_code.stan")))
-    
-    saveRDS(idealdata,paste0(mpi_export,"/idealdata_object.rds"))
-    
-    # save extra necessary parameters
-    
-    saveRDS(list(vary_ideal_pts=vary_ideal_pts,
-                 use_groups=use_groups,
-                 model_type=model_type,
-                 use_vb=use_vb,
-                 map_over_id=map_over_id,
-                 time_sd=time_sd),
-            paste0(mpi_export,"/extra_params.rds"))
-    
-    # need all the chunks
-    dir.create(paste0(mpi_export,"/chunks"),showWarnings=FALSE)
-    chunks <- system.file("stan_files/chunks",package="idealstan")
-    chunks_files <- list.files(chunks,full.names=T)
-    file.copy(chunks_files,to=paste0(mpi_export,"/chunks"),overwrite = T)
-    
-    return("You will need to run the model in cmdstan yourself and load the resulting data back in to R with the id_load_mpi function. See vignette for details.")
-    
-  } 
+  
+  # deprecate: reduce_sum doesn't work in mpi
+  
+  # else if(within_chain=="mpi") {
+  #   
+  #   # we can't do mpi natively, so let's export to cmdstan to run on a cluster
+  # 
+  #   if(is.null(mpi_export)) {
+  #     print("Please choose a folder to store the exported data and stan code for MPI.")
+  #     mpi_export <- rstudioapi::selectDirectory(caption="Choose a directory to export code and data for running MPI in cmdstan:")
+  #   }
+  #   
+  #   write_stan_json(this_data,paste0(mpi_export,"/idealstan_mpi_data.json"))
+  # 
+  #   writeLines(idealdata@stanmodel$code(),con=file(paste0(mpi_export,"/idealstan_stan_code.stan")))
+  #   
+  #   saveRDS(idealdata,paste0(mpi_export,"/idealdata_object.rds"))
+  #   
+  #   # save extra necessary parameters
+  #   
+  #   saveRDS(list(vary_ideal_pts=vary_ideal_pts,
+  #                use_groups=use_groups,
+  #                model_type=model_type,
+  #                use_vb=use_vb,
+  #                map_over_id=map_over_id,
+  #                time_sd=time_sd),
+  #           paste0(mpi_export,"/extra_params.rds"))
+  #   
+  #   # need all the chunks
+  #   dir.create(paste0(mpi_export,"/chunks"),showWarnings=FALSE)
+  #   chunks <- system.file("stan_files/chunks",package="idealstan")
+  #   chunks_files <- list.files(chunks,full.names=T)
+  #   file.copy(chunks_files,to=paste0(mpi_export,"/chunks"),overwrite = T)
+  #   
+  #   return("You will need to run the model in cmdstan yourself and load the resulting data back in to R with the id_load_mpi function. See vignette for details.")
+  #   
+  # } 
   
   outobj@model_type <- model_type
   outobj@time_proc <- vary_ideal_pts
@@ -1366,7 +1362,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   
 }
 
-#' Reconstitute an idealstan object after an MPI/cluster run
+#' DEPRECATED: Reconstitute an idealstan object after an MPI/cluster run
 #' 
 #' This convenience function takes as input a file location storing the results of a 
 #' MPI/cluster run. 
@@ -1382,7 +1378,6 @@ id_estimate <- function(idealdata=NULL,model_type=2,
 #' @param csv_name A vector of character names of CSV files with posterior estimates from 
 #' \code{cmdstan}. Should be located in the same place as \code{file_loc}.
 #' @importFrom posterior summarize_draws
-#' @export
 id_rebuild_mpi <- function(file_loc=NULL,
                    csv_name=NULL) {
 

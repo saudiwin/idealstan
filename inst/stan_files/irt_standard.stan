@@ -319,7 +319,6 @@ data {
   int T; // number of time points
   int grainsize;
   int Y_int[N_int]; // integer outcome
-  int within_chain; // whether to use map_rect
   real Y_cont[N_cont]; // continuous outcome
   int y_int_miss; // missing value for integers
   int<lower=0, upper=1> pos_discrim; // whether to constrain all discrimination parameters to be positive (removes need for further identification conditions)

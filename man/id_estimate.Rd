@@ -10,6 +10,7 @@ id_estimate(
   inflate_zero = FALSE,
   vary_ideal_pts = "none",
   within_chain = "none",
+  keep_param = NULL,
   grainsize = 1,
   mpi_export = NULL,
   use_subset = FALSE,
@@ -35,6 +36,8 @@ id_estimate(
   discrim_miss_sd = 2,
   person_sd = 3,
   time_sd = 0.1,
+  time_center_cutoff = 50,
+  restrict_var = TRUE,
   sample_stationary = FALSE,
   ar_sd = 2,
   diff_reg_sd = 1,
@@ -83,6 +86,17 @@ parallelization (this requires sampling in \code{cmdstan},
 see vignette for details). Generally speaking, \code{"mpi"} is
 more efficient parallelization that can be used on computer
 clusters to estimate very large models.}
+
+\item{keep_param}{A list with logical values for different categories of paremeters which
+should/should not be kept following estimation. Can be any/all of \code{person_int} for 
+the person-level intercepts (static ideal points), 
+\code{person_vary} for person-varying ideal points,
+\code{item} for observed item parameters (discriminations/intercepts),
+\code{item_miss} for missing item parameters (discriminations/intercepts),
+and \code{extra} for other parameters (hierarchical covariates, ordinal intercepts, etc.).
+Takes the form \code{list(person_int=TRUE,person_vary=TRUE,item=TRUE,item_miss=TRUE,extra=TRUE)}.
+If any are missing in the list, it is assumed that those parameters will be excluded.
+If \code{NULL} (default), will save all parameters in output.}
 
 \item{grainsize}{The grainsize parameter for the \code{reduce_sum} 
 function used for within-chain parallelization. The default is 1, 
@@ -165,6 +179,13 @@ estimated instead of individual parameters.}
 \item{time_sd}{The variance of the over-time component of the first person/legislator
 is fixed to this value as a reference. 
 Default is 0.1.}
+
+\item{time_center_cutoff}{The number of time points above which
+the model will employ a centered time series approach for AR(1)
+and random walk models. Below this number the model will employ a 
+non-centered approach. The default is 50 time points, which is 
+relatively arbitrary and higher values may be better if sampling
+quality is poor above the threshold.}
 
 \item{sample_stationary}{If \code{TRUE}, the AR(1) coefficients in a time-varying model will be 
 sampled from an unconstrained space and then mapped back to a stationary space. Leaving this \code{TRUE} is 

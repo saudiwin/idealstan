@@ -307,13 +307,11 @@ setMethod('sample_model',signature(object='idealdata'),
               if(is.null(save_files)) {
                 save_files <- system.file("csv_files",package="idealstan")
               } 
-              
-              if(within_chain=="threads") {
                 
                 if(gpu) {
                   out_model <- object@stanmodel_gpu$sample(data=this_data,chains=nchains,iter_sampling=niters,
                                                            parallel_chains=nchains,
-                                                           threads_per_chain=floor(ncores/nchains),
+                                                           threads_per_chain=ifelse(floor(ncores/nchains)>0,floor(ncores/nchains),1),
                                                            iter_warmup=warmup,
                                                            init=init_vals,
                                                            output_dir=save_files,
@@ -322,7 +320,7 @@ setMethod('sample_model',signature(object='idealdata'),
                 } else {
                   out_model <- object@stanmodel_map$sample(data=this_data,chains=nchains,iter_sampling=niters,
                                                            parallel_chains=nchains,
-                                                           threads_per_chain=floor(ncores/nchains),
+                                                           threads_per_chain=ifelse(floor(ncores/nchains)>0,floor(ncores/nchains),1),
                                                            iter_warmup=warmup,
                                                            init=init_vals,
                                                            output_dir=save_files,
@@ -331,17 +329,7 @@ setMethod('sample_model',signature(object='idealdata'),
                 }
 
               } else {
-                out_model <- object@stanmodel$sample(data=this_data,chains=nchains,iter_sampling=niters,
-                                                     parallel_chains=ncores,
-                                                     iter_warmup=warmup,
-                                                     init=init_vals,
-                                                     output_dir=save_files,
-                                                     refresh=this_data$id_refresh,
-                                                     ...)
-              }
-              
-              
-            } else {
+                
               if(is.null(tol_rel_obj)) {
                 # set to this number for identification runs
                 tol_rel_obj <- 1e-02
@@ -359,7 +347,7 @@ setMethod('sample_model',signature(object='idealdata'),
                 eval_elbo <- 100
               }
               print("Estimating model with variational inference (approximation of true posterior).")
-              out_model <- object@stanmodel$variational(data=this_data,
+              out_model <- object@stanmodel_map$variational(data=this_data,
                               tol_rel_obj=tol_rel_obj,
                               iter=20000,
                               init=init_vals[[1]],
@@ -773,12 +761,11 @@ setGeneric('launch_shinystan',signature='object',
 #' @importFrom shinystan as.shinystan launch_shinystan
 #' @export
 setMethod(launch_shinystan,signature(object='idealstan'),
-          function(object,pars=c('L_free',
-                                 'sigma_reg_free',
+          function(object,pars=c('L_full',
+                                 'sigma_reg_full',
                                  'sigma_abs_free',
-                                 'restrict_high',
-                                 'restrict_low',
-                                 'restrict_ord',
+                                 "A_int_free",
+                                 "B_int_free",
                                  'steps_votes',
                                  'steps_votes_grm'),...) {
             to_shiny <- as.shinystan(object@stan_samples)
