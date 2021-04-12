@@ -690,6 +690,14 @@ id_make <- function(score_data=NULL,
 #' @param time_sd The variance of the over-time component of the first person/legislator
 #' is fixed to this value as a reference. 
 #' Default is 0.1.
+#' @param boundary_prior If your time series has very low variance (change over time),
+#' you may want to use this option to put a boundary-avoiding inverse gamma prior on
+#' the time series variance parameters if your model has a lot of divergent transitions. 
+#' To do so, pass a list with a element called 
+#' \code{beta} that signifies the rate parameter of the inverse-gamma distribution. 
+#' For example, try \code{boundary_prior=list(beta=1)}. Increasing the value of \code{beta}
+#' will increase the "push" away from zero. Setting it too high will result in 
+#' time series that exhibit a lot of "wiggle" without much need.
 #' @param time_center_cutoff The number of time points above which
 #' the model will employ a centered time series approach for AR(1)
 #' and random walk models. Below this number the model will employ a 
@@ -840,6 +848,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                            discrim_miss_sd=2,
                            person_sd=3,
                         time_sd=.1,
+                        boundary_prior=NULL,
                         time_center_cutoff=50,
                         restrict_var=TRUE,
                         sample_stationary=FALSE,
@@ -1095,6 +1104,30 @@ id_estimate <- function(idealdata=NULL,model_type=2,
       
     }
     
+    # check for boundary priors
+    
+    if(!is.null(boundary_prior)) {
+      
+      if(is.null(boundary_prior$beta)) {
+        
+        stop("If you want to use a boundary-avoiding prior for time-series variance, please pass a list with an element named beta, i.e. list(beta=1).")
+        
+      }
+      
+      if(boundary_prior$beta <= 0) {
+        
+        stop("Boundary prior beta value must be strictly positive (i.e. greater than 0).")
+        
+      }
+      
+      inv_gamma_beta <- boundary_prior$beta
+      
+    } else {
+      
+      inv_gamma_beta <- 0
+      
+    }
+    
   this_data <- list(N=remove_list$N,
                     N_cont=remove_list$N_cont,
                     N_int=remove_list$N_int,
@@ -1142,6 +1175,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     time_proc=vary_ideal_pts,
                     restrict_var=restrict_var,
                     time_sd=time_sd,
+                    inv_gamma_beta=inv_gamma_beta,
                     center_cutoff=as.integer(time_center_cutoff),
                     ar_sd=ar_sd,
                     zeroes=inflate_zero,
@@ -1272,6 +1306,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     restrict_sd_high=restrict_sd_high,
                     restrict_sd_low=restrict_sd_low,
                     time_sd=time_sd,
+                    inv_gamma_beta=inv_gamma_beta,
                     center_cutoff=as.integer(time_center_cutoff),
                     restrict_var=restrict_var,
                     ar_sd=ar_sd,

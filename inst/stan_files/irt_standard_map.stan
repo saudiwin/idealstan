@@ -98,6 +98,7 @@ real partial_sum(int[,] y_slice,
         vector time_var_gp_free,
         vector[] L_tp1,
         vector time_var_free,
+        real inv_gamma_beta,
         vector gp_length,
         int het_var,
         int[] type_het_var,
@@ -221,20 +222,35 @@ real partial_sum(int[,] y_slice,
         if(restrict_var==1) {
           
           if(s>1) {
-
-          log_prob += exponential_lpdf(time_var_free[s-1]|.1); // tight-ish prior on additional variances
+            
+            if(inv_gamma_beta>0) {
+              
+              log_prob += inv_gamma_lpdf(time_var_free[s-1]|2,inv_gamma_beta); // boundary-avoiding prior
+              
+            } else {
+              
+              log_prob += exponential_lpdf(time_var_free[s-1]|.1); // tight-ish prior on additional variances
+              
+            }
 
           }
           
         } else {
           
-          log_prob += exponential_lpdf(time_var_free[s]|.1);
+          if(inv_gamma_beta>0) {
+              
+              log_prob += inv_gamma_lpdf(time_var_free[s]|2,inv_gamma_beta); // boundary-avoiding prior
+              
+            } else {
+              
+              log_prob += exponential_lpdf(time_var_free[s]|.1); // tight-ish prior on additional variances
+              
+            }
           
         }
-        
-        
 
       } 
+     
 
       if(time_proc==3) {
         log_prob += normal_lpdf(L_AR1[s]|0,ar_sd);
@@ -359,6 +375,7 @@ data {
   real<lower=0> restrict_sd_low;
   real ar_sd;
   real time_sd;
+  real inv_gamma_beta;
   int<lower=2> center_cutoff;
   int restrict_var; // whether to fix the over-time variance of the first person to a value
   int sum_vals[S,3]; // what to loop over for reduce sum
@@ -596,7 +613,16 @@ for(n in 1:num_legis) {
   gp_sd_free ~ exponential(1); // length 1
   
   if(T>1 && S_type==0) {
-    time_var_free ~ exponential(.1); // tight-ish prior on additional variances
+    
+    if(inv_gamma_beta>0) {
+      
+      time_var_free ~ inv_gamma(2,inv_gamma_beta);
+        
+    } else {
+      
+      time_var_free ~ exponential(.1);    
+        
+    }
     time_var_gp_free ~ inv_gamma(5,5); // tight-ish prior on additional variances
     m_sd_free ~ exponential(1);
   }
@@ -762,6 +788,7 @@ if(S_type==1 && const_type==1) {
         time_var_gp_free,
         L_tp1,
         time_var_free,
+        inv_gamma_beta,
         gp_length,
         num_var,
         type_het_var,
