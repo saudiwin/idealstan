@@ -608,12 +608,12 @@ if(T==1) {
       //latent space non-inflated (normal parameterization)
       if(T==1) {
         
-        log_prob += bernoulli_logit_lpmf(Y_int[n]|ls_int[ll[n]]  + sigma_abs_free[s] -  sqrt(square( (L_full[ll[n]] + legis_calc[n - start2 + 1]) - (B_int_free[s] + sigma_reg_calc[n - start2 + 1]))));
+        log_prob += bernoulli_logit_lpmf(Y_int[n]|ls_int[ll[n]]  + B_int_free[s] -  sqrt(square( (L_full[ll[n]] + legis_calc[n - start2 + 1]) - (sigma_reg_full[s] + sigma_reg_calc[n - start2 + 1]))));
         
       } else {
         
-        log_prob += bernoulli_logit_lpmf(Y_int[n]|ls_int[ll[n]] + sigma_abs_free[s] -
-        sqrt(square((L_tp1[time[n],ll[n]] + legis_calc[n - start2 + 1]) - (B_int_free[s] + sigma_reg_calc[n - start2 + 1]))));
+        log_prob += bernoulli_logit_lpmf(Y_int[n]|ls_int[ll[n]] + B_int_free[s] -
+        sqrt(square((L_tp1[time[n],ll[n]] + legis_calc[n - start2 + 1]) - (sigma_reg_full[s] + sigma_reg_calc[n - start2 + 1]))));
         
       }
       
@@ -621,18 +621,18 @@ if(T==1) {
       //latent space inflated (idealstan parameterization)
       if(T==1) {
         if(Y_int[n]<y_int_miss) {
-          log_prob += log(2) + bernoulli_logit_lpmf(Y_int[n]|(- sqrt(square((L_full[ll[n]] + legis_calc[n - start2 + 1]) - (B_int_free[s] + sigma_reg_calc[n - start2 + 1])))));
-          log_prob += log(2) + bernoulli_logit_lpmf(0|( - sqrt(square((L_full[ll[n]] + legis_calc[n - start2 + 1]) - (A_int_free[s] + sigma_abs_calc[n - start2 + 1])))));
+          log_prob += bernoulli_logit_lpmf(Y_int[n]|ls_int[ll[n]]  + B_int_free[s] - sqrt(square((L_full[ll[n]] + legis_calc[n - start2 + 1]) - (sigma_reg_full[s] + sigma_reg_calc[n - start2 + 1]))));
+          log_prob += bernoulli_logit_lpmf(0| ls_int_abs[ll[n]]  + A_int_free[s] - sqrt(square((L_full[ll[n]] + legis_calc[n - start2 + 1]) - (sigma_abs_free[s] + sigma_abs_calc[n - start2 + 1]))));
         } else {
-          log_prob += log(2) + bernoulli_logit_lpmf(1|0 - sqrt(square((L_full[ll[n]] + legis_calc[n - start2 + 1]) - (B_int_free[s] + sigma_reg_calc[n - start2 + 1]))));
+          log_prob += bernoulli_logit_lpmf(1|ls_int_abs[ll[n]]  + A_int_free[s] - sqrt(square((L_full[ll[n]] + legis_calc[n - start2 + 1]) - (sigma_abs_free[s] + sigma_abs_calc[n - start2 + 1]))));
         }
         
       } else {
         if(Y_int[n]<y_int_miss) {
-          log_prob += log(2) + bernoulli_logit_lpmf(Y_int[n]|0 - sqrt(square((L_full[ll[n]] + legis_calc[n - start2 + 1]) - (B_int_free[s] + sigma_reg_calc[n - start2 + 1]))));
-          log_prob += log(2) + bernoulli_logit_lpmf(0|0 - sqrt(square((L_full[ll[n]] + legis_calc[n - start2 + 1]) - (A_int_free[s] + sigma_abs_calc[n - start2 + 1]))));
+          log_prob += bernoulli_logit_lpmf(Y_int[n]|ls_int[ll[n]]  + B_int_free[s] - sqrt(square((L_tp1[time[n],ll[n]] + legis_calc[n - start2 + 1]) - (sigma_reg_full[s] + sigma_reg_calc[n - start2 + 1]))));
+          log_prob += bernoulli_logit_lpmf(0|ls_int_abs[ll[n]]  + A_int_free[s] - sqrt(square((L_tp1[time[n],ll[n]] + legis_calc[n - start2 + 1]) - (sigma_abs_free[s] + sigma_abs_calc[n - start2 + 1]))));
         } else {
-          log_prob += log(2) + bernoulli_logit_lpmf(1|0 - sqrt(square((L_full[ll[n]] + legis_calc[n - start2 + 1]) - (B_int_free[s] + sigma_reg_calc[n - start2 + 1]))));
+          log_prob += bernoulli_logit_lpmf(1|ls_int_abs[ll[n]]  + A_int_free[s] - sqrt(square((L_tp1[time[n],ll[n]] + legis_calc[n - start2 + 1]) - (sigma_abs_free[s] + sigma_abs_calc[n - start2 + 1]))));
         }
       }
       

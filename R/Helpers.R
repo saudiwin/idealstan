@@ -1661,7 +1661,7 @@ return(as.vector(idx))
     num_bills_grm <- 0L
   }
   
-  if(any(11 %in% modelpoints)) {
+  if(any(c(13,14) %in% modelpoints)) {
     num_ls <- num_legis
   } else {
     num_ls <- 0L

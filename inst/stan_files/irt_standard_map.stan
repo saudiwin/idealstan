@@ -70,6 +70,7 @@ real partial_sum(int[,] y_slice,
         vector m_sd_free, // marginal standard deviation of GP
         vector gp_sd_free, // residual GP variation in Y
         vector ls_int, // extra intercepts for non-inflated latent space
+        vector ls_int_abs, // extra intercepts for non-inflated latent space
         vector[] L_tp1_var, // non-centered variance
         vector L_AR1, // AR-1 parameters for AR-1 model
         vector sigma_reg_full,
@@ -148,7 +149,7 @@ real partial_sum(int[,] y_slice,
             } else {
               log_prob += normal_lpdf(L_full[s]|fix_low,restrict_sd_low);
             }
-            
+
           } else {
             
             if(time_proc==2) {
@@ -161,7 +162,14 @@ real partial_sum(int[,] y_slice,
         } else {
           log_prob += normal_lpdf(L_full[s]|0,legis_sd);
         }
-      
+        
+        if(rows(ls_int)>0) {
+          
+          log_prob += normal_lpdf(ls_int[s]|0,legis_sd);
+          log_prob += normal_lpdf(ls_int_abs[s]|0,legis_sd);
+          
+        }
+        
     } else if(S_type==0 && const_type==2) {
       
       if(pos_discrim==0) {
@@ -200,6 +208,13 @@ real partial_sum(int[,] y_slice,
     } else if(const_type==2 && S_type==1) {
       
       log_prob += normal_lpdf(L_full[s]|0,legis_sd);
+      
+      if(rows(ls_int)>0) {
+          
+          log_prob += normal_lpdf(ls_int[s]|0,legis_sd);
+          log_prob += normal_lpdf(ls_int_abs[s]|0,legis_sd);
+          
+      }
       
     }
 
@@ -441,6 +456,7 @@ parameters {
   vector<lower=0>[gp_N_fix] m_sd_free; // marginal standard deviation of GP
   vector<lower=0>[time_proc==4 ? 1 : 0] gp_sd_free; // residual GP variation in Y
   vector[num_ls] ls_int; // extra intercepts for non-inflated latent space
+  vector[num_ls] ls_int_abs; // extra intercepts for non-inflated latent space
   vector[T>1 ? num_legis : 0] L_tp1_var[T]; // non-centered variance
   vector<lower=-.99,upper=.99>[(T>1 && time_proc==3) ? num_legis : 0] L_AR1; // AR-1 parameters for AR-1 model
   vector[pos_discrim == 0 ? num_bills : 0] sigma_reg_free;
@@ -608,6 +624,7 @@ for(n in 1:num_legis) {
   
   if(S_type==0)  {
     ls_int ~ normal(0,legis_sd);
+    ls_int_abs ~ normal(0,legis_sd);
   }
   
   gp_sd_free ~ exponential(1); // length 1
@@ -760,6 +777,7 @@ if(S_type==1 && const_type==1) {
         m_sd_free, // marginal standard deviation of GP
         gp_sd_free, // residual GP variation in Y
         ls_int, // extra intercepts for non-inflated latent space
+        ls_int_abs, // extra intercepts for non-inflated latent space
         L_tp1_var, // non-centered variance
         L_AR1, // AR-1 parameters for AR-1 model
         sigma_reg_full,

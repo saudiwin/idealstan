@@ -26,7 +26,7 @@ This Rmarkdown file has a series of simulations run on the models offered in `id
 First, the standard IRT 2-PL (for this one, the absence discriminations are not a part of the model):
 
 ```{r irt_binary}
-bin_irt_2pl_sim <- id_sim_gen(num_person=20,num_bills=200,ordinal=F,inflate=F,
+bin_irt_2pl_sim <- id_sim_gen(num_person=300,num_bills=5,ordinal=F,inflate=F,
                               diff_sd=1,
                               reg_discrim_sd = 1,
                               absence_discrim_sd = 1)
@@ -645,7 +645,8 @@ diff_sd = 1,
                                absence_discrim_sd = 1,
                                reg_discrim_sd = 1)
 bin_time_irt_2pl_abs_est <- id_estimate(idealdata=bin_time_irt_2pl_abs_sim,
-                               model_type=2,niters = 2,warmup = 1,
+                               model_type=2,niters = 2,warmup = 1,keep_param=list(person_vary=T,person_int=F,item=TRUE,
+                                                           extra=T),
                                vary_ideal_pts = 'random_walk',
                                restrict_ind_high = as.character(sort(bin_time_irt_2pl_abs_sim@simul_data$drift,
                                                                      decreasing=TRUE,
@@ -801,7 +802,7 @@ Another new addition is the latent space model, which is only a slight modificat
 Non-inflated:
 
 ```{r latent_space_noninfl}
-latent_noninfl_sim <- id_sim_gen(num_person=20,num_bills=125,ordinal=F,
+latent_noninfl_sim <- id_sim_gen(num_person=10,num_bills=125,ordinal=F,
                                        inflate=F,
                                        model_type='binary',
                                        latent_space=T,
@@ -818,7 +819,7 @@ latent_noninfl_est <- id_estimate(idealdata=latent_noninfl_sim,
                               restrict_ind_low = as.character(sort(latent_noninfl_sim@simul_data$true_person,
                                                                    decreasing=F,
                                                         index=T)$ix[1]),
-                               fixtype='prefix')
+                               fixtype='prefix',id_refresh=100,warmup=250,niters=250,nchains=2,ncores=2)
 id_plot_rhats(latent_noninfl_est)
 ```
 
@@ -856,6 +857,7 @@ latent_infl_est <- id_estimate(idealdata=latent_infl_sim,
                                                                    decreasing=F,
                                                         index=T)$ix[1]),
                                fixtype='prefix',
+                              adapt_delta=0.95,
                               diff_reg_sd = 2,
                              diff_miss_sd=2)
 id_plot_rhats(latent_infl_est)
