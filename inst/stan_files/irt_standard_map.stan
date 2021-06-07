@@ -139,6 +139,7 @@ real partial_sum(int[,] y_slice,
             if(time_proc==2) {
               //centered
               log_prob += normal_lpdf(L_tp1_var[1,s]|fix_high,restrict_sd_high);
+              log_prob += normal_lpdf(L_full[s]|0,legis_sd);
             } else {
               log_prob += normal_lpdf(L_full[s]|fix_high,restrict_sd_high);
             }
@@ -146,6 +147,7 @@ real partial_sum(int[,] y_slice,
             if(time_proc==2) {
               //centered
               log_prob += normal_lpdf(L_tp1_var[1,s]|fix_low,restrict_sd_low);
+              log_prob += normal_lpdf(L_full[s]|0,legis_sd);
             } else {
               log_prob += normal_lpdf(L_full[s]|fix_low,restrict_sd_low);
             }
@@ -154,9 +156,10 @@ real partial_sum(int[,] y_slice,
             
             if(time_proc==2) {
               log_prob += normal_lpdf(L_tp1_var[1,s]|0,legis_sd);
-            } else {
+            } 
+            
               log_prob += normal_lpdf(L_full[s]|0,legis_sd);
-            }
+
             
           }
         } else {
@@ -224,8 +227,8 @@ real partial_sum(int[,] y_slice,
       
       if(time_proc!=4) {
         
-        if(const_type!=1 && time_proc!=2) {
-          log_prob += normal_lpdf(L_tp1_var[1,s]|0,5);
+        if(time_proc==3) {
+          log_prob += normal_lpdf(L_tp1_var[1,s]|0,legis_sd);
         }
         
         if(T<center_cutoff) {
@@ -571,7 +574,7 @@ for(n in 1:num_legis) {
   
   if(T>1 && time_proc!=4 && S_type==0) {
     
-    if(const_type!=1 && time_proc!=2) {
+    if(time_proc!=2) {
       L_tp1_var[1] ~ normal(0,5);
     }
     
@@ -692,7 +695,7 @@ if(S_type==1 && const_type==1) {
                         0,
                         legis_sd); 
       
-      
+      L_full ~ normal(0,legis_sd);
       
     } else {
       
@@ -710,7 +713,12 @@ if(S_type==1 && const_type==1) {
     }
     
   } else {
+    
     L_full ~ normal(0,legis_sd);
+    
+    if(time_proc==2) {
+      to_vector(L_tp1_var[1,1:num_legis]) ~ normal(0,legis_sd);
+    }
   }
    
   
@@ -719,6 +727,12 @@ if(S_type==1 && const_type==1) {
   // map items, ID items
   
   L_full ~ normal(0,legis_sd);
+  
+  if(time_proc==2) {
+    
+      to_vector(L_tp1_var[1,1:num_legis]) ~ normal(0,legis_sd);
+      
+  }
   
 }
 

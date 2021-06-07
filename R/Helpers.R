@@ -1556,7 +1556,7 @@ return(as.vector(idx))
   # this works because the data were sorted in id_make
   if(length(Y_cont)>1 && length(Y_int)>1) {
 
-      remove_nas <- remove_nas_int | remove_nas_cont
+      remove_nas <- remove_nas_int & remove_nas_cont
     
   } else if(length(Y_cont)>1) {
     remove_nas <- remove_nas_cont
@@ -1565,7 +1565,7 @@ return(as.vector(idx))
   }
    
     if(length(Y_cont)>1) {
-      Y_cont <- Y_cont[remove_nas_cont]
+      Y_cont <- Y_cont[remove_nas]
       N_cont <- length(Y_cont)
     } else {
       N_cont <- 0
@@ -1573,7 +1573,7 @@ return(as.vector(idx))
     }
     
     if(length(Y_int)>1) {
-      Y_int <- Y_int[remove_nas_int]
+      Y_int <- Y_int[remove_nas]
       N_int <- length(Y_int)
     } else {
       N_int <- 0
@@ -1676,8 +1676,8 @@ return(as.vector(idx))
   
   if(N_int>0) {
     
-    order_cats_rat <- ordered_id[remove_nas]
-    order_cats_grm <- ordered_id[remove_nas]
+    order_cats_rat <- ordered_id
+    order_cats_grm <- ordered_id
     
   } else {
     
@@ -1852,7 +1852,8 @@ return(as.vector(idx))
 
 #' Function to square data for map_rect
 #' @noRd
-.make_sum_vals <- function(this_data,map_over_id=NULL,use_groups=FALSE) {
+.make_sum_vals <- function(this_data,map_over_id=NULL,use_groups=FALSE,
+                           remove_nas=NULL) {
   
   # need a matrix equal to each ID and row number for where it starts/ends
   
@@ -1862,6 +1863,7 @@ return(as.vector(idx))
       this_data <- dplyr::arrange(this_data, group_id,time_id) 
       
       sum_vals <- this_data %>% 
+        filter(remove_nas) %>% 
         mutate(rownum=row_number()) %>% 
         group_by(group_id) %>% 
         filter(row_number() %in% c(1,n())) %>% 
@@ -1879,6 +1881,7 @@ return(as.vector(idx))
       this_data <- dplyr::arrange(this_data,person_id,time_id)
         
         sum_vals <- this_data %>% 
+          filter(remove_nas) %>% 
           mutate(rownum=row_number()) %>% 
           group_by(person_id) %>% 
           filter(row_number() %in% c(1,n())) %>% 
@@ -1896,6 +1899,7 @@ return(as.vector(idx))
     this_data <- dplyr::arrange(this_data, item_id, time_id)
     
     sum_vals <- this_data %>% 
+      filter(remove_nas) %>% 
       mutate(rownum=row_number()) %>% 
       group_by(item_id) %>% 
       filter(row_number() %in% c(1,n())) %>% 

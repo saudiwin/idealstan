@@ -988,24 +988,6 @@ id_estimate <- function(idealdata=NULL,model_type=2,
     idealdata@score_matrix$ordered_id <- 0
   }
   
-  # need to create new data if map_rect is in operation 
-  # and we have missing values / ragged arrays
-  
-    out_list <- .make_sum_vals(idealdata@score_matrix,map_over_id,use_groups=use_groups)
-    
-    sum_vals <- out_list$sum_vals
-    
-    # make sure data is re-sorted by ID
-    
-    idealdata@score_matrix <- out_list$this_data
-
-  
-  
-  
-  # need number of shards
-  
-  S <- nrow(sum_vals)
-  
   # use either row numbers for person/legislator IDs or use group IDs (static or time-varying)
   
   if(use_groups==T) {
@@ -1079,6 +1061,22 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                                restrict_low=idealdata@restrict_ind_low,
                                fix_high=idealdata@restrict_num_high,
                                fix_low=idealdata@restrict_num_low)
+    
+    # need to create new data if map_rect is in operation 
+    # and we have missing values / ragged arrays
+    
+    out_list <- .make_sum_vals(idealdata@score_matrix,map_over_id,use_groups=use_groups,
+                               remove_nas=remove_list$remove_nas)
+    
+    sum_vals <- out_list$sum_vals
+    
+    # make sure data is re-sorted by ID
+    
+    idealdata@score_matrix <- out_list$this_data
+
+    # need number of shards
+    
+    S <- nrow(sum_vals)
     
     # check for heterogenous variances
 
