@@ -1069,10 +1069,6 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                                remove_nas=remove_list$remove_nas)
     
     sum_vals <- out_list$sum_vals
-    
-    # make sure data is re-sorted by ID
-    
-    idealdata@score_matrix <- out_list$this_data
 
     # need number of shards
     
@@ -1129,8 +1125,8 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   this_data <- list(N=remove_list$N,
                     N_cont=remove_list$N_cont,
                     N_int=remove_list$N_int,
-                    Y_int=remove_list$Y_int,
-                    Y_cont=remove_list$Y_cont,
+                    Y_int=remove_list$Y_int[out_list$this_data$orig_order],
+                    Y_cont=remove_list$Y_cont[out_list$this_data$orig_order],
                     y_int_miss=remove_list$y_int_miss,
                     y_cont_miss=remove_list$y_cont_miss,
                     S=nrow(sum_vals),
@@ -1143,26 +1139,26 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     num_bills=remove_list$num_bills,
                     num_ls=remove_list$num_ls,
                     num_bills_grm=remove_list$num_bills_grm,
-                    ll=remove_list$legispoints,
-                    bb=remove_list$billpoints,
-                    mm=remove_list$modelpoints,
+                    ll=remove_list$legispoints[out_list$this_data$orig_order],
+                    bb=remove_list$billpoints[out_list$this_data$orig_order],
+                    mm=remove_list$modelpoints[out_list$this_data$orig_order],
                     mod_count=length(unique(remove_list$modelpoints)),
                     num_fix_high=as.integer(1),
                     num_fix_low=as.integer(1),
                     tot_cats=length(remove_list$n_cats_rat),
                     n_cats_rat=remove_list$n_cats_rat,
                     n_cats_grm=remove_list$n_cats_grm,
-                    order_cats_rat=remove_list$order_cats_rat,
-                    order_cats_grm=remove_list$order_cats_grm,
+                    order_cats_rat=remove_list$order_cats_rat[out_list$this_data$orig_order],
+                    order_cats_grm=remove_list$order_cats_grm[out_list$this_data$orig_order],
                     num_bills_grm=ifelse(any(remove_list$modelpoints %in% c(5,6)),
                                           remove_list$num_bills,0L),
                     LX=remove_list$LX,
                     SRX=remove_list$SRX,
                     SAX=remove_list$SAX,
-                    legis_pred=remove_list$legis_pred,
-                    srx_pred=remove_list$srx_pred,
-                    sax_pred=remove_list$sax_pred,
-                    time=remove_list$timepoints,
+                    legis_pred=remove_list$legis_pred[out_list$this_data$orig_order,,drop=FALSE],
+                    srx_pred=remove_list$srx_pred[out_list$this_data$orig_order,,drop=FALSE],
+                    sax_pred=remove_list$sax_pred[out_list$this_data$orig_order,,drop=FALSE],
+                    time=remove_list$timepoints[out_list$this_data$orig_order],
                     discrim_reg_sd=discrim_reg_sd,
                     discrim_abs_sd=discrim_miss_sd,
                     diff_reg_sd=diff_reg_sd,
@@ -1235,6 +1231,22 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   
   idealdata <- remove_list$idealdata
   
+  # need to create new data if map_rect is in operation 
+  # and we have missing values / ragged arrays
+  
+  out_list <- .make_sum_vals(idealdata@score_matrix,map_over_id,use_groups=use_groups,
+                             remove_nas=remove_list$remove_nas)
+  
+  sum_vals <- out_list$sum_vals
+  
+  # make sure data is re-sorted by ID
+  
+  idealdata@score_matrix <- out_list$this_data
+  
+  # need number of shards
+  
+  S <- nrow(sum_vals)
+  
   # check for heterogenous variances
   
   if(het_var) {
@@ -1262,8 +1274,8 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   this_data <- list(N=remove_list$N,
                     N_cont=remove_list$N_cont,
                     N_int=remove_list$N_int,
-                    Y_int=remove_list$Y_int,
-                    Y_cont=remove_list$Y_cont,
+                    Y_int=remove_list$Y_int[out_list$this_data$orig_order],
+                    Y_cont=remove_list$Y_cont[out_list$this_data$orig_order],
                     y_int_miss=remove_list$y_int_miss,
                     y_cont_miss=remove_list$y_cont_miss,
                     num_var=num_var,
@@ -1275,26 +1287,26 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     num_bills=remove_list$num_bills,
                     num_ls=remove_list$num_ls,
                     num_bills_grm=remove_list$num_bills_grm,
-                    ll=remove_list$legispoints,
-                    bb=remove_list$billpoints,
-                    mm=remove_list$modelpoints,
+                    ll=remove_list$legispoints[out_list$this_data$orig_order],
+                    bb=remove_list$billpoints[out_list$this_data$orig_order],
+                    mm=remove_list$modelpoints[out_list$this_data$orig_order],
                     mod_count=length(unique(remove_list$modelpoints)),
                     num_fix_high=as.integer(1),
                     num_fix_low=as.integer(1),
                     tot_cats=length(remove_list$n_cats_rat),
                     n_cats_rat=remove_list$n_cats_rat,
                     n_cats_grm=remove_list$n_cats_grm,
-                    order_cats_rat=remove_list$order_cats_rat,
-                    order_cats_grm=remove_list$order_cats_grm,
+                    order_cats_rat=remove_list$order_cats_rat[out_list$this_data$orig_order],
+                    order_cats_grm=remove_list$order_cats_grm[out_list$this_data$orig_order],
                     num_bills_grm=ifelse(any(remove_list$modelpoints %in% c(5,6)),
                                          remove_list$num_bills,0L),
                     LX=remove_list$LX,
                     SRX=remove_list$SRX,
                     SAX=remove_list$SAX,
-                    legis_pred=remove_list$legis_pred,
-                    srx_pred=remove_list$srx_pred,
-                    sax_pred=remove_list$sax_pred,
-                    time=remove_list$timepoints,
+                    legis_pred=remove_list$legis_pred[out_list$this_data$orig_order,,drop=FALSE],
+                    srx_pred=remove_list$srx_pred[out_list$this_data$orig_order,,drop=FALSE],
+                    sax_pred=remove_list$sax_pred[out_list$this_data$orig_order,,drop=FALSE],
+                    time=remove_list$timepoints[out_list$this_data$orig_order],
                     time_proc=vary_ideal_pts,
                     discrim_reg_sd=discrim_reg_sd,
                     discrim_abs_sd=discrim_miss_sd,

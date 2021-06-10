@@ -7,7 +7,7 @@ This file is specifically for mapping over items.*/
 // for both continuous and discrete outcomes
 // skip all for pad_id=0
 
-  for(n in end2:start2) {
+for(n in start2:end2) {
   
     // first iterate over all the integer types
     

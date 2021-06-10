@@ -224,74 +224,74 @@ real partial_sum(int[,] y_slice,
     if(S_type==1 && T>1) {
 
       // priors for time-varying persons
-      
+
       if(time_proc!=4) {
-        
+
         if(time_proc==3) {
           log_prob += normal_lpdf(L_tp1_var[1,s]|0,legis_sd);
         }
-        
+
         if(T<center_cutoff) {
-      
+
           log_prob += normal_lpdf(to_vector(L_tp1_var[2:T,s])|0,1);
-        
+
         }
-        
+
         if(restrict_var==1) {
-          
+
           if(s>1) {
-            
+
             if(inv_gamma_beta>0) {
-              
+
               log_prob += inv_gamma_lpdf(time_var_free[s-1]|2,inv_gamma_beta); // boundary-avoiding prior
-              
+
             } else {
-              
+
               log_prob += exponential_lpdf(time_var_free[s-1]|.1); // tight-ish prior on additional variances
-              
+
             }
 
           }
-          
+
         } else {
-          
+
           if(inv_gamma_beta>0) {
-              
+
               log_prob += inv_gamma_lpdf(time_var_free[s]|2,inv_gamma_beta); // boundary-avoiding prior
-              
+
             } else {
-              
+
               log_prob += exponential_lpdf(time_var_free[s]|.1); // tight-ish prior on additional variances
-              
+
             }
-          
+
         }
 
-      } 
-     
+      }
+
 
       if(time_proc==3) {
         log_prob += normal_lpdf(L_AR1[s]|0,ar_sd);
 #include /chunks/l_hier_ar1_prior_map.stan
       } else if(time_proc==2) {
-#include /chunks/l_hier_prior_map.stan        
+#include /chunks/l_hier_prior_map.stan
       } else if(time_proc==4) {
-        
-            log_prob += inv_gamma_lpdf(time_var_gp_free[s]|5,5); 
-        
+
+            log_prob += inv_gamma_lpdf(time_var_gp_free[s]|5,5);
+
         if(s>1) {
             log_prob += exponential_lpdf(m_sd_free[s-1]|1);
         }
-        
-        
+
+
         {
           matrix[T, T] cov; // zero-length if not a GP model
           matrix[T, T] L_cov;// zero-length if not a GP model
           real time_ind_center[T];
-          
-          for(t in 1:T) 
+
+          for(t in 1:T)
             time_ind_center[t] = time_ind[t] - mean(time_ind);
-          
+
           // chunk giving a GP prior to legislators/persons
             //create covariance matrices given current values of hiearchical parameters
             if(s==1) {
@@ -307,26 +307,26 @@ real partial_sum(int[,] y_slice,
 
 
           }
-          
+
           lt = to_vector(L_tp1_var[,s]);
         }
-        
+
 
     }
-    
+
     // do calculations
     if(cols(legis_pred)>0) {
       legis_calc = legis_pred[start2:end2,]*legis_x;
     } else {
       legis_calc = rep_vector(0.0,end2 - start2 + 1);
     }
-    
+
     if(cols(srx_pred)>0) {
       sigma_reg_calc = srx_pred[start2:end2,]*sigma_reg_x;
     } else {
       sigma_reg_calc = rep_vector(0.0,end2 - start2 + 1);
     }
-    
+
     if(cols(sax_pred)>0) {
       sigma_abs_calc = sax_pred[start2:end2,]*sigma_abs_x;
     } else {
@@ -334,13 +334,17 @@ real partial_sum(int[,] y_slice,
     }
 
     if(S_type==1) {
+      
 #include /chunks/model_types_mm_map_persons.stan
-    } else {
-#include /chunks/model_types_mm_map_items.stan
-    }
 
-    return log_prob;
+    } else {
+  
+#include /chunks/model_types_mm_map_items.stan
+
+    }
   }
+  
+  return log_prob;
 
 }
 
@@ -735,7 +739,9 @@ if(S_type==1 && const_type==1) {
   }
   
 }
-
+  // temporary
+  
+  //L_full ~ normal(0,legis_sd);
 
   //all model types
 

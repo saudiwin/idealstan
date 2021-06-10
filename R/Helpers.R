@@ -1855,6 +1855,13 @@ return(as.vector(idx))
 .make_sum_vals <- function(this_data,map_over_id=NULL,use_groups=FALSE,
                            remove_nas=NULL) {
   
+  this_data <- this_data %>% 
+    filter(remove_nas)
+  
+  # need to save original order to reconvert if necessary
+  
+  this_data$orig_order <- 1:nrow(this_data)
+  
   # need a matrix equal to each ID and row number for where it starts/ends
   
   if(map_over_id=="persons") {
@@ -1863,7 +1870,6 @@ return(as.vector(idx))
       this_data <- dplyr::arrange(this_data, group_id,time_id) 
       
       sum_vals <- this_data %>% 
-        filter(remove_nas) %>% 
         mutate(rownum=row_number()) %>% 
         group_by(group_id) %>% 
         filter(row_number() %in% c(1,n())) %>% 
@@ -1881,7 +1887,6 @@ return(as.vector(idx))
       this_data <- dplyr::arrange(this_data,person_id,time_id)
         
         sum_vals <- this_data %>% 
-          filter(remove_nas) %>% 
           mutate(rownum=row_number()) %>% 
           group_by(person_id) %>% 
           filter(row_number() %in% c(1,n())) %>% 
@@ -1899,7 +1904,6 @@ return(as.vector(idx))
     this_data <- dplyr::arrange(this_data, item_id, time_id)
     
     sum_vals <- this_data %>% 
-      filter(remove_nas) %>% 
       mutate(rownum=row_number()) %>% 
       group_by(item_id) %>% 
       filter(row_number() %in% c(1,n())) %>% 
