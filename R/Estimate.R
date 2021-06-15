@@ -142,12 +142,12 @@ id_make <- function(score_data=NULL,
                     model_id='model_id',
                     ordered_id="ordered_id",
                     simul_data=NULL,
-                           person_cov=NULL,
-                  item_cov=NULL,
-                           item_cov_miss=NULL,
-                  remove_cov_int=FALSE,
+                    person_cov=NULL,
+                    item_cov=NULL,
+                    item_cov_miss=NULL,
+                    remove_cov_int=FALSE,
                     unbounded=FALSE,
-                           exclude_level=NA,simulation=FALSE) {
+                    exclude_level=NA,simulation=FALSE) {
   
   # only allow  missing values as NA
   
@@ -174,33 +174,33 @@ id_make <- function(score_data=NULL,
     low_val <- 6
     high_val <- 1
     exclude_level <- c(3,7)
-
+    
   } 
   
-    # data is already in long form
+  # data is already in long form
   
-    # save original ID names as strings to filter later
+  # save original ID names as strings to filter later
   
-    orig_id <- c(item_id,
-                 group_id,
-                 person_id)
+  orig_id <- c(item_id,
+               group_id,
+               person_id)
   
-    # test for input and quote
-    outcome_disc <- .check_quoted(outcome_disc,quo(outcome_disc))
-    outcome_cont <- .check_quoted(outcome_cont,quo(outcome_cont))
-    ordered_id <- .check_quoted(ordered_id,quo(ordered_id))
-    item_id <- .check_quoted(item_id,quo(item_id))
-    time_id <- .check_quoted(time_id,quo(time_id))
-    group_id <- .check_quoted(group_id,quo(group_id))
-    person_id <- .check_quoted(person_id,quo(person_id))
-    model_id <- .check_quoted(model_id,quo(model_id))
+  # test for input and quote
+  outcome_disc <- .check_quoted(outcome_disc,quo(outcome_disc))
+  outcome_cont <- .check_quoted(outcome_cont,quo(outcome_cont))
+  ordered_id <- .check_quoted(ordered_id,quo(ordered_id))
+  item_id <- .check_quoted(item_id,quo(item_id))
+  time_id <- .check_quoted(time_id,quo(time_id))
+  group_id <- .check_quoted(group_id,quo(group_id))
+  person_id <- .check_quoted(person_id,quo(person_id))
+  model_id <- .check_quoted(model_id,quo(model_id))
   
   
   # rename data
   # IDs are made factors now so we can re-arrange indices when need be
   score_rename <- select(score_data,
-                       item_id = !!item_id,
-                       person_id = !!person_id) %>% 
+                         item_id = !!item_id,
+                         person_id = !!person_id) %>% 
     mutate(item_id=factor(!! quo(item_id)),
            person_id=factor(!! quo(person_id)))
   
@@ -269,13 +269,13 @@ id_make <- function(score_data=NULL,
   num_person <- max(as.numeric(factor(pull(score_rename,!!person_id))),na.rm=T)
   num_group <- try(max(as.numeric(factor(pull(score_rename,!!group_id)))))
   num_item <- max(as.numeric(factor(pull(score_rename,!!item_id))),na.rm=T)
-
+  
   # create data frames for all hierachical parameters
-
+  
   if(!is.null(person_cov)) {
     
     # drop intercept
-
+    
     personm <- model.matrix(person_cov,data=score_data)[,-1,drop=FALSE]
     
     # need to check for missing data and remove any missing from IDs
@@ -300,7 +300,7 @@ id_make <- function(score_data=NULL,
     if(remove_cov_int) {
       personm <- personm[,!check_ids] 
     }
-
+    
     score_rename <- bind_cols(score_rename,
                               as_data_frame(personm))
     person_cov <- dimnames(personm)[[2]]
@@ -373,7 +373,7 @@ id_make <- function(score_data=NULL,
     if(remove_cov_int) {
       itemmissm <- itemmissm[,!check_ids]
     }
-
+    
     score_rename <- bind_cols(score_rename,
                               as_data_frame(itemmissm))
     item_cov_miss <- dimnames(itemmissm)[[2]]
@@ -385,7 +385,7 @@ id_make <- function(score_data=NULL,
   
   # recode score/outcome
   if("outcome_disc" %in% names(score_rename)) {
-
+    
     if(is.na(miss_val[1])) {
       # make NA a level, then change it
       score_rename$outcome_disc <- addNA(score_rename$outcome_disc)
@@ -394,14 +394,14 @@ id_make <- function(score_data=NULL,
     }
     
     if(!is.null(high_val) && !is.null(low_val) && !is.null(middle_val)) {
-
+      
       score_rename$outcome_disc <- factor(score_rename$outcome_disc,
-                                     levels=c(low_val,middle_val,high_val,miss_val[1]),
-                                     exclude = exclude_level)
+                                          levels=c(low_val,middle_val,high_val,miss_val[1]),
+                                          exclude = exclude_level)
     } else if(!is.null(high_val) && !is.null(low_val)) {
       score_rename$outcome_disc <- factor(score_rename$outcome_disc,
-                                     levels=c(low_val,high_val,miss_val[1]),
-                                     exclude = exclude_level)
+                                          levels=c(low_val,high_val,miss_val[1]),
+                                          exclude = exclude_level)
     } else {
       # variable does not need to be recoded, only move missing to the end
       score_rename$outcome_disc <- factor(score_rename$outcome_disc)
@@ -410,21 +410,21 @@ id_make <- function(score_data=NULL,
     
     # reconvert if continuous values present
     if("outcome_cont" %in% names(score_rename)) {
-
+      
       levels(score_rename$outcome_disc) <- c(levels(score_rename$outcome_disc),
                                              "Joint Posterior")
       
       score_rename$outcome_disc[score_rename$model_id>8 & score_rename$model_id<13] <- "Joint Posterior"
-
+      
     }
     
   } 
   
-
-
-
-  if("outcome_cont" %in% names(score_rename)) {
   
+  
+  
+  if("outcome_cont" %in% names(score_rename)) {
+    
     if("outcome_disc" %in% names(score_rename)) {
       max_val <- max(pull(score_rename,!!outcome_cont)[score_rename$outcome_disc=="Joint Posterior"],na.rm=T)
     } else {
@@ -433,11 +433,11 @@ id_make <- function(score_data=NULL,
     
     # make missing data the highest observed value
     if(is.na(miss_val[2])) {
-
+      
       if("outcome_disc" %in% names(score_rename)) {
         # only truly missing if discrete outcome also missing
         score_rename$outcome_cont[score_rename$outcome_disc=="Joint Posterior" & !is.na(score_rename$outcome_disc)] <- coalesce(score_rename$outcome_cont[score_rename$outcome_disc=="Joint Posterior" & !is.na(score_rename$outcome_disc)],max_val+1L)
-
+        
         # need to set another value for not truly missing values for appended datasets
         score_rename$outcome_cont[score_rename$outcome_disc!="Joint Posterior"] <- max_val + 2L
       } else {
@@ -447,7 +447,7 @@ id_make <- function(score_data=NULL,
     } else {
       if("outcome_disc" %in% names(score_rename)) {
         score_rename <- mutate(score_rename,!! quo_name(outcome_cont) := ifelse(!!outcome_cont==miss_val[2] & outcome_disc=="Joint Posterior" &
-                                                                                !is.na(outcome_disc),max_val+1L,!!outcome_cont))
+                                                                                  !is.na(outcome_disc),max_val+1L,!!outcome_cont))
         # need to set another value for not truly missing values for appended datasets
         score_rename$outcome_cont[score_rename$outcome_disc!="Joint Posterior"] <- max_val + 2L
       } else {
@@ -465,13 +465,13 @@ id_make <- function(score_data=NULL,
   score_rename$discrete <- as.numeric(score_rename$model_id %in% c(1,2,3,4,5,6,7,8,13,14))
   score_rename <- arrange(score_rename,desc(discrete),person_id,item_id)
   
-
+  
   outobj <- new('idealdata',
-      score_matrix=score_rename,
-      person_cov=person_cov,
-      item_cov=item_cov,
-      item_cov_miss=item_cov_miss,
-      miss_val=miss_val)
+                score_matrix=score_rename,
+                person_cov=person_cov,
+                item_cov=item_cov,
+                item_cov_miss=item_cov_miss,
+                miss_val=miss_val)
   
   if(simulation==TRUE) {
     outobj@simul_data <- simul_data
@@ -832,30 +832,30 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                         grainsize=1,
                         mpi_export=NULL,
                         use_subset=FALSE,sample_it=FALSE,
-                           subset_group=NULL,subset_person=NULL,sample_size=20,
-                           nchains=4,niters=1000,use_vb=FALSE,
-                           restrict_ind_high=NULL,
-                          fix_high=1,
-                          fix_low=(-1),
-                           restrict_ind_low=NULL,
-                           fixtype='vb_full',
+                        subset_group=NULL,subset_person=NULL,sample_size=20,
+                        nchains=4,niters=1000,use_vb=FALSE,
+                        restrict_ind_high=NULL,
+                        fix_high=1,
+                        fix_low=(-1),
+                        restrict_ind_low=NULL,
+                        fixtype='vb_full',
                         const_type="persons",
                         id_refresh=0,
                         prior_fit=NULL,
                         warmup=1000,ncores=4,
                         use_groups=FALSE,
-                           discrim_reg_sd=2,
-                           discrim_miss_sd=2,
-                           person_sd=3,
+                        discrim_reg_sd=2,
+                        discrim_miss_sd=2,
+                        person_sd=3,
                         time_sd=.1,
                         boundary_prior=NULL,
                         time_center_cutoff=50,
                         restrict_var=TRUE,
                         sample_stationary=FALSE,
                         ar_sd=2,
-                           diff_reg_sd=1,
-                           diff_miss_sd=1,
-                           restrict_sd_high=0.01,
+                        diff_reg_sd=1,
+                        diff_miss_sd=1,
+                        restrict_sd_high=0.01,
                         restrict_sd_low=0.01,
                         tol_rel_obj=.001,
                         gp_sd_par=.025,
@@ -868,7 +868,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                         save_files=NULL,
                         pos_discrim=FALSE,
                         het_var=TRUE,
-                           ...) {
+                        ...) {
   
   
   # check to make sure cmdstanr is working
@@ -876,50 +876,50 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   if(is.null(cmdstanr::cmdstan_version())) {
     print("You need to install cmdstan with cmdstanr to compile models. Use the function install_cmdstan() in the cmdstanr package.")
   }
-
-
+  
+  
   
   if(use_subset==TRUE || sample_it==TRUE) {
     idealdata <- subset_ideal(idealdata,use_subset=use_subset,sample_it=sample_it,subset_group=subset_group,
                               subset_person=subset_person,sample_size=sample_size)
   }
   
-    # set path if user specifies
-    if(!is.null(cmdstan_path_user))
-          set_cmdstan_path(cmdstan_path_user)
+  # set path if user specifies
+  if(!is.null(cmdstan_path_user))
+    set_cmdstan_path(cmdstan_path_user)
   
-    if(!file.exists(system.file("stan_files","irt_standard",
-                                package="idealstan"))) {
-      print("Compiling model. Will take some time as this is the first time package is used.")
-      print("Have you thought about donating to relief for victims for Yemen's famine?")
-      print("Check out https://www.unicef.org/emergencies/yemen-crisis for more info.")
-    }
-    
-    # stan_code <- system.file("stan_files","irt_standard.stan",
-    #                          package="idealstan")
-    
-    stan_code_map <- system.file("stan_files","irt_standard_map.stan",
-                             package="idealstan")
-    
-    stan_code_gpu <- system.file("stan_files","irt_standard_gpu.stan",
-                                 package="idealstan")
-      
-    
-    idealdata@stanmodel_map <- stan_code_map %>%
-        cmdstan_model(include_paths=dirname(stan_code_map),
-                      cpp_options = list(stan_threads = TRUE,
-                                         STAN_CPP_OPTIMS=TRUE))
-    
-    idealdata@stanmodel_gpu <- stan_code_gpu %>%
-      cmdstan_model(include_paths=dirname(stan_code_map),
-                    cpp_options = list(stan_threads = TRUE,
-                                       STAN_CPP_OPTIMS=TRUE,
-                                       STAN_OPENCL=TRUE,
-                                       opencl_platform_id = 0,
-                                       opencl_device_id = 0))
-    
-    #Using an un-identified model with variational inference, find those parameters that would be most useful for
-    #constraining/pinning to have an identified model for full Bayesian inference
+  if(!file.exists(system.file("stan_files","irt_standard",
+                              package="idealstan"))) {
+    print("Compiling model. Will take some time as this is the first time package is used.")
+    print("Have you thought about donating to relief for victims for Yemen's famine?")
+    print("Check out https://www.unicef.org/emergencies/yemen-crisis for more info.")
+  }
+  
+  # stan_code <- system.file("stan_files","irt_standard.stan",
+  #                          package="idealstan")
+  
+  stan_code_map <- system.file("stan_files","irt_standard_map.stan",
+                               package="idealstan")
+  
+  stan_code_gpu <- system.file("stan_files","irt_standard_gpu.stan",
+                               package="idealstan")
+  
+  
+  idealdata@stanmodel_map <- stan_code_map %>%
+    cmdstan_model(include_paths=dirname(stan_code_map),
+                  cpp_options = list(stan_threads = TRUE,
+                                     STAN_CPP_OPTIMS=TRUE))
+  
+  idealdata@stanmodel_gpu <- stan_code_gpu %>%
+    cmdstan_model(include_paths=dirname(stan_code_map),
+                  cpp_options = list(stan_threads = TRUE,
+                                     STAN_CPP_OPTIMS=TRUE,
+                                     STAN_OPENCL=TRUE,
+                                     opencl_platform_id = 0,
+                                     opencl_device_id = 0))
+  
+  #Using an un-identified model with variational inference, find those parameters that would be most useful for
+  #constraining/pinning to have an identified model for full Bayesian inference
   
   # change time IDs if non time-varying model is being fit
   if(vary_ideal_pts=='none') {
@@ -980,11 +980,11 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   # check if ordinal categories exist in the data if model_id>1
   
   if(any(c(3,4,5,6) %in% idealdata@score_matrix$model_id)) {
-      if(is.null(idealdata@score_matrix$ordered_id) || !is.numeric(idealdata@score_matrix$ordered_id)) {
-        stop("If you have an ordered categorical variable in a multi-distribution model, you must include a column in the data with the number of ordered categories for each row in the data.\n
+    if(is.null(idealdata@score_matrix$ordered_id) || !is.numeric(idealdata@score_matrix$ordered_id)) {
+      stop("If you have an ordered categorical variable in a multi-distribution model, you must include a column in the data with the number of ordered categories for each row in the data.\n
              See id_make documentation for more info.")
-      }
-    } else {
+    }
+  } else {
     idealdata@score_matrix$ordered_id <- 0
   }
   
@@ -995,7 +995,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   } else {
     legispoints <- as.numeric(idealdata@score_matrix$person_id)
   }
-
+  
   billpoints <- as.numeric(idealdata@score_matrix$item_id)
   timepoints <- as.numeric(factor(as.numeric(idealdata@score_matrix$time_id)))
   modelpoints <- as.integer(idealdata@score_matrix$model_id)
@@ -1013,120 +1013,140 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   if(gp_min_length>=gp_num_diff[1]) {
     stop('The parameter gp_min_length cannot be equal to or greater than gp_num_diff[1].')
   }
-
-    if(("outcome_cont" %in% names(idealdata@score_matrix)) && ("outcome_disc" %in% names(idealdata@score_matrix))) {
-      Y_int <- idealdata@score_matrix$outcome_disc
-      Y_cont <- idealdata@score_matrix$outcome_cont
-    } else if ("outcome_cont" %in% names(idealdata@score_matrix)) {
-      Y_int <- array(0)
-      Y_cont <- idealdata@score_matrix$outcome_cont
-    } else {
-      Y_cont <- array(0)
-      Y_int <- idealdata@score_matrix$outcome_disc
-    }
+  
+  if(("outcome_cont" %in% names(idealdata@score_matrix)) && ("outcome_disc" %in% names(idealdata@score_matrix))) {
+    Y_int <- idealdata@score_matrix$outcome_disc
+    Y_cont <- idealdata@score_matrix$outcome_cont
+  } else if ("outcome_cont" %in% names(idealdata@score_matrix)) {
+    Y_int <- array(0)
+    Y_cont <- idealdata@score_matrix$outcome_cont
+  } else {
+    Y_cont <- array(0)
+    Y_int <- idealdata@score_matrix$outcome_disc
+  }
   
   
   #Remove NA values, which should have been coded correctly in the make_idealdata function
-
+  
   # need to have a different way to remove missing values if multiple
   # posteriors used
   # set values for length of discrete/continuous outcomes  
-    remove_list <- .remove_nas(Y_int,
-                               Y_cont,
-                               discrete=idealdata@score_matrix$discrete,
-                               legispoints,
-                               billpoints,
-                               timepoints,
-                               modelpoints,
-                               ordered_id,
-                               idealdata,
-                               time_ind=as.array(time_ind),
-                               time_proc=vary_ideal_pts,
-                               ar_sd=ar_sd,
-                               gp_sd_par=gp_sd_par,
-                               num_diff=gp_num_diff,
-                               m_sd_par=gp_m_sd_par,
-                               min_length=gp_min_length,
-                               const_type=switch(const_type,
-                                                 persons=1L,
-                                                 items=2L),
-                               discrim_reg_sd=discrim_reg_sd,
-                               discrim_miss_sd=discrim_miss_sd,
-                               diff_reg_sd=diff_reg_sd,
-                               diff_miss_sd=diff_miss_sd,
-                               legis_sd=person_sd,
-                               restrict_sd_high=restrict_sd_high,
-                               restrict_sd_low=restrict_sd_low,
-                               restrict_high=idealdata@restrict_ind_high,
-                               restrict_low=idealdata@restrict_ind_low,
-                               fix_high=idealdata@restrict_num_high,
-                               fix_low=idealdata@restrict_num_low)
+  remove_list <- .remove_nas(Y_int,
+                             Y_cont,
+                             discrete=idealdata@score_matrix$discrete,
+                             legispoints,
+                             billpoints,
+                             timepoints,
+                             modelpoints,
+                             ordered_id,
+                             idealdata,
+                             time_ind=as.array(time_ind),
+                             time_proc=vary_ideal_pts,
+                             ar_sd=ar_sd,
+                             gp_sd_par=gp_sd_par,
+                             num_diff=gp_num_diff,
+                             m_sd_par=gp_m_sd_par,
+                             min_length=gp_min_length,
+                             const_type=switch(const_type,
+                                               persons=1L,
+                                               items=2L),
+                             discrim_reg_sd=discrim_reg_sd,
+                             discrim_miss_sd=discrim_miss_sd,
+                             diff_reg_sd=diff_reg_sd,
+                             diff_miss_sd=diff_miss_sd,
+                             legis_sd=person_sd,
+                             restrict_sd_high=restrict_sd_high,
+                             restrict_sd_low=restrict_sd_low,
+                             restrict_high=idealdata@restrict_ind_high,
+                             restrict_low=idealdata@restrict_ind_low,
+                             fix_high=idealdata@restrict_num_high,
+                             fix_low=idealdata@restrict_num_low)
+  
+  # need to create new data if map_rect is in operation 
+  # and we have missing values / ragged arrays
+  
+  out_list <- .make_sum_vals(idealdata@score_matrix,map_over_id,use_groups=use_groups,
+                             remove_nas=remove_list$remove_nas)
+  
+  sum_vals <- out_list$sum_vals
+  
+  # need number of shards
+  
+  S <- nrow(sum_vals)
+  
+  # check for heterogenous variances
+  
+  if(het_var) {
     
-    # need to create new data if map_rect is in operation 
-    # and we have missing values / ragged arrays
+    num_var <- length(unique(remove_list$billpoints[remove_list$modelpoints %in% c(9,10,11,12)]))
     
-    out_list <- .make_sum_vals(idealdata@score_matrix,map_over_id,use_groups=use_groups,
-                               remove_nas=remove_list$remove_nas)
+    mod_items <- tibble(model_id=remove_list$modelpoints,
+                        item_id=remove_list$billpoints) %>% 
+      distinct
     
-    sum_vals <- out_list$sum_vals
-
-    # need number of shards
+    mod_items <- mutate(mod_items,cont=model_id %in% c(9,10,11,12)) %>% 
+      group_by(cont) %>% 
+      mutate(num_var=1:n())
     
-    S <- nrow(sum_vals)
+    type_het_var <- arrange(mod_items, item_id) %>% pull(num_var)
     
-    # check for heterogenous variances
-
-    if(het_var) {
+  } else {
+    
+    num_var <- 1
+    
+    type_het_var <- rep(num_var, length(unique(billpoints)))
+    
+  }
+  
+  # check for boundary priors
+  
+  if(!is.null(boundary_prior)) {
+    
+    if(is.null(boundary_prior$beta)) {
       
-      num_var <- length(unique(remove_list$billpoints[remove_list$modelpoints %in% c(9,10,11,12)]))
-      
-      mod_items <- tibble(model_id=remove_list$modelpoints,
-                          item_id=remove_list$billpoints) %>% 
-        distinct
-      
-      mod_items <- mutate(mod_items,cont=model_id %in% c(9,10,11,12)) %>% 
-        group_by(cont) %>% 
-        mutate(num_var=1:n())
-      
-      type_het_var <- arrange(mod_items, item_id) %>% pull(num_var)
-      
-    } else {
-      
-      num_var <- 1
-      
-      type_het_var <- rep(num_var, length(unique(billpoints)))
+      stop("If you want to use a boundary-avoiding prior for time-series variance, please pass a list with an element named beta, i.e. list(beta=1).")
       
     }
     
-    # check for boundary priors
-    
-    if(!is.null(boundary_prior)) {
+    if(boundary_prior$beta <= 0) {
       
-      if(is.null(boundary_prior$beta)) {
-        
-        stop("If you want to use a boundary-avoiding prior for time-series variance, please pass a list with an element named beta, i.e. list(beta=1).")
-        
-      }
-      
-      if(boundary_prior$beta <= 0) {
-        
-        stop("Boundary prior beta value must be strictly positive (i.e. greater than 0).")
-        
-      }
-      
-      inv_gamma_beta <- boundary_prior$beta
-      
-    } else {
-      
-      inv_gamma_beta <- 0
+      stop("Boundary prior beta value must be strictly positive (i.e. greater than 0).")
       
     }
     
+    inv_gamma_beta <- boundary_prior$beta
+    
+  } else {
+    
+    inv_gamma_beta <- 0
+    
+  }
+  
+  if(remove_list$N_cont>0) {
+    
+    Y_cont <- remove_list$Y_cont[out_list$this_data$orig_order]
+    
+  } else {
+    
+    Y_cont <- remove_list$Y_cont
+    
+  }
+  
+  if(remove_list$N_int>0) {
+    
+    Y_int <- remove_list$Y_int[out_list$this_data$orig_order]
+    
+  } else {
+    
+    Y_int <- remove_list$Y_int
+    
+  }
+  
   this_data <- list(N=remove_list$N,
                     N_cont=remove_list$N_cont,
                     N_int=remove_list$N_int,
-                    Y_int=remove_list$Y_int[out_list$this_data$orig_order],
-                    Y_cont=remove_list$Y_cont[out_list$this_data$orig_order],
+                    Y_int=Y_int,
+                    Y_cont=Y_cont,
                     y_int_miss=remove_list$y_int_miss,
                     y_cont_miss=remove_list$y_cont_miss,
                     S=nrow(sum_vals),
@@ -1151,7 +1171,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     order_cats_rat=remove_list$order_cats_rat[out_list$this_data$orig_order],
                     order_cats_grm=remove_list$order_cats_grm[out_list$this_data$orig_order],
                     num_bills_grm=ifelse(any(remove_list$modelpoints %in% c(5,6)),
-                                          remove_list$num_bills,0L),
+                                         remove_list$num_bills,0L),
                     LX=remove_list$LX,
                     SRX=remove_list$SRX,
                     SAX=remove_list$SAX,
@@ -1184,7 +1204,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                                       persons=1L,
                                       items=2L),
                     grainsize=grainsize)
-
+  
   idealdata <- id_model(object=idealdata,fixtype=fixtype,this_data=this_data,
                         nfix=nfix,restrict_ind_high=restrict_ind_high,
                         restrict_ind_low=restrict_ind_low,
@@ -1195,6 +1215,17 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                         fix_high=fix_high,
                         fix_low=fix_low,
                         const_type=const_type)
+  
+  if(("outcome_cont" %in% names(idealdata@score_matrix)) && ("outcome_disc" %in% names(idealdata@score_matrix))) {
+    Y_int <- idealdata@score_matrix$outcome_disc
+    Y_cont <- idealdata@score_matrix$outcome_cont
+  } else if ("outcome_cont" %in% names(idealdata@score_matrix)) {
+    Y_int <- array(0)
+    Y_cont <- idealdata@score_matrix$outcome_cont
+  } else {
+    Y_cont <- array(0)
+    Y_int <- idealdata@score_matrix$outcome_disc
+  }
   
   
   # need to redo everything post-identification
@@ -1271,11 +1302,31 @@ id_estimate <- function(idealdata=NULL,model_type=2,
     
   }
   
+  if(remove_list$N_cont>0) {
+    
+    Y_cont <- remove_list$Y_cont[out_list$this_data$orig_order]
+    
+  } else {
+    
+    Y_cont <- remove_list$Y_cont
+    
+  }
+  
+  if(remove_list$N_int>0) {
+    
+    Y_int <- remove_list$Y_int[out_list$this_data$orig_order]
+    
+  } else {
+    
+    Y_int <- remove_list$Y_int
+    
+  }
+  
   this_data <- list(N=remove_list$N,
                     N_cont=remove_list$N_cont,
                     N_int=remove_list$N_int,
-                    Y_int=remove_list$Y_int[out_list$this_data$orig_order],
-                    Y_cont=remove_list$Y_cont[out_list$this_data$orig_order],
+                    Y_int=Y_int,
+                    Y_cont=Y_cont,
                     y_int_miss=remove_list$y_int_miss,
                     y_cont_miss=remove_list$y_cont_miss,
                     num_var=num_var,
@@ -1345,14 +1396,14 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   idealdata@n_cats_grm <- remove_list$n_cats_grm
   idealdata@order_cats_rat <- remove_list$order_cats_rat
   idealdata@order_cats_grm <- remove_list$order_cats_grm
-
-    outobj <- sample_model(object=idealdata,nchains=nchains,niters=niters,warmup=warmup,ncores=ncores,
-                           this_data=this_data,use_vb=use_vb,
-                           gpu=gpu,
-                           save_files=save_files,
-                           keep_param=keep_param,
-                           tol_rel_obj=tol_rel_obj,within_chain=within_chain,
-                           ...)
+  
+  outobj <- sample_model(object=idealdata,nchains=nchains,niters=niters,warmup=warmup,ncores=ncores,
+                         this_data=this_data,use_vb=use_vb,
+                         gpu=gpu,
+                         save_files=save_files,
+                         keep_param=keep_param,
+                         tol_rel_obj=tol_rel_obj,within_chain=within_chain,
+                         ...)
   
   # deprecate: reduce_sum doesn't work in mpi
   
@@ -1424,42 +1475,42 @@ id_estimate <- function(idealdata=NULL,model_type=2,
 #' \code{cmdstan}. Should be located in the same place as \code{file_loc}.
 #' @importFrom posterior summarize_draws
 id_rebuild_mpi <- function(file_loc=NULL,
-                   csv_name=NULL) {
-
-            
-            if(is.null(file_loc)) {
-              file_loc <- rstudioapi::selectDirectory(caption="Choose the directory containing relevant files to rebuild object:")
-            }
-            
-            all_csvs <- read_cmdstan_csv(paste0(file_loc,"/",csv_name))
-            
-            object <- readRDS(paste0(file_loc,"/","idealdata_object.rds"))
-            
-            extra_params <- readRDS(paste0(file_loc,"/",extra_params.rds))
-            
-            outobj <- new('idealstan',
-                          score_data=object,
-                          model_code=readLines(paste0(file_loc,"/","idealstan_stan_code.stan")),
-                          stan_samples=all_csvs,
-                          use_vb=extra_params$use_vb)
-            
-            # add safe summaries
-            
-            to_sum <- summarize_draws(outobj@stan_samples$post_warmup_draws)
-            
-            to_sum <- select(to_sum,variable,lower="q95",mean,median,upper="q5",rhat,ess_bulk,ess_tail)
-            
-            outobj@summary <- to_sum
-            
-            outobj@mpi <- T
-            
-            outobj@model_type <- extra_params$model_type
-            outobj@time_proc <- extra_params$vary_ideal_pts
-            outobj@use_groups <- extra_params$use_groups
-            outobj@map_over_id <- extra_params$map_over_id
-            outobj@time_sd <- extra_params$time_sd
-            
-            return(outobj)
-            
-            
+                           csv_name=NULL) {
+  
+  
+  if(is.null(file_loc)) {
+    file_loc <- rstudioapi::selectDirectory(caption="Choose the directory containing relevant files to rebuild object:")
   }
+  
+  all_csvs <- read_cmdstan_csv(paste0(file_loc,"/",csv_name))
+  
+  object <- readRDS(paste0(file_loc,"/","idealdata_object.rds"))
+  
+  extra_params <- readRDS(paste0(file_loc,"/",extra_params.rds))
+  
+  outobj <- new('idealstan',
+                score_data=object,
+                model_code=readLines(paste0(file_loc,"/","idealstan_stan_code.stan")),
+                stan_samples=all_csvs,
+                use_vb=extra_params$use_vb)
+  
+  # add safe summaries
+  
+  to_sum <- summarize_draws(outobj@stan_samples$post_warmup_draws)
+  
+  to_sum <- select(to_sum,variable,lower="q95",mean,median,upper="q5",rhat,ess_bulk,ess_tail)
+  
+  outobj@summary <- to_sum
+  
+  outobj@mpi <- T
+  
+  outobj@model_type <- extra_params$model_type
+  outobj@time_proc <- extra_params$vary_ideal_pts
+  outobj@use_groups <- extra_params$use_groups
+  outobj@map_over_id <- extra_params$map_over_id
+  outobj@time_sd <- extra_params$time_sd
+  
+  return(outobj)
+  
+  
+}
