@@ -4,11 +4,21 @@
 
 if(T<center_cutoff) {
   
+  int start_time = 1;
+  int end_time = T+1;
+  
+  if(ignore==1) {
+    
+    start_time = ignore_mat[s,1];
+    end_time = ignore_mat[s,2];
+    
+  }
+  
   //non-centered time series
   
   for(t in 1:T) {
   
-  if(t==1) {
+  if(t==1 || (t <= start_time) || (t >= end_time)) {
     
     lt[t] = L_tp1_var[t,s];
     
@@ -40,28 +50,66 @@ if(T<center_cutoff) {
   
 } else {
   
+  int start_time = 1;
+  int end_time = T;
+  
   // centered time series
   
   //centered time series
   
   lt = to_vector(L_tp1_var[,s]);
   
+  if(ignore==1) {
+    
+    start_time = ignore_mat[s,1];
+    end_time = ignore_mat[s,2];
+    
+            if(end_time>T) {
+              end_time = T;
+            }
+            
+            if(start_time < 1) {
+              
+              start_time = 1;
+              
+            }
+            
+            if(start_time==T) {
+              
+              start_time = T  - 1;
+              
+            }
+    
+  }
+  
   if(restrict_var==1) {
     
     if(s==1) {
       
-      log_prob += normal_lpdf(lt[2:T]|L_full[s] + L_AR1[s]*lt[1:(T-1)],time_sd);
+      log_prob += normal_lpdf(lt[(start_time+1):end_time]|L_full[s] + L_AR1[s]*lt[start_time:(end_time-1)],time_sd);
       
       
     } else {
       
-      log_prob += normal_lpdf(lt[2:T]|L_full[s] + L_AR1[s]*lt[1:(T-1)],time_var_free[s-1]);
+      log_prob += normal_lpdf(lt[(start_time+1):end_time]|L_full[s] + L_AR1[s]*lt[start_time:(end_time-1)],time_var_free[s-1]);
       
     }
     
   } else {
     
-    log_prob += normal_lpdf(lt[2:T]|L_full[s] + L_AR1[s]*lt[1:(T-1)],time_var_free[s]);
+    log_prob += normal_lpdf(lt[(start_time+1):end_time]|L_full[s] + L_AR1[s]*lt[start_time:(end_time-1)],time_var_free[s]);
+    
+  }
+  
+  if(start_time>1)  {
+    
+    log_prob += normal_lpdf(L_tp1_var[2:start_time,s]|0,legis_sd);
+    
+  }
+  
+  if(end_time<T) {
+    
+    log_prob += normal_lpdf(L_tp1_var[end_time:T,s]|0,legis_sd);
     
   }
 

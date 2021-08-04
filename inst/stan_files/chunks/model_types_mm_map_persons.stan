@@ -26,6 +26,7 @@ for(n in start2:end2) {
           log_prob += bernoulli_logit_lpmf(0|(sigma_abs_free[bb[n]] + sigma_abs_calc[n - start2 + 1]) * (L_full[s] + legis_calc[n - start2 + 1]) - 
           A_int_free[bb[n]]);
         } else {
+          //print(time[n]);
           log_prob += bernoulli_logit_lpmf(Y_int[n]|(sigma_reg_full[bb[n]] + sigma_reg_calc[n - start2 + 1]) *  (lt[time[n]] + legis_calc[n - start2 + 1]) - B_int_free[bb[n]]);
           log_prob += bernoulli_logit_lpmf(0|(sigma_abs_free[bb[n]] + sigma_abs_calc[n - start2 + 1]) * (lt[time[n]] + legis_calc[n - start2 + 1]) - 
           A_int_free[bb[n]]);

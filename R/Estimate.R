@@ -141,6 +141,7 @@ id_make <- function(score_data=NULL,
                     group_id='group_id',
                     model_id='model_id',
                     ordered_id="ordered_id",
+                    ignore_id="ignore_id",
                     simul_data=NULL,
                     person_cov=NULL,
                     item_cov=NULL,
@@ -604,6 +605,21 @@ id_make <- function(score_data=NULL,
 #' To use correctly, the value for 
 #' zero must be passed as the \code{miss_val} option to \code{\link{id_make}} before
 #' running a model so that zeroes are coded as missing data.
+#' @param ignore_db If there are multiple time periods (particularly when there are 
+#' very many time periods), you can pass in a data frame
+#' (or tibble) with one row per person per time period and an indicator column 
+#' \code{ignore} that is equal to 1 for periods that should be considered in sample
+#' and 0 for periods for periods that should be considered out of sample. This is 
+#' useful for excluding time periods from estimation for persons when they could not 
+#' be present, i.e. such as before entrance into an organization or following death.
+#' If \code{ignore} equals 0, the person's ideal point is estimated as a standard Normal
+#' draw rather than an auto-correlated parameter, reducing computational 
+#' burden substantially.
+#' Note that there can only be one pre-sample period of 0s, one in-sample period of 1s,
+#' and one post-sample period of 0s. Multiple in-sample periods cannot be interspersed
+#' with out of sample periods. The columns must be labeled as \code{person_id}, 
+#' \code{time_id} and \code{ignore} and must match the formatting of the columns
+#' fed to the \code{id_make} function.
 #' @param keep_param A list with logical values for different categories of paremeters which
 #' should/should not be kept following estimation. Can be any/all of \code{person_int} for 
 #' the person-level intercepts (static ideal points), 
@@ -834,6 +850,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                         use_subset=FALSE,sample_it=FALSE,
                         subset_group=NULL,subset_person=NULL,sample_size=20,
                         nchains=4,niters=1000,use_vb=FALSE,
+                        ignore_db=NULL,
                         restrict_ind_high=NULL,
                         fix_high=1,
                         fix_low=(-1),
@@ -1142,6 +1159,35 @@ id_estimate <- function(idealdata=NULL,model_type=2,
     
   }
   
+  if(!is.null(ignore_db)) {
+    
+    # check for correct columns
+    
+    if(!all(c("person_id",
+             "time_id",
+             "ignore") %in% names(ignore_db))) {
+      stop("Ignore DB does not have the three necessary columns: time_id, person_id, and ignore (0 or 1).")
+      
+    }
+    
+    ignore_db <- mutate(ungroup(ignore_db),
+                        person_id=as.numeric(person_id),
+                        time_id=as.numeric(factor(as.numeric(ignore_db$time_id))))
+    
+    # filter out time_ids not in main data
+    
+    ignore_db <- filter(ignore_db, time_id %in% remove_list$timepoints,
+                        person_id %in% remove_list$legispoints) %>% 
+      select(person_id,time_id,ignore) %>% 
+      arrange(person_id,time_id) %>% 
+      as.matrix
+    
+  } else {
+    
+    ignore_db <- matrix(nrow=0,ncol=3)
+    
+  }
+  
   this_data <- list(N=remove_list$N,
                     N_cont=remove_list$N_cont,
                     N_int=remove_list$N_int,
@@ -1162,6 +1208,8 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     ll=remove_list$legispoints[out_list$this_data$orig_order],
                     bb=remove_list$billpoints[out_list$this_data$orig_order],
                     mm=remove_list$modelpoints[out_list$this_data$orig_order],
+                    ignore=as.numeric(!is.null(ignore_db)),
+                    ignore_db=ignore_db,
                     mod_count=length(unique(remove_list$modelpoints)),
                     num_fix_high=as.integer(1),
                     num_fix_low=as.integer(1),
@@ -1341,6 +1389,8 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     ll=remove_list$legispoints[out_list$this_data$orig_order],
                     bb=remove_list$billpoints[out_list$this_data$orig_order],
                     mm=remove_list$modelpoints[out_list$this_data$orig_order],
+                    ignore=as.numeric(!is.null(ignore_db)),
+                    ignore_db=ignore_db,
                     mod_count=length(unique(remove_list$modelpoints)),
                     num_fix_high=as.integer(1),
                     num_fix_low=as.integer(1),

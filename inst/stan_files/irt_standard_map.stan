@@ -103,7 +103,9 @@ real partial_sum(int[,] y_slice,
         vector gp_length,
         int het_var,
         int[] type_het_var,
-        int restrict_var) {
+        int restrict_var,
+        int ignore,
+        int[,] ignore_mat) {
   
   // big loop over states
   real log_prob = 0;
@@ -156,7 +158,7 @@ real partial_sum(int[,] y_slice,
             
             if(time_proc==2) {
               log_prob += normal_lpdf(L_tp1_var[1,s]|0,legis_sd);
-            } 
+            }
             
               log_prob += normal_lpdf(L_full[s]|0,legis_sd);
 
@@ -358,6 +360,7 @@ data {
   int grainsize;
   int Y_int[N_int]; // integer outcome
   real Y_cont[N_cont]; // continuous outcome
+  int ignore;
   int y_int_miss; // missing value for integers
   int<lower=0, upper=1> pos_discrim; // whether to constrain all discrimination parameters to be positive (removes need for further identification conditions)
   real y_cont_miss; // missing value for continuous data
@@ -374,6 +377,7 @@ data {
   int bb[N]; // items/bills id
   int time[N]; // time point id
   int mm[N]; // model counter id
+  matrix[(ignore==1) ? (num_legis * T) : 0,3] ignore_db;
   matrix[N,(N>0) ? LX:0] legis_pred;
   matrix[N,(N>0) ? SRX:0] srx_pred;
   matrix[N,(N>0) ? SAX:0] sax_pred;
@@ -426,6 +430,7 @@ transformed data {
 	int gp_nT; // used to make L_tp1 go to model block if GPs are used
 	int gp_oT; // used to make L_tp1 go to model block if GPs are used
 	vector[1] gp_length; 
+	int ignore_mat[(ignore==1) ? num_legis : 0, 2];
 	
 	// set mean of log-normal distribution for GP length-scale prior
 	
@@ -454,7 +459,66 @@ transformed data {
 
   num_legis_real = num_legis; // promote N to type real
   
-  
+  if(ignore==1) {
+    
+    for(n in 1:num_legis) {
+      
+      int start = 0;
+      int end = T+1;
+      int switch_num =  0;
+      
+      for(t in 1:T) {
+        
+        if(ignore_db[n + (t-1),3]==0 &&  switch_num == 0) {
+          
+          if(start==T) {
+            
+            // failsafe
+            
+            start = T;
+          }
+          
+          start += 1;
+          
+        }
+        
+        if(ignore_db[n + (t-1),3]==1 && start > 0) {
+          
+          switch_num = 1;
+          
+        }
+        
+        if(ignore_db[n + (t-1),3]==0 && start>0 && switch_num ==  1) {
+          
+          if(t<end) {
+            
+            end = t;
+            
+          }
+          
+        } else if(ignore_db[n + (t-1),3]==0 && start==0) {
+          
+          
+          if(t<end) {
+            
+            end = t;
+            
+          }
+          
+        }
+        
+      }
+      
+      // assign start/end for this legislator
+      
+      ignore_mat[n,1] = start;
+      ignore_mat[n,2] = end;
+      
+    }
+    
+    
+  }
+
 }
 
 parameters {
@@ -513,9 +577,6 @@ transformed parameters {
   } else {
     sigma_reg_full = sigma_reg_pos;
   }
-  
-    //combine constrained and unconstrained parameters
-    //#include /chunks/build_params_v2.stan
 
   if(T>1 && S_type==0) {
     if(time_proc==3) {
@@ -591,33 +652,111 @@ for(n in 1:num_legis) {
       
     } else {
       
+      int start = 1;
+      int end = T;
+      
       if(time_proc==2) {
         
         if(restrict_var==1) {
           
-          for(n in 1:num_legis) 
-              L_tp1_var[2:T,n] ~ normal(L_tp1_var[1:(T-1),n],time_var_full[n]);
+          for(n in 1:num_legis) {
+            if(ignore==1) {
+    
+              start = ignore_mat[n,1];
+               end = ignore_mat[n,2];
+               
+                   if(end>T) {
+                      end = T;
+                    }
+                    if(start < 1) {
+                      
+                      start = 1;
+                      
+                  }
+    
+              }
+              
+              L_tp1_var[(start+1):end,n] ~ normal(L_tp1_var[start:(end-1),n],time_var_full[n]);
+              
+          }
 
             
           } else {
           
-          for(n in 1:num_legis)
-                L_tp1_var[2:T,n] ~ normal(L_tp1_var[1:(T-1),n],time_var_free[n]);
+          for(n in 1:num_legis) {
+            
+            if(ignore==1) {
+    
+              start = ignore_mat[n,1];
+               end = ignore_mat[n,2];
+               
+                  if(end>T) {
+                      end = T;
+                    }
+                    if(start < 1) {
+                      
+                      start = 1;
+                      
+                  }
+    
+              }
+            
+            L_tp1_var[(start+1):end,n] ~ normal(L_tp1_var[start:(end-1),n],time_var_free[n]);
           
+          }
+                
         }
         
       } else if(time_proc==3) {
         
         if(restrict_var==1) {
           
-          for(n in 1:num_legis) 
-              L_tp1_var[2:T,n] ~ normal(L_full[n] + L_AR1[n]*to_vector(L_tp1_var[1:(T-1),n]),time_var_full[n]);
+          for(n in 1:num_legis) {
+            
+            if(ignore==1) {
+    
+              start = ignore_mat[n,1];
+               end = ignore_mat[n,2];
+               
+               if(end>T) {
+                      end = T;
+                    }
+                    if(start < 1) {
+                      
+                      start = 1;
+                      
+                  }
+    
+              }
+              
+              L_tp1_var[(start+1):end,n] ~ normal(L_full[n] + L_AR1[n]*to_vector(L_tp1_var[start:(end-1),n]),time_var_full[n]);
+            
+          }
+              
                 
           
         } else {
           
-          for(n in 1:num_legis)
-                L_tp1_var[2:T,n] ~ normal(L_full[n] + L_AR1[n]*to_vector(L_tp1_var[1:(T-1),n]),time_var_free[n]);
+          for(n in 1:num_legis) {
+            if(ignore==1) {
+    
+              start = ignore_mat[n,1];
+               end = ignore_mat[n,2];
+               
+               if(end>T) {
+                      end = T;
+                    }
+                    if(start < 1) {
+                      
+                      start = 1;
+                      
+                  }
+    
+              }
+              
+              L_tp1_var[(start+1):end,n] ~ normal(L_full[n] + L_AR1[n]*to_vector(L_tp1_var[start:(end-1),n]),time_var_free[n]);
+          }
+                
           
         }
         
@@ -830,7 +969,9 @@ if(S_type==1 && const_type==1) {
         gp_length,
         num_var,
         type_het_var,
-        restrict_var);
+        restrict_var,
+        ignore,
+        ignore_mat);
 
 }
 generated quantities {
