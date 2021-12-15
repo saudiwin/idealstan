@@ -594,7 +594,7 @@ id_make <- function(score_data=NULL,
 #' implemented in idealstan, though fiddling with some parameters may be 
 #' necessary in difficult cases. For time-series models, one of the 
 #' person ideal point over-time variances is also fixed to .1, a value that
-#' can be changed using the option \code{time_sd}.
+#' can be changed using the option \code{time_fix_sd}.
 #' @param idealdata An object produced by the \code{\link{id_make}} 
 #' containing a score/vote matrix for use for estimation & plotting
 #' @param model_type An integer reflecting the kind of model to be estimated. 
@@ -703,7 +703,7 @@ id_make <- function(score_data=NULL,
 #' @param discrim_reg_sd Set the prior standard deviation of the bimodal prior for the discrimination parameters for the non-inflated model.
 #' @param discrim_miss_sd Set the prior standard deviation of the bimodal prior for the discrimination parameters for the inflated model.
 #' @param person_sd Set the prior standard deviation for the legislators (persons) parameters
-#' @param time_sd The variance of the over-time component of the first person/legislator
+#' @param time_fix_sd The variance of the over-time component of the first person/legislator
 #' is fixed to this value as a reference. 
 #' Default is 0.1.
 #' @param boundary_prior If your time series has very low variance (change over time),
@@ -864,7 +864,10 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                         discrim_reg_sd=2,
                         discrim_miss_sd=2,
                         person_sd=3,
-                        time_sd=.1,
+                        time_fix_sd=.1,
+                        time_var=.1,
+                        ar1_up=1,
+                        ar1_down=0,
                         boundary_prior=NULL,
                         time_center_cutoff=50,
                         restrict_var=TRUE,
@@ -1236,7 +1239,10 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     restrict_sd_low=restrict_sd_low,
                     time_proc=vary_ideal_pts,
                     restrict_var=restrict_var,
-                    time_sd=time_sd,
+                    time_sd=time_fix_sd,
+                    time_var_sd=time_var,
+                    ar1_up=ar1_up,
+                    ar1_down=ar1_down,
                     inv_gamma_beta=inv_gamma_beta,
                     center_cutoff=as.integer(time_center_cutoff),
                     ar_sd=ar_sd,
@@ -1416,7 +1422,10 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     legis_sd=person_sd,
                     restrict_sd_high=restrict_sd_high,
                     restrict_sd_low=restrict_sd_low,
-                    time_sd=time_sd,
+                    time_sd=time_fix_sd,
+                    time_var_sd=time_var,
+                    ar1_up=ar1_up,
+                    ar1_down=ar1_down,
                     inv_gamma_beta=inv_gamma_beta,
                     center_cutoff=as.integer(time_center_cutoff),
                     restrict_var=restrict_var,
@@ -1479,7 +1488,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   #                model_type=model_type,
   #                use_vb=use_vb,
   #                map_over_id=map_over_id,
-  #                time_sd=time_sd),
+  #                time_fix_sd=time_fix_sd),
   #           paste0(mpi_export,"/extra_params.rds"))
   #   
   #   # need all the chunks
@@ -1496,7 +1505,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   outobj@time_proc <- vary_ideal_pts
   outobj@use_groups <- use_groups
   outobj@map_over_id <- map_over_id
-  outobj@time_sd <- time_sd
+  outobj@time_fix_sd <- time_fix_sd
   outobj@restrict_var <- restrict_var
   
   # need to recalculate legis points if time series used
@@ -1558,7 +1567,7 @@ id_rebuild_mpi <- function(file_loc=NULL,
   outobj@time_proc <- extra_params$vary_ideal_pts
   outobj@use_groups <- extra_params$use_groups
   outobj@map_over_id <- extra_params$map_over_id
-  outobj@time_sd <- extra_params$time_sd
+  outobj@time_fix_sd <- extra_params$time_fix_sd
   
   return(outobj)
   

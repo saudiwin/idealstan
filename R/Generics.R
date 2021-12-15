@@ -71,7 +71,7 @@ setClass('idealstan',
                     model_code='character',
                     test_model_code='character',
                     map_over_id="character",
-                    time_sd="numeric",
+                    time_fix_sd="numeric",
                     diagnostics="ANY",
                     time_varying="ANY",
                     restrict_var="logical",
@@ -168,13 +168,15 @@ setMethod('sample_model',signature(object='idealdata'),
                                 const_type=this_data$const_type,
                                 fix_high=this_data$fix_high,
                                 fix_low=this_data$fix_low,
+                                ar1_up=this_data$ar1_up,
+                                ar1_down=this_data$ar1_down,
                                 restrict_ind_high=this_data$restrict_high,
                                 restrict_ind_low=this_data$restrict_low,
                                 time_proc=this_data$time_proc,
                                 m_sd_par=this_data$m_sd_par,
                                 time_range=mean(diff(this_data$time_ind)),
                                 num_diff=this_data$num_diff,
-                                time_sd=this_data$time_sd,
+                                time_fix_sd=this_data$time_sd,
                                 use_ar=this_data$use_ar,
                                 person_start=object@person_start,
                                 actual=TRUE)
@@ -303,10 +305,6 @@ setMethod('sample_model',signature(object='idealdata'),
             }
             if(use_vb==FALSE) {
               print("Estimating model with full Stan MCMC sampler.")
-              
-              if(is.null(save_files)) {
-                save_files <- system.file("csv_files",package="idealstan")
-              } 
                 
                 if(gpu) {
                   out_model <- object@stanmodel_gpu$sample(data=this_data,chains=nchains,iter_sampling=niters,

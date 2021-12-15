@@ -303,6 +303,8 @@
                        item_labels=NULL,
                        num_cit=NULL,
                         fix_high=NULL,
+                       ar1_up=NULL,
+                       ar1_down=NULL,
                        fix_low=NULL,
                        restrict_ind_high=NULL,
                        restrict_ind_low=NULL,
@@ -312,7 +314,7 @@
                        const_type=NULL,
                        T=NULL,
                        time_proc=NULL,
-                       time_sd=NULL,
+                       time_fix_sd=NULL,
                        actual=TRUE,
                        use_ar=NULL,
                        person_start=NULL) {
@@ -370,8 +372,8 @@
                     m_sd=rep(m_sd_par,num_legis)))
       } else if(time_proc==3) {
         return(list(L_full = L_full,
-                    L_AR1 = array(runif(n = num_legis,min = -.5,max=.5)),
-                    time_var_free = rexp(rate=1/time_sd,n=num_legis-1),
+                    L_AR1 = array(runif(n = num_legis,min = ar1_down+.1,max=ar1_up-.1)),
+                    time_var_free = rexp(rate=1/time_fix_sd,n=num_legis-1),
                     sigma_reg_free=sigma_reg_free,
                     sigma_abs_free=sigma_abs_free,
                     A_int_free=A_int_free,
@@ -379,7 +381,7 @@
         
         } else if(time_proc==2) {
           return(list(L_full = L_full,
-                      time_var_free = rexp(rate=1/time_sd,n=num_legis-1),
+                      time_var_free = rexp(rate=1/time_fix_sd,n=num_legis-1),
                       sigma_reg_free=sigma_reg_free,
                       sigma_abs_free=sigma_abs_free,
                       A_int_free=A_int_free,
@@ -1961,12 +1963,12 @@ return(as.vector(idx))
         
         if(obj@restrict_var) {
           
-          time_sd <- obj@time_sd
+          time_fix_sd <- obj@time_fix_sd
           p_time <- p - 1
           
         } else {
           
-          time_sd <- time_var_free[,p]
+          time_fix_sd <- time_var_free[,p]
           p_time <- p
           
         }
@@ -2012,13 +2014,13 @@ return(as.vector(idx))
           
           if(t==2) {
             
-            prior_est <- initial + time_sd*L_tp1_var[,(time_grid$Var1==(t-1) & time_grid$Var2==p)]
+            prior_est <- initial + time_fix_sd*L_tp1_var[,(time_grid$Var1==(t-1) & time_grid$Var2==p)]
             
             prior_est <- cbind(initial,prior_est)
             
           } else {
             
-            this_t <- prior_est[,t-1]  + time_sd*L_tp1_var[,(time_grid$Var1==(t-1) & time_grid$Var2==p)]
+            this_t <- prior_est[,t-1]  + time_fix_sd*L_tp1_var[,(time_grid$Var1==(t-1) & time_grid$Var2==p)]
             prior_est <- cbind(prior_est,this_t)
             
             
@@ -2118,12 +2120,12 @@ return(as.vector(idx))
           
         if(obj@restrict_var) {
           
-          time_sd <- obj@time_sd
+          time_fix_sd <- obj@time_fix_sd
           p_time <- p - 1
           
         } else {
           
-          time_sd <- time_var_free[,p]
+          time_fix_sd <- time_var_free[,p]
           p_time <- p
           
         }
@@ -2171,13 +2173,13 @@ return(as.vector(idx))
             
             if(t==2) {
               
-              prior_est <- L_full[,p] + L_AR1[,p]*initial + time_sd*L_tp1_var[,(time_grid$Var1==t & time_grid$Var2==p)]
+              prior_est <- L_full[,p] + L_AR1[,p]*initial + time_fix_sd*L_tp1_var[,(time_grid$Var1==t & time_grid$Var2==p)]
               
               prior_est <- cbind(initial,prior_est)
               
             } else {
               
-              this_t <- L_full[,p] + L_AR1[,p]*prior_est[,t-1]  + time_sd*L_tp1_var[,(time_grid$Var1==t & time_grid$Var2==p)]
+              this_t <- L_full[,p] + L_AR1[,p]*prior_est[,t-1]  + time_fix_sd*L_tp1_var[,(time_grid$Var1==t & time_grid$Var2==p)]
               prior_est <- cbind(prior_est,this_t)
               
               

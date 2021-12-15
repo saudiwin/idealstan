@@ -31,7 +31,7 @@ bin_irt_2pl_sim <- id_sim_gen(num_person=100,num_bills=5,ordinal=F,inflate=F,
                               reg_discrim_sd = 1,
                               absence_discrim_sd = 1)
 bin_irt_2pl_est <- id_estimate(idealdata=bin_irt_2pl_sim,
-                               model_type=1,
+                               model_type=1,save_files = ".",
                                restrict_ind_high = as.character(sort(bin_irt_2pl_sim@simul_data$true_person,
                                                                      decreasing=T,
                                                         index=T)$ix[1]),
@@ -651,11 +651,12 @@ bin_time_irt_2pl_abs_sim <- id_sim_gen(num_person=20,num_bills=30,
 
 bin_time_irt_2pl_abs_est <- id_estimate(idealdata=bin_time_irt_2pl_abs_sim,
                                model_type=2,nchains=2,
-                               id_refresh=100,
+                               id_refresh=100,time_var = 10,
                                niters = 1000,warmup = 500,
                           keep_param=list(person_vary=T,person_int=F,item=TRUE,
                                                            extra=T),
                                vary_ideal_pts = 'random_walk',
+                          restrict_var = F,
                                restrict_ind_high = as.character(sort(bin_time_irt_2pl_abs_sim@simul_data$drift,
                                                                   
                                                                   decreasing=TRUE,
@@ -700,16 +701,24 @@ And autocorrelation:
 ```{r irt_binary_time_ar_inflate}
 
 bin_time_ar_irt_2pl_abs_sim <- id_sim_gen(num_person=20,num_bills=200,inflate=T,
-                               absence_diff_mean=0,time_process = 'AR',time_points=50,time_sd = .2,diff_sd = 1,
+                               absence_diff_mean=0,time_process = 'AR',time_points=20,time_sd = .5,diff_sd = 1,
                                absence_discrim_sd = 1,
                                reg_discrim_sd = 1)
+
+bin_time_ar_irt_2pl_abs_sim@score_matrix$group_id <- forcats::fct_collapse(bin_time_ar_irt_2pl_abs_sim@score_matrix$person_id,
+                                                                           `1`=c("1","2","3"))
+
 bin_time_ar_irt_2pl_abs_est <- id_estimate(idealdata=bin_time_ar_irt_2pl_abs_sim,
+                                           use_groups = T,
                                model_type=2,
+                               ar1_up = 1,ar1_down = -1,
                                vary_ideal_pts = 'AR1',
-                               restrict_ind_high = as.character(sort(bin_time_ar_irt_2pl_abs_sim@simul_data$drift,
+                               const_type = "items",
+                               time_var = 2,restrict_var = T,
+                               restrict_ind_high = as.character(sort(bin_time_ar_irt_2pl_abs_sim@simul_data$true_reg_discrim,
                                                                      decreasing=TRUE,
                                                         index=TRUE)$ix[1]),
-                              restrict_ind_low = as.character(sort(bin_time_ar_irt_2pl_abs_sim@simul_data$drift,
+                              restrict_ind_low = as.character(sort(bin_time_ar_irt_2pl_abs_sim@simul_data$true_reg_discrim,,
                                                                    decreasing=F,
                                                         index=T)$ix[1]),
                                fixtype='prefix')
