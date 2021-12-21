@@ -77,12 +77,10 @@ low_leg <- sort(true_legis,index.return=TRUE)
 
 ord_ideal_est <- id_estimate(idealdata=ord_ideal_sim,
                              model_type=6,
-                             fixtype='constrained',
-                             id_diff=high_leg$x[1]-low_leg$x[1],
-                             id_diff_high=high_leg$x[1],
+                             fixtype='prefix',
                              restrict_ind_high = as.character(high_leg$ix[1]),
                              restrict_ind_low=as.character(low_leg$ix[1]),
-                             refresh=500,
+                             id_refresh=500,
                              ncores=2,
                              person_sd=1,
                            nchains=2)
@@ -98,13 +96,13 @@ Given the small amount of data used to estimate the model, the imprecision with 
 
 To automatically identify the model, simply change the `fixtype` option to `'vb_full'`. By default, the model will select the highest and lowest ideal points to constrain by running an approximation to the full posterior using Stan's `vb` function. While this method works well, the exact rotation is not known a priori. To specify a rotation of the ideal points while still letting the model decide the optimal placement of the constrained ideal points, set `fixtype` to `'vb_partial'` and include person IDs as a character value for the high constrained ideal point `restrict_ind_high` and low `restrict_ind_low`.
 
-For example, using our simulated data and the default settings (`'vb_full'`):
+For example, using our simulated data and identifying the model automatically with `'vb_full'`:
 
 ```{r restrict_auto}
 ord_ideal_est <- id_estimate(idealdata=ord_ideal_sim,
                              model_type=6,
-                             refresh=500,
-                             ncores=2,
+                             id_refresh=500,fixtype="vb_full",
+                             ncores=8,
                            nchains=2,
                            person_sd=1)
 ```
@@ -146,12 +144,14 @@ Because our outcome is discrete and already coded as a factor, we only need to s
 Note that there are many other columns in the `senate114` data. These can be used as person or item/bill covariates, as is discussed at the end of the vignette, but are essentially ignored unless specified to the `id_make` function.
 
 ```{r long_to_ideal}
-senate_data <- id_make(senate114,outcome = 'cast_code',
+
+senate114$cast_code <- ifelse(senate114$cast_code=="Absent",NA,senate114$cast_code)
+senate114$cast_code <- senate114$cast_code -  1
+senate_data <- id_make(senate114,outcome_disc = 'cast_code',
                        person_id = 'bioname',
                        item_id = 'rollnumber',
                        group_id= 'party_code',
-                       time_id='date',
-                       miss_val='Absent')
+                       time_id='date')
 
 ```
 
@@ -161,13 +161,14 @@ This same missing-data mechanism also applies more broadly to situations of soci
 
 Because this dataset is relatively large, we will use the `use_vb` option to use Stan's variational Bayesian inference. This version of the sampler is less accurate and tends to underestimate uncertainty, but it runs much, much faster. Generally speaking, the values of the ideal points are close to the full posterior, and it is useful for exploratory model-building even with small datasets. For very large data, `use_vb` is the only viable option as estimation times may require days or longer. 
 
-Ideal points are not identified without further information about the latent scale, especially its direction: should conservative ideal points be listed as positive or negative? To identify the latent scale, I constrain a conservative senator (John Barrasso) to be positive, and a liberal senator, Elizabeth Warren, to be negative in order to identify the polarity in the model. I have to pass in the names of the legislators as they exist in the IDs present in the `senate114` data (column `bionames`). Rather than specify the exact values to pin the legislators to, I set `fixtype` to `'vb_partial'` so that the function will first fit an un-identified model, and then use those estimates to determine what would be good values to pin these legislators to. Using `'vb_partial'` is the recommended way to identify models while using prior information about the direction of the latent scale as it avoids having to fix these ideal points to specific values. It will also create starting values for the ideal points that should speed convergence.
+Ideal points are not identified without further information about the latent scale, especially its direction: should conservative ideal points be listed as positive or negative? To identify the latent scale, I constrain a conservative senator (John Barrasso) to be positive, and a liberal senator, Elizabeth Warren, to be negative in order to identify the polarity in the model. I have to pass in the names of the legislators as they exist in the IDs present in the `senate114` data (column `bionames`). Rather than specify the exact values to pin the legislators to, I set `fixtype` to `'vb_partial'` so that the function will first fit an un-identified model, and then use those estimates to determine what would be good values to pin these legislators to. Using `'vb_partial'` is the recommended way to identify models while using prior information about the direction of the latent scale as it avoids having to fix these ideal points to specific values. It will also create starting values for the ideal points that should speed convergence. 
+
+To make the model fit faster, I set `nchains` at 2 and `ncores` at 16, which will allow for 8 cores to be used per chain for parallel processing (assuming of course the computer has access to 16 cores). 
 
 ```{r run_114_model,fig.height=7}
 sen_est <- id_estimate(senate_data,
-                model_type = 1,
-                 use_vb = T,
-                fixtype='vb_partial',
+                model_type = 1,ncores=16,nchains=2,
+                fixtype='prefix',
                  restrict_ind_high = "WARREN, Elizabeth",
                  restrict_ind_low="BARRASSO, John A.",
             seed=84520)

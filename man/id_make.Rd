@@ -14,6 +14,7 @@ id_make(
   group_id = "group_id",
   model_id = "model_id",
   ordered_id = "ordered_id",
+  ignore_id = "ignore_id",
   simul_data = NULL,
   person_cov = NULL,
   item_cov = NULL,

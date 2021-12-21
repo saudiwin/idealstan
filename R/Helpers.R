@@ -16,7 +16,6 @@
   } 
 
   . <- NULL
-  to_use <- stanmodels[['irt_standard_noid']]
   
   if(this_data$time_proc==4) {
     tol_rel_obj <- .001
@@ -28,14 +27,13 @@
 
   print("(First Step): Estimating model with variational inference to identify modes to constrain.")
 
-  post_modes <- rstan::vb(object=to_use,data =this_data,
-                          algorithm='meanfield',
+  post_modes <- object@stanmodel_map$variational(data =this_data,
                           refresh=this_data$id_refresh,
-                          eval_elbo=eval_elbo,
+                          eval_elbo=eval_elbo,threads=1,
                           tol_rel_obj=tol_rel_obj, # better convergence criterion than default
                           output_samples=200)
 
-  lookat_params <- rstan::extract(post_modes,permuted=FALSE)
+  browser()
   
   this_params <- lookat_params[,1,]
   
@@ -44,6 +42,9 @@
   # pull out unidentified parameters
   
   if(const_type=="persons") {
+    
+    lookat_params <- post_modes$draws("L_full")
+    
     person <- apply(this_params[,grepl(pattern = 'L_full',x=all_params)],2,mean)
 
     restrict_ind_high <- which(person==max(person))[1]
@@ -51,7 +52,10 @@
     val_high <- person[restrict_ind_high]
     val_low <- person[restrict_ind_low]
   } else if(const_type=="items") {
-    items <- apply(this_params[,grepl(pattern = 'sigma_reg_free',x=all_params)],2,mean)
+    
+    lookat_params <- post_modes$draws("sigma_reg_full")
+    
+    items <- apply(this_params[,grepl(pattern = 'sigma_reg_full',x=all_params)],2,mean)
 
     restrict_ind_high <- which(items==max(items))[1]
     restrict_ind_low <- which(items==min(items))[1]
@@ -414,6 +418,7 @@
 
 #' used to calculate the true ideal points
 #' given that a non-centered parameterization is used.
+#' @importFrom posterior as_draws_df as_draws_matrix
 #' @noRd
 .calc_true_pts <- function(obj) {
 
@@ -495,18 +500,18 @@
   
   # now get all the necessary components
   
-  reg_diff <- as.data.frame(object@stan_samples,pars=paste0('B_int_free[',param_num,']'))[[1]]
-  reg_discrim <- as.data.frame(object@stan_samples,pars=paste0('sigma_reg_free[',param_num,']'))[[1]]
-  abs_diff <- as.data.frame(object@stan_samples,pars=paste0('A_int_free[',param_num,']'))[[1]]
-  abs_discrim <- as.data.frame(object@stan_samples,pars=paste0('sigma_abs_free[',param_num,']'))[[1]]
+  reg_diff <- as_draws_matrix(object@stan_samples$draws(paste0('B_int_free[',param_num,']')))[,1]
+  reg_discrim <- as_draws_matrix(object@stan_samples$draws(paste0('sigma_reg_free[',param_num,']')))[,1]
+  abs_diff <- as_draws_matrix(object@stan_samples$draws(paste0('A_int_free[',param_num,']')))[,1]
+  abs_discrim <- as_draws_matrix(object@stan_samples$draws(paste0('sigma_abs_free[',param_num,']')))[,1]
   
   reg_mid <- reg_diff/reg_discrim
   abs_mid <- abs_diff/abs_discrim
   
-  if(class(object@score_data@score_matrix$outcome)=='factor') {
-    cut_names <- levels(object@score_data@score_matrix$outcome)
+  if(class(object@score_data@score_matrix$outcome_disc)=='factor') {
+    cut_names <- levels(object@score_data@score_matrix$outcome_disc)
   } else {
-    cut_names <- as.character(unique(object@score_data@score_matrix$outcome))
+    cut_names <- as.character(unique(object@score_data@score_matrix$outcome_disc))
   }
   if(!all) {
     reg_data <- data_frame(item_median=quantile(reg_mid,0.5),
@@ -649,15 +654,17 @@
   
   # now get all the necessary components
   
-  reg_diff <- as.data.frame(object@stan_samples,pars=paste0('B_int_free[',param_num,']'))[[1]]
-  reg_discrim <- as.data.frame(object@stan_samples,pars=paste0('sigma_reg_free[',param_num,']'))[[1]]
-  abs_diff <- as.data.frame(object@stan_samples,pars=paste0('A_int_free[',param_num,']'))[[1]]
-  abs_discrim <- as.data.frame(object@stan_samples,pars=paste0('sigma_abs_free[',param_num,']'))[[1]]
-  cuts <- as.data.frame(object@stan_samples,pars='steps_votes')
-  if(class(object@score_data@score_matrix$outcome)=='factor') {
-    cut_names <- levels(object@score_data@score_matrix$outcome)
+  reg_diff <- as_draws_matrix(object@stan_samples$draws(paste0('B_int_free[',param_num,']')))[,1]
+  reg_discrim <- as_draws_matrix(object@stan_samples$draws(paste0('sigma_reg_free[',param_num,']')))[,1]
+  abs_diff <- as_draws_matrix(object@stan_samples$draws(paste0('A_int_free[',param_num,']')))[,1]
+  abs_discrim <- as_draws_matrix(object@stan_samples$draws(paste0('sigma_abs_free[',param_num,']')))[,1]
+  
+  cuts <- as_draws_df(object@stan_samples$draws('steps_votes'))
+  
+  if(class(object@score_data@score_matrix$outcome_disc)=='factor') {
+    cut_names <- levels(object@score_data@score_matrix$outcome_disc)
   } else {
-    cut_names <- as.character(unique(object@score_data@score_matrix$outcome))
+    cut_names <- as.character(unique(object@score_data@score_matrix$outcome_disc))
   }
   abs_mid <- abs_diff/abs_discrim
   # need to loop over cuts
@@ -820,21 +827,21 @@
   
   # now get all the necessary components
   
-  reg_diff <- as.data.frame(object@stan_samples,pars=paste0('B_int_free[',param_num,']'))[[1]]
-  reg_discrim <- as.data.frame(object@stan_samples,pars=paste0('sigma_reg_free[',param_num,']'))[[1]]
-  abs_diff <- as.data.frame(object@stan_samples,pars=paste0('A_int_free[',param_num,']'))[[1]]
-  abs_discrim <- as.data.frame(object@stan_samples,pars=paste0('sigma_abs_free[',param_num,']'))[[1]]
-  
+  reg_diff <- as_draws_matrix(object@stan_samples$draws(paste0('B_int_free[',param_num,']')))[,1]
+  reg_discrim <- as_draws_matrix(object@stan_samples$draws(paste0('sigma_reg_free[',param_num,']')))[,1]
+  abs_diff <- as_draws_matrix(object@stan_samples$draws(paste0('A_int_free[',param_num,']')))[,1]
+  abs_discrim <- as_draws_matrix(object@stan_samples$draws(paste0('sigma_abs_free[',param_num,']')))[,1]
+
   # figure out how many categories we need
   
-  total_cat <- ncol(as.data.frame(object@stan_samples,pars='steps_votes'))
+  total_cat <- length(as_draws_df(object@stan_samples$draws('steps_votes')))
   
-  cuts <- as.data.frame(object@stan_samples,pars=paste0('steps_votes_grm[',param_num,',',total_cat,']'))
+  cuts <- as_draws_df(object@stan_samples$draws(paste0('steps_votes_grm[',param_num,',',total_cat,']')))
   
-  if(class(object@score_data@score_matrix$outcome)=='factor') {
-    cut_names <- levels(object@score_data@score_matrix$outcome)
+  if(class(object@score_data@score_matrix$outcome_disc)=='factor') {
+    cut_names <- levels(object@score_data@score_matrix$outcome_disc)
   } else {
-    cut_names <- as.character(unique(object@score_data@score_matrix$outcome))
+    cut_names <- as.character(unique(object@score_data@score_matrix$outcome_disc))
   }
   abs_mid <- abs_diff/abs_discrim
   # need to loop over cuts
@@ -995,15 +1002,16 @@
   
   # now get all the necessary components
   
-  reg_diff <- as.data.frame(object@stan_samples,pars=paste0('B_int_free[',param_num,']'))[[1]]
-  abs_diff <- as.data.frame(object@stan_samples,pars=paste0('A_int_free[',param_num,']'))[[1]]
-  item_int <- as.data.frame(object@stan_samples,pars=paste0('sigma_abs_free[',param_num,']'))[[1]]
-  ideal_int <- as.data.frame(object@stan_samples,pars=paste0('ls_int[',param_num,']'))[[1]]
+  reg_diff <- as_draws_matrix(object@stan_samples$draws(paste0('B_int_free[',param_num,']')))[,1]
+  reg_discrim <- as_draws_matrix(object@stan_samples$draws(paste0('sigma_reg_free[',param_num,']')))[,1]
+  abs_diff <- as_draws_matrix(object@stan_samples$draws(paste0('A_int_free[',param_num,']')))[,1]
+  item_int <- as_draws_matrix(object@stan_samples$draws(paste0('sigma_abs_free[',param_num,']')))[,1]
+  ideal_int <- as_draws_matrix(object@stan_samples$draws(paste0('ls_int[',param_num,']')))[,1]
   
-  if(class(object@score_data@score_matrix$outcome)=='factor') {
-    cut_names <- levels(object@score_data@score_matrix$outcome)
+  if(class(object@score_data@score_matrix$outcome_disc)=='factor') {
+    cut_names <- levels(object@score_data@score_matrix$outcome_disc)
   } else {
-    cut_names <- as.character(unique(object@score_data@score_matrix$outcome))
+    cut_names <- as.character(unique(object@score_data@score_matrix$outcome_disc))
   }
   
   reg_data <- data_frame(item_median=quantile(reg_diff,0.5),
@@ -1928,6 +1936,9 @@ return(as.vector(idx))
 #' @noRd
 .get_varying <- function(obj) {
   
+  if(obj@use_groups) {
+    obj@score_data@score_matrix$person_id <- obj@score_data@score_matrix$group_id
+  }
   
   if(obj@map_over_id=="items") {
     

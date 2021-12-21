@@ -9,7 +9,6 @@ id_estimate(
   model_type = 2,
   inflate_zero = FALSE,
   vary_ideal_pts = "none",
-  within_chain = "none",
   keep_param = NULL,
   grainsize = 1,
   mpi_export = NULL,
@@ -21,6 +20,7 @@ id_estimate(
   nchains = 4,
   niters = 1000,
   use_vb = FALSE,
+  ignore_db = NULL,
   restrict_ind_high = NULL,
   fix_high = 1,
   fix_low = (-1),
@@ -35,7 +35,11 @@ id_estimate(
   discrim_reg_sd = 2,
   discrim_miss_sd = 2,
   person_sd = 3,
-  time_sd = 0.1,
+  time_fix_sd = 0.1,
+  time_var = 0.1,
+  ar1_up = 1,
+  ar1_down = 0,
+  boundary_prior = NULL,
   time_center_cutoff = 50,
   restrict_var = TRUE,
   sample_stationary = FALSE,
@@ -77,16 +81,6 @@ running a model so that zeroes are coded as missing data.}
 time-varying ideal point model will be fit with either a random-walk process, an 
 AR1 process or a Gaussian process. See documentation for more info.}
 
-\item{within_chain}{This parameter determines whether Stan's within-chain
-parallelization scheme is used for estimation. The parameter can take three values:
-\code{"none"} for no within-chain parallelization,
-\code{"threads"} for shared-memory parallelization,
-and \code{"mpi"} for using the MPI library for 
-parallelization (this requires sampling in \code{cmdstan},
-see vignette for details). Generally speaking, \code{"mpi"} is
-more efficient parallelization that can be used on computer
-clusters to estimate very large models.}
-
 \item{keep_param}{A list with logical values for different categories of paremeters which
 should/should not be kept following estimation. Can be any/all of \code{person_int} for 
 the person-level intercepts (static ideal points), 
@@ -126,6 +120,22 @@ the response matrix}
 
 \item{use_vb}{Whether or not to use Stan's variational Bayesian inference engine instead of full Bayesian inference. Pros: it's much faster.
 Cons: it's not quite as accurate. See \code{\link[rstan]{vb}} for more info.}
+
+\item{ignore_db}{If there are multiple time periods (particularly when there are 
+very many time periods), you can pass in a data frame
+(or tibble) with one row per person per time period and an indicator column 
+\code{ignore} that is equal to 1 for periods that should be considered in sample
+and 0 for periods for periods that should be considered out of sample. This is 
+useful for excluding time periods from estimation for persons when they could not 
+be present, i.e. such as before entrance into an organization or following death.
+If \code{ignore} equals 0, the person's ideal point is estimated as a standard Normal
+draw rather than an auto-correlated parameter, reducing computational 
+burden substantially.
+Note that there can only be one pre-sample period of 0s, one in-sample period of 1s,
+and one post-sample period of 0s. Multiple in-sample periods cannot be interspersed
+with out of sample periods. The columns must be labeled as \code{person_id}, 
+\code{time_id} and \code{ignore} and must match the formatting of the columns
+fed to the \code{id_make} function.}
 
 \item{restrict_ind_high}{If \code{fixtype} is not "vb_full", the character value or numerical index
 of a legislator/person or bill/item to pin to a high value (default +1).}
@@ -176,9 +186,18 @@ estimated instead of individual parameters.}
 
 \item{person_sd}{Set the prior standard deviation for the legislators (persons) parameters}
 
-\item{time_sd}{The variance of the over-time component of the first person/legislator
+\item{time_fix_sd}{The variance of the over-time component of the first person/legislator
 is fixed to this value as a reference. 
 Default is 0.1.}
+
+\item{boundary_prior}{If your time series has very low variance (change over time),
+you may want to use this option to put a boundary-avoiding inverse gamma prior on
+the time series variance parameters if your model has a lot of divergent transitions. 
+To do so, pass a list with a element called 
+\code{beta} that signifies the rate parameter of the inverse-gamma distribution. 
+For example, try \code{boundary_prior=list(beta=1)}. Increasing the value of \code{beta}
+will increase the "push" away from zero. Setting it too high will result in 
+time series that exhibit a lot of "wiggle" without much need.}
 
 \item{time_center_cutoff}{The number of time points above which
 the model will employ a centered time series approach for AR(1)
@@ -327,7 +346,7 @@ all of the models
 implemented in idealstan, though fiddling with some parameters may be 
 necessary in difficult cases. For time-series models, one of the 
 person ideal point over-time variances is also fixed to .1, a value that
-can be changed using the option \code{time_sd}.
+can be changed using the option \code{time_fix_sd}.
 }
 
 \examples{

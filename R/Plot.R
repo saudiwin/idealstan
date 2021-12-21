@@ -232,7 +232,7 @@ id_plot_legis <- function(object,return_data=FALSE,
                          ymin=~low_pt,ymax=~high_pt),alpha=person_ci_alpha) +
       geom_text(aes_(x=~reorder(person_id,median_pt),y=~median_pt,
                     colour=groupc,
-                    label=~reorder(outcome,median_pt)),size=text_size_group,
+                    label=~reorder(outcome_disc,median_pt)),size=text_size_group,
                 check_overlap = T)
     
   }

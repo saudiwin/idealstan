@@ -672,8 +672,10 @@ setGeneric('id_plot',
 #'    Currently, the options are limited to a plot of legislator/person ideal points with bills/item midpoints as an optional overlay.
 #'    Additional plots will be available in future versions of \code{idealstan}.
 #' @param object A fitted \code{idealstan} object
-#' @param plot_type Specify the plot as a character string. Currently 'persons' for legislator/person ideal point plot and 
-#'    'histogram' for a histogram of model estimates for given parameters.
+#' @param plot_type Specify the plot as a character string. Currently 'persons' for legislator/person ideal point plot, 
+#'    'histogram' for a histogram of model estimates for given parameters. Alternatively,
+#'    use the \code{param} option to specify a specific model parameter.
+#' @param param A character name of a parameter from an \code{idealstan} model.
 #' @param ... Additional arguments passed on to the underlying functions. See individual function documentation for details.
 #' @return A \code{\link[ggplot2]{ggplot}} object
 #' @seealso \code{\link{id_plot_legis}} for a legislator/person ideal point plot, 
@@ -766,8 +768,12 @@ setMethod(launch_shinystan,signature(object='idealstan'),
                                  "B_int_free",
                                  'steps_votes',
                                  'steps_votes_grm'),...) {
-            to_shiny <- as.shinystan(object@stan_samples)
-            launch_shinystan(to_shiny,...)
+            if(packageDescription("shinystan")$Version=="3.0.0") {
+              launch_shinystan(to_shiny@stan_samples,...)
+            } else {
+              stop("You need to install version 3.0.0 of package shinystan. To do so, use remotes::install_github('stan-dev/shinystan', ref='v3-alpha') ")
+            }
+            
           })
 
 #' Plot the MCMC posterior draws by chain
