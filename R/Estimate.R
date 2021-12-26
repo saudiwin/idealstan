@@ -1317,9 +1317,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                              restrict_high=idealdata@restrict_ind_high,
                              restrict_low=idealdata@restrict_ind_low,
                              fix_high=idealdata@restrict_num_high,
-                             fix_low=idealdata@restrict_num_low,
-                             pos_discrim=as.integer(pos_discrim),
-                             grainsize=grainsize)
+                             fix_low=idealdata@restrict_num_low)
   
   idealdata <- remove_list$idealdata
   

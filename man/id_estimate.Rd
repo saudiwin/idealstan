@@ -25,7 +25,7 @@ id_estimate(
   fix_high = 1,
   fix_low = (-1),
   restrict_ind_low = NULL,
-  fixtype = "vb_full",
+  fixtype = "prefix",
   const_type = "persons",
   id_refresh = 0,
   prior_fit = NULL,

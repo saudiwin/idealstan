@@ -32,30 +32,25 @@
                           eval_elbo=eval_elbo,threads=1,
                           tol_rel_obj=tol_rel_obj, # better convergence criterion than default
                           output_samples=200)
-
-  browser()
-  
-  this_params <- lookat_params[,1,]
-  
-  all_params <- attributes(this_params)$dimnames$parameters
   
   # pull out unidentified parameters
   
   if(const_type=="persons") {
     
-    lookat_params <- post_modes$draws("L_full")
+    this_params <- post_modes$draws("L_full") %>% as_draws_matrix
     
-    person <- apply(this_params[,grepl(pattern = 'L_full',x=all_params)],2,mean)
+    person <- apply(this_params,2,mean)
 
     restrict_ind_high <- which(person==max(person))[1]
     restrict_ind_low <- which(person==min(person))[1]
     val_high <- person[restrict_ind_high]
     val_low <- person[restrict_ind_low]
+    
   } else if(const_type=="items") {
     
-    lookat_params <- post_modes$draws("sigma_reg_full")
+    this_params <- post_modes$draws("sigma_reg_full") %>% as_draws_matrix
     
-    items <- apply(this_params[,grepl(pattern = 'sigma_reg_full',x=all_params)],2,mean)
+    items <- apply(this_params,2,mean)
 
     restrict_ind_high <- which(items==max(items))[1]
     restrict_ind_low <- which(items==min(items))[1]
@@ -588,42 +583,42 @@
     
     return(out_d)
   } else if(all && !aggregate) {
-    reg_data_mid <- data_frame(Posterior_Sample=reg_mid,
+    reg_data_mid <- data_frame(Posterior_Sample=as.numeric(reg_mid),
                                `Item Name`=param_name,
                                `Item Type`='Non-Inflated Item Midpoint',
                                `Predicted Outcome`=cut_names[2],
                                `Parameter`='A function of other parameters') %>% 
       mutate(Iteration=1:n())
     
-    abs_data_mid <- data_frame(`Posterior_Sample`=abs_mid,
+    abs_data_mid <- data_frame(`Posterior_Sample`=as.numeric(abs_mid),
                                `Item Name`=param_name,
                                `Item Type`='Inflated Item Midpoint',
                                `Predicted Outcome`='Missing',
                                `Parameter`='A function of other parameters') %>% 
       mutate(Iteration=1:n())
     
-    reg_data_discrim <- data_frame(`Posterior_Sample`=reg_discrim,
+    reg_data_discrim <- data_frame(`Posterior_Sample`=as.numeric(reg_discrim),
                                    `Item Name`=param_name,
                                    `Item Type`='Non-Inflated Discrimination',
                                    `Predicted Outcome`=cut_names[2],
                                    `Parameter`=paste0('sigma_reg_free[',param_name,']')) %>% 
       mutate(Iteration=1:n())
     
-    abs_data_discrim <- data_frame(`Posterior_Sample`=abs_discrim,
+    abs_data_discrim <- data_frame(`Posterior_Sample`=as.numeric(abs_discrim),
                                    `Item Name`=param_name,
                                    `Item Type`='Inflated Discrimination',
                                    `Predicted Outcome`='Missing',
                                    `Parameter`=paste0('sigma_abs_free[',param_name,']')) %>% 
       mutate(Iteration=1:n())
     
-    reg_data_diff <- data_frame(`Posterior_Sample`=reg_diff,
+    reg_data_diff <- data_frame(`Posterior_Sample`=as.numeric(reg_diff),
                                 `Item Name`=param_name,
                                 `Item Type`='Non-Inflated Difficulty',
                                 `Predicted Outcome`=cut_names[2],
                                 `Parameter`=paste0('B_int_free[',param_name,']')) %>% 
       mutate(Iteration=1:n())
     
-    abs_data_diff <- data_frame(`Posterior_Sample`=abs_discrim,
+    abs_data_diff <- data_frame(`Posterior_Sample`=as.numeric(abs_discrim),
                                 `Item Name`=param_name,
                                 `Item Type`='Inflated Difficulty',
                                 `Predicted Outcome`='Missing',
@@ -1933,6 +1928,7 @@ return(as.vector(idx))
 
 
 #' Need new function to re-create time-varying ideal points given reduce sum
+#' @importFrom tidyr unite
 #' @noRd
 .get_varying <- function(obj) {
   

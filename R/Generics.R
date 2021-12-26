@@ -563,7 +563,7 @@ setMethod('summary',signature(object='idealstan'),
             if(pars=='items') {
 
               # a bit trickier with item points
-              item_plot <- levels(object@score_matrix$item_id)
+              item_plot <- levels(object@score_data@score_matrix$item_id)
               if(object@model_type %in% c(1,2) || (object@model_type>6 && object@model_type<13)) {
                 # binary models and continuous
                 item_points <- lapply(item_plot,.item_plot_binary,object=object,
@@ -598,27 +598,8 @@ setMethod('summary',signature(object='idealstan'),
 
             
             if(pars=='all') {
-              if(!is.null(pars)) {
-                sumobj <- rstan::summary(object@stan_samples,pars=pars)
-                this_summary <- sumobj[[1]] %>% as_data_frame
-              } else {
-                sumobj <- rstan::summary(object@stan_samples)
-                this_summary <- sumobj[[1]] %>% as_data_frame
-              }
               
-              this_summary <- mutate(this_summary,
-                                     parameters=row.names(sumobj[[1]]),
-                                     par_type=stringr::str_extract(parameters,'[A-Za-z_]+')) %>% 
-                rename(posterior_mean=`mean`,
-                       posterior_sd=`sd`,
-                       posterior_median=`50%`,
-                       Prob.025=`2.5%`,
-                       Prob.25=`25%`,
-                       Prob.75=`75%`,
-                       Prob.975=`97.5%`) %>% 
-                select(parameters,par_type,posterior_mean,posterior_median,posterior_sd,Prob.025,
-                       Prob.25,Prob.75,Prob.975)
-              return(this_summary)
+              return(object@summary)
             }
             
             if(pars %in% c('person_cov','discrim_reg_cov','discrim_infl_cov')) {
@@ -627,15 +608,14 @@ setMethod('summary',signature(object='idealstan'),
                                    discrim_reg_cov='sigma_reg_x',
                                    discrim_infl_cov='sigma_abs_x')
               
-              to_sum <- as.array(object@stan_samples,
-                                  pars=param_name)
+              to_sum <- object@stan_samples$draws(param_name)
               
               # reset names of parameters
-              new_names <- switch(pars,person_cov=object@person_cov,
-                                  discrim_reg=object@item_cov,
-                                  discrim_abs=object@item_cov_miss)
+              new_names <- switch(pars,person_cov=object@score_data@person_cov,
+                                  discrim_reg=object@score_data@item_cov,
+                                  discrim_abs=object@score_data@item_cov_miss)
               
-              attributes(to_sum)$dimnames$parameters <- new_names
+              attributes(to_sum)$dimnames$variable <- new_names
               
               if(!aggregate) {
                 return(to_sum)
@@ -788,10 +768,11 @@ setMethod(launch_shinystan,signature(object='idealstan'),
 #' \code{id_plog_legis} or \code{id_plot_legis_dyn} to find the 
 #' name of the parameter in the Stan model.
 #' 
-#' This function is a simple wrapper around \code{\link[rstan]{stan_trace}}. 
+#' This function is a simple wrapper around \code{\link[bayesplot]{mcmc_trace}}. 
 #' Please refer to that function's documentation for further options.
 #' 
 #' @param object A fitted \code{idealstan} model
+#' @importFrom bayesplot mcmc_trace
 #' @param ... Other options passed on to \code{\link[rstan]{stan_trace}}
 #' @export
 setGeneric('stan_trace',
@@ -810,16 +791,16 @@ setGeneric('stan_trace',
 #' \code{id_plog_legis} or \code{id_plot_legis_dyn} to find the 
 #' name of the parameter in the Stan model.
 #' 
-#' This function is a simple wrapper around \code{\link[rstan]{stan_trace}}. 
+#' This function is a simple wrapper around \code{\link[bayesplot]{mcmc_trace}}. 
 #' Please refer to that function's documentation for further options.
 #' 
 #' @param object A fitted \code{idealstan} model
 #' @param par The character string  name of a parameter in the model 
-#' @param ... Other options passed on to \code{\link[rstan]{stan_trace}}
+#' @param ... Other options passed on to \code{\link[bayesplot]{mcmc_trace}}
 #' @export
 setMethod('stan_trace',signature(object='idealstan'),
           function(object,par='L_full[1]') {
             
-        rstan::stan_trace(object@stan_samples,pars = par)
+        mcmc_trace(object@stan_samples$draws(par))
           })
 
