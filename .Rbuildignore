@@ -24,6 +24,8 @@ rcppExports.cpp
 stanExports_*
 delaware.png
 delaware_var.png
+set_up_vignettes.R
+test.R
 
 ^CRAN-RELEASE$
 ^doc$
