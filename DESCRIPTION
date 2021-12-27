@@ -32,11 +32,11 @@ Imports:
     abind,
     ggthemes,
     posterior,
+    R.rsp,
     Rcpp
 Suggests:
     loo,
     lubridate,
-    R.rsp,
     cmdstanr
 Encoding: UTF-8
 LazyData: true
