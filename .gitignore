@@ -17,5 +17,3 @@ src-x64
 *.Rproj
 *.o
 *.hpp
-/doc/
-/Meta/
