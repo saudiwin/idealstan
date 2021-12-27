@@ -5,9 +5,9 @@ December 27, 2021
 
 *Note: This is a beta release of `idealstan` v1.0. While most features have been implemented and are stable, some have not (ideal point marginal effects), and there may be bugs that have not been sorted out. To report bugs with the package, please file an issue on the [Github page](https://github.com/saudiwin/idealstan/issues).* 
 
-At present, `idealstan` is only available on Github as one of its main dependencies, `cmdstanr` is also not on CRAN. To use my package, `cmdstanr` must be first be set up with a local installation of `cmdstan`, which is used for estimation. To see how to install `cmdstanr`, [see this guide](https://mc-stan.org/cmdstanr/).
+At present, `idealstan` is only available on Github as one of its main dependencies, `cmdstanr` is also not on CRAN. To use my package, `cmdstanr` must be first be set up with a local installation of `cmdstan`, which is used for estimation. To see how to install `cmdstanr`, [see this guide](https://mc-stan.org/cmdstanr/). Note that the `cmdstanr` default installation location should be used when installing `cmdstan`.
 
-To install this package, type the command `devtools::install_github('saudiwin/idealstan',local=F)` at the R console prompt. To include the package vignettes in the package install, which can be accessed by the command `vignette(package='idealstan)`, use instead the command `devtools::install_github('saudiwin/idealstan',local=F,build_vignette=TRUE)`. To install the unstable development branch `develop`, use this command: `devtools::install_github('saudiwin/idealstan',local=F,ref='develop')`--don't do this unless you know what you're doing.*
+To install this package, type the command `remotes::install_github('saudiwin/idealstan',local=F,build_vignette=TRUE)` at the R console prompt (you first must have the `remotes` package installed from CRAN for this to work). The best way to learn how the package works is to look at the package vignettes, which can be accessed by running the R command `vignette(package='idealstan)` following package installation.
 
 **If you use this package, please cite the following:**
 
