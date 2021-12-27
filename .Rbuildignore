@@ -3,6 +3,12 @@
 ^\.travis\.yml$
 package_test.html
 package_test.Rmd
+package_test_v2.Rmd
+package_test_v2.html
+How_to_Evaluate_models.html
+How_to_Evaluate_models.html.asis
+How_to_Evaluate_models.Rmd
+..Rcheck
 DE 2018.Rdata
 LICENSE.txt
 delaware_example.R
