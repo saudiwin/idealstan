@@ -15,18 +15,13 @@ delaware_example.R
 package_test.nb.html
 package_test_files
 render_vignettes.R
-vignette_output.txt
-psis_vb_diagnostic*
 cran-comments.md
 test_*
 .gitattributes
-rcppExports.cpp
-stanExports_*
 delaware.png
 delaware_var.png
 set_up_vignettes.R
 test.R
 
 ^CRAN-RELEASE$
-^doc$
 ^Meta$
