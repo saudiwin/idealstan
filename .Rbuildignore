@@ -22,6 +22,9 @@ test_*
 .gitattributes
 rcppExports.cpp
 stanExports_*
-
+delaware.png
+delaware_var.png
 
 ^CRAN-RELEASE$
+^doc$
+^Meta$
