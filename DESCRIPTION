@@ -32,7 +32,8 @@ Imports:
     abind,
     ggthemes,
     posterior,
-    cmdstanr
+    cmdstanr,
+    bayesplot
 Suggests:
     pscl,
     loo,
