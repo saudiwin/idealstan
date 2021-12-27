@@ -32,13 +32,12 @@ Imports:
     abind,
     ggthemes,
     posterior,
-    cmdstanr,
-    bayesplot,
-    R.rsp
+    R.rsp,
+    Rcpp
 Suggests:
-    pscl,
     loo,
-    lubridate
+    lubridate,
+    cmdstanr
 Encoding: UTF-8
 LazyData: true
 NeedsCompilation: yes
