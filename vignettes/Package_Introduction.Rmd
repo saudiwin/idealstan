@@ -2,7 +2,11 @@
 title: "Introduction to Idealstan"
 author: "Robert Kubinec"
 date: "`r Sys.Date()`"
-output: html_document
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Time-Varying Ideal Points}
+  %\VignetteEngine{R.rsp::asis}
+  %\VignetteEncoding{UTF-8}
 ---
 
 
