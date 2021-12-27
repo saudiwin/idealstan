@@ -71,10 +71,12 @@ setClass('idealstan',
                     model_code='character',
                     test_model_code='character',
                     map_over_id="character",
-                    time_sd="numeric",
+                    time_fix_sd="numeric",
+                    diagnostics="ANY",
                     time_varying="ANY",
                     restrict_var="logical",
                     stan_samples='ANY',
+                    keep_param='ANY',
                     use_vb='logical',
                     use_groups='logical',
                     simulation='logical'))
@@ -150,6 +152,7 @@ setGeneric('sample_model',signature='object',
 setMethod('sample_model',signature(object='idealdata'),
           function(object,nchains=4,niters=2000,warmup=floor(niters/2),ncores=NULL,
                    to_use=to_use,this_data=this_data,use_vb=FALSE,within_chain=NULL,
+                   keep_param=NULL,
                    save_files=NULL,gpu=FALSE,
                    tol_rel_obj=NULL,...) {
             
@@ -165,16 +168,137 @@ setMethod('sample_model',signature(object='idealdata'),
                                 const_type=this_data$const_type,
                                 fix_high=this_data$fix_high,
                                 fix_low=this_data$fix_low,
+                                ar1_up=this_data$ar1_up,
+                                ar1_down=this_data$ar1_down,
                                 restrict_ind_high=this_data$restrict_high,
                                 restrict_ind_low=this_data$restrict_low,
                                 time_proc=this_data$time_proc,
                                 m_sd_par=this_data$m_sd_par,
                                 time_range=mean(diff(this_data$time_ind)),
                                 num_diff=this_data$num_diff,
-                                time_sd=this_data$time_sd,
+                                time_fix_sd=this_data$time_sd,
                                 use_ar=this_data$use_ar,
                                 person_start=object@person_start,
+                                restrict_var=this_data$restrict_var,
                                 actual=TRUE)
+            
+            if(!is.null(keep_param)) {
+              
+              # check for logical vectors
+              
+              check_type <- sapply(keep_param, is.logical)
+              
+              stopifnot("Please only use TRUE/FALSE values for keep parameter option"=check_type)
+              
+              keep_vars <- "lp__"
+              
+              if(!is.null(keep_param$person_vary)) {
+                
+                if(keep_param$person_vary) {
+                  
+                  if(this_data$time_proc==2) {
+                    
+                    if(this_data$S_type!=0) {
+                      keep_vars <- c(keep_vars,"L_tp1_var","time_var_free",
+                                     "L_full")
+                    } else {
+                      keep_vars <- c(keep_vars,"L_tp1","time_var_full","time_var_free",
+                                     "L_full")
+                      
+                    }
+
+                    
+                  } else if(this_data$time_proc==3) {
+                    
+                    if(this_data$S_type!=0) {
+                      keep_vars <- c(keep_vars,"L_tp1_var","time_var_free","L_AR1",
+                                     "L_full")
+                    } else {
+                      keep_vars <- c(keep_vars,"L_tp1","time_var_full","time_var_free",
+                                     "L_full","L_AR1")
+                      
+                    }
+                    
+                  } else if(this_data$time_proc==4) {
+                    
+                    if(this_data$S_type!=0) {
+                      
+                      keep_vars <- c(keep_vars,"L_tp1_var","time_var_free","L_AR1",
+                                     "time_var_gp_free","m_sd_free","gp_sd_free",
+                                     "L_full")
+                      
+                    } else {
+                      
+                      keep_vars <- c(keep_vars,"L_tp1","L_tp1_var","time_var_free","L_AR1","time_var_full",
+                                     "m_sd_full","m_sd_free","gp_sd_free",
+                                     "time_var_gp_free",
+                                     "L_full")
+                      
+                      
+                    }
+                  }
+                  
+                }
+                
+              } else if(!is.null(keep_param$person_int)) {
+                
+                # figure out which people to keep in the estimation
+                
+                if(keep_param$person_int && (is.null(keep_param$person_vary) || !keep_param$person_vary)) {
+                  
+                  keep_vars <- c(keep_vars,"L_full")
+                  
+                }
+                
+              } 
+              
+              if(!is.null(keep_param$item)) {
+                
+                if(keep_param$item) {
+                  
+                  keep_vars <- c(keep_vars,"sigma_reg_full","B_int_free")
+                  
+                }
+                
+              } 
+              
+              if(!is.null(keep_param$item_miss)) {
+                
+                if(keep_param$item_miss) {
+                  
+                  keep_vars <- c(keep_vars,"sigma_abs_free","A_int_free")
+                  
+                }
+                
+              } 
+              
+              if(!is.null(keep_param$extra)) {
+                
+                if(keep_param$extra) {
+                  
+                  if(object@person_cov!="personcov0") {
+                    
+                    keep_vars <- c(keep_vars,"legis_x")
+                    
+                  }
+                  
+                  if(object@item_cov!="itemcov0") {
+                    
+                    keep_vars <- c(keep_vars,"sigma_reg_x")
+                    
+                  }
+                  
+                  if(object@item_cov_miss!="itemcovmiss0") {
+                    
+                    keep_vars <- c(keep_vars,"sigma_abs_x")
+                    
+                  }
+                  
+                }
+                
+              }
+               
+            }
 
 
             if(is.null(ncores)) {
@@ -182,17 +306,11 @@ setMethod('sample_model',signature(object='idealdata'),
             }
             if(use_vb==FALSE) {
               print("Estimating model with full Stan MCMC sampler.")
-              
-              if(is.null(save_files)) {
-                save_files <- system.file("csv_files",package="idealstan")
-              } 
-              
-              if(within_chain=="threads") {
                 
                 if(gpu) {
                   out_model <- object@stanmodel_gpu$sample(data=this_data,chains=nchains,iter_sampling=niters,
                                                            parallel_chains=nchains,
-                                                           threads_per_chain=floor(ncores/nchains),
+                                                           threads_per_chain=ifelse(floor(ncores/nchains)>0,floor(ncores/nchains),1),
                                                            iter_warmup=warmup,
                                                            init=init_vals,
                                                            output_dir=save_files,
@@ -201,7 +319,7 @@ setMethod('sample_model',signature(object='idealdata'),
                 } else {
                   out_model <- object@stanmodel_map$sample(data=this_data,chains=nchains,iter_sampling=niters,
                                                            parallel_chains=nchains,
-                                                           threads_per_chain=floor(ncores/nchains),
+                                                           threads_per_chain=ifelse(floor(ncores/nchains)>0,floor(ncores/nchains),1),
                                                            iter_warmup=warmup,
                                                            init=init_vals,
                                                            output_dir=save_files,
@@ -210,17 +328,7 @@ setMethod('sample_model',signature(object='idealdata'),
                 }
 
               } else {
-                out_model <- object@stanmodel$sample(data=this_data,chains=nchains,iter_sampling=niters,
-                                                     parallel_chains=ncores,
-                                                     iter_warmup=warmup,
-                                                     init=init_vals,
-                                                     output_dir=save_files,
-                                                     refresh=this_data$id_refresh,
-                                                     ...)
-              }
-              
-              
-            } else {
+                
               if(is.null(tol_rel_obj)) {
                 # set to this number for identification runs
                 tol_rel_obj <- 1e-02
@@ -238,7 +346,7 @@ setMethod('sample_model',signature(object='idealdata'),
                 eval_elbo <- 100
               }
               print("Estimating model with variational inference (approximation of true posterior).")
-              out_model <- object@stanmodel$variational(data=this_data,
+              out_model <- object@stanmodel_map$variational(data=this_data,
                               tol_rel_obj=tol_rel_obj,
                               iter=20000,
                               init=init_vals[[1]],
@@ -251,13 +359,21 @@ setMethod('sample_model',signature(object='idealdata'),
             
             outobj <- new('idealstan',
                           score_data=object,
-                          model_code=object@stanmodel$code(),
-                          stan_samples=out_model,
+                          model_code=object@stanmodel_map$code(),
                           use_vb=use_vb)
             
             # add safe summaries
             
-            to_sum <- outobj@stan_samples$summary(variables=NULL,
+            # need to use keep_param to filter items/persons in case we need to
+            # remove some of them
+            
+            if(is.null(keep_param)) {
+              
+              keep_vars <- NULL
+              
+            }
+            
+            to_sum <- out_model$summary(variables=keep_vars,
                                                   ~quantile(.x, probs = c(0.05, 0.95),na.rm=T),
                                                   rhat=rhat,~mean(.x,na.rm=T),
                                                   median=median,ess_bulk,ess_tail) 
@@ -268,6 +384,12 @@ setMethod('sample_model',signature(object='idealdata'),
             to_sum <- select(to_sum,variable,lower,mean,median,upper,rhat,ess_bulk,ess_tail)
             
             outobj@summary <- to_sum
+            
+            outobj@diagnostics <- out_model$sampler_diagnostics()
+            
+            outobj@stan_samples <- out_model
+            
+            outobj@keep_param <- keep_param
             
             return(outobj)
           })
@@ -477,27 +599,8 @@ setMethod('summary',signature(object='idealstan'),
 
             
             if(pars=='all') {
-              if(!is.null(pars)) {
-                sumobj <- rstan::summary(object@stan_samples,pars=pars)
-                this_summary <- sumobj[[1]] %>% as_data_frame
-              } else {
-                sumobj <- rstan::summary(object@stan_samples)
-                this_summary <- sumobj[[1]] %>% as_data_frame
-              }
               
-              this_summary <- mutate(this_summary,
-                                     parameters=row.names(sumobj[[1]]),
-                                     par_type=stringr::str_extract(parameters,'[A-Za-z_]+')) %>% 
-                rename(posterior_mean=`mean`,
-                       posterior_sd=`sd`,
-                       posterior_median=`50%`,
-                       Prob.025=`2.5%`,
-                       Prob.25=`25%`,
-                       Prob.75=`75%`,
-                       Prob.975=`97.5%`) %>% 
-                select(parameters,par_type,posterior_mean,posterior_median,posterior_sd,Prob.025,
-                       Prob.25,Prob.75,Prob.975)
-              return(this_summary)
+              return(object@summary)
             }
             
             if(pars %in% c('person_cov','discrim_reg_cov','discrim_infl_cov')) {
@@ -506,15 +609,14 @@ setMethod('summary',signature(object='idealstan'),
                                    discrim_reg_cov='sigma_reg_x',
                                    discrim_infl_cov='sigma_abs_x')
               
-              to_sum <- as.array(object@stan_samples,
-                                  pars=param_name)
+              to_sum <- object@stan_samples$draws(param_name)
               
               # reset names of parameters
               new_names <- switch(pars,person_cov=object@score_data@person_cov,
                                   discrim_reg=object@score_data@item_cov,
                                   discrim_abs=object@score_data@item_cov_miss)
               
-              attributes(to_sum)$dimnames$parameters <- new_names
+              attributes(to_sum)$dimnames$variable <- new_names
               
               if(!aggregate) {
                 return(to_sum)
@@ -551,8 +653,10 @@ setGeneric('id_plot',
 #'    Currently, the options are limited to a plot of legislator/person ideal points with bills/item midpoints as an optional overlay.
 #'    Additional plots will be available in future versions of \code{idealstan}.
 #' @param object A fitted \code{idealstan} object
-#' @param plot_type Specify the plot as a character string. Currently 'persons' for legislator/person ideal point plot and 
-#'    'histogram' for a histogram of model estimates for given parameters.
+#' @param plot_type Specify the plot as a character string. Currently 'persons' for legislator/person ideal point plot, 
+#'    'histogram' for a histogram of model estimates for given parameters. Alternatively,
+#'    use the \code{param} option to specify a specific model parameter.
+#' @param param A character name of a parameter from an \code{idealstan} model.
 #' @param ... Additional arguments passed on to the underlying functions. See individual function documentation for details.
 #' @return A \code{\link[ggplot2]{ggplot}} object
 #' @seealso \code{\link{id_plot_legis}} for a legislator/person ideal point plot, 
@@ -638,16 +742,19 @@ setGeneric('launch_shinystan',signature='object',
 #' @importFrom shinystan as.shinystan launch_shinystan
 #' @export
 setMethod(launch_shinystan,signature(object='idealstan'),
-          function(object,pars=c('L_free',
-                                 'sigma_reg_free',
+          function(object,pars=c('L_full',
+                                 'sigma_reg_full',
                                  'sigma_abs_free',
-                                 'restrict_high',
-                                 'restrict_low',
-                                 'restrict_ord',
+                                 "A_int_free",
+                                 "B_int_free",
                                  'steps_votes',
                                  'steps_votes_grm'),...) {
-            to_shiny <- as.shinystan(object@stan_samples)
-            launch_shinystan(to_shiny,...)
+            if(packageDescription("shinystan")$Version=="3.0.0") {
+              launch_shinystan(to_shiny@stan_samples,...)
+            } else {
+              stop("You need to install version 3.0.0 of package shinystan. To do so, use remotes::install_github('stan-dev/shinystan', ref='v3-alpha') ")
+            }
+            
           })
 
 #' Plot the MCMC posterior draws by chain
@@ -662,10 +769,11 @@ setMethod(launch_shinystan,signature(object='idealstan'),
 #' \code{id_plog_legis} or \code{id_plot_legis_dyn} to find the 
 #' name of the parameter in the Stan model.
 #' 
-#' This function is a simple wrapper around \code{\link[rstan]{stan_trace}}. 
+#' This function is a simple wrapper around \code{\link[bayesplot]{mcmc_trace}}. 
 #' Please refer to that function's documentation for further options.
 #' 
 #' @param object A fitted \code{idealstan} model
+#' @importFrom bayesplot mcmc_trace
 #' @param ... Other options passed on to \code{\link[rstan]{stan_trace}}
 #' @export
 setGeneric('stan_trace',
@@ -684,16 +792,16 @@ setGeneric('stan_trace',
 #' \code{id_plog_legis} or \code{id_plot_legis_dyn} to find the 
 #' name of the parameter in the Stan model.
 #' 
-#' This function is a simple wrapper around \code{\link[rstan]{stan_trace}}. 
+#' This function is a simple wrapper around \code{\link[bayesplot]{mcmc_trace}}. 
 #' Please refer to that function's documentation for further options.
 #' 
 #' @param object A fitted \code{idealstan} model
 #' @param par The character string  name of a parameter in the model 
-#' @param ... Other options passed on to \code{\link[rstan]{stan_trace}}
+#' @param ... Other options passed on to \code{\link[bayesplot]{mcmc_trace}}
 #' @export
 setMethod('stan_trace',signature(object='idealstan'),
           function(object,par='L_full[1]') {
             
-        rstan::stan_trace(object@stan_samples,pars = par)
+        mcmc_trace(object@stan_samples$draws(par))
           })
 

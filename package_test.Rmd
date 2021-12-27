@@ -38,14 +38,22 @@ bin_irt_2pl_est <- id_estimate(idealdata=bin_irt_2pl_sim,
                                                                     decreasing=F, 
                                                         index=T)$ix[1]),
                                fixtype='constrained',
-                           within_chain="threads",
                            person_sd = 3,
+<<<<<<< HEAD
                            discrim_miss_sd = 1,
                            discrim_reg_sd = 1,grainsize=1,
                            diff_reg_sd = 1,
                            diff_miss_sd = 1,
                            niter=500,warmup=500,
                            nchains=1,ncores=1,id_refresh=100)
+=======
+                           discrim_miss_sd = 1,grainsize=1,
+                           discrim_reg_sd = 1,
+                           diff_reg_sd = 1,
+                           diff_miss_sd = 1,
+                           niter=500,warmup=500,
+                           nchains=1,ncores=4,id_refresh=100)
+>>>>>>> develop
 id_plot_rhats(bin_irt_2pl_est)
 ```
 
@@ -651,8 +659,7 @@ diff_sd = 1,
                                absence_discrim_sd = 1,
                                reg_discrim_sd = 1)
 bin_time_irt_2pl_abs_est <- id_estimate(idealdata=bin_time_irt_2pl_abs_sim,
-                               model_type=2,nchains = 1,ncores = 1,
-                               within_chain="threads",
+                               model_type=2,nchains = 1,ncores = 3,
                                vary_ideal_pts = 'random_walk',
                                save_files = "~/corona_private/data/indices/",
                                restrict_ind_high = as.character(sort(bin_time_irt_2pl_abs_sim@simul_data$drift,
@@ -704,7 +711,7 @@ bin_time_ar_irt_2pl_abs_sim <- id_sim_gen(num_person=10,num_bills=100,inflate=T,
 bin_time_ar_irt_2pl_abs_est <- id_estimate(idealdata=bin_time_ar_irt_2pl_abs_sim,
                                model_type=2,
                                vary_ideal_pts = 'AR1',
-                               within_chain="none",nchains=3,ncores = 3,
+                               nchains=3,ncores = 3,
                                restrict_ind_high = as.character(sort(bin_time_ar_irt_2pl_abs_sim@simul_data$drift,
                                                                      decreasing=TRUE,
                                                         index=TRUE)$ix[1]),
@@ -764,7 +771,6 @@ time_gp_est <- id_estimate(idealdata=time_gp_sim,
                            use_vb=F,id_refresh=100,
                            nchains=3,niters=500,
                                vary_ideal_pts = 'GP',
-                          within_chain="threads",
                           fix_high = sort(time_gp_sim@simul_data$true_person_mean,
                                                                      decreasing=TRUE)[1],
                           fix_low=sort(time_gp_sim@simul_data$true_person_mean)[1],
@@ -1065,363 +1071,4 @@ num_person <- 20
     
 ```
 
-
-## Test Within-chain Parallelization
-
-We don't need to repeat all models for this test. Only a subset, particularly ordinal models which have different parameter configurations. Also need to do missing data/non-missing data models. Some models will have data removed for "padding."
-
-As an initial test, we'll do the 2-Pl binary with no missing data:
-
-```{r irt_binary_par}
-bin_irt_2pl_sim_par <- id_sim_gen(num_person=5,num_bills=200,ordinal=F,inflate=F,
-                              diff_sd=1,
-                              reg_discrim_sd = 1,
-                              absence_discrim_sd = 1)
-
-# remove some data
-
-bin_irt_2pl_sim_par@score_matrix <- sample_frac(bin_irt_2pl_sim_par@score_matrix,.7)
-
-
-bin_irt_2pl_par <- id_estimate(idealdata=bin_irt_2pl_sim_par,
-                               model_type=1,
-                               within_chain="threads",
-                               restrict_ind_high = as.character(sort(bin_irt_2pl_sim_par@simul_data$true_person,
-                                                                     decreasing=T,
-                                                        index=T)$ix[1]),
-                               restrict_ind_low = as.character(sort(bin_irt_2pl_sim_par@simul_data$true_person,
-                                                                    decreasing=F, 
-                                                        index=T)$ix[1]),
-                               fix_high=sort(bin_irt_2pl_sim_par@simul_data$true_person,
-                                                                     decreasing=T)[1],
-                               fix_low=sort(bin_irt_2pl_sim_par@simul_data$true_person,
-                                                                     decreasing=F)[1],
-                               fixtype='prefix',
-                           person_sd = 3,
-                           id_refresh = 200,
-                           discrim_miss_sd = 1,
-                           discrim_reg_sd = 1,
-                           diff_reg_sd = 1,
-                           diff_miss_sd = 1,niters = 1000,
-                           nchains=2,ncores=5)
-id_plot_rhats(bin_irt_2pl_par)
-```
-
-```{r cov_plot_irt_2pl_par}
-id_sim_coverage(bin_irt_2pl_par) %>% 
-  bind_rows(.id='Parameter') %>% 
-  ggplot(aes(y=avg,x=Parameter)) +
-  stat_summary(fun.args=list(mult=1.96)) + 
-  theme_minimal() 
-```
-
-Plot true versus observed values:
-
-```{r irt_2pl_plot_par}
-id_plot_legis(bin_irt_2pl_par,show_true = T)
-```
-
-
-```{r irt_2pl_resid_par}
-
-id_plot_sims(bin_irt_2pl_par,type='Residuals')
-
-```
-
-```{r irt_2pl_RMSE_par}
-
-id_plot_sims(bin_irt_2pl_par)
-
-```
-
-```{r irt_2pl_pred_par}
-
-bin_irt_2pl_par %>% 
-  id_post_pred %>% 
-  id_plot_ppc(bin_irt_2pl_par,ppc_pred=.)
-
-```
-
-Now we'll do an ordinal rating-scale model:
-
-```{r irt_ordinal_abs_par}
-ord_irt_abs_sim_par <- id_sim_gen(num_person=20,num_bills=100,inflate=T,
-                               absence_diff_mean=0,model_type='ordinal_ratingscale')
-
-ord_irt_abs_sim_par@score_matrix <- sample_frac(ord_irt_abs_sim_par@score_matrix,.7)
-
-ord_irt_abs_par <- id_estimate(idealdata=ord_irt_abs_sim_par,
-                               model_type=4,
-                               nchains=1,ncores=5,within_chain="threads",
-                               restrict_ind_high = as.character(sort(ord_irt_abs_sim_par@simul_data$true_person,
-                                                                     decreasing=T,
-                                                        index=T)$ix[1]),
-                              restrict_ind_low = as.character(sort(ord_irt_abs_sim_par@simul_data$true_person,
-                                                                   decreasing=F,
-                                                        index=T)$ix[1]),
-                               fixtype='prefix',
-                              fix_high=sort(ord_irt_abs_sim_par@simul_data$true_person,
-                                                                   decreasing=T)[1],
-                              fix_low=sort(ord_irt_abs_sim_par@simul_data$true_person,
-                                  decreasing=F)[1])
-id_plot_rhats(ord_irt_abs_par)
-```
-
-```{r irt_ord_abs_plot_par}
-id_plot_legis(ord_irt_abs_par,show_true = T)
-```
-
-```{r ord_irt_abs_cov_par}
-id_sim_coverage(ord_irt_abs_par) %>% 
-  bind_rows(.id='Parameter') %>% 
-  ggplot(aes(y=avg,x=Parameter)) +
-  stat_summary(fun.args=list(mult=1.96)) + 
-  theme_minimal() 
-```
-
-```{r ord_irt_abs_resid_par}
-
-id_plot_sims(ord_irt_abs_par,type='Residuals')
-
-```
-
-```{r ord_irt_abs_RMSE_par}
-
-id_plot_sims(ord_irt_abs_par)
-
-```
-
-```{r ord_irt_abs_pred_par}
-
-  ord_irt_abs_par %>% 
-  id_post_pred %>% 
-  id_plot_ppc(ord_irt_abs_par,ppc_pred=.)
-
-```
-
-Next we'll try a graded response model:
-
-```{r irt_ordinal_grm_par}
-ord_irt_grm_sim_par <- id_sim_gen(num_person=20,num_bills=100,inflate=F,
-                               absence_diff_mean=0,model_type='ordinal_grm')
-ord_irt_grm_par <- id_estimate(idealdata=ord_irt_grm_sim_par,
-                               model_type=5,
-                               nchains=1,ncores=8,within_chain="threads",
-                               restrict_ind_high = as.character(sort(ord_irt_grm_sim_par@simul_data$true_person,
-                                                                     decreasing=T,
-                                                        index=T)$ix[1]),
-                              restrict_ind_low = as.character(sort(ord_irt_grm_sim_par@simul_data$true_person,
-                                                                   decreasing=F,
-                                                        index=T)$ix[1]),
-                               fixtype='prefix',fix_high=sort(ord_irt_grm_sim_par@simul_data$true_person,
-                                                                   decreasing=T)[1], fix_low=sort(ord_irt_grm_sim_par@simul_data$true_person,
-                                  decreasing=F)[1])
-id_plot_rhats(ord_irt_grm_par)
-```
-
-```{r ord_irt_grm_cov_plot_par}
-id_sim_coverage(ord_irt_grm_par) %>% 
-  bind_rows(.id='Parameter') %>% 
-  ggplot(aes(y=avg,x=Parameter)) +
-  stat_summary(fun.args=list(mult=1.96)) + 
-  theme_minimal() 
-```
-
-```{r irt_ord_grm_plot_par}
-id_plot_legis(ord_irt_grm_par,show_true = T)
-```
-
-```{r ord_irt_grm_resid_par}
-
-id_plot_sims(ord_irt_grm_par,type='Residuals')
-
-```
-
-```{r ord_irt_grm_RMSE_par}
-
-id_plot_sims(ord_irt_grm_par)
-
-```
-
-```{r ord_irt_grm_pred_par}
-
-ord_irt_grm_par %>% 
-  id_post_pred %>% 
-  id_plot_ppc(ord_irt_grm_est,ppc_pred=.)
-
-```
-
-Finally we will simulate a separate set of distributions to test with within-chain parallelization:
-
-```{r sep_maprect}
-
-num_bills <- 200
-time <- 20
-num_per_dist <- (200*20)/4
-num_person <- 20
-
-  absence_diff <- rnorm(n=num_bills)
-  absence_discrim <- rnorm(n=num_bills)
-  # person ideal points common to both types of models (absence and regular)
-  
-
-  ar_adj <- rep(1,num_person)
-  
-  # need to pull out some functions to generate data
-  
-  .gen_ts_data <- function(t,adj_in,alpha_int,sigma,init_sides) {
-  current_val <- new.env()
-  current_val$t1 <- 0
-  
-  out_vec <- lapply(1:t,function(t_1) {
-    
-    if(t_1==1) {
-      t_11 <- alpha_int
-      current_val$t1 <- t_11
-      return(data_frame(t_11))
-    } else {
-      if(adj_in==1) {
-        t_11 <- adj_in*current_val$t1 + rnorm(n=1,sd=sigma)
-      } else {
-        t_11 <- alpha_int + adj_in*current_val$t1 + rnorm(n=1,sd=sigma)
-      }
-      
-    }
-    current_val$t1 <- t_11
-    return(data_frame(t_11))
-  })  %>% bind_rows
-  return(out_vec)
-}
-  
-  drift <- rnorm(n=num_person,mean=0,sd=1)
-  
-  time_points <- rep(1:time,each=num_bills/time)
-      
-  ideal_pts <- lapply(1:num_person, function(i) {
-        this_person <- .gen_ts_data(t=time,
-                                    adj_in=ar_adj[i],
-                                    alpha_int=drift[i],
-                                    sigma=.1,
-                                    init_sides=ideal_t1[i])
-        return(this_person)
-      }) %>% bind_cols %>% as.matrix
-      ideal_pts <- t(ideal_pts)
-
-  
-  # First generate prob of absences
-
-  person_points <- rep(1:num_person,times=num_bills)
-  bill_points <- rep(1:num_bills,each=num_person)
-  time_points <- rep(1:time,each=num_bills/time)
-  time_points <- rep(time_points,each=num_person)
-
-    pr_absence <- sapply(1:length(person_points),function(n) {
-      ideal_pts[person_points[n],time_points[n]]*absence_discrim[bill_points[n]] - absence_diff[bill_points[n]]
-    }) %>% plogis()
-
-  reg_diff <- rnorm(n=num_bills,mean=0,sd=1)
-  reg_discrim <- rnorm(n=num_bills,mean=0,sd=1)
-  
-    pr_vote <- sapply(1:length(person_points),function(n) {
-      ideal_pts[person_points[n],time_points[n]]*reg_discrim[bill_points[n]] - reg_diff[bill_points[n]]
-    }) %>% plogis()
-
-    
- bill_points_all <- bill_points
- person_points_all <- person_points
- 
- # do each model in turn
- 
- bill_points <- bill_points_all[1:num_per_dist]
- person_points <- person_points_all[1:num_per_dist]
- 
- bernoulli <- as.numeric(pr_vote[1:num_per_dist]>runif(length(person_points)))
- 
- bernoulli <- ifelse(pr_absence[1:num_per_dist]<(runif(length(person_points))),bernoulli,NA)
- 
-  bill_points <- bill_points_all[(num_per_dist+1):(num_per_dist*2)]
- person_points <- person_points_all[(num_per_dist+1):(num_per_dist*2)]
- 
- ordinal_outcomes <- 4
- 
- cutpoints <- quantile(pr_vote[(num_per_dist+1):(num_per_dist*2)],probs=seq(0,1,length.out = ordinal_outcomes+1))
-    cutpoints <- cutpoints[2:(length(cutpoints)-1)]
-    
-    #Generate outcomes by personlator
-    
-    cuts <- sapply(cutpoints,function(y) {
-      qlogis(pr_vote[(num_per_dist+1):(num_per_dist*2)]) - y
-    },simplify='array')
- 
- ord_rat <- sapply(1:nrow(cuts), function(i) {
-      this_cut <- cuts[i,]
-      
-      pr_bottom <- 1 - plogis(this_cut[1])
-      
-      mid_prs <- sapply(1:(length(this_cut)-1), function(c) {
-        plogis(this_cut[c]) - plogis(this_cut[c+1])
-      })
-      
-      pr_top <- plogis(this_cut[length(this_cut)])
-      
-      return(sample(1:(length(this_cut)+1),size=1,prob=c(pr_bottom,mid_prs,pr_top)))
-    })
-    
- ord_rat <- ifelse(pr_absence[(num_per_dist+1):(num_per_dist*2)]<(runif(length(person_points))),ord_rat,NA)
- 
- # now poisson
- 
-   bill_points <- bill_points_all[(2*num_per_dist+1):(num_per_dist*3)]
- person_points <- person_points_all[(2*num_per_dist+1):(num_per_dist*3)]
- 
-  poisson <- rpois(n = length(pr_vote[(2*num_per_dist+1):(num_per_dist*3)]),lambda = exp(pr_vote[(2*num_per_dist+1):(num_per_dist*3)]))
-  
-  poisson <- ifelse(pr_absence[(2*num_per_dist+1):(num_per_dist*3)]<(runif(num_per_dist)),poisson,NA)
-  
-  # Normal distribution
-  
-     bill_points <- bill_points_all[(3*num_per_dist+1):(num_per_dist*4)]
-  person_points <- person_points_all[(3*num_per_dist+1):(num_per_dist*4)]
-  
-  normal <- rnorm(n = length(pr_vote[(3*num_per_dist+1):(num_per_dist*4)]),mean = pr_vote[(3*num_per_dist+1):(num_per_dist*4)],sd = .5)
-  normal <- ifelse(pr_absence[(3*num_per_dist+1):(num_per_dist*4)]<(runif(num_per_dist)),normal,NA)
-
-  # now make data and feed it to id_make
-  
-  to_id_make <- tibble(outcome_disc=c(bernoulli,ord_rat,poisson,1:num_per_dist),
-                       outcome_cont=c(1:(3*num_per_dist),normal),
-                       person_id=person_points_all,
-                       item_id=bill_points_all,
-                       model_id=c(rep(2,num_per_dist),
-                                  rep(4,num_per_dist),
-                                  rep(8,num_per_dist),
-                                  rep(10,num_per_dist)),
-                       time_id=time_points) %>% 
-    mutate(ordered_id=4)
-  
-  combine_data <- id_make(to_id_make)
-
-  combine_data_est_map <- id_estimate(combine_data,nchains=2,ncores = 5,fixtype = "prefix",restrict_ind_high = as.character(sort(ideal_pts[,1],
-                                                                     decreasing=T,
-                                                        index=T)$ix[1]),
-                               restrict_ind_low = as.character(sort(ideal_pts[,1],
-                                                                    decreasing=F, 
-                                                        index=T)$ix[1]),
-                               vary_ideal_pts = "random_walk",
-                               within_chain="threads",
-                               fix_high = sort(ideal_pts[,1],decreasing=T)[1],
-                               fix_low = sort(ideal_pts[,1],decreasing=F)[1],
-                               id_refresh = 100)
-  
-  # need to add back in true values
-  
-  combine_data_est_map@score_data@simulation <- T
-  combine_data_est_map@score_data@simul_data <- list(num_person=num_person,
-                                                 num_bills=num_bills,
-                                                 ideal_pts_sd=1,
-                                                 true_person=ideal_pts)
-  
-  id_plot_legis_dyn(combine_data_est_map,plot_sim = T) + facet_wrap(~person_id)
-
-```
 

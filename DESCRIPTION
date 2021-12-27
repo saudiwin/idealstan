@@ -41,4 +41,4 @@ LazyData: true
 NeedsCompilation: yes
 SystemRequirements: GNU make
 VignetteBuilder: R.rsp
-RoxygenNote: 7.1.1
+RoxygenNote: 7.1.2

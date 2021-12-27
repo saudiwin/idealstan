@@ -11,7 +11,7 @@
 
 \item{par}{The character string  name of a parameter in the model}
 
-\item{...}{Other options passed on to \code{\link[rstan]{stan_trace}}}
+\item{...}{Other options passed on to \code{\link[bayesplot]{mcmc_trace}}}
 }
 \description{
 This function allows you to produce trace plots for assessing the quality
@@ -25,6 +25,6 @@ from a plot by passing the \code{return_data=TRUE} option to
 \code{id_plog_legis} or \code{id_plot_legis_dyn} to find the 
 name of the parameter in the Stan model.
 
-This function is a simple wrapper around \code{\link[rstan]{stan_trace}}. 
+This function is a simple wrapper around \code{\link[bayesplot]{mcmc_trace}}. 
 Please refer to that function's documentation for further options.
 }

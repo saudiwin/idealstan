@@ -59,6 +59,7 @@ real partial_sum(int[,] y_slice,
         real diff_reg_sd,
         real ar_sd,
         real time_sd,
+        real time_var_sd,
         int time_proc,
         int zeroes, // whether to use traditional zero-inflation for bernoulli and poisson models
         real gp_sd_par, // residual variation in GP
@@ -70,6 +71,7 @@ real partial_sum(int[,] y_slice,
         vector m_sd_free, // marginal standard deviation of GP
         vector gp_sd_free, // residual GP variation in Y
         vector ls_int, // extra intercepts for non-inflated latent space
+        vector ls_int_abs, // extra intercepts for non-inflated latent space
         vector[] L_tp1_var, // non-centered variance
         vector L_AR1, // AR-1 parameters for AR-1 model
         vector sigma_reg_full,
@@ -98,10 +100,13 @@ real partial_sum(int[,] y_slice,
         vector time_var_gp_free,
         vector[] L_tp1,
         vector time_var_free,
+        real inv_gamma_beta,
         vector gp_length,
         int het_var,
         int[] type_het_var,
-        int restrict_var) {
+        int restrict_var,
+        int ignore,
+        int[,] ignore_mat) {
   
   // big loop over states
   real log_prob = 0;
@@ -113,10 +118,16 @@ real partial_sum(int[,] y_slice,
     int start2;
     int end2;
     int this_var = 1;
+    
+    vector[y_slice[r,3] - y_slice[r,2] + 1] legis_calc; // store calculations for hierarchical covariates
+    vector[y_slice[r,3] - y_slice[r,2] + 1] sigma_reg_calc;
+    vector[y_slice[r,3] - y_slice[r,2] + 1] sigma_abs_calc;
 
     s = y_slice[r,1];
     start2 = y_slice[r,2];
     end2 = y_slice[r,3];
+    
+    
 
     // create covariates
     // depends on whether persons or items are mapped over
@@ -131,6 +142,7 @@ real partial_sum(int[,] y_slice,
             if(time_proc==2) {
               //centered
               log_prob += normal_lpdf(L_tp1_var[1,s]|fix_high,restrict_sd_high);
+              log_prob += normal_lpdf(L_full[s]|0,legis_sd);
             } else {
               log_prob += normal_lpdf(L_full[s]|fix_high,restrict_sd_high);
             }
@@ -138,23 +150,32 @@ real partial_sum(int[,] y_slice,
             if(time_proc==2) {
               //centered
               log_prob += normal_lpdf(L_tp1_var[1,s]|fix_low,restrict_sd_low);
+              log_prob += normal_lpdf(L_full[s]|0,legis_sd);
             } else {
               log_prob += normal_lpdf(L_full[s]|fix_low,restrict_sd_low);
             }
-            
+
           } else {
             
             if(time_proc==2) {
               log_prob += normal_lpdf(L_tp1_var[1,s]|0,legis_sd);
-            } else {
-              log_prob += normal_lpdf(L_full[s]|0,legis_sd);
             }
+            
+              log_prob += normal_lpdf(L_full[s]|0,legis_sd);
+
             
           }
         } else {
           log_prob += normal_lpdf(L_full[s]|0,legis_sd);
         }
-      
+        
+        if(rows(ls_int)>0) {
+          
+          log_prob += normal_lpdf(ls_int[s]|0,legis_sd);
+          log_prob += normal_lpdf(ls_int_abs[s]|0,legis_sd);
+          
+        }
+        
     } else if(S_type==0 && const_type==2) {
       
       if(pos_discrim==0) {
@@ -194,71 +215,93 @@ real partial_sum(int[,] y_slice,
       
       log_prob += normal_lpdf(L_full[s]|0,legis_sd);
       
+      if(rows(ls_int)>0) {
+          
+          log_prob += normal_lpdf(ls_int[s]|0,legis_sd);
+          log_prob += normal_lpdf(ls_int_abs[s]|0,legis_sd);
+          
+      }
+      
     }
 
     if(S_type==1 && T>1) {
 
       // priors for time-varying persons
-      
+
       if(time_proc!=4) {
-        
-        if(const_type!=1 && time_proc!=2) {
-          log_prob += normal_lpdf(L_tp1_var[1,s]|0,5);
+
+        if(time_proc==3) {
+          log_prob += normal_lpdf(L_tp1_var[1,s]|0,legis_sd);
         }
-        
+
         if(T<center_cutoff) {
-      
+
           log_prob += normal_lpdf(to_vector(L_tp1_var[2:T,s])|0,1);
-        
+
         }
-        
+
         if(restrict_var==1) {
-          
+
           if(s>1) {
 
-          log_prob += exponential_lpdf(time_var_free[s-1]|.1); // tight-ish prior on additional variances
+            if(inv_gamma_beta>0) {
+
+              log_prob += inv_gamma_lpdf(time_var_free[s-1]|2,inv_gamma_beta); // boundary-avoiding prior
+
+            } else {
+
+              log_prob += exponential_lpdf(time_var_free[s-1]|time_var_sd); // tight-ish prior on additional variances
+
+            }
 
           }
-          
-        } else {
-          
-          log_prob += exponential_lpdf(time_var_free[s]|.1);
-          
-        }
-        
-        
 
-      } 
+        } else {
+
+          if(inv_gamma_beta>0) {
+
+              log_prob += inv_gamma_lpdf(time_var_free[s]|2,inv_gamma_beta); // boundary-avoiding prior
+
+            } else {
+
+              log_prob += exponential_lpdf(time_var_free[s]|time_var_sd); // tight-ish prior on additional variances
+
+            }
+
+        }
+
+      }
+
 
       if(time_proc==3) {
         log_prob += normal_lpdf(L_AR1[s]|0,ar_sd);
 #include /chunks/l_hier_ar1_prior_map.stan
       } else if(time_proc==2) {
-#include /chunks/l_hier_prior_map.stan        
+#include /chunks/l_hier_prior_map.stan
       } else if(time_proc==4) {
-        
-            log_prob += inv_gamma_lpdf(time_var_gp_free[s]|5,5); 
-        
+
+            log_prob += inv_gamma_lpdf(time_var_gp_free[s]|5,5);
+
         if(s>1) {
             log_prob += exponential_lpdf(m_sd_free[s-1]|1);
         }
-        
-        
+
+
         {
           matrix[T, T] cov; // zero-length if not a GP model
           matrix[T, T] L_cov;// zero-length if not a GP model
           real time_ind_center[T];
-          
-          for(t in 1:T) 
+
+          for(t in 1:T)
             time_ind_center[t] = time_ind[t] - mean(time_ind);
-          
+
           // chunk giving a GP prior to legislators/persons
             //create covariance matrices given current values of hiearchical parameters
             if(s==1) {
-              //cov =   cov_exp_quad(time_ind, m_sd_par, gp_length[1]) + diag_matrix(rep_vector(square(gp_sd_par),T));
-              cov =   cov_exp_quad(time_ind_center, m_sd_par, time_var_gp_free[s]) + diag_matrix(rep_vector(gp_sd_free[1],T));
+              //cov =   gp_exp_quad_cov(time_ind, m_sd_par, gp_length[1]) + diag_matrix(rep_vector(square(gp_sd_par),T));
+              cov =   gp_exp_quad_cov(time_ind_center, m_sd_par, time_var_gp_free[s]) + diag_matrix(rep_vector(gp_sd_free[1],T));
             } else {
-              cov =   cov_exp_quad(time_ind_center, m_sd_free[s-1], time_var_gp_free[s]) + diag_matrix(rep_vector(gp_sd_free[1],T));
+              cov =   gp_exp_quad_cov(time_ind_center, m_sd_free[s-1], time_var_gp_free[s]) + diag_matrix(rep_vector(gp_sd_free[1],T));
             }
 
             L_cov = cholesky_decompose(cov);
@@ -267,21 +310,44 @@ real partial_sum(int[,] y_slice,
 
 
           }
-          
+
           lt = to_vector(L_tp1_var[,s]);
         }
-        
 
-    } 
 
-    if(S_type==1) {
-#include /chunks/model_types_mm_map_persons.stan
-    } else {
-#include /chunks/model_types_mm_map_items.stan
     }
 
-    return log_prob;
+    // do calculations
+    if(cols(legis_pred)>0) {
+      legis_calc = legis_pred[start2:end2,]*legis_x;
+    } else {
+      legis_calc = rep_vector(0.0,end2 - start2 + 1);
+    }
+
+    if(cols(srx_pred)>0) {
+      sigma_reg_calc = srx_pred[start2:end2,]*sigma_reg_x;
+    } else {
+      sigma_reg_calc = rep_vector(0.0,end2 - start2 + 1);
+    }
+
+    if(cols(sax_pred)>0) {
+      sigma_abs_calc = sax_pred[start2:end2,]*sigma_abs_x;
+    } else {
+      sigma_abs_calc = rep_vector(0.0,end2 - start2 + 1);
+    }
+
+    if(S_type==1) {
+      
+#include /chunks/model_types_mm_map_persons.stan
+
+    } else {
+  
+#include /chunks/model_types_mm_map_items.stan
+
+    }
   }
+  
+  return log_prob;
 
 }
 
@@ -294,8 +360,8 @@ data {
   int T; // number of time points
   int grainsize;
   int Y_int[N_int]; // integer outcome
-  int within_chain; // whether to use map_rect
   real Y_cont[N_cont]; // continuous outcome
+  int ignore;
   int y_int_miss; // missing value for integers
   int<lower=0, upper=1> pos_discrim; // whether to constrain all discrimination parameters to be positive (removes need for further identification conditions)
   real y_cont_miss; // missing value for continuous data
@@ -312,6 +378,7 @@ data {
   int bb[N]; // items/bills id
   int time[N]; // time point id
   int mm[N]; // model counter id
+  matrix[(ignore==1) ? (num_legis * T) : 0,3] ignore_db;
   matrix[N,(N>0) ? LX:0] legis_pred;
   matrix[N,(N>0) ? SRX:0] srx_pred;
   matrix[N,(N>0) ? SAX:0] sax_pred;
@@ -335,6 +402,10 @@ data {
   real<lower=0> restrict_sd_low;
   real ar_sd;
   real time_sd;
+  real time_var_sd; // over-time variance of persons
+  real ar1_up;  // upper ar1 limit
+  real ar1_down; // lower ar1 limit
+  real inv_gamma_beta;
   int<lower=2> center_cutoff;
   int restrict_var; // whether to fix the over-time variance of the first person to a value
   int sum_vals[S,3]; // what to loop over for reduce sum
@@ -363,6 +434,7 @@ transformed data {
 	int gp_nT; // used to make L_tp1 go to model block if GPs are used
 	int gp_oT; // used to make L_tp1 go to model block if GPs are used
 	vector[1] gp_length; 
+	int ignore_mat[(ignore==1) ? num_legis : 0, 2];
 	
 	// set mean of log-normal distribution for GP length-scale prior
 	
@@ -391,7 +463,66 @@ transformed data {
 
   num_legis_real = num_legis; // promote N to type real
   
-  
+  if(ignore==1) {
+    
+    for(n in 1:num_legis) {
+      
+      int start = 0;
+      int end = T+1;
+      int switch_num =  0;
+      
+      for(t in 1:T) {
+        
+        if(ignore_db[n + (t-1),3]==0 &&  switch_num == 0) {
+          
+          if(start==T) {
+            
+            // failsafe
+            
+            start = T;
+          }
+          
+          start += 1;
+          
+        }
+        
+        if(ignore_db[n + (t-1),3]==1 && start > 0) {
+          
+          switch_num = 1;
+          
+        }
+        
+        if(ignore_db[n + (t-1),3]==0 && start>0 && switch_num ==  1) {
+          
+          if(t<end) {
+            
+            end = t;
+            
+          }
+          
+        } else if(ignore_db[n + (t-1),3]==0 && start==0) {
+          
+          
+          if(t<end) {
+            
+            end = t;
+            
+          }
+          
+        }
+        
+      }
+      
+      // assign start/end for this legislator
+      
+      ignore_mat[n,1] = start;
+      ignore_mat[n,2] = end;
+      
+    }
+    
+    
+  }
+
 }
 
 parameters {
@@ -400,8 +531,9 @@ parameters {
   vector<lower=0>[gp_N_fix] m_sd_free; // marginal standard deviation of GP
   vector<lower=0>[time_proc==4 ? 1 : 0] gp_sd_free; // residual GP variation in Y
   vector[num_ls] ls_int; // extra intercepts for non-inflated latent space
+  vector[num_ls] ls_int_abs; // extra intercepts for non-inflated latent space
   vector[T>1 ? num_legis : 0] L_tp1_var[T]; // non-centered variance
-  vector<lower=-.99,upper=.99>[(T>1 && time_proc==3) ? num_legis : 0] L_AR1; // AR-1 parameters for AR-1 model
+  vector<lower=ar1_down,upper=ar1_up>[(T>1 && time_proc==3) ? num_legis : 0] L_AR1; // AR-1 parameters for AR-1 model
   vector[pos_discrim == 0 ? num_bills : 0] sigma_reg_free;
   vector<lower=0>[pos_discrim == 1 ? num_bills : 0] sigma_reg_pos;
   vector[LX] legis_x;
@@ -449,9 +581,6 @@ transformed parameters {
   } else {
     sigma_reg_full = sigma_reg_pos;
   }
-  
-    //combine constrained and unconstrained parameters
-    //#include /chunks/build_params_v2.stan
 
   if(T>1 && S_type==0) {
     if(time_proc==3) {
@@ -500,7 +629,7 @@ for(n in 1:num_legis) {
   
   //create covariance matrices given current values of hiearchical parameters
   
-  cov[n] =   cov_exp_quad(time_ind, m_sd_full[n], time_var_free[n])
+  cov[n] =   gp_exp_quad_cov(time_ind, m_sd_full[n], time_var_free[n])
       + diag_matrix(rep_vector(gp_sd_free[1],T));
   L_cov[n] = cholesky_decompose(cov[n]);
 
@@ -514,7 +643,7 @@ for(n in 1:num_legis) {
   
   if(T>1 && time_proc!=4 && S_type==0) {
     
-    if(const_type!=1 && time_proc!=2) {
+    if(time_proc!=2) {
       L_tp1_var[1] ~ normal(0,5);
     }
     
@@ -527,33 +656,111 @@ for(n in 1:num_legis) {
       
     } else {
       
+      int start = 1;
+      int end = T;
+      
       if(time_proc==2) {
         
         if(restrict_var==1) {
           
-          for(n in 1:num_legis) 
-              L_tp1_var[2:T,n] ~ normal(L_tp1_var[1:(T-1),n],time_var_full[n]);
+          for(n in 1:num_legis) {
+            if(ignore==1) {
+    
+              start = ignore_mat[n,1];
+               end = ignore_mat[n,2];
+               
+                   if(end>T) {
+                      end = T;
+                    }
+                    if(start < 1) {
+                      
+                      start = 1;
+                      
+                  }
+    
+              }
+              
+              L_tp1_var[(start+1):end,n] ~ normal(L_tp1_var[start:(end-1),n],time_var_full[n]);
+              
+          }
 
             
           } else {
           
-          for(n in 1:num_legis)
-                L_tp1_var[2:T,n] ~ normal(L_tp1_var[1:(T-1),n],time_var_free[n]);
+          for(n in 1:num_legis) {
+            
+            if(ignore==1) {
+    
+              start = ignore_mat[n,1];
+               end = ignore_mat[n,2];
+               
+                  if(end>T) {
+                      end = T;
+                    }
+                    if(start < 1) {
+                      
+                      start = 1;
+                      
+                  }
+    
+              }
+            
+            L_tp1_var[(start+1):end,n] ~ normal(L_tp1_var[start:(end-1),n],time_var_free[n]);
           
+          }
+                
         }
         
       } else if(time_proc==3) {
         
         if(restrict_var==1) {
           
-          for(n in 1:num_legis) 
-              L_tp1_var[2:T,n] ~ normal(L_full[n] + L_AR1[n]*to_vector(L_tp1_var[1:(T-1),n]),time_var_full[n]);
+          for(n in 1:num_legis) {
+            
+            if(ignore==1) {
+    
+              start = ignore_mat[n,1];
+               end = ignore_mat[n,2];
+               
+               if(end>T) {
+                      end = T;
+                    }
+                    if(start < 1) {
+                      
+                      start = 1;
+                      
+                  }
+    
+              }
+              
+              L_tp1_var[(start+1):end,n] ~ normal(L_full[n] + L_AR1[n]*to_vector(L_tp1_var[start:(end-1),n]),time_var_full[n]);
+            
+          }
+              
                 
           
         } else {
           
-          for(n in 1:num_legis)
-                L_tp1_var[2:T,n] ~ normal(L_full[n] + L_AR1[n]*to_vector(L_tp1_var[1:(T-1),n]),time_var_free[n]);
+          for(n in 1:num_legis) {
+            if(ignore==1) {
+    
+              start = ignore_mat[n,1];
+               end = ignore_mat[n,2];
+               
+               if(end>T) {
+                      end = T;
+                    }
+                    if(start < 1) {
+                      
+                      start = 1;
+                      
+                  }
+    
+              }
+              
+              L_tp1_var[(start+1):end,n] ~ normal(L_full[n] + L_AR1[n]*to_vector(L_tp1_var[start:(end-1),n]),time_var_free[n]);
+          }
+                
           
         }
         
@@ -567,12 +774,22 @@ for(n in 1:num_legis) {
   
   if(S_type==0)  {
     ls_int ~ normal(0,legis_sd);
+    ls_int_abs ~ normal(0,legis_sd);
   }
   
   gp_sd_free ~ exponential(1); // length 1
   
   if(T>1 && S_type==0) {
-    time_var_free ~ exponential(.1); // tight-ish prior on additional variances
+    
+    if(inv_gamma_beta>0) {
+      
+      time_var_free ~ inv_gamma(2,inv_gamma_beta);
+        
+    } else {
+      
+      time_var_free ~ exponential(time_var_sd);    
+        
+    }
     time_var_gp_free ~ inv_gamma(5,5); // tight-ish prior on additional variances
     m_sd_free ~ exponential(1);
   }
@@ -625,7 +842,7 @@ if(S_type==1 && const_type==1) {
                         0,
                         legis_sd); 
       
-      
+      L_full ~ normal(0,legis_sd);
       
     } else {
       
@@ -643,7 +860,12 @@ if(S_type==1 && const_type==1) {
     }
     
   } else {
+    
     L_full ~ normal(0,legis_sd);
+    
+    if(time_proc==2) {
+      to_vector(L_tp1_var[1,1:num_legis]) ~ normal(0,legis_sd);
+    }
   }
    
   
@@ -653,8 +875,16 @@ if(S_type==1 && const_type==1) {
   
   L_full ~ normal(0,legis_sd);
   
+  if(time_proc==2) {
+    
+      to_vector(L_tp1_var[1,1:num_legis]) ~ normal(0,legis_sd);
+      
+  }
+  
 }
-
+  // temporary
+  
+  //L_full ~ normal(0,legis_sd);
 
   //all model types
 
@@ -699,6 +929,7 @@ if(S_type==1 && const_type==1) {
         diff_reg_sd,
         ar_sd,
         time_sd,
+        time_var_sd,
         time_proc,
         zeroes, // whether to use traditional zero-inflation for bernoulli and poisson models
         gp_sd_par, // residual variation in GP
@@ -710,6 +941,7 @@ if(S_type==1 && const_type==1) {
         m_sd_free, // marginal standard deviation of GP
         gp_sd_free, // residual GP variation in Y
         ls_int, // extra intercepts for non-inflated latent space
+        ls_int_abs, // extra intercepts for non-inflated latent space
         L_tp1_var, // non-centered variance
         L_AR1, // AR-1 parameters for AR-1 model
         sigma_reg_full,
@@ -738,10 +970,13 @@ if(S_type==1 && const_type==1) {
         time_var_gp_free,
         L_tp1,
         time_var_free,
+        inv_gamma_beta,
         gp_length,
         num_var,
         type_het_var,
-        restrict_var);
+        restrict_var,
+        ignore,
+        ignore_mat);
 
 }
 generated quantities {

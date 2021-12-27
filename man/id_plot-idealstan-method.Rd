@@ -9,10 +9,13 @@
 \arguments{
 \item{object}{A fitted \code{idealstan} object}
 
-\item{plot_type}{Specify the plot as a character string. Currently 'persons' for legislator/person ideal point plot and 
-'histogram' for a histogram of model estimates for given parameters.}
+\item{plot_type}{Specify the plot as a character string. Currently 'persons' for legislator/person ideal point plot, 
+'histogram' for a histogram of model estimates for given parameters. Alternatively,
+use the \code{param} option to specify a specific model parameter.}
 
 \item{...}{Additional arguments passed on to the underlying functions. See individual function documentation for details.}
+
+\item{param}{A character name of a parameter from an \code{idealstan} model.}
 }
 \value{
 A \code{\link[ggplot2]{ggplot}} object

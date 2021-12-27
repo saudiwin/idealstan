@@ -232,7 +232,7 @@ id_plot_legis <- function(object,return_data=FALSE,
                          ymin=~low_pt,ymax=~high_pt),alpha=person_ci_alpha) +
       geom_text(aes_(x=~reorder(person_id,median_pt),y=~median_pt,
                     colour=groupc,
-                    label=~reorder(outcome,median_pt)),size=text_size_group,
+                    label=~reorder(outcome_disc,median_pt)),size=text_size_group,
                 check_overlap = T)
     
   }
@@ -1080,6 +1080,9 @@ id_plot_cov <- function(object,
   # determine which outcome to predict
   # iterate over model types
   
+  
+  if(calc_varying) {
+  
   all_plots <- lapply(unique(object@score_data@score_matrix$model_id), function(m) {
 
     this_data <- filter(object@score_data@score_matrix,model_id==m)
@@ -1149,8 +1152,7 @@ id_plot_cov <- function(object,
                          discrim_reg_cov='sigma_reg_x',
                          discrim_infl_cov='sigma_abs_x')
     
-    to_plot <- as.array(object@stan_samples,
-                        pars=param_name)
+    to_plot <- object@stan_samples$draws(variables=param_name)
     
     # reset names of parameters
     new_names <- switch(cov_type,person_cov=object@score_data@person_cov,
@@ -1163,7 +1165,7 @@ id_plot_cov <- function(object,
       new_names <- recode(new_names,!!!new_cov_names)
     }
     
-    attributes(to_plot)$dimnames$parameters <- new_names
+    attributes(to_plot)$dimnames$variable <- new_names
     
     # remove unwanted coefficients
     
@@ -1196,33 +1198,33 @@ id_plot_cov <- function(object,
       if(length(recalc_vals)!=3) {
         stop("Option recalc_vals can only be a character vector of length 3 indicating which two variables to add together and their name.")
       }
-      val1 <- which(attributes(to_plot)$dimnames$parameters==recalc_vals[1])
-      val2 <- which(attributes(to_plot)$dimnames$parameters==recalc_vals[2])
+      val1 <- which(attributes(to_plot)$dimnames$variable==recalc_vals[1])
+      val2 <- which(attributes(to_plot)$dimnames$variable==recalc_vals[2])
       if(is.null(val1) || is.null(val2)) {
         stop("The parameter names you passed to re-calculate did not match existing parameters. Please be sure to use recoded parameter names not original parameter names.")
       }
     }
-    
-    if(calc_varying) {
       # get all sigmas
       
       these_items <- unique(as.numeric(this_data$item_id))
       
       if(pred_outcome=="Missing") {
-        sigma_all <- rstan::extract(object@stan_samples,"sigma_abs_free")
+        sigma_all <- object@stan_samples$draws(variables="sigma_abs_free") %>% 
+          as_draws_matrix
         # only take the items in this data set
-        sigma_all[[1]] <- sigma_all$sigma_abs_free[,these_items,drop=F]
+        sigma_all <- sigma_all[,these_items,drop=F]
       } else {
-        sigma_all <- rstan::extract(object@stan_samples,"sigma_reg_free")
+        sigma_all <- object@stan_samples$draws(variables="sigma_reg_free") %>% 
+          as_draws_matrix
         # only take the items in this data set
-        sigma_all[[1]] <- sigma_all$sigma_reg_free[,these_items,drop=F]
+        sigma_all <- sigma_all[,these_items,drop=F]
       }
       
       # iterate over posterior draws and calculate effect conditional on pos/neg discrimination
       # for all params in to_plot
       
-      neg_eff <- lapply(1:nrow(sigma_all[[1]]), function(i) {
-        this_discrim <- sigma_all[[1]][i,]
+      neg_eff <- lapply(1:nrow(sigma_all), function(i) {
+        this_discrim <- sigma_all[i,]
         
         # if cutpoints exist, need to pull the correct one
         
@@ -1243,8 +1245,8 @@ id_plot_cov <- function(object,
           mutate(Type=pred_outcome_low)
       }) %>% bind_rows
       
-      pos_eff <- lapply(1:nrow(sigma_all[[1]]), function(i) {
-        this_discrim <- sigma_all[[1]][i,]
+      pos_eff <- lapply(1:nrow(sigma_all), function(i) {
+        this_discrim <- sigma_all[i,]
         pos_discrim <- this_discrim[this_discrim>0]
         
         if(K>1) {
@@ -1265,8 +1267,8 @@ id_plot_cov <- function(object,
       if(!is.null(recalc_vals)) {
         # do the same for re-calculated values
         
-        neg_eff_recalc <- lapply(1:nrow(sigma_all[[1]]), function(i) {
-          this_discrim <- sigma_all[[1]][i,]
+        neg_eff_recalc <- lapply(1:nrow(sigma_all), function(i) {
+          this_discrim <- sigma_all[i,]
           
           neg_discrim <- this_discrim[this_discrim<0]
           
@@ -1284,8 +1286,8 @@ id_plot_cov <- function(object,
             mutate(Type=pred_outcome_low)
         }) %>% bind_rows
         
-        pos_eff_recalc <- lapply(1:nrow(sigma_all[[1]]), function(i) {
-          this_discrim <- sigma_all[[1]][i,]
+        pos_eff_recalc <- lapply(1:nrow(sigma_all), function(i) {
+          this_discrim <- sigma_all[i,]
           pos_discrim <- this_discrim[this_discrim>0]
           
           if(K>1) {
@@ -1324,12 +1326,9 @@ id_plot_cov <- function(object,
         }
         
       }
-    }
     
     return(mutate(to_plot,model_id=m,xlabel=xlabel))
   }) %>% bind_rows
-  
-  browser()
   
   sum_func <- function(this_data,high=high_quantile,
                        low=low_quantile) {
@@ -1359,10 +1358,7 @@ id_plot_cov <- function(object,
                            `12`="Log-Normal Outcome",
                            `13`="Binary Outcome Latent Space",
                            `14`="Binary Outcome Latent Space"))
-  
 
-  
-    if(calc_varying) {
     outplot <- all_plots_sum %>% 
       ggplot(aes(x=parameter,y=Median)) +
       geom_pointrange(aes(ymin=Low,
@@ -1389,8 +1385,10 @@ id_plot_cov <- function(object,
     }
     
     
+    outplot
     
-    return(outplot)
+    invisible(all_plots)
+    
     
   } else {
     
@@ -1398,10 +1396,16 @@ id_plot_cov <- function(object,
                          discrim_reg_cov='sigma_reg_x',
                          discrim_infl_cov='sigma_abs_x')
     
-    to_plot <- as.array(object@stan_samples,
-                        pars=param_name)
+    to_plot <- object@stan_samples$draws(variables = param_name)
+    
+    attr(to_plot,"dimnames")$variable <- switch(cov_type,
+                                                person_cov=object@score_data@person_cov,
+                                                discrim_reg_cov=object@score_data@item_cov,
+                                                discrim_infl_cov=object@score_data@item_cov_miss)
     
     mcmc_intervals(to_plot) + xlab("Ideal Point Score")
+    
+    invisible(as_draws_df(to_plot))
   }
   
 }
@@ -1515,10 +1519,9 @@ id_plot_irf <- function(object,
                                     title="Select at least one variable to compute IRFs. If you want to combine two variables, select two variables (but not more than two).")$res
   }
   
-  to_plot <- as.array(object@stan_samples,
-                      pars=param_name)
+  to_plot <- object@stan_samples$draws(variables=param_name)
   
-  attributes(to_plot)$dimnames$parameters <- new_names
+  attributes(to_plot)$dimnames$variable <- new_names
   
   to_plot <- to_plot[,,(new_names %in% cov_name),drop=F]
   
@@ -1530,7 +1533,7 @@ id_plot_irf <- function(object,
     all_ids <- unique(object@score_data@score_matrix$person_id)
   }
   
-  ar1 <- rstan::extract(object@stan_samples,"L_AR1")[[1]]
+  ar1 <- object@stan_samples$draws(variables="L_AR1") %>% as_draws_matrix
   
   # keep some if user specifies
   if(!is.null(include)) {
@@ -1567,7 +1570,8 @@ id_plot_irf <- function(object,
     
     # pull sigmas if we want to calculate marginal changes
     
-    sigma_all <- rstan::extract(object@stan_samples,"sigma_reg_free")[[1]]
+    sigma_all <- object@stan_samples$draws(variables="sigma_reg_free") %>% 
+                    as_draws_matrix
     
     # iterate over persons and time points
     

@@ -2,7 +2,7 @@
 % Please edit documentation in R/Estimate.R
 \name{id_rebuild_mpi}
 \alias{id_rebuild_mpi}
-\title{Reconstitute an idealstan object after an MPI/cluster run}
+\title{DEPRECATED: Reconstitute an idealstan object after an MPI/cluster run}
 \usage{
 id_rebuild_mpi(file_loc = NULL, csv_name = NULL)
 }

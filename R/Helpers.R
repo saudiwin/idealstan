@@ -16,7 +16,6 @@
   } 
 
   . <- NULL
-  to_use <- stanmodels[['irt_standard_noid']]
   
   if(this_data$time_proc==4) {
     tol_rel_obj <- .001
@@ -28,30 +27,30 @@
 
   print("(First Step): Estimating model with variational inference to identify modes to constrain.")
 
-  post_modes <- rstan::vb(object=to_use,data =this_data,
-                          algorithm='meanfield',
+  post_modes <- object@stanmodel_map$variational(data =this_data,
                           refresh=this_data$id_refresh,
-                          eval_elbo=eval_elbo,
+                          eval_elbo=eval_elbo,threads=1,
                           tol_rel_obj=tol_rel_obj, # better convergence criterion than default
                           output_samples=200)
-
-  lookat_params <- rstan::extract(post_modes,permuted=FALSE)
-  
-  this_params <- lookat_params[,1,]
-  
-  all_params <- attributes(this_params)$dimnames$parameters
   
   # pull out unidentified parameters
   
   if(const_type=="persons") {
-    person <- apply(this_params[,grepl(pattern = 'L_full',x=all_params)],2,mean)
+    
+    this_params <- post_modes$draws("L_full") %>% as_draws_matrix
+    
+    person <- apply(this_params,2,mean)
 
     restrict_ind_high <- which(person==max(person))[1]
     restrict_ind_low <- which(person==min(person))[1]
     val_high <- person[restrict_ind_high]
     val_low <- person[restrict_ind_low]
+    
   } else if(const_type=="items") {
-    items <- apply(this_params[,grepl(pattern = 'sigma_reg_free',x=all_params)],2,mean)
+    
+    this_params <- post_modes$draws("sigma_reg_full") %>% as_draws_matrix
+    
+    items <- apply(this_params,2,mean)
 
     restrict_ind_high <- which(items==max(items))[1]
     restrict_ind_low <- which(items==min(items))[1]
@@ -303,6 +302,8 @@
                        item_labels=NULL,
                        num_cit=NULL,
                         fix_high=NULL,
+                       ar1_up=NULL,
+                       ar1_down=NULL,
                        fix_low=NULL,
                        restrict_ind_high=NULL,
                        restrict_ind_low=NULL,
@@ -312,10 +313,11 @@
                        const_type=NULL,
                        T=NULL,
                        time_proc=NULL,
-                       time_sd=NULL,
+                       time_fix_sd=NULL,
                        actual=TRUE,
                        use_ar=NULL,
-                       person_start=NULL) {
+                       person_start=NULL,
+                       restrict_var=NULL) {
 
   L_full <- array(rnorm(n=num_legis,mean=0,sd=person_sd))
   sigma_reg_free <- array(rnorm(n=num_cit,mean=0,sd=2))
@@ -351,6 +353,12 @@
     # full run
     if(T>1) {
       
+      if(restrict_var) {
+        num_var <- num_legis - 1
+      } else {
+        num_var <- num_legis
+      }
+      
       # figure out optimized gp par
       
       # m_sd_optim <- optimize(f=rev_trans,
@@ -370,8 +378,8 @@
                     m_sd=rep(m_sd_par,num_legis)))
       } else if(time_proc==3) {
         return(list(L_full = L_full,
-                    L_AR1 = array(runif(n = num_legis,min = -.5,max=.5)),
-                    time_var_free = rexp(rate=1/time_sd,n=num_legis-1),
+                    L_AR1 = array(runif(n = num_legis,min = ar1_down+.1,max=ar1_up-.1)),
+                    time_var_free = rexp(rate=1/time_fix_sd,n=num_var),
                     sigma_reg_free=sigma_reg_free,
                     sigma_abs_free=sigma_abs_free,
                     A_int_free=A_int_free,
@@ -379,7 +387,7 @@
         
         } else if(time_proc==2) {
           return(list(L_full = L_full,
-                      time_var_free = rexp(rate=1/time_sd,n=num_legis-1),
+                      time_var_free = rexp(rate=1/time_fix_sd,n=num_var),
                       sigma_reg_free=sigma_reg_free,
                       sigma_abs_free=sigma_abs_free,
                       A_int_free=A_int_free,
@@ -412,6 +420,7 @@
 
 #' used to calculate the true ideal points
 #' given that a non-centered parameterization is used.
+#' @importFrom posterior as_draws_df as_draws_matrix
 #' @noRd
 .calc_true_pts <- function(obj) {
 
@@ -493,18 +502,18 @@
   
   # now get all the necessary components
   
-  reg_diff <- as.data.frame(object@stan_samples,pars=paste0('B_int_free[',param_num,']'))[[1]]
-  reg_discrim <- as.data.frame(object@stan_samples,pars=paste0('sigma_reg_free[',param_num,']'))[[1]]
-  abs_diff <- as.data.frame(object@stan_samples,pars=paste0('A_int_free[',param_num,']'))[[1]]
-  abs_discrim <- as.data.frame(object@stan_samples,pars=paste0('sigma_abs_free[',param_num,']'))[[1]]
+  reg_diff <- as_draws_matrix(object@stan_samples$draws(paste0('B_int_free[',param_num,']')))[,1]
+  reg_discrim <- as_draws_matrix(object@stan_samples$draws(paste0('sigma_reg_free[',param_num,']')))[,1]
+  abs_diff <- as_draws_matrix(object@stan_samples$draws(paste0('A_int_free[',param_num,']')))[,1]
+  abs_discrim <- as_draws_matrix(object@stan_samples$draws(paste0('sigma_abs_free[',param_num,']')))[,1]
   
   reg_mid <- reg_diff/reg_discrim
   abs_mid <- abs_diff/abs_discrim
   
-  if(class(object@score_data@score_matrix$outcome)=='factor') {
-    cut_names <- levels(object@score_data@score_matrix$outcome)
+  if(class(object@score_data@score_matrix$outcome_disc)=='factor') {
+    cut_names <- levels(object@score_data@score_matrix$outcome_disc)
   } else {
-    cut_names <- as.character(unique(object@score_data@score_matrix$outcome))
+    cut_names <- as.character(unique(object@score_data@score_matrix$outcome_disc))
   }
   if(!all) {
     reg_data <- data_frame(item_median=quantile(reg_mid,0.5),
@@ -581,42 +590,42 @@
     
     return(out_d)
   } else if(all && !aggregate) {
-    reg_data_mid <- data_frame(Posterior_Sample=reg_mid,
+    reg_data_mid <- data_frame(Posterior_Sample=as.numeric(reg_mid),
                                `Item Name`=param_name,
                                `Item Type`='Non-Inflated Item Midpoint',
                                `Predicted Outcome`=cut_names[2],
                                `Parameter`='A function of other parameters') %>% 
       mutate(Iteration=1:n())
     
-    abs_data_mid <- data_frame(`Posterior_Sample`=abs_mid,
+    abs_data_mid <- data_frame(`Posterior_Sample`=as.numeric(abs_mid),
                                `Item Name`=param_name,
                                `Item Type`='Inflated Item Midpoint',
                                `Predicted Outcome`='Missing',
                                `Parameter`='A function of other parameters') %>% 
       mutate(Iteration=1:n())
     
-    reg_data_discrim <- data_frame(`Posterior_Sample`=reg_discrim,
+    reg_data_discrim <- data_frame(`Posterior_Sample`=as.numeric(reg_discrim),
                                    `Item Name`=param_name,
                                    `Item Type`='Non-Inflated Discrimination',
                                    `Predicted Outcome`=cut_names[2],
                                    `Parameter`=paste0('sigma_reg_free[',param_name,']')) %>% 
       mutate(Iteration=1:n())
     
-    abs_data_discrim <- data_frame(`Posterior_Sample`=abs_discrim,
+    abs_data_discrim <- data_frame(`Posterior_Sample`=as.numeric(abs_discrim),
                                    `Item Name`=param_name,
                                    `Item Type`='Inflated Discrimination',
                                    `Predicted Outcome`='Missing',
                                    `Parameter`=paste0('sigma_abs_free[',param_name,']')) %>% 
       mutate(Iteration=1:n())
     
-    reg_data_diff <- data_frame(`Posterior_Sample`=reg_diff,
+    reg_data_diff <- data_frame(`Posterior_Sample`=as.numeric(reg_diff),
                                 `Item Name`=param_name,
                                 `Item Type`='Non-Inflated Difficulty',
                                 `Predicted Outcome`=cut_names[2],
                                 `Parameter`=paste0('B_int_free[',param_name,']')) %>% 
       mutate(Iteration=1:n())
     
-    abs_data_diff <- data_frame(`Posterior_Sample`=abs_discrim,
+    abs_data_diff <- data_frame(`Posterior_Sample`=as.numeric(abs_discrim),
                                 `Item Name`=param_name,
                                 `Item Type`='Inflated Difficulty',
                                 `Predicted Outcome`='Missing',
@@ -647,15 +656,17 @@
   
   # now get all the necessary components
   
-  reg_diff <- as.data.frame(object@stan_samples,pars=paste0('B_int_free[',param_num,']'))[[1]]
-  reg_discrim <- as.data.frame(object@stan_samples,pars=paste0('sigma_reg_free[',param_num,']'))[[1]]
-  abs_diff <- as.data.frame(object@stan_samples,pars=paste0('A_int_free[',param_num,']'))[[1]]
-  abs_discrim <- as.data.frame(object@stan_samples,pars=paste0('sigma_abs_free[',param_num,']'))[[1]]
-  cuts <- as.data.frame(object@stan_samples,pars='steps_votes')
-  if(class(object@score_data@score_matrix$outcome)=='factor') {
-    cut_names <- levels(object@score_data@score_matrix$outcome)
+  reg_diff <- as_draws_matrix(object@stan_samples$draws(paste0('B_int_free[',param_num,']')))[,1]
+  reg_discrim <- as_draws_matrix(object@stan_samples$draws(paste0('sigma_reg_free[',param_num,']')))[,1]
+  abs_diff <- as_draws_matrix(object@stan_samples$draws(paste0('A_int_free[',param_num,']')))[,1]
+  abs_discrim <- as_draws_matrix(object@stan_samples$draws(paste0('sigma_abs_free[',param_num,']')))[,1]
+  
+  cuts <- as_draws_df(object@stan_samples$draws('steps_votes'))
+  
+  if(class(object@score_data@score_matrix$outcome_disc)=='factor') {
+    cut_names <- levels(object@score_data@score_matrix$outcome_disc)
   } else {
-    cut_names <- as.character(unique(object@score_data@score_matrix$outcome))
+    cut_names <- as.character(unique(object@score_data@score_matrix$outcome_disc))
   }
   abs_mid <- abs_diff/abs_discrim
   # need to loop over cuts
@@ -818,21 +829,21 @@
   
   # now get all the necessary components
   
-  reg_diff <- as.data.frame(object@stan_samples,pars=paste0('B_int_free[',param_num,']'))[[1]]
-  reg_discrim <- as.data.frame(object@stan_samples,pars=paste0('sigma_reg_free[',param_num,']'))[[1]]
-  abs_diff <- as.data.frame(object@stan_samples,pars=paste0('A_int_free[',param_num,']'))[[1]]
-  abs_discrim <- as.data.frame(object@stan_samples,pars=paste0('sigma_abs_free[',param_num,']'))[[1]]
-  
+  reg_diff <- as_draws_matrix(object@stan_samples$draws(paste0('B_int_free[',param_num,']')))[,1]
+  reg_discrim <- as_draws_matrix(object@stan_samples$draws(paste0('sigma_reg_free[',param_num,']')))[,1]
+  abs_diff <- as_draws_matrix(object@stan_samples$draws(paste0('A_int_free[',param_num,']')))[,1]
+  abs_discrim <- as_draws_matrix(object@stan_samples$draws(paste0('sigma_abs_free[',param_num,']')))[,1]
+
   # figure out how many categories we need
   
-  total_cat <- ncol(as.data.frame(object@stan_samples,pars='steps_votes'))
+  total_cat <- length(as_draws_df(object@stan_samples$draws('steps_votes')))
   
-  cuts <- as.data.frame(object@stan_samples,pars=paste0('steps_votes_grm[',param_num,',',total_cat,']'))
+  cuts <- as_draws_df(object@stan_samples$draws(paste0('steps_votes_grm[',param_num,',',total_cat,']')))
   
-  if(class(object@score_data@score_matrix$outcome)=='factor') {
-    cut_names <- levels(object@score_data@score_matrix$outcome)
+  if(class(object@score_data@score_matrix$outcome_disc)=='factor') {
+    cut_names <- levels(object@score_data@score_matrix$outcome_disc)
   } else {
-    cut_names <- as.character(unique(object@score_data@score_matrix$outcome))
+    cut_names <- as.character(unique(object@score_data@score_matrix$outcome_disc))
   }
   abs_mid <- abs_diff/abs_discrim
   # need to loop over cuts
@@ -993,15 +1004,16 @@
   
   # now get all the necessary components
   
-  reg_diff <- as.data.frame(object@stan_samples,pars=paste0('B_int_free[',param_num,']'))[[1]]
-  abs_diff <- as.data.frame(object@stan_samples,pars=paste0('A_int_free[',param_num,']'))[[1]]
-  item_int <- as.data.frame(object@stan_samples,pars=paste0('sigma_abs_free[',param_num,']'))[[1]]
-  ideal_int <- as.data.frame(object@stan_samples,pars=paste0('ls_int[',param_num,']'))[[1]]
+  reg_diff <- as_draws_matrix(object@stan_samples$draws(paste0('B_int_free[',param_num,']')))[,1]
+  reg_discrim <- as_draws_matrix(object@stan_samples$draws(paste0('sigma_reg_free[',param_num,']')))[,1]
+  abs_diff <- as_draws_matrix(object@stan_samples$draws(paste0('A_int_free[',param_num,']')))[,1]
+  item_int <- as_draws_matrix(object@stan_samples$draws(paste0('sigma_abs_free[',param_num,']')))[,1]
+  ideal_int <- as_draws_matrix(object@stan_samples$draws(paste0('ls_int[',param_num,']')))[,1]
   
-  if(class(object@score_data@score_matrix$outcome)=='factor') {
-    cut_names <- levels(object@score_data@score_matrix$outcome)
+  if(class(object@score_data@score_matrix$outcome_disc)=='factor') {
+    cut_names <- levels(object@score_data@score_matrix$outcome_disc)
   } else {
-    cut_names <- as.character(unique(object@score_data@score_matrix$outcome))
+    cut_names <- as.character(unique(object@score_data@score_matrix$outcome_disc))
   }
   
   reg_data <- data_frame(item_median=quantile(reg_diff,0.5),
@@ -1556,7 +1568,7 @@ return(as.vector(idx))
   # this works because the data were sorted in id_make
   if(length(Y_cont)>1 && length(Y_int)>1) {
 
-      remove_nas <- remove_nas_int | remove_nas_cont
+      remove_nas <- remove_nas_int & remove_nas_cont
     
   } else if(length(Y_cont)>1) {
     remove_nas <- remove_nas_cont
@@ -1565,7 +1577,7 @@ return(as.vector(idx))
   }
    
     if(length(Y_cont)>1) {
-      Y_cont <- Y_cont[remove_nas_cont]
+      Y_cont <- Y_cont[remove_nas]
       N_cont <- length(Y_cont)
     } else {
       N_cont <- 0
@@ -1573,7 +1585,7 @@ return(as.vector(idx))
     }
     
     if(length(Y_int)>1) {
-      Y_int <- Y_int[remove_nas_int]
+      Y_int <- Y_int[remove_nas]
       N_int <- length(Y_int)
     } else {
       N_int <- 0
@@ -1661,7 +1673,7 @@ return(as.vector(idx))
     num_bills_grm <- 0L
   }
   
-  if(any(11 %in% modelpoints)) {
+  if(any(c(13,14) %in% modelpoints)) {
     num_ls <- num_legis
   } else {
     num_ls <- 0L
@@ -1676,8 +1688,8 @@ return(as.vector(idx))
   
   if(N_int>0) {
     
-    order_cats_rat <- ordered_id[remove_nas]
-    order_cats_grm <- ordered_id[remove_nas]
+    order_cats_rat <- ordered_id
+    order_cats_grm <- ordered_id
     
   } else {
     
@@ -1852,7 +1864,15 @@ return(as.vector(idx))
 
 #' Function to square data for map_rect
 #' @noRd
-.make_sum_vals <- function(this_data,map_over_id=NULL,use_groups=FALSE) {
+.make_sum_vals <- function(this_data,map_over_id=NULL,use_groups=FALSE,
+                           remove_nas=NULL) {
+  
+  this_data <- this_data %>% 
+    filter(remove_nas)
+  
+  # need to save original order to reconvert if necessary
+  
+  this_data$orig_order <- 1:nrow(this_data)
   
   # need a matrix equal to each ID and row number for where it starts/ends
   
@@ -1915,9 +1935,13 @@ return(as.vector(idx))
 
 
 #' Need new function to re-create time-varying ideal points given reduce sum
+#' @importFrom tidyr unite
 #' @noRd
 .get_varying <- function(obj) {
   
+  if(obj@use_groups) {
+    obj@score_data@score_matrix$person_id <- obj@score_data@score_matrix$group_id
+  }
   
   if(obj@map_over_id=="items") {
     
@@ -1953,12 +1977,12 @@ return(as.vector(idx))
         
         if(obj@restrict_var) {
           
-          time_sd <- obj@time_sd
+          time_fix_sd <- obj@time_fix_sd
           p_time <- p - 1
           
         } else {
           
-          time_sd <- time_var_free[,p]
+          time_fix_sd <- time_var_free[,p]
           p_time <- p
           
         }
@@ -2004,13 +2028,13 @@ return(as.vector(idx))
           
           if(t==2) {
             
-            prior_est <- initial + time_sd*L_tp1_var[,(time_grid$Var1==(t-1) & time_grid$Var2==p)]
+            prior_est <- initial + time_fix_sd*L_tp1_var[,(time_grid$Var1==(t-1) & time_grid$Var2==p)]
             
             prior_est <- cbind(initial,prior_est)
             
           } else {
             
-            this_t <- prior_est[,t-1]  + time_sd*L_tp1_var[,(time_grid$Var1==(t-1) & time_grid$Var2==p)]
+            this_t <- prior_est[,t-1]  + time_fix_sd*L_tp1_var[,(time_grid$Var1==(t-1) & time_grid$Var2==p)]
             prior_est <- cbind(prior_est,this_t)
             
             
@@ -2110,12 +2134,12 @@ return(as.vector(idx))
           
         if(obj@restrict_var) {
           
-          time_sd <- obj@time_sd
+          time_fix_sd <- obj@time_fix_sd
           p_time <- p - 1
           
         } else {
           
-          time_sd <- time_var_free[,p]
+          time_fix_sd <- time_var_free[,p]
           p_time <- p
           
         }
@@ -2163,13 +2187,13 @@ return(as.vector(idx))
             
             if(t==2) {
               
-              prior_est <- L_full[,p] + L_AR1[,p]*initial + time_sd*L_tp1_var[,(time_grid$Var1==t & time_grid$Var2==p)]
+              prior_est <- L_full[,p] + L_AR1[,p]*initial + time_fix_sd*L_tp1_var[,(time_grid$Var1==t & time_grid$Var2==p)]
               
               prior_est <- cbind(initial,prior_est)
               
             } else {
               
-              this_t <- L_full[,p] + L_AR1[,p]*prior_est[,t-1]  + time_sd*L_tp1_var[,(time_grid$Var1==t & time_grid$Var2==p)]
+              this_t <- L_full[,p] + L_AR1[,p]*prior_est[,t-1]  + time_fix_sd*L_tp1_var[,(time_grid$Var1==t & time_grid$Var2==p)]
               prior_est <- cbind(prior_est,this_t)
               
               

@@ -6,8 +6,8 @@
 \usage{
 \S4method{launch_shinystan}{idealstan}(
   object,
-  pars = c("L_free", "sigma_reg_free", "sigma_abs_free", "restrict_high",
-    "restrict_low", "restrict_ord", "steps_votes", "steps_votes_grm"),
+  pars = c("L_full", "sigma_reg_full", "sigma_abs_free", "A_int_free", "B_int_free",
+    "steps_votes", "steps_votes_grm"),
   ...
 )
 }

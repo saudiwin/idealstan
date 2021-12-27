@@ -26,7 +26,7 @@ This Rmarkdown file has a series of simulations run on the models offered in `id
 First, the standard IRT 2-PL (for this one, the absence discriminations are not a part of the model):
 
 ```{r irt_binary}
-bin_irt_2pl_sim <- id_sim_gen(num_person=20,num_bills=200,ordinal=F,inflate=F,
+bin_irt_2pl_sim <- id_sim_gen(num_person=100,num_bills=5,ordinal=F,inflate=F,
                               diff_sd=1,
                               reg_discrim_sd = 1,
                               absence_discrim_sd = 1)
@@ -40,11 +40,6 @@ bin_irt_2pl_est <- id_estimate(idealdata=bin_irt_2pl_sim,
                                                         index=T)$ix[1]),
                                fixtype='prefix',
                            person_sd = 3,
-                           discrim_miss_sd = 1,
-                           discrim_reg_sd = 1,
-                           diff_reg_sd = 1,
-                           diff_miss_sd = 1,
-                           restrict_sd=0.01,
                            nchains=4,ncores=4)
 id_plot_rhats(bin_irt_2pl_est)
 ```
@@ -644,16 +639,27 @@ While these models are identified, it appears that sometimes given the amount of
 First random walks:
 
 ```{r irt_binary_time_inflate}
-bin_time_irt_2pl_abs_sim <- id_sim_gen(num_person=20,num_bills=125,ordinal=F,inflate=T,
-                               absence_diff_mean=0,time_process = 'random',time_points=25,ideal_pts_sd = 1,
-diff_sd = 1,
+bin_time_irt_2pl_abs_sim <- id_sim_gen(num_person=20,num_bills=30,
+                                       ordinal=F,inflate=T,
+                               absence_diff_mean=0,
+                               time_process = 'random',
+                               time_points=10,
+                               ideal_pts_sd = 1,
+                               diff_sd = 1,
                                absence_discrim_sd = 1,
                                reg_discrim_sd = 1)
+
 bin_time_irt_2pl_abs_est <- id_estimate(idealdata=bin_time_irt_2pl_abs_sim,
-                               model_type=2,
+                               model_type=2,nchains=2,
+                               id_refresh=100,time_var = 10,
+                               niters = 1000,warmup = 500,
+                          keep_param=list(person_vary=T,person_int=F,item=TRUE,
+                                                           extra=T),
                                vary_ideal_pts = 'random_walk',
+                          restrict_var = F,
                                restrict_ind_high = as.character(sort(bin_time_irt_2pl_abs_sim@simul_data$drift,
-                                                                     decreasing=TRUE,
+                                                                  
+                                                                  decreasing=TRUE,
                                                         index=T)$ix[1]),
                               restrict_ind_low = as.character(sort(bin_time_irt_2pl_abs_sim@simul_data$drift,
                                                                    decreasing=F,
@@ -673,7 +679,7 @@ id_sim_coverage(bin_time_irt_2pl_abs_est) %>%
 Let's do a time-varying ideal point plot with true point overlay:
 
 ```{r irt_2pl_abs_time_true_pt}
-id_plot_legis_dyn(bin_time_irt_2pl_abs_est,plot_sim = T) + facet_wrap(~person_id)
+id_plot_legis_dyn(bin_time_irt_2pl_abs_est,plot_sim = T) + facet_wrap(~person_id,scales="free_y")
 ```
 
 ```{r irt_2pl_time_abs_resid}
@@ -695,16 +701,24 @@ And autocorrelation:
 ```{r irt_binary_time_ar_inflate}
 
 bin_time_ar_irt_2pl_abs_sim <- id_sim_gen(num_person=20,num_bills=200,inflate=T,
-                               absence_diff_mean=0,time_process = 'AR',time_points=50,time_sd = .2,diff_sd = 1,
+                               absence_diff_mean=0,time_process = 'AR',time_points=20,time_sd = .5,diff_sd = 1,
                                absence_discrim_sd = 1,
                                reg_discrim_sd = 1)
+
+bin_time_ar_irt_2pl_abs_sim@score_matrix$group_id <- forcats::fct_collapse(bin_time_ar_irt_2pl_abs_sim@score_matrix$person_id,
+                                                                           `1`=c("1","2","3"))
+
 bin_time_ar_irt_2pl_abs_est <- id_estimate(idealdata=bin_time_ar_irt_2pl_abs_sim,
+                                           use_groups = T,
                                model_type=2,
+                               ar1_up = 1,ar1_down = -1,
                                vary_ideal_pts = 'AR1',
-                               restrict_ind_high = as.character(sort(bin_time_ar_irt_2pl_abs_sim@simul_data$drift,
+                               const_type = "items",
+                               time_var = 2,restrict_var = T,
+                               restrict_ind_high = as.character(sort(bin_time_ar_irt_2pl_abs_sim@simul_data$true_reg_discrim,
                                                                      decreasing=TRUE,
                                                         index=TRUE)$ix[1]),
-                              restrict_ind_low = as.character(sort(bin_time_ar_irt_2pl_abs_sim@simul_data$drift,
+                              restrict_ind_low = as.character(sort(bin_time_ar_irt_2pl_abs_sim@simul_data$true_reg_discrim,,
                                                                    decreasing=F,
                                                         index=T)$ix[1]),
                                fixtype='prefix')
@@ -806,7 +820,7 @@ Another new addition is the latent space model, which is only a slight modificat
 Non-inflated:
 
 ```{r latent_space_noninfl}
-latent_noninfl_sim <- id_sim_gen(num_person=20,num_bills=125,ordinal=F,
+latent_noninfl_sim <- id_sim_gen(num_person=10,num_bills=125,ordinal=F,
                                        inflate=F,
                                        model_type='binary',
                                        latent_space=T,
@@ -823,7 +837,7 @@ latent_noninfl_est <- id_estimate(idealdata=latent_noninfl_sim,
                               restrict_ind_low = as.character(sort(latent_noninfl_sim@simul_data$true_person,
                                                                    decreasing=F,
                                                         index=T)$ix[1]),
-                               fixtype='prefix')
+                               fixtype='prefix',id_refresh=100,warmup=250,niters=250,nchains=2,ncores=2)
 id_plot_rhats(latent_noninfl_est)
 ```
 
@@ -861,6 +875,7 @@ latent_infl_est <- id_estimate(idealdata=latent_infl_sim,
                                                                    decreasing=F,
                                                         index=T)$ix[1]),
                                fixtype='prefix',
+                              adapt_delta=0.95,
                               diff_reg_sd = 2,
                              diff_miss_sd=2)
 id_plot_rhats(latent_infl_est)
