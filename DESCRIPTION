@@ -33,12 +33,12 @@ Imports:
     ggthemes,
     posterior,
     cmdstanr,
-    bayesplot
+    bayesplot,
+    R.rsp
 Suggests:
     pscl,
     loo,
-    lubridate,
-    R.rsp
+    lubridate
 Encoding: UTF-8
 LazyData: true
 NeedsCompilation: yes
