@@ -179,6 +179,7 @@ setMethod('sample_model',signature(object='idealdata'),
                                 time_fix_sd=this_data$time_sd,
                                 use_ar=this_data$use_ar,
                                 person_start=object@person_start,
+                                restrict_var=this_data$restrict_var,
                                 actual=TRUE)
             
             if(!is.null(keep_param)) {

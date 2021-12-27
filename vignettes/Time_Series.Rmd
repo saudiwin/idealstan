@@ -53,6 +53,8 @@ The stationary model, by contrast, assumes that ideal points have a single long-
 
 To show what these models look like, we will fit each model to the `delaware` data in turn. We use the `vb` option to produce variational estimates of the true posterior; these approximations are much faster to fit than the full model but usually have some distortions. For finished analysis we would want to use the full sampler (`use_vb=FALSE`), unless we have so much data that processing time for the full model is infeasible. 
 
+The models will be fit with parallel processing over the persons in the model (i.e. more `ncores` than `nchains` specified in `id_estimate`). Parallel processing is only possible for persons as time series model introduce dependence between time points. As such do not change the `map_over_id` option for dynamic models or you will get incorrect results.
+
 ## Random-Walk Model
 
 To fit the random walk model, we first create data in which we pass the name of the column of dates for each bill/item to the `time_id` option of `id_make`. One important thing to note about this model is that we code missing values as `'Absent'`, but we leave `NA` values in the outcome. These `NA` values will be dropped before running the model. They represent periods of time when legislators were not in office, and hence it is reasonable to exclude these periods of time from analysis.
@@ -76,12 +78,22 @@ delaware_data <- id_make(delaware,outcome_disc = 'outcome',
 
 We then pass this object to the `id_estimate` function and specify `'random_walk'` in the `vary_ideal_pts` option. We also use `model_type=2` to select a binary model (yes/no votes) that adjust for the missing data (legislator absences). We pass the names of two legislators to restrict their ideal points for identification. For the random walk model, only the first time points for these legislators will be fixed. Alternatively,  specific bills can be pinned by changing `const_type` to `items` and passing the name of bills to the `restrict_ind_high` and `restrict_ind_low` options. Using bills that have a clear split in the votes between parties will help achieve identification, as well as using bills that are far apart in time.
 
+One problem with time-varying models is that they introduce additional identification issues with the ideal point scores. Theoretically, if over-time variance is high enough, ideal point scores can oscillate from positive to negative. As such, `id_estimate` uses a default conservative prior for the argument `time_var` of 10 (equivalent to an average time period change of 0.1) for the person-level variance parameters. Increasing that number would constrain over-time change even more. The option `restrict_var`, by comparison, will constrain the over-time variance of the first person to 0.1 to help with identification in case a tight prior is not enough.
+
 ```{r create_data2}
+
+# parallel processing over persons/legislators specified with
+# ncores = 16 and nchains = 2
+# this will equal 8 cores per chain.
+# of course your machine must have 16 cores for 
+# that number to be useful
+
 del_est <- id_estimate(delaware_data,
                 model_type = 1,
                 fixtype='prefix',
                 nchains = 2,
-                ncores = 16,
+                ncores = 16,time_var = 10,
+                restrict_var = F,
                 vary_ideal_pts='random_walk',
                  restrict_ind_high = "Brady, David 13",
                  restrict_ind_low="Blakey, Donald 9",
@@ -92,13 +104,19 @@ del_est <- id_estimate(delaware_data,
 Given the fitted model, we can now plot the ideal points. We will turn off the option for showing the uncertainty interval as there are a lot of lines, one for each legislator:
 
 ```{r plo_rw1, fig.height=8}
-id_plot_legis_dyn(del_est,use_ci = F) +
+id_plot_legis_dyn(del_est,use_ci = T) +
   scale_color_manual(values=c(R='red',
                               D='blue',
-                              X='green'))
+                              X='green'),
+                     name="Party") +
+  ggtitle("Yearly Ideal Point Scores for Delaware Legislature")
 ```
 
-This plot does now show very much that is particularly interesting. Most of the ideal points are not changing over time, except for some of the moderate Democrats that become slightly more conservative over time. This small amount of change is not surprising as the Senate has become highly polarized and people are not shifting their policy positions.
+This plot does now show very much that is particularly interesting. Most of the ideal points are not changing over time, although it is important to note that polarization is increasing over time--both within parties and between parties as some legislators move to the extremes. 
+
+It is important to note that not all the parameters in this model converged per their Rhat values. Many of the non-converged parameters are discrimination parameters for bills, implying that there are bills that have unanimous votes (or few dissenters). It is not wrong per se to leave these bills in, and it does not hurt convergence for legislators, but the model can only converge if there is sufficient data and/or priors to estimate only one mode per parameter. An alternative would be to use items (bills) as identification restrictions rather than legislators/persons.
+
+What is important is that the sampler itself reported no issues, such as divergent transitions or reaching maximum treedepth. If it does so, that is a sign that the model is not fitting correctly, and needs to be diagnosed--or at least get an idea of why it is happening. 
 
 <!-- However, we can also change the model's parameters to induce more change over time. By default, `idealstan` restricts the over-time change in ideal points to have an SD of no more than .1. Restricting the variance this low helps with identification, however, it also prevents the ideal points from changing too much, such as switching signs from one time point to the next. We can relax that parameter and see if we get slightly more variation by increasing the `restrict_var_high` option have an SD of .5: -->
 
@@ -134,7 +152,7 @@ id_plot_legis_var(del_est) + ggtitle('Variances of Time-Varying Ideal Points in 
 We can access the actual estimates of the variances by passing the `return_data=TRUE` option to the plot function:
 
 ```{r var_est}
-out_d <- id_plot_legis_var(del_est_rw2,return_data = T)
+out_d <- id_plot_legis_var(del_est,return_data = T)
 knitr::kable(head(out_d$plot_data))
 ```
 
@@ -150,7 +168,7 @@ del_est_ar1 <- id_estimate(delaware_data,
                 fixtype='prefix',
                 nchains=2,
                 ncores=16,
-                vary_ideal_pts='AR1',
+                vary_ideal_pts='AR1',time_var=10,
                  restrict_ind_high = "Brady, David 13",
                  restrict_ind_low="Blakey, Donald 9",
             seed=84520)
@@ -174,7 +192,7 @@ summary(del_est_ar1,pars='ideal_pts') %>%
 To examine trace plots of the actual MCMC sampling, we can use the `stan_plot` function to look at posterior sampling for the first time point for Lamar Alexander based on the value shown in `Parameter Name` in the table above:
 
 ```{r mcmc_stan}
-stan_trace(del_est_ar1,'L_tp1[1,1]')
+stan_trace(del_est_ar1,'L_tp1_var[1,1]')
 ```
 
 ## Group-level Time-varying Ideal Points
@@ -183,10 +201,10 @@ Finally, we can also change the model's parameters to look at group-level, i.e. 
 
 ```{r stationary_groups}
 del_est_rw3 <- id_estimate(delaware_data,
-                model_type = 2,
+                model_type = 1,
                 use_groups=T,
                 fixtype='prefix',
-                nchains=2,
+                nchains=2,time_var = 10,
                 ncores=16,
                 vary_ideal_pts='random_walk',
                  restrict_ind_high = "D",
@@ -220,17 +238,16 @@ id_plot_legis_dyn(del_est_rw3,item_plot='342',
            label='Confirmation Vote for Wilhelmina Wright as U.S. District Judge')
 ```
 
-As this plot shows, the line of indifference is in a no-person's zone in the middle of the plot, signifying the lack of overlap and consensus on legislation in the current Senate.
+As this plot shows, the line of indifference is very close to the Republican party, implying that the vote split the Republican party while Democrats voted as a bloc. Empirically that is very close to the observed votes; all 27 Democrats voted to confirm the judge while 7 out of 6 Republicans did so.
 
 I will now estimate additional AR(1) and a Gaussian process model to use as comparison points to the random-walk model for parties:
 
 ```{r ar1_and_gp}
 del_est_ar2 <- id_estimate(delaware_data,
-                model_type = 2,
-                 use_vb = T,
+                model_type = 1,
                 use_groups = T,
                 fixtype='prefix',
-                nchains=2,
+                nchains=2,time_var=10,
                 ncores=16,
                 vary_ideal_pts='AR1',
                  restrict_ind_high = "D",
@@ -238,7 +255,7 @@ del_est_ar2 <- id_estimate(delaware_data,
             seed=84520)
 
 del_est_gp1 <- id_estimate(delaware_data,
-                           model_type = 2,
+                           model_type = 1,
                            use_groups = T,
                            fixtype='prefix',
                            nchains=2,
@@ -259,7 +276,7 @@ id_plot_legis_dyn(list(RW=del_est_rw3,
                   include=c('D','R'))
 ```
 
-This plot shows that are substantial divergences between the different models. Broadly speaking, the random-walk and GP models are close to each other, as we might expect given that both models impose relatively little structure on the time series. The AR model, on the other hand, constrains change over time, and it is not surprising that it shows the Democrats and Republicans much closer to each other. The advantage of the AR1 model, of course, is that it can estimate the effect of covariates on the long-term mean of the series, a very precise interpretation. 
+This plot shows that are substantial divergences between the different models (each plot is faceted by `group_id`). Broadly speaking, the random-walk and GP models are close to each other, as we might expect given that both models impose relatively little structure on the time series. The GP/AR1 models show a lot more bounce over time relative to the random walk model. For these models, we may want to either reduce the prior on the over-time variances (`time_var`) for the AR1 model or for the GP model fiddle with the parameters that control over-time bounciness (see below).
 
 The GP model has several parameters that control the ability of the time series to wiggle or adjust to over-time change in the ideal points. These parameters are given defaults that restrict movement in the ideal points to help ensure identification. As such, they tend to be fairly conservative, and can be adjusted to see if the ideal points can handle greater variation. 
 

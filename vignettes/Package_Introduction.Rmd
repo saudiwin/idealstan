@@ -2,11 +2,7 @@
 title: "Introduction to Idealstan"
 author: "Robert Kubinec"
 date: "`r Sys.Date()`"
-output: rmarkdown::html_vignette
-vignette: >
-  %\VignetteIndexEntry{Introduction to Idealstan}
-  %\VignetteEngine{R.rsp::asis}
-  %\VignetteEncoding{UTF-8}
+output: html_document
 ---
 
 
@@ -22,6 +18,8 @@ require(ggplot2)
 **If you use this package, please cite the following:**
 
 Kubinec, Robert. "Generalized Ideal Point Models for Time-Varying and Missing-Data Inference". Working Paper.
+
+**Note: At present, `idealstan` uses the `cmdstanr` package, which is not on CRAN and must be installed separately. Please see below for instructions.**
 
 This package implements IRT (item response theory) ideal point models, which are models designed for situations in which actors make strategic choices that correlate with a unidimensional scale, such as the left-right axis in American politics, disagreement over product design in consumer choice, or psychometric scales in which the direction that items load on the latent scale is unknown. Compared to traditional IRT, ideal point models examine the polarizing influence of a set of items on a set of persons, and has similarities to models based on Euclidean latent spaces, such as multi-dimensional scaling. In fact, this package also implements a version of the latent space model for binary outcomes, which is an alternate formulation of an ideal point model.
 
@@ -52,7 +50,14 @@ In addition, all of these models can be estimated with either time-varying or st
 
 The package also has extensive plotting functions via `ggplot2` for model parameters, particularly the legislator (person) ideal points (ability parameters).
 
-This vignette demonstrates basic usage of the package. I first simulate data using the package, document basic usage and then show an empirical example from the U.S. Senate.
+This vignette demonstrates basic usage of the package. I first show some crucial installation pre-requisities. 
+
+## Installation Instructions
+
+To use `idealstan`, you first have to have both `cmdstanr`, an R package, installed and `cmdstan`, the underlying MCMC library. Unfortunately, `cmdstanr` is not yet available on CRAN, but you can read complete installation instructions on this page: https://mc-stan.org/cmdstanr/articles/cmdstanr.html.
+
+Assuming you install `cmdstan` using the functions provided in the package, please allow it to install in the default location. Otherwise you wil always have to pass the path of the `cmdstan` installation to `id_estimate`. 
+
 
 ## Simulation of Ordinal IRT with Missing Data
 
@@ -104,7 +109,7 @@ For example, using our simulated data and identifying the model automatically wi
 ```{r restrict_auto}
 ord_ideal_est <- id_estimate(idealdata=ord_ideal_sim,
                              model_type=6,
-                             id_refresh=500,fixtype="vb_full",
+                             id_refresh=2000,fixtype="vb_full",
                              ncores=16,
                            nchains=2)
 ```

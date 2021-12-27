@@ -1,28 +1,25 @@
 Introduction to R Package Idealstan
 ================
 Robert Kubinec
-October 26, 2018
+December 27, 2021
 
-*Note: To report bugs with the package, please file an issue on the [Github page](https://github.com/saudiwin/idealstan/issues). You are currently reading the README file, which largely follows the introductory vignette in the package. To install this package, type the command `devtools::install_github('saudiwin/idealstan',local=F)` at the R console prompt. To include the package vignettes in the package install, which can be accessed by the command `vignette(package='idealstan)`, use instead the command `devtools::install_github('saudiwin/idealstan',local=F,build_vignette=TRUE)`. To install the unstable development branch `develop`, use this command: `devtools::install_github('saudiwin/idealstan',local=F,ref='develop')`.*
+*Note: This is a beta release of `idealstan` v1.0. While most features have been implemented and are stable, some have not (ideal point marginal effects), and there may be bugs that have not been sorted out. To report bugs with the package, please file an issue on the [Github page](https://github.com/saudiwin/idealstan/issues).* 
 
+At present, `idealstan` is only available on Github as one of its main dependencies, `cmdstanr` is also not on CRAN. To use my package, `cmdstanr` must be first be set up with a local installation of `cmdstan`, which is used for estimation. To see how to install `cmdstanr`, [see this guide](https://mc-stan.org/cmdstanr/).
+
+To install this package, type the command `devtools::install_github('saudiwin/idealstan',local=F)` at the R console prompt. To include the package vignettes in the package install, which can be accessed by the command `vignette(package='idealstan)`, use instead the command `devtools::install_github('saudiwin/idealstan',local=F,build_vignette=TRUE)`. To install the unstable development branch `develop`, use this command: `devtools::install_github('saudiwin/idealstan',local=F,ref='develop')`--don't do this unless you know what you're doing.*
 
 **If you use this package, please cite the following:**
 
-Kubinec, Robert. "Generalized Ideal Point Models for Time-Varying and Missing-Data Inference". Working Paper.
+Kubinec, Robert. "Generalized Ideal Point Models for Time-Varying and Missing-Data Inference". **SocArchiv** (2019). doi:10.31219/osf.io/8j2bt.
 
-**To install this package from source on Windows, please add the following to a file named `Makevars.win`, which should be located in the `~/.R` directory (a directory named `.R` in the user home folder):**
-
-```
-CXX11FLAGS=-O3
-CXX14 = C:/Rtools/mingw_64/bin/g++ -m$(WIN) -std=c++1y
-CXX14FLAGS=-O3
-```
+The paper is available from [this link](https://osf.io/8j2bt/).
 
 ## About the Package
 
-This package implements IRT (item response theory) ideal point models, which are models designed for situations in which actors make strategic choices that correlate with a unidimensional scale, such as the left-right axis in American politics. Compared to traditional IRT, ideal point models examine the polarizing influence of a set of items on a set of persons, and has simlarities to models based on Euclidean latent spaces, such as multi-dimensional scaling. For more information, I refer you to my paper presented at [StanCon 2018](https://zenodo.org/record/1284361#.W9O_5WhKhPY) and the R package vignettes that can be accessed on [CRAN](https://CRAN.R-project.org/package=idealstan).
+This package implements IRT (item response theory) ideal point models, which are models designed for situations in which actors make strategic choices that correlate with a unidimensional scale, such as the left-right axis in American politics. Compared to traditional IRT, ideal point models use a similar parameterization (the 2-Pl variant) but without the strong assumption that all items load in the same direction (i.e., higher ability). For more information, I refer you to [my paper](https://osf.io/8j2bt/) about IRT and ideal point models, documenting many of the features in the package.
 
-The goal of `idealstan` is to offer both standard ideal point models and additional models for missing data, time-varying ideal points and diverse responses, such as binary, ordinal, count, continuous and positive-continuous outcomes. In addition, `idealstan` uses the Stan estimation engine to offer full and variational Bayesian inference for all models so that every model is estimated with uncertainty. The package also exploits variational inference to automatically identify models instead of requiring users to pre-specify which persons or items in the data to constrain in advance.
+The goal of `idealstan` is to offer both standard IRT/ideal point models and additional models for missing data, time-varying ideal points and diverse responses, such as binary, ordinal, count, continuous and positive-continuous outcomes. In addition, `idealstan` uses the Stan estimation engine to offer full and variational Bayesian inference for all models so that every model is estimated with uncertainty. Models can also have mixed outcomes, such as discrete and continuous responses.
 
 The approach to handling missing data in this package is to model directly strategic censoring in observations. While this kind of missing data pattern can be found in many situations in which data is not missing at random, this particular version was developed to account for legislatures in which legislators (persons) are strategically absent for votes on bills (items). This approach to missing data can be usefully applied to many contexts in which a missing outcome is a function of the person's ideal point (i.e., people will tend to be present in the data when the item is far away or very close to their ideal point).
 

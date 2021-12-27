@@ -110,7 +110,7 @@
       l[1] = log(1);
     } else {
       for (i in 1:n) {
-        t1[i] = log(pow(1 - r[i]^2,(i-1)/2));
+        t1[i] = log(pow(1 - r[i]^2,(i-1)/2.0));
         // only add this second term if index is even
         t2[i] = (i % 2)==0 ? log(1 + r[i]) : 0;
       }

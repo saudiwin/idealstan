@@ -316,7 +316,8 @@
                        time_fix_sd=NULL,
                        actual=TRUE,
                        use_ar=NULL,
-                       person_start=NULL) {
+                       person_start=NULL,
+                       restrict_var=NULL) {
 
   L_full <- array(rnorm(n=num_legis,mean=0,sd=person_sd))
   sigma_reg_free <- array(rnorm(n=num_cit,mean=0,sd=2))
@@ -352,6 +353,12 @@
     # full run
     if(T>1) {
       
+      if(restrict_var) {
+        num_var <- num_legis - 1
+      } else {
+        num_var <- num_legis
+      }
+      
       # figure out optimized gp par
       
       # m_sd_optim <- optimize(f=rev_trans,
@@ -372,7 +379,7 @@
       } else if(time_proc==3) {
         return(list(L_full = L_full,
                     L_AR1 = array(runif(n = num_legis,min = ar1_down+.1,max=ar1_up-.1)),
-                    time_var_free = rexp(rate=1/time_fix_sd,n=num_legis-1),
+                    time_var_free = rexp(rate=1/time_fix_sd,n=num_var),
                     sigma_reg_free=sigma_reg_free,
                     sigma_abs_free=sigma_abs_free,
                     A_int_free=A_int_free,
@@ -380,7 +387,7 @@
         
         } else if(time_proc==2) {
           return(list(L_full = L_full,
-                      time_var_free = rexp(rate=1/time_fix_sd,n=num_legis-1),
+                      time_var_free = rexp(rate=1/time_fix_sd,n=num_var),
                       sigma_reg_free=sigma_reg_free,
                       sigma_abs_free=sigma_abs_free,
                       A_int_free=A_int_free,
