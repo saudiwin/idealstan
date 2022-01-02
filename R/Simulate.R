@@ -237,7 +237,7 @@ id_sim_gen <- function(num_person=20,num_bills=50,
                             drift=drift,
                             ar_adj=ar_adj)
 
-  outobj@person_data <- data_frame(person.names=paste0('person_',1:nrow(outobj@score_matrix)),
+  outobj@person_data <- tibble(person.names=paste0('person_',1:nrow(outobj@score_matrix)),
                                                group='L')
   
   outobj@simulation <- TRUE
@@ -394,7 +394,7 @@ id_sim_rmse <- function(obj,rep=1) {
     })
   }
     
-    out_data1 <- data_frame(avg=apply(all_rmse,2,mean),
+    out_data1 <- tibble(avg=apply(all_rmse,2,mean),
                             high=apply(all_rmse,2,quantile,probs=0.9),
                             low=apply(all_rmse,2,quantile,probs=0.1),
                             total_avg=mean(all_rmse),
@@ -468,7 +468,7 @@ id_sim_coverage <- function(obj,rep=1,quantiles=c(.95,.05)) {
         
       })
     }
-    all_covs <- data_frame(avg=as.numeric(all_covs),est_type='Coverage',iter=rep)
+    all_covs <- tibble(avg=as.numeric(all_covs),est_type='Coverage',iter=rep)
     return(all_covs)
   }
 
@@ -545,7 +545,7 @@ id_sim_resid <- function(obj,rep=1) {
   }
   
   
-  out_data1 <- data_frame(avg=apply(all_resid,2,mean),
+  out_data1 <- tibble(avg=apply(all_resid,2,mean),
                           high=apply(all_resid,2,quantile,probs=0.9),
                           low=apply(all_resid,2,quantile,probs=0.1),
                           total_avg=mean(all_resid),
