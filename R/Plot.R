@@ -148,7 +148,7 @@ id_plot_legis <- function(object,return_data=FALSE,
 
   if(show_true==TRUE) {
     
-    true_vals <- data_frame(true_vals=object@score_data@simul_data$true_person[,1]) %>% 
+    true_vals <- tibble(true_vals=object@score_data@simul_data$true_person[,1]) %>% 
       slice(as.numeric(levels(person_params$person_id))) %>% 
       mutate(id_num=1:n())
     
@@ -660,7 +660,7 @@ id_plot_legis_dyn <- function(object,return_data=FALSE,
     
     true_pts <- object@score_data@simul_data$true_person
     colnames(true_pts) <- c(as.character(1:ncol(true_pts)))
-    true_pts <- as_data_frame(true_pts) %>% mutate(person_id=1:n()) %>% 
+    true_pts <- as_tibble(true_pts) %>% mutate(person_id=1:n()) %>% 
       gather(key = time_id,value=true_pt,-person_id) %>% 
       # need to flip for identification
       mutate(time_id=as.numeric(time_id),
@@ -915,7 +915,7 @@ id_plot_all_hist <- function(object,params='person',param_labels=NULL,dens_type=
   
   param_length <- ncol(estimates)
   iters <- nrow(estimates)
-  estimates <- estimates %>% as_data_frame %>% 
+  estimates <- estimates %>% as_tibble %>% 
     gather(param,value) 
   if(!is.null(param_labels)) {
     if(length(param_labels)==param_length) {
