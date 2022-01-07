@@ -303,7 +303,7 @@ id_make <- function(score_data=NULL,
     }
     
     score_rename <- bind_cols(score_rename,
-                              as_data_frame(personm))
+                              as_tibble(personm))
     person_cov <- dimnames(personm)[[2]]
   } else {
     # make a dummy column if no covariate data
@@ -340,7 +340,7 @@ id_make <- function(score_data=NULL,
     
     
     score_rename <- bind_cols(score_rename,
-                              as_data_frame(itemm))
+                              as_tibble(itemm))
     item_cov <- dimnames(itemm)[[2]]
   } else {
     # make a dummy column if no covariate data
@@ -376,7 +376,7 @@ id_make <- function(score_data=NULL,
     }
     
     score_rename <- bind_cols(score_rename,
-                              as_data_frame(itemmissm))
+                              as_tibble(itemmissm))
     item_cov_miss <- dimnames(itemmissm)[[2]]
   } else {
     # make a dummy column if no covariate data
@@ -1183,7 +1183,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                         person_id %in% remove_list$legispoints) %>% 
       select(person_id,time_id,ignore) %>% 
       arrange(person_id,time_id) %>% 
-      as.matrix
+      as.matrix()
     
   } else {
     
