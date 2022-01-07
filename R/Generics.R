@@ -621,11 +621,11 @@ setMethod('summary',signature(object='idealstan'),
               if(!aggregate) {
                 return(to_sum)
               } else {
-                out_d <- data_frame(Covariate=new_names,
-                                    `Posterior Median`=apply(to_sum,3,median),
-                                    `Posterior High Interval`=apply(to_sum,3,quantile,high_limit),
-                                    `Posterior Low Interval`=apply(to_sum,3,quantile,low_limit),
-                                    Parameter=param_name)
+                out_d <- tibble(Covariate=new_names,
+                                `Posterior Median`=apply(to_sum,3,median),
+                                `Posterior High Interval`=apply(to_sum,3,quantile,high_limit),
+                                `Posterior Low Interval`=apply(to_sum,3,quantile,low_limit),
+                                Parameter=param_name)
                 return(out_d)
               }
               
