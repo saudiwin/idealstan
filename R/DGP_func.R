@@ -58,7 +58,7 @@
     
     # Create a score dataset
     
-    out_data <- data_frame(outcome_disc=combined,
+    out_data <- tibble(outcome_disc=combined,
                            person_id=person_points,
                            time_id=time_points,
                            item_id=item_points,
@@ -157,7 +157,7 @@
     
     # Create a score dataset
     
-    out_data <- data_frame(outcome_disc=combined,
+    out_data <- tibble(outcome_disc=combined,
                            person_id=person_points,
                            time_id=time_points,
                            item_id=item_points,
@@ -297,7 +297,7 @@
     
     # Create a score dataset
     
-    out_data <- data_frame(outcome_disc=combined,
+    out_data <- tibble(outcome_disc=combined,
                            person_id=person_points,
                            ordered_id=ordinal_outcomes,
                            time_id=time_points,
@@ -419,7 +419,7 @@
     
     # Create a score dataset
     
-    out_data <- data_frame(outcome_disc=combined,
+    out_data <- tibble(outcome_disc=combined,
                            person_id=person_points,
                            time_id=time_points,
                            item_id=item_points,
@@ -497,7 +497,7 @@
     
     # Create a score dataset
     
-    out_data <- data_frame(outcome_cont=combined,
+    out_data <- tibble(outcome_cont=combined,
                            person_id=person_points,
                            time_id=time_points,
                            item_id=item_points,
@@ -574,7 +574,7 @@
     
     # Create a score dataset
     
-    out_data <- data_frame(outcome_cont=combined,
+    out_data <- tibble(outcome_cont=combined,
                            person_id=person_points,
                            time_id=time_points,
                            item_id=item_points,
@@ -611,7 +611,7 @@
     if(t_1==1) {
       t_11 <- alpha_int
       current_val$t1 <- t_11
-      return(data_frame(t_11))
+      return(tibble(t_11))
     } else {
       if(adj_in==1) {
         t_11 <- adj_in*current_val$t1 + rnorm(n=1,sd=sigma)
@@ -621,7 +621,7 @@
       
     }
     current_val$t1 <- t_11
-    return(data_frame(t_11))
+    return(tibble(t_11))
   })  %>% bind_rows
   return(out_vec)
 }
