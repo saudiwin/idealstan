@@ -102,13 +102,13 @@ if(T<center_cutoff) {
   
   if(start_time>1)  {
     
-    log_prob += normal_lpdf(L_tp1_var[1:start_time,s]|0,legis_sd);
+    log_prob += normal_lpdf(lt[2:start_time]|0,legis_sd);
     
   }
   
   if(end_time<T) {
     
-    log_prob += normal_lpdf(L_tp1_var[end_time:T,s]|0,legis_sd);
+    log_prob += normal_lpdf(lt[(end_time+1):T]|0,legis_sd);
     
   }
   

@@ -303,7 +303,7 @@ id_make <- function(score_data=NULL,
     }
     
     score_rename <- bind_cols(score_rename,
-                              as_data_frame(personm))
+                              as_tibble(personm))
     person_cov <- dimnames(personm)[[2]]
   } else {
     # make a dummy column if no covariate data
@@ -340,7 +340,7 @@ id_make <- function(score_data=NULL,
     
     
     score_rename <- bind_cols(score_rename,
-                              as_data_frame(itemm))
+                              as_tibble(itemm))
     item_cov <- dimnames(itemm)[[2]]
   } else {
     # make a dummy column if no covariate data
@@ -376,7 +376,7 @@ id_make <- function(score_data=NULL,
     }
     
     score_rename <- bind_cols(score_rename,
-                              as_data_frame(itemmissm))
+                              as_tibble(itemmissm))
     item_cov_miss <- dimnames(itemmissm)[[2]]
   } else {
     # make a dummy column if no covariate data
@@ -872,7 +872,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                         time_center_cutoff=50,
                         restrict_var=FALSE,
                         sample_stationary=FALSE,
-                        ar_sd=2,
+                        ar_sd=1,
                         diff_reg_sd=1,
                         diff_miss_sd=1,
                         restrict_sd_high=0.01,
@@ -908,10 +908,10 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   if(!is.null(cmdstan_path_user))
     set_cmdstan_path(cmdstan_path_user)
   
-  if(!file.exists(system.file("stan_files","irt_standard",
+  if(!file.exists(system.file("stan_files","irt_standard_map",
                               package="idealstan"))) {
-    print("Compiling model. Will take some time as this is the first time package is used.")
-    print("Have you thought about donating to relief for victims for Yemen's famine?")
+    print("Compiling model. Will take some time as this is the first time the package has been used.")
+    print("Have you thought about donating to relief for victims of Yemen's famine?")
     print("Check out https://www.unicef.org/emergencies/yemen-crisis for more info.")
   }
   
@@ -1469,49 +1469,13 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                          tol_rel_obj=tol_rel_obj,within_chain=within_chain,
                          ...)
   
-  # deprecate: reduce_sum doesn't work in mpi
-  
-  # else if(within_chain=="mpi") {
-  #   
-  #   # we can't do mpi natively, so let's export to cmdstan to run on a cluster
-  # 
-  #   if(is.null(mpi_export)) {
-  #     print("Please choose a folder to store the exported data and stan code for MPI.")
-  #     mpi_export <- rstudioapi::selectDirectory(caption="Choose a directory to export code and data for running MPI in cmdstan:")
-  #   }
-  #   
-  #   write_stan_json(this_data,paste0(mpi_export,"/idealstan_mpi_data.json"))
-  # 
-  #   writeLines(idealdata@stanmodel$code(),con=file(paste0(mpi_export,"/idealstan_stan_code.stan")))
-  #   
-  #   saveRDS(idealdata,paste0(mpi_export,"/idealdata_object.rds"))
-  #   
-  #   # save extra necessary parameters
-  #   
-  #   saveRDS(list(vary_ideal_pts=vary_ideal_pts,
-  #                use_groups=use_groups,
-  #                model_type=model_type,
-  #                use_vb=use_vb,
-  #                map_over_id=map_over_id,
-  #                time_fix_sd=time_fix_sd),
-  #           paste0(mpi_export,"/extra_params.rds"))
-  #   
-  #   # need all the chunks
-  #   dir.create(paste0(mpi_export,"/chunks"),showWarnings=FALSE)
-  #   chunks <- system.file("stan_files/chunks",package="idealstan")
-  #   chunks_files <- list.files(chunks,full.names=T)
-  #   file.copy(chunks_files,to=paste0(mpi_export,"/chunks"),overwrite = T)
-  #   
-  #   return("You will need to run the model in cmdstan yourself and load the resulting data back in to R with the id_load_mpi function. See vignette for details.")
-  #   
-  # } 
-  
   outobj@model_type <- model_type
   outobj@time_proc <- vary_ideal_pts
   outobj@use_groups <- use_groups
   outobj@map_over_id <- map_over_id
   outobj@time_fix_sd <- time_fix_sd
   outobj@restrict_var <- restrict_var
+  outobj@time_center_cutoff <- time_center_cutoff
   
   # need to recalculate legis points if time series used
   if(this_data$T>1 && ((!is.null(keep_param$person_vary) && keep_param$person_vary) || is.null(keep_param))) {

@@ -230,11 +230,13 @@ real partial_sum(int[,] y_slice,
 
       if(time_proc!=4) {
 
-        if(time_proc==3) {
+        if(time_proc==3 || (time_proc==2 && const_type==2)) {
           log_prob += normal_lpdf(L_tp1_var[1,s]|0,legis_sd);
         }
 
         if(T<center_cutoff) {
+          
+          // note this means that we aren't doing any adjustment here for absent person points
 
           log_prob += normal_lpdf(to_vector(L_tp1_var[2:T,s])|0,1);
 
@@ -274,7 +276,7 @@ real partial_sum(int[,] y_slice,
 
 
       if(time_proc==3) {
-        log_prob += normal_lpdf(L_AR1[s]|0,ar_sd);
+        log_prob += normal_lpdf(L_AR1[s]|1,ar_sd);
 #include /chunks/l_hier_ar1_prior_map.stan
       } else if(time_proc==2) {
 #include /chunks/l_hier_prior_map.stan
@@ -613,7 +615,7 @@ model {
   extra_sd ~ exponential(1);
   
   if(time_proc==3 && S_type==0 && T>1) {
-    L_AR1 ~ normal(0,ar_sd);
+    L_AR1 ~ normal(1,ar_sd);
   }
   
 
@@ -643,7 +645,7 @@ for(n in 1:num_legis) {
   
   if(T>1 && time_proc!=4 && S_type==0) {
     
-    if(time_proc!=2) {
+    if(time_proc==3 || (time_proc==2 && const_type==2)) {
       L_tp1_var[1] ~ normal(0,5);
     }
     
