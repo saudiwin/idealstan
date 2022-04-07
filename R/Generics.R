@@ -71,7 +71,7 @@ setClass('idealstan',
                     model_code='character',
                     test_model_code='character',
                     map_over_id="character",
-                    time_sd="numeric",
+                    time_fix_sd="numeric",
                     diagnostics="ANY",
                     time_varying="ANY",
                     restrict_var="logical",
@@ -168,15 +168,18 @@ setMethod('sample_model',signature(object='idealdata'),
                                 const_type=this_data$const_type,
                                 fix_high=this_data$fix_high,
                                 fix_low=this_data$fix_low,
+                                ar1_up=this_data$ar1_up,
+                                ar1_down=this_data$ar1_down,
                                 restrict_ind_high=this_data$restrict_high,
                                 restrict_ind_low=this_data$restrict_low,
                                 time_proc=this_data$time_proc,
                                 m_sd_par=this_data$m_sd_par,
                                 time_range=mean(diff(this_data$time_ind)),
                                 num_diff=this_data$num_diff,
-                                time_sd=this_data$time_sd,
+                                time_fix_sd=this_data$time_sd,
                                 use_ar=this_data$use_ar,
                                 person_start=object@person_start,
+                                restrict_var=this_data$restrict_var,
                                 actual=TRUE)
             
             if(!is.null(keep_param)) {
@@ -303,10 +306,6 @@ setMethod('sample_model',signature(object='idealdata'),
             }
             if(use_vb==FALSE) {
               print("Estimating model with full Stan MCMC sampler.")
-              
-              if(is.null(save_files)) {
-                save_files <- system.file("csv_files",package="idealstan")
-              } 
                 
                 if(gpu) {
                   out_model <- object@stanmodel_gpu$sample(data=this_data,chains=nchains,iter_sampling=niters,
@@ -565,7 +564,7 @@ setMethod('summary',signature(object='idealstan'),
             if(pars=='items') {
 
               # a bit trickier with item points
-              item_plot <- levels(object@score_matrix$item_id)
+              item_plot <- levels(object@score_data@score_matrix$item_id)
               if(object@model_type %in% c(1,2) || (object@model_type>6 && object@model_type<13)) {
                 # binary models and continuous
                 item_points <- lapply(item_plot,.item_plot_binary,object=object,
@@ -600,27 +599,8 @@ setMethod('summary',signature(object='idealstan'),
 
             
             if(pars=='all') {
-              if(!is.null(pars)) {
-                sumobj <- rstan::summary(object@stan_samples,pars=pars)
-                this_summary <- sumobj[[1]] %>% as_data_frame
-              } else {
-                sumobj <- rstan::summary(object@stan_samples)
-                this_summary <- sumobj[[1]] %>% as_data_frame
-              }
               
-              this_summary <- mutate(this_summary,
-                                     parameters=row.names(sumobj[[1]]),
-                                     par_type=stringr::str_extract(parameters,'[A-Za-z_]+')) %>% 
-                rename(posterior_mean=`mean`,
-                       posterior_sd=`sd`,
-                       posterior_median=`50%`,
-                       Prob.025=`2.5%`,
-                       Prob.25=`25%`,
-                       Prob.75=`75%`,
-                       Prob.975=`97.5%`) %>% 
-                select(parameters,par_type,posterior_mean,posterior_median,posterior_sd,Prob.025,
-                       Prob.25,Prob.75,Prob.975)
-              return(this_summary)
+              return(object@summary)
             }
             
             if(pars %in% c('person_cov','discrim_reg_cov','discrim_infl_cov')) {
@@ -629,15 +609,14 @@ setMethod('summary',signature(object='idealstan'),
                                    discrim_reg_cov='sigma_reg_x',
                                    discrim_infl_cov='sigma_abs_x')
               
-              to_sum <- as.array(object@stan_samples,
-                                  pars=param_name)
+              to_sum <- object@stan_samples$draws(param_name)
               
               # reset names of parameters
-              new_names <- switch(pars,person_cov=object@person_cov,
-                                  discrim_reg=object@item_cov,
-                                  discrim_abs=object@item_cov_miss)
+              new_names <- switch(pars,person_cov=object@score_data@person_cov,
+                                  discrim_reg=object@score_data@item_cov,
+                                  discrim_abs=object@score_data@item_cov_miss)
               
-              attributes(to_sum)$dimnames$parameters <- new_names
+              attributes(to_sum)$dimnames$variable <- new_names
               
               if(!aggregate) {
                 return(to_sum)
@@ -674,8 +653,10 @@ setGeneric('id_plot',
 #'    Currently, the options are limited to a plot of legislator/person ideal points with bills/item midpoints as an optional overlay.
 #'    Additional plots will be available in future versions of \code{idealstan}.
 #' @param object A fitted \code{idealstan} object
-#' @param plot_type Specify the plot as a character string. Currently 'persons' for legislator/person ideal point plot and 
-#'    'histogram' for a histogram of model estimates for given parameters.
+#' @param plot_type Specify the plot as a character string. Currently 'persons' for legislator/person ideal point plot, 
+#'    'histogram' for a histogram of model estimates for given parameters. Alternatively,
+#'    use the \code{param} option to specify a specific model parameter.
+#' @param param A character name of a parameter from an \code{idealstan} model.
 #' @param ... Additional arguments passed on to the underlying functions. See individual function documentation for details.
 #' @return A \code{\link[ggplot2]{ggplot}} object
 #' @seealso \code{\link{id_plot_legis}} for a legislator/person ideal point plot, 
@@ -768,8 +749,12 @@ setMethod(launch_shinystan,signature(object='idealstan'),
                                  "B_int_free",
                                  'steps_votes',
                                  'steps_votes_grm'),...) {
-            to_shiny <- as.shinystan(object@stan_samples)
-            launch_shinystan(to_shiny,...)
+            if(packageDescription("shinystan")$Version=="3.0.0") {
+              launch_shinystan(to_shiny@stan_samples,...)
+            } else {
+              stop("You need to install version 3.0.0 of package shinystan. To do so, use remotes::install_github('stan-dev/shinystan', ref='v3-alpha') ")
+            }
+            
           })
 
 #' Plot the MCMC posterior draws by chain
@@ -784,10 +769,11 @@ setMethod(launch_shinystan,signature(object='idealstan'),
 #' \code{id_plog_legis} or \code{id_plot_legis_dyn} to find the 
 #' name of the parameter in the Stan model.
 #' 
-#' This function is a simple wrapper around \code{\link[rstan]{stan_trace}}. 
+#' This function is a simple wrapper around \code{\link[bayesplot]{mcmc_trace}}. 
 #' Please refer to that function's documentation for further options.
 #' 
 #' @param object A fitted \code{idealstan} model
+#' @importFrom bayesplot mcmc_trace
 #' @param ... Other options passed on to \code{\link[rstan]{stan_trace}}
 #' @export
 setGeneric('stan_trace',
@@ -806,16 +792,16 @@ setGeneric('stan_trace',
 #' \code{id_plog_legis} or \code{id_plot_legis_dyn} to find the 
 #' name of the parameter in the Stan model.
 #' 
-#' This function is a simple wrapper around \code{\link[rstan]{stan_trace}}. 
+#' This function is a simple wrapper around \code{\link[bayesplot]{mcmc_trace}}. 
 #' Please refer to that function's documentation for further options.
 #' 
 #' @param object A fitted \code{idealstan} model
 #' @param par The character string  name of a parameter in the model 
-#' @param ... Other options passed on to \code{\link[rstan]{stan_trace}}
+#' @param ... Other options passed on to \code{\link[bayesplot]{mcmc_trace}}
 #' @export
 setMethod('stan_trace',signature(object='idealstan'),
           function(object,par='L_full[1]') {
             
-        rstan::stan_trace(object@stan_samples,pars = par)
+        mcmc_trace(object@stan_samples$draws(par))
           })
 

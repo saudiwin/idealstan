@@ -59,6 +59,7 @@ real partial_sum(int[,] y_slice,
         real diff_reg_sd,
         real ar_sd,
         real time_sd,
+        real time_var_sd,
         int time_proc,
         int zeroes, // whether to use traditional zero-inflation for bernoulli and poisson models
         real gp_sd_par, // residual variation in GP
@@ -249,7 +250,7 @@ real partial_sum(int[,] y_slice,
 
             } else {
 
-              log_prob += exponential_lpdf(time_var_free[s-1]|.1); // tight-ish prior on additional variances
+              log_prob += exponential_lpdf(time_var_free[s-1]|time_var_sd); // tight-ish prior on additional variances
 
             }
 
@@ -263,7 +264,7 @@ real partial_sum(int[,] y_slice,
 
             } else {
 
-              log_prob += exponential_lpdf(time_var_free[s]|.1); // tight-ish prior on additional variances
+              log_prob += exponential_lpdf(time_var_free[s]|time_var_sd); // tight-ish prior on additional variances
 
             }
 
@@ -297,10 +298,10 @@ real partial_sum(int[,] y_slice,
           // chunk giving a GP prior to legislators/persons
             //create covariance matrices given current values of hiearchical parameters
             if(s==1) {
-              //cov =   cov_exp_quad(time_ind, m_sd_par, gp_length[1]) + diag_matrix(rep_vector(square(gp_sd_par),T));
-              cov =   cov_exp_quad(time_ind_center, m_sd_par, time_var_gp_free[s]) + diag_matrix(rep_vector(gp_sd_free[1],T));
+              //cov =   gp_exp_quad_cov(time_ind, m_sd_par, gp_length[1]) + diag_matrix(rep_vector(square(gp_sd_par),T));
+              cov =   gp_exp_quad_cov(time_ind_center, m_sd_par, time_var_gp_free[s]) + diag_matrix(rep_vector(gp_sd_free[1],T));
             } else {
-              cov =   cov_exp_quad(time_ind_center, m_sd_free[s-1], time_var_gp_free[s]) + diag_matrix(rep_vector(gp_sd_free[1],T));
+              cov =   gp_exp_quad_cov(time_ind_center, m_sd_free[s-1], time_var_gp_free[s]) + diag_matrix(rep_vector(gp_sd_free[1],T));
             }
 
             L_cov = cholesky_decompose(cov);
@@ -401,6 +402,9 @@ data {
   real<lower=0> restrict_sd_low;
   real ar_sd;
   real time_sd;
+  real time_var_sd; // over-time variance of persons
+  real ar1_up;  // upper ar1 limit
+  real ar1_down; // lower ar1 limit
   real inv_gamma_beta;
   int<lower=2> center_cutoff;
   int restrict_var; // whether to fix the over-time variance of the first person to a value
@@ -529,7 +533,7 @@ parameters {
   vector[num_ls] ls_int; // extra intercepts for non-inflated latent space
   vector[num_ls] ls_int_abs; // extra intercepts for non-inflated latent space
   vector[T>1 ? num_legis : 0] L_tp1_var[T]; // non-centered variance
-  vector<lower=-.99,upper=.99>[(T>1 && time_proc==3) ? num_legis : 0] L_AR1; // AR-1 parameters for AR-1 model
+  vector<lower=ar1_down,upper=ar1_up>[(T>1 && time_proc==3) ? num_legis : 0] L_AR1; // AR-1 parameters for AR-1 model
   vector[pos_discrim == 0 ? num_bills : 0] sigma_reg_free;
   vector<lower=0>[pos_discrim == 1 ? num_bills : 0] sigma_reg_pos;
   vector[LX] legis_x;
@@ -625,7 +629,7 @@ for(n in 1:num_legis) {
   
   //create covariance matrices given current values of hiearchical parameters
   
-  cov[n] =   cov_exp_quad(time_ind, m_sd_full[n], time_var_free[n])
+  cov[n] =   gp_exp_quad_cov(time_ind, m_sd_full[n], time_var_free[n])
       + diag_matrix(rep_vector(gp_sd_free[1],T));
   L_cov[n] = cholesky_decompose(cov[n]);
 
@@ -783,7 +787,7 @@ for(n in 1:num_legis) {
         
     } else {
       
-      time_var_free ~ exponential(.1);    
+      time_var_free ~ exponential(time_var_sd);    
         
     }
     time_var_gp_free ~ inv_gamma(5,5); // tight-ish prior on additional variances
@@ -925,6 +929,7 @@ if(S_type==1 && const_type==1) {
         diff_reg_sd,
         ar_sd,
         time_sd,
+        time_var_sd,
         time_proc,
         zeroes, // whether to use traditional zero-inflation for bernoulli and poisson models
         gp_sd_par, // residual variation in GP

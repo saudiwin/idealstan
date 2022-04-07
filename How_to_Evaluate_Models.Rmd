@@ -1,0 +1,138 @@
+---
+title: "How to Evaluate Models"
+author: "Robert Kubinec"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{How to Evaluate Models}
+  %\VignetteEngine{R.rsp::asis}
+  %\VignetteEncoding{UTF-8}
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,warning=TRUE,fig.align = 'center',fig.width=6, fig.height=5)
+require(idealstan)
+require(dplyr)
+require(ggplot2)
+require(loo)
+require(bayesplot)
+options(mc.cores=2)
+```
+
+A big part of the purpose of `idealstan` is to give people different options in fitting ideal point models to diverse data. Along with that, `idealstan` makes use of Bayesian model evaluation a la [loo](https://CRAN.R-project.org/package=loo/) and also can analyze the posterior predictive distribution using [bayesplot](http://mc-stan.org/users/interfaces/bayesplot). `loo` is an approximation of the predictive error of a Bayesian model via leave-one-out cross-validation (LOO-CV). True LOO-CV on Bayesian models is computationally prohibitive because it involves estimating a new model for each data point. For IRT models incorporating thousands or even millions of observations, this is practically infeasible.
+
+`bayesplot` allows us to analyze the data we used to estimate the model compared to data produced by the model, or what is called the posterior predictive distribution. This is very useful as a general summary of model fit to see whether there are values of the outcome that we are over or under predicting.
+
+`idealstan` implements functions for each ideal point model that calculate the log-posterior probability of the data, which is the necessary input to use `loo`'s model evaluation features. This vignette demonstrates the basic usage. I also discuss best practices for evaluating models.
+
+We first begin by simulating data for a standard IRT 2-PL ideal point model but with strategically missing data:
+
+```{r sim_irt_2pl}
+irt_2pl <- id_sim_gen(inflate=TRUE)
+```
+
+We can then fit two ideal point models to the same data, one that uses the correct binomial model for a 0/1 binary outcome, and the second that tries to fit a Poisson count model to this same binary data.
+
+```{r fit_irt_2pl}
+# Because of CRAN limitations, only using 2 cores & 2 chains
+irt_2pl_correct <- id_estimate(idealdata=irt_2pl,
+                               model_type=2,
+                               restrict_ind_high = as.character(sort(irt_2pl@simul_data$true_person,
+                                                        decreasing=TRUE,
+                                                        index=TRUE)$ix[1]),
+                              restrict_ind_low = as.character(sort(irt_2pl@simul_data$true_person,
+                                                      decreasing=FALSE,
+                                                        index=TRUE)$ix[1]),
+                               fixtype='vb_partial',
+                           ncores=2,
+                           nchains=2,
+                           niters = 500)
+
+irt_2pl_incorrect <- id_estimate(idealdata=irt_2pl,
+                               model_type=8,
+                            restrict_ind_high = as.character(sort(irt_2pl@simul_data$true_person,
+                                                        decreasing=TRUE,
+                                                        index=TRUE)$ix[1]),
+                            restrict_ind_low = as.character(sort(irt_2pl@simul_data$true_person,
+                                                      decreasing=FALSE,
+                                                        index=TRUE)$ix[1]),
+                            fixtype='vb_partial',
+                           ncores=2,
+                           nchains=2,
+                           niters=500)
+
+```
+
+The first thing we want to check with any MCMC model is convergence. An easy way to check is by looking at the Rhat distributions. If all these values are below 1.1, then we have good reason to believe that the model converged, and we can get these distributions with the `id_plot_rhats` function:
+
+```{r rhats_correct}
+id_plot_rhats(irt_2pl_correct)
+```
+
+```{r rhats_incorrect}
+id_plot_rhats(irt_2pl_incorrect)
+```
+
+We can only assume that the first model will converge. If the second model failed the Rhat test, at this point we should go back and see if the model is miss-specified or there is something wrong with the data. But for the sake of illustration, we will look at other diagnostics. We can also examine whether 1) the models are able to replicate the data they were fitted on accurately and 2) overall measures of model fit. 
+
+We can first look at how well the model reproduces the data, which is called the posterior predictive distribution. We can obtain these distributions using the `id_post_pred` function:
+
+```{r post_pred}
+post_correct <- id_post_pred(irt_2pl_correct)
+post_incorrect <- id_post_pred(irt_2pl_incorrect)
+```
+
+What we can do is the use a wrapper around the `bayesplot` package called `id_plot_ppc` to see how well these models replicate their own data. These plots show the original data as blue bars and the posterior predictive estimate as an uncertainty interval. If the interval overlaps with the observed data, then the model was able to replicate the observed data, which is a basic and important validity test for the model, i.e., could the model have generated the data that was used to fit it?
+
+```{r post_pred_graph}
+
+id_plot_ppc(irt_2pl_correct,ppc_pred=post_correct)
+id_plot_ppc(irt_2pl_incorrect,ppc_pred=post_incorrect)
+
+```
+
+It is stupidly obvious from these plots that one should not use a Poisson distribution for a Bernoulli (binary) outcome as it will predict values as high as 10 (although it still puts the majority of the density on 1 and 2). Only two observed values are showing on the Poisson predictive distribution because the missing data model must be shown separately if the outcome is unbounded. To view the missing data model (i.e., a binary response), simply change the `output` option in `id_post_pred` to `'missing'`. We can also look at particular persons or items to see how well the models predict those persons or items. For example, let's look at the first two persons in the simulated data for which we incorrectly used the Poisson model by passing their IDs as a character vector to the `group` option:
+
+```{r post_pred_ind}
+id_plot_ppc(irt_2pl_incorrect,ppc_pred=post_incorrect,group=c('1','2'))
+```
+
+
+Finally, we can turn to summary measures of model fit that also allow us to compare models directly to each other (if they were fit on the same data). To do so, I first employ the `log_lik` option of the `id_post_pred` function to generate log-likelihood values for each of these models.
+
+```{r log_lik}
+log_lik_irt_2pl_correct <- id_post_pred(irt_2pl_correct,type='log_lik')
+log_lik_irt_2pl_incorrect <- id_post_pred(irt_2pl_incorrect,type='log_lik')
+
+```
+
+Note that we must also specify the `relative_eff` function in order to calculate degrees of freedom. The first argument to `relative_eff` is the exponentiated log-likelihood matrix we calculated previously. The second argument uses the function `derive_chain` and also takes the log-likelihood matrix as its argument.
+
+I put in an option for two cores, but a larger number could be used which would improve the speed of the calculations.
+
+```{r loo_show}
+correct_loo <- loo(log_lik_irt_2pl_correct,
+                   cores=2,
+                   r_eff=relative_eff(exp(log_lik_irt_2pl_correct),
+                                      chain_id=derive_chain(log_lik_irt_2pl_correct)))
+
+incorrect_loo <- loo(log_lik_irt_2pl_incorrect,
+                     cores=2,
+                     r_eff=relative_eff(exp(log_lik_irt_2pl_incorrect),
+                                      chain_id=derive_chain(log_lik_irt_2pl_incorrect)))
+
+print(correct_loo)
+print(incorrect_loo)
+```
+
+With this calculation we can examine the models' `loo` values, which shows the relative predictive performance of the model to the data. Overall, model performance seems quite good, as the Pareto k values show that there are only a few dozen observations in the dataset that aren't well predicted. The LOO-IC, or the leave-one-out information criterion (think AIC or BIC), is much lower (i.e. better) for the correct model, as we would expect.
+
+We can also compare the LOOIC of the two models explicitly using a second `loo` function that will even give us a confidence interval around the difference. If the difference is negative, then the first (correct) model has higher predictive accuracy:
+
+```{r loo_compare,warn=F,message=F}
+compare(correct_loo,
+        incorrect_loo)
+```
+
+The first (correct) model is clearly preferred, as we would certainly hope in this extreme example. In less obvious cases, the `elpd` values can help arbitrate between model choices when a theoretical reason for choosing a model does not exist.

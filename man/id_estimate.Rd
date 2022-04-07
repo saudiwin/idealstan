@@ -25,7 +25,7 @@ id_estimate(
   fix_high = 1,
   fix_low = (-1),
   restrict_ind_low = NULL,
-  fixtype = "vb_full",
+  fixtype = "prefix",
   const_type = "persons",
   id_refresh = 0,
   prior_fit = NULL,
@@ -35,10 +35,13 @@ id_estimate(
   discrim_reg_sd = 2,
   discrim_miss_sd = 2,
   person_sd = 3,
-  time_sd = 0.1,
+  time_fix_sd = 0.1,
+  time_var = 10,
+  ar1_up = 1,
+  ar1_down = 0,
   boundary_prior = NULL,
   time_center_cutoff = 50,
-  restrict_var = TRUE,
+  restrict_var = FALSE,
   sample_stationary = FALSE,
   ar_sd = 2,
   diff_reg_sd = 1,
@@ -183,7 +186,7 @@ estimated instead of individual parameters.}
 
 \item{person_sd}{Set the prior standard deviation for the legislators (persons) parameters}
 
-\item{time_sd}{The variance of the over-time component of the first person/legislator
+\item{time_fix_sd}{The variance of the over-time component of the first person/legislator
 is fixed to this value as a reference. 
 Default is 0.1.}
 
@@ -343,7 +346,7 @@ all of the models
 implemented in idealstan, though fiddling with some parameters may be 
 necessary in difficult cases. For time-series models, one of the 
 person ideal point over-time variances is also fixed to .1, a value that
-can be changed using the option \code{time_sd}.
+can be changed using the option \code{time_fix_sd}.
 }
 
 \examples{
