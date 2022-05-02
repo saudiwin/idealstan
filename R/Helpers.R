@@ -150,11 +150,32 @@
       person_params <-  person_params %>% 
         left_join(person_ids,by=c(param_id='group_id_num',
                                   time_point='time_id_num'))
+      
+      person_params <- person_params  %>% 
+        group_by(param_id) %>% 
+        arrange(param_id,time_point) %>% 
+        mutate(time_id=rep(sort(unique(person_ids$time_id)),
+                           each=length(unique(person_ids$person_id[person_ids$group_id_num==param_id])))) %>% 
+        fill(everything(), .direction="downup") %>% 
+        ungroup
+      
     } else {
       person_params <-  person_params %>% 
         left_join(person_ids,by=c(param_id='person_id_num',
                                   time_point='time_id_num'))
+      
+      person_params <- person_params  %>% 
+        group_by(param_id) %>% 
+        arrange(param_id,time_point) %>% 
+        mutate(time_id=sort(unique(person_ids$time_id))) %>% 
+        fill(everything(), .direction="downup") %>% 
+        ungroup
+      
     }
+    
+    # fill in missing data
+    
+    
     
   } else {
     # need to match estimated parameters to original IDs
@@ -178,7 +199,7 @@
     person_params <- person_params %>% gather(key = legis,value=ideal_pts) 
     # get ids out 
     
-    person_ids <- data_frame(long_name=person_params$legis) %>% 
+    person_ids <- tibble(long_name=person_params$legis) %>% 
       distinct
     legis_nums <- stringr::str_extract_all(person_ids$long_name,'[0-9]+',simplify=T)
     person_ids <-   mutate(person_ids,id_num=as.numeric(legis_nums))
@@ -1954,7 +1975,7 @@ return(as.vector(idx))
     L_tp1_var <- obj@stan_samples$draws("L_tp1_var") %>% as_draws_matrix()
     
     
-    if(obj@time_proc==2 && length(unique(obj@score_data@score_matrix$time_id))<50) {
+    if(obj@time_proc==2 && length(unique(obj@score_data@score_matrix$time_id))<obj@time_center_cutoff) {
       
         
         L_full <- obj@stan_samples$draws("L_full") %>% as_draws_matrix()
@@ -2106,7 +2127,7 @@ return(as.vector(idx))
       colnames(all_time) <- paste0("L_tp1[",time_grid$Var1,",",time_grid$Var2,"]")
 
       
-    } else if(obj@time_proc==3  && length(unique(obj@score_data@score_matrix$time_id))>50) {
+    } else if(obj@time_proc==3  && length(unique(obj@score_data@score_matrix$time_id))<obj@time_center_cutoff) {
         
         L_full <- obj@stan_samples$draws("L_full") %>% as_draws_matrix()
         
@@ -2273,7 +2294,7 @@ return(as.vector(idx))
       
       # GP or random walk and AR(1) but with centered time series   
       
-      all_time <- L_tp1_var <- obj@stan_samples$draws("L_tp1_var") %>% as_draws_matrix()
+      all_time <- obj@stan_samples$draws("L_tp1_var") %>% as_draws_matrix()
       
     } 
     

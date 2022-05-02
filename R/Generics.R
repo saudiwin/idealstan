@@ -79,7 +79,8 @@ setClass('idealstan',
                     keep_param='ANY',
                     use_vb='logical',
                     use_groups='logical',
-                    simulation='logical'))
+                    simulation='logical',
+                    time_center_cutoff="numeric"))
 
 setGeneric('subset_ideal',signature='object',
            function(object,...) standardGeneric('subset_ideal'))
