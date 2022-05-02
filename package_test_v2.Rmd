@@ -40,7 +40,7 @@ bin_irt_2pl_est <- id_estimate(idealdata=bin_irt_2pl_sim,
                                                         index=T)$ix[1]),
                                fixtype='prefix',
                            person_sd = 3,
-                           nchains=4,ncores=4)
+                           nchains=4,ncores=4,compile_optim = F)
 id_plot_rhats(bin_irt_2pl_est)
 ```
 

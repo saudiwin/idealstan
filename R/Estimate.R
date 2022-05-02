@@ -299,7 +299,7 @@ id_make <- function(score_data=NULL,
       apply(2,any)
     
     if(remove_cov_int) {
-      personm <- personm[,!check_ids] 
+      personm <- personm[,!check_ids,drop=F] 
     }
     
     score_rename <- bind_cols(score_rename,
@@ -753,6 +753,8 @@ id_make <- function(score_data=NULL,
 #' @param het_var Whether to use a separate variance parameter for each item if using
 #' Normal or Log-Normal distributions that have variance parameters. Defaults to TRUE and
 #' should be set to FALSE only if all items have a similar variance.
+#' @param compile_optim Whether to use Stan compile optimization flags (turn off if there
+#'   are any compile issues)
 #' @param ... Additional parameters passed on to Stan's sampling engine. See \code{\link[rstan]{stan}} for more information.
 #' @return A fitted \code{\link{idealstan}} object that contains posterior samples of all parameters either via full Bayesian inference
 #' or a variational approximation if \code{use_vb} is set to \code{TRUE}. This object can then be passed to the plotting functions for further analysis.
@@ -888,6 +890,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                         save_files=NULL,
                         pos_discrim=FALSE,
                         het_var=TRUE,
+                        compile_optim=TRUE,
                         ...) {
   
   
@@ -924,19 +927,39 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   stan_code_gpu <- system.file("stan_files","irt_standard_gpu.stan",
                                package="idealstan")
   
+  if(compile_optim) {
+    
+    idealdata@stanmodel_map <- stan_code_map %>%
+      cmdstan_model(include_paths=dirname(stan_code_map),
+                    cpp_options = list(stan_threads = TRUE,
+                                       STAN_CPP_OPTIMS=TRUE))
+    
+    idealdata@stanmodel_gpu <- stan_code_gpu %>%
+      cmdstan_model(include_paths=dirname(stan_code_map),
+                    cpp_options = list(stan_threads = TRUE,
+                                       STAN_CPP_OPTIMS=TRUE,
+                                       STAN_OPENCL=TRUE,
+                                       opencl_platform_id = 0,
+                                       opencl_device_id = 0))
+    
+  } else {
+    
+    idealdata@stanmodel_map <- stan_code_map %>%
+      cmdstan_model(include_paths=dirname(stan_code_map),
+                    cpp_options = list(stan_threads = TRUE))
+    
+    idealdata@stanmodel_gpu <- stan_code_gpu %>%
+      cmdstan_model(include_paths=dirname(stan_code_map),
+                    cpp_options = list(stan_threads = TRUE,
+                                       STAN_OPENCL=TRUE,
+                                       opencl_platform_id = 0,
+                                       opencl_device_id = 0))
+    
+    
+  }
   
-  idealdata@stanmodel_map <- stan_code_map %>%
-    cmdstan_model(include_paths=dirname(stan_code_map),
-                  cpp_options = list(stan_threads = TRUE,
-                                     STAN_CPP_OPTIMS=TRUE))
   
-  idealdata@stanmodel_gpu <- stan_code_gpu %>%
-    cmdstan_model(include_paths=dirname(stan_code_map),
-                  cpp_options = list(stan_threads = TRUE,
-                                     STAN_CPP_OPTIMS=TRUE,
-                                     STAN_OPENCL=TRUE,
-                                     opencl_platform_id = 0,
-                                     opencl_device_id = 0))
+  
   
   #Using an un-identified model with variational inference, find those parameters that would be most useful for
   #constraining/pinning to have an identified model for full Bayesian inference

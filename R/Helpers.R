@@ -1938,7 +1938,7 @@ return(as.vector(idx))
 #' @importFrom tidyr unite
 #' @noRd
 .get_varying <- function(obj) {
-  
+  browser()
   if(obj@use_groups) {
     obj@score_data@score_matrix$person_id <- obj@score_data@score_matrix$group_id
   }

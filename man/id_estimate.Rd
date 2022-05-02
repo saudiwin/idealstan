@@ -59,6 +59,7 @@ id_estimate(
   save_files = NULL,
   pos_discrim = FALSE,
   het_var = TRUE,
+  compile_optim = TRUE,
   ...
 )
 }
@@ -270,6 +271,9 @@ specified to prevent errors.}
 \item{het_var}{Whether to use a separate variance parameter for each item if using
 Normal or Log-Normal distributions that have variance parameters. Defaults to TRUE and
 should be set to FALSE only if all items have a similar variance.}
+
+\item{compile_optim}{Whether to use Stan compile optimization flags (turn off if there
+are any compile issues)}
 
 \item{...}{Additional parameters passed on to Stan's sampling engine. See \code{\link[rstan]{stan}} for more information.}
 }
