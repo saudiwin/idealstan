@@ -1958,8 +1958,12 @@ return(as.vector(idx))
 #' Need new function to re-create time-varying ideal points given reduce sum
 #' @importFrom tidyr unite
 #' @noRd
-.get_varying <- function(obj) {
-  browser()
+.get_varying <- function(obj,
+                         legis_x=NULL,
+                         time_id=NULL,
+                         person_id=NULL) {
+  
+  
   if(obj@use_groups) {
     obj@score_data@score_matrix$person_id <- obj@score_data@score_matrix$group_id
   }
@@ -2299,6 +2303,29 @@ return(as.vector(idx))
     } 
     
   } # end of if statement differentiating between mapping over items vs. persons
+  
+  if(length(obj@score_data@person_cov)>0) {
+    
+    # need to do an adjustment by re-calculating ideal point scores and including hierarchical covariates
+    
+    time_grid <- expand.grid(1:length(unique(obj@score_data@score_matrix$time_id)),
+                             unique(as.numeric(obj@score_data@score_matrix$person_id)))
+    
+    
+    all_time <- sapply(1:nrow(time_grid), function(i) {
+      
+      # loop over all time points and all persons
+      
+      b <- obj@stan_samples$draws("legis_x") %>% as_draws_matrix()
+      
+       all_time[,paste0("L_tp1[",time_grid$Var1[i],",",time_grid$Var2[i],"]")] +
+             apply(legis_x[time_id==time_grid$Var1[i] & person_id==time_grid$Var2[i],,drop=F] %*% t(b),2,mean)
+      
+    })
+    
+    colnames(all_time) <- paste0("L_tp1[",time_grid$Var1,",",time_grid$Var2,"]")
+    
+  }
     
     return(all_time)
   }
