@@ -1499,6 +1499,8 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   outobj@time_fix_sd <- time_fix_sd
   outobj@restrict_var <- restrict_var
   outobj@time_center_cutoff <- time_center_cutoff
+  outobj@orig_order <- out_list$this_data$orig_order
+  outobj@this_data <- this_data
   
   # need to recalculate legis points if time series used
   if(this_data$T>1 && ((!is.null(keep_param$person_vary) && keep_param$person_vary) || is.null(keep_param))) {

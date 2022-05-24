@@ -337,14 +337,15 @@
                        time_fix_sd=NULL,
                        actual=TRUE,
                        use_ar=NULL,
+                       person_cov=NULL,
                        person_start=NULL,
                        restrict_var=NULL) {
 
   L_full <- array(rnorm(n=num_legis,mean=0,sd=person_sd))
-  sigma_reg_free <- array(rnorm(n=num_cit,mean=0,sd=2))
-  sigma_abs_free <- array(rnorm(n=num_cit,mean=0,sd=2))
-  A_int_free <- array(rnorm(n=num_cit,mean=0,sd=2))
-  B_int_free <- array(rnorm(n=num_cit,mean=0,sd=2))
+  sigma_reg_free <- array(rnorm(n=num_cit,mean=0,sd=1))
+  sigma_abs_free <- array(rnorm(n=num_cit,mean=0,sd=1))
+  A_int_free <- array(rnorm(n=num_cit,mean=0,sd=1))
+  B_int_free <- array(rnorm(n=num_cit,mean=0,sd=1))
   
   names(L_full) <- legis_labels
   names(sigma_reg_free) <- paste0("Obs_Discrim_",item_labels)
@@ -391,49 +392,61 @@
       #   m_sd_optim <- m_sd_par[1]/2
       # }
       if(time_proc==4) {
-        return(list(L_full = L_full,
+        base_params <- list(L_full = L_full,
                     sigma_reg_free=sigma_reg_free,
                     sigma_abs_free=sigma_abs_free,
                     A_int_free=A_int_free,
                     B_int_free=B_int_free,
-                    m_sd=rep(m_sd_par,num_legis)))
+                    m_sd=rep(m_sd_par,num_legis))
       } else if(time_proc==3) {
-        return(list(L_full = L_full,
+        base_params <- list(L_full = L_full,
                     L_AR1 = array(runif(n = num_legis,min = ar1_down+.1,max=ar1_up-.1)),
                     time_var_free = rexp(rate=1/time_fix_sd,n=num_var),
                     sigma_reg_free=sigma_reg_free,
                     sigma_abs_free=sigma_abs_free,
                     A_int_free=A_int_free,
-                    B_int_free=B_int_free))
+                    B_int_free=B_int_free)
         
         } else if(time_proc==2) {
-          return(list(L_full = L_full,
+          base_params <- list(L_full = L_full,
                       time_var_free = rexp(rate=1/time_fix_sd,n=num_var),
                       sigma_reg_free=sigma_reg_free,
                       sigma_abs_free=sigma_abs_free,
                       A_int_free=A_int_free,
-                      B_int_free=B_int_free))
+                      B_int_free=B_int_free)
           } else {
             
-        return(list(L_full = L_full,
+            base_params <- list(L_full = L_full,
                     sigma_reg_free=sigma_reg_free,
                     sigma_abs_free=sigma_abs_free,
                     A_int_free=A_int_free,
-                    B_int_free=B_int_free))
+                    B_int_free=B_int_free)
         
-      }
+          }
+      
+      # need to generate time process
+      
+      base_params$L_tp1_var <- array(rep(0, `T`*num_var),dim = c(num_var, `T`))
           
 
   } else {
     #identification run
-    return(list(L_full = L_full,
+    base_params <- list(L_full = L_full,
                 sigma_reg_free=sigma_reg_free,
                 sigma_abs_free=sigma_abs_free,
                 A_int_free=A_int_free,
-                B_int_free=B_int_free))
+                B_int_free=B_int_free)
   }
+    
+  if(length(person_cov)>0) {
+    
+    base_params$legis_x <- rep(0, length(person_cov))
+    
+  }
+    
+    
   
-  
+  return(base_params)
   
   }
   

@@ -78,7 +78,9 @@ setClass('idealstan',
                     stan_samples='ANY',
                     keep_param='ANY',
                     use_vb='logical',
+                    orig_order="ANY",
                     use_groups='logical',
+                    this_data="ANY",
                     simulation='logical',
                     time_center_cutoff="numeric"))
 

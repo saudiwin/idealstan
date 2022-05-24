@@ -50,6 +50,7 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
                                                                 output='observed',
                                                                 type='predict',
                                                                 sample_scores=NULL,...) {
+
   #all_params <- rstan::extract(object@stan_samples)
 
   n_votes <- nrow(object@score_data@score_matrix)
@@ -98,8 +99,7 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
   
   if(length(Y_cont)>1 && length(Y_int)>1) {
     
-    remove_nas <- c(remove_nas_int,
-                    remove_nas_cont)
+    remove_nas <- remove_nas_int & remove_nas_cont
     
   } else if(length(Y_cont)>1) {
     remove_nas <- remove_nas_cont
@@ -308,14 +308,14 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
              # set attributes to pass along sample info
              #attr(out_predict,'chain_order') <- attr(L_tp1,'chain_order')[these_draws]
              attr(out_predict,'this_sample') <- this_sample
-
+              
              attr(out_predict,"data") <- list(person_id=person_points[modelpoints==m$model_id],
                                                 group_id=person_points[modelpoints==m$model_id],
                                                 item_id=bill_points[modelpoints==m$model_id],
                                                 time_id=time_points[modelpoints==m$model_id],
                                                 Y_int=Y_int[modelpoints==m$model_id],
                                                 cutpoints=cutpoints,
-                                                Y_cont=Y_cont)
+                                                Y_cont=Y_cont[modelpoints==m$model_id])
 
              attr(out_predict,'model') <- m$model_id
              attr(out_predict,"order_id") <- cuts
@@ -349,6 +349,7 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
           miss_val <- object@score_data@miss_val[2]
         }
         
+        browser()
       
       out_predict <- rep_func(pr_absence=m$pr_absence,
                               pr_vote=m$pr_vote,
@@ -377,14 +378,14 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
                                          item_id=bill_points[modelpoints==m$model_id],
                                          time_id=time_points[modelpoints==m$model_id],
                                          Y_int=Y_int[modelpoints==m$model_id],
-                                         Y_cont=Y_cont)
+                                         Y_cont=Y_cont[modelpoints==m$model_id])
       } else {
         attr(out_predict,"data") <- list(person_id=person_points[modelpoints==m$model_id],
                                          group_id=person_points[modelpoints==m$model_id],
                                          item_id=bill_points[modelpoints==m$model_id],
                                          time_id=time_points[modelpoints==m$model_id],
                                          Y_cont=Y_cont[modelpoints==m$model_id],
-                                         Y_int=Y_int)
+                                         Y_int=Y_int[modelpoints==m$model_id])
       }
       
       attr(out_predict,'model') <- m$model_id
@@ -408,11 +409,13 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
       
   })
     
-  if(any(c(3,4,5,6) %in% unique(modelpoints))) {
-    return(unlist(out_mods,recursive = F))
-  } else {
+  #if(any(c(3,4,5,6) %in% unique(modelpoints))) {
+  #  return(unlist(out_mods,recursive = F))
+  #} else {
+    #return(out_mods)
+  #}
+    
     return(out_mods)
-  }
     
 })
 
@@ -599,15 +602,15 @@ setMethod('id_plot_ppc',signature(object='idealstan'),function(object,
     # many models, loop over plots
     
     all_plots <- lapply(ppc_pred, function (this_plot) {
-      
+      browser()
       all_data <- attr(this_plot,"data")
-      
+      mod <- attr(this_plot,"model")
       group_id <- all_data$group_id
       person_points <- all_data$person_id
       bill_points <- all_data$item_id
       time_points <- all_data$time_id
       
-      if(length(all_data$Y_int)>1) {
+      if(mod %in% c(1,2,3,4,5,6,7,8,13,14)) {
         y <- all_data$Y_int
       } else {
         y <- all_data$Y_cont
