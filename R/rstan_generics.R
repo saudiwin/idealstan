@@ -53,7 +53,7 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
 
   #all_params <- rstan::extract(object@stan_samples)
 
-  n_votes <- nrow(object@score_data@score_matrix)
+  n_votes <- object@this_data$N
   
 
   n_iters <- nrow(as_draws_matrix(object@stan_samples$draws("L_full")))
@@ -76,67 +76,30 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
   print(paste0('Processing posterior replications for ',n_votes,' scores using ',draws,
                ' posterior samples out of a total of ',n_iters, ' samples.'))
 
-  if(length(object@score_data@Y_cont)>1) {
-    Y_cont <- object@score_data@Y_cont[this_sample]
+  if(length(object@this_data$Y_cont)>1) {
+    Y_cont <- object@this_data$Y_cont[this_sample]
   } else {
-    Y_cont <- object@score_data@Y_cont
+    Y_cont <- object@this_data$Y_cont
   }
   
-  if(length(object@score_data@Y_int)>1) {
-    Y_int <- object@score_data@Y_int[this_sample]
+  if(length(object@this_data$Y_int)>1) {
+    Y_int <- object@this_data$Y_int[this_sample]
   } else {
-    Y_int <- object@score_data@Y_int
+    Y_int <- object@this_data$Y_int
   }
   
-  modelpoints <- object@score_data@score_matrix$model_id[this_sample]
-  discrete <- object@score_data@score_matrix$discrete[this_sample]
-  ordered_id <- object@score_data@score_matrix$ordered_id[this_sample]
+  modelpoints <- object@this_data$mm[this_sample]
+  #discrete <- object@score_data@score_matrix$discrete[this_sample]
+  ordered_id <- object@this_data$order_cats_rat[this_sample]
   
-  # check to see if we need to recode missing values from the data if the model_type doesn't handle missing data
-  
-  remove_nas_cont <- !is.na(Y_cont)
-  remove_nas_int <- !is.na(Y_int)
-  
-  if(length(Y_cont)>1 && length(Y_int)>1) {
-    
-    remove_nas <- remove_nas_int & remove_nas_cont
-    
-  } else if(length(Y_cont)>1) {
-    remove_nas <- remove_nas_cont
-  } else {
-    remove_nas <- remove_nas_int
-  }
-  
-  if(length(Y_cont)>1) {
-    Y_cont <- Y_cont[remove_nas_cont]
-    N_cont <- length(Y_cont)
-  }
-  
-  if(length(Y_int)>1) {
-    Y_int <- Y_int[remove_nas_int]
-    N_int <- length(Y_int)
-  }
-  
-  if(object@use_groups) {
-    person_points <- as.numeric(object@score_data@score_matrix$group_id)[this_sample]
-  } else {
-    person_points <- as.numeric(object@score_data@score_matrix$person_id)[this_sample]
-  }
+  person_points <- object@this_data$ll[this_sample]
 
-  bill_points <- as.numeric(object@score_data@score_matrix$item_id)[this_sample]
-  time_points <- as.numeric(factor(object@score_data@score_matrix$time_id))[this_sample]
-  
-  bill_points <- bill_points[remove_nas]
-  time_points <- time_points[remove_nas]
-  modelpoints <- modelpoints[remove_nas]
-  ordered_id <- ordered_id[remove_nas]
-  discrete <- discrete[remove_nas]
-  person_points <- person_points[remove_nas]
-  
+  bill_points <- object@this_data$bb[this_sample]
+  time_points <- object@this_data$time[this_sample]
   # we can do the initial processing here
   
   # loop over posterior iterations
-  if(length(unique(object@score_data@score_matrix$time_id))>1) {
+  if(object@this_data$`T`>1) {
     L_tp1 <- .get_varying(object)
   }
   L_full <- object@stan_samples$draws('L_full') %>% as_draws_matrix()
@@ -313,9 +276,9 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
                                                 group_id=person_points[modelpoints==m$model_id],
                                                 item_id=bill_points[modelpoints==m$model_id],
                                                 time_id=time_points[modelpoints==m$model_id],
-                                                Y_int=Y_int[modelpoints==m$model_id],
+                                                Y_int=try(Y_int[modelpoints==m$model_id]),
                                                 cutpoints=cutpoints,
-                                                Y_cont=Y_cont[modelpoints==m$model_id])
+                                                Y_cont=try(Y_cont[modelpoints==m$model_id]))
 
              attr(out_predict,'model') <- m$model_id
              attr(out_predict,"order_id") <- cuts
@@ -343,13 +306,11 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
         
         if(m$model_id %in% c(1,2,3,4,5,6,7,8,13,14)) {
           outcome <- Y_int[modelpoints==m$model_id]
-          miss_val <- object@score_data@miss_val[1]
+          miss_val <- object@this_data$Y_int_miss
         } else {
           outcome <- Y_cont[modelpoints==m$model_id]
-          miss_val <- object@score_data@miss_val[2]
+          miss_val <- object@this_data$Y_cont_miss
         }
-        
-        browser()
       
       out_predict <- rep_func(pr_absence=m$pr_absence,
                               pr_vote=m$pr_vote,
@@ -377,15 +338,15 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
                                          group_id=person_points[modelpoints==m$model_id],
                                          item_id=bill_points[modelpoints==m$model_id],
                                          time_id=time_points[modelpoints==m$model_id],
-                                         Y_int=Y_int[modelpoints==m$model_id],
-                                         Y_cont=Y_cont[modelpoints==m$model_id])
+                                         Y_int=try(Y_int[modelpoints==m$model_id]),
+                                         Y_cont=try(Y_cont[modelpoints==m$model_id]))
       } else {
         attr(out_predict,"data") <- list(person_id=person_points[modelpoints==m$model_id],
                                          group_id=person_points[modelpoints==m$model_id],
                                          item_id=bill_points[modelpoints==m$model_id],
                                          time_id=time_points[modelpoints==m$model_id],
-                                         Y_cont=Y_cont[modelpoints==m$model_id],
-                                         Y_int=Y_int[modelpoints==m$model_id])
+                                         Y_cont=try(Y_cont[modelpoints==m$model_id]),
+                                         Y_int=try(Y_int[modelpoints==m$model_id]))
       }
       
       attr(out_predict,'model') <- m$model_id
@@ -482,242 +443,247 @@ setMethod('id_plot_ppc',signature(object='idealstan'),function(object,
   if(is.null(ppc_pred)) {
     stop("Please first use the function id_post_pred and pass the result to the ppc_pred argument to use this function.")
   }
-  
-  if(length(ppc_pred)==1) {
-    
-    this_plot <- ppc_pred[[1]]
-    
-    all_data <- attr(this_plot,"data")
-    
-    group_id <- all_data$group_id
-    person_points <- all_data$person_id
-    bill_points <- all_data$item_id
-    time_points <- all_data$time_id
-    
-    if(length(all_data$Y_int)>1) {
-      y <- all_data$Y_int
-    } else {
-      y <- all_data$Y_cont
-    }
-    
-    # only one model, create a standard plot
-    
-    this_sample <- attr(this_plot,'this_sample')
-    
-    # create grouping variable
-    if(!is.null(group)) {
-      if(object@use_groups) {
-        group_var <- group_id
-      } else {
-        group_var <- person_points
-      }
-      grouped <- T
-    } else {
-      grouped <- F
-    }
-  
-    if(attr(this_plot,'output')=='all') {
-      y <- as.numeric(y)
-      if(grouped) {
-        
-       out_plot <- bayesplot::ppc_bars_grouped(y=as.numeric(factor(y)),yrep=this_plot,
-                                    group=group_var,...)
-        
-      } else {
-        out_plot <- bayesplot::ppc_bars(y=as.numeric(factor(y)),yrep=this_plot,...)
-        
-        
-      }
-    } else if(attr(this_plot,'output')=='observed') {
-      # only show observed data for yrep
-      
-      if(length(all_data$Y_int)>1) {
-        to_remove <- !(y==object@score_data@miss_val[1])
-      } else {
-        to_remove <- !(y==object@score_data@miss_val[2])
-      }
-      
-      y <- y[to_remove]
-      if(!is.null(group)) {
-        group_var <- group_var[to_remove]
-      }
-      y <- as.numeric(y)
-
-      save_att <- attributes(this_plot)
-      save_att$dim <- NULL
-      this_plot <- this_plot[,to_remove]
-      save_att$dim <- dim(this_plot)
-      attributes(this_plot) <- save_att
-
-      if(attr(this_plot,'output_type')=='continuous') {
-        
-        #unbounded observed outcomes (i.e., continuous)
-        if(grouped) {
-          out_plot <- bayesplot::ppc_violin_grouped(y=y,yrep=this_plot,
-                                        group=group_var,
-                                        ...)
-        } else {
-          out_plot <- bayesplot::ppc_dens_overlay(y=y,yrep=this_plot,...)
-        }
-        
-      } else if(attr(this_plot,'output_type')=='discrete') {
-        
-        if(grouped) {
-          
-          out_plot <- bayesplot::ppc_bars_grouped(y=as.numeric(factor(y)),yrep=this_plot,
-                                      group=group_var,...)
-          
-        } else {
-          out_plot <- bayesplot::ppc_bars(y=as.numeric(factor(y)),yrep=this_plot,...)
-        }
-      }
-      
-      
-    } else if(attr(this_plot,'output')=='missing') {
-      
-      if(length(all_data$Y_int)>1) {
-        y <- as.numeric(y==object@score_data@miss_val[1])
-      } else {
-        y <- as.numeric(y==object@score_data@miss_val[2])
-      }
-
-      if(grouped) {
-        
-        out_plot <- bayesplot::ppc_bars_grouped(y=as.numeric(factor(y)),yrep=this_plot,
-                                    group=group_var,...)
-        
-      } else {
-        
-        out_plot <- bayesplot::ppc_bars(y=as.numeric(factor(y)),yrep=this_plot,...)
-        
-      }
-    }
-    
-    print(out_plot)
-    
-    return(invisible(out_plot))
-    
-  } else {
     
     # many models, loop over plots
     
     all_plots <- lapply(ppc_pred, function (this_plot) {
-      browser()
-      all_data <- attr(this_plot,"data")
-      mod <- attr(this_plot,"model")
-      group_id <- all_data$group_id
-      person_points <- all_data$person_id
-      bill_points <- all_data$item_id
-      time_points <- all_data$time_id
-      
-      if(mod %in% c(1,2,3,4,5,6,7,8,13,14)) {
-        y <- all_data$Y_int
-      } else {
-        y <- all_data$Y_cont
-      }
-      
-      # only one model, create a standard plot
-      
-      this_sample <- attr(this_plot,'this_sample')
-      
-      # create grouping variable
-      if(!is.null(group)) {
-        if(object@use_groups) {
-          group_var <- group_id
+
+      if(!is.list(this_plot)) {
+        
+        all_data <- attr(this_plot,"data")
+        mod <- attr(this_plot,"model")
+        group_id <- all_data$group_id
+        person_points <- all_data$person_id
+        bill_points <- all_data$item_id
+        time_points <- all_data$time_id
+        
+        if(mod %in% c(1,2,3,4,5,6,7,8,13,14)) {
+          y <- all_data$Y_int
         } else {
-          group_var <- person_points
-        }
-        grouped <- T
-      } else {
-        grouped <- F
-      }
-      
-      if(attr(this_plot,'output')=='all') {
-        y <- as.numeric(y)
-        if(grouped) {
-          
-          out_plot <- bayesplot::ppc_bars_grouped(y=as.numeric(factor(y)),yrep=this_plot,
-                                                  group=group_var,...)
-          
-        } else {
-          out_plot <- bayesplot::ppc_bars(y=as.numeric(factor(y)),yrep=this_plot,...)
-          
-          
-        }
-      } else if(attr(this_plot,'output')=='observed') {
-        # only show observed data for yrep
-        if(length(all_data$Y_int>1)) {
-          to_remove <- y==object@score_data@miss_val[1]
-        } else {
-          to_remove <- y==object@score_data@miss_val[2]
+          y <- all_data$Y_cont
         }
         
-        y <- y[to_remove]
+        # only one model, create a standard plot
+        
+        this_sample <- attr(this_plot,'this_sample')
+        
+        # create grouping variable
         if(!is.null(group)) {
-          group_var <- group_var[to_remove]
-        }
-        y <- as.numeric(y)
-        
-        save_att <- attributes(this_plot)
-        save_att$dim <- NULL
-        this_plot <- this_plot[,to_remove]
-        save_att$dim <- dim(this_plot)
-        attributes(this_plot) <- save_att
-        
-        if(attr(this_plot,'output_type')=='continuous') {
-          
-          #unbounded observed outcomes (i.e., continuous)
-          if(grouped) {
-            out_plot <- bayesplot::ppc_violin_grouped(y=y,yrep=this_plot,
-                                                      group=group_var,
-                                                      ...)
+          if(object@use_groups) {
+            group_var <- group_id
           } else {
-            out_plot <- bayesplot::ppc_dens_overlay(y=y,yrep=this_plot,...)
+            group_var <- person_points
           }
-          
-        } else if(attr(this_plot,'output_type')=='discrete') {
-          
+          grouped <- T
+        } else {
+          grouped <- F
+        }
+        
+        if(attr(this_plot,'output')=='all') {
+          y <- as.numeric(y)
           if(grouped) {
             
-            out_plot <- bayesplot::ppc_bars_grouped(y=as.numeric(factor(y)),yrep=this_plot,
+            out_plot <- bayesplot::ppc_bars_grouped(y=y,yrep=this_plot,
                                                     group=group_var,...)
             
           } else {
-            out_plot <- bayesplot::ppc_bars(y=as.numeric(factor(y)),yrep=this_plot,...)
+            out_plot <- bayesplot::ppc_bars(y=y,yrep=this_plot,...)
+            
+            
+          }
+        } else if(attr(this_plot,'output')=='observed') {
+          # only show observed data for yrep
+          if(attr(this_plot,'output_type')=='continuous') {
+            to_remove <- y!=object@this_data$y_int_miss
+          } else {
+            to_remove <- y!=object@this_data$y_cont_miss
+          }
+          
+          y <- y[to_remove]
+          if(!is.null(group)) {
+            group_var <- group_var[to_remove]
+          }
+          
+          save_att <- attributes(this_plot)
+          save_att$dim <- NULL
+          this_plot <- this_plot[,to_remove]
+          save_att$dim <- dim(this_plot)
+          attributes(this_plot) <- save_att
+          
+          if(attr(this_plot,'output_type')=='continuous') {
+            
+            #unbounded observed outcomes (i.e., continuous)
+            if(grouped) {
+              out_plot <- bayesplot::ppc_violin_grouped(y=y,yrep=this_plot,
+                                                        group=group_var,
+                                                        ...)
+            } else {
+              out_plot <- bayesplot::ppc_dens_overlay(y=y,yrep=this_plot,...)
+            }
+            
+          } else if(attr(this_plot,'output_type')=='discrete') {
+            
+            if(grouped) {
+              
+              out_plot <- bayesplot::ppc_bars_grouped(y=y,yrep=this_plot,
+                                                      group=group_var,...)
+              
+            } else {
+              out_plot <- bayesplot::ppc_bars(y=y,yrep=this_plot,...)
+            }
+          }
+          
+          
+        } else if(attr(this_plot,'output')=='missing') {
+          
+          if(length(all_data$Y_int>1)) {
+            y <- as.numeric(y==object@score_data@miss_val[1])
+          } else {
+            y <- as.numeric(y==object@score_data@miss_val[2])
+          }
+          
+          if(grouped) {
+            
+            out_plot <- bayesplot::ppc_bars_grouped(y=y,yrep=this_plot,
+                                                    group=group_var,...)
+            
+          } else {
+            
+            out_plot <- bayesplot::ppc_bars(y=y,yrep=this_plot,...)
+            
           }
         }
         
+        # start over with new posterior prediction object
         
-      } else if(attr(this_plot,'output')=='missing') {
+        print(out_plot)
         
-        if(length(all_data$Y_int>1)) {
-          y <- as.numeric(y==object@score_data@miss_val[1])
-        } else {
-          y <- as.numeric(y==object@score_data@miss_val[2])
-        }
+        invisible(readline(prompt="Press [enter] to see next plot"))
         
-        if(grouped) {
+      } else {
+        
+        # likely ordered models that have multiple components
+        
+        lapply(this_plot, function(p) {
           
-          out_plot <- bayesplot::ppc_bars_grouped(y=as.numeric(factor(y)),yrep=this_plot,
-                                                  group=group_var,...)
           
-        } else {
+          all_data <- attr(p,"data")
+          mod <- attr(p,"model")
+          group_id <- all_data$group_id
+          person_points <- all_data$person_id
+          bill_points <- all_data$item_id
+          time_points <- all_data$time_id
           
-          out_plot <- bayesplot::ppc_bars(y=as.numeric(factor(y)),yrep=this_plot,...)
+          if(mod %in% c(1,2,3,4,5,6,7,8,13,14)) {
+            y <- all_data$Y_int
+          } else {
+            y <- all_data$Y_cont
+          }
           
-        }
+          # only one model, create a standard plot
+          
+          this_sample <- attr(p,'this_sample')
+          
+          # create grouping variable
+          if(!is.null(group)) {
+            if(object@use_groups) {
+              group_var <- group_id
+            } else {
+              group_var <- person_points
+            }
+            grouped <- T
+          } else {
+            grouped <- F
+          }
+          
+          if(attr(p,'output')=='all') {
+            y <- as.numeric(y)
+            if(grouped) {
+              
+              out_plot <- bayesplot::ppc_bars_grouped(y=as.numeric(factor(y)),yrep=p,
+                                                      group=group_var,...)
+              
+            } else {
+              out_plot <- bayesplot::ppc_bars(y=as.numeric(factor(y)),yrep=p,...)
+              
+              
+            }
+          } else if(attr(this_plot,'output')=='observed' && attr(this_plot,'output_type')!='continuous') {
+            # only show observed data for yrep
+            if(length(all_data$Y_int>1)) {
+              to_remove <- y==object@score_data@miss_val[1]
+            } else {
+              to_remove <- y==object@score_data@miss_val[2]
+            }
+            
+            y <- y[to_remove]
+            if(!is.null(group)) {
+              group_var <- group_var[to_remove]
+            }
+            y <- as.numeric(y)
+            
+            save_att <- attributes(p)
+            save_att$dim <- NULL
+            p <- p[,to_remove]
+            save_att$dim <- dim(p)
+            attributes(p) <- save_att
+            
+            if(attr(p,'output_type')=='continuous') {
+              
+              #unbounded observed outcomes (i.e., continuous)
+              if(grouped) {
+                out_plot <- bayesplot::ppc_violin_grouped(y=y,yrep=p,
+                                                          group=group_var,
+                                                          ...)
+              } else {
+                out_plot <- bayesplot::ppc_dens_overlay(y=y,yrep=p,...)
+              }
+              
+            } else if(attr(p,'output_type')=='discrete') {
+              
+              if(grouped) {
+                
+                out_plot <- bayesplot::ppc_bars_grouped(y=as.numeric(factor(y)),yrep=p,
+                                                        group=group_var,...)
+                
+              } else {
+                out_plot <- bayesplot::ppc_bars(y=as.numeric(factor(y)),yrep=p,...)
+              }
+            }
+            
+            
+          } else if(attr(p,'output')=='missing') {
+            
+            if(length(all_data$Y_int>1)) {
+              y <- as.numeric(y==object@score_data@miss_val[1])
+            } else {
+              y <- as.numeric(y==object@score_data@miss_val[2])
+            }
+            
+            if(grouped) {
+              
+              out_plot <- bayesplot::ppc_bars_grouped(y=as.numeric(factor(y)),yrep=p,
+                                                      group=group_var,...)
+              
+            } else {
+              
+              out_plot <- bayesplot::ppc_bars(y=as.numeric(factor(y)),yrep=p,...)
+              
+            }
+          }
+          
+          print(out_plot)
+          
+          invisible(readline(prompt="Press [enter] to see next plot"))
+          
+        })
+        
       }
       
-      print(out_plot)
-      
-      invisible(readline(prompt="Press [enter] to see next plot"))
+      # end of model type loop
       
     })
     
-  }
-  
-  return(invisible(all_plots))
-  
 })
 
 

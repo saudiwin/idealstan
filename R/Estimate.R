@@ -1398,9 +1398,14 @@ id_estimate <- function(idealdata=NULL,model_type=2,
     
     Y_int <- remove_list$Y_int[out_list$this_data$orig_order]
     
+    order_cats_rat <- remove_list$order_cats_rat[out_list$this_data$orig_order]
+    order_cats_grm <- remove_list$order_cats_grm[out_list$this_data$orig_order]
+    
   } else {
     
     Y_int <- remove_list$Y_int
+    order_cats_rat <- remove_list$order_cats_rat
+    order_cats_grm <- remove_list$order_cats_grm
     
   }
   
@@ -1431,8 +1436,8 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     tot_cats=length(remove_list$n_cats_rat),
                     n_cats_rat=remove_list$n_cats_rat,
                     n_cats_grm=remove_list$n_cats_grm,
-                    order_cats_rat=remove_list$order_cats_rat[out_list$this_data$orig_order],
-                    order_cats_grm=remove_list$order_cats_grm[out_list$this_data$orig_order],
+                    order_cats_rat=order_cats_rat,
+                    order_cats_grm=order_cats_grm,
                     num_bills_grm=ifelse(any(remove_list$modelpoints %in% c(5,6)),
                                          remove_list$num_bills,0L),
                     LX=remove_list$LX,

@@ -1991,6 +1991,8 @@ return(as.vector(idx))
       
     L_tp1_var <- obj@stan_samples$draws("L_tp1_var") %>% as_draws_matrix()
     
+    rebuilt <- TRUE
+    
     
     if(obj@time_proc==2 && length(unique(obj@score_data@score_matrix$time_id))<obj@time_center_cutoff) {
       
@@ -2309,9 +2311,18 @@ return(as.vector(idx))
       
     } else {
       
-      # GP or random walk and AR(1) but with centered time series   
+      # GP or random walk and AR(1) but with centered time series  
+      
+      rebuilt <- FALSE
       
       all_time <- obj@stan_samples$draws("L_tp1_var") %>% as_draws_matrix()
+      
+      time_grid <- expand.grid(1:length(unique(obj@score_data@score_matrix$time_id)),
+                               unique(as.numeric(obj@score_data@score_matrix$person_id)))
+      
+      # for consistency
+      
+      colnames(all_time) <- paste0("L_tp1[",time_grid$Var1,",",time_grid$Var2,"]")
       
     } 
     
@@ -2323,20 +2334,19 @@ return(as.vector(idx))
     
     time_grid <- expand.grid(1:length(unique(obj@score_data@score_matrix$time_id)),
                              unique(as.numeric(obj@score_data@score_matrix$person_id)))
-    
-    
-    all_time <- sapply(1:nrow(time_grid), function(i) {
       
-      # loop over all time points and all persons
+      all_time <- sapply(1:nrow(time_grid), function(i) {
+        
+        # loop over all time points and all persons
+        
+        b <- obj@stan_samples$draws("legis_x") %>% as_draws_matrix()
+        
+        all_time[,paste0("L_tp1[",time_grid$Var1[i],",",time_grid$Var2[i],"]")] +
+          apply(legis_x[time_id==time_grid$Var1[i] & person_id==time_grid$Var2[i],,drop=F] %*% t(b),2,mean)
+        
+      })
       
-      b <- obj@stan_samples$draws("legis_x") %>% as_draws_matrix()
-      
-       all_time[,paste0("L_tp1[",time_grid$Var1[i],",",time_grid$Var2[i],"]")] +
-             apply(legis_x[time_id==time_grid$Var1[i] & person_id==time_grid$Var2[i],,drop=F] %*% t(b),2,mean)
-      
-    })
-    
-    colnames(all_time) <- paste0("L_tp1[",time_grid$Var1,",",time_grid$Var2,"]")
+      colnames(all_time) <- paste0("L_tp1[",time_grid$Var1,",",time_grid$Var2,"]")
     
   }
     

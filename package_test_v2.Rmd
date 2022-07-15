@@ -453,7 +453,7 @@ ord_irt_normal_est <- id_estimate(idealdata=ord_irt_normal_sim,
                               restrict_ind_low = as.character(sort(ord_irt_normal_sim@simul_data$true_person,
                                                                    decreasing=F,
                                                         index=T)$ix[1]),
-                               fixtype='prefix')
+                               fixtype='prefix',compile_optim=F)
 id_plot_rhats(ord_irt_normal_est)
 ```
 
@@ -639,7 +639,7 @@ While these models are identified, it appears that sometimes given the amount of
 First random walks:
 
 ```{r irt_binary_time_inflate}
-bin_time_irt_2pl_abs_sim <- id_sim_gen(num_person=20,num_bills=30,
+bin_time_irt_2pl_abs_sim <- id_sim_gen(num_person=20,num_bills=1000,
                                        ordinal=F,inflate=T,
                                absence_diff_mean=0,
                                time_process = 'random',
@@ -650,22 +650,30 @@ bin_time_irt_2pl_abs_sim <- id_sim_gen(num_person=20,num_bills=30,
                                reg_discrim_sd = 1)
 
 bin_time_irt_2pl_abs_est <- id_estimate(idealdata=bin_time_irt_2pl_abs_sim,
-                               model_type=2,nchains=2,
+                               model_type=2,nchains=2,ncores = 10,
                                id_refresh=100,time_var = 10,
-                               niters = 1000,warmup = 500,
+                               niters = 500,warmup = 300,const_type = "items",
                           keep_param=list(person_vary=T,person_int=F,item=TRUE,
                                                            extra=T),
                                vary_ideal_pts = 'random_walk',
                           restrict_var = F,
-                               restrict_ind_high = as.character(sort(bin_time_irt_2pl_abs_sim@simul_data$drift,
+                               restrict_ind_high = as.character(sort(bin_time_irt_2pl_abs_sim@simul_data$true_reg_discrim,
                                                                   
                                                                   decreasing=TRUE,
                                                         index=T)$ix[1]),
-                              restrict_ind_low = as.character(sort(bin_time_irt_2pl_abs_sim@simul_data$drift,
+                              restrict_ind_low = as.character(sort(bin_time_irt_2pl_abs_sim@simul_data$true_reg_discrim,
                                                                    decreasing=F,
                                                         index=T)$ix[1]),
+                          restrict_sd_high = .001,
+                          restrict_sd_low = .001,
+                          fix_high=sort(bin_time_irt_2pl_abs_sim@simul_data$true_reg_discrim,
+                                                                  
+                                                                  decreasing=TRUE)[1],
+                          fix_low=sort(bin_time_irt_2pl_abs_sim@simul_data$true_reg_discrim,
+                                                                  
+                                                                  decreasing=FALSE)[1],
                                fixtype='prefix')
-id_plot_rhats(bin_time_irt_2pl_abs_est)
+id_plot_rhats(bin_time_irt_2pl_abs_est) + theme(text=element_text(family=""))
 ```
 
 ```{r irt_2pl_abs_time_cov_plot}
