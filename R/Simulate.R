@@ -135,11 +135,13 @@ id_sim_gen <- function(num_person=20,num_bills=50,
       # drift parameters
       drift <- prior_func(params=list(N=num_person,mean=0,sd=ideal_pts_sd))
       
+      time_sd_all <- rexp(num_person, 1/time_sd)
+      
       ideal_pts <- lapply(1:num_person, function(i) {
         this_person <- .gen_ts_data(t=time_points,
                                     adj_in=ar_adj[i],
                                     alpha_int=drift[i],
-                                    sigma=time_sd,
+                                    sigma=time_sd_all[i],
                                     init_sides=ideal_t1[i])
         return(this_person)
       }) %>% bind_cols %>% as.matrix
@@ -225,6 +227,8 @@ id_sim_gen <- function(num_person=20,num_bills=50,
                                        num_bills=num_bills,
                                        absence_discrim_sd=absence_discrim_sd,
                                        absence_diff_mean=absence_diff_mean,
+                                       absence_diff=absence_diff,
+                                       reg_diff=reg_diff,
                                        reg_discrim_sd=reg_discrim_sd,
                                        ideal_pts_sd=ideal_pts_sd,
                                        prior_func=prior_func,
@@ -233,7 +237,7 @@ id_sim_gen <- function(num_person=20,num_bills=50,
                                        true_reg_discrim=reg_discrim,
                                        true_abs_discrim=absence_discrim,
                                   true_person_mean=ideal_pts_mean,
-                            time_sd=time_sd,
+                            time_sd=time_sd_all,
                             drift=drift,
                             ar_adj=ar_adj)
 

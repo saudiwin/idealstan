@@ -1578,7 +1578,9 @@ return(as.vector(idx))
     # need to get back to zero index
     if(levels(Y_int)[1]=="0") {
       
-      Y_int <- as.numeric(Y_int) - 1
+      Y_int <- as.numeric(Y_int)
+      
+      Y_int <- ifelse(modelpoints %in% c(1,2),Y_int - 1, Y_int)
       
     } else {
       
@@ -2328,10 +2330,10 @@ return(as.vector(idx))
     
   } # end of if statement differentiating between mapping over items vs. persons
   
-  if(length(obj@score_data@person_cov)>0) {
+  if(!is.null(legis_x) && length(obj@score_data@person_cov)>0) {
     
     # need to do an adjustment by re-calculating ideal point scores and including hierarchical covariates
-    
+    print("Adding in hierarchical covariates values to the time-varying person scores.")
     time_grid <- expand.grid(1:length(unique(obj@score_data@score_matrix$time_id)),
                              unique(as.numeric(obj@score_data@score_matrix$person_id)))
       
