@@ -89,6 +89,7 @@ id_sim_gen <- function(num_person=20,num_bills=50,
     ideal_pts <- as.matrix(prior_func(params=list(N=num_person,mean=0,sd=ideal_pts_sd)))
     drift <- 0
     ar_adj <- 0
+    time_sd_all <- NULL
   } else if(time_points>1) {
     # if more than 1 time point, generate via an AR, random-walk or GP process
     if(time_process=='GP') {
@@ -237,7 +238,8 @@ id_sim_gen <- function(num_person=20,num_bills=50,
                                        true_reg_discrim=reg_discrim,
                                        true_abs_discrim=absence_discrim,
                                   true_person_mean=ideal_pts_mean,
-                            time_sd=time_sd_all,
+                            time_sd=time_sd,
+                            time_sd_all=time_sd_all,
                             drift=drift,
                             ar_adj=ar_adj)
 
