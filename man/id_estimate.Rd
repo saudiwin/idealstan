@@ -43,7 +43,7 @@ id_estimate(
   time_center_cutoff = 50,
   restrict_var = FALSE,
   sample_stationary = FALSE,
-  ar_sd = 2,
+  ar_sd = 1,
   diff_reg_sd = 1,
   diff_miss_sd = 1,
   restrict_sd_high = 0.01,
@@ -59,7 +59,8 @@ id_estimate(
   save_files = NULL,
   pos_discrim = FALSE,
   het_var = TRUE,
-  compile_optim = TRUE,
+  compile_optim = FALSE,
+  debug = FALSE,
   ...
 )
 }
@@ -274,6 +275,9 @@ should be set to FALSE only if all items have a similar variance.}
 
 \item{compile_optim}{Whether to use Stan compile optimization flags (turn off if there
 are any compile issues)}
+
+\item{debug}{For debugging purposes, turns off threading to enable more informative
+error messages from Stan.}
 
 \item{...}{Additional parameters passed on to Stan's sampling engine. See \code{\link[rstan]{stan}} for more information.}
 }

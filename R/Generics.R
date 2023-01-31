@@ -320,6 +320,9 @@ setMethod('sample_model',signature(object='idealdata'),
                                                            refresh=this_data$id_refresh,
                                                            ...)
                 } else {
+                  
+                  browser()
+                  
                   out_model <- object@stanmodel_map$sample(data=this_data,chains=nchains,iter_sampling=niters,
                                                            parallel_chains=nchains,
                                                            threads_per_chain=ifelse(floor(ncores/nchains)>0,floor(ncores/nchains),1),

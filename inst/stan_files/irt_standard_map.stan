@@ -235,10 +235,10 @@ real partial_sum(int[,] y_slice,
         }
 
         if(T<center_cutoff) {
-          
+
           // note this means that we aren't doing any adjustment here for absent person points
 
-          log_prob += normal_lpdf(to_vector(L_tp1_var[2:T,s])|0,1);
+          log_prob += std_normal_lpdf(to_vector(L_tp1_var[2:T,s]));
 
         }
 
@@ -889,6 +889,8 @@ if(S_type==1 && const_type==1) {
   //L_full ~ normal(0,legis_sd);
 
   //all model types
+  
+  print(L_full);
 
   target += reduce_sum(partial_sum,
                       sum_vals,
