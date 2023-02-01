@@ -124,6 +124,7 @@ for(n in start2:end2) {
                                  A_int_free[bb[n]]);
       } else {
         //observed
+        
         log_prob += ordered_logistic_lpmf(Y_int[n]|(sigma_reg_full[bb[n]] + sigma_reg_calc[n - start2 + 1]) *  (L_full[s] + legis_calc[n - start2 + 1]) - B_int_free[bb[n]],
               steps_votes4);
         log_prob += bernoulli_logit_lpmf(0|(sigma_abs_free[bb[n]] + sigma_abs_calc[n - start2 + 1]) * (L_full[s] + legis_calc[n - start2 + 1]) - 
