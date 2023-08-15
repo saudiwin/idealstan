@@ -44,7 +44,7 @@
 #' @param ... Other options passed on to plotting function, currently ignored
 #' @import ggplot2
 #' @import lazyeval
-#' @importFrom rlang parse_quosure as_quosure
+#' @importFrom rlang parse_quo as_quosure
 #' @import ggrepel
 #' @import ggthemes
 #' @export
@@ -338,7 +338,7 @@ id_plot_legis <- function(object,return_data=FALSE,
 #' @param ... Other options passed on to plotting function, currently ignored
 #' @import ggplot2
 #' @import lazyeval
-#' @importFrom rlang parse_quosure as_quosure
+#' @importFrom rlang parse_quo as_quosure
 #' @export
 #' @examples 
 #' 
