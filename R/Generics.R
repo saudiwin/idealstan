@@ -308,14 +308,14 @@ setMethod('sample_model',signature(object='idealdata'),
               print("Estimating model with full Stan MCMC sampler.")
                 
                 if(gpu) {
-                  out_model <- object@stanmodel_gpu$sample(data=this_data,chains=nchains,iter_sampling=niters,
-                                                           parallel_chains=nchains,
-                                                           threads_per_chain=ifelse(floor(ncores/nchains)>0,floor(ncores/nchains),1),
-                                                           iter_warmup=warmup,
-                                                           init=init_vals,
-                                                           output_dir=save_files,
-                                                           refresh=this_data$id_refresh,
-                                                           ...)
+                  # out_model <- object@stanmodel_gpu$sample(data=this_data,chains=nchains,iter_sampling=niters,
+                  #                                          parallel_chains=nchains,
+                  #                                          threads_per_chain=ifelse(floor(ncores/nchains)>0,floor(ncores/nchains),1),
+                  #                                          iter_warmup=warmup,
+                  #                                          init=init_vals,
+                  #                                          output_dir=save_files,
+                  #                                          refresh=this_data$id_refresh,
+                  #                                          ...)
                 } else {
                   out_model <- object@stanmodel_map$sample(data=this_data,chains=nchains,iter_sampling=niters,
                                                            parallel_chains=nchains,

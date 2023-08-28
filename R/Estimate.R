@@ -921,8 +921,8 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   stan_code_map <- system.file("stan_files","irt_standard_map.stan",
                                package="idealstan")
   
-  stan_code_gpu <- system.file("stan_files","irt_standard_gpu.stan",
-                               package="idealstan")
+  # stan_code_gpu <- system.file("stan_files","irt_standard_gpu.stan",
+  #                              package="idealstan")
   
   
   idealdata@stanmodel_map <- stan_code_map %>%
@@ -930,13 +930,13 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                   cpp_options = list(stan_threads = TRUE,
                                      STAN_CPP_OPTIMS=TRUE))
   
-  idealdata@stanmodel_gpu <- stan_code_gpu %>%
-    cmdstan_model(include_paths=dirname(stan_code_map),
-                  cpp_options = list(stan_threads = TRUE,
-                                     STAN_CPP_OPTIMS=TRUE,
-                                     STAN_OPENCL=TRUE,
-                                     opencl_platform_id = 0,
-                                     opencl_device_id = 0))
+  # idealdata@stanmodel_gpu <- stan_code_gpu %>%
+  #   cmdstan_model(include_paths=dirname(stan_code_map),
+  #                 cpp_options = list(stan_threads = TRUE,
+  #                                    STAN_CPP_OPTIMS=TRUE,
+  #                                    STAN_OPENCL=TRUE,
+  #                                    opencl_platform_id = 0,
+  #                                    opencl_device_id = 0))
   
   #Using an un-identified model with variational inference, find those parameters that would be most useful for
   #constraining/pinning to have an identified model for full Bayesian inference
