@@ -887,7 +887,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                         gp_m_sd_par=0.3,
                         gp_min_length=0,
                         cmdstan_path_user=NULL,
-                        gpu=FALSE,
+                        #gpu=FALSE,
                         map_over_id="persons",
                         save_files=NULL,
                         pos_discrim=FALSE,
@@ -927,9 +927,9 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   stan_code_map <- system.file("stan_files","irt_standard_map.stan",
                                package="idealstan")
   
-  stan_code_gpu <- system.file("stan_files","irt_standard_gpu.stan",
-                               package="idealstan")
-  
+  # stan_code_gpu <- system.file("stan_files","irt_standard_gpu.stan",
+  #                              package="idealstan")
+  # 
   if(compile_optim) {
     
     idealdata@stanmodel_map <- stan_code_map %>%
@@ -938,14 +938,14 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                                        STAN_CPP_OPTIMS=TRUE),
                     force_recompile=debug)
     
-    idealdata@stanmodel_gpu <- stan_code_gpu %>%
-      cmdstan_model(include_paths=dirname(stan_code_map),
-                    cpp_options = list(stan_threads = !debug,
-                                       STAN_CPP_OPTIMS=TRUE,
-                                       STAN_OPENCL=TRUE,
-                                       opencl_platform_id = 0,
-                                       opencl_device_id = 0),
-                    force_recompile=debug)
+    # idealdata@stanmodel_gpu <- stan_code_gpu %>%
+    #   cmdstan_model(include_paths=dirname(stan_code_map),
+    #                 cpp_options = list(stan_threads = !debug,
+    #                                    STAN_CPP_OPTIMS=TRUE,
+    #                                    STAN_OPENCL=TRUE,
+    #                                    opencl_platform_id = 0,
+    #                                    opencl_device_id = 0),
+    #                 force_recompile=debug)
     
   } else {
     
@@ -954,13 +954,13 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     cpp_options = list(stan_threads = !debug),
                     force_recompile=debug)
     
-    idealdata@stanmodel_gpu <- stan_code_gpu %>%
-      cmdstan_model(include_paths=dirname(stan_code_map),
-                    cpp_options = list(stan_threads = !debug,
-                                       STAN_OPENCL=TRUE,
-                                       opencl_platform_id = 0,
-                                       opencl_device_id = 0),
-                    force_recompile=debug)
+    # idealdata@stanmodel_gpu <- stan_code_gpu %>%
+    #   cmdstan_model(include_paths=dirname(stan_code_map),
+    #                 cpp_options = list(stan_threads = !debug,
+    #                                    STAN_OPENCL=TRUE,
+    #                                    opencl_platform_id = 0,
+    #                                    opencl_device_id = 0),
+    #                 force_recompile=debug)
     
     
   }
@@ -1497,7 +1497,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   
   outobj <- sample_model(object=idealdata,nchains=nchains,niters=niters,warmup=warmup,ncores=ncores,
                          this_data=this_data,use_vb=use_vb,
-                         gpu=gpu,
+                         #gpu=gpu,
                          save_files=save_files,
                          keep_param=keep_param,
                          tol_rel_obj=tol_rel_obj,within_chain=within_chain,

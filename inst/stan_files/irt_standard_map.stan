@@ -889,8 +889,6 @@ if(S_type==1 && const_type==1) {
   //L_full ~ normal(0,legis_sd);
 
   //all model types
-  
-  print(L_full);
 
   target += reduce_sum(partial_sum,
                       sum_vals,

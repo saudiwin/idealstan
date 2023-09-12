@@ -25,7 +25,7 @@ setClass('idealdata',
                     restrict_data='list',
                     stanmodel='ANY',
                     stanmodel_map="ANY",
-                    stanmodel_gpu='ANY',
+                    #stanmodel_gpu='ANY',
                     n_cats_rat="ANY",
                     n_cats_grm="ANY",
                     order_cats_rat="ANY",
@@ -156,7 +156,7 @@ setMethod('sample_model',signature(object='idealdata'),
           function(object,nchains=4,niters=2000,warmup=floor(niters/2),ncores=NULL,
                    to_use=to_use,this_data=this_data,use_vb=FALSE,within_chain=NULL,
                    keep_param=NULL,
-                   save_files=NULL,gpu=FALSE,
+                   save_files=NULL,
                    tol_rel_obj=NULL,...) {
             
             init_vals <- lapply(1:nchains,.init_stan,
@@ -310,16 +310,16 @@ setMethod('sample_model',signature(object='idealdata'),
             if(use_vb==FALSE) {
               print("Estimating model with full Stan MCMC sampler.")
                 
-                if(gpu) {
-                  out_model <- object@stanmodel_gpu$sample(data=this_data,chains=nchains,iter_sampling=niters,
-                                                           parallel_chains=nchains,
-                                                           threads_per_chain=ifelse(floor(ncores/nchains)>0,floor(ncores/nchains),1),
-                                                           iter_warmup=warmup,
-                                                           init=init_vals,
-                                                           output_dir=save_files,
-                                                           refresh=this_data$id_refresh,
-                                                           ...)
-                } else {
+                # if(gpu) {
+                #   out_model <- object@stanmodel_gpu$sample(data=this_data,chains=nchains,iter_sampling=niters,
+                #                                            parallel_chains=nchains,
+                #                                            threads_per_chain=ifelse(floor(ncores/nchains)>0,floor(ncores/nchains),1),
+                #                                            iter_warmup=warmup,
+                #                                            init=init_vals,
+                #                                            output_dir=save_files,
+                #                                            refresh=this_data$id_refresh,
+                #                                            ...)
+                # } else {
                   
                   out_model <- object@stanmodel_map$sample(data=this_data,chains=nchains,iter_sampling=niters,
                                                            parallel_chains=nchains,
@@ -329,7 +329,7 @@ setMethod('sample_model',signature(object='idealdata'),
                                                            output_dir=save_files,
                                                            refresh=this_data$id_refresh,
                                                            ...)
-                }
+                # }
 
               } else {
                 
