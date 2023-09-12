@@ -309,7 +309,7 @@ setMethod('sample_model',signature(object='idealdata'),
             }
             if(use_vb==FALSE) {
               print("Estimating model with full Stan MCMC sampler.")
-                
+          
                 # if(gpu) {
                 #   out_model <- object@stanmodel_gpu$sample(data=this_data,chains=nchains,iter_sampling=niters,
                 #                                            parallel_chains=nchains,
