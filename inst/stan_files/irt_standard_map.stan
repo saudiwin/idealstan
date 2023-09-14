@@ -7,7 +7,7 @@ functions {
 #include /chunks/calc_rlnorm_gp.stan
 #include /chunks/id_params.stan
 // #include /chunks/r_in.stan
-int r_in(int pos,int[] pos_var) {
+int r_in(int pos,array[] int pos_var) {
   
   for (p in 1:(size(pos_var))) {
     if (pos_var[p]==pos) {
@@ -19,31 +19,31 @@ int r_in(int pos,int[] pos_var) {
 }
 
 
-real partial_sum(int[,] y_slice,
+real partial_sum(array[,] int y_slice,
         int start, int end,
         int T,
         int pos_discrim,
         int gp_N,
         int num_legis,
-        int[] Y_int,
-        real[] Y_cont,
+        array[] int Y_int,
+        array[] real Y_cont,
         int y_int_miss,
         real y_cont_miss,
         int S_type,
         matrix srx_pred,
         matrix sax_pred,
         matrix legis_pred,
-        int[] bb,
-        int[] ll,
-        int[] time,
-        int[] mm,
-        real[] time_ind,
-        int[] n_cats_rat,
+        array[] int bb,
+        array[] int ll,
+        array[] int time,
+        array[] int mm,
+        array[] real time_ind,
+        array[] int n_cats_rat,
         int mod_count, // total number of models
         int tot_cats, // total number of possible ordinal outcomes
-        int[] n_cats_grm,
-        int[] order_cats_rat,
-        int[] order_cats_grm,
+        array[] int n_cats_grm,
+        array[] int order_cats_rat,
+        array[] int order_cats_grm,
         int const_type,
         int restrict_high,
         int restrict_low,
@@ -72,7 +72,7 @@ real partial_sum(int[,] y_slice,
         vector gp_sd_free, // residual GP variation in Y
         vector ls_int, // extra intercepts for non-inflated latent space
         vector ls_int_abs, // extra intercepts for non-inflated latent space
-        vector[] L_tp1_var, // non-centered variance
+        array[] vector L_tp1_var, // non-centered variance
         vector L_AR1, // AR-1 parameters for AR-1 model
         vector sigma_reg_full,
         vector legis_x,
@@ -88,25 +88,25 @@ real partial_sum(int[,] y_slice,
         vector steps_votes8,
         vector steps_votes9,
         vector steps_votes10,
-        vector[] steps_votes_grm3,
-        vector[] steps_votes_grm4,
-        vector[] steps_votes_grm5,
-        vector[] steps_votes_grm6,
-        vector[] steps_votes_grm7,
-        vector[] steps_votes_grm8,
-        vector[] steps_votes_grm9,
-        vector[] steps_votes_grm10,
+        array[] vector steps_votes_grm3,
+        array[] vector steps_votes_grm4,
+        array[] vector steps_votes_grm5,
+        array[] vector steps_votes_grm6,
+        array[] vector steps_votes_grm7,
+        array[] vector steps_votes_grm8,
+        array[] vector steps_votes_grm9,
+        array[] vector steps_votes_grm10,
         vector extra_sd,
         vector time_var_gp_free,
-        vector[] L_tp1,
+        array[] vector L_tp1,
         vector time_var_free,
         real inv_gamma_beta,
         vector gp_length,
         int het_var,
-        int[] type_het_var,
+        array[] int type_het_var,
         int restrict_var,
         int ignore,
-        int[,] ignore_mat) {
+        array[,] int ignore_mat) {
   
   // big loop over states
   real log_prob = 0;
@@ -293,7 +293,7 @@ real partial_sum(int[,] y_slice,
         {
           matrix[T, T] cov; // zero-length if not a GP model
           matrix[T, T] L_cov;// zero-length if not a GP model
-          real time_ind_center[T];
+          array[T] real time_ind_center;
 
           for(t in 1:T)
             time_ind_center[t] = time_ind[t] - mean(time_ind);
@@ -362,8 +362,8 @@ data {
   int N_cont; // if outcome is continuous
   int T; // number of time points
   int grainsize;
-  int Y_int[N_int]; // integer outcome
-  real Y_cont[N_cont]; // continuous outcome
+  array[N_int] int Y_int; // integer outcome
+  array[N_cont] real Y_cont; // continuous outcome
   int ignore;
   int y_int_miss; // missing value for integers
   int<lower=0, upper=1> pos_discrim; // whether to constrain all discrimination parameters to be positive (removes need for further identification conditions)
@@ -377,20 +377,20 @@ data {
   int<lower=1> num_bills;
   int num_bills_grm;
   int num_ls;
-  int ll[N]; // persons/legislators id
-  int bb[N]; // items/bills id
-  int time[N]; // time point id
-  int mm[N]; // model counter id
+  array[N] int ll; // persons/legislators id
+  array[N] int bb; // items/bills id
+  array[N] int time; // time point id
+  array[N] int mm; // model counter id
   matrix[(ignore==1) ? (num_legis * T) : 0,3] ignore_db;
   matrix[N,(N>0) ? LX:0] legis_pred;
   matrix[N,(N>0) ? SRX:0] srx_pred;
   matrix[N,(N>0) ? SAX:0] sax_pred;
   int mod_count; // total number of models
   int tot_cats; // total number of possible ordinal outcomes
-  int n_cats_rat[tot_cats]; // how many outcomes per outcome size int he data
-  int n_cats_grm[tot_cats]; // how many outcomes per outcome size int he data
-  int order_cats_rat[N_int]; // indicator for whether an observation comes from a certain ordinal model
-  int order_cats_grm[N_int]; // indicator for whether an observation comes from a certain ordinal model
+  array[tot_cats] int n_cats_rat; // how many outcomes per outcome size int he data
+  array[tot_cats] int n_cats_grm; // how many outcomes per outcome size int he data
+  array[N_int] int order_cats_rat; // indicator for whether an observation comes from a certain ordinal model
+  array[N_int] int order_cats_grm; // indicator for whether an observation comes from a certain ordinal model
   int const_type; // whether to constrain persons (1) or item discriminations (2)
   int restrict_high; // position of high valued fixed parameter
   int restrict_low; // position of low valued fixed parameter
@@ -411,16 +411,16 @@ data {
   real inv_gamma_beta;
   int<lower=2> center_cutoff;
   int restrict_var; // whether to fix the over-time variance of the first person to a value
-  int sum_vals[S,3]; // what to loop over for reduce sum
+  array[S,3] int sum_vals; // what to loop over for reduce sum
   int time_proc;
-  real time_ind[T]; // the actual indices/values of time points, used for Gaussian processes
+  array[T] real time_ind; // the actual indices/values of time points, used for Gaussian processes
   int zeroes; // whether to use traditional zero-inflation for bernoulli and poisson models
   real gp_sd_par; // residual variation in GP
   real num_diff; // number of time points used to calculate GP length-scale prior
   real m_sd_par; // the marginal standard deviation of the GP
   int min_length; // the minimum threshold for GP length-scale prior
   int num_var;
-  int type_het_var[num_bills];
+  array[num_bills] int type_het_var;
 }
 
 transformed data {
@@ -437,7 +437,7 @@ transformed data {
 	int gp_nT; // used to make L_tp1 go to model block if GPs are used
 	int gp_oT; // used to make L_tp1 go to model block if GPs are used
 	vector[1] gp_length; 
-	int ignore_mat[(ignore==1) ? num_legis : 0, 2];
+	array[(ignore==1) ? num_legis : 0, 2] int ignore_mat;
 	
 	// set mean of log-normal distribution for GP length-scale prior
 	
@@ -535,7 +535,7 @@ parameters {
   vector<lower=0>[time_proc==4 ? 1 : 0] gp_sd_free; // residual GP variation in Y
   vector[num_ls] ls_int; // extra intercepts for non-inflated latent space
   vector[num_ls] ls_int_abs; // extra intercepts for non-inflated latent space
-  vector[T>1 ? num_legis : 0] L_tp1_var[T]; // non-centered variance
+  array[T] vector[T>1 ? num_legis : 0] L_tp1_var; // non-centered variance
   vector<lower=ar1_down,upper=ar1_up>[(T>1 && time_proc==3) ? num_legis : 0] L_AR1; // AR-1 parameters for AR-1 model
   vector[pos_discrim == 0 ? num_bills : 0] sigma_reg_free;
   vector<lower=0>[pos_discrim == 1 ? num_bills : 0] sigma_reg_pos;
@@ -552,14 +552,14 @@ parameters {
   ordered[n_cats_rat[6]-1] steps_votes8;
   ordered[n_cats_rat[7]-1] steps_votes9;
   ordered[n_cats_rat[8]-1] steps_votes10;
-  ordered[n_cats_grm[1]-1] steps_votes_grm3[num_bills_grm];
-  ordered[n_cats_grm[2]-1] steps_votes_grm4[num_bills_grm];
-  ordered[n_cats_grm[3]-1] steps_votes_grm5[num_bills_grm];
-  ordered[n_cats_grm[4]-1] steps_votes_grm6[num_bills_grm];
-  ordered[n_cats_grm[5]-1] steps_votes_grm7[num_bills_grm];
-  ordered[n_cats_grm[6]-1] steps_votes_grm8[num_bills_grm];
-  ordered[n_cats_grm[7]-1] steps_votes_grm9[num_bills_grm];
-  ordered[n_cats_grm[8]-1] steps_votes_grm10[num_bills_grm];
+  array[num_bills_grm] ordered[n_cats_grm[1]-1] steps_votes_grm3;
+  array[num_bills_grm] ordered[n_cats_grm[2]-1] steps_votes_grm4;
+  array[num_bills_grm] ordered[n_cats_grm[3]-1] steps_votes_grm5;
+  array[num_bills_grm] ordered[n_cats_grm[4]-1] steps_votes_grm6;
+  array[num_bills_grm] ordered[n_cats_grm[5]-1] steps_votes_grm7;
+  array[num_bills_grm] ordered[n_cats_grm[6]-1] steps_votes_grm8;
+  array[num_bills_grm] ordered[n_cats_grm[7]-1] steps_votes_grm9;
+  array[num_bills_grm] ordered[n_cats_grm[8]-1] steps_votes_grm10;
   vector<lower=0>[num_var] extra_sd;
   vector<lower=0>[gp_N] time_var_gp_free;
   vector<lower=0>[(T>1 && time_proc!=4 && restrict_var==1) ? num_legis-1 : (T>1 && time_proc!=4 && restrict_var==0 ? num_legis : 0)] time_var_free;
@@ -568,7 +568,7 @@ parameters {
 
 transformed parameters {
 
-  vector[(T>1 && S_type==0) ? num_legis : 0] L_tp1[T];
+  array[T] vector[(T>1 && S_type==0) ? num_legis : 0] L_tp1;
   vector[num_bills] sigma_reg_full;
   vector[(T>1 && S_type==0 && time_proc!=4) ? num_legis : 0] time_var_full;
   //vector[S_type==0 ? gp_N : 0] time_var_gp_full;
@@ -624,8 +624,8 @@ model {
   
   if(time_proc==4 && S_type==0 && T>1)  {
     {
-    matrix[T, T] cov[gp_N]; // zero-length if not a GP model
-    matrix[T, T] L_cov[gp_N];// zero-length if not a GP model
+    array[gp_N] matrix[T, T] cov; // zero-length if not a GP model
+    array[gp_N] matrix[T, T] L_cov;// zero-length if not a GP model
 // chunk giving a GP prior to legislators/persons
 
 for(n in 1:num_legis) {

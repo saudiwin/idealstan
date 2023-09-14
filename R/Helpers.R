@@ -426,7 +426,7 @@
       
       # need to generate time process
       
-      base_params$L_tp1_var <- array(rep(0, `T`*num_var),dim = c(num_var, `T`))
+      base_params$L_tp1_var <- array(rep(0, `T`*num_legis),dim = c(`T`,num_legis ))
           
 
   } else {

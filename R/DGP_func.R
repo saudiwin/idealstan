@@ -269,7 +269,7 @@
     # over posterior draws
     
     cuts_iters <- sapply(1:dim(cutpoints)[1], function(i) {
-        qlogis(pr_vote[,i]) - cutpoints[i,item_points,]
+        qlogis(pr_vote[,i]) - cutpoints[i,item_points]
     },simplify='array')
   }
 
@@ -311,7 +311,7 @@
     over_iters <- sapply(1:ncol(pr_vote), function(d) {
       votes <- sapply(1:dim(cuts_iters)[1], function(i) {
         
-        this_cut <- cuts_iters[i,,d]
+        this_cut <- cuts_iters[i,d]
         
         pr_bottom <- 1 - plogis(this_cut[1])
         
@@ -388,18 +388,18 @@
   if(type=='simulate') {
     votes <- rpois(n = length(pr_vote),lambda = exp(pr_vote))
   } else if(type=='predict') {
-    votes <- apply(pr_vote,2,function(c) rpois(n=length(c),lambda = exp(c)))
+    votes <- apply(pr_vote,2,function(c) rpois(n=length(c),lambda = exp(qlogis(c))))
   } else if(type=='log_lik') {
     if(inflate) {
       over_iters <- sapply(1:ncol(pr_vote), function(c) {
         outdens <- ifelse(is.na(outcome), 
                           dbinom(1,size = 1,prob=pr_absence[,c],log=T),
-                          dpois(outcome,lambda=exp(pr_vote[,c]),log=T))
+                          dpois(outcome,lambda=exp(qlogis(pr_vote[,c])),log=T))
       })
       
     } else {
       over_iters <- sapply(1:ncol(pr_vote), function(c) {
-        outdens <- dpois(outcome,lambda=exp(pr_vote[,c]),log=T)})
+        outdens <- dpois(outcome,lambda=exp(qlogis(pr_vote[,c])),log=T)})
     }
     return(t(over_iters))
   }
@@ -466,18 +466,19 @@
     votes <- rnorm(n = length(pr_vote),mean = pr_vote,sd = sigma_sd)
   } else if(type=='predict') {
 
-    votes <- sapply(1:ncol(pr_vote),function(c) rnorm(n=nrow(pr_vote),mean=pr_vote[,c],sd=sigma_sd[c]))
+    votes <- sapply(1:ncol(pr_vote),function(c) rnorm(n=nrow(pr_vote),mean=qlogis(pr_vote[,c]),sd=sigma_sd[c]))
+    
   } else if(type=='log_lik') {
     if(inflate) {
       over_iters <- sapply(1:ncol(pr_vote), function(c) {
         outdens <- ifelse(is.na(outcome), 
                           dbinom(1,size = 1,prob=pr_absence[,c],log=T),
-                          dnorm(outcome,mean=pr_vote[,c],sd=sigma_sd[c],log=T))
+                          dnorm(outcome,mean=qlogis(pr_vote[,c]),sd=sigma_sd[c],log=T))
       })
       
     } else {
       over_iters <- sapply(1:ncol(pr_vote), function(c) {
-        outdens <- dnorm(outcome,mean=pr_vote[,c],sd=sigma_sd[c],log=T)})
+        outdens <- dnorm(outcome,mean=qlogis(pr_vote[,c]),sd=sigma_sd[c],log=T)})
     }
     return(t(over_iters))
   }
@@ -541,20 +542,20 @@
   
   #standard IRT 2-PL model
   if(type=='simulate') {
-    votes <- rlnorm(n = length(pr_vote),meanlog = exp(pr_vote),sdlog = sigma_sd)
+    votes <- rlnorm(n = length(pr_vote),meanlog = pr_vote,sdlog = sigma_sd)
   } else if(type=='predict') {
-    votes <- sapply(1:ncol(pr_vote),function(c) rlnorm(n=nrow(pr_vote),meanlog=exp(pr_vote[,c]),sdlog=sigma_sd[c]))
+    votes <- sapply(1:ncol(pr_vote),function(c) rlnorm(n=nrow(pr_vote),meanlog=qlogis(pr_vote[,c]),sdlog=sigma_sd[c]))
   } else if(type=='log_lik') {
     if(inflate) {
       over_iters <- sapply(1:ncol(pr_vote), function(c) {
         outdens <- ifelse(is.na(outcomel), 
                           dbinom(1,size = 1,prob=pr_absence[,c],log=T),
-                          dnorm(outcome,mean=pr_vote[,c],sd=sigma_sd[c],log=T))
+                          dlnorm(outcome,mean=qlogis(pr_vote[,c]),sd=sigma_sd[c],log=T))
       })
 
     } else {
       over_iters <- sapply(1:ncol(pr_vote), function(c) {
-        outdens <- dnorm(outcome,mean=pr_vote[,c],sd=sigma_sd[c],log=T)})
+        outdens <- dlnorm(outcome,mean=qlogis(pr_vote[,c]),sd=sigma_sd[c],log=T)})
     }
     return(t(over_iters))
   }
