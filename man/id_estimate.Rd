@@ -54,7 +54,6 @@ id_estimate(
   gp_m_sd_par = 0.3,
   gp_min_length = 0,
   cmdstan_path_user = NULL,
-  gpu = FALSE,
   map_over_id = "persons",
   save_files = NULL,
   pos_discrim = FALSE,
@@ -252,9 +251,6 @@ lower limit. Increasing this value will force a smoother GP fit. It should alway
 \code{cmdstanr} package. Specify a file path  here to use a different \code{cmdtstan}
 installation.}
 
-\item{gpu}{Whether a GPU is available to speed computation (primarily for GP 
-time-varying models).}
-
 \item{map_over_id}{This parameter identifies which ID variable to use to construct the 
 shards for within-chain parallelization. It defaults to \code{"persons"} but can also take
 a value of \code{"items"}. It is recommended to select whichever variable has more
@@ -277,9 +273,12 @@ should be set to FALSE only if all items have a similar variance.}
 are any compile issues)}
 
 \item{debug}{For debugging purposes, turns off threading to enable more informative
-error messages from Stan.}
+error messages from Stan. Also recompiles model objects.}
 
 \item{...}{Additional parameters passed on to Stan's sampling engine. See \code{\link[rstan]{stan}} for more information.}
+
+\item{gpu}{Whether a GPU is available to speed computation (primarily for GP 
+time-varying models).}
 }
 \value{
 A fitted \code{\link{idealstan}} object that contains posterior samples of all parameters either via full Bayesian inference

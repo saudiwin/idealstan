@@ -70,7 +70,7 @@
   } else if(type=='predict') {
     combined <- sapply(1:ncol(pr_absence), function(c) ifelse(pr_absence[,c]<(runif(N)+pr_boost),votes[,c],2))
     # add one to have minimum = 1
-    combined <- combined + 1
+    combined <- combined 
     attr(combined,'output') <- 'all'
     # transpose to make S x N matrix
     return(t(combined))

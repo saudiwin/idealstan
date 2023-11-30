@@ -4,7 +4,14 @@
 \alias{id_plot_ppc,idealstan-method}
 \title{Plot Posterior Predictive Distribution for \code{idealstan} Objects}
 \usage{
-\S4method{id_plot_ppc}{idealstan}(object, ppc_pred = NULL, group = NULL, item = NULL, ...)
+\S4method{id_plot_ppc}{idealstan}(
+  object,
+  ppc_pred = NULL,
+  group = NULL,
+  item = NULL,
+  combine_item = NULL,
+  ...
+)
 }
 \arguments{
 \item{object}{A fitted idealstan object}
@@ -14,7 +21,17 @@
 \item{group}{A character vector of the person or group IDs 
 over which to subset the predictive distribution}
 
+\item{item}{A character vector of the item IDs
+over which to subset the predictive distribution}
+
+\item{combine_item}{Whether to combine all items together (TRUE) or create one plot for each item (FALSE)}
+
 \item{...}{Other arguments passed on to \code{\link[bayesplot]{ppc_bars}}}
+
+\item{type}{Whether to plot "continuous" or "discrete" responses 
+If NULL (default), will use the type specified in the data. 
+However, if both continuous and discrete items are present, will
+throw an error if NULL.}
 }
 \description{
 This function is the actual method for generating posterior distributions 
