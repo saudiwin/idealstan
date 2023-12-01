@@ -75,7 +75,8 @@ id_plot_sims(bin_irt_2pl_est)
 
 bin_irt_2pl_est %>% 
   id_post_pred %>% 
-  id_plot_ppc(bin_irt_2pl_est,ppc_pred=.)
+  id_plot_ppc(bin_irt_2pl_est,ppc_pred=.,combine_item=FALSE,
+              prompt_plot=FALSE)
 
 ```
 
@@ -127,7 +128,7 @@ id_plot_sims(bin_irt_2pl_abs_est)
 
 bin_irt_2pl_abs_est %>% 
   id_post_pred %>% 
-  id_plot_ppc(bin_irt_2pl_abs_est,ppc_pred=.)
+  id_plot_ppc(bin_irt_2pl_abs_est,ppc_pred=.,combine_item=FALSE,prompt_plot=FALSE)
 
 ```
 

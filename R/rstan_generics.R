@@ -470,6 +470,8 @@ setGeneric('id_plot_ppc',signature='object',
 #' @param group A character vector of the person or group IDs 
 #' over which to subset the predictive distribution
 #' @param type Whether to plot "continuous" or "discrete" responses 
+#' @param prompt_plot Whether to expect a user prompt for each plot if multiple plots 
+#' are produced (defaults to TRUE)
 #' If NULL (default), will use the type specified in the data. 
 #' However, if both continuous and discrete items are present, will
 #' throw an error if NULL.
@@ -489,6 +491,7 @@ setMethod('id_plot_ppc',signature(object='idealstan'),function(object,
                                                                type=NULL,
                                                                only_observed=NULL,
                                                                which_mod=NULL,
+                                                               prompt_plot=TRUE,
                                                                ...) {
   
   if(is.null(ppc_pred)) {
@@ -552,7 +555,18 @@ setMethod('id_plot_ppc',signature(object='idealstan'),function(object,
         
         this_sample <- unlist(samples)
         all_data <- bind_rows(datas)
-        this_plot <- do.call(rbind, ppc_pred)
+        
+        # reshape if necessary
+        
+        if(dim(ppc_pred[[1]])[2]==length(unique(all_data$person_id))) {
+          
+          this_plot <- do.call(cbind, ppc_pred)
+          
+        } else {
+          
+          this_plot <- t(do.call(rbind, ppc_pred))
+          
+        }
 
         mod <- which_mod
         group_id <- all_data$group_id
@@ -582,11 +596,11 @@ setMethod('id_plot_ppc',signature(object='idealstan'),function(object,
           y <- as.numeric(y)
           if(grouped) {
             
-            out_plot <- bayesplot::ppc_bars_grouped(y=y,yrep=t(this_plot),
+            out_plot <- bayesplot::ppc_bars_grouped(y=y,yrep=this_plot,
                                                     group=group_var,...)
             
           } else {
-            out_plot <- bayesplot::ppc_bars(y=y,yrep=t(this_plot),...)
+            out_plot <- bayesplot::ppc_bars(y=y,yrep=this_plot,...)
             
             
           }
@@ -607,22 +621,22 @@ setMethod('id_plot_ppc',signature(object='idealstan'),function(object,
             
             #unbounded observed outcomes (i.e., continuous)
             if(grouped) {
-              out_plot <- bayesplot::ppc_violin_grouped(y=y,yrep=t(this_plot),
+              out_plot <- bayesplot::ppc_violin_grouped(y=y,yrep=this_plot,
                                                         group=group_var,
                                                         ...)
             } else {
-              out_plot <- bayesplot::ppc_dens_overlay(y=y,yrep=t(this_plot),...)
+              out_plot <- bayesplot::ppc_dens_overlay(y=y,yrep=this_plot,...)
             }
             
           } else if(type=='discrete') {
             
             if(grouped) {
               
-              out_plot <- bayesplot::ppc_bars_grouped(y=y,yrep=t(this_plot),
+              out_plot <- bayesplot::ppc_bars_grouped(y=y,yrep=this_plot,
                                                       group=group_var,...)
               
             } else {
-              out_plot <- bayesplot::ppc_bars(y=y,yrep=t(this_plot),...)
+              out_plot <- bayesplot::ppc_bars(y=y,yrep=this_plot,...)
             }
           }
           
@@ -633,12 +647,12 @@ setMethod('id_plot_ppc',signature(object='idealstan'),function(object,
           
           if(grouped) {
             
-            out_plot <- bayesplot::ppc_bars_grouped(y=y,yrep=t(this_plot),
+            out_plot <- bayesplot::ppc_bars_grouped(y=y,yrep=this_plot,
                                                     group=group_var,...)
             
           } else {
             
-            out_plot <- bayesplot::ppc_bars(y=y,yrep=t(this_plot),...)
+            out_plot <- bayesplot::ppc_bars(y=y,yrep=this_plot,...)
             
           }
         }
@@ -651,8 +665,7 @@ setMethod('id_plot_ppc',signature(object='idealstan'),function(object,
         
         # likely ordered models that have multiple components
         
-        lapply(this_plot, function(p) {
-          
+        lapply(ppc_pred, function(p) {
           
           all_data <- attr(p,"data")
           mod <- attr(p,"model")
@@ -661,6 +674,14 @@ setMethod('id_plot_ppc',signature(object='idealstan'),function(object,
           bill_points <- all_data$item_id
           time_points <- all_data$time_id
           miss_val <- unique(all_data$miss_val)
+          
+          # reshape if necessary
+          
+          if(dim(p)[2]!=length(unique(all_data$person_id))) {
+            
+            p <- t(p)
+            
+          }
           
           y <- all_data$outcome
           
@@ -684,11 +705,11 @@ setMethod('id_plot_ppc',signature(object='idealstan'),function(object,
             y <- as.numeric(y)
             if(grouped) {
               
-              out_plot <- bayesplot::ppc_bars_grouped(y=as.numeric(factor(y)),yrep=t(p),
+              out_plot <- bayesplot::ppc_bars_grouped(y=as.numeric(factor(y)),yrep=p,
                                                       group=group_var,...)
               
             } else {
-              out_plot <- bayesplot::ppc_bars(y=as.numeric(factor(y)),yrep=t(p),...)
+              out_plot <- bayesplot::ppc_bars(y=as.numeric(factor(y)),yrep=p,...)
               
               
             }
@@ -713,22 +734,22 @@ setMethod('id_plot_ppc',signature(object='idealstan'),function(object,
               
               #unbounded observed outcomes (i.e., continuous)
               if(grouped) {
-                out_plot <- bayesplot::ppc_violin_grouped(y=y,yrep=t(p),
+                out_plot <- bayesplot::ppc_violin_grouped(y=y,yrep=p,
                                                           group=group_var,
                                                           ...)
               } else {
-                out_plot <- bayesplot::ppc_dens_overlay(y=y,yrep=t(p),...)
+                out_plot <- bayesplot::ppc_dens_overlay(y=y,yrep=p,...)
               }
               
             } else if(attr(p,'output_type')=='discrete') {
               
               if(grouped) {
                 
-                out_plot <- bayesplot::ppc_bars_grouped(y=as.numeric(factor(y)),yrep=t(p),
+                out_plot <- bayesplot::ppc_bars_grouped(y=as.numeric(factor(y)),yrep=p,
                                                         group=group_var,...)
                 
               } else {
-                out_plot <- bayesplot::ppc_bars(y=as.numeric(factor(y)),yrep=t(p),...)
+                out_plot <- bayesplot::ppc_bars(y=as.numeric(factor(y)),yrep=p,...)
               }
             }
             
@@ -739,19 +760,21 @@ setMethod('id_plot_ppc',signature(object='idealstan'),function(object,
             
             if(grouped) {
               
-              out_plot <- bayesplot::ppc_bars_grouped(y=as.numeric(factor(y)),yrep=t(p),
+              out_plot <- bayesplot::ppc_bars_grouped(y=as.numeric(factor(y)),yrep=p,
                                                       group=group_var,...)
               
             } else {
               
-              out_plot <- bayesplot::ppc_bars(y=as.numeric(factor(y)),yrep=t(p),...)
+              out_plot <- bayesplot::ppc_bars(y=as.numeric(factor(y)),yrep=p,...)
               
             }
           }
           
+          out_plot <- out_plot + ggtitle(paste0("Item ",unique(all_data$item_id)))
+          
           print(out_plot)
           
-          invisible(readline(prompt="Press [enter] to see next plot"))
+          if(prompt_plot) invisible(readline(prompt="Press [enter] to see next plot: "))
           
         })
         

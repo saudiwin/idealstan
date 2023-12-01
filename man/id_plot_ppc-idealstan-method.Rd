@@ -9,7 +9,11 @@
   ppc_pred = NULL,
   group = NULL,
   item = NULL,
-  combine_item = NULL,
+  combine_item = TRUE,
+  type = NULL,
+  only_observed = NULL,
+  which_mod = NULL,
+  prompt_plot = TRUE,
   ...
 )
 }
@@ -26,12 +30,20 @@ over which to subset the predictive distribution}
 
 \item{combine_item}{Whether to combine all items together (TRUE) or create one plot for each item (FALSE)}
 
-\item{...}{Other arguments passed on to \code{\link[bayesplot]{ppc_bars}}}
+\item{type}{Whether to plot "continuous" or "discrete" responses}
 
-\item{type}{Whether to plot "continuous" or "discrete" responses 
+\item{which_mod}{If you are producing one plot aggregating data across multiple items and 
+you have different item distributions,
+then you need to specify the item type number to plot (see function documentation in
+\code{\link{id_estimate}}).}
+
+\item{prompt_plot}{Whether to expect a user prompt for each plot if multiple plots 
+are produced (defaults to TRUE)
 If NULL (default), will use the type specified in the data. 
 However, if both continuous and discrete items are present, will
 throw an error if NULL.}
+
+\item{...}{Other arguments passed on to \code{\link[bayesplot]{ppc_bars}}}
 }
 \description{
 This function is the actual method for generating posterior distributions 
