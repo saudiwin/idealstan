@@ -2352,9 +2352,9 @@ return(as.vector(idx))
         
       })
       
-      rm(over_persons)
-      
       all_time <- do.call(cbind, over_persons)
+      
+      rm(over_persons)
       
       # make the object to return
       
