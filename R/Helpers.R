@@ -2352,6 +2352,8 @@ return(as.vector(idx))
         
       })
       
+      rm(over_persons)
+      
       all_time <- do.call(cbind, over_persons)
       
       # make the object to return
@@ -2380,7 +2382,7 @@ return(as.vector(idx))
     
   } # end of if statement differentiating between mapping over items vs. persons
   
-  if(!is.null(legis_x) && length(obj@score_data@person_cov)>0) {
+  if(!is.null(legis_x) && sum(c(legis_x))!=0) {
     
     # need to do an adjustment by re-calculating ideal point scores and including hierarchical covariates
     print("Adding in hierarchical covariates values to the time-varying person scores.")
@@ -2389,34 +2391,37 @@ return(as.vector(idx))
     
     b <- obj@stan_samples$draws("legis_x") %>% as_draws_matrix()
     
-    cov_vals <- legis_x %*% t(b) %>% 
-      as_tibble %>% 
-      mutate(time_id=time_id,
-             person_id=person_id) %>% 
-      gather(key="draw",value="person_cov",-person_id, -time_id) %>% 
-      group_by(draw, time_id, person_id) %>% 
-      summarize(person_cov=mean(person_cov)) %>% 
-      ungroup %>% 
-      complete(person_id, time_id, draw) %>% 
-      mutate(person_cov=coalesce(person_cov, 0))
+    gc()
     
-    cov_val_mat <- spread(cov_vals,
-                          key="draw",value="person_cov")
+    # loop over draws d for memory efficiency
     
-    # convert to matrix of correct format
+    print("Collapsing covariates to person and time IDs.")
     
-    col_labs <- paste0("L_tp1[",cov_val_mat$time_id,",",cov_val_mat$person_id,"]")
+    old_dim <- dimnames(legis_x)
     
-    cov_val_mat <- cov_val_mat %>% 
-      select(-person_id,-time_id) %>% 
-      as.matrix %>% 
-      t
+    legis_x <- apply(legis_x, 2, function(c) {
+      
+      aggregate(c, by=list(person_id, time_id), mean) %>% 
+        arrange(Group.1, Group.2) %>% 
+      pull(x)
+      
+    })
     
-    colnames(cov_val_mat) <- col_labs
+    dimnames(legis_x) <- old_dim
     
-    cov_val_mat <- cov_val_mat[,colnames(all_time)]
+    df_id <- tibble(time_id=time_id,
+                    person_id=person_id) %>% 
+      distinct %>% 
+      arrange(person_id, time_id)
     
-    all_time <- all_time + cov_val_mat
+    # missing covariate values (values not observed in data) are set to 0 
+    
+    cov_vals <- legis_x %*% t(b) %>% t
+    colnames(cov_vals) <- paste0("L_tp1[",df_id$time_id,",",df_id$person_id,"]")
+    
+    all_time <- cbind(all_time[,which(colnames(cov_vals) %in% colnames(all_time))] + cov_vals,all_time[,which(!(colnames(all_time) %in% colnames(cov_vals)))])
+    
+    print("Done!")
     
   }
     
