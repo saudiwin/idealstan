@@ -17,6 +17,8 @@ id_plot_legis_dyn(
   highlight = NULL,
   plot_text = TRUE,
   use_ci = TRUE,
+  plot_lines = 0,
+  line_alpha = 0.5,
   person_line_alpha = 0.3,
   person_ci_alpha = 0.8,
   item_plot_type = "non-inflated",
@@ -57,6 +59,13 @@ posterior uncertainty interval (defaults to 0.05).}
 
 \item{use_ci}{Whether or not high-posterior density intervals (credible intervals) should be
 plotted over the estimates (turn off if the plot is too busy)}
+
+\item{plot_lines}{The number of lines of actual draws of time-varying ideal points
+to draw on the plot. Note that these are grouped by persons. Specific draws selected at random
+from total number of draws of the estimation. Default is 0.}
+
+\item{line_alpha}{The opacity of lines plotted over the distribution (should be 
+between 0 and 1, default is 0.5).}
 
 \item{person_line_alpha}{The transparency level of the time-varying ideal point line}
 

@@ -28,6 +28,7 @@ id_estimate(
   fixtype = "prefix",
   const_type = "persons",
   id_refresh = 0,
+  prior_only = FALSE,
   prior_fit = NULL,
   warmup = 1000,
   ncores = 4,
@@ -170,6 +171,9 @@ select the parameters to pin to fixed values.}
 
 \item{id_refresh}{The number of times to report iterations from the variational run used to 
 identify models. Default is 0 (nothing output to console).}
+
+\item{prior_only}{Whether to only sample from priors as opposed to the full model
+with likelihood (the default). Useful for doing posterior predictive checks.}
 
 \item{prior_fit}{If a previous \code{idealstan} model was fit \emph{with the same} data, then the same
 identification constraints can be recycled from the prior fit if the \code{idealstan} object is passed 
