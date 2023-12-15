@@ -718,6 +718,66 @@ id_plot_sims(bin_time_irt_2pl_abs_est)
 
 ```
 
+## Time: Splines
+
+```{r irt_binary_time_spline_inflate}
+
+bin_time_spline_irt_2pl_abs_sim <- id_sim_gen(num_person=100,num_bills=200,inflate=F,
+                               absence_diff_mean=0,
+                               time_process = 'random',
+                               time_points=20,time_sd = .25,diff_sd = 1,
+                               absence_discrim_sd = 1,
+                               reg_discrim_sd = 1)
+
+bin_time_spline_irt_2pl_abs_est <- id_estimate(idealdata=bin_time_spline_irt_2pl_abs_sim,
+                                           use_groups = F,
+                               model_type=1,
+                               time_center_cutoff = 50,
+                               ar1_up = 1,ar1_down = -1,
+                               ncores = parallel::detectCores(),
+                               vary_ideal_pts = 'splines',prior_only = FALSE,
+                               spline_knots=3,spline_degree = 3,
+                               const_type = "items",person_sd = 3,
+                               time_var = 1,restrict_var = F,
+                               restrict_ind_high = as.character(sort(bin_time_spline_irt_2pl_abs_sim@simul_data$true_reg_discrim,
+                                                                     decreasing=TRUE,
+                                                        index=TRUE)$ix[1]),
+                              restrict_ind_low =as.character(sort(bin_time_spline_irt_2pl_abs_sim@simul_data$true_reg_discrim,,
+                                                                   decreasing=F,
+                                                        index=T)$ix[1]),
+                               fixtype='prefix',adapt_delta=0.95)
+id_plot_rhats(bin_time_spline_irt_2pl_abs_est)
+```
+
+```{r irt_2pl_abs_time_spline_cov_plot}
+id_sim_coverage(bin_time_spline_irt_2pl_abs_est) %>% 
+  bind_rows(.id='Parameter') %>% 
+  ggplot(aes(y=avg,x=Parameter)) +
+  stat_summary(fun.args=list(mult=1.96)) + 
+  theme_minimal() 
+```
+
+Let's do a time-varying ideal point plot with true point overlay:
+
+```{r irt_2pl_abs_time_spline_true_pt}
+id_plot_legis_dyn(bin_time_spline_irt_2pl_abs_est,plot_lines = 10) + guides(colour="none") + facet_wrap(~person_id,scales="free_y")
+```
+
+
+```{r irt_2pl_time_ar_spline_resid}
+
+id_plot_sims(bin_time_ar_irt_2pl_abs_est,type='Residuals')
+
+```
+
+```{r irt_2pl_time_spline_abs_RMSE}
+
+id_plot_sims(bin_time_ar_irt_2pl_abs_est)
+
+```
+
+
+
 ## Time: AR(1)
 
 And autocorrelation:
@@ -748,33 +808,6 @@ bin_time_ar_irt_2pl_abs_est <- id_estimate(idealdata=bin_time_ar_irt_2pl_abs_sim
                                                         index=T)$ix[1]),
                                fixtype='prefix')
 id_plot_rhats(bin_time_ar_irt_2pl_abs_est)
-```
-
-```{r irt_2pl_abs_time_ar_cov_plot}
-id_sim_coverage(bin_time_ar_irt_2pl_abs_est) %>% 
-  bind_rows(.id='Parameter') %>% 
-  ggplot(aes(y=avg,x=Parameter)) +
-  stat_summary(fun.args=list(mult=1.96)) + 
-  theme_minimal() 
-```
-
-Let's do a time-varying ideal point plot with true point overlay:
-
-```{r irt_2pl_abs_time_ar_true_pt}
-id_plot_legis_dyn(bin_time_ar_irt_2pl_abs_est,plot_sim = T) +facet_wrap(~person_id)
-```
-
-
-```{r irt_2pl_time_ar_abs_resid}
-
-id_plot_sims(bin_time_ar_irt_2pl_abs_est,type='Residuals')
-
-```
-
-```{r irt_2pl_time_ar_abs_RMSE}
-
-id_plot_sims(bin_time_ar_irt_2pl_abs_est)
-
 ```
 
 

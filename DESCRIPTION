@@ -21,6 +21,7 @@ Imports:
     tidyr,
     stringr,
     bayesplot,
+    tidybayes,
     ggplot2,
     lazyeval,
     rlang,

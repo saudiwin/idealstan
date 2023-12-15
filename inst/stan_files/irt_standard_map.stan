@@ -6,6 +6,7 @@ functions {
 #include /chunks/jacobians.stan
 #include /chunks/calc_rlnorm_gp.stan
 #include /chunks/id_params.stan
+
 // #include /chunks/r_in.stan
 int r_in(int pos,array[] int pos_var) {
   
@@ -106,7 +107,11 @@ real partial_sum(array[,] int y_slice,
         array[] int type_het_var,
         int restrict_var,
         int ignore,
-        array[,] int ignore_mat) {
+        array[,] int ignore_mat,
+        int num_basis,
+        array[] row_vector a_raw,
+        matrix B,
+        int prior_only) {
   
   // big loop over states
   real log_prob = 0;
@@ -122,12 +127,11 @@ real partial_sum(array[,] int y_slice,
     vector[y_slice[r,3] - y_slice[r,2] + 1] legis_calc; // store calculations for hierarchical covariates
     vector[y_slice[r,3] - y_slice[r,2] + 1] sigma_reg_calc;
     vector[y_slice[r,3] - y_slice[r,2] + 1] sigma_abs_calc;
+    row_vector[num_basis] a;
 
     s = y_slice[r,1];
     start2 = y_slice[r,2];
     end2 = y_slice[r,3];
-    
-    
 
     // create covariates
     // depends on whether persons or items are mapped over
@@ -233,8 +237,10 @@ real partial_sum(array[,] int y_slice,
         if(time_proc==3 || (time_proc==2 && const_type==2)) {
           log_prob += normal_lpdf(L_tp1_var[1,s]|0,legis_sd);
         }
+          
+        }
 
-        if(T<center_cutoff) {
+        if(T<center_cutoff && time_proc!=5) {
 
           // note this means that we aren't doing any adjustment here for absent person points
 
@@ -272,6 +278,29 @@ real partial_sum(array[,] int y_slice,
             }
 
         }
+        
+        if(time_proc==5) {
+          
+          log_prob += normal_lpdf(a_raw[s]|0,1);
+          
+          if(restrict_var==1) {
+            
+            if(s==1) {
+              
+              a = a_raw[s]*time_sd;
+              
+            } else {
+              
+              a = a_raw[s]*time_var_free[s-1];
+              
+            }
+            
+            
+          } else {
+            
+            a = a_raw[s]*time_var_free[s];
+            
+          }
 
       }
 
@@ -315,6 +344,13 @@ real partial_sum(array[,] int y_slice,
           }
 
           lt = to_vector(L_tp1_var[,s]);
+        } else if(time_proc==5) {
+          
+          //splines
+          
+#include /chunks/l_splines_map.stan         
+          
+          
         }
 
 
@@ -338,8 +374,10 @@ real partial_sum(array[,] int y_slice,
     } else {
       sigma_abs_calc = rep_vector(0.0,end2 - start2 + 1);
     }
-
-    if(S_type==1) {
+    
+    if(prior_only==0) {
+      
+      if(S_type==1) {
       
 #include /chunks/model_types_mm_map_persons.stan
 
@@ -349,6 +387,10 @@ real partial_sum(array[,] int y_slice,
 
     }
   }
+      
+    }
+
+
   
   return log_prob;
 
@@ -360,8 +402,11 @@ data {
   int N; // total number of observations
   int N_int; // if outcome is an integer
   int N_cont; // if outcome is continuous
+  int T_spline; // whether to use splines
+  int num_basis; // number of basis functions in spline matrix
   int T; // number of time points
   int grainsize;
+  int prior_only; // don't sample the likelihood (prior predictive checks)
   array[N_int] int Y_int; // integer outcome
   array[N_cont] real Y_cont; // continuous outcome
   int ignore;
@@ -385,6 +430,7 @@ data {
   matrix[N,(N>0) ? LX:0] legis_pred;
   matrix[N,(N>0) ? SRX:0] srx_pred;
   matrix[N,(N>0) ? SAX:0] sax_pred;
+  matrix[num_basis, T_spline] B; // spline matrix (if used)
   int mod_count; // total number of models
   int tot_cats; // total number of possible ordinal outcomes
   array[tot_cats] int n_cats_rat; // how many outcomes per outcome size int he data
@@ -535,7 +581,7 @@ parameters {
   vector<lower=0>[time_proc==4 ? 1 : 0] gp_sd_free; // residual GP variation in Y
   vector[num_ls] ls_int; // extra intercepts for non-inflated latent space
   vector[num_ls] ls_int_abs; // extra intercepts for non-inflated latent space
-  array[T] vector[T>1 ? num_legis : 0] L_tp1_var; // non-centered variance
+  array[T] vector[(T>1 && time_proc!=5) ? num_legis : 0] L_tp1_var; // non-centered variance, don't need for splines
   vector<lower=ar1_down,upper=ar1_up>[(T>1 && time_proc==3) ? num_legis : 0] L_AR1; // AR-1 parameters for AR-1 model
   vector[pos_discrim == 0 ? num_bills : 0] sigma_reg_free;
   vector<lower=0>[pos_discrim == 1 ? num_bills : 0] sigma_reg_pos;
@@ -562,21 +608,34 @@ parameters {
   array[num_bills_grm] ordered[n_cats_grm[8]-1] steps_votes_grm10;
   vector<lower=0>[num_var] extra_sd;
   vector<lower=0>[gp_N] time_var_gp_free;
-  vector<lower=0>[(T>1 && time_proc!=4 && restrict_var==1) ? num_legis-1 : (T>1 && time_proc!=4 && restrict_var==0 ? num_legis : 0)] time_var_free;
-  
+  vector<lower=0>[(T>1 && time_proc!=4 && restrict_var==1) ? num_legis-1 : (T>1 && time_proc!=4 ? num_legis : 0)] time_var_free;
+  array[num_basis > 1 ? num_legis : 0] row_vector[num_basis] a_raw;
 }
 
 transformed parameters {
 
   array[T] vector[(T>1 && S_type==0) ? num_legis : 0] L_tp1;
+  array[num_basis > 1 && S_type==0 ? num_legis : 0] row_vector[num_basis] a;
   vector[num_bills] sigma_reg_full;
   vector[(T>1 && S_type==0 && time_proc!=4) ? num_legis : 0] time_var_full;
   //vector[S_type==0 ? gp_N : 0] time_var_gp_full;
   vector[S_type==0 ? gp_N : 0] m_sd_full;
   //vector[S_type==0 ? gp_N : 0] gp_sd_full;
   
-  if(T>1 && time_proc!=4 && S_type==0) {
+  if(T>1 && time_proc!=4 && restrict_var==1) {
     time_var_full = append_row([time_sd]',time_var_free);
+  }
+  
+  if(T>1 && num_basis>1 && S_type==0 && restrict_var==1) {
+    
+    for(n in 1:num_legis)
+              a[n] = a_raw[n] * time_var_full[n];
+    
+  } else if(T>1 && num_basis>1 && S_type==0) {
+    
+    for(n in 1:num_legis)
+              a[n] = a_raw[n] * time_var_free[n];
+    
   }
   
   if(pos_discrim==0) {
@@ -602,8 +661,11 @@ transformed parameters {
       
       L_tp1 = L_tp1_var;
       
-    }  
-  } 
+    }  else if(time_proc==5) {
+    
+#include /chunks/l_splines.stan
+    
+  }
 
 
 }
@@ -770,10 +832,18 @@ for(n in 1:num_legis) {
         
       }
       
-    }
+    } 
     
     
-  }
+  } 
+  
+  if(S_type==0 && time_proc==5 && T>1) {
+    
+    // splines define priors for time series values
+    for(n in 1:num_legis)
+            a_raw[n] ~ normal(0,1);
+    
+  } 
   
   if(S_type==0)  {
     ls_int ~ normal(0,legis_sd);
@@ -798,6 +868,7 @@ for(n in 1:num_legis) {
   }
 
   //priors for parameters not included in reduce_sum
+  // case where restrictions are on persons, not items (S_type==1)
   
 if(S_type==1 && const_type==1) {
   // both ID and map for persons
@@ -979,7 +1050,11 @@ if(S_type==1 && const_type==1) {
         type_het_var,
         restrict_var,
         ignore,
-        ignore_mat);
+        ignore_mat,
+        num_basis,
+        a_raw,
+        B,
+        prior_only);
 
 }
 generated quantities {

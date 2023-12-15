@@ -127,7 +127,10 @@
                time_point=stringr::str_extract(legis,'\\[[0-9]+'),
                time_point=as.numeric(stringr::str_extract(time_point,'[0-9]+')))
     } else {
-      person_params <- person_params %>% gather(key = legis,value=ideal_pts) %>% 
+      
+      person_params <- person_params %>% 
+        mutate(.draw=1:n()) %>% 
+        gather(key = legis,value=ideal_pts,-.draw) %>% 
         group_by(legis) %>% 
         mutate(param_id=stringr::str_extract(legis,'[0-9]+\\]'),
                param_id=as.numeric(stringr::str_extract(param_id,'[0-9]+')),
@@ -151,25 +154,25 @@
         left_join(person_ids,by=c(param_id='group_id_num',
                                   time_point='time_id_num'))
       
-      person_params <- person_params  %>% 
-        group_by(param_id) %>% 
-        arrange(param_id,time_point) %>% 
-        mutate(time_id=rep(sort(unique(person_ids$time_id)),
-                           each=length(unique(person_ids$person_id[person_ids$group_id_num==param_id])))) %>% 
-        fill(everything(), .direction="downup") %>% 
-        ungroup
+      # person_params <- person_params  %>% 
+      #   group_by(param_id) %>% 
+      #   arrange(param_id,time_point) %>% 
+      #   mutate(time_id=rep(sort(unique(person_ids$time_id)),
+      #                      each=length(unique(person_ids$person_id[person_ids$group_id_num==param_id])))) %>% 
+      #   fill(everything(), .direction="downup") %>% 
+      #   ungroup
       
     } else {
       person_params <-  person_params %>% 
         left_join(person_ids,by=c(param_id='person_id_num',
                                   time_point='time_id_num'))
       
-      person_params <- person_params  %>% 
-        group_by(param_id) %>% 
-        arrange(param_id,time_point) %>% 
-        mutate(time_id=sort(unique(person_ids$time_id))) %>% 
-        fill(everything(), .direction="downup") %>% 
-        ungroup
+      # person_params <- person_params  %>% 
+      #   group_by(param_id) %>% 
+      #   arrange(param_id,time_point) %>% 
+      #   mutate(time_id=sort(unique(person_ids$time_id))) %>% 
+      #   fill(everything(), .direction="downup") %>% 
+      #   ungroup
       
     }
     
@@ -425,8 +428,8 @@
           }
       
       # need to generate time process
-      
-      base_params$L_tp1_var <- array(rep(0, `T`*num_legis),dim = c(`T`,num_legis ))
+      if(time_proc!= 5)
+        base_params$L_tp1_var <- array(rep(0, `T`*num_legis),dim = c(`T`,num_legis ))
           
 
   } else {
@@ -1972,6 +1975,7 @@ return(as.vector(idx))
 
 #' Need new function to re-create time-varying ideal points given reduce sum
 #' @importFrom tidyr unite
+#' @importFrom tidybayes spread_draws
 #' @noRd
 .get_varying <- function(obj,
                          legis_x=NULL,
@@ -1990,8 +1994,9 @@ return(as.vector(idx))
       all_time <- obj@stan_samples$draws("L_tp1") %>% as_draws_matrix()
     
   } else {
-      
-    L_tp1_var <- obj@stan_samples$draws("L_tp1_var") %>% as_draws_matrix()
+    
+    if(obj@time_proc!=5) 
+      L_tp1_var <- obj@stan_samples$draws("L_tp1_var") %>% as_draws_matrix()
     
     rebuilt <- TRUE
     
@@ -2001,7 +2006,15 @@ return(as.vector(idx))
         
         L_full <- obj@stan_samples$draws("L_full") %>% as_draws_matrix()
         
-        time_var_free <- obj@stan_samples$draws("time_var_free") %>% as_draws_matrix()
+        if(obj@restrict_var) {
+          
+          time_var_free <- obj@stan_samples$draws("time_var_full") %>% as_draws_matrix()
+          
+        } else {
+          
+          time_var_free <- obj@stan_samples$draws("time_var_free") %>% as_draws_matrix()
+          
+        }
       
       #make a grid, time varying fastest
       
@@ -2311,7 +2324,44 @@ return(as.vector(idx))
       colnames(all_time) <- paste0("L_tp1[",time_grid$Var1,",",time_grid$Var2,"]")
 
       
-    } else {
+    } else if(obj@time_proc==5) { 
+      
+      L_full <- obj@stan_samples$draws("L_full") %>% as_draws_matrix()
+      
+      time_var_free <- obj@stan_samples$draws("time_var_free") %>% as_draws_matrix()
+      
+      stan_data <- obj@this_data
+      
+      a_raw <- obj@stan_samples$draws("a_raw") %>% tidybayes::spread_draws(a_raw[ll,basis])
+      B <- stan_data$B
+      time_ind <- stan_data$time_ind
+      
+      #loop over persons
+      
+      over_persons <- lapply(unique(stan_data$ll), function(l) {
+        
+        this_a <- filter(a_raw, ll==l) %>% 
+          ungroup %>% select(basis,a_raw,.draw,.iteration,.chain) %>% 
+          spread(key="basis",value="a_raw") %>% 
+          select(-.chain, -.iteration, -.draw) %>% as.matrix
+        
+        out_mat <- L_full[,l] %*% matrix(time_ind,nrow=1,ncol=length(time_ind)) + 
+          this_a %*% B
+        
+        out_mat
+        
+      })
+      
+      all_time <- do.call(cbind, over_persons)
+      
+      # make the object to return
+      
+      time_grid <- expand.grid(1:length(unique(stan_data$time)),
+                               unique(as.numeric(stan_data$ll)))
+      
+      colnames(all_time) <- paste0("L_tp1[",time_grid$Var1,",",time_grid$Var2,"]")
+              
+      } else {
       
       # GP or random walk and AR(1) but with centered time series  
       
@@ -2336,19 +2386,37 @@ return(as.vector(idx))
     print("Adding in hierarchical covariates values to the time-varying person scores.")
     time_grid <- expand.grid(1:length(unique(obj@score_data@score_matrix$time_id)),
                              unique(as.numeric(obj@score_data@score_matrix$person_id)))
-      
-      all_time <- sapply(1:nrow(time_grid), function(i) {
-        
-        # loop over all time points and all persons
-        
-        b <- obj@stan_samples$draws("legis_x") %>% as_draws_matrix()
-        
-        all_time[,paste0("L_tp1[",time_grid$Var1[i],",",time_grid$Var2[i],"]")] +
-          apply(legis_x[time_id==time_grid$Var1[i] & person_id==time_grid$Var2[i],,drop=F] %*% t(b),2,mean)
-        
-      })
-      
-      colnames(all_time) <- paste0("L_tp1[",time_grid$Var1,",",time_grid$Var2,"]")
+    
+    b <- obj@stan_samples$draws("legis_x") %>% as_draws_matrix()
+    
+    cov_vals <- legis_x %*% t(b) %>% 
+      as_tibble %>% 
+      mutate(time_id=time_id,
+             person_id=person_id) %>% 
+      gather(key="draw",value="person_cov",-person_id, -time_id) %>% 
+      group_by(draw, time_id, person_id) %>% 
+      summarize(person_cov=mean(person_cov)) %>% 
+      ungroup %>% 
+      complete(person_id, time_id, draw) %>% 
+      mutate(person_cov=coalesce(person_cov, 0))
+    
+    cov_val_mat <- spread(cov_vals,
+                          key="draw",value="person_cov")
+    
+    # convert to matrix of correct format
+    
+    col_labs <- paste0("L_tp1[",cov_val_mat$time_id,",",cov_val_mat$person_id,"]")
+    
+    cov_val_mat <- cov_val_mat %>% 
+      select(-person_id,-time_id) %>% 
+      as.matrix %>% 
+      t
+    
+    colnames(cov_val_mat) <- col_labs
+    
+    cov_val_mat <- cov_val_mat[,colnames(all_time)]
+    
+    all_time <- all_time + cov_val_mat
     
   }
     

@@ -493,6 +493,11 @@ id_plot_legis_var <- function(object,return_data=FALSE,
 #' @param plot_text If \code{TRUE}, will plot \code{person_labels} over the lines.
 #' @param use_ci Whether or not high-posterior density intervals (credible intervals) should be
 #' plotted over the estimates (turn off if the plot is too busy)
+#' @param plot_lines The number of lines of actual draws of time-varying ideal points
+#' to draw on the plot. Note that these are grouped by persons. Specific draws selected at random
+#' from total number of draws of the estimation. Default is 0.
+#' @param line_alpha The opacity of lines plotted over the distribution (should be 
+#' between 0 and 1, default is 0.5).
 #' @param show_true Whether to show the true values of the legislators (if model has been simulated)
 #' @param hpd_limit The greatest absolute difference in high-posterior density interval shown for any point. Useful for excluding imprecisely estimated persons/legislators from the plot. Leave NULL if you don't want to exclude any.
 #' @param sample_persons If you don't want to use the full number of persons/legislators from the model, enter a proportion (between 0 and 1) to select
@@ -540,12 +545,15 @@ id_plot_legis_dyn <- function(object,return_data=FALSE,
                               highlight=NULL,
                               plot_text=TRUE,
                               use_ci=TRUE,
+                              plot_lines=0,
+                              line_alpha=0.5,
                               person_line_alpha=0.3,
                               person_ci_alpha=0.8,
                               item_plot_type='non-inflated',show_true=FALSE,group_color=TRUE,
                               hpd_limit=10,
                               sample_persons=NULL,
                               plot_sim=FALSE,...) {
+  
   
   # prepare data
   
@@ -556,14 +564,16 @@ id_plot_legis_dyn <- function(object,return_data=FALSE,
   if(class(object)=='idealstan') {
     person_params <- .prepare_legis_data(object,
                                          high_limit=high_limit,
-                                         low_limit=low_limit)
+                                         low_limit=low_limit,
+                                         aggregate=FALSE)
     model_wrap <- FALSE
     use_groups <- object@use_groups
   } else {
     # loop over lists
     person_params <- lapply(object,.prepare_legis_data,
                             high_limit=high_limit,
-                            low_limit=low_limit) %>% 
+                            low_limit=low_limit,
+                            aggregate=FALSE) %>% 
       bind_rows(.id='Model')
     
     check_groups <- sapply(object,function(x) x@use_groups)
@@ -577,6 +587,20 @@ id_plot_legis_dyn <- function(object,return_data=FALSE,
     # assume all data is the same
     object <- object[[1]]
   }
+  
+  if(plot_lines>0) {
+    
+    person_lines <- dplyr::filter(ungroup(person_params), 
+                           .draw %in% sample(unique(.draw),
+                                                             plot_lines)) %>% 
+      mutate(line_group1=paste0(person_id, .draw),
+             line_group2=paste0(group_id, .draw))
+    
+  }
+  
+  person_params <- person_params %>% group_by(person_id, time_id, legis, group_id) %>% 
+    summarize(low_pt=quantile(ideal_pts,low_limit),high_pt=quantile(ideal_pts,high_limit),
+              median_pt=median(ideal_pts))
   
   # create item plot data
   
@@ -764,7 +788,6 @@ id_plot_legis_dyn <- function(object,return_data=FALSE,
     
   }
 
-  
   # plot random labels
   
   if(plot_text==TRUE) {
@@ -804,6 +827,21 @@ id_plot_legis_dyn <- function(object,return_data=FALSE,
       guides(color=FALSE,
              fill=FALSE)
   }
+  
+  # add individual draws as lines
+  
+  if(plot_lines>0 && object@use_groups) {
+    
+    outplot <- outplot + geom_line(data=person_lines, aes(y=ideal_pts,x=time_id,group=line_group2),
+                                   alpha=line_alpha)
+    
+  } else if(plot_lines>0 && !object@use_groups) {
+    
+    outplot <- outplot + geom_line(data=person_lines, aes(y=ideal_pts,x=time_id,group=line_group1),
+                                   alpha=line_alpha)
+    
+  }
+    
   
   outplot <- outplot +
     theme_minimal() + ylab("Ideal Point Scale") + xlab("") +

@@ -637,10 +637,14 @@ id_make <- function(score_data=NULL,
 #' shards for within-chain parallelization. It defaults to \code{"persons"} but can also take
 #' a value of \code{"items"}. It is recommended to select whichever variable has more
 #' distinct values to improve parallelization.
-#' @param vary_ideal_pts Default \code{'none'}. If \code{'random_walk'}, \code{'AR1'} or 
-#' \code{'GP'}, a 
+#' @param vary_ideal_pts Default \code{'none'}. If \code{'random_walk'}, \code{'AR1'}, 
+#' \code{'GP'}, or \code{'spline'}, a 
 #' time-varying ideal point model will be fit with either a random-walk process, an 
-#' AR1 process or a Gaussian process. See documentation for more info.
+#' AR1 process, a Gaussian process or a spline. 
+#' Note that the spline is the easiest time-varying model to fit so long as the number
+#' of knots (option \code{spline_knots}) is significantly less than 
+#' the number of time points in the data. 
+#' See documentation for more info.
 #' @param use_subset Whether a subset of the legislators/persons should be used instead of the full response matrix
 #' @param sample_it Whether or not to use a random subsample of the response matrix. Useful for testing.
 #' @param subset_group If person/legislative data was included in the \code{\link{id_make}} function, then you can subset by
@@ -673,6 +677,8 @@ id_make <- function(score_data=NULL,
 #' identification constraints can be recycled from the prior fit if the \code{idealstan} object is passed 
 #' to this option. Note that means that all identification options, like \code{restrict_var}, will also 
 #' be the same
+#' @param prior_only Whether to only sample from priors as opposed to the full model
+#' with likelihood (the default). Useful for doing posterior predictive checks.
 #' @param mpi_export If \code{within_chains="mpi"}, this parameter should refer to the 
 #' directory where the necessary data and Stan code will be exported to. If missing, 
 #' an interactive dialogue will prompt the user for a directory. 
@@ -706,6 +712,16 @@ id_make <- function(score_data=NULL,
 #' @param time_fix_sd The variance of the over-time component of the first person/legislator
 #' is fixed to this value as a reference. 
 #' Default is 0.1.
+#' @param spline_knots Number of knots (essentially, number of points
+#' at which to calculate time-varying ideal points given T time points).
+#' Note that this must be equal or less than the number of time points--and there is
+#' no reason to have it equal to the number of time points as that will likely 
+#' over-fit the data.
+#' @param spline_degree The degree of the spline polynomial. The default is 2 which is a 
+#' quadratic polynomial. A value of 1 will result in independent knots (essentially 
+#' pooled across time points T). A higher value will result in wigglier time series. 
+#' There is no "correct" value but lower values are likely more stable and easier to 
+#' identify.
 #' @param boundary_prior If your time series has very low variance (change over time),
 #' you may want to use this option to put a boundary-avoiding inverse gamma prior on
 #' the time series variance parameters if your model has a lot of divergent transitions. 
@@ -862,6 +878,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                         fixtype='prefix',
                         const_type="persons",
                         id_refresh=0,
+                        prior_only=FALSE,
                         prior_fit=NULL,
                         warmup=1000,ncores=4,
                         use_groups=FALSE,
@@ -870,6 +887,8 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                         person_sd=3,
                         time_fix_sd=.1,
                         time_var=10,
+                        spline_knots=2,
+                        spline_degree=2,
                         ar1_up=1,
                         ar1_down=0,
                         boundary_prior=NULL,
@@ -983,7 +1002,11 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                            none=1,
                            random_walk=2,
                            AR1=3,
-                           GP=4)
+                           GP=4,
+                           splines=5)
+  
+  if(is.null(vary_ideal_pts))
+    stop("Please pass an option to vary_ideal_pts that is either 'none', 'random_walk', 'AR1', 'GP' or 'splines'.")
   
   # number of combined posterior models
   
@@ -1058,6 +1081,35 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                      POSIXlt=unique(as.numeric(idealdata@score_matrix$time_id)),
                      numeric=unique(idealdata@score_matrix$time_id),
                      integer=unique(idealdata@score_matrix$time_id))
+  
+  if(vary_ideal_pts==5) {
+    
+    # code borrowed from very helpful Stan documentation by Milad Kharratzadeh
+    # see https://github.com/milkha/Splines_in_Stan/blob/master/splines_in_stan.pdf
+    
+    if(spline_knots < 1)
+      stop("Please pass a value for spline_knots that is at least equal to 1 but less than the number of time points.")
+    
+    if(spline_degree < 1)
+      stop("Please pass a value for spline_degree that is at least 1.")
+    
+    B <- t(splines::bs(time_ind, 
+                       knots = quantile(time_ind, 
+                                        probs=seq(0,1,length.out=spline_knots)),
+                       degree = spline_degree))
+    
+    num_basis <- nrow(B)
+    
+    T_spline <- length(unique(time_ind))
+      
+  } else {
+    
+    B <- matrix(0L,
+                nrow=1,ncol=1)
+    num_basis <- 1
+    T_spline <- 1
+    
+  }
   
   # now need to generate max/min values for empirical length-scale prior in GP
   if(gp_min_length>=gp_num_diff[1]) {
@@ -1229,6 +1281,9 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     y_int_miss=remove_list$y_int_miss,
                     y_cont_miss=remove_list$y_cont_miss,
                     num_var=num_var,
+                    B=B,
+                    num_basis=num_basis,
+                    T_spline=T_spline,
                     type_het_var=type_het_var,
                     S=nrow(sum_vals),
                     S_type=as.numeric(map_over_id=="persons"),
@@ -1292,7 +1347,8 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     fix_low=0,
                     num_diff=gp_num_diff,
                     pos_discrim=as.integer(pos_discrim),
-                    grainsize=grainsize)
+                    grainsize=grainsize,
+                    prior_only=as.integer(prior_only))
   
   idealdata <- id_model(object=idealdata,fixtype=fixtype,this_data=this_data,
                         nfix=nfix,restrict_ind_high=restrict_ind_high,
@@ -1425,6 +1481,9 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     y_cont_miss=remove_list$y_cont_miss,
                     num_var=num_var,
                     type_het_var=type_het_var,
+                    B=B,
+                    num_basis=num_basis,
+                    T_spline=T_spline,
                     S=nrow(sum_vals),
                     S_type=as.numeric(map_over_id=="persons"),
                     T=remove_list$max_t,
@@ -1486,7 +1545,8 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     fix_low=idealdata@restrict_num_low,
                     num_diff=gp_num_diff,
                     pos_discrim=as.integer(pos_discrim),
-                    grainsize=grainsize)
+                    grainsize=grainsize,
+                    prior_only=as.integer(prior_only))
   
   # need to save n_cats
   

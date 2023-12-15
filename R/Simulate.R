@@ -446,7 +446,7 @@ id_sim_coverage <- function(obj,rep=1,quantiles=c(.95,.05)) {
   
   over_params <- function(est_param,true_param) {
     
-    if(class(true_param)=="matrix") {
+    if("matrix" %in% class(true_param)) {
       
       num_person <- length(unique(as.numeric(obj@score_data@score_matrix$person_id)))
       time <- length(unique(as.numeric(obj@score_data@score_matrix$time_id)))
@@ -463,7 +463,7 @@ id_sim_coverage <- function(obj,rep=1,quantiles=c(.95,.05)) {
         
         return(this_param)
       })
-    } else if(class(true_param)=="numeric") {
+    } else if("numeric" %in% class(true_param)) {
       param_length <- ncol(est_param)
       all_covs <- sapply(1:param_length, function(i) {
          high <- quantile(est_param[,i],.95)
@@ -527,7 +527,7 @@ id_sim_resid <- function(obj,rep=1) {
     
     param_length <- ncol(est_param)
 
-  if(class(true_param)=='matrix') {
+  if('matrix' %in% class(true_param)) {
     
     num_person <- length(unique(as.numeric(obj@score_data@score_matrix$person_id)))
     time <- length(unique(as.numeric(obj@score_data@score_matrix$time_id)))
@@ -543,7 +543,7 @@ id_sim_resid <- function(obj,rep=1) {
       return(this_param)
     })
     
-  } else if(class(true_param)=='numeric') {
+  } else if('numeric' %in% class(true_param)) {
     
     all_resid <- sapply(1:param_length, function(i) {
       this_param <- (est_param[,i] - true_param[i])

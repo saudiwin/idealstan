@@ -37,6 +37,8 @@ id_estimate(
   person_sd = 3,
   time_fix_sd = 0.1,
   time_var = 10,
+  spline_knots = 2,
+  spline_degree = 2,
   ar1_up = 1,
   ar1_down = 0,
   boundary_prior = NULL,
@@ -77,10 +79,14 @@ To use correctly, the value for
 zero must be passed as the \code{miss_val} option to \code{\link{id_make}} before
 running a model so that zeroes are coded as missing data.}
 
-\item{vary_ideal_pts}{Default \code{'none'}. If \code{'random_walk'}, \code{'AR1'} or 
-\code{'GP'}, a 
+\item{vary_ideal_pts}{Default \code{'none'}. If \code{'random_walk'}, \code{'AR1'}, 
+\code{'GP'}, or \code{'spline'}, a 
 time-varying ideal point model will be fit with either a random-walk process, an 
-AR1 process or a Gaussian process. See documentation for more info.}
+AR1 process, a Gaussian process or a spline. 
+Note that the spline is the easiest time-varying model to fit so long as the number
+of knots (option \code{spline_knots}) is significantly less than 
+the number of time points in the data. 
+See documentation for more info.}
 
 \item{keep_param}{A list with logical values for different categories of paremeters which
 should/should not be kept following estimation. Can be any/all of \code{person_int} for 
@@ -190,6 +196,18 @@ estimated instead of individual parameters.}
 \item{time_fix_sd}{The variance of the over-time component of the first person/legislator
 is fixed to this value as a reference. 
 Default is 0.1.}
+
+\item{spline_knots}{Number of knots (essentially, number of points
+at which to calculate time-varying ideal points given T time points).
+Note that this must be equal or less than the number of time points--and there is
+no reason to have it equal to the number of time points as that will likely 
+over-fit the data.}
+
+\item{spline_degree}{The degree of the spline polynomial. The default is 2 which is a 
+quadratic polynomial. A value of 1 will result in independent knots (essentially 
+pooled across time points T). A higher value will result in wigglier time series. 
+There is no "correct" value but lower values are likely more stable and easier to 
+identify.}
 
 \item{boundary_prior}{If your time series has very low variance (change over time),
 you may want to use this option to put a boundary-avoiding inverse gamma prior on
