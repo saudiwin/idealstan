@@ -1084,18 +1084,39 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   
   if(vary_ideal_pts==5) {
     
-    # code borrowed from very helpful Stan documentation by Milad Kharratzadeh
-    # see https://github.com/milkha/Splines_in_Stan/blob/master/splines_in_stan.pdf
-    
-    if(spline_knots < 1)
-      stop("Please pass a value for spline_knots that is at least equal to 1 but less than the number of time points.")
+    if(length(spline_knots)==1 && spline_knots < 1)
+      stop("Please pass a value for the number of spline_knots that is at least equal to 1 but less than the number of time points.")
     
     if(spline_degree < 1)
       stop("Please pass a value for spline_degree that is at least 1.")
     
+    # code borrowed from very helpful Stan documentation by Milad Kharratzadeh
+    # see https://github.com/milkha/Splines_in_Stan/blob/master/splines_in_stan.pdf
+    
+    # need to rescale time_ind to an interval that is easy for sampling
+    # first get location of knots if they are present
+    
+    if(length(spline_knots)>1) {
+      
+      spline_knots <- which(spline_knots %in% time_ind)
+      
+    }
+    old_bounds <- c(min(time_ind,na.rm=T),max(time_ind, na.rm=T))
+    time_ind <- 2 * ((time_ind - min(time_ind))/(max(time_ind) - min(time_ind))) - 1
+    
+    if(length(spline_knots)>1) {
+      
+      spline_knots <- time_ind[spline_knots]
+      
+    } else {
+      
+      spline_knots <- quantile(time_ind, 
+                               probs=seq(0,1,length.out=spline_knots))
+      
+    }
+    
     B <- t(splines::bs(time_ind, 
-                       knots = quantile(time_ind, 
-                                        probs=seq(0,1,length.out=spline_knots)),
+                       knots = spline_knots,
                        degree = spline_degree))
     
     num_basis <- nrow(B)

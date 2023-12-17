@@ -93,17 +93,49 @@ id_plot_legis <- function(object,return_data=FALSE,
                        hpd_limit=10,
                        sample_persons=NULL,...) {
   
+  if(!is.null(include)) {
+    if(use_groups) {
+      include <- which(unique(object@score_data@score_matrix$group_id) %in% include)
+    } else {
+      include <- include <- which(unique(object@score_data@score_matrix$person_id) %in% include)
+    }
+    
+  }
+  
+  if(!is.null(sample_persons)) {
+    if(!is.numeric(sample_persons) && !(sample_persons>0 && sample_persons<1)) {
+      stop('Please enter a fraction to sample from between 0 and 1 as a numeric value.')
+    }
+    
+    if(use_groups) {
+      
+      to_sample <- sample(unique(object@score_data@score_matrix$group_id),
+                          round(sample_persons*length(unique(object@score_data@score_matrix$group_id))))
+      include <-  which(object@score_data@score_matrix$group_id %in% to_sample)
+      
+    } else {
+      
+      to_sample <- sample(unique(object@score_data@score_matrix$person_id),
+                          round(sample_persons*length(unique(object@score_data@score_matrix$person_id))))
+      include <-  which(object@score_data@score_matrix$person_id %in% to_sample)
+      
+    }
+    
+  }
+  
+  
   if(class(object)=='idealstan') {
     person_params <- .prepare_legis_data(object,
                                          high_limit=high_limit,
-                                         low_limit=low_limit)
+                                         low_limit=low_limit,include=include)
     model_wrap <- FALSE
     use_groups <- object@use_groups
   } else {
     # loop over lists
     person_params <- lapply(object,.prepare_legis_data,
                             high_limit=high_limit,
-                            low_limit=low_limit) %>% 
+                            low_limit=low_limit,
+                            include=include) %>% 
       bind_rows(.id='Model')
     
     check_groups <- sapply(object,function(x) x@use_groups)
@@ -135,14 +167,14 @@ id_plot_legis <- function(object,return_data=FALSE,
 
   # sample for plot only
   
-  if(!is.null(sample_persons)) {
-    if(!is.numeric(sample_persons) && !(sample_persons>0 && sample_persons<1)) {
-      stop('Please enter a fraction to sample from between 0 and 1 as a numeric value.')
-    }
-    to_sample <- sample(1:nrow(person_params),round(sample_persons*nrow(person_params)))
-    person_params <- slice(person_params,to_sample)
-  }
-  
+  # if(!is.null(sample_persons)) {
+  #   if(!is.numeric(sample_persons) && !(sample_persons>0 && sample_persons<1)) {
+  #     stop('Please enter a fraction to sample from between 0 and 1 as a numeric value.')
+  #   }
+  #   to_sample <- sample(1:nrow(person_params),round(sample_persons*nrow(person_params)))
+  #   person_params <- slice(person_params,to_sample)
+  # }
+  # 
   
   # Rescale simulated values to ensure that they match estimated values in terms of scale multiplicativity
 
@@ -561,11 +593,45 @@ id_plot_legis_dyn <- function(object,return_data=FALSE,
   group_labels <- quo(group_id)
   already_facet <- FALSE
   
+  if(!is.null(include)) {
+    if(object@use_groups) {
+      include <- which(unique(object@score_data@score_matrix$group_id) %in% include)
+    } else {
+      include <- which(unique(object@score_data@score_matrix$person_id) %in% include)
+    }
+    
+    if(length(include)==0)
+      stop("You specified persons or groups that were not in the data. Please the labels as you passed them to the id_make function.")
+    
+  }
+  
+    if(!is.null(sample_persons)) {
+      if(!is.numeric(sample_persons) && !(sample_persons>0 && sample_persons<1)) {
+        stop('Please enter a fraction to sample from between 0 and 1 as a numeric value.')
+      }
+      
+      if(object@use_groups) {
+        
+        to_sample <- sample(unique(object@score_data@score_matrix$group_id),
+                            round(sample_persons*length(unique(object@score_data@score_matrix$group_id))))
+        include <-  which(object@score_data@score_matrix$group_id %in% to_sample)
+        
+      } else {
+        
+        to_sample <- sample(unique(object@score_data@score_matrix$person_id),
+                            round(sample_persons*length(unique(object@score_data@score_matrix$person_id))))
+        include <-  which(object@score_data@score_matrix$person_id %in% to_sample)
+        
+      }
+
+    }
+  
   if(class(object)=='idealstan') {
     person_params <- .prepare_legis_data(object,
                                          high_limit=high_limit,
                                          low_limit=low_limit,
-                                         aggregate=FALSE)
+                                         sample_draws=plot_lines,
+                                         include=include)
     model_wrap <- FALSE
     use_groups <- object@use_groups
   } else {
@@ -573,7 +639,8 @@ id_plot_legis_dyn <- function(object,return_data=FALSE,
     person_params <- lapply(object,.prepare_legis_data,
                             high_limit=high_limit,
                             low_limit=low_limit,
-                            aggregate=FALSE) %>% 
+                            sample_draws=plot_lines,
+                            include=include) %>% 
       bind_rows(.id='Model')
     
     check_groups <- sapply(object,function(x) x@use_groups)
@@ -590,17 +657,13 @@ id_plot_legis_dyn <- function(object,return_data=FALSE,
   
   if(plot_lines>0) {
     
-    person_lines <- dplyr::filter(ungroup(person_params), 
+    person_lines <- dplyr::filter(ungroup(attr(person_params,"draws")), 
                            .draw %in% sample(unique(.draw),
                                                              plot_lines)) %>% 
       mutate(line_group1=paste0(person_id, .draw),
              line_group2=paste0(group_id, .draw))
     
   }
-  
-  person_params <- person_params %>% group_by(person_id, time_id, legis, group_id) %>% 
-    summarize(low_pt=quantile(ideal_pts,low_limit),high_pt=quantile(ideal_pts,high_limit),
-              median_pt=median(ideal_pts))
   
   # create item plot data
   
@@ -653,15 +716,6 @@ id_plot_legis_dyn <- function(object,return_data=FALSE,
       
       person_params <- filter(person_params,item_type==item_plot_type)
     } 
-    
-  }
-  
-  if(!is.null(include)) {
-    if(use_groups) {
-      person_params <- filter(person_params, group_id %in% include)
-    } else {
-      person_params <- filter(person_params, person_id %in% include)
-    }
     
   }
   
@@ -824,8 +878,8 @@ id_plot_legis_dyn <- function(object,return_data=FALSE,
   
   if(group_color==F || (group_color==F && is.null(highlight))) {
     output <- outplot + 
-      guides(color=FALSE,
-             fill=FALSE)
+      guides(color="none",
+             fill="none")
   }
   
   # add individual draws as lines

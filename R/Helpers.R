@@ -89,6 +89,56 @@
   
 }
 
+#' Helper function for normalization
+#' @noRd
+.normalize <- function(outcome,true_bounds=NULL) {
+  
+  if(is.character(outcome)) {
+    
+    stop("Please do not pass a character vector as a response/outcome.\nThat really doesn't make any sense.")
+    
+  }
+  
+  if(is.factor(outcome)) {
+    
+    message("Converting factor response variable to numeric.")
+    
+    outcome <- as.numeric(outcome)
+    
+  }
+  
+  if(is.na(min(outcome, na.rm=T)) || is.infinite(min(outcome, na.rm=T))) {
+    
+    stop("The vector does not have enough non-missing data.")
+    
+  }
+  
+  if(!is.null(true_bounds)) {
+    
+    min_out <- true_bounds[1]
+    max_out <- true_bounds[2]
+  } else {
+    
+    min_out <- min(outcome, na.rm=T)
+    max_out <- max(outcome, na.rm=T)
+    
+    message(paste0("Normalizing using the observed bounds of ",min_out, " - ",
+                   max_out,". If these are incorrect, please pass the bounds to use to the true_bounds parameter."))
+    
+  }
+  
+  trans_out <- (outcome - min_out) / (max_out - min_out)
+  
+  # handle values very close to 0
+  
+  attr(trans_out, "upper_bound") <- max_out
+  attr(trans_out, "lower_bound") <- min_out
+  
+  return(trans_out)
+  
+  
+}
+
 
 
 #' Helper function for preparing person ideal point plot data
@@ -96,12 +146,19 @@
 .prepare_legis_data <- function(object,
                                 high_limit=NULL,
                                 low_limit=NULL,
-                                aggregate=TRUE,
-                                type='ideal_pts') {
+                                type='ideal_pts',
+                                sample_draws=0,
+                                include=NULL) {
   
   if(length(unique(object@score_data@score_matrix$time_id))>1 && type!='variance') {
     
     person_params <- object@time_varying 
+    
+    if(!is.null(include)) {
+
+      person_params <- person_params[,as.numeric(stringr::str_extract(colnames(person_params),'[0-9]+(?=\\])')) %in% include]
+      
+    }
     
     if("draws_matrix" %in% class(person_params)) {
       
@@ -115,9 +172,20 @@
       
     }
     
-   
+    if(sample_draws>0) {
+      
+      person_params_draws <- slice(person_params,sample(1:n(),
+                                                        size = sample_draws)) %>% 
+        mutate(.draw=1:n()) %>% 
+        gather(key = legis,value=ideal_pts,-.draw) %>% 
+        group_by(legis) %>% 
+        mutate(param_id=stringr::str_extract(legis,'[0-9]+\\]'),
+               param_id=as.numeric(stringr::str_extract(param_id,'[0-9]+')),
+               time_point=stringr::str_extract(legis,'\\[[0-9]+'),
+               time_point=as.numeric(stringr::str_extract(time_point,'[0-9]+')))
+      
+    }
     
-    if(aggregate) {
       person_params <- person_params %>% gather(key = legis,value=ideal_pts) %>% 
         group_by(legis) %>% 
         summarize(low_pt=quantile(ideal_pts,low_limit),high_pt=quantile(ideal_pts,high_limit),
@@ -126,17 +194,6 @@
                param_id=as.numeric(stringr::str_extract(param_id,'[0-9]+')),
                time_point=stringr::str_extract(legis,'\\[[0-9]+'),
                time_point=as.numeric(stringr::str_extract(time_point,'[0-9]+')))
-    } else {
-      
-      person_params <- person_params %>% 
-        mutate(.draw=1:n()) %>% 
-        gather(key = legis,value=ideal_pts,-.draw) %>% 
-        group_by(legis) %>% 
-        mutate(param_id=stringr::str_extract(legis,'[0-9]+\\]'),
-               param_id=as.numeric(stringr::str_extract(param_id,'[0-9]+')),
-               time_point=stringr::str_extract(legis,'\\[[0-9]+'),
-               time_point=as.numeric(stringr::str_extract(time_point,'[0-9]+')))
-    }
 
     # get ids out 
     
@@ -154,25 +211,30 @@
         left_join(person_ids,by=c(param_id='group_id_num',
                                   time_point='time_id_num'))
       
-      # person_params <- person_params  %>% 
-      #   group_by(param_id) %>% 
-      #   arrange(param_id,time_point) %>% 
-      #   mutate(time_id=rep(sort(unique(person_ids$time_id)),
-      #                      each=length(unique(person_ids$person_id[person_ids$group_id_num==param_id])))) %>% 
-      #   fill(everything(), .direction="downup") %>% 
-      #   ungroup
+      if(sample_draws>0) {
+        
+        person_params_draws <-  person_params_draws %>% 
+          left_join(person_ids,by=c(param_id='group_id_num',
+                                    time_point='time_id_num'))
+        
+        attr(person_params, "draws") <- person_params_draws
+        
+      }
       
     } else {
       person_params <-  person_params %>% 
         left_join(person_ids,by=c(param_id='person_id_num',
                                   time_point='time_id_num'))
       
-      # person_params <- person_params  %>% 
-      #   group_by(param_id) %>% 
-      #   arrange(param_id,time_point) %>% 
-      #   mutate(time_id=sort(unique(person_ids$time_id))) %>% 
-      #   fill(everything(), .direction="downup") %>% 
-      #   ungroup
+      if(sample_draws>0) {
+        
+        person_params_draws <-  person_params_draws %>% 
+          left_join(person_ids,by=c(param_id='person_id_num',
+                                    time_point='time_id_num'))
+        
+        attr(person_params, "draws") <- person_params_draws
+        
+      }
       
     }
     
@@ -185,7 +247,15 @@
     if(type=='ideal_pts') {
       
         
-        person_params <- object@stan_samples$draws('L_full') %>% as_draws_df %>% 
+        person_params <- object@stan_samples$draws('L_full') %>% as_draws_df 
+        
+        if(!is.null(include)) {
+          
+          browser()
+          
+        }
+        
+        person_params <- person_params %>% 
           dplyr::select(-`.chain`,-`.iteration`,-`.draw`)
       
       
