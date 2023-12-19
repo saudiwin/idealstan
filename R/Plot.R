@@ -528,7 +528,7 @@ id_plot_legis_var <- function(object,return_data=FALSE,
 #' @param plot_lines The number of lines of actual draws of time-varying ideal points
 #' to draw on the plot. Note that these are grouped by persons. Specific draws selected at random
 #' from total number of draws of the estimation. Default is 0.
-#' @param line_alpha The opacity of lines plotted over the distribution (should be 
+#' @param draw_line_alpha The opacity of lines plotted over the distribution (should be 
 #' between 0 and 1, default is 0.5).
 #' @param show_true Whether to show the true values of the legislators (if model has been simulated)
 #' @param hpd_limit The greatest absolute difference in high-posterior density interval shown for any point. Useful for excluding imprecisely estimated persons/legislators from the plot. Leave NULL if you don't want to exclude any.
@@ -578,7 +578,7 @@ id_plot_legis_dyn <- function(object,return_data=FALSE,
                               plot_text=TRUE,
                               use_ci=TRUE,
                               plot_lines=0,
-                              line_alpha=0.5,
+                              draw_line_alpha=0.5,
                               person_line_alpha=0.3,
                               person_ci_alpha=0.8,
                               item_plot_type='non-inflated',show_true=FALSE,group_color=TRUE,
@@ -779,7 +779,7 @@ id_plot_legis_dyn <- function(object,return_data=FALSE,
     
     outplot <- outplot + 
       geom_line(aes_(y=~true_pt,colour=base_id),
-                alpha=person_ci_alpha,
+                alpha=person_line_alpha,
                 size=line_size)
     
   } else {
@@ -788,13 +788,13 @@ id_plot_legis_dyn <- function(object,return_data=FALSE,
         outplot <- outplot + 
           geom_line(aes_(y=~median_pt,group=base_id,
                          colour=~Model),
-                    alpha=person_ci_alpha,
+                    alpha=person_line_alpha,
                     size=line_size)
       } else {
         outplot <- outplot + 
           geom_line(aes_(y=~median_pt,group=base_id,
                          colour=~group_id),
-                    alpha=person_ci_alpha,
+                    alpha=person_line_alpha,
                     size=line_size)
       }
       
@@ -802,7 +802,7 @@ id_plot_legis_dyn <- function(object,return_data=FALSE,
       
       outplot <- outplot + 
         geom_line(aes_(y=~median_pt,group=base_id),
-                  alpha=person_ci_alpha,
+                  alpha=person_line_alpha,
                   size=line_size)
     }
   }
@@ -887,12 +887,12 @@ id_plot_legis_dyn <- function(object,return_data=FALSE,
   if(plot_lines>0 && object@use_groups) {
     
     outplot <- outplot + geom_line(data=person_lines, aes(y=ideal_pts,x=time_id,group=line_group2),
-                                   alpha=line_alpha)
+                                   alpha=draw_line_alpha)
     
   } else if(plot_lines>0 && !object@use_groups) {
     
     outplot <- outplot + geom_line(data=person_lines, aes(y=ideal_pts,x=time_id,group=line_group1),
-                                   alpha=line_alpha)
+                                   alpha=draw_line_alpha)
     
   }
     
