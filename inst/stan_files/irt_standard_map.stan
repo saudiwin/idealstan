@@ -249,7 +249,7 @@ real partial_sum(array[,] int y_slice,
 
         }
 
-        if(restrict_var==1) {
+        if(restrict_var==1 && time_proc!=4) {
 
           if(s>1) {
 
@@ -265,7 +265,7 @@ real partial_sum(array[,] int y_slice,
 
           }
 
-        } else {
+        } else if(time_proc!=4) {
 
           if(inv_gamma_beta>0) {
 
@@ -325,15 +325,14 @@ real partial_sum(array[,] int y_slice,
           array[T] real time_ind_center;
 
           for(t in 1:T)
-            time_ind_center[t] = time_ind[t] - mean(time_ind);
 
           // chunk giving a GP prior to legislators/persons
             //create covariance matrices given current values of hiearchical parameters
             if(s==1) {
               //cov =   gp_exp_quad_cov(time_ind, m_sd_par, gp_length[1]) + diag_matrix(rep_vector(square(gp_sd_par),T));
-              cov =   gp_exp_quad_cov(time_ind_center, m_sd_par, time_var_gp_free[s]) + diag_matrix(rep_vector(gp_sd_free[1],T));
+              cov =   gp_exp_quad_cov(time_ind, m_sd_par, time_var_gp_free[s]) + diag_matrix(rep_vector(gp_sd_free[1],T));
             } else {
-              cov =   gp_exp_quad_cov(time_ind_center, m_sd_free[s-1], time_var_gp_free[s]) + diag_matrix(rep_vector(gp_sd_free[1],T));
+              cov =   gp_exp_quad_cov(time_ind, m_sd_free[s-1], time_var_gp_free[s]) + diag_matrix(rep_vector(gp_sd_free[1],T));
             }
 
             L_cov = cholesky_decompose(cov);
