@@ -247,13 +247,25 @@
     if(type=='ideal_pts') {
       
         
-        person_params <- object@stan_samples$draws('L_full') %>% as_draws_df 
+        person_params <- object@stan_samples$draws('L_full')
         
         if(!is.null(include)) {
           
-          browser()
+
+          if(length(dim(person_params))>2) {
+            
+            person_params <- person_params[,,as.numeric(stringr::str_extract(attr(person_params,"dimnames")$variable,'[0-9]+(?=\\])')) %in% include]
+            
+          } else {
+            
+            person_params <- person_params[,as.numeric(stringr::str_extract(attr(person_params,"dimnames")$variable,'[0-9]+(?=\\])')) %in% include]
+            
+          }
+          
           
         }
+        
+        person_params <- as_draws_df(person_params)
         
         person_params <- person_params %>% 
           dplyr::select(-`.chain`,-`.iteration`,-`.draw`)
@@ -291,16 +303,11 @@
     
     person_ids <- left_join(person_ids,person_data)
     
-    if(aggregate) {
-      person_params <-  person_params %>% 
+    person_params <-  person_params %>% 
         group_by(legis) %>% 
         summarize(low_pt=quantile(ideal_pts,low_limit),high_pt=quantile(ideal_pts,high_limit),
                   median_pt=median(ideal_pts)) %>% 
         left_join(person_ids,by=c(legis='long_name'))
-    } else {
-      person_params <-  person_params %>% 
-        left_join(person_ids,by=c(legis='long_name'))
-    }
 
     
   }
