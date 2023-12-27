@@ -2,7 +2,7 @@
 Chop up the parameter vector to be identified
 By constraining two parameters to almost-fixed values (very low SD)
 */
-real id_params(vector p, int high, int low, 
+real id_params(vector p, array[] int high, array[] int low, 
                   real fix_high, 
                   real fix_low,
                   real sd_fix_high,
@@ -12,49 +12,22 @@ real id_params(vector p, int high, int low,
     
     int N = num_elements(p);
     real prob_dens = 0; // hold the calculated probability density
-
-    // use different types of indexing depending on placement of 
-    // values to fix in the vector
-    if(high>low) {
+    
+    for(n in 1:N) {
       
-      if(low>1) {
-        prob_dens += normal_lpdf(p[1:(low-1)]|mean_val,sd_val);
+      if(r_in(n,high)) {
+        
+        prob_dens += normal_lpdf(p[n]|fix_high,sd_fix_high);
+        
+      } else if(r_in(n,low)) {
+        
+        prob_dens += normal_lpdf(p[n]|fix_low,sd_fix_low);
+        
+      } else {
+        
+        prob_dens += normal_lpdf(p[n]|mean_val,sd_val);
+        
       }
-      
-      prob_dens += normal_lpdf(p[low]|fix_low,sd_fix_low);
-      
-        if(high>(low+1)) {
-          prob_dens += normal_lpdf(p[(low+1):(high-1)]|mean_val,
-                                    sd_val);
-          }
-          
-      prob_dens += normal_lpdf(p[high]|fix_high,
-                                        sd_fix_high);
-                                        
-        if(high<N) {
-          prob_dens += normal_lpdf(p[(high+1):N]|mean_val,sd_val);
-        }
-      
-      
-      
-    } else {
-
-      if(high>1) {
-        prob_dens += normal_lpdf(p[1:(high-1)]|mean_val,sd_val);
-      }
-      
-      prob_dens += normal_lpdf(p[high]|fix_high,sd_fix_high);
-      
-        if(low>(high+1)) {
-          prob_dens += normal_lpdf(p[(high+1):(low-1)]|mean_val,
-                                    sd_val);
-          }
-          
-      prob_dens += normal_lpdf(p[low]|fix_low,
-                                        sd_fix_low);
-        if(low<N) {
-          prob_dens += normal_lpdf(p[(low+1):N]|mean_val,sd_val);
-        }
       
       
     }

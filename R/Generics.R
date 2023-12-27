@@ -442,7 +442,7 @@ setMethod('id_model',signature(object='idealdata'),
                 
               }
 
-              if(all(restrict_ind_low==restrict_ind_high)) {
+              if(any(restrict_ind_low %in% restrict_ind_high)) {
                 stop("Please do not select the same items or persons to constrain both high and low on the latent scale.")
               }
               
@@ -465,12 +465,12 @@ setMethod('id_model',signature(object='idealdata'),
               
               if(is.character(restrict_ind_high)) {
                 if(const_type=="items") {
-                  restrict_ind_high <- which(levels(object@score_matrix$item_id)==restrict_ind_high)
+                  restrict_ind_high <- which(levels(object@score_matrix$item_id) %in% restrict_ind_high)
                 } else {
                   if(use_groups) {
-                    restrict_ind_high <- which(levels(object@score_matrix$group_id)==restrict_ind_high)
+                    restrict_ind_high <- which(levels(object@score_matrix$group_id) %in% restrict_ind_high)
                   } else {
-                    restrict_ind_high <- which(levels(object@score_matrix$person_id)==restrict_ind_high)
+                    restrict_ind_high <- which(levels(object@score_matrix$person_id) %in% restrict_ind_high)
                   }
                   
                 }
@@ -479,12 +479,12 @@ setMethod('id_model',signature(object='idealdata'),
               
               if(is.character(restrict_ind_low)) {
                 if(const_type=="items") {
-                  restrict_ind_low <- which(levels(object@score_matrix$item_id)==restrict_ind_low)
+                  restrict_ind_low <- which(levels(object@score_matrix$item_id) %in% restrict_ind_low)
                 } else {
                   if(use_groups) {
-                    restrict_ind_low <- which(levels(object@score_matrix$group_id)==restrict_ind_low)
+                    restrict_ind_low <- which(levels(object@score_matrix$group_id) %in% restrict_ind_low)
                   } else {
-                    restrict_ind_low <- which(levels(object@score_matrix$person_id)==restrict_ind_low)
+                    restrict_ind_low <- which(levels(object@score_matrix$person_id) %in% restrict_ind_low)
                   }
                   
                 }

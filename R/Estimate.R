@@ -698,13 +698,13 @@ id_make <- function(score_data=NULL,
 #' pinned parameters should be specified to \code{fix_high} and \code{fix_low}
 #' if \code{fixtype} equals \code{"prefix"}, otherwise the model will
 #' select the parameters to pin to fixed values.
-#' @param restrict_ind_high If \code{fixtype} is not "vb_full", the character value or numerical index
+#' @param restrict_ind_high If \code{fixtype} is not "vb_full", a vector of character values or integer indices
 #' of a legislator/person or bill/item to pin to a high value (default +1).
-#' @param restrict_ind_low If \code{fixtype} is not "vb_full", the character value or numerical index of a 
+#' @param restrict_ind_low If \code{fixtype} is not "vb_full", a vector of character values or integer indices of a 
 #' legislator/person or bill/item to pin to a low value (default -1). 
-#' @param fix_high The value of which the high fixed ideal point/item should be
+#' @param fix_high The value of which the high fixed ideal point/item(s) should be
 #' fixed to. Default is +1.
-#' @param fix_low The value of which the high fixed ideal point/item should be
+#' @param fix_low The value of which the high fixed ideal point/item(s) should be
 #' fixed to. Default is -1.
 #' @param discrim_reg_sd Set the prior standard deviation of the bimodal prior for the discrimination parameters for the non-inflated model.
 #' @param discrim_miss_sd Set the prior standard deviation of the bimodal prior for the discrimination parameters for the inflated model.
@@ -1560,6 +1560,8 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     const_type=switch(const_type,
                                       persons=1L,
                                       items=2L),
+                    num_restrict_high=length(idealdata@restrict_ind_high),
+                    num_restrict_low=length(idealdata@restrict_ind_low),
                     restrict_high=idealdata@restrict_ind_high,
                     restrict_low=idealdata@restrict_ind_low,
                     fix_high=idealdata@restrict_num_high,

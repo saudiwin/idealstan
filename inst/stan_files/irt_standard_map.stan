@@ -46,8 +46,10 @@ real partial_sum(array[,] int y_slice,
         array[] int order_cats_rat,
         array[] int order_cats_grm,
         int const_type,
-        int restrict_high,
-        int restrict_low,
+        int num_restrict_high,
+        int num_restrict_low,
+        array[] int restrict_high,
+        array[] int restrict_low,
         int center_cutoff,
         real fix_high,
         real fix_low,
@@ -142,7 +144,7 @@ real partial_sum(array[,] int y_slice,
     if(const_type==1 && S_type==1) {
       // determine whether mapped parameter is restricted
         if(pos_discrim==0) {
-          if(s==restrict_high) {
+          if(r_in(s,restrict_high)) {
             if(time_proc==2) {
               //centered
               log_prob += normal_lpdf(L_tp1_var[1,s]|fix_high,restrict_sd_high);
@@ -150,7 +152,7 @@ real partial_sum(array[,] int y_slice,
             } else {
               log_prob += normal_lpdf(L_full[s]|fix_high,restrict_sd_high);
             }
-          } else if(s==restrict_low) {
+          } else if(r_in(s,restrict_low)) {
             if(time_proc==2) {
               //centered
               log_prob += normal_lpdf(L_tp1_var[1,s]|fix_low,restrict_sd_low);
@@ -183,9 +185,9 @@ real partial_sum(array[,] int y_slice,
     } else if(S_type==0 && const_type==2) {
       
       if(pos_discrim==0) {
-        if(s==restrict_high) {
+        if(r_in(s,restrict_high)) {
           log_prob += normal_lpdf(sigma_reg_full[s]|fix_high,restrict_sd_high);
-        } else if(s==restrict_low) {
+        } else if(r_in(s,restrict_low)) {
           log_prob += normal_lpdf(sigma_reg_full[s]|fix_low,restrict_sd_low);
         } else {
           log_prob += normal_lpdf(sigma_reg_full[s]|0,discrim_reg_sd);
@@ -437,8 +439,10 @@ data {
   array[N_int] int order_cats_rat; // indicator for whether an observation comes from a certain ordinal model
   array[N_int] int order_cats_grm; // indicator for whether an observation comes from a certain ordinal model
   int const_type; // whether to constrain persons (1) or item discriminations (2)
-  int restrict_high; // position of high valued fixed parameter
-  int restrict_low; // position of low valued fixed parameter
+  int num_restrict_high; // number of items/persons constrained to be high
+  int num_restrict_low; // number of items/persons constrained to be low
+  array[num_restrict_high] int restrict_high; // position of high valued fixed parameter
+  array[num_restrict_low] int restrict_low; // position of low valued fixed parameter
   real fix_high; // value to fix high parameter to
   real fix_low; // value to fix low parameter to
   real discrim_reg_sd;
@@ -988,6 +992,8 @@ if(S_type==1 && const_type==1) {
         order_cats_rat,
         order_cats_grm,
         const_type,
+        num_restrict_high,
+        num_restrict_low,
         restrict_high,
         restrict_low,
         center_cutoff,
