@@ -2,11 +2,7 @@
 #include /chunks/license.stan
 
 functions {
-#include /chunks/stationary_functions.stan
-#include /chunks/jacobians.stan
-#include /chunks/calc_rlnorm_gp.stan
-#include /chunks/id_params.stan
-
+  
 // #include /chunks/r_in.stan
 int r_in(int pos,array[] int pos_var) {
   
@@ -18,6 +14,11 @@ int r_in(int pos,array[] int pos_var) {
   }
   return 0;
 }
+  
+#include /chunks/stationary_functions.stan
+#include /chunks/jacobians.stan
+#include /chunks/calc_rlnorm_gp.stan
+#include /chunks/id_params.stan
 
 
 real partial_sum(array[,] int y_slice,
