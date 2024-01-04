@@ -2055,7 +2055,6 @@ return(as.vector(idx))
 #' @importFrom tidybayes spread_draws
 #' @noRd
 .get_varying <- function(obj,
-                         legis_x=NULL,
                          time_id=NULL,
                          person_id=NULL) {
   
@@ -2458,6 +2457,17 @@ return(as.vector(idx))
     } 
     
   } # end of if statement differentiating between mapping over items vs. persons
+    
+    return(all_time)
+}
+
+#' @noRd
+#' Function to add in time-varying covariates to person time-varying ideal points
+.add_person_cov <- function(all_time, 
+                            obj,
+                            legis_x,
+                            person_id,
+                            time_id) {
   
   if(!is.null(legis_x) && sum(c(legis_x))!=0) {
     
@@ -2474,17 +2484,13 @@ return(as.vector(idx))
     
     print("Collapsing covariates to person and time IDs.")
     
-    old_dim <- dimnames(legis_x)
-    
     legis_x <- apply(legis_x, 2, function(c) {
       
       aggregate(c, by=list(person_id, time_id), mean) %>% 
         arrange(Group.1, Group.2) %>% 
-      pull(x)
+        pull(x)
       
     })
-    
-    dimnames(legis_x) <- old_dim
     
     df_id <- tibble(time_id=time_id,
                     person_id=person_id) %>% 
@@ -2496,11 +2502,15 @@ return(as.vector(idx))
     cov_vals <- legis_x %*% t(b) %>% t
     colnames(cov_vals) <- paste0("L_tp1[",df_id$time_id,",",df_id$person_id,"]")
     
-    all_time <- cbind(all_time[,which(colnames(cov_vals) %in% colnames(all_time))] + cov_vals,all_time[,which(!(colnames(all_time) %in% colnames(cov_vals)))])
+    # for person X time combinations for which we don't have data, set covariate = 0
+    
+    all_time <- cbind(all_time[,which(colnames(all_time) %in% colnames(cov_vals))] + cov_vals,
+                      all_time[,which(!(colnames(all_time) %in% colnames(cov_vals)))])
     
     print("Done!")
     
   }
-    
-    return(all_time)
-  }
+  
+  return(all_time)
+  
+}

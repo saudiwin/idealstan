@@ -29,6 +29,10 @@
     votes <- as.numeric((mul_fac*pr_vote)>runif(N))
   } else if(type=='predict') {
     votes <- apply(pr_vote,2,function(c) as.numeric((c*mul_fac)>runif(N)))
+  } else if(type=="epred") {
+    
+    votes <- pr_vote
+    
   } else if(type=='log_lik') {
     if(inflate) {
       over_iters <- sapply(1:ncol(pr_vote), function(c) {
@@ -74,6 +78,16 @@
     attr(combined,'output') <- 'all'
     # transpose to make S x N matrix
     return(t(combined))
+    
+  } else if(type=="epred") {
+    
+    # nothing to do here really
+    
+    combined <- votes
+    attr(combined,'output') <- 'all'
+    # transpose to make S x N matrix
+    return(t(combined))
+    
   }
                    
 }

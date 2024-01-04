@@ -304,11 +304,12 @@ id_make <- function(score_data=NULL,
     
     score_rename <- bind_cols(score_rename,
                               as_tibble(personm))
-    person_cov <- dimnames(personm)[[2]]
+    person_cov_names <- dimnames(personm)[[2]]
   } else {
     # make a dummy column if no covariate data
     score_rename$personcov0 <- 0
-    person_cov <- 'personcov0'
+    person_cov_names <- 'personcov0'
+    person_cov <- formula()
   }
   
   if(!is.null(item_cov)) {
@@ -341,11 +342,12 @@ id_make <- function(score_data=NULL,
     
     score_rename <- bind_cols(score_rename,
                               as_tibble(itemm))
-    item_cov <- dimnames(itemm)[[2]]
+    item_cov_names <- dimnames(itemm)[[2]]
   } else {
     # make a dummy column if no covariate data
     score_rename$itemcov0 <- 0
-    item_cov <- 'itemcov0'
+    item_cov_names <- 'itemcov0'
+    item_cov <- formula()
   }
   
   if(!is.null(item_cov_miss)) {
@@ -377,11 +379,12 @@ id_make <- function(score_data=NULL,
     
     score_rename <- bind_cols(score_rename,
                               as_tibble(itemmissm))
-    item_cov_miss <- dimnames(itemmissm)[[2]]
+    item_cov_miss_names <- dimnames(itemmissm)[[2]]
   } else {
     # make a dummy column if no covariate data
     score_rename$itemcovmiss0 <- 0
-    item_cov_miss <- 'itemcovmiss0'
+    item_cov_miss_names <- 'itemcovmiss0'
+    item_cov_miss <- formula()
   }
   
   # recode score/outcome
@@ -469,9 +472,12 @@ id_make <- function(score_data=NULL,
   
   outobj <- new('idealdata',
                 score_matrix=score_rename,
-                person_cov=person_cov,
-                item_cov=item_cov,
-                item_cov_miss=item_cov_miss,
+                person_cov=person_cov_names,
+                person_cov_formula=person_cov,
+                item_cov=item_cov_names,
+                item_cov_miss=item_cov_miss_names,
+                item_cov_formula=item_cov,
+                item_cov_miss_formula=item_cov_miss,
                 miss_val=miss_val)
   
   if(simulation==TRUE) {
@@ -713,8 +719,11 @@ id_make <- function(score_data=NULL,
 #' is fixed to this value as a reference. 
 #' Default is 0.1.
 #' @param spline_knots Number of knots (essentially, number of points
-#' at which to calculate time-varying ideal points given T time points).
-#' Note that this must be equal or less than the number of time points--and there is
+#' at which to calculate time-varying ideal points given T time points). 
+#' Default is NULL, which means that the spline is equivalent to 
+#' polynomial time trend of degree \code{spline_degree}.
+#' Note that the spline number (if not null) must be equal or less than 
+#' the number of time points--and there is
 #' no reason to have it equal to the number of time points as that will likely 
 #' over-fit the data.
 #' @param spline_degree The degree of the spline polynomial. The default is 2 which is a 
@@ -887,7 +896,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                         person_sd=3,
                         time_fix_sd=.1,
                         time_var=10,
-                        spline_knots=2,
+                        spline_knots=NULL,
                         spline_degree=2,
                         ar1_up=1,
                         ar1_down=0,
@@ -1084,7 +1093,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   
   if(vary_ideal_pts==5) {
     
-    if(length(spline_knots)==1 && spline_knots < 1)
+    if(!is.null(spline_knots) && length(spline_knots)==1 && spline_knots < 1)
       stop("Please pass a value for the number of spline_knots that is at least equal to 1 but less than the number of time points.")
     
     if(spline_degree < 1)
@@ -1096,7 +1105,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
     # need to rescale time_ind to an interval that is easy for sampling
     # first get location of knots if they are present
     
-    if(length(spline_knots)>1) {
+    if(!is.null(spline_knots) && length(spline_knots)>1) {
       
       spline_knots <- which(spline_knots %in% time_ind)
       
@@ -1104,11 +1113,11 @@ id_estimate <- function(idealdata=NULL,model_type=2,
     old_bounds <- c(min(time_ind,na.rm=T),max(time_ind, na.rm=T))
     time_ind <- 2 * ((time_ind - min(time_ind))/(max(time_ind) - min(time_ind))) - 1
     
-    if(length(spline_knots)>1) {
+    if(!is.null(spline_knots) && length(spline_knots)>1) {
       
       spline_knots <- time_ind[spline_knots]
       
-    } else {
+    } else if(!is.null(spline_knots)) {
       
       spline_knots <- quantile(time_ind, 
                                probs=seq(0,1,length.out=spline_knots))
@@ -1595,11 +1604,11 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   outobj@time_center_cutoff <- time_center_cutoff
   outobj@orig_order <- out_list$this_data$orig_order
   outobj@this_data <- this_data
+  outobj@remove_nas <- remove_list$remove_nas
   
   # need to recalculate legis points if time series used
   if(this_data$T>1 && ((!is.null(keep_param$person_vary) && keep_param$person_vary) || is.null(keep_param))) {
     outobj@time_varying <- try(.get_varying(outobj,
-                                            legis_x=remove_list$legis_pred[out_list$this_data$orig_order,,drop=FALSE],
                                             person_id=this_data$ll,
                                             time_id=this_data$time))
   }

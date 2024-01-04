@@ -15,6 +15,9 @@ setClass('idealdata',
                     person_cov='character',
                     item_cov='character',
                     item_cov_miss='character',
+                    person_cov_formula="formula",
+                    item_cov_formula="formula",
+                    item_cov_miss_formula="formula",
                     time='ANY',
                     exog_data='vector',
                     time_vals='vector',
@@ -82,7 +85,8 @@ setClass('idealstan',
                     use_groups='logical',
                     this_data="ANY",
                     simulation='logical',
-                    time_center_cutoff="numeric"))
+                    time_center_cutoff="numeric",
+                    remove_nas="ANY"))
 
 setGeneric('subset_ideal',signature='object',
            function(object,...) standardGeneric('subset_ideal'))

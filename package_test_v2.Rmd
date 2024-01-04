@@ -741,10 +741,10 @@ bin_time_spline_irt_2pl_abs_est <- id_estimate(idealdata=bin_time_spline_irt_2pl
                                time_var = 1,restrict_var = F,
                                restrict_ind_high = as.character(sort(bin_time_spline_irt_2pl_abs_sim@simul_data$true_reg_discrim,
                                                                      decreasing=TRUE,
-                                                        index=TRUE)$ix[1]),
+                                                        index=TRUE)$ix[1:2]),
                               restrict_ind_low =as.character(sort(bin_time_spline_irt_2pl_abs_sim@simul_data$true_reg_discrim,,
                                                                    decreasing=F,
-                                                        index=T)$ix[1]),
+                                                        index=T)$ix[1:2]),
                                fixtype='prefix',adapt_delta=0.95)
 id_plot_rhats(bin_time_spline_irt_2pl_abs_est)
 ```

@@ -35,6 +35,7 @@ setGeneric('id_post_pred',signature='object',
 #'
 #' @param object A fitted \code{idealstan} object
 #' @param draws The number of draws to use from the total number of posterior draws (default is 100).
+#' For reproducibility, you can also pass a vector of specific draws to use.
 #' @param sample_scores In addition to reducing the number of posterior draws used to 
 #' calculate the posterior predictive distribution, which will reduce computational overhead.
 #' Only available for calculating predictive distributions, not log-likelihood values.
@@ -43,22 +44,29 @@ setGeneric('id_post_pred',signature='object',
 #' @param output If the model has an unbounded outcome (Poisson, continuous, etc.), then
 #' specify whether to show the \code{'observed'} data (the default) or the binary 
 #' output \code{'missing'} showing whether an observation was predicted as missing or not
+#' @param covar What kind of covariates to include as part of the prediction -- either
+#' "person" (the default) or "items" if you included predictors for item discriminations.
+#' @param newdata Optional: pass a data frame that must have all of the predictors that
+#' were given to the id_make function. Used to generate predictions from person or item
+#' covariates on to items.
+#' @param use_cores Number of cores to use for multicore parallel processing with
+#' the base R \code{parallel} package
 #' @param ... Any other arguments passed on to posterior_predict (currently none available)
 #' 
 #' @export
 setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100,
                                                                 output='observed',
                                                                 type='predict',
-                                                                sample_scores=NULL,...) {
-
-  #all_params <- rstan::extract(object@stan_samples)
+                                                                covar="person",
+                                                                sample_scores=NULL,
+                                                                use_cores=1,
+                                                                newdata=NULL,...) {
 
   n_votes <- object@this_data$N
   
 
   n_iters <- nrow(as_draws_matrix(object@stan_samples$draws("L_full")))
-
-
+  
   if(!is.null(sample_scores) && type!='log_lik') {
     this_sample <- sample(1:n_votes,sample_scores)
   } else {
@@ -66,7 +74,19 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
   }
   
   if(type!='log_lik') {
-    these_draws <- sample(1:n_iters,draws)
+    
+    if(length(draws)==1) {
+      
+      these_draws <- sample(1:n_iters,draws)
+      
+    } else {
+      
+      these_draws <- draws
+      draws <- length(draws)
+      
+    }
+    
+    
   } else {
     these_draws <- 1:n_iters
     draws <- n_iters
@@ -96,17 +116,83 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
 
   bill_points <- object@this_data$bb[this_sample]
   time_points <- object@this_data$time[this_sample]
+  
+  # check for covariates & newdata
+  
+  if(length(object@score_data@person_cov_formula)>0) {
+    
+    if(is.null(newdata)) {
+      
+      # pull existing data & sample it
+      
+      legis_x <- object@this_data$legis_pred[this_sample,]
+      
+    } else {
+      
+      legis_x <- model.matrix(object@score_data@person_cov_formula,
+                              data=newdata)[,-1,drop=FALSE]
+
+      # remove NAs if necessary
+      
+      legis_x <- legis_x[object@remove_nas,]
+      
+      if(nrow(legis_x)!=nrow(object@this_data$legis_pred)) {
+        
+        stop("Newdata must be same number of rows as original data.")
+        
+      }
+      
+      legis_x <- legis_x[this_sample,]
+      
+    }
+    
+    cov_type <- "persons"
+    
+  } else if(length(object@score_data@item_cov_formula)>0) {
+    
+    cov_type <- "items"
+    
+  } else if(length(object@score_data@item_cov_miss_formula)>0) {
+    
+    cov_type <- "items_missing"
+    
+  } else {
+    
+    cov_type <- "none"
+    
+  }
+  
   # we can do the initial processing here
   
   # loop over posterior iterations
   if(object@this_data$`T`>1) {
-    L_tp1 <- .get_varying(object)
+    L_tp1 <- object@time_varying
+    
+    # add in person covariates if present
+    
+    if(cov_type=="persons") {
+      
+      L_tp1 <- .add_person_cov(L_tp1, object, legis_x, person_points, time_points)
+      
+    }
+    
   }
+  
   L_full <- object@stan_samples$draws('L_full') %>% as_draws_matrix()
   A_int_free <- object@stan_samples$draws('A_int_free') %>% as_draws_matrix()
   B_int_free <- object@stan_samples$draws('B_int_free') %>% as_draws_matrix()
   sigma_abs_free <- object@stan_samples$draws('sigma_abs_free') %>% as_draws_matrix()
   sigma_reg_free <- object@stan_samples$draws('sigma_reg_free') %>% as_draws_matrix()
+  
+  # check if we need to update covariates
+  
+  if(cov_type!="none" && object@this_data$`T`==1) {
+    
+    # add in static covariates
+    
+    browser()
+    
+  }
 
   # loop over model IDs
   
@@ -120,7 +206,7 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
     
     # loop over itempoints
 
-    out_items <- lapply(unique(bill_points)[unique(bill_points) %in% unique(bill_points[modelpoints==m])], function(i) {
+    out_items <- parallel::mclapply(unique(bill_points)[unique(bill_points) %in% unique(bill_points[modelpoints==m])], function(i) {
 
       this_obs <- which(bill_points==i)
       
@@ -130,7 +216,9 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
           if(latent_space) {
             # use latent-space formulation for likelihood
             pr_absence <- sapply(this_obs,function(n) {
+              print(this_obs[n])
               this_time <- paste0("L_tp1[",time_points[n],",",person_points[n],"]")
+              print(this_time)
               -sqrt((L_tp1[d,this_time] - A_int_free[d,bill_points[n]])^2)
             }) %>% plogis()
           } else {
@@ -215,7 +303,7 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
       return(list(pr_vote=pr_vote_iter,pr_absence=pr_absence_iter,model_id=m,
                   item_point=i,
                   this_obs=this_obs))
-      })
+      },mc.cores=use_cores)
       
     return(out_items)
       
@@ -324,6 +412,10 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
                class(out_predict) <- c('matrix','ppd')
              } else if(type=='log_lik') {
                class(out_predict) <- c('matrix','log_lik')
+             } else if(type=="epred") {
+               
+               class(out_predict) <- c('matrix','ppd')
+               
              }
          
       } else {
@@ -384,7 +476,7 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
         attr(out_predict,"output_type") <- "continuous"
       }
       
-      if(type=='predict') {
+      if(type %in% c('predict',"epred")) {
         class(out_predict) <- c('matrix','ppd')
       } else if(type=='log_lik') {
         class(out_predict) <- c('matrix','log_lik')
