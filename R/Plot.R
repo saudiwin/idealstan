@@ -536,6 +536,8 @@ id_plot_legis_var <- function(object,return_data=FALSE,
 #'  only a fraction of the persons/legislators.
 #' @param plot_sim Whether to plot the true values of parameters if a simulation was used to generate data 
 #' (see \code{\link{id_sim_gen}})
+#' @param add_cov Whether to add values of hierarchical person-level covariates to the
+#' time trends (defaults to TRUE).
 #' @param ... Other options passed on to plotting function, currently ignored
 #' @importFrom gghighlight gghighlight
 #' @export
@@ -584,7 +586,8 @@ id_plot_legis_dyn <- function(object,return_data=FALSE,
                               item_plot_type='non-inflated',show_true=FALSE,group_color=TRUE,
                               hpd_limit=10,
                               sample_persons=NULL,
-                              plot_sim=FALSE,...) {
+                              plot_sim=FALSE,
+                              add_cov=TRUE,...) {
   
   
   # prepare data
@@ -631,7 +634,8 @@ id_plot_legis_dyn <- function(object,return_data=FALSE,
                                          high_limit=high_limit,
                                          low_limit=low_limit,
                                          sample_draws=plot_lines,
-                                         include=include)
+                                         include=include,
+                                         add_cov=add_cov)
     model_wrap <- FALSE
     use_groups <- object@use_groups
   } else {

@@ -148,11 +148,20 @@
                                 low_limit=NULL,
                                 type='ideal_pts',
                                 sample_draws=0,
-                                include=NULL) {
+                                include=NULL,
+                                add_cov=TRUE) {
   
   if(length(unique(object@score_data@score_matrix$time_id))>1 && type!='variance') {
     
     person_params <- object@time_varying 
+    
+    if(add_cov) {
+      
+      person_params <- .add_person_cov(person_params,object,object@this_data$legis_pred,
+                                       object@this_data$ll,
+                                       object@this_data$time)
+      
+    }
     
     if(!is.null(include)) {
 
@@ -2057,7 +2066,6 @@ return(as.vector(idx))
 .get_varying <- function(obj,
                          time_id=NULL,
                          person_id=NULL) {
-  
   
   if(obj@use_groups) {
     obj@score_data@score_matrix$person_id <- obj@score_data@score_matrix$group_id
