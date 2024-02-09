@@ -587,6 +587,7 @@ id_plot_legis_dyn <- function(object,return_data=FALSE,
                               hpd_limit=10,
                               sample_persons=NULL,
                               plot_sim=FALSE,
+                              use_chain=NULL,
                               add_cov=TRUE,...) {
   
   
@@ -635,7 +636,8 @@ id_plot_legis_dyn <- function(object,return_data=FALSE,
                                          low_limit=low_limit,
                                          sample_draws=plot_lines,
                                          include=include,
-                                         add_cov=add_cov)
+                                         add_cov=add_cov,
+                                         use_chain=use_chain)
     model_wrap <- FALSE
     use_groups <- object@use_groups
   } else {

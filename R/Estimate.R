@@ -712,9 +712,14 @@ id_make <- function(score_data=NULL,
 #' fixed to. Default is +1.
 #' @param fix_low The value of which the high fixed ideal point/item(s) should be
 #' fixed to. Default is -1.
-#' @param discrim_reg_sd Set the prior standard deviation of the bimodal prior for the discrimination parameters for the non-inflated model.
-#' @param discrim_miss_sd Set the prior standard deviation of the bimodal prior for the discrimination parameters for the inflated model.
-#' @param person_sd Set the prior standard deviation for the legislators (persons) parameters
+#' @param discrim_reg_scale Set the scale parameter for the rescaled Beta distribution
+#' of the discrimination parameters.
+#' @param discrim_reg_shape Set the shape parameter for the rescaled Beta distribution
+#' of the discrimination parameters.
+#' @param discrim_miss_scale Set the scale parameter for the rescaled Beta distribution
+#' of the missingness discrimination parameters.
+#' @param discrim_miss_shape Set the shape parameter for the rescaled Beta distribution
+#' of the missingness discrimination parameters.
 #' @param time_fix_sd The variance of the over-time component of the first person/legislator
 #' is fixed to this value as a reference. 
 #' Default is 0.1.
@@ -891,8 +896,10 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                         prior_fit=NULL,
                         warmup=1000,ncores=4,
                         use_groups=FALSE,
-                        discrim_reg_sd=2,
-                        discrim_miss_sd=2,
+                        discrim_reg_scale=0.1,
+                        discrim_reg_shape=0.1,
+                        discrim_miss_scale=0.1,
+                        discrim_miss_shape=0.1,
                         person_sd=3,
                         time_fix_sd=.1,
                         time_var=10,
@@ -1120,7 +1127,11 @@ id_estimate <- function(idealdata=NULL,model_type=2,
     } else if(!is.null(spline_knots)) {
       
       spline_knots <- quantile(time_ind, 
-                               probs=seq(0,1,length.out=spline_knots))
+                               probs=seq(0,1,length.out=spline_knots+2))
+      
+      # remove first and last knot, these should be internal
+      
+      spline_knots <- spline_knots[2:(length(spline_knots)-1)]
       
     }
     
@@ -1182,8 +1193,10 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                              const_type=switch(const_type,
                                                persons=1L,
                                                items=2L),
-                             discrim_reg_sd=discrim_reg_sd,
-                             discrim_miss_sd=discrim_miss_sd,
+                             discrim_reg_scale=discrim_reg_scale,
+                             discrim_reg_shape=discrim_reg_shape,
+                             discrim_miss_scale=discrim_miss_scale,
+                             discrim_miss_shape=discrim_miss_shape,
                              diff_reg_sd=diff_reg_sd,
                              diff_miss_sd=diff_miss_sd,
                              legis_sd=person_sd,
@@ -1345,8 +1358,10 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     sax_pred=remove_list$sax_pred[out_list$this_data$orig_order,,drop=FALSE],
                     time=remove_list$timepoints[out_list$this_data$orig_order],
                     time_proc=vary_ideal_pts,
-                    discrim_reg_sd=discrim_reg_sd,
-                    discrim_abs_sd=discrim_miss_sd,
+                    discrim_reg_scale=discrim_reg_scale,
+                    discrim_reg_shape=discrim_reg_shape,
+                    discrim_abs_scale=discrim_miss_scale,
+                    discrim_abs_shape=discrim_miss_shape,
                     diff_reg_sd=diff_reg_sd,
                     diff_abs_sd=diff_miss_sd,
                     legis_sd=person_sd,
@@ -1423,8 +1438,10 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                              const_type=switch(const_type,
                                                persons=1L,
                                                items=2L),
-                             discrim_reg_sd=discrim_reg_sd,
-                             discrim_miss_sd=discrim_miss_sd,
+                             discrim_reg_scale=discrim_reg_scale,
+                             discrim_reg_shape=discrim_reg_shape,
+                             discrim_miss_scale=discrim_miss_scale,
+                             discrim_miss_shape=discrim_miss_shape,
                              diff_reg_sd=diff_reg_sd,
                              diff_miss_sd=diff_miss_sd,
                              legis_sd=person_sd,
@@ -1544,8 +1561,10 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     sax_pred=remove_list$sax_pred[out_list$this_data$orig_order,,drop=FALSE],
                     time=remove_list$timepoints[out_list$this_data$orig_order],
                     time_proc=vary_ideal_pts,
-                    discrim_reg_sd=discrim_reg_sd,
-                    discrim_abs_sd=discrim_miss_sd,
+                    discrim_reg_scale=discrim_reg_scale,
+                    discrim_reg_shape=discrim_reg_shape,
+                    discrim_abs_scale=discrim_miss_scale,
+                    discrim_abs_shape=discrim_miss_shape,
                     diff_reg_sd=diff_reg_sd,
                     diff_abs_sd=diff_miss_sd,
                     legis_sd=person_sd,

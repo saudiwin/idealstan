@@ -149,17 +149,35 @@
                                 type='ideal_pts',
                                 sample_draws=0,
                                 include=NULL,
-                                add_cov=TRUE) {
+                                add_cov=TRUE,
+                                use_chain=NULL) {
+  
+  
+  if(is.null(use_chain))
+      use_chain <- 1:dim(object@stan_samples$draws("L_full"))[2]
   
   if(length(unique(object@score_data@score_matrix$time_id))>1 && type!='variance') {
     
-    person_params <- object@time_varying 
+    if(length(use_chain)<dim(object@stan_samples$draws("L_full"))[2]) {
+      
+      print(paste0("Using only one chain: chain ",use_chain))
+      
+      .get_varying(object,time_id=object@this_data$time, person_id=object@this_data$ll,
+                   use_chain=use_chain)
+      
+    } else {
+      
+      person_params <- object@time_varying 
+    }
+    
+    
     
     if(add_cov) {
       
       person_params <- .add_person_cov(person_params,object,object@this_data$legis_pred,
                                        object@this_data$ll,
-                                       object@this_data$time)
+                                       object@this_data$time,
+                                       use_chain)
       
     }
     
@@ -429,10 +447,25 @@
                        person_cov=NULL,
                        person_start=NULL,
                        restrict_var=NULL) {
+  
+  normalize <- function(x) {
+    # Ensure that x is a numeric vector
+    if(!is.numeric(x)) {
+      stop("Input should be numeric")
+    }
+    
+    # Check for constant vector
+    if(min(x) == max(x)) {
+      return(rep(0, length(x)))
+    }
+    
+    # Normalizing
+    return((2 * (x - min(x)) / (max(x) - min(x))) - 1)
+  }
 
   L_full <- array(rnorm(n=num_legis,mean=0,sd=person_sd))
-  sigma_reg_free <- array(rnorm(n=num_cit,mean=0,sd=1))
-  sigma_abs_free <- array(rnorm(n=num_cit,mean=0,sd=1))
+  sigma_reg_free <- array(normalize(rbeta(n=num_cit,1,1))*.998)
+  sigma_abs_free <- array(normalize(rbeta(n=num_cit,1,1))*.998)
   A_int_free <- array(rnorm(n=num_cit,mean=0,sd=1))
   B_int_free <- array(rnorm(n=num_cit,mean=0,sd=1))
   
@@ -449,8 +482,8 @@
     
   } else if(const_type==2 && !is.null(const_type)) {
 
-    sigma_reg_free[restrict_ind_high] <- fix_high
-    sigma_reg_free[restrict_ind_low] <- fix_low
+    sigma_reg_free[restrict_ind_high] <- .998
+    sigma_reg_free[restrict_ind_low] <- -.998
   }
   
   # given upper bound on m_sd figure out mean to match real value on the real numbers
@@ -1634,8 +1667,10 @@ return(as.vector(idx))
                         ar_sd=NULL,
                         diff_reg_sd=NULL,
                         diff_miss_sd=NULL,
-                        discrim_reg_sd=NULL,
-                        discrim_miss_sd=NULL,
+                        discrim_reg_scale=NULL,
+                        discrim_reg_shape=NULL,
+                        discrim_miss_scale=NULL,
+                        discrim_miss_shape=NULL,
                         fix_high=NULL,
                         fix_low=NULL) {
   
@@ -2065,7 +2100,16 @@ return(as.vector(idx))
 #' @noRd
 .get_varying <- function(obj,
                          time_id=NULL,
-                         person_id=NULL) {
+                         person_id=NULL,
+                         use_chain=NULL) {
+  
+  num_chains <- dim(obj@stan_samples$draws("L_full"))[2]
+  
+  if(is.null(use_chain)) {
+    
+    use_chain <- 1:num_chains
+    
+  }
   
   if(obj@use_groups) {
     obj@score_data@score_matrix$person_id <- obj@score_data@score_matrix$group_id
@@ -2075,12 +2119,12 @@ return(as.vector(idx))
     
     # needs to be in the same format, varying in T then person
       
-      all_time <- obj@stan_samples$draws("L_tp1") %>% as_draws_matrix()
+      all_time <- obj@stan_samples$draws("L_tp1")[,use_chain,] %>% as_draws_matrix()
     
   } else {
     
     if(obj@time_proc!=5) 
-      L_tp1_var <- obj@stan_samples$draws("L_tp1_var") %>% as_draws_matrix()
+      L_tp1_var <- obj@stan_samples$draws("L_tp1_var")[,use_chain,] %>% as_draws_matrix()
     
     rebuilt <- TRUE
     
@@ -2088,15 +2132,15 @@ return(as.vector(idx))
     if(obj@time_proc==2 && length(unique(obj@score_data@score_matrix$time_id))<obj@time_center_cutoff) {
       
         
-        L_full <- obj@stan_samples$draws("L_full") %>% as_draws_matrix()
+        L_full <- obj@stan_samples$draws("L_full")[,use_chain,] %>% as_draws_matrix()
         
         if(obj@restrict_var) {
           
-          time_var_free <- obj@stan_samples$draws("time_var_full") %>% as_draws_matrix()
+          time_var_free <- obj@stan_samples$draws("time_var_full")[,use_chain,] %>% as_draws_matrix()
           
         } else {
           
-          time_var_free <- obj@stan_samples$draws("time_var_free") %>% as_draws_matrix()
+          time_var_free <- obj@stan_samples$draws("time_var_free")[,use_chain,] %>% as_draws_matrix()
           
         }
       
@@ -2247,11 +2291,11 @@ return(as.vector(idx))
       
     } else if(obj@time_proc==3  && length(unique(obj@score_data@score_matrix$time_id))<obj@time_center_cutoff) {
         
-        L_full <- obj@stan_samples$draws("L_full") %>% as_draws_matrix()
+        L_full <- obj@stan_samples$draws("L_full")[,use_chain,] %>% as_draws_matrix()
         
-        time_var_free <- obj@stan_samples$draws("time_var_free") %>% as_draws_matrix()
+        time_var_free <- obj@stan_samples$draws("time_var_free")[,use_chain,] %>% as_draws_matrix()
         
-        L_AR1 <- obj@stan_samples$draws("L_AR1") %>% as_draws_matrix()
+        L_AR1 <- obj@stan_samples$draws("L_AR1")[,use_chain,] %>% as_draws_matrix()
         
       #make a grid, time varying fastest
       
@@ -2410,13 +2454,13 @@ return(as.vector(idx))
       
     } else if(obj@time_proc==5) { 
       
-      L_full <- obj@stan_samples$draws("L_full") %>% as_draws_matrix()
+      L_full <- obj@stan_samples$draws("L_full")[,use_chain,] %>% as_draws_matrix()
       
-      time_var_free <- obj@stan_samples$draws("time_var_free") %>% as_draws_matrix()
+      time_var_free <- obj@stan_samples$draws("time_var_free")[,use_chain,] %>% as_draws_matrix()
       
       stan_data <- obj@this_data
       
-      a_raw <- obj@stan_samples$draws("a_raw") %>% tidybayes::spread_draws(a_raw[ll,basis])
+      a_raw <- obj@stan_samples$draws("a_raw")[,use_chain,] %>% tidybayes::spread_draws(a_raw[ll,basis])
       B <- stan_data$B
       time_ind <- stan_data$time_ind
       
@@ -2475,7 +2519,8 @@ return(as.vector(idx))
                             obj,
                             legis_x,
                             person_id,
-                            time_id) {
+                            time_id,
+                            use_chain) {
   
   if(!is.null(legis_x) && sum(c(legis_x))!=0) {
     
@@ -2484,7 +2529,7 @@ return(as.vector(idx))
     time_grid <- expand.grid(1:length(unique(obj@score_data@score_matrix$time_id)),
                              unique(as.numeric(obj@score_data@score_matrix$person_id)))
     
-    b <- obj@stan_samples$draws("legis_x") %>% as_draws_matrix()
+    b <- obj@stan_samples$draws("legis_x")[,use_chain,] %>% as_draws_matrix()
     
     gc()
     
