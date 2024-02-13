@@ -12,7 +12,7 @@ require(idealstan)
 require(ggplot2)
 require(dplyr)
 require(tidyr)
-require(rstan)
+library(bayesplot)
 
 knitr::opts_chunk$set(fig.align = 'center',warning = F,message = F)
 ```
@@ -729,6 +729,22 @@ bin_time_spline_irt_2pl_abs_sim <- id_sim_gen(num_person=100,num_bills=200,infla
                                absence_discrim_sd = 1,
                                reg_discrim_sd = 1)
 
+sort_ids_high <- sort(bin_time_spline_irt_2pl_abs_sim@simul_data$true_reg_discrim,
+                                                                     decreasing=TRUE,
+                                                        index=TRUE)$ix
+
+high_restrict <- c(min(sort_ids_high[1:20]),
+                       round(median(sort_ids_high[1:20])),
+                   max(sort_ids_high[1:20]))
+
+sort_ids_low <- sort(bin_time_spline_irt_2pl_abs_sim@simul_data$true_reg_discrim,,
+                                                                   decreasing=F,
+                                                        index=T)$ix
+
+low_restrict <- c(min(sort_ids_low[1:20]),
+                       round(median(sort_ids_low[1:20])),
+                   max(sort_ids_low[1:20]))
+
 bin_time_spline_irt_2pl_abs_est <- id_estimate(idealdata=bin_time_spline_irt_2pl_abs_sim,
                                            use_groups = F,
                                model_type=1,
@@ -736,15 +752,12 @@ bin_time_spline_irt_2pl_abs_est <- id_estimate(idealdata=bin_time_spline_irt_2pl
                                ar1_up = 1,ar1_down = -1,
                                ncores = parallel::detectCores(),
                                vary_ideal_pts = 'splines',prior_only = FALSE,
-                               spline_knots=3,spline_degree = 3,
-                               const_type = "items",person_sd = 3,
-                               time_var = 1,restrict_var = F,
-                               restrict_ind_high = as.character(sort(bin_time_spline_irt_2pl_abs_sim@simul_data$true_reg_discrim,
-                                                                     decreasing=TRUE,
-                                                        index=TRUE)$ix[1:2]),
-                              restrict_ind_low =as.character(sort(bin_time_spline_irt_2pl_abs_sim@simul_data$true_reg_discrim,,
-                                                                   decreasing=F,
-                                                        index=T)$ix[1:2]),
+                               spline_knots=NULL,spline_degree = 2,
+                               const_type = "items",person_sd = 5,diff_reg_sd = 5,
+                               discrim_reg_scale = 2,discrim_reg_shape = 2,
+                               time_var = .1,restrict_var = F,
+                               restrict_ind_high = as.character(high_restrict),
+                              restrict_ind_low =as.character(low_restrict),
                                fixtype='prefix',adapt_delta=0.95)
 id_plot_rhats(bin_time_spline_irt_2pl_abs_est)
 ```
@@ -766,13 +779,13 @@ id_plot_legis_dyn(bin_time_spline_irt_2pl_abs_est,plot_lines = 10) + guides(colo
 
 ```{r irt_2pl_time_ar_spline_resid}
 
-id_plot_sims(bin_time_ar_irt_2pl_abs_est,type='Residuals')
+id_plot_sims(bin_time_spline_irt_2pl_abs_est,type='Residuals')
 
 ```
 
 ```{r irt_2pl_time_spline_abs_RMSE}
 
-id_plot_sims(bin_time_ar_irt_2pl_abs_est)
+id_plot_sims(bin_time_spline_irt_2pl_abs_est)
 
 ```
 

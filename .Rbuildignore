@@ -25,7 +25,6 @@ test.R
 generalized_beta.R
 four_param_beta.stan
 this_data.rds
-*.png
-
+\.png
 ^CRAN-RELEASE$
 ^Meta$
