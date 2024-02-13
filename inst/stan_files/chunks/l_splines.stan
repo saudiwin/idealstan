@@ -30,7 +30,7 @@ if(ignore==1) {
             }
             
             
-        L_tp1[,s] = to_array_1d(L_full[s] * to_vector(time_ind[end:start]) + to_vector(a[s]*B[end:start,]));
+        L_tp1[,s] = to_array_1d(to_vector(a_raw[s]*B[end:start,]));
       
       }
       
@@ -38,7 +38,7 @@ if(ignore==1) {
       
       for(s in 1:num_legis) {
             
-        L_tp1[,s] = to_array_1d(L_full[s] * to_vector(time_ind) + to_vector(a[s]*B));
+        L_tp1[,s] = to_array_1d(to_vector(a_raw[s]*B));
       
       }
 

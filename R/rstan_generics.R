@@ -60,12 +60,19 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
                                                                 covar="person",
                                                                 sample_scores=NULL,
                                                                 use_cores=1,
+                                                                use_chain=NULL,
                                                                 newdata=NULL,...) {
 
   n_votes <- object@this_data$N
   
-
-  n_iters <- nrow(as_draws_matrix(object@stan_samples$draws("L_full")))
+  if(is.null(use_chain)) {
+    
+    use_chain <- 1:dim(object@stan_samples$draws("L_full"))[2]
+    
+  } 
+  
+    n_iters <- nrow(as_draws_matrix(object@stan_samples$draws("L_full")[,use_chain,]))
+  
   
   if(!is.null(sample_scores) && type!='log_lik') {
     this_sample <- sample(1:n_votes,sample_scores)
@@ -166,23 +173,37 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
   
   # loop over posterior iterations
   if(object@this_data$`T`>1) {
-    L_tp1 <- object@time_varying
+    
+    if(is.null(use_chain)) {
+      
+      L_tp1 <- object@time_varying
+      
+    } else {
+      
+      L_tp1 <- .get_varying(object, time_id=object@this_data$time,
+                            person_id=object@this_data$ll,
+                            use_chain=use_chain)
+      
+    }
+    
+    
     
     # add in person covariates if present
     
     if(cov_type=="persons") {
       
-      L_tp1 <- .add_person_cov(L_tp1, object, legis_x, person_points, time_points)
+      L_tp1 <- .add_person_cov(L_tp1, object, legis_x, person_points, time_points,
+                               use_chain)
       
     }
     
   }
-  
-  L_full <- object@stan_samples$draws('L_full') %>% as_draws_matrix()
-  A_int_free <- object@stan_samples$draws('A_int_free') %>% as_draws_matrix()
-  B_int_free <- object@stan_samples$draws('B_int_free') %>% as_draws_matrix()
-  sigma_abs_free <- object@stan_samples$draws('sigma_abs_free') %>% as_draws_matrix()
-  sigma_reg_free <- object@stan_samples$draws('sigma_reg_free') %>% as_draws_matrix()
+
+  L_full <- object@stan_samples$draws('L_full')[,use_chain,] %>% as_draws_matrix()
+  A_int_free <- object@stan_samples$draws('A_int_free')[,use_chain,] %>% as_draws_matrix()
+  B_int_free <- object@stan_samples$draws('B_int_free')[,use_chain,] %>% as_draws_matrix()
+  sigma_abs_free <- object@stan_samples$draws('sigma_abs_free')[,use_chain,] %>% as_draws_matrix()
+  sigma_reg_free <- object@stan_samples$draws('sigma_reg_free')[,use_chain,] %>% as_draws_matrix()
   
   # check if we need to update covariates
   
@@ -361,12 +382,12 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
              miss_val <- object@score_data@miss_val[1]
 
            if(m$model_id %in% c(3,4)) {
-             cutpoints <- object@stan_samples$draws(paste0('steps_votes',cuts)) %>% as_draws_matrix()
+             cutpoints <- object@stan_samples$draws(paste0('steps_votes',cuts))[,use_chain,] %>% as_draws_matrix()
              cutpoints <- cutpoints[these_draws,]
            } else if(m$model_id %in% c(5,6)) {
              cutpoints <- object@stan_samples$draws(paste0('steps_votes_grm',cuts,
                                                            '[',m$item_point,
-                                                           ",",1:(cuts-1),"]")) %>% as_draws_matrix()
+                                                           ",",1:(cuts-1),"]"))[,use_chain,] %>% as_draws_matrix()
              cutpoints <- cutpoints[these_draws,]
            } 
              

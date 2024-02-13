@@ -22,6 +22,10 @@ delaware.png
 delaware_var.png
 set_up_vignettes.R
 test.R
+generalized_beta.R
+four_param_beta.stan
+this_data.rds
+*.png
 
 ^CRAN-RELEASE$
 ^Meta$

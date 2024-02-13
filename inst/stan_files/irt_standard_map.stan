@@ -3,6 +3,29 @@
 
 functions {
   
+  // use this to set a prior on discriminations that makes them either +1 or -1
+  real genbeta_lpdf(real y, real alpha, real beta, real lb, real lb_offset) {
+    
+    real x = (y - lb) / lb_offset;
+    
+    return(alpha - 1) * log(x) + (beta - 1) .* log1m(x) - log(lb_offset) - lbeta(alpha, beta);
+  }
+  
+    real genbeta_vec_lpdf(vector y, real alpha, real beta, real lb, real lb_offset) {
+    
+    int length_y = num_elements(y);
+    real log_prob;
+    real log_offset = log(lb_offset);
+    real calc_lbeta = lbeta(alpha, beta);
+    
+    vector[length_y] x = (y - lb) ./ lb_offset;
+    vector[length_y] vec_offset = rep_vector(log_offset, length_y);
+    vector[length_y] vec_lbeta = rep_vector(calc_lbeta, length_y);
+    
+    
+    return sum( (alpha - 1) .* log(x) + (beta - 1) .* log1m(x) - vec_offset - vec_lbeta);
+  }
+  
 // #include /chunks/r_in.stan
 int r_in(int pos,array[] int pos_var) {
   
@@ -19,7 +42,7 @@ int r_in(int pos,array[] int pos_var) {
 #include /chunks/jacobians.stan
 #include /chunks/calc_rlnorm_gp.stan
 #include /chunks/id_params.stan
-
+#include /chunks/id_params2.stan
 
 real partial_sum(array[,] int y_slice,
         int start, int end,
@@ -56,8 +79,10 @@ real partial_sum(array[,] int y_slice,
         real fix_low,
         real restrict_sd_high,
         real restrict_sd_low,
-        real discrim_reg_sd,
-        real discrim_abs_sd,
+        real discrim_reg_scale,
+        real discrim_reg_shape,
+        real discrim_abs_scale,
+        real discrim_abs_shape,
         real legis_sd,
         real diff_abs_sd,
         real diff_reg_sd,
@@ -187,18 +212,23 @@ real partial_sum(array[,] int y_slice,
       
       if(pos_discrim==0) {
         if(r_in(s,restrict_high)) {
-          log_prob += normal_lpdf(sigma_reg_full[s]|fix_high,restrict_sd_high);
+          //log_prob += normal_lpdf(sigma_reg_full[s]|fix_high,restrict_sd_high);
+          log_prob += genbeta_lpdf(sigma_reg_full[s]|1000,0.1,-1,2);
         } else if(r_in(s,restrict_low)) {
-          log_prob += normal_lpdf(sigma_reg_full[s]|fix_low,restrict_sd_low);
+          //log_prob += normal_lpdf(sigma_reg_full[s]|fix_low,restrict_sd_low);
+          log_prob += genbeta_lpdf(sigma_reg_full[s]|0.1,1000,-1,2);
         } else {
-          log_prob += normal_lpdf(sigma_reg_full[s]|0,discrim_reg_sd);
+          //log_prob += normal_lpdf(sigma_reg_full[s]|0,discrim_reg_sd);
+          log_prob += genbeta_lpdf(sigma_reg_full[s]|discrim_reg_scale,discrim_reg_shape,-1,2);
         }
       } else {
-        log_prob += exponential_lpdf(sigma_reg_full[s]|1/discrim_reg_sd);
+        
+        log_prob += exponential_lpdf(sigma_reg_full[s]|1/discrim_reg_scale);
+        
       }
       
       log_prob += normal_lpdf(B_int_free[s]|0,diff_reg_sd);
-      log_prob += normal_lpdf(sigma_abs_free[s]|0,discrim_abs_sd);
+      log_prob += genbeta_lpdf(sigma_abs_free[s]|discrim_abs_scale,discrim_abs_shape,-1,2);
       log_prob += normal_lpdf(A_int_free[s]|0,diff_abs_sd);
 
     } else if(S_type==0 && const_type==1) {
@@ -206,15 +236,16 @@ real partial_sum(array[,] int y_slice,
       // priors if items
       if(pos_discrim==0) { 
         
-        log_prob += normal_lpdf(sigma_reg_full[s]|0,discrim_reg_sd);
+        //log_prob += normal_lpdf(sigma_reg_full[s]|0,discrim_reg_sd);
+        log_prob += genbeta_lpdf(sigma_reg_full[s]|discrim_reg_scale,discrim_reg_shape,-1,2);
         
       } else {
         
-        log_prob += exponential_lpdf(sigma_reg_full[s]|1/discrim_reg_sd);
+        log_prob += exponential_lpdf(sigma_reg_full[s]|1/discrim_reg_scale);
         
       }
       
-      log_prob += normal_lpdf(sigma_abs_free[s]|0,discrim_abs_sd);
+      log_prob += genbeta_lpdf(sigma_abs_free[s]|discrim_abs_scale,discrim_abs_shape,-1,2);
       log_prob += normal_lpdf(B_int_free[s]|0,diff_reg_sd);
       log_prob += normal_lpdf(A_int_free[s]|0,diff_abs_sd);
 
@@ -284,7 +315,7 @@ real partial_sum(array[,] int y_slice,
         
         if(time_proc==5) {
           
-          log_prob += normal_lpdf(a_raw[s]|0,1);
+          log_prob += normal_lpdf(a_raw[s]|0,legis_sd);
           
           if(restrict_var==1) {
             
@@ -446,8 +477,10 @@ data {
   array[num_restrict_low] int restrict_low; // position of low valued fixed parameter
   real fix_high; // value to fix high parameter to
   real fix_low; // value to fix low parameter to
-  real discrim_reg_sd;
-  real discrim_abs_sd;
+  real discrim_reg_scale;
+  real discrim_reg_shape;
+  real discrim_abs_scale;
+  real discrim_abs_shape;
   real legis_sd;
   real diff_abs_sd;
   real diff_reg_sd;
@@ -579,7 +612,7 @@ transformed data {
 }
 
 parameters {
-  vector[num_bills] sigma_abs_free;
+  vector<lower=-0.999,upper=0.999>[num_bills] sigma_abs_free;
   vector[num_legis] L_full; // first T=1 params to constrain
   vector<lower=0>[gp_N_fix] m_sd_free; // marginal standard deviation of GP
   vector<lower=0>[time_proc==4 ? 1 : 0] gp_sd_free; // residual GP variation in Y
@@ -587,7 +620,7 @@ parameters {
   vector[num_ls] ls_int_abs; // extra intercepts for non-inflated latent space
   array[T] vector[(T>1 && time_proc!=5) ? num_legis : 0] L_tp1_var; // non-centered variance, don't need for splines
   vector<lower=ar1_down,upper=ar1_up>[(T>1 && time_proc==3) ? num_legis : 0] L_AR1; // AR-1 parameters for AR-1 model
-  vector[pos_discrim == 0 ? num_bills : 0] sigma_reg_free;
+  vector<lower=-.999,upper=.999>[pos_discrim == 0 ? num_bills : 0] sigma_reg_free;
   vector<lower=0>[pos_discrim == 1 ? num_bills : 0] sigma_reg_pos;
   vector[LX] legis_x;
   vector[SRX] sigma_reg_x;
@@ -845,7 +878,7 @@ for(n in 1:num_legis) {
     
     // splines define priors for time series values
     for(n in 1:num_legis)
-            a_raw[n] ~ normal(0,1);
+            a_raw[n] ~ normal(0,legis_sd);
     
   } 
   
@@ -876,19 +909,20 @@ for(n in 1:num_legis) {
   
 if(S_type==1 && const_type==1) {
   // both ID and map for persons
-  sigma_reg_free ~ normal(0, discrim_reg_sd);
-  sigma_reg_pos ~ exponential(1/discrim_reg_sd);
-  sigma_abs_free ~ normal(0,discrim_abs_sd);
+  //sigma_reg_free ~ normal(0, discrim_reg_sd);
+  target += genbeta_vec_lpdf(sigma_reg_free|discrim_reg_scale,discrim_reg_shape,-1,2);
+  sigma_reg_pos ~ exponential(1/discrim_reg_scale);
+  target += genbeta_vec_lpdf(sigma_abs_free|discrim_abs_scale,discrim_abs_shape,-1,2);
   B_int_free ~ normal(0,diff_reg_sd);
   A_int_free ~ normal(0,diff_abs_sd);
 } else if(S_type==1 && const_type==2) {
   // map persons, ID items
   B_int_free ~ normal(0,diff_reg_sd);
   A_int_free ~ normal(0,diff_abs_sd);
-  sigma_abs_free ~ normal(0,discrim_abs_sd);
+  target += genbeta_vec_lpdf(sigma_abs_free|discrim_abs_scale,discrim_abs_shape,-1,2);
   
   if(pos_discrim==0) {
-    target += id_params(sigma_reg_free,
+    target += id_params2(sigma_reg_free,
                         restrict_high,
                         restrict_low,
                         fix_high,
@@ -896,9 +930,13 @@ if(S_type==1 && const_type==1) {
                         restrict_sd_high,
                         restrict_sd_low,
                         0,
-                        discrim_reg_sd);
+                        discrim_reg_scale,
+                        discrim_reg_shape);
+    
+    
+    
   } else {
-    sigma_reg_pos ~ exponential(1/discrim_reg_sd);
+    sigma_reg_pos ~ exponential(1/discrim_reg_scale);
   }
   
   
@@ -1002,8 +1040,10 @@ if(S_type==1 && const_type==1) {
         fix_low,
         restrict_sd_high,
         restrict_sd_low,
-        discrim_reg_sd,
-        discrim_abs_sd,
+        discrim_reg_scale,
+        discrim_reg_shape,
+        discrim_abs_scale,
+        discrim_abs_shape,
         legis_sd,
         diff_abs_sd,
         diff_reg_sd,

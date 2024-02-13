@@ -2473,8 +2473,7 @@ return(as.vector(idx))
           spread(key="basis",value="a_raw") %>% 
           select(-.chain, -.iteration, -.draw) %>% as.matrix
         
-        out_mat <- L_full[,l] %*% matrix(time_ind,nrow=1,ncol=length(time_ind)) + 
-          this_a %*% B
+        out_mat <- this_a %*% B
         
         out_mat
         

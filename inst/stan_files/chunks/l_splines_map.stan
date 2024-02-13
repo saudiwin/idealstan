@@ -28,13 +28,13 @@ if(ignore==1) {
             }
             
             
-       lt = L_full[s] * to_vector(time_ind[end_time:start_time]) + to_vector(a*B[end_time:start_time,]);
+       //lt = L_full[s] * to_vector(time_ind[end_time:start_time]) + to_vector(a*B[end_time:start_time,]);
 
+      lt = to_vector(a_raw[s]*B[start_time:end_time,]);
       
     } else {
       
-
-        lt = L_full[s] * to_vector(time_ind) + to_vector(a*B);
+        lt = to_vector(a_raw[s]*B);
 
   }
 

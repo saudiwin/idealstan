@@ -1137,7 +1137,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
     
     B <- t(splines::bs(time_ind, 
                        knots = spline_knots,
-                       degree = spline_degree))
+                       degree = spline_degree,intercept=TRUE))
     
     num_basis <- nrow(B)
     
