@@ -1114,9 +1114,19 @@ id_estimate <- function(idealdata=NULL,model_type=2,
     
     if(!is.null(spline_knots) && length(spline_knots)>1) {
       
-      spline_knots <- which(spline_knots %in% time_ind)
+      spline_knots <- switch(class(spline_knots),
+                         factor=unique(as.numeric(spline_knots,
+                                                  levels=levels(idealdata@score_matrix$time_id))),
+                         Date=unique(as.numeric(spline_knots)),
+                         POSIXct=unique(as.numeric(spline_knots)),
+                         POSIXlt=unique(as.numeric(spline_knots)),
+                         numeric=unique(spline_knots),
+                         integer=unique(spline_knots))
+      
+      spline_knots <- which(time_ind %in% spline_knots)
       
     }
+    
     old_bounds <- c(min(time_ind,na.rm=T),max(time_ind, na.rm=T))
     time_ind <- 2 * ((time_ind - min(time_ind))/(max(time_ind) - min(time_ind))) - 1
     
