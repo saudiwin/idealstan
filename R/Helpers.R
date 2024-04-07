@@ -150,7 +150,8 @@
                                 sample_draws=0,
                                 include=NULL,
                                 add_cov=TRUE,
-                                use_chain=NULL) {
+                                use_chain=NULL,
+                                aggregated=NULL) {
   
   
   if(is.null(use_chain))
@@ -213,6 +214,8 @@
       
     }
     
+    if(aggregated) {
+      
       person_params <- person_params %>% gather(key = legis,value=ideal_pts) %>% 
         group_by(legis) %>% 
         summarize(low_pt=quantile(ideal_pts,low_limit),high_pt=quantile(ideal_pts,high_limit),
@@ -221,6 +224,19 @@
                param_id=as.numeric(stringr::str_extract(param_id,'[0-9]+')),
                time_point=stringr::str_extract(legis,'\\[[0-9]+'),
                time_point=as.numeric(stringr::str_extract(time_point,'[0-9]+')))
+      
+    } else {
+      
+      person_params <- person_params %>% gather(key = legis,value=ideal_pts) %>% 
+        mutate(param_id=stringr::str_extract(legis,'[0-9]+\\]'),
+               param_id=as.numeric(stringr::str_extract(param_id,'[0-9]+')),
+               time_point=stringr::str_extract(legis,'\\[[0-9]+'),
+               time_point=as.numeric(stringr::str_extract(time_point,'[0-9]+')))
+      
+      
+    }
+    
+      
 
     # get ids out 
     
@@ -330,11 +346,23 @@
     
     person_ids <- left_join(person_ids,person_data)
     
-    person_params <-  person_params %>% 
+    if(aggregated) {
+      
+      person_params <-  person_params %>% 
         group_by(legis) %>% 
         summarize(low_pt=quantile(ideal_pts,low_limit),high_pt=quantile(ideal_pts,high_limit),
                   median_pt=median(ideal_pts)) %>% 
         left_join(person_ids,by=c(legis='long_name'))
+      
+    } else {
+      
+      person_params <-  person_params %>% 
+        left_join(person_ids,by=c(legis='long_name'))
+      
+      
+    }
+    
+    
 
     
   }
@@ -650,7 +678,7 @@
                        high_limit=NULL,
                        low_limit=NULL,
                        all=FALSE,
-                       aggregate=FALSE) {
+                       aggregated=FALSE) {
   
   # first need to get num of the parameter
   
@@ -690,7 +718,7 @@
     
     return(out_d)
     
-  } else if(all && aggregate) {
+  } else if(all && aggregated) {
     reg_data_mid <- data_frame(`Posterior Median`=quantile(reg_mid,0.5),
                                `High Posterior Interval`=quantile(reg_mid,high_limit),
                                `Low Posterior Interval`=quantile(reg_mid,low_limit),
@@ -745,7 +773,7 @@
                        abs_data_diff)
     
     return(out_d)
-  } else if(all && !aggregate) {
+  } else if(all && !aggregated) {
     reg_data_mid <- data_frame(Posterior_Sample=as.numeric(reg_mid),
                                `Item Name`=param_name,
                                `Item Type`='Non-Inflated Item Midpoint',
@@ -804,7 +832,7 @@
                               high_limit=NULL,
                               low_limit=NULL,
                               all=FALSE,
-                              aggregate=FALSE) {
+                              aggregated=FALSE) {
 
   # first need to get num of the parameter
   
@@ -854,7 +882,7 @@
     
     return(out_d)
   
-} else if(all && aggregate) {
+} else if(all && aggregated) {
   
   # need to loop over cuts
   
@@ -914,7 +942,7 @@
                      abs_data_diff)
   
   return(out_d)
-} else if(all && !aggregate) {
+} else if(all && !aggregated) {
   
   reg_data_mid <- lapply(1:ncol(cuts), function(c) {
     reg_mid <- (reg_diff+cuts[[c]])/reg_discrim
@@ -977,7 +1005,7 @@
                               high_limit=NULL,
                               low_limit=NULL,
                               all=FALSE,
-                              aggregate=FALSE) {
+                              aggregated=FALSE) {
 
   # first need to get num of the parameter
   
@@ -1031,7 +1059,7 @@
     
     return(out_d)
     
-  } else if(all && aggregate) {
+  } else if(all && aggregated) {
     
     # need to loop over cuts
     
@@ -1091,7 +1119,7 @@
                        abs_data_diff)
     
     return(out_d)
-  } else if(all && !aggregate) {
+  } else if(all && !aggregated) {
     
     reg_data_mid <- lapply(1:ncol(cuts), function(c) {
       reg_mid <- (reg_diff+cuts[[c]])/reg_discrim
@@ -1152,7 +1180,7 @@
 .item_plot_ls <- function(param_name,object,
                               high_limit=NULL,
                               low_limit=NULL,
-                          aggregate=F) {
+                          aggregated=F) {
 
   # first need to get num of the parameter
   
@@ -1194,7 +1222,7 @@
     
     return(out_d)
     
-  } else if(all && aggregate) {
+  } else if(all && aggregated) {
     reg_data <- data_frame(item_median=quantile(reg_diff,0.5),
                            item_high=quantile(reg_diff,high_limit),
                            item_low=quantile(reg_diff,low_limit),
@@ -1230,7 +1258,7 @@
     out_d <- bind_rows(reg_data,abs_data,ideal_int,item_int)
     
     return(out_d)
-  } else if(all && !aggregate) {
+  } else if(all && !aggregated) {
     reg_data <- data_frame(Posterior_Sample=reg_diff,
                                `Item Name`=param_name,
                                `Item Type`='Non-Inflated Item Ideal Point',
@@ -1704,15 +1732,38 @@ return(as.vector(idx))
       
       Y_int <- as.numeric(Y_int)
       
-      Y_int <- ifelse(modelpoints %in% c(1,2),Y_int - 1, Y_int)
-      
     } else {
       
       Y_int <- as.numeric(Y_int)
       
     }
-    
-    
+
+      # need to convert binary outcomes to start at 0
+        
+      # if missing data present, only adjust bottom two numbers
+      
+      if(any(c(1,2) %in% unique(modelpoints))) {
+        
+        Y_int[modelpoints %in% c(1,2) & (Y_int %in% sort(unique(Y_int[modelpoints %in% c(1,2)]))[1:2])] <- Y_int[modelpoints %in% c(1,2) & (Y_int %in% sort(unique(Y_int[modelpoints %in% c(1,2)]))[1:2])] - min(Y_int[modelpoints %in% c(1,2)])
+        
+      }
+      
+      if(any(c(3,4,5,6) %in% unique(modelpoints))) {
+        
+        # convert ordinal outcomes to start at 1
+        # missing data number a bit trickier to avoid
+        
+        in_ord_num <- sapply(1:length(Y_int[modelpoints %in% c(3,4,5,6)]), function(i) {
+          
+          Y_int[modelpoints %in% c(3,4,5,6)][i] %in% min(Y_int[modelpoints %in% c(3,4,5,6)]):(Y_int[modelpoints %in% c(3,4,5,6)][i] + ordered_id[modelpoints %in% c(3,4,5,6)][i]) 
+          
+        })
+        
+        Y_int[modelpoints %in% c(3,4,5,6) & in_ord_num] <- Y_int[modelpoints %in% c(3,4,5,6) & in_ord_num] - (min(Y_int[modelpoints %in% c(3,4,5,6)]) - 1)
+        
+        
+      }
+      
     #Y_int[modelpoints %in% c(1,2) & Y_int<3] <- Y_int[modelpoints %in% c(1,2)  & Y_int<3] - 1
 
   }

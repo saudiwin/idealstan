@@ -531,7 +531,7 @@ setMethod('summary',signature(object='idealstan'),
           function(object,pars='ideal_pts',
                    high_limit=0.95,
                    low_limit=0.05,
-                   aggregate=TRUE) {
+                   aggregated=TRUE) {
             
             options(tibble.print_max=1000,
                     tibble.print_min=100)
@@ -541,11 +541,11 @@ setMethod('summary',signature(object='idealstan'),
               ideal_pts <- .prepare_legis_data(object,
                                                high_limit=high_limit,
                                                low_limit=low_limit,
-                                               aggregate=aggregate)
+                                               aggregated=aggregated)
               if(is.null(ideal_pts$time_id)) {
                 ideal_pts$time_id=1
               }
-              if(aggregate) {
+              if(aggregated) {
                 ideal_pts <- select(ideal_pts,
                                     Person=person_id,
                                     Group=group_id,
@@ -579,28 +579,28 @@ setMethod('summary',signature(object='idealstan'),
                                       low_limit=low_limit,
                                       high_limit=high_limit,
                                       all=T,
-                                      aggregate=aggregate) %>% bind_rows()
+                                      aggregated=aggregated) %>% bind_rows()
               } else if(object@model_type %in% c(3,4)) {
                 # rating scale
                 item_points <- lapply(item_plot,.item_plot_ord_rs,object=object,
                                       low_limit=low_limit,
                                       high_limit=high_limit,
                                       all=T,
-                                      aggregate=aggregate) %>% bind_rows()
+                                      aggregated=aggregated) %>% bind_rows()
               } else if(object@model_type %in% c(5,6)) {
                 # grm
                 item_points <- lapply(item_plot,.item_plot_ord_grm,object=object,
                                       low_limit=low_limit,
                                       high_limit=high_limit,
                                       all=T,
-                                      aggregate=aggregate) %>% bind_rows()
+                                      aggregated=aggregated) %>% bind_rows()
               } else if(object@model_type %in% c(13,14)) {
                 # latent space
                 item_points <- lapply(item_plot,.item_plot_ls,object=object,
                                       low_limit=low_limit,
                                       high_limit=high_limit,
                                       all=T,
-                                      aggregate=aggregate) %>% bind_rows()
+                                      aggregated=aggregated) %>% bind_rows()
               }
               return(item_points)
             }
