@@ -1744,7 +1744,7 @@ return(as.vector(idx))
       
       if(any(c(1,2) %in% unique(modelpoints))) {
         
-        Y_int[modelpoints %in% c(1,2) & (Y_int %in% sort(unique(Y_int[modelpoints %in% c(1,2)]))[1:2])] <- Y_int[modelpoints %in% c(1,2) & (Y_int %in% sort(unique(Y_int[modelpoints %in% c(1,2)]))[1:2])] - min(Y_int[modelpoints %in% c(1,2)])
+        Y_int[modelpoints %in% c(1,2) & (Y_int %in% sort(unique(Y_int[modelpoints %in% c(1,2)]))[1:2])] <- Y_int[modelpoints %in% c(1,2) & (Y_int %in% sort(unique(Y_int[modelpoints %in% c(1,2)]))[1:2])] - min(Y_int[modelpoints %in% c(1,2)],na.rm=T)
         
       }
       
@@ -1759,7 +1759,7 @@ return(as.vector(idx))
           
         })
         
-        Y_int[modelpoints %in% c(3,4,5,6) & in_ord_num] <- Y_int[modelpoints %in% c(3,4,5,6) & in_ord_num] - (min(Y_int[modelpoints %in% c(3,4,5,6)]) - 1)
+        Y_int[modelpoints %in% c(3,4,5,6) & in_ord_num] <- Y_int[modelpoints %in% c(3,4,5,6) & in_ord_num] - (min(Y_int[modelpoints %in% c(3,4,5,6)],na.rm=T) - 1)
         
         
       }
