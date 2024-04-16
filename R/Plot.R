@@ -127,7 +127,8 @@ id_plot_legis <- function(object,return_data=FALSE,
   if(class(object)=='idealstan') {
     person_params <- .prepare_legis_data(object,
                                          high_limit=high_limit,
-                                         low_limit=low_limit,include=include)
+                                         low_limit=low_limit,include=include,
+                                         aggregated=TRUE)
     model_wrap <- FALSE
     use_groups <- object@use_groups
   } else {
@@ -135,7 +136,8 @@ id_plot_legis <- function(object,return_data=FALSE,
     person_params <- lapply(object,.prepare_legis_data,
                             high_limit=high_limit,
                             low_limit=low_limit,
-                            include=include) %>% 
+                            include=include,
+                            aggregated=TRUE) %>% 
       bind_rows(.id='Model')
     
     check_groups <- sapply(object,function(x) x@use_groups)

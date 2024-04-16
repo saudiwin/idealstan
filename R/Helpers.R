@@ -1753,13 +1753,26 @@ return(as.vector(idx))
         # convert ordinal outcomes to start at 1
         # missing data number a bit trickier to avoid
         
-        in_ord_num <- sapply(1:length(Y_int[modelpoints %in% c(3,4,5,6)]), function(i) {
-          
-          Y_int[modelpoints %in% c(3,4,5,6)][i] %in% min(Y_int[modelpoints %in% c(3,4,5,6)]):(Y_int[modelpoints %in% c(3,4,5,6)][i] + ordered_id[modelpoints %in% c(3,4,5,6)][i]) 
-          
-        })
+        min_ord <- min(Y_int[modelpoints %in% c(3,4,5,6)],na.rm=T)
+        max_ord <-  Y_int + ordered_id
         
-        Y_int[modelpoints %in% c(3,4,5,6) & in_ord_num] <- Y_int[modelpoints %in% c(3,4,5,6) & in_ord_num] - (min(Y_int[modelpoints %in% c(3,4,5,6)],na.rm=T) - 1)
+        # in_ord_num <- sapply(1:length(Y_int[modelpoints %in% c(3,4,5,6)]), function(i) {
+        #   
+        #   if(!is.na(Y_int[modelpoints %in% c(3,4,5,6)][i])) {
+        #     
+        #     return(Y_int[modelpoints %in% c(3,4,5,6)][i] %in% min(Y_int[modelpoints %in% c(3,4,5,6)],na.rm=T):(Y_int[modelpoints %in% c(3,4,5,6)][i] + ordered_id[modelpoints %in% c(3,4,5,6)][i]) )
+        #     
+        #   } else {
+        #     
+        #     return(FALSE)
+        #     
+        #   }
+        #   
+        # })
+        
+        conditions <- !is.na(Y_int) & modelpoints %in% c(3,4,5,6) & Y_int <= max_ord
+        
+        Y_int[conditions] <- Y_int[conditions] - (min(Y_int[conditions],na.rm=T) - 1)
         
         
       }
