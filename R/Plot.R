@@ -639,7 +639,7 @@ id_plot_legis_dyn <- function(object,return_data=FALSE,
                                          sample_draws=plot_lines,
                                          include=include,
                                          add_cov=add_cov,
-                                         use_chain=use_chain)
+                                         use_chain=use_chain,aggregated=TRUE)
     model_wrap <- FALSE
     use_groups <- object@use_groups
   } else {
@@ -648,7 +648,7 @@ id_plot_legis_dyn <- function(object,return_data=FALSE,
                             high_limit=high_limit,
                             low_limit=low_limit,
                             sample_draws=plot_lines,
-                            include=include) %>% 
+                            include=include,aggregated=TRUE) %>% 
       bind_rows(.id='Model')
     
     check_groups <- sapply(object,function(x) x@use_groups)
