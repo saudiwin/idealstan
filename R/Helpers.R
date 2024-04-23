@@ -163,7 +163,7 @@
       
       print(paste0("Using only one chain: chain ",use_chain))
       
-      .get_varying(object,time_id=object@this_data$time, person_id=object@this_data$ll,
+      person_params <- .get_varying(object,time_id=object@this_data$time, person_id=object@this_data$ll,
                    use_chain=use_chain)
       
     } else {
