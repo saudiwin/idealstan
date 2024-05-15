@@ -39,7 +39,11 @@ setGeneric('id_post_pred',signature='object',
 #' @param sample_scores In addition to reducing the number of posterior draws used to 
 #' calculate the posterior predictive distribution, which will reduce computational overhead.
 #' Only available for calculating predictive distributions, not log-likelihood values.
+#' @param item_subset Whether to calculate marginal effects for only a subset of 
+#' items. Should be item IDs that match the \code{item_id} column passed to the \code{id_make}
+#'  function.
 #' @param type Whether to produce posterior predictive values (\code{'predict'}, the default),
+#' the posterior expected (average) values (\code{'epred'}),
 #' or log-likelihood values (\code{'log_lik'}). See the How to Evaluate Models vignette for more info.
 #' @param output If the model has an unbounded outcome (Poisson, continuous, etc.), then
 #' specify whether to show the \code{'observed'} data (the default) or the binary 
@@ -59,6 +63,7 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
                                                                 type='predict',
                                                                 covar="person",
                                                                 sample_scores=NULL,
+                                                                item_subset=NULL,
                                                                 use_cores=1,
                                                                 use_chain=NULL,
                                                                 newdata=NULL,...) {
@@ -98,6 +103,14 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
     these_draws <- 1:n_iters
     draws <- n_iters
   }
+    
+    if(!is.null(item_subset)) {
+      
+      # need to get item parameters
+      
+      item_subset <- which(levels(object@score_data@score_matrix$item_id) %in% item_subset)
+      
+    }
   
   
   print(paste0('Processing posterior replications for ',n_votes,' scores using ',draws,
@@ -226,107 +239,125 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
     print(paste0("Now on model ",m))
     
     # loop over itempoints
-
-    out_items <- parallel::mclapply(unique(bill_points)[unique(bill_points) %in% unique(bill_points[modelpoints==m])], function(i) {
-
-      this_obs <- which(bill_points==i)
+    
+    these_bills <- unique(bill_points)
+    
+    these_bills <- these_bills[these_bills %in% unique(bill_points[modelpoints==m])]
+    
+    # check if any are in the item subset
+    
+    if(!is.null(item_subset)) {
       
-      if(length(unique(object@score_data@score_matrix$time_id))>1) {
+      these_bills <- these_bills[these_bills %in% unique(bill_points[bill_points %in% item_subset])]
+      
+    }
+    
+    if(length(these_bills)>0) {
+      
+      out_items <- parallel::mclapply(these_bills, function(i) {
         
-        pr_absence_iter <- sapply(these_draws, function(d) {
-          if(latent_space) {
-            # use latent-space formulation for likelihood
-            pr_absence <- sapply(this_obs,function(n) {
-              print(this_obs[n])
-              this_time <- paste0("L_tp1[",time_points[n],",",person_points[n],"]")
-              print(this_time)
-              -sqrt((L_tp1[d,this_time] - A_int_free[d,bill_points[n]])^2)
-            }) %>% plogis()
-          } else {
-            # use IRT formulation for likelihood
-            pr_absence <- sapply(this_obs,function(n) {
-              this_time <- paste0("L_tp1[",time_points[n],",",person_points[n],"]")
-              L_tp1[d,this_time]*sigma_abs_free[d,bill_points[n]] - A_int_free[d,bill_points[n]]
-            }) %>% plogis()
-            
-          }
-          return(pr_absence)
-        })
+        this_obs <- which(bill_points==i)
         
-        pr_vote_iter <- sapply(these_draws, function(d) {
-          if(latent_space) {
-            if(inflate) {
-              pr_vote <- sapply(this_obs,function(n) {
+        if(length(unique(object@score_data@score_matrix$time_id))>1) {
+          
+          pr_absence_iter <- sapply(these_draws, function(d) {
+            if(latent_space) {
+              # use latent-space formulation for likelihood
+              pr_absence <- sapply(this_obs,function(n) {
+                print(this_obs[n])
                 this_time <- paste0("L_tp1[",time_points[n],",",person_points[n],"]")
-                -sqrt((L_tp1[d,this_time] - B_int_free[d,bill_points[n]])^2)
+                print(this_time)
+                -sqrt((L_tp1[d,this_time] - A_int_free[d,bill_points[n]])^2)
               }) %>% plogis()
             } else {
-              # latent space non-inflated formulation is different
+              # use IRT formulation for likelihood
+              pr_absence <- sapply(this_obs,function(n) {
+                this_time <- paste0("L_tp1[",time_points[n],",",person_points[n],"]")
+                L_tp1[d,this_time]*sigma_abs_free[d,bill_points[n]] - A_int_free[d,bill_points[n]]
+              }) %>% plogis()
+              
+            }
+            return(pr_absence)
+          })
+          
+          pr_vote_iter <- sapply(these_draws, function(d) {
+            if(latent_space) {
+              if(inflate) {
+                pr_vote <- sapply(this_obs,function(n) {
+                  this_time <- paste0("L_tp1[",time_points[n],",",person_points[n],"]")
+                  -sqrt((L_tp1[d,this_time] - B_int_free[d,bill_points[n]])^2)
+                }) %>% plogis()
+              } else {
+                # latent space non-inflated formulation is different
+                pr_vote <- sapply(this_obs,function(n) {
+                  this_time <- paste0("L_tp1[",time_points[n],",",person_points[n],"]")
+                  sigma_reg_free[d,bill_points[n]] + sigma_abs_free[d,bill_points[n]] -
+                    sqrt((L_tp1[d,this_time] - B_int_free[d,bill_points[n]])^2)
+                }) %>% plogis()
+              }
+              
+            } else {
               pr_vote <- sapply(this_obs,function(n) {
                 this_time <- paste0("L_tp1[",time_points[n],",",person_points[n],"]")
-                sigma_reg_free[d,bill_points[n]] + sigma_abs_free[d,bill_points[n]] -
-                  sqrt((L_tp1[d,this_time] - B_int_free[d,bill_points[n]])^2)
+                L_tp1[d,this_time]*sigma_reg_free[d,bill_points[n]] - B_int_free[d,bill_points[n]]
               }) %>% plogis()
             }
             
-          } else {
-            pr_vote <- sapply(this_obs,function(n) {
-              this_time <- paste0("L_tp1[",time_points[n],",",person_points[n],"]")
-              L_tp1[d,this_time]*sigma_reg_free[d,bill_points[n]] - B_int_free[d,bill_points[n]]
-            }) %>% plogis()
-          }
+            return(pr_vote)
+          })
+        } else {
           
-          return(pr_vote)
-        })
-      } else {
-        
-        pr_absence_iter <- sapply(these_draws, function(d) {
-          if(latent_space) {
-            # use latent-space formulation for likelihood
-            pr_absence <- sapply(this_obs,function(n) {
-              -sqrt((L_full[d,person_points[n]] - A_int_free[d,bill_points[n]])^2)
-            }) %>% plogis()
-          } else {
-            # use IRT formulation for likelihood
-            pr_absence <- sapply(this_obs,function(n) {
-              L_full[d,person_points[n]]*sigma_abs_free[d,bill_points[n]] - A_int_free[d,bill_points[n]]
-            }) %>% plogis()
-            
-          }
-          return(pr_absence)
-        })
-        
-        pr_vote_iter <- sapply(these_draws, function(d) {
-          if(latent_space) {
-            if(inflate) {
-              pr_vote <- sapply(this_obs,function(n) {
-                -sqrt((L_full[d,person_points[n]] - B_int_free[d,bill_points[n]])^2)
+          pr_absence_iter <- sapply(these_draws, function(d) {
+            if(latent_space) {
+              # use latent-space formulation for likelihood
+              pr_absence <- sapply(this_obs,function(n) {
+                -sqrt((L_full[d,person_points[n]] - A_int_free[d,bill_points[n]])^2)
               }) %>% plogis()
             } else {
-              # latent space non-inflated formulation is different
+              # use IRT formulation for likelihood
+              pr_absence <- sapply(this_obs,function(n) {
+                L_full[d,person_points[n]]*sigma_abs_free[d,bill_points[n]] - A_int_free[d,bill_points[n]]
+              }) %>% plogis()
+              
+            }
+            return(pr_absence)
+          })
+          
+          pr_vote_iter <- sapply(these_draws, function(d) {
+            if(latent_space) {
+              if(inflate) {
+                pr_vote <- sapply(this_obs,function(n) {
+                  -sqrt((L_full[d,person_points[n]] - B_int_free[d,bill_points[n]])^2)
+                }) %>% plogis()
+              } else {
+                # latent space non-inflated formulation is different
+                pr_vote <- sapply(this_obs,function(n) {
+                  sigma_reg_free[d,bill_points[n]] + sigma_abs_free[d,bill_points[n]] -
+                    sqrt((L_full[d,person_points[n]] - B_int_free[d,bill_points[n]])^2)
+                }) %>% plogis()
+              }
+              
+            } else {
               pr_vote <- sapply(this_obs,function(n) {
-                sigma_reg_free[d,bill_points[n]] + sigma_abs_free[d,bill_points[n]] -
-                  sqrt((L_full[d,person_points[n]] - B_int_free[d,bill_points[n]])^2)
+                L_full[d,person_points[n]]*sigma_reg_free[d,bill_points[n]] - B_int_free[d,bill_points[n]]
               }) %>% plogis()
             }
             
-          } else {
-            pr_vote <- sapply(this_obs,function(n) {
-              L_full[d,person_points[n]]*sigma_reg_free[d,bill_points[n]] - B_int_free[d,bill_points[n]]
-            }) %>% plogis()
-          }
+            return(pr_vote)
+          })
           
-          return(pr_vote)
-        })
-        
         }
-      
-      return(list(pr_vote=pr_vote_iter,pr_absence=pr_absence_iter,model_id=m,
-                  item_point=i,
-                  this_obs=this_obs))
+        
+        return(list(pr_vote=pr_vote_iter,pr_absence=pr_absence_iter,model_id=m,
+                    item_point=i,
+                    this_obs=this_obs))
       },mc.cores=use_cores)
       
-    return(out_items)
+      return(out_items)
+      
+    } 
+    
+    
       
     }) %>% unlist(recursive=FALSE)
     

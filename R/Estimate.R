@@ -712,6 +712,16 @@ id_make <- function(score_data=NULL,
 #' fixed to. Default is +1.
 #' @param fix_low The value of which the high fixed ideal point/item(s) should be
 #' fixed to. Default is -1.
+#' @param discrim_reg_upb Upper bound of the rescaled Beta distribution for 
+#' observed discrimination parameters (default is +1)
+#' @param discrim_reg_lb Lower bound of the rescaled Beta distribution for 
+#' observed discrimination parameters (default is -1). Set to 0 for 
+#' conventional IRT.
+#' @param discrim_miss_upb Upper bound of the rescaled Beta distribution for 
+#' missing discrimination parameters (default is +1)
+#' @param discrim_miss_lb Lower bound of the rescaled Beta distribution for 
+#' missing discrimination parameters (default is -1). Set to 0 for 
+#' conventional IRT.
 #' @param discrim_reg_scale Set the scale parameter for the rescaled Beta distribution
 #' of the discrimination parameters.
 #' @param discrim_reg_shape Set the shape parameter for the rescaled Beta distribution
@@ -775,11 +785,6 @@ id_make <- function(score_data=NULL,
 #' time-varying models).
 #' @param save_files The location to save CSV files with MCMC draws from \code{cmdstanr}. 
 #' The default is \code{NULL}, which will use a folder in the package directory.
-#' @param pos_discrim Whether all discrimination parameters should be constrained to be
-#' positive. If so, the model reduces to a traditional IRT model in which all items 
-#' positively predict ability. Setting this to \code{TRUE} will also eliminate the need
-#' to use other parameters for identification, though the options should still be 
-#' specified to prevent errors.
 #' @param het_var Whether to use a separate variance parameter for each item if using
 #' Normal or Log-Normal distributions that have variance parameters. Defaults to TRUE and
 #' should be set to FALSE only if all items have a similar variance.
@@ -896,6 +901,10 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                         prior_fit=NULL,
                         warmup=1000,ncores=4,
                         use_groups=FALSE,
+                        discrim_reg_upb=1,
+                        discrim_reg_lb=-1,
+                        discrim_miss_upb=1,
+                        discrim_miss_lb=-1,
                         discrim_reg_scale=1,
                         discrim_reg_shape=1,
                         discrim_miss_scale=1,
@@ -914,8 +923,8 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                         ar_sd=1,
                         diff_reg_sd=1,
                         diff_miss_sd=1,
-                        restrict_sd_high=0.01,
-                        restrict_sd_low=0.01,
+                        restrict_sd_high=0.1,
+                        restrict_sd_low=0.1,
                         tol_rel_obj=.001,
                         gp_sd_par=.025,
                         gp_num_diff=3,
@@ -925,7 +934,6 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                         #gpu=FALSE,
                         map_over_id="persons",
                         save_files=NULL,
-                        pos_discrim=FALSE,
                         het_var=TRUE,
                         compile_optim=FALSE,
                         debug=FALSE,
@@ -1368,6 +1376,10 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     sax_pred=remove_list$sax_pred[out_list$this_data$orig_order,,drop=FALSE],
                     time=remove_list$timepoints[out_list$this_data$orig_order],
                     time_proc=vary_ideal_pts,
+                    discrim_reg_upb=discrim_reg_upb - discrim_reg_lb,
+                    discrim_reg_lb=discrim_reg_lb,
+                    discrim_miss_upb=discrim_miss_upb - discrim_miss_lb,
+                    discrim_miss_lb=discrim_miss_lb,
                     discrim_reg_scale=discrim_reg_scale,
                     discrim_reg_shape=discrim_reg_shape,
                     discrim_abs_scale=discrim_miss_scale,
@@ -1401,7 +1413,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     fix_high=0,
                     fix_low=0,
                     num_diff=gp_num_diff,
-                    pos_discrim=as.integer(pos_discrim),
+                    pos_discrim=as.integer(sign(discrim_reg_upb)==sign(discrim_reg_lb)),
                     grainsize=grainsize,
                     prior_only=as.integer(prior_only))
   
@@ -1571,6 +1583,10 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     sax_pred=remove_list$sax_pred[out_list$this_data$orig_order,,drop=FALSE],
                     time=remove_list$timepoints[out_list$this_data$orig_order],
                     time_proc=vary_ideal_pts,
+                    discrim_reg_upb=discrim_reg_upb - discrim_reg_lb,
+                    discrim_reg_lb=discrim_reg_lb,
+                    discrim_miss_upb=discrim_miss_upb - discrim_miss_lb,
+                    discrim_miss_lb=discrim_miss_lb,
                     discrim_reg_scale=discrim_reg_scale,
                     discrim_reg_shape=discrim_reg_shape,
                     discrim_abs_scale=discrim_miss_scale,
@@ -1605,7 +1621,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     fix_high=idealdata@restrict_num_high,
                     fix_low=idealdata@restrict_num_low,
                     num_diff=gp_num_diff,
-                    pos_discrim=as.integer(pos_discrim),
+                    pos_discrim=as.integer(sign(discrim_reg_upb)==sign(discrim_reg_lb)),
                     grainsize=grainsize,
                     prior_only=as.integer(prior_only))
   

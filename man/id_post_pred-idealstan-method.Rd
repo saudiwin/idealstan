@@ -9,14 +9,19 @@
   draws = 100,
   output = "observed",
   type = "predict",
+  covar = "person",
   sample_scores = NULL,
+  use_cores = 1,
+  use_chain = NULL,
+  newdata = NULL,
   ...
 )
 }
 \arguments{
 \item{object}{A fitted \code{idealstan} object}
 
-\item{draws}{The number of draws to use from the total number of posterior draws (default is 100).}
+\item{draws}{The number of draws to use from the total number of posterior draws (default is 100).
+For reproducibility, you can also pass a vector of specific draws to use.}
 
 \item{output}{If the model has an unbounded outcome (Poisson, continuous, etc.), then
 specify whether to show the \code{'observed'} data (the default) or the binary 
@@ -25,9 +30,19 @@ output \code{'missing'} showing whether an observation was predicted as missing 
 \item{type}{Whether to produce posterior predictive values (\code{'predict'}, the default),
 or log-likelihood values (\code{'log_lik'}). See the How to Evaluate Models vignette for more info.}
 
+\item{covar}{What kind of covariates to include as part of the prediction -- either
+"person" (the default) or "items" if you included predictors for item discriminations.}
+
 \item{sample_scores}{In addition to reducing the number of posterior draws used to 
 calculate the posterior predictive distribution, which will reduce computational overhead.
 Only available for calculating predictive distributions, not log-likelihood values.}
+
+\item{use_cores}{Number of cores to use for multicore parallel processing with
+the base R \code{parallel} package}
+
+\item{newdata}{Optional: pass a data frame that must have all of the predictors that
+were given to the id_make function. Used to generate predictions from person or item
+covariates on to items.}
 
 \item{...}{Any other arguments passed on to posterior_predict (currently none available)}
 }

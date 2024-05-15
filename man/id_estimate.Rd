@@ -33,12 +33,18 @@ id_estimate(
   warmup = 1000,
   ncores = 4,
   use_groups = FALSE,
-  discrim_reg_sd = 2,
-  discrim_miss_sd = 2,
+  discrim_reg_upb = 1,
+  discrim_reg_lb = -1,
+  discrim_miss_upb = 1,
+  discrim_miss_lb = -1,
+  discrim_reg_scale = 1,
+  discrim_reg_shape = 1,
+  discrim_miss_scale = 1,
+  discrim_miss_shape = 1,
   person_sd = 3,
   time_fix_sd = 0.1,
   time_var = 10,
-  spline_knots = 2,
+  spline_knots = NULL,
   spline_degree = 2,
   ar1_up = 1,
   ar1_down = 0,
@@ -59,7 +65,6 @@ id_estimate(
   cmdstan_path_user = NULL,
   map_over_id = "persons",
   save_files = NULL,
-  pos_discrim = FALSE,
   het_var = TRUE,
   compile_optim = FALSE,
   debug = FALSE,
@@ -145,16 +150,16 @@ with out of sample periods. The columns must be labeled as \code{person_id},
 \code{time_id} and \code{ignore} and must match the formatting of the columns
 fed to the \code{id_make} function.}
 
-\item{restrict_ind_high}{If \code{fixtype} is not "vb_full", the character value or numerical index
+\item{restrict_ind_high}{If \code{fixtype} is not "vb_full", a vector of character values or integer indices
 of a legislator/person or bill/item to pin to a high value (default +1).}
 
-\item{fix_high}{The value of which the high fixed ideal point/item should be
+\item{fix_high}{The value of which the high fixed ideal point/item(s) should be
 fixed to. Default is +1.}
 
-\item{fix_low}{The value of which the high fixed ideal point/item should be
+\item{fix_low}{The value of which the high fixed ideal point/item(s) should be
 fixed to. Default is -1.}
 
-\item{restrict_ind_low}{If \code{fixtype} is not "vb_full", the character value or numerical index of a 
+\item{restrict_ind_low}{If \code{fixtype} is not "vb_full", a vector of character values or integer indices of a 
 legislator/person or bill/item to pin to a low value (default -1).}
 
 \item{fixtype}{Sets the particular kind of identification used on the model, could be either 'vb_full' 
@@ -191,19 +196,42 @@ See \code{\link[rstan]{stan}} for more info. If \code{within_chain} is set to
 \item{use_groups}{If \code{TRUE}, group parameters from the person/legis data given in \code{\link{id_make}} will be 
 estimated instead of individual parameters.}
 
-\item{discrim_reg_sd}{Set the prior standard deviation of the bimodal prior for the discrimination parameters for the non-inflated model.}
+\item{discrim_reg_upb}{Upper bound of the rescaled Beta distribution for 
+observed discrimination parameters (default is +1)}
 
-\item{discrim_miss_sd}{Set the prior standard deviation of the bimodal prior for the discrimination parameters for the inflated model.}
+\item{discrim_reg_lb}{Lower bound of the rescaled Beta distribution for 
+observed discrimination parameters (default is -1). Set to 0 for 
+conventional IRT.}
 
-\item{person_sd}{Set the prior standard deviation for the legislators (persons) parameters}
+\item{discrim_miss_upb}{Upper bound of the rescaled Beta distribution for 
+missing discrimination parameters (default is +1)}
+
+\item{discrim_miss_lb}{Lower bound of the rescaled Beta distribution for 
+missing discrimination parameters (default is -1). Set to 0 for 
+conventional IRT.}
+
+\item{discrim_reg_scale}{Set the scale parameter for the rescaled Beta distribution
+of the discrimination parameters.}
+
+\item{discrim_reg_shape}{Set the shape parameter for the rescaled Beta distribution
+of the discrimination parameters.}
+
+\item{discrim_miss_scale}{Set the scale parameter for the rescaled Beta distribution
+of the missingness discrimination parameters.}
+
+\item{discrim_miss_shape}{Set the shape parameter for the rescaled Beta distribution
+of the missingness discrimination parameters.}
 
 \item{time_fix_sd}{The variance of the over-time component of the first person/legislator
 is fixed to this value as a reference. 
 Default is 0.1.}
 
 \item{spline_knots}{Number of knots (essentially, number of points
-at which to calculate time-varying ideal points given T time points).
-Note that this must be equal or less than the number of time points--and there is
+at which to calculate time-varying ideal points given T time points). 
+Default is NULL, which means that the spline is equivalent to 
+polynomial time trend of degree \code{spline_degree}.
+Note that the spline number (if not null) must be equal or less than 
+the number of time points--and there is
 no reason to have it equal to the number of time points as that will likely 
 over-fit the data.}
 
@@ -280,12 +308,6 @@ distinct values to improve parallelization.}
 
 \item{save_files}{The location to save CSV files with MCMC draws from \code{cmdstanr}. 
 The default is \code{NULL}, which will use a folder in the package directory.}
-
-\item{pos_discrim}{Whether all discrimination parameters should be constrained to be
-positive. If so, the model reduces to a traditional IRT model in which all items 
-positively predict ability. Setting this to \code{TRUE} will also eliminate the need
-to use other parameters for identification, though the options should still be 
-specified to prevent errors.}
 
 \item{het_var}{Whether to use a separate variance parameter for each item if using
 Normal or Log-Normal distributions that have variance parameters. Defaults to TRUE and

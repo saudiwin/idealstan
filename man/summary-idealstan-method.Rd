@@ -9,7 +9,7 @@
   pars = "ideal_pts",
   high_limit = 0.95,
   low_limit = 0.05,
-  aggregate = TRUE
+  aggregated = TRUE
 )
 }
 \arguments{

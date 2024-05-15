@@ -18,7 +18,7 @@ id_plot_legis_dyn(
   plot_text = TRUE,
   use_ci = TRUE,
   plot_lines = 0,
-  line_alpha = 0.5,
+  draw_line_alpha = 0.5,
   person_line_alpha = 0.3,
   person_ci_alpha = 0.8,
   item_plot_type = "non-inflated",
@@ -27,6 +27,8 @@ id_plot_legis_dyn(
   hpd_limit = 10,
   sample_persons = NULL,
   plot_sim = FALSE,
+  use_chain = NULL,
+  add_cov = TRUE,
   ...
 )
 }
@@ -64,7 +66,7 @@ plotted over the estimates (turn off if the plot is too busy)}
 to draw on the plot. Note that these are grouped by persons. Specific draws selected at random
 from total number of draws of the estimation. Default is 0.}
 
-\item{line_alpha}{The opacity of lines plotted over the distribution (should be 
+\item{draw_line_alpha}{The opacity of lines plotted over the distribution (should be 
 between 0 and 1, default is 0.5).}
 
 \item{person_line_alpha}{The transparency level of the time-varying ideal point line}
@@ -87,6 +89,9 @@ only a fraction of the persons/legislators.}
 
 \item{plot_sim}{Whether to plot the true values of parameters if a simulation was used to generate data 
 (see \code{\link{id_sim_gen}})}
+
+\item{add_cov}{Whether to add values of hierarchical person-level covariates to the
+time trends (defaults to TRUE).}
 
 \item{...}{Other options passed on to plotting function, currently ignored}
 }
