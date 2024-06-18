@@ -260,95 +260,84 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
         
         if(length(unique(object@score_data@score_matrix$time_id))>1) {
           
-          pr_absence_iter <- sapply(these_draws, function(d) {
             if(latent_space) {
               # use latent-space formulation for likelihood
-              pr_absence <- sapply(this_obs,function(n) {
-                print(this_obs[n])
+              pr_absence_iter <- sapply(this_obs,function(n) {
+
                 this_time <- paste0("L_tp1[",time_points[n],",",person_points[n],"]")
-                print(this_time)
-                -sqrt((L_tp1[d,this_time] - A_int_free[d,bill_points[n]])^2)
+
+                t(-sqrt((L_tp1[these_draws,this_time] - A_int_free[these_draws,bill_points[n]])^2))
               }) %>% plogis()
             } else {
               # use IRT formulation for likelihood
-              pr_absence <- sapply(this_obs,function(n) {
+              pr_absence_iter <- sapply(this_obs,function(n) {
                 this_time <- paste0("L_tp1[",time_points[n],",",person_points[n],"]")
-                L_tp1[d,this_time]*sigma_abs_free[d,bill_points[n]] - A_int_free[d,bill_points[n]]
+                t(L_tp1[these_draws,this_time]*sigma_abs_free[these_draws,bill_points[n]] - A_int_free[these_draws,bill_points[n]])
               }) %>% plogis()
               
             }
-            return(pr_absence)
-          })
-          
-          pr_vote_iter <- sapply(these_draws, function(d) {
+ 
             if(latent_space) {
               if(inflate) {
                 pr_vote <- sapply(this_obs,function(n) {
                   this_time <- paste0("L_tp1[",time_points[n],",",person_points[n],"]")
-                  -sqrt((L_tp1[d,this_time] - B_int_free[d,bill_points[n]])^2)
+                  t(-sqrt((L_tp1[these_draws,this_time] - B_int_free[these_draws,bill_points[n]])^2))
                 }) %>% plogis()
               } else {
                 # latent space non-inflated formulation is different
                 pr_vote <- sapply(this_obs,function(n) {
                   this_time <- paste0("L_tp1[",time_points[n],",",person_points[n],"]")
-                  sigma_reg_free[d,bill_points[n]] + sigma_abs_free[d,bill_points[n]] -
-                    sqrt((L_tp1[d,this_time] - B_int_free[d,bill_points[n]])^2)
+                  t(sigma_reg_free[these_draws,bill_points[n]] + sigma_abs_free[these_draws,bill_points[n]] -
+                    sqrt((L_tp1[these_draws,this_time] - B_int_free[these_draws,bill_points[n]])^2))
                 }) %>% plogis()
               }
               
             } else {
               pr_vote <- sapply(this_obs,function(n) {
                 this_time <- paste0("L_tp1[",time_points[n],",",person_points[n],"]")
-                L_tp1[d,this_time]*sigma_reg_free[d,bill_points[n]] - B_int_free[d,bill_points[n]]
+                t(L_tp1[these_draws,this_time]*sigma_reg_free[these_draws,bill_points[n]] - B_int_free[these_draws,bill_points[n]])
               }) %>% plogis()
             }
             
-            return(pr_vote)
-          })
         } else {
           
-          pr_absence_iter <- sapply(these_draws, function(d) {
+          # non-time varying
+          
             if(latent_space) {
               # use latent-space formulation for likelihood
-              pr_absence <- sapply(this_obs,function(n) {
-                -sqrt((L_full[d,person_points[n]] - A_int_free[d,bill_points[n]])^2)
+              pr_absence_iter <- sapply(this_obs,function(n) {
+                t(-sqrt((L_full[these_draws,person_points[n]] - A_int_free[these_draws,bill_points[n]])^2))
               }) %>% plogis()
             } else {
               # use IRT formulation for likelihood
-              pr_absence <- sapply(this_obs,function(n) {
-                L_full[d,person_points[n]]*sigma_abs_free[d,bill_points[n]] - A_int_free[d,bill_points[n]]
+              pr_absence_iter <- sapply(this_obs,function(n) {
+                t(L_full[these_draws,person_points[n]]*sigma_abs_free[these_draws,bill_points[n]] - A_int_free[these_draws,bill_points[n]])
               }) %>% plogis()
               
             }
-            return(pr_absence)
-          })
-          
-          pr_vote_iter <- sapply(these_draws, function(d) {
+
             if(latent_space) {
               if(inflate) {
                 pr_vote <- sapply(this_obs,function(n) {
-                  -sqrt((L_full[d,person_points[n]] - B_int_free[d,bill_points[n]])^2)
+                  t(-sqrt((L_full[these_draws,person_points[n]] - B_int_free[these_draws,bill_points[n]])^2))
                 }) %>% plogis()
               } else {
                 # latent space non-inflated formulation is different
                 pr_vote <- sapply(this_obs,function(n) {
-                  sigma_reg_free[d,bill_points[n]] + sigma_abs_free[d,bill_points[n]] -
-                    sqrt((L_full[d,person_points[n]] - B_int_free[d,bill_points[n]])^2)
+                  t(sigma_reg_free[these_draws,bill_points[n]] + sigma_abs_free[these_draws,bill_points[n]] -
+                    sqrt((L_full[these_draws,person_points[n]] - B_int_free[these_draws,bill_points[n]])^2))
                 }) %>% plogis()
               }
               
             } else {
               pr_vote <- sapply(this_obs,function(n) {
-                L_full[d,person_points[n]]*sigma_reg_free[d,bill_points[n]] - B_int_free[d,bill_points[n]]
+                t(L_full[these_draws,person_points[n]]*sigma_reg_free[these_draws,bill_points[n]] - B_int_free[these_draws,bill_points[n]])
               }) %>% plogis()
             }
-            
-            return(pr_vote)
-          })
           
         }
         
-        return(list(pr_vote=pr_vote_iter,pr_absence=pr_absence_iter,model_id=m,
+        return(list(pr_vote=pr_vote,pr_absence=pr_absence_iter,model_id=m,
                     item_point=i,
                     this_obs=this_obs))
       },mc.cores=use_cores)
@@ -356,16 +345,16 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
       return(out_items)
       
     } 
-    
-    
       
-    }) %>% unlist(recursive=FALSE)
+    })
     
    # need to flatten the list one level so it is at the item level, not the model level
 
     out_mods <- lapply(out_prs, function(m) {
       
-      rep_func <- switch(as.character(m$model_id),
+      this_mid <- m[[1]]$model_id
+      
+      rep_func <- switch(as.character(this_mid),
              `1`=.binary,
              `2`=.binary,
              `3`=.ordinal_ratingscale,
@@ -383,53 +372,35 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
              `13`=.binary,
              `14`=.binary)
       
-      this_obs <- m$this_obs
+      over_models_obj <- lapply(m, function(item)  {
+        
+        this_obs <- item$this_obs
 
-      if(m$model_id %in% c(3,4,5,6)) {
-        
-       # if(m$model_id %in% c(3,4)) {
-       #   
-       #   over_id <- object@score_data@n_cats_rat
-       # } else {
-       #   
-       #   over_id <- object@score_data@n_cats_grm
-       # }
-       #   
-       #   over_ordered <- lapply(1:length(over_id), function(i) {
-       #     
-       #     if(object@score_data@n_cats_rat[i]>1) {
-       #       cuts <- object@score_data@n_cats_rat[i]
-       #     } else if(object@score_data@n_cats_grm[i]>1) {
-       #       
-       #       cuts <- object@score_data@n_cats_grm[i]
-       #       
-       #     } else {
-       #       return(NULL)
-       #     }
-        
+        if(this_mid %in% c(3,4,5,6)) {
+
              cuts <- unique(ordered_id[this_obs])
 
              outcome <- Y_int[this_obs]
              miss_val <- object@score_data@miss_val[1]
 
-           if(m$model_id %in% c(3,4)) {
+           if(item$model_id %in% c(3,4)) {
              cutpoints <- object@stan_samples$draws(paste0('steps_votes',cuts))[,use_chain,] %>% as_draws_matrix()
              cutpoints <- cutpoints[these_draws,]
-           } else if(m$model_id %in% c(5,6)) {
+           } else if(item$model_id %in% c(5,6)) {
              cutpoints <- object@stan_samples$draws(paste0('steps_votes_grm',cuts,
-                                                           '[',m$item_point,
+                                                           '[',item$item_point,
                                                            ",",1:(cuts-1),"]"))[,use_chain,] %>% as_draws_matrix()
              cutpoints <- cutpoints[these_draws,]
            } 
              
              item_points <- bill_points[this_obs]
              
-             out_predict <- rep_func(pr_absence=m$pr_absence,
-                                     pr_vote=m$pr_vote,
+             out_predict <- rep_func(pr_absence=item$pr_absence,
+                                     pr_vote=item$pr_vote,
                                      N=length(person_points[this_obs]),
                                      ordinal_outcomes=1:cuts,
-                                     inflate=m$model_id %in% c(2,4,6,8,10,12,14),
-                                     latent_space=m$model_id %in% c(13,14),
+                                     inflate=item$model_id %in% c(2,4,6,8,10,12,14),
+                                     latent_space=item$model_id %in% c(13,14),
                                      time_points=time_points[this_obs],
                                      item_points=bill_points[this_obs],
                                      max_val=max_val,
@@ -453,8 +424,8 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
                                               miss_val=miss_val,
                                                 cutpoints=cutpoints)
 
-             attr(out_predict,'model') <- m$model_id
-             attr(out_predict,'item') <- m$item_point
+             attr(out_predict,'model') <- item$model_id
+             attr(out_predict,'item') <- item$item_point
              attr(out_predict,"order_id") <- cuts
              attr(out_predict,'this_obs') <- this_obs
              attr(out_predict,"output_type") <- "discrete"
@@ -472,7 +443,7 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
          
       } else {
         
-        if(m$model_id %in% c(1,2,3,4,5,6,7,8,13,14)) {
+        if(item$model_id %in% c(1,2,3,4,5,6,7,8,13,14)) {
           outcome <- Y_int[this_obs]
           miss_val <- object@this_data$Y_int_miss
         } else {
@@ -480,12 +451,12 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
           miss_val <- object@this_data$Y_cont_miss
         }
       
-      out_predict <- rep_func(pr_absence=m$pr_absence,
-                              pr_vote=m$pr_vote,
+      out_predict <- rep_func(pr_absence=item$pr_absence,
+                              pr_vote=item$pr_vote,
                               N=length(person_points[this_obs]),
                               ordinal_outcomes=length(unique(object@score_data@score_matrix$outcome[this_obs])),
-                              inflate=m$model_id %in% c(2,4,6,8,10,12,14),
-                              latent_space=m$model_id %in% c(13,14),
+                              inflate=item$model_id %in% c(2,4,6,8,10,12,14),
+                              latent_space=item$model_id %in% c(13,14),
                               time_points=time_points[this_obs],
                               item_points=bill_points[this_obs],
                               max_val=max_val,
@@ -517,12 +488,12 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
                                          outcome=outcome)
       }
       
-      attr(out_predict,'model') <- m$model_id
+      attr(out_predict,'model') <- item$model_id
       attr(out_predict,"order_id") <- NA
-      attr(out_predict,'item') <- m$item_point
+      attr(out_predict,'item') <- item$item_point
       attr(out_predict,'this_obs') <- this_obs
       
-      if(m$model_id %in% c(1,2,3,4,5,6,7,8,13,14)) {
+      if(item$model_id %in% c(1,2,3,4,5,6,7,8,13,14)) {
         attr(out_predict,"output_type") <- "discrete"
       } else {
         attr(out_predict,"output_type") <- "continuous"
@@ -536,16 +507,20 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
       
       }
       
+        # end item loop
       
       return(out_predict)
+        
+      })
+      
+      # end items for this model type
+      
+      return(over_models_obj)
       
   })
     
-  #if(any(c(3,4,5,6) %in% unique(modelpoints))) {
-  #  return(unlist(out_mods,recursive = F))
-  #} else {
-    #return(out_mods)
-  #}
+    
+    # this is now a list of lists with model ID at the top
     
     class(out_mods) <- c(class(out_mods), "id_pred_obj")
     

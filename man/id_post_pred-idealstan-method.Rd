@@ -11,6 +11,7 @@
   type = "predict",
   covar = "person",
   sample_scores = NULL,
+  item_subset = NULL,
   use_cores = 1,
   use_chain = NULL,
   newdata = NULL,
@@ -28,6 +29,7 @@ specify whether to show the \code{'observed'} data (the default) or the binary
 output \code{'missing'} showing whether an observation was predicted as missing or not}
 
 \item{type}{Whether to produce posterior predictive values (\code{'predict'}, the default),
+the posterior expected (average) values (\code{'epred'}),
 or log-likelihood values (\code{'log_lik'}). See the How to Evaluate Models vignette for more info.}
 
 \item{covar}{What kind of covariates to include as part of the prediction -- either
@@ -36,6 +38,10 @@ or log-likelihood values (\code{'log_lik'}). See the How to Evaluate Models vign
 \item{sample_scores}{In addition to reducing the number of posterior draws used to 
 calculate the posterior predictive distribution, which will reduce computational overhead.
 Only available for calculating predictive distributions, not log-likelihood values.}
+
+\item{item_subset}{Whether to calculate marginal effects for only a subset of 
+items. Should be item IDs that match the \code{item_id} column passed to the \code{id_make}
+ function.}
 
 \item{use_cores}{Number of cores to use for multicore parallel processing with
 the base R \code{parallel} package}

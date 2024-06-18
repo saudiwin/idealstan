@@ -161,33 +161,94 @@ setMethod('sample_model',signature(object='idealdata'),
                    to_use=to_use,this_data=this_data,use_vb=FALSE,within_chain=NULL,
                    keep_param=NULL,
                    save_files=NULL,
+                   init_pathfinder=TRUE,
+                   #pathfinder_object=NULL,
                    tol_rel_obj=NULL,...) {
             
-            init_vals <- lapply(1:nchains,.init_stan,
-                                num_legis=this_data$num_legis,
-                                legis_labels=levels(object@score_matrix$person_id)[1:this_data$num_legis],
-                                item_labels=levels(object@score_matrix$item_id)[1:this_data$num_bills],
-                                num_cit=this_data$num_bills,
-                                restrict_sd_high=this_data$restrict_sd_high,
-                                restrict_sd_low=this_data$restrict_sd_low,
-                                person_sd=this_data$legis_sd,
-                                T=this_data$T,
-                                const_type=this_data$const_type,
-                                fix_high=this_data$fix_high,
-                                fix_low=this_data$fix_low,
-                                ar1_up=this_data$ar1_up,
-                                ar1_down=this_data$ar1_down,
-                                restrict_ind_high=this_data$restrict_high,
-                                restrict_ind_low=this_data$restrict_low,
-                                time_proc=this_data$time_proc,
-                                m_sd_par=this_data$m_sd_par,
-                                time_range=mean(diff(this_data$time_ind)),
-                                num_diff=this_data$num_diff,
-                                time_fix_sd=this_data$time_sd,
-                                use_ar=this_data$use_ar,
-                                person_start=object@person_start,
-                                restrict_var=this_data$restrict_var,
-                                actual=TRUE)
+            if(!init_pathfinder) {
+              
+              init_vals <- lapply(1:nchains,.init_stan,
+                                  num_legis=this_data$num_legis,
+                                  legis_labels=levels(object@score_matrix$person_id)[1:this_data$num_legis],
+                                  item_labels=levels(object@score_matrix$item_id)[1:this_data$num_bills],
+                                  num_cit=this_data$num_bills,
+                                  restrict_sd_high=this_data$restrict_sd_high,
+                                  restrict_sd_low=this_data$restrict_sd_low,
+                                  person_sd=this_data$legis_sd,
+                                  T=this_data$T,
+                                  const_type=this_data$const_type,
+                                  fix_high=this_data$fix_high,
+                                  fix_low=this_data$fix_low,
+                                  ar1_up=this_data$ar1_up,
+                                  ar1_down=this_data$ar1_down,
+                                  restrict_ind_high=this_data$restrict_high,
+                                  restrict_ind_low=this_data$restrict_low,
+                                  time_proc=this_data$time_proc,
+                                  m_sd_par=this_data$m_sd_par,
+                                  time_range=mean(diff(this_data$time_ind)),
+                                  num_diff=this_data$num_diff,
+                                  time_fix_sd=this_data$time_sd,
+                                  use_ar=this_data$use_ar,
+                                  person_start=object@person_start,
+                                  restrict_var=this_data$restrict_var,
+                                  actual=TRUE)
+              
+            } else {
+              
+              # try pathfinder first, if that fails try laplace
+              
+              init_vals <- try(object@stanmodel_map$pathfinder(data=this_data,
+                                          refresh=0,num_threads=ncores))
+              
+              # if fitting fails, we won't get variance in the draws
+              
+              c1 <- init_vals$draws()
+              
+              if(is.null(c1) || sd(init_vals$draws()[,1])==0) {
+                
+                init_vals <- try(object@stanmodel_map$laplace(data=this_data,
+                                                          refresh=0,threads=ncores,
+                                                          draws=1000))
+                
+              }
+              
+              # if it still doesn't work, do random inits
+              
+              c1 <- try(init_vals$draws())
+              
+              if(is.null(c1) || 'try-error' %in% class(c1) || sd(init_vals$draws()[,1])==0) {
+                
+                print("Both pathfinder and laplace algorithms failed to find starting values. Doing random inits.")
+                
+                init_vals <- lapply(1:nchains,.init_stan,
+                                    num_legis=this_data$num_legis,
+                                    legis_labels=levels(object@score_matrix$person_id)[1:this_data$num_legis],
+                                    item_labels=levels(object@score_matrix$item_id)[1:this_data$num_bills],
+                                    num_cit=this_data$num_bills,
+                                    restrict_sd_high=this_data$restrict_sd_high,
+                                    restrict_sd_low=this_data$restrict_sd_low,
+                                    person_sd=this_data$legis_sd,
+                                    T=this_data$T,
+                                    const_type=this_data$const_type,
+                                    fix_high=this_data$fix_high,
+                                    fix_low=this_data$fix_low,
+                                    ar1_up=this_data$ar1_up,
+                                    ar1_down=this_data$ar1_down,
+                                    restrict_ind_high=this_data$restrict_high,
+                                    restrict_ind_low=this_data$restrict_low,
+                                    time_proc=this_data$time_proc,
+                                    m_sd_par=this_data$m_sd_par,
+                                    time_range=mean(diff(this_data$time_ind)),
+                                    num_diff=this_data$num_diff,
+                                    time_fix_sd=this_data$time_sd,
+                                    use_ar=this_data$use_ar,
+                                    person_start=object@person_start,
+                                    restrict_var=this_data$restrict_var,
+                                    actual=TRUE)
+                
+              }
+              
+            }
             
             if(!is.null(keep_param)) {
               
@@ -325,14 +386,31 @@ setMethod('sample_model',signature(object='idealdata'),
                 #                                            ...)
                 # } else {
                   
-                  out_model <- object@stanmodel_map$sample(data=this_data,chains=nchains,iter_sampling=niters,
+                  # give informative starting values a shot, if they fail then just do 
+                  # pure random
+              
+                  out_model <- try(object@stanmodel_map$sample(data=this_data,chains=nchains,iter_sampling=niters,
                                                            parallel_chains=nchains,
                                                            threads_per_chain=ifelse(floor(ncores/nchains)>0,floor(ncores/nchains),1),
                                                            iter_warmup=warmup,
                                                            init=init_vals,
                                                            output_dir=save_files,
                                                            refresh=this_data$id_refresh,
-                                                           ...)
+                                                           ...))
+                  if('try-error' %in% class(out_model)) {
+                    
+                    print("Finding initialization with pathfinder/laplace failed, using random inits on (-2,2).")
+                    
+                    out_model <- try(object@stanmodel_map$sample(data=this_data,chains=nchains,iter_sampling=niters,
+                                                                 parallel_chains=nchains,
+                                                                 threads_per_chain=ifelse(floor(ncores/nchains)>0,floor(ncores/nchains),1),
+                                                                 iter_warmup=warmup,
+                                                                 output_dir=save_files,
+                                                                 refresh=this_data$id_refresh,
+                                                                 ...))
+                    
+                  }
+                  
                 # }
 
               } else {

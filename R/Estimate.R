@@ -792,6 +792,8 @@ id_make <- function(score_data=NULL,
 #'   are any compile issues)
 #' @param debug For debugging purposes, turns off threading to enable more informative
 #'   error messages from Stan. Also recompiles model objects.
+#' @param init_pathfinder Whether to generate initial values from the Pathfinder 
+#' algorithm (see Stan documentation). If FALSE, will generate random start values.
 #' @param ... Additional parameters passed on to Stan's sampling engine. See \code{\link[rstan]{stan}} for more information.
 #' @return A fitted \code{\link{idealstan}} object that contains posterior samples of all parameters either via full Bayesian inference
 #' or a variational approximation if \code{use_vb} is set to \code{TRUE}. This object can then be passed to the plotting functions for further analysis.
@@ -937,6 +939,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                         het_var=TRUE,
                         compile_optim=FALSE,
                         debug=FALSE,
+                        init_pathfinder=TRUE,
                         ...) {
   
   
@@ -964,8 +967,8 @@ id_estimate <- function(idealdata=NULL,model_type=2,
     print("Check out https://www.unicef.org/emergencies/yemen-crisis for more info.")
   }
   
-  # stan_code <- system.file("stan_files","irt_standard.stan",
-  #                          package="idealstan")
+  stan_code <- system.file("stan_files","irt_pathfinder.stan",
+                           package="idealstan")
   
   stan_code_map <- system.file("stan_files","irt_standard_map.stan",
                                package="idealstan")
@@ -980,6 +983,10 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     cpp_options = list(stan_threads = !debug,
                                        STAN_CPP_OPTIMS=TRUE),
                     force_recompile=debug)
+    
+    # for pathfinder
+    
+    # stan_code_compiled <- cmdstan_model(stan_code)
     
     # idealdata@stanmodel_gpu <- stan_code_gpu %>%
     #   cmdstan_model(include_paths=dirname(stan_code_map),
@@ -996,6 +1003,10 @@ id_estimate <- function(idealdata=NULL,model_type=2,
       cmdstan_model(include_paths=dirname(stan_code_map),
                     cpp_options = list(stan_threads = !debug),
                     force_recompile=debug)
+    
+    # for pathfinder
+    
+    #stan_code_compiled <- cmdstan_model(stan_code)
     
     # idealdata@stanmodel_gpu <- stan_code_gpu %>%
     #   cmdstan_model(include_paths=dirname(stan_code_map),
@@ -1638,6 +1649,8 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                          save_files=save_files,
                          keep_param=keep_param,
                          tol_rel_obj=tol_rel_obj,within_chain=within_chain,
+                         init_pathfinder=init_pathfinder,
+                         #pathfinder_object=stan_code_compiled,
                          ...)
   
   outobj@model_type <- model_type

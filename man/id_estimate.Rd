@@ -55,8 +55,8 @@ id_estimate(
   ar_sd = 1,
   diff_reg_sd = 1,
   diff_miss_sd = 1,
-  restrict_sd_high = 0.01,
-  restrict_sd_low = 0.01,
+  restrict_sd_high = 0.1,
+  restrict_sd_low = 0.1,
   tol_rel_obj = 0.001,
   gp_sd_par = 0.025,
   gp_num_diff = 3,
@@ -68,6 +68,7 @@ id_estimate(
   het_var = TRUE,
   compile_optim = FALSE,
   debug = FALSE,
+  init_pathfinder = TRUE,
   ...
 )
 }
@@ -318,6 +319,9 @@ are any compile issues)}
 
 \item{debug}{For debugging purposes, turns off threading to enable more informative
 error messages from Stan. Also recompiles model objects.}
+
+\item{init_pathfinder}{Whether to generate initial values from the Pathfinder 
+algorithm (see Stan documentation). If FALSE, will generate random start values.}
 
 \item{...}{Additional parameters passed on to Stan's sampling engine. See \code{\link[rstan]{stan}} for more information.}
 
