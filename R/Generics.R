@@ -165,40 +165,41 @@ setMethod('sample_model',signature(object='idealdata'),
                    #pathfinder_object=NULL,
                    tol_rel_obj=NULL,...) {
             
-            if(!init_pathfinder) {
-              
-              init_vals <- lapply(1:nchains,.init_stan,
-                                  num_legis=this_data$num_legis,
-                                  legis_labels=levels(object@score_matrix$person_id)[1:this_data$num_legis],
-                                  item_labels=levels(object@score_matrix$item_id)[1:this_data$num_bills],
-                                  num_cit=this_data$num_bills,
-                                  restrict_sd_high=this_data$restrict_sd_high,
-                                  restrict_sd_low=this_data$restrict_sd_low,
-                                  person_sd=this_data$legis_sd,
-                                  T=this_data$T,
-                                  const_type=this_data$const_type,
-                                  fix_high=this_data$fix_high,
-                                  fix_low=this_data$fix_low,
-                                  ar1_up=this_data$ar1_up,
-                                  ar1_down=this_data$ar1_down,
-                                  restrict_ind_high=this_data$restrict_high,
-                                  restrict_ind_low=this_data$restrict_low,
-                                  time_proc=this_data$time_proc,
-                                  m_sd_par=this_data$m_sd_par,
-                                  time_range=mean(diff(this_data$time_ind)),
-                                  num_diff=this_data$num_diff,
-                                  time_fix_sd=this_data$time_sd,
-                                  use_ar=this_data$use_ar,
-                                  person_start=object@person_start,
-                                  restrict_var=this_data$restrict_var,
-                                  actual=TRUE)
-              
-            } else {
+            # need init values for pathfinder that work
+            
+            init_vals_orig <- lapply(1:4,.init_stan,
+                                             num_legis=this_data$num_legis,
+                                             legis_labels=levels(object@score_matrix$person_id)[1:this_data$num_legis],
+                                             item_labels=levels(object@score_matrix$item_id)[1:this_data$num_bills],
+                                             num_cit=this_data$num_bills,
+                                             restrict_sd_high=this_data$restrict_sd_high,
+                                             restrict_sd_low=this_data$restrict_sd_low,
+                                             person_sd=this_data$legis_sd,
+                                             T=this_data$T,
+                                             const_type=this_data$const_type,
+                                             fix_high=this_data$fix_high,
+                                             fix_low=this_data$fix_low,
+                                             ar1_up=this_data$ar1_up,
+                                             ar1_down=this_data$ar1_down,
+                                             restrict_ind_high=this_data$restrict_high,
+                                             restrict_ind_low=this_data$restrict_low,
+                                             time_proc=this_data$time_proc,
+                                             m_sd_par=this_data$m_sd_par,
+                                             time_range=mean(diff(this_data$time_ind)),
+                                             num_diff=this_data$num_diff,
+                                             time_fix_sd=this_data$time_sd,
+                                             use_ar=this_data$use_ar,
+                                             person_start=object@person_start,
+                                             restrict_var=this_data$restrict_var,
+                                             actual=TRUE)
+            
+            if(init_pathfinder) {
               
               # try pathfinder first, if that fails try laplace
               
               init_vals <- try(object@stanmodel_map$pathfinder(data=this_data,
-                                          refresh=0,num_threads=ncores))
+                                          refresh=0,num_threads=ncores,
+                                          init=init_vals_orig))
               
               # if fitting fails, we won't get variance in the draws
               
@@ -208,7 +209,8 @@ setMethod('sample_model',signature(object='idealdata'),
                 
                 init_vals <- try(object@stanmodel_map$laplace(data=this_data,
                                                           refresh=0,threads=ncores,
-                                                          draws=1000))
+                                                          draws=1000,
+                                                          init=init_vals_orig[1]))
                 
               }
               
