@@ -166,7 +166,7 @@ setMethod('sample_model',signature(object='idealdata'),
                    tol_rel_obj=NULL,...) {
             
             # need init values for pathfinder that work
-            
+
             init_vals_orig <- lapply(1:4,.init_stan,
                                              num_legis=this_data$num_legis,
                                              legis_labels=levels(object@score_matrix$person_id)[1:this_data$num_legis],
