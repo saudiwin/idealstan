@@ -678,7 +678,8 @@
                        high_limit=NULL,
                        low_limit=NULL,
                        all=FALSE,
-                       aggregated=FALSE) {
+                       aggregated=FALSE,
+                       use_chain=NULL) {
   
   if(is.null(use_chain))
     use_chain <- 1:dim(object@stan_samples$draws("L_full"))[2]
