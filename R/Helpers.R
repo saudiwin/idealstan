@@ -681,8 +681,6 @@
                        aggregated=FALSE,
                        use_chain=NULL) {
   
-  browser()
-  
   if(is.null(use_chain))
     use_chain <- 1:dim(object@stan_samples$draws("L_full"))[2]
   
