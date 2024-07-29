@@ -680,16 +680,19 @@
                        all=FALSE,
                        aggregated=FALSE) {
   
+  if(is.null(use_chain))
+    use_chain <- 1:dim(object@stan_samples$draws("L_full"))[2]
+  
   # first need to get num of the parameter
   
   param_num <- which(levels(object@score_data@score_matrix$item_id)==param_name)
   
   # now get all the necessary components
   
-  reg_diff <- as_draws_matrix(object@stan_samples$draws(paste0('B_int_free[',param_num,']')))[,1]
-  reg_discrim <- as_draws_matrix(object@stan_samples$draws(paste0('sigma_reg_free[',param_num,']')))[,1]
-  abs_diff <- as_draws_matrix(object@stan_samples$draws(paste0('A_int_free[',param_num,']')))[,1]
-  abs_discrim <- as_draws_matrix(object@stan_samples$draws(paste0('sigma_abs_free[',param_num,']')))[,1]
+  reg_diff <- object@stan_samples$draws(paste0('B_int_free[',param_num,']'))[,use_chain,] %>% as_draws_matrix()
+  reg_discrim <- object@stan_samples$draws(paste0('sigma_reg_free[',param_num,']'))[,use_chain,] %>% as_draws_matrix()
+  abs_diff <- object@stan_samples$draws(paste0('A_int_free[',param_num,']'))[,use_chain,] %>% as_draws_matrix()
+  abs_discrim <- object@stan_samples$draws(paste0('sigma_abs_free[',param_num,']'))[,use_chain,] %>% as_draws_matrix()
   
   reg_mid <- reg_diff/reg_discrim
   abs_mid <- abs_diff/abs_discrim
@@ -832,20 +835,24 @@
                               high_limit=NULL,
                               low_limit=NULL,
                               all=FALSE,
-                              aggregated=FALSE) {
+                              aggregated=FALSE,
+                              use_chain=NULL) {
 
+  if(is.null(use_chain))
+    use_chain <- 1:dim(object@stan_samples$draws("L_full"))[2]
+  
   # first need to get num of the parameter
   
   param_num <- which(levels(object@score_data@score_matrix$item_id)==param_name)
   
   # now get all the necessary components
   
-  reg_diff <- as_draws_matrix(object@stan_samples$draws(paste0('B_int_free[',param_num,']')))[,1]
-  reg_discrim <- as_draws_matrix(object@stan_samples$draws(paste0('sigma_reg_free[',param_num,']')))[,1]
-  abs_diff <- as_draws_matrix(object@stan_samples$draws(paste0('A_int_free[',param_num,']')))[,1]
-  abs_discrim <- as_draws_matrix(object@stan_samples$draws(paste0('sigma_abs_free[',param_num,']')))[,1]
+  reg_diff <- object@stan_samples$draws(paste0('B_int_free[',param_num,']'))[,use_chain,] %>% as_draws_matrix()
+  reg_discrim <- object@stan_samples$draws(paste0('sigma_reg_free[',param_num,']'))[,use_chain,] %>% as_draws_matrix()
+  abs_diff <- object@stan_samples$draws(paste0('A_int_free[',param_num,']'))[,use_chain,] %>% as_draws_matrix()
+  abs_discrim <- object@stan_samples$draws(paste0('sigma_abs_free[',param_num,']'))[,use_chain,] %>% as_draws_matrix()
   
-  cuts <- as_draws_df(object@stan_samples$draws('steps_votes'))
+  cuts <- object@stan_samples$draws('steps_votes')[,use_chain,] %>% as_draws_df
   
   if(class(object@score_data@score_matrix$outcome_disc)=='factor') {
     cut_names <- levels(object@score_data@score_matrix$outcome_disc)
@@ -1005,24 +1012,28 @@
                               high_limit=NULL,
                               low_limit=NULL,
                               all=FALSE,
-                              aggregated=FALSE) {
+                              aggregated=FALSE,
+                              use_chain=NULL) {
 
+  if(is.null(use_chain))
+    use_chain <- 1:dim(object@stan_samples$draws("L_full"))[2]
+  
   # first need to get num of the parameter
   
   param_num <- which(levels(object@score_data@score_matrix$item_id)==param_name)
   
   # now get all the necessary components
   
-  reg_diff <- as_draws_matrix(object@stan_samples$draws(paste0('B_int_free[',param_num,']')))[,1]
-  reg_discrim <- as_draws_matrix(object@stan_samples$draws(paste0('sigma_reg_free[',param_num,']')))[,1]
-  abs_diff <- as_draws_matrix(object@stan_samples$draws(paste0('A_int_free[',param_num,']')))[,1]
-  abs_discrim <- as_draws_matrix(object@stan_samples$draws(paste0('sigma_abs_free[',param_num,']')))[,1]
-
+  reg_diff <- object@stan_samples$draws(paste0('B_int_free[',param_num,']'))[,use_chain,] %>% as_draws_matrix()
+  reg_discrim <- object@stan_samples$draws(paste0('sigma_reg_free[',param_num,']'))[,use_chain,] %>% as_draws_matrix()
+  abs_diff <- object@stan_samples$draws(paste0('A_int_free[',param_num,']'))[,use_chain,] %>% as_draws_matrix()
+  abs_discrim <- object@stan_samples$draws(paste0('sigma_abs_free[',param_num,']'))[,use_chain,] %>% as_draws_matrix()
+  
   # figure out how many categories we need
   
   total_cat <- length(as_draws_df(object@stan_samples$draws('steps_votes')))
   
-  cuts <- as_draws_df(object@stan_samples$draws(paste0('steps_votes_grm[',param_num,',',total_cat,']')))
+  cuts <- object@stan_samples$draws(paste0('steps_votes_grm[',param_num,',',total_cat,']'))[,use_chain,] %>% as_draws_df
   
   if(class(object@score_data@score_matrix$outcome_disc)=='factor') {
     cut_names <- levels(object@score_data@score_matrix$outcome_disc)
@@ -1180,19 +1191,23 @@
 .item_plot_ls <- function(param_name,object,
                               high_limit=NULL,
                               low_limit=NULL,
-                          aggregated=F) {
-
+                          aggregated=F,
+                          use_chain=NULL) {
+  
+  if(is.null(use_chain))
+    use_chain <- 1:dim(object@stan_samples$draws("L_full"))[2]
+  
   # first need to get num of the parameter
   
   param_num <- which(levels(object@score_data@score_matrix$item_id)==param_name)
   
   # now get all the necessary components
   
-  reg_diff <- as_draws_matrix(object@stan_samples$draws(paste0('B_int_free[',param_num,']')))[,1]
-  reg_discrim <- as_draws_matrix(object@stan_samples$draws(paste0('sigma_reg_free[',param_num,']')))[,1]
-  abs_diff <- as_draws_matrix(object@stan_samples$draws(paste0('A_int_free[',param_num,']')))[,1]
-  item_int <- as_draws_matrix(object@stan_samples$draws(paste0('sigma_abs_free[',param_num,']')))[,1]
-  ideal_int <- as_draws_matrix(object@stan_samples$draws(paste0('ls_int[',param_num,']')))[,1]
+  reg_diff <- object@stan_samples$draws(paste0('B_int_free[',param_num,']'))[,use_chain,] %>% as_draws_matrix()
+  reg_discrim <- object@stan_samples$draws(paste0('sigma_reg_free[',param_num,']'))[,use_chain,] %>% as_draws_matrix()
+  abs_diff <- object@stan_samples$draws(paste0('A_int_free[',param_num,']'))[,use_chain,] %>% as_draws_matrix()
+  item_int <- object@stan_samples$draws(paste0('sigma_abs_free[',param_num,']'))[,use_chain,] %>% as_draws_matrix()
+  ideal_int <- object@stan_samples$draws(paste0('ls_int[',param_num,']'))[,use_chain,] %>% as_draws_matrix()
   
   if(class(object@score_data@score_matrix$outcome_disc)=='factor') {
     cut_names <- levels(object@score_data@score_matrix$outcome_disc)
