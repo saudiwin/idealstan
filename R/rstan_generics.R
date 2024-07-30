@@ -786,114 +786,122 @@ setMethod('id_plot_ppc',signature(object='idealstan'),function(object,
         
         lapply(ppc_pred, function(p) {
           
-          all_data <- attr(p,"data")
-          mod <- attr(p,"model")
-          group_id <- all_data$group_id
-          person_points <- all_data$person_id
-          bill_points <- all_data$item_id
-          time_points <- all_data$time_id
-          miss_val <- unique(all_data$miss_val)
+          # loop over items
           
-          # reshape if necessary
-          
-          if(dim(p)[2]!=length(unique(all_data$person_id))) {
+          lapply(p, function(psub) {
             
-            p <- t(p)
+            all_data <- attr(psub,"data")
+            mod <- attr(psub,"model")
+            group_id <- all_data$group_id
+            person_points <- all_data$person_id
+            bill_points <- all_data$item_id
+            time_points <- all_data$time_id
+            miss_val <- unique(all_data$miss_val)
             
-          }
-          
-          y <- all_data$outcome
-          
-          # only one model, create a standard plot
-          
-          this_sample <- attr(p,'this_sample')
-          
-          # create grouping variable
-          if(!is.null(group)) {
-            if(object@use_groups) {
-              group_var <- group_id
-            } else {
-              group_var <- person_points
-            }
-            grouped <- T
-          } else {
-            grouped <- F
-          }
-          
-          if(attr(p,'output')=='all') {
-            y <- as.numeric(y)
-            if(grouped) {
+            # reshape if necessary
+            
+            if(dim(psub)[2]!=length(unique(all_data$person_id))) {
               
-              out_plot <- bayesplot::ppc_bars_grouped(y=as.numeric(factor(y)),yrep=p,
-                                                      group=group_var,...)
-              
-            } else {
-              out_plot <- bayesplot::ppc_bars(y=as.numeric(factor(y)),yrep=p,...)
-              
+              psub <- t(psub)
               
             }
-          } else if(attr(this_plot,'output')=='observed' && attr(this_plot,'output_type')!='continuous') {
-            # only show observed data for yrep
-
-            to_remove <- y==miss_val
             
-            y <- y[to_remove]
+            y <- all_data$outcome
+            
+            # only one model, create a standard plot
+            
+            this_sample <- attr(psub,'this_sample')
+            
+            # create grouping variable
             if(!is.null(group)) {
-              group_var <- group_var[to_remove]
-            }
-            y <- as.numeric(y)
-            
-            save_att <- attributes(p)
-            save_att$dim <- NULL
-            p <- p[,to_remove]
-            save_att$dim <- dim(p)
-            attributes(p) <- save_att
-            
-            if(attr(p,'output_type')=='continuous') {
-              
-              #unbounded observed outcomes (i.e., continuous)
-              if(grouped) {
-                out_plot <- bayesplot::ppc_violin_grouped(y=y,yrep=p,
-                                                          group=group_var,
-                                                          ...)
+              if(object@use_groups) {
+                group_var <- group_id
               } else {
-                out_plot <- bayesplot::ppc_dens_overlay(y=y,yrep=p,...)
+                group_var <- person_points
               }
-              
-            } else if(attr(p,'output_type')=='discrete') {
-              
+              grouped <- T
+            } else {
+              grouped <- F
+            }
+            
+            if(attr(psub,'output')=='all') {
+              y <- as.numeric(y)
               if(grouped) {
                 
-                out_plot <- bayesplot::ppc_bars_grouped(y=as.numeric(factor(y)),yrep=p,
+                out_plot <- bayesplot::ppc_bars_grouped(y=as.numeric(factor(y)),yrep=psub,
                                                         group=group_var,...)
                 
               } else {
-                out_plot <- bayesplot::ppc_bars(y=as.numeric(factor(y)),yrep=p,...)
+                out_plot <- bayesplot::ppc_bars(y=as.numeric(factor(y)),yrep=psub,...)
+                
+                
+              }
+            } else if(attr(this_plot,'output')=='observed' && attr(this_plot,'output_type')!='continuous') {
+              # only show observed data for yrep
+              
+              to_remove <- y==miss_val
+              
+              y <- y[to_remove]
+              if(!is.null(group)) {
+                group_var <- group_var[to_remove]
+              }
+              y <- as.numeric(y)
+              
+              save_att <- attributes(p)
+              save_att$dim <- NULL
+              psub <- psub[,to_remove]
+              save_att$dim <- dim(psub)
+              attributes(psub) <- save_att
+              
+              if(attr(psub,'output_type')=='continuous') {
+                
+                #unbounded observed outcomes (i.e., continuous)
+                if(grouped) {
+                  out_plot <- bayesplot::ppc_violin_grouped(y=y,yrep=psub,
+                                                            group=group_var,
+                                                            ...)
+                } else {
+                  out_plot <- bayesplot::ppc_dens_overlay(y=y,yrep=psub,...)
+                }
+                
+              } else if(attr(psub,'output_type')=='discrete') {
+                
+                if(grouped) {
+                  
+                  out_plot <- bayesplot::ppc_bars_grouped(y=as.numeric(factor(y)),yrep=psub,
+                                                          group=group_var,...)
+                  
+                } else {
+                  out_plot <- bayesplot::ppc_bars(y=as.numeric(factor(y)),yrep=psub,...)
+                }
+              }
+              
+              
+            } else if(attr(psub,'output')=='missing') {
+              
+              y <- as.numeric(y==miss_val)
+              
+              if(grouped) {
+                
+                out_plot <- bayesplot::ppc_bars_grouped(y=as.numeric(factor(y)),yrep=psub,
+                                                        group=group_var,...)
+                
+              } else {
+                
+                out_plot <- bayesplot::ppc_bars(y=as.numeric(factor(y)),yrep=psub,...)
+                
               }
             }
             
+            out_plot <- out_plot + ggtitle(paste0("Item ",unique(all_data$item_id)))
             
-          } else if(attr(p,'output')=='missing') {
+            print(out_plot)
             
-              y <- as.numeric(y==miss_val)
+            if(prompt_plot) invisible(readline(prompt="Press [enter] to see next plot: "))
             
-            if(grouped) {
-              
-              out_plot <- bayesplot::ppc_bars_grouped(y=as.numeric(factor(y)),yrep=p,
-                                                      group=group_var,...)
-              
-            } else {
-              
-              out_plot <- bayesplot::ppc_bars(y=as.numeric(factor(y)),yrep=p,...)
-              
-            }
-          }
-          
-          out_plot <- out_plot + ggtitle(paste0("Item ",unique(all_data$item_id)))
-          
-          print(out_plot)
-          
-          if(prompt_plot) invisible(readline(prompt="Press [enter] to see next plot: "))
+            
+          })
+        
           
         })
         
