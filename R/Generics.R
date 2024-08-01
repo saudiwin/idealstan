@@ -233,6 +233,8 @@ setMethod('sample_model',signature(object='idealdata'),
               
               if(is.null(c1) || sd(init_vals$draws()[,1])==0) {
                 
+                print("Pathfinder failed; attempting Laplace.")
+                
                 init_vals <- try(object@stanmodel_map$laplace(data=this_data,
                                                           refresh=0,threads=ncores,
                                                           draws=1000,

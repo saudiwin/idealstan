@@ -421,8 +421,7 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
                                                 item_id=bill_points[this_obs],
                                                 time_id=time_points[this_obs],
                                                 outcome=Y_int[this_obs],
-                                              miss_val=miss_val,
-                                                cutpoints=cutpoints)
+                                              miss_val=miss_val)
 
              attr(out_predict,'model') <- item$model_id
              attr(out_predict,'item') <- item$item_point
@@ -518,6 +517,22 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
       return(over_models_obj)
       
   })
+    
+    # add model ID
+    
+    out_mods <- lapply(1:length(out_mods), function(m) {
+      
+      attr(out_mods[[m]], "model") <- unique(modelpoints)[m]
+      
+      if(unique(modelpoints)[m] %in% c(1,2,3,4,5,6,7,8,13,14)) {
+        attr(out_mods[[m]],"output_type") <- "discrete"
+      } else {
+        attr(out_mods[[m]],"output_type") <- "continuous"
+      }
+      
+      out_mods[[m]]
+      
+    })
     
     
     # this is now a list of lists with model ID at the top
@@ -628,7 +643,6 @@ setMethod('id_plot_ppc',signature(object='idealstan'),function(object,
     ppc_pred <- ppc_pred[item]
     
   }
-    
   
   if(combine_item) {
     
@@ -640,17 +654,21 @@ setMethod('id_plot_ppc',signature(object='idealstan'),function(object,
         if(length(unique(output_types))>1 && is.null(type)) stop("Please specify type if there are both discrete and continuous items.")
         if(length(unique(models))>1 && is.null(which_mod)) stop("Please specify item model type if there is more than one type of item distribution.")
         
-        if(!is.null(which_mod)) {
+        if(!is.null(which_mod) && (length(which_mod)>1 || !(which_mod %in% models))) {
           
-          ppc_pred <- ppc_pred[which(models==as.numeric(which_mod))]
-          
-          if(length(ppc_pred)==0) stop("Please specify an item model type that was passed to id_estimate. Item model type not found.")
-          
+          stop("Please specify only one model ID for the which_mod parameter that is in the models/item types in the idealstan object.")
         } else {
+          
+          if(length(unique(models))>1)
+              stop("Please specify a model type to use (item type) as there are multiple models/outcomes in the idealstan object.")
           
           which_mod <- unique(models)
           
         }
+        
+        print(paste0("Predicting outcomes for model ID ",which_mod,"."))
+        
+        ppc_pred <- ppc_pred[[which(models==as.numeric(which_mod))]]
         
         if(!is.null(type)) {
           

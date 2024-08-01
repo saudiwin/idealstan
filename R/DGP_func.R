@@ -116,7 +116,7 @@
   } else {
     pr_boost <- 0
   }
-  
+
   if(type=='simulate') {
     cutpoints <- quantile(pr_vote,probs=seq(0,1,length.out = ordinal_outcomes+1))
     cutpoints <- cutpoints[2:(length(cutpoints)-1)]
@@ -130,7 +130,7 @@
     # over posterior draws
     cuts_iters <- sapply(1:nrow(cutpoints), function(i) {
       cuts <- sapply(1:ncol(cutpoints),function(y) {
-        qlogis(pr_vote[,i]) - cutpoints[i,y]
+        qlogis(pr_vote[i,]) - cutpoints[i,y]
       })
     },simplify='array')
 
@@ -143,7 +143,7 @@
     # over posterior draws
     cuts_iters <- sapply(1:nrow(cutpoints), function(i) {
       cuts <- sapply(1:ncol(cutpoints),function(y) {
-        qlogis(pr_vote[,i]) - cutpoints[i,y]
+        qlogis(pr_vote[i,]) - cutpoints[i,y]
       })
     },simplify='array')
     
@@ -183,7 +183,7 @@
     return(out_data) 
   } else if(type=='predict') {
 
-    over_iters <- sapply(1:ncol(pr_vote), function(d) {
+    over_iters <- sapply(1:nrow(pr_vote), function(d) {
       votes <- sapply(1:dim(cuts_iters)[1], function(i) {
         
         this_cut <- cuts_iters[i,,d]
@@ -283,7 +283,7 @@
     # over posterior draws
     
     cuts_iters <- sapply(1:dim(cutpoints)[1], function(i) {
-        qlogis(pr_vote[,i]) - cutpoints[i,item_points]
+        qlogis(pr_vote[i,]) - cutpoints[i,item_points]
     },simplify='array')
   }
 
@@ -322,7 +322,7 @@
     
     return(out_data)                      
   } else if(type=='predict') {
-    over_iters <- sapply(1:ncol(pr_vote), function(d) {
+    over_iters <- sapply(1:nrow(pr_vote), function(d) {
       votes <- sapply(1:dim(cuts_iters)[1], function(i) {
         
         this_cut <- cuts_iters[i,d]
