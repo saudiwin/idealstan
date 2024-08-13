@@ -464,7 +464,7 @@
       ls_int = rnorm(num_ls),
       ls_int_abs = rnorm(num_ls),
       L_tp1_var = if (T > 1 && time_proc != 5) array(rep(0L,num_legis * T), dim = c(T, num_legis)) else array(numeric(0), dim = c(T, 0)),
-      L_AR1 = if (T > 1 && time_proc == 3) rep(0L,num_legis) else numeric(0),
+      L_AR1 = if (T > 1 && time_proc == 3) rep(0.1L,num_legis) else numeric(0),
       sigma_reg_free = if (pos_discrim == 0) rep(0L,num_bills) else numeric(0),
       legis_x = rnorm(LX,sd=0.25),
       sigma_reg_x = rnorm(SRX,sd=0.25),
