@@ -179,7 +179,7 @@ setMethod('sample_model',signature(object='idealdata'),
               
               init_vals <- try(object@stanmodel_map$pathfinder(data=this_data,
                                           refresh=0,num_threads=ncores,
-                                          init=init_vals_orig))
+                                          init=init_vals_orig,psis_resample=FALSE))
               
               # if fitting fails, we won't get variance in the draws
               

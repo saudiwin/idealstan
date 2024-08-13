@@ -31,7 +31,7 @@ bin_irt_2pl_sim <- id_sim_gen(num_person=100,num_bills=5,ordinal=F,inflate=F,
                               reg_discrim_sd = 1,
                               absence_discrim_sd = 1)
 bin_irt_2pl_est <- id_estimate(idealdata=bin_irt_2pl_sim,
-                               model_type=1,
+                               model_type=1,init_pathfinder = TRUE,
                                restrict_ind_high = as.character(sort(bin_irt_2pl_sim@simul_data$true_person,
                                                                      decreasing=T,
                                                         index=T)$ix[1]),
@@ -454,7 +454,8 @@ ord_irt_normal_est <- id_estimate(idealdata=ord_irt_normal_sim,
                               restrict_ind_low = as.character(sort(ord_irt_normal_sim@simul_data$true_person,
                                                                    decreasing=F,
                                                         index=T)$ix[1]),
-                               fixtype='prefix',compile_optim=F)
+                               fixtype='prefix',compile_optim=F,
+                              het_var=FALSE)
 id_plot_rhats(ord_irt_normal_est)
 ```
 
