@@ -643,18 +643,18 @@ parameters {
   ordered[n_cats_rat[6]-1] steps_votes8;
   ordered[n_cats_rat[7]-1] steps_votes9;
   ordered[n_cats_rat[8]-1] steps_votes10;
-  array[num_bills_grm] ordered[n_cats_grm[1]-1] steps_votes_grm3;
-  array[num_bills_grm] ordered[n_cats_grm[2]-1] steps_votes_grm4;
-  array[num_bills_grm] ordered[n_cats_grm[3]-1] steps_votes_grm5;
-  array[num_bills_grm] ordered[n_cats_grm[4]-1] steps_votes_grm6;
-  array[num_bills_grm] ordered[n_cats_grm[5]-1] steps_votes_grm7;
-  array[num_bills_grm] ordered[n_cats_grm[6]-1] steps_votes_grm8;
-  array[num_bills_grm] ordered[n_cats_grm[7]-1] steps_votes_grm9;
-  array[num_bills_grm] ordered[n_cats_grm[8]-1] steps_votes_grm10;
+  array[num_bills] ordered[n_cats_grm[1]-1] steps_votes_grm3;
+  array[num_bills] ordered[n_cats_grm[2]-1] steps_votes_grm4;
+  array[num_bills] ordered[n_cats_grm[3]-1] steps_votes_grm5;
+  array[num_bills] ordered[n_cats_grm[4]-1] steps_votes_grm6;
+  array[num_bills] ordered[n_cats_grm[5]-1] steps_votes_grm7;
+  array[num_bills] ordered[n_cats_grm[6]-1] steps_votes_grm8;
+  array[num_bills] ordered[n_cats_grm[7]-1] steps_votes_grm9;
+  array[num_bills] ordered[n_cats_grm[8]-1] steps_votes_grm10;
   vector<lower=0>[num_var] extra_sd;
   vector<lower=0>[gp_N] time_var_gp_free;
   vector<lower=0>[(T>1 && time_proc!=4 && restrict_var==1) ? num_legis-1 : (T>1 && time_proc!=4 ? num_legis : 0)] time_var_free;
-  array[num_basis > 1 ? num_legis : 0] row_vector[num_basis] a_raw;
+  array[num_legis] row_vector[num_basis > 1 ? num_basis : 0] a_raw;
 }
 
 transformed parameters {

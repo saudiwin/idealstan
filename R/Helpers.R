@@ -450,155 +450,254 @@
 #' @importFrom stats optimize
 #' @noRd
 .init_stan <- function(chain_id=NULL,
-                       restrict_sd_high=NULL,
-                       restrict_sd_low=NULL,
-                        person_sd=NULL,
-                       num_legis=NULL,
-                       legis_labels=NULL,
-                       item_labels=NULL,
-                       num_cit=NULL,
-                        fix_high=NULL,
-                       ar1_up=NULL,
-                       ar1_down=NULL,
-                       fix_low=NULL,
-                       restrict_ind_high=NULL,
-                       restrict_ind_low=NULL,
-                       m_sd_par=NULL,
-                       num_diff=NULL,
-                       time_range=NULL,
-                       const_type=NULL,
-                       T=NULL,
-                       time_proc=NULL,
-                       time_fix_sd=NULL,
-                       actual=TRUE,
-                       use_ar=NULL,
-                       person_cov=NULL,
-                       person_start=NULL,
-                       restrict_var=NULL) {
+                       this_data=NULL) {
   
-  normalize <- function(x) {
-    # Ensure that x is a numeric vector
-    if(!is.numeric(x)) {
-      stop("Input should be numeric")
-    }
-    
-    # Check for constant vector
-    if(min(x) == max(x)) {
-      return(rep(0, length(x)))
-    }
-    
-    # Normalizing
-    return((2 * (x - min(x)) / (max(x) - min(x))) - 1)
-  }
-
-  L_full <- array(rnorm(n=num_legis,mean=0,sd=person_sd))
-  sigma_reg_free <- array(normalize(rbeta(n=num_cit,1,1))*.998)
-  sigma_abs_free <- array(normalize(rbeta(n=num_cit,1,1))*.998)
-  A_int_free <- array(rnorm(n=num_cit,mean=0,sd=1))
-  B_int_free <- array(rnorm(n=num_cit,mean=0,sd=1))
+  # test out new chatGPT function
+  # this works, oddly enough
   
-  names(L_full) <- legis_labels
-  names(sigma_reg_free) <- paste0("Obs_Discrim_",item_labels)
-  names(sigma_abs_free) <- paste0("Miss_Discrim_",item_labels)
-  names(A_int_free) <- paste0("Obs_Difficulty_",item_labels)
-  names(B_int_free) <- paste0("Miss_Difficulty_",item_labels)
-  
-  if(const_type==1 && !is.null(const_type)) {
-    
-    L_full[restrict_ind_high] <- fix_high
-    L_full[restrict_ind_low] <- fix_low
-    
-  } else if(const_type==2 && !is.null(const_type)) {
-
-    sigma_reg_free[restrict_ind_high] <- .998
-    sigma_reg_free[restrict_ind_low] <- -.998
+  generate_initial_values <- function(num_bills, num_legis, gp_N_fix, time_proc, num_ls, T, ar1_down, ar1_up, pos_discrim, LX, SRX, SAX, num_bills_grm, n_cats_rat, n_cats_grm, num_var, gp_N, restrict_var, num_basis) {
+    list(
+      sigma_abs_free = rep(0L,num_bills),
+      L_full = rep(0L,num_legis),
+      m_sd_free = runif(gp_N_fix, 0.5, 1),
+      gp_sd_free = if (time_proc == 4) runif(1, 0.5, 1) else numeric(0),
+      ls_int = rnorm(num_ls),
+      ls_int_abs = rnorm(num_ls),
+      L_tp1_var = if (T > 1 && time_proc != 5) array(rep(0L,num_legis * T), dim = c(T, num_legis)) else array(numeric(0), dim = c(T, 0)),
+      L_AR1 = if (T > 1 && time_proc == 3) rep(0L,num_legis) else numeric(0),
+      sigma_reg_free = if (pos_discrim == 0) rep(0L,num_bills) else numeric(0),
+      legis_x = rnorm(LX,sd=0.25),
+      sigma_reg_x = rnorm(SRX,sd=0.25),
+      sigma_abs_x = rnorm(SAX,sd=0.25),
+      B_int_free = rnorm(num_bills,sd=0.25),
+      A_int_free = rnorm(num_bills,sd=0.25),
+      steps_votes3 = sort(rnorm(n_cats_rat[1] - 1),sd=0.25),
+      steps_votes4 = sort(rnorm(n_cats_rat[2] - 1),sd=0.25),
+      steps_votes5 = sort(rnorm(n_cats_rat[3] - 1),sd=0.25),
+      steps_votes6 = sort(rnorm(n_cats_rat[4] - 1),sd=0.25),
+      steps_votes7 = sort(rnorm(n_cats_rat[5] - 1),sd=0.25),
+      steps_votes8 = sort(rnorm(n_cats_rat[6] - 1),sd=0.25),
+      steps_votes9 = sort(rnorm(n_cats_rat[7] - 1),sd=0.25),
+      steps_votes10 = sort(rnorm(n_cats_rat[8] - 1),sd=0.25),
+      steps_votes_grm3 = if (n_cats_grm[1]>1) array(apply(array(rnorm((n_cats_grm[1] - 1) * num_bills,sd=0.25), dim = c(num_bills, n_cats_grm[1] - 1)), 1, sort), dim = c(num_bills, n_cats_grm[1] - 1)) else array(dim = c(num_bills, n_cats_grm[1] - 1)),
+      steps_votes_grm4 = if (n_cats_grm[2]>1) array(apply(array(rnorm((n_cats_grm[2] - 1) * num_bills,sd=0.25), dim = c(num_bills, n_cats_grm[2] - 1)), 1, sort), dim = c(num_bills, n_cats_grm[2] - 1)) else array(dim = c(num_bills, n_cats_grm[1] - 1)),
+      steps_votes_grm5 = if (n_cats_grm[3]>1) array(apply(array(rnorm((n_cats_grm[3] - 1) * num_bills,sd=0.25), dim = c(num_bills, n_cats_grm[3] - 1)), 1, sort), dim = c(num_bills, n_cats_grm[3] - 1)) else array(dim = c(num_bills, n_cats_grm[1] - 1)),
+      steps_votes_grm6 = if (n_cats_grm[4]>1) array(apply(array(rnorm((n_cats_grm[4] - 1) * num_bills,sd=0.25), dim = c(num_bills, n_cats_grm[4] - 1)), 1, sort), dim = c(num_bills, n_cats_grm[4] - 1)) else array(dim = c(num_bills, n_cats_grm[1] - 1)),
+      steps_votes_grm7 = if (n_cats_grm[5]>1) array(apply(array(rnorm((n_cats_grm[5] - 1) * num_bills,sd=0.25), dim = c(num_bills, n_cats_grm[5] - 1)), 1, sort), dim = c(num_bills, n_cats_grm[5] - 1)) else array(dim = c(num_bills, n_cats_grm[1] - 1)),
+      steps_votes_grm8 = if (n_cats_grm[6]>1) array(apply(array(rnorm((n_cats_grm[6] - 1) * num_bills,sd=0.25), dim = c(num_bills, n_cats_grm[6] - 1)), 1, sort), dim = c(num_bills, n_cats_grm[6] - 1)) else array(dim = c(num_bills, n_cats_grm[1] - 1)),
+      steps_votes_grm9 = if (n_cats_grm[7]>1) array(apply(array(rnorm((n_cats_grm[7] - 1) * num_bills,sd=0.25), dim = c(num_bills, n_cats_grm[7] - 1)), 1, sort), dim = c(num_bills, n_cats_grm[7] - 1)) else array(dim = c(num_bills, n_cats_grm[1] - 1)),
+      steps_votes_grm10 = if (n_cats_grm[8]>1) array(apply(array(rnorm((n_cats_grm[8] - 1) * num_bills,sd=0.25), dim = c(num_bills, n_cats_grm[8] - 1)), 1, sort), dim = c(num_bills, n_cats_grm[8] - 1)) else array(dim = c(num_bills, n_cats_grm[1] - 1)),
+      extra_sd = runif(num_var, 0.5, 1),
+      time_var_gp_free = runif(gp_N, 0.5, 1),
+      time_var_free = if (T > 1 && time_proc != 4 && restrict_var == 1) runif(num_legis - 1, 0.5, 1) else if (T > 1 && time_proc != 4) runif(num_legis, 0.5, 1) else numeric(0),
+      a_raw = if (num_basis > 1) array(rep(0L, num_legis * num_basis), dim = c(num_legis, num_basis)) else array(numeric(0), dim = c(num_legis, 0L))
+    )
   }
   
-  # given upper bound on m_sd figure out mean to match real value on the real numbers
+  # need to figure out gp_N_fix
   
-  # rev_trans <- function(x,m_sd_par) {
-  #   m_sd_par[1]*plogis(x) - 1/m_sd_par[2]
-  # }
-
-  
-  if(actual==TRUE) {
-    # full run
-    if(T>1) {
-      
-      if(restrict_var) {
-        num_var <- num_legis - 1
-      } else {
-        num_var <- num_legis
-      }
-      
-      # figure out optimized gp par
-      
-      # m_sd_optim <- optimize(f=rev_trans,
-      #                        interval=c(0,m_sd_par[1]),
-      #                     m_sd_par=m_sd_par)$objective
-      # 
-      # if(m_sd_optim<0) {
-      #   # shouldn't happen, but just in case
-      #   m_sd_optim <- m_sd_par[1]/2
-      # }
-      if(time_proc==4) {
-        base_params <- list(L_full = L_full,
-                    sigma_reg_free=sigma_reg_free,
-                    sigma_abs_free=sigma_abs_free,
-                    A_int_free=A_int_free,
-                    B_int_free=B_int_free,
-                    m_sd=rep(m_sd_par,num_legis))
-      } else if(time_proc==3) {
-        base_params <- list(L_full = L_full,
-                    L_AR1 = array(runif(n = num_legis,min = ar1_down+.1,max=ar1_up-.1)),
-                    time_var_free = rexp(rate=1/time_fix_sd,n=num_var),
-                    sigma_reg_free=sigma_reg_free,
-                    sigma_abs_free=sigma_abs_free,
-                    A_int_free=A_int_free,
-                    B_int_free=B_int_free)
-        
-        } else if(time_proc==2) {
-          base_params <- list(L_full = L_full,
-                      time_var_free = rexp(rate=1/time_fix_sd,n=num_var),
-                      sigma_reg_free=sigma_reg_free,
-                      sigma_abs_free=sigma_abs_free,
-                      A_int_free=A_int_free,
-                      B_int_free=B_int_free)
-          } else {
-            
-            base_params <- list(L_full = L_full,
-                    sigma_reg_free=sigma_reg_free,
-                    sigma_abs_free=sigma_abs_free,
-                    A_int_free=A_int_free,
-                    B_int_free=B_int_free)
-        
-          }
-      
-      # need to generate time process
-      if(time_proc!= 5)
-        base_params$L_tp1_var <- array(rep(0, `T`*num_legis),dim = c(`T`,num_legis ))
-          
-
+  if(this_data$time_proc!=4) {
+    
+    gp_N=0
+    gp_N_fix=0
+    gp_1=0
+    gp_oT=this_data$T
+    gp_nT=0
+    
   } else {
-    #identification run
-    base_params <- list(L_full = L_full,
-                sigma_reg_free=sigma_reg_free,
-                sigma_abs_free=sigma_abs_free,
-                A_int_free=A_int_free,
-                B_int_free=B_int_free)
-  }
     
-  if(length(person_cov)>0) {
-    
-    base_params$legis_x <- rep(0, length(person_cov))
+    gp_N=this_data$num_legis
+    gp_N_fix=this_data$num_legis-1
+    gp_1=1
+    gp_nT=this_data$T
+    gp_oT=0
     
   }
-    
-    
+  
+  base_params <- generate_initial_values(num_bills=this_data$num_bills,
+                                         num_legis=this_data$num_legis,
+                                         gp_N_fix=gp_N_fix,
+                                         time_proc=this_data$time_proc,
+                                         num_ls=this_data$num_ls,
+                                         this_data$T,
+                                         this_data$ar1_down, 
+                                         this_data$ar1_up, 
+                                         this_data$pos_discrim, 
+                                         this_data$LX, 
+                                         this_data$SRX, 
+                                         this_data$SAX, 
+                                         this_data$num_bills_grm, 
+                                         this_data$n_cats_rat, 
+                                         this_data$n_cats_grm, 
+                                         this_data$num_var, 
+                                         gp_N, 
+                                         this_data$restrict_var, 
+                                         this_data$num_basis)
   
   return(base_params)
   
-  }
+  # code below is legacy
+  
+  # normalize <- function(x) {
+  #   # Ensure that x is a numeric vector
+  #   if(!is.numeric(x)) {
+  #     stop("Input should be numeric")
+  #   }
+  #   
+  #   # Check for constant vector
+  #   if(min(x) == max(x)) {
+  #     return(rep(0, length(x)))
+  #   }
+  #   
+  #   # Normalizing
+  #   return((2 * (x - min(x)) / (max(x) - min(x))) - 1)
+  # }
+  # 
+  # # let's add less randomness to avoid corner solutions
+  # # randomness is only in intercepts
+  # 
+  # # L_full <- array(rnorm(n=num_legis,mean=0,sd=person_sd))
+  # # sigma_reg_free <- array(normalize(rbeta(n=num_cit,1,1))*.998)
+  # # sigma_abs_free <- array(normalize(rbeta(n=num_cit,1,1))*.998)
+  # L_full <- array(rep(0,num_legis))
+  # sigma_reg_free <- array(rep(0,num_cit))
+  # sigma_abs_free <- array(rep(0,num_cit))
+  # A_int_free <- array(rnorm(n=num_cit,mean=0,sd=.25))
+  # B_int_free <- array(rnorm(n=num_cit,mean=0,sd=.25))
+  # 
+  # names(L_full) <- legis_labels
+  # names(sigma_reg_free) <- paste0("Obs_Discrim_",item_labels)
+  # names(sigma_abs_free) <- paste0("Miss_Discrim_",item_labels)
+  # names(A_int_free) <- paste0("Obs_Difficulty_",item_labels)
+  # names(B_int_free) <- paste0("Miss_Difficulty_",item_labels)
+  # 
+  # if(const_type==1 && !is.null(const_type)) {
+  #   
+  #   L_full[restrict_ind_high] <- fix_high
+  #   L_full[restrict_ind_low] <- fix_low
+  #   
+  # } else if(const_type==2 && !is.null(const_type)) {
+  # 
+  #   sigma_reg_free[restrict_ind_high] <- .998
+  #   sigma_reg_free[restrict_ind_low] <- -.998
+  # }
+  # 
+  # # given upper bound on m_sd figure out mean to match real value on the real numbers
+  # 
+  # # rev_trans <- function(x,m_sd_par) {
+  # #   m_sd_par[1]*plogis(x) - 1/m_sd_par[2]
+  # # }
+  # 
+  # 
+  # if(actual==TRUE) {
+  #   # full run
+  #   if(T>1) {
+  #     
+  #     if(restrict_var) {
+  #       num_var <- num_legis - 1
+  #     } else {
+  #       num_var <- num_legis
+  #     }
+  #     
+  #     # figure out optimized gp par
+  #     
+  #     # m_sd_optim <- optimize(f=rev_trans,
+  #     #                        interval=c(0,m_sd_par[1]),
+  #     #                     m_sd_par=m_sd_par)$objective
+  #     # 
+  #     # if(m_sd_optim<0) {
+  #     #   # shouldn't happen, but just in case
+  #     #   m_sd_optim <- m_sd_par[1]/2
+  #     # }
+  #     if(time_proc==4) {
+  #       base_params <- list(L_full = L_full,
+  #                   sigma_reg_free=sigma_reg_free,
+  #                   sigma_abs_free=sigma_abs_free,
+  #                   A_int_free=A_int_free,
+  #                   B_int_free=B_int_free,
+  #                   m_sd=rep(m_sd_par,num_legis))
+  #     } else if(time_proc==3) {
+  #       base_params <- list(L_full = L_full,
+  #                   L_AR1 = rep(0.1,num_legis),
+  #                   time_var_free = rep(0.1,num_var),
+  #                   sigma_reg_free=sigma_reg_free,
+  #                   sigma_abs_free=sigma_abs_free,
+  #                   A_int_free=A_int_free,
+  #                   B_int_free=B_int_free)
+  #       
+  #       } else if(time_proc==2) {
+  #         base_params <- list(L_full = L_full,
+  #                     time_var_free = rep(0.1,num_var),
+  #                     sigma_reg_free=sigma_reg_free,
+  #                     sigma_abs_free=sigma_abs_free,
+  #                     A_int_free=A_int_free,
+  #                     B_int_free=B_int_free)
+  #         } else {
+  #           
+  #           base_params <- list(L_full = L_full,
+  #                   sigma_reg_free=sigma_reg_free,
+  #                   sigma_abs_free=sigma_abs_free,
+  #                   A_int_free=A_int_free,
+  #                   B_int_free=B_int_free)
+  #       
+  #         }
+  #     
+  #     # need to generate time process
+  #     if(time_proc!= 5)
+  #       base_params$L_tp1_var <- array(rep(0, `T`*num_legis),dim = c(`T`,num_legis ))
+  #         
+  # 
+  # } else {
+  #   #identification run
+  #   base_params <- list(L_full = L_full,
+  #               sigma_reg_free=sigma_reg_free,
+  #               sigma_abs_free=sigma_abs_free,
+  #               A_int_free=A_int_free,
+  #               B_int_free=B_int_free)
+  # }
+  #   
+  # if(length(person_cov)>0) {
+  #   
+  #   base_params$legis_x <- rep(0, length(person_cov))
+  #   
+  # }
+  #   
+  #   # static parameters
+  #   
+  #   base_params$extra_sd <- rep(0.5,times=this_data$num_var)
+  #   
+  #   if(this_data$num_basis>1) {
+  #     
+  #     base_params$a_raw <- matrix(rep(0, this_data$num_basis*this_data$num_legis),
+  #                                     ncol=this_data$num_basis,
+  #                                 nrow=num_legis)
+  #     
+  #   }
+  #   
+  #   
+  #   
+  #   base_params <- generate_initial_values(num_bills=this_data$num_bills,
+  #                                          num_legis=this_data$num_legis,
+  #                                          gp_N_fix=this_data$gp_N_fix,
+  #                                          time_proc=this_data$time_proc,
+  #                                          num_ls=this_data$num_ls,
+  #                                          this_data$ar1_down, 
+  #                                          this_data$ar1_up, 
+  #                                          this_data$pos_discrim, 
+  #                                          this_data$LX, 
+  #                                          this_data$SRX, 
+  #                                          this_data$num_bills_grm, 
+  #                                          this_data$n_cats_rat, 
+  #                                          this_data$n_cats_grm, 
+  #                                          this_data$num_var, 
+  #                                          this_data$gp_N, 
+  #                                          this_data$restrict_var, 
+  #                                          this_data$num_basis)
+  #   
+  # 
+  # return(base_params)
+  
+  #}
   
 }
 
