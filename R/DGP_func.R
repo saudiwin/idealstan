@@ -60,6 +60,8 @@
   if(type=='simulate') {
     combined <- ifelse((pr_absence*mul_fac)<(runif(N)+pr_boost),votes,NA)
     
+    combined <- combined - min(combined,na.rm=T)
+    
     # Create a score dataset
     
     out_data <- data_frame(outcome_disc=combined,

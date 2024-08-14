@@ -125,6 +125,8 @@ id_sim_gen <- function(num_person=20,num_bills=50,
         select(-person) %>% 
         as.matrix
       
+      time_sd_all <- time_sd
+      
     } else {
       ideal_t1 <- prior_func(params=list(N=num_person,mean=0,sd=ideal_pts_sd))
       if(time_process=='AR') {

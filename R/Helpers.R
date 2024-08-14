@@ -464,7 +464,7 @@
       ls_int = rnorm(num_ls),
       ls_int_abs = rnorm(num_ls),
       L_tp1_var = if (T > 1 && time_proc != 5) array(rep(0L,num_legis * T), dim = c(T, num_legis)) else array(numeric(0), dim = c(T, 0)),
-      L_AR1 = if (T > 1 && time_proc == 3) rep(0.1L,num_legis) else numeric(0),
+      L_AR1 = if (T > 1 && time_proc == 3) rep(0.1,num_legis) else numeric(0),
       sigma_reg_free = if (pos_discrim == 0) rep(0L,num_bills) else numeric(0),
       legis_x = rnorm(LX,sd=0.25),
       sigma_reg_x = rnorm(SRX,sd=0.25),
@@ -1857,9 +1857,9 @@ return(as.vector(idx))
         
       # if missing data present, only adjust bottom two numbers
       
-      if(any(c(1,2) %in% unique(modelpoints))) {
+      if(any(c(1,2,13,14) %in% unique(modelpoints))) {
         
-        Y_int[modelpoints %in% c(1,2) & (Y_int %in% sort(unique(Y_int[modelpoints %in% c(1,2)]))[1:2])] <- Y_int[modelpoints %in% c(1,2) & (Y_int %in% sort(unique(Y_int[modelpoints %in% c(1,2)]))[1:2])] - min(Y_int[modelpoints %in% c(1,2)],na.rm=T)
+        Y_int[modelpoints %in% c(1,2,13,14) & (Y_int %in% sort(unique(Y_int[modelpoints %in% c(1,2,13,14)]))[1:2])] <- Y_int[modelpoints %in% c(1,2,13,14) & (Y_int %in% sort(unique(Y_int[modelpoints %in% c(1,2,13,14)]))[1:2])] - min(Y_int[modelpoints %in% c(1,2,13,14)],na.rm=T)
         
       }
       
