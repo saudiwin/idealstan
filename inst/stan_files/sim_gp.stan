@@ -1,19 +1,19 @@
 data {
 int<lower=1> N;
 int<lower=1> T;
-real x[T];
+array[T] real x;
 vector[N] ideal_pts;
-real<lower=0> rho[N];
+array[N] real<lower=0> rho;
 real<lower=0> alpha;
 real<lower=0> sigma;
 }
 
 transformed data {
 //create one covariance matrix for each legislator
-matrix[T, T] cov[N];
-matrix[T, T] L_cov[N];
+array[N] matrix[T, T] cov;
+array[N] matrix[T, T] L_cov;
 for(n in 1:N) {
-cov[n] =   cov_exp_quad(x, alpha, rho[n])
+cov[n] =   gp_exp_quad_cov(x, alpha, rho[n])
 + diag_matrix(rep_vector(1e-10, T));
 L_cov[n] = cholesky_decompose(cov[n]);
 }
