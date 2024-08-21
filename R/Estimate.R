@@ -1096,6 +1096,26 @@ id_estimate <- function(idealdata=NULL,model_type=2,
     idealdata@score_matrix$ordered_id <- 0
   }
   
+  # sort data according to shard
+  
+  if(map_over_id=="persons") {
+    
+    if(use_groups) {
+      
+      idealdata@score_matrix <- arrange(idealdata@score_matrix, group_id, time_id)
+      
+    } else {
+      
+      idealdata@score_matrix <- arrange(idealdata@score_matrix, person_id, time_id)
+      
+    }
+    
+  } else {
+    
+    idealdata@score_matrix <- arrange(idealdata@score_matrix, item_id, time_id)
+    
+  }
+  
   # use either row numbers for person/legislator IDs or use group IDs (static or time-varying)
   
   if(use_groups==T) {
@@ -1186,10 +1206,10 @@ id_estimate <- function(idealdata=NULL,model_type=2,
     stop('The parameter gp_min_length cannot be equal to or greater than gp_num_diff[1].')
   }
   
-  if(("outcome_cont" %in% names(idealdata@score_matrix)) && ("outcome_disc" %in% names(idealdata@score_matrix))) {
+  if((any(c(9,10,11,12) %in% idealdata@score_matrix$model_id)) && (any(c(1,2,3,4,5,6,7,8,13,14) %in% idealdata@score_matrix$model_id))) {
     Y_int <- idealdata@score_matrix$outcome_disc
     Y_cont <- idealdata@score_matrix$outcome_cont
-  } else if ("outcome_cont" %in% names(idealdata@score_matrix)) {
+  } else if (any(c(9,10,11,12) %in% idealdata@score_matrix$model_id)) {
     Y_int <- array(0)
     Y_cont <- idealdata@score_matrix$outcome_cont
   } else {

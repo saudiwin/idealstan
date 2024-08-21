@@ -2218,8 +2218,6 @@ return(as.vector(idx))
   if(map_over_id=="persons") {
     if(use_groups) {
       
-      this_data <- dplyr::arrange(this_data, group_id,time_id) 
-      
       sum_vals <- this_data %>% 
         mutate(rownum=row_number()) %>% 
         group_by(group_id) %>% 
@@ -2234,8 +2232,6 @@ return(as.vector(idx))
       
       
     } else {
-      
-      this_data <- dplyr::arrange(this_data,person_id,time_id)
         
         sum_vals <- this_data %>% 
           mutate(rownum=row_number()) %>% 
@@ -2251,8 +2247,6 @@ return(as.vector(idx))
       
     }
   } else {
-    
-    this_data <- dplyr::arrange(this_data, item_id, time_id)
     
     sum_vals <- this_data %>% 
       mutate(rownum=row_number()) %>% 
