@@ -20,11 +20,11 @@ real id_params2(vector p, array[] int high, array[] int low,
       
       if(r_in(n,high)) {
         
-        prob_dens += genbeta_lpdf(p[n]|1000,sd_fix_high,lb,upb);
+        prob_dens += genbeta_lpdf(p[n]|10000,sd_fix_high,lb,upb);
         
       } else if(r_in(n,low)) {
         
-        prob_dens += genbeta_lpdf(p[n]|sd_fix_low,1000,lb,upb);
+        prob_dens += genbeta_lpdf(p[n]|sd_fix_low,10000,lb,upb);
         
       } else {
         

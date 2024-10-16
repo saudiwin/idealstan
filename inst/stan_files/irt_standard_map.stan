@@ -217,10 +217,10 @@ real partial_sum(array[,] int y_slice,
       if(pos_discrim==0) {
         if(r_in(s,restrict_high)) {
           //log_prob += normal_lpdf(sigma_reg_full[s]|fix_high,restrict_sd_high);
-          log_prob += genbeta_lpdf(sigma_reg_full[s]|1000,restrict_sd_high,discrim_reg_lb,discrim_reg_upb);
+          log_prob += genbeta_lpdf(sigma_reg_full[s]|10000,restrict_sd_high,discrim_reg_lb,discrim_reg_upb);
         } else if(r_in(s,restrict_low)) {
           //log_prob += normal_lpdf(sigma_reg_full[s]|fix_low,restrict_sd_low);
-          log_prob += genbeta_lpdf(sigma_reg_full[s]|restrict_sd_low,1000,discrim_reg_lb,discrim_reg_upb);
+          log_prob += genbeta_lpdf(sigma_reg_full[s]|restrict_sd_low,10000,discrim_reg_lb,discrim_reg_upb);
         } else {
           //log_prob += normal_lpdf(sigma_reg_full[s]|0,discrim_reg_sd);
           log_prob += genbeta_lpdf(sigma_reg_full[s]|discrim_reg_scale,discrim_reg_shape,discrim_reg_lb,discrim_reg_upb);
