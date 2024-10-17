@@ -1805,6 +1805,8 @@ return(as.vector(idx))
                         legis_sd=NULL,
                         restrict_sd_high=NULL,
                         restrict_sd_low=NULL,
+                        restrict_N_high=NULL,
+                        restrict_N_low=NULL,
                         restrict_high=NULL,
                         restrict_low=NULL,
                         ar_sd=NULL,

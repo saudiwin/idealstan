@@ -57,6 +57,8 @@ id_estimate(
   diff_miss_sd = 1,
   restrict_sd_high = 0.1,
   restrict_sd_low = 0.1,
+  restrict_N_high = 1000,
+  restrict_N_low = 1000,
   tol_rel_obj = 0.001,
   gp_sd_par = 0.025,
   gp_num_diff = 3,
@@ -271,11 +273,20 @@ identify the model when there are few time points.}
 
 \item{diff_miss_sd}{Set the prior standard deviation for the bill (item) intercepts for the inflated model.}
 
-\item{restrict_sd_high}{Set the prior standard deviation for pinned parameters. This has a default of 
-0.01, but could be set lower if the data is really large.}
+\item{restrict_sd_high}{Set the prior shape for high pinned parameters. This has a default of 
+0.01 (equivalent to +0.99), but could be set lower if the data is really large.}
 
-\item{restrict_sd_low}{Set the prior standard deviation for pinned parameters. This has a default of 
-0.01, but could be set lower if the data is really large.}
+\item{restrict_sd_low}{Set the prior scale for low pinned parameters. This has a default of 
+0.01 (equivalent to -0.99), but could be set lower if the data is really large.
+To make the prior uninformative, set this value and \code{restrict_N_low} to +1 (or +2, +2 for weakly informative).}
+
+\item{restrict_N_high}{Set the prior scale for high pinned parameters. Default is 1000 
+(equivalent to 1,000 observations of the pinned value). Higher values make the pin
+stronger (for example if there is a lot of data).}
+
+\item{restrict_N_low}{Set the prior shape for high pinned parameters. Default is 1000 
+(equivalent to 1,000 observations of the pinned value). Higher values make the pin stronger
+(for example if there is a lot of data).}
 
 \item{tol_rel_obj}{If \code{use_vb} is \code{TRUE}, this parameter sets the stopping rule for the \code{vb} algorithm. 
 It's default is 0.001. A stricter threshold will require the sampler to run longer but may yield a

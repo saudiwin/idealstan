@@ -19,3 +19,21 @@ See the README on
    \item Bafumi, J., Gelman, A., Park, D., & Kaplan, N. (2005). Practical Issues in Implementing and Understanding Bayesian Ideal Point Estimation. \emph{Political Analysis}, 13(2), 171-187. doi:10.1093/pan/mpi010
 }
 }
+\seealso{
+Useful links:
+\itemize{
+  \item Report bugs at \url{https://github.com/saudiwin/idealstan/issues}
+}
+
+}
+\author{
+\strong{Maintainer}: Robert Kubinec \email{rmk7@nyu.edu}
+
+Other contributors:
+\itemize{
+  \item Jonah Gabry [contributor]
+  \item Ben Goodrich [contributor]
+  \item Trustees of Columbia University [copyright holder]
+}
+
+}

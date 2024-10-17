@@ -143,7 +143,9 @@ real partial_sum(array[,] int y_slice,
         int num_basis,
         array[] row_vector a_raw,
         matrix B,
-        int prior_only) {
+        int prior_only,
+        real restrict_N_high,
+        real restrict_N_low) {
   
   // big loop over states
   real log_prob = 0;
@@ -217,10 +219,11 @@ real partial_sum(array[,] int y_slice,
       if(pos_discrim==0) {
         if(r_in(s,restrict_high)) {
           //log_prob += normal_lpdf(sigma_reg_full[s]|fix_high,restrict_sd_high);
-          log_prob += genbeta_lpdf(sigma_reg_full[s]|10000,restrict_sd_high,discrim_reg_lb,discrim_reg_upb);
+          log_prob += genbeta_lpdf(sigma_reg_full[s]|restrict_N_high,restrict_sd_high,discrim_reg_lb,discrim_reg_upb);
         } else if(r_in(s,restrict_low)) {
           //log_prob += normal_lpdf(sigma_reg_full[s]|fix_low,restrict_sd_low);
-          log_prob += genbeta_lpdf(sigma_reg_full[s]|restrict_sd_low,10000,discrim_reg_lb,discrim_reg_upb);
+          log_prob += genbeta_lpdf(sigma_reg_full[s]|restrict_sd_low,restrict_N_low,
+          discrim_reg_lb,discrim_reg_upb);
         } else {
           //log_prob += normal_lpdf(sigma_reg_full[s]|0,discrim_reg_sd);
           log_prob += genbeta_lpdf(sigma_reg_full[s]|discrim_reg_scale,discrim_reg_shape,discrim_reg_lb,discrim_reg_upb);
@@ -494,6 +497,8 @@ data {
   real diff_reg_sd;
   real<lower=0> restrict_sd_high;
   real<lower=0> restrict_sd_low;
+  real<lower=0> restrict_N_high;
+  real<lower=0> restrict_N_low;
   real ar_sd;
   real time_sd;
   real time_var_sd; // over-time variance of persons
@@ -936,7 +941,9 @@ if(S_type==1 && const_type==1) {
                         discrim_reg_scale,
                         discrim_reg_shape,
                         discrim_reg_upb,
-                        discrim_reg_lb);
+                        discrim_reg_lb,
+                        restrict_N_high,
+                        restrict_N_low);
   
   
   
@@ -1103,7 +1110,9 @@ if(S_type==1 && const_type==1) {
         num_basis,
         a_raw,
         B,
-        prior_only);
+        prior_only,
+        restrict_N_high,
+        restrict_N_low);
 
 }
 generated quantities {

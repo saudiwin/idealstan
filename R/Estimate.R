@@ -762,10 +762,17 @@ id_make <- function(score_data=NULL,
 #' quality is poor above the threshold.
 #' @param diff_reg_sd Set the prior standard deviation for the bill (item) intercepts for the non-inflated model.
 #' @param diff_miss_sd Set the prior standard deviation for the bill (item) intercepts for the inflated model.
-#' @param restrict_sd_high Set the prior standard deviation for pinned parameters. This has a default of 
-#' 0.01, but could be set lower if the data is really large.
-#' @param restrict_sd_low Set the prior standard deviation for pinned parameters. This has a default of 
-#' 0.01, but could be set lower if the data is really large.
+#' @param restrict_sd_high Set the prior shape for high pinned parameters. This has a default of 
+#' 0.01 (equivalent to +0.99), but could be set lower if the data is really large.
+#' @param restrict_sd_low Set the prior scale for low pinned parameters. This has a default of 
+#' 0.01 (equivalent to -0.99), but could be set lower if the data is really large.
+#' To make the prior uninformative, set this value and \code{restrict_N_low} to +1 (or +2, +2 for weakly informative).
+#' @param restrict_N_high Set the prior scale for high pinned parameters. Default is 1000 
+#' (equivalent to 1,000 observations of the pinned value). Higher values make the pin
+#' stronger (for example if there is a lot of data).
+#' @param restrict_N_low Set the prior shape for high pinned parameters. Default is 1000 
+#' (equivalent to 1,000 observations of the pinned value). Higher values make the pin stronger
+#' (for example if there is a lot of data).
 #' @param gp_sd_par The upper limit on allowed residual variation of the Gaussian process
 #' prior. Increasing the limit will permit the GP to more closely follow the time points, 
 #' resulting in much sharper bends in the function and potentially oscillation.
@@ -927,6 +934,8 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                         diff_miss_sd=1,
                         restrict_sd_high=0.1,
                         restrict_sd_low=0.1,
+                        restrict_N_high=1000,
+                        restrict_N_low=1000,
                         tol_rel_obj=.001,
                         gp_sd_par=.025,
                         gp_num_diff=3,
@@ -1251,6 +1260,8 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                              legis_sd=person_sd,
                              restrict_sd_high=restrict_sd_high,
                              restrict_sd_low=restrict_sd_low,
+                             restrict_N_high=restrict_N_high,
+                             restrict_N_low=restrict_N_low,
                              restrict_high=idealdata@restrict_ind_high,
                              restrict_low=idealdata@restrict_ind_low,
                              fix_high=idealdata@restrict_num_high,
@@ -1418,8 +1429,10 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     diff_reg_sd=diff_reg_sd,
                     diff_abs_sd=diff_miss_sd,
                     legis_sd=person_sd,
-                    restrict_sd_high=5,
-                    restrict_sd_low=5,
+                    restrict_sd_high=2,
+                    restrict_sd_low=2,
+                    restrict_N_high=2,
+                    restrict_N_low=2,
                     time_sd=time_fix_sd,
                     time_var_sd=time_var,
                     ar1_up=ar1_up,
@@ -1500,6 +1513,8 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                              legis_sd=person_sd,
                              restrict_sd_high=restrict_sd_high,
                              restrict_sd_low=restrict_sd_low,
+                             restrict_N_high=restrict_N_high,
+                             restrict_N_low=restrict_N_low,
                              restrict_high=idealdata@restrict_ind_high,
                              restrict_low=idealdata@restrict_ind_low,
                              fix_high=idealdata@restrict_num_high,
@@ -1627,6 +1642,8 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     legis_sd=person_sd,
                     restrict_sd_high=restrict_sd_high,
                     restrict_sd_low=restrict_sd_low,
+                    restrict_N_high=restrict_N_high,
+                    restrict_N_low=restrict_N_low,
                     time_sd=time_fix_sd,
                     time_var_sd=time_var,
                     ar1_up=ar1_up,

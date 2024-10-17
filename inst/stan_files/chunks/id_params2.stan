@@ -11,7 +11,9 @@ real id_params2(vector p, array[] int high, array[] int low,
                   real scale,
                   real shape,
                   real upb,
-                  real lb) {
+                  real lb,
+                  real restrict_N_high,
+                  real restrict_N_low) {
     
     int N = num_elements(p);
     real prob_dens = 0; // hold the calculated probability density
@@ -20,11 +22,11 @@ real id_params2(vector p, array[] int high, array[] int low,
       
       if(r_in(n,high)) {
         
-        prob_dens += genbeta_lpdf(p[n]|10000,sd_fix_high,lb,upb);
+        prob_dens += genbeta_lpdf(p[n]|restrict_N_high,sd_fix_high,lb,upb);
         
       } else if(r_in(n,low)) {
         
-        prob_dens += genbeta_lpdf(p[n]|sd_fix_low,10000,lb,upb);
+        prob_dens += genbeta_lpdf(p[n]|sd_fix_low,restrict_N_low,lb,upb);
         
       } else {
         
