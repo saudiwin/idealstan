@@ -162,6 +162,7 @@ setMethod('sample_model',signature(object='idealdata'),
                    keep_param=NULL,
                    save_files=NULL,
                    init_pathfinder=TRUE,
+                   num_pathfinder_paths=num_pathfinder_paths,
                    #pathfinder_object=NULL,
                    tol_rel_obj=NULL,...) {
             
@@ -179,6 +180,7 @@ setMethod('sample_model',signature(object='idealdata'),
               
               init_vals <- try(object@stanmodel_map$pathfinder(data=this_data,
                                           refresh=0,num_threads=ncores,
+                                          num_paths=num_pathfinder_paths,
                                           init=init_vals_orig,psis_resample=FALSE))
               
               # if fitting fails, we won't get variance in the draws

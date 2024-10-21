@@ -801,6 +801,8 @@ id_make <- function(score_data=NULL,
 #'   error messages from Stan. Also recompiles model objects.
 #' @param init_pathfinder Whether to generate initial values from the Pathfinder 
 #' algorithm (see Stan documentation). If FALSE, will generate random start values.
+#' @param num_pathfinder_paths Number of pathfinder runs. Default is 4. More runs
+#' may be necessary for very large or complex models to find good starting values.
 #' @param ... Additional parameters passed on to Stan's sampling engine. See \code{\link[rstan]{stan}} for more information.
 #' @return A fitted \code{\link{idealstan}} object that contains posterior samples of all parameters either via full Bayesian inference
 #' or a variational approximation if \code{use_vb} is set to \code{TRUE}. This object can then be passed to the plotting functions for further analysis.
@@ -949,6 +951,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                         compile_optim=FALSE,
                         debug=FALSE,
                         init_pathfinder=TRUE,
+                        num_pathfinder_paths=4,
                         ...) {
   
   

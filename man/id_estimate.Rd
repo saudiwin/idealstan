@@ -71,6 +71,7 @@ id_estimate(
   compile_optim = FALSE,
   debug = FALSE,
   init_pathfinder = TRUE,
+  num_pathfinder_paths = 4,
   ...
 )
 }
@@ -333,6 +334,9 @@ error messages from Stan. Also recompiles model objects.}
 
 \item{init_pathfinder}{Whether to generate initial values from the Pathfinder 
 algorithm (see Stan documentation). If FALSE, will generate random start values.}
+
+\item{num_pathfinder_paths}{Number of pathfinder runs. Default is 4. More runs
+may be necessary for very large or complex models to find good starting values.}
 
 \item{...}{Additional parameters passed on to Stan's sampling engine. See \code{\link[rstan]{stan}} for more information.}
 
