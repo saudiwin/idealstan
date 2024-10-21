@@ -1690,6 +1690,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                          keep_param=keep_param,
                          tol_rel_obj=tol_rel_obj,within_chain=within_chain,
                          init_pathfinder=init_pathfinder,
+                         num_pathfinder_paths=num_pathfinder_paths,
                          #pathfinder_object=stan_code_compiled,
                          ...)
   

@@ -162,16 +162,16 @@ setMethod('sample_model',signature(object='idealdata'),
                    keep_param=NULL,
                    save_files=NULL,
                    init_pathfinder=TRUE,
-                   num_pathfinder_paths=num_pathfinder_paths,
+                   num_pathfinder_paths=NULL,
                    #pathfinder_object=NULL,
                    tol_rel_obj=NULL,...) {
             
-            # need init values for pathfinder that work
+            # need init values for pathfinder & other algos that work
             
             init_vals <- lapply(1:nchains,.init_stan,
                                 this_data=this_data)
 
-            init_vals_orig <- lapply(1:4,.init_stan,
+            init_vals_orig <- lapply(1:num_pathfinder_paths,.init_stan,
                                      this_data=this_data)
             
             if(init_pathfinder) {
@@ -362,11 +362,11 @@ setMethod('sample_model',signature(object='idealdata'),
                                                            ...))
                   if('try-error' %in% class(out_model)) {
                     
-                    print("Finding initialization with pathfinder/laplace failed, using random inits on (-2,2).")
+                    print("Finding initialization with pathfinder/laplace failed, using random inits on (-2,2). You might have better luck with pathfinder if you increase the number of paths with the num_pathfinder_paths parameter (default is 4, try doubling it).")
                     
                     out_model <- try(object@stanmodel_map$sample(data=this_data,chains=nchains,iter_sampling=niters,
                                                                  parallel_chains=nchains,
-                                                                 threads_per_chain=ifelse(floor(ncores/nchains)>0,floor(ncores/nchains),1),
+                                                                 threads_per_chain=ifelse(floor(ncores/nchains)>0,floor(ncores/nchains),1),init=init_vals,
                                                                  iter_warmup=warmup,
                                                                  output_dir=save_files,
                                                                  refresh=this_data$id_refresh,

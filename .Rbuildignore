@@ -10,6 +10,7 @@ How_to_Evaluate_models.html.asis
 How_to_Evaluate_models.Rmd
 ..Rcheck
 DE 2018.Rdata
+convergence_behavior.R
 LICENSE.txt
 delaware_example.R
 package_test.nb.html
