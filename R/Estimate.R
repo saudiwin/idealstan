@@ -803,6 +803,9 @@ id_make <- function(score_data=NULL,
 #' algorithm (see Stan documentation). If FALSE, will generate random start values.
 #' @param num_pathfinder_paths Number of pathfinder runs. Default is 4. More runs
 #' may be necessary for very large or complex models to find good starting values.
+#' @param debug_mode Whether to print valuesof all parameters for debugging purposes.
+#' If this is used, only one iteration should be used as it generates a lot of 
+#' console output.
 #' @param ... Additional parameters passed on to Stan's sampling engine. See \code{\link[rstan]{stan}} for more information.
 #' @return A fitted \code{\link{idealstan}} object that contains posterior samples of all parameters either via full Bayesian inference
 #' or a variational approximation if \code{use_vb} is set to \code{TRUE}. This object can then be passed to the plotting functions for further analysis.
@@ -952,6 +955,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                         debug=FALSE,
                         init_pathfinder=TRUE,
                         num_pathfinder_paths=4,
+                        debug_mode=FALSE,
                         ...) {
   
   
@@ -1388,6 +1392,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     y_cont_miss=remove_list$y_cont_miss,
                     num_var=num_var,
                     B=B,
+                    debug_mode=debug_mode,
                     num_basis=num_basis,
                     T_spline=T_spline,
                     type_het_var=array(type_het_var),
@@ -1600,6 +1605,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     num_var=num_var,
                     type_het_var=array(type_het_var),
                     B=B,
+                    debug_mode=debug_mode,
                     num_basis=num_basis,
                     T_spline=T_spline,
                     S=nrow(sum_vals),

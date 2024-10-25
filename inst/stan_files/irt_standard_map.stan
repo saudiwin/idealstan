@@ -517,6 +517,7 @@ data {
   int min_length; // the minimum threshold for GP length-scale prior
   int num_var;
   array[num_bills] int type_het_var;
+  int<lower=0,upper=1> debug_mode;
 }
 
 transformed data {
@@ -717,6 +718,14 @@ transformed parameters {
 }
 
 model {
+  
+  // If in debug mode, spit out values of all parameters to see where the problem is
+  
+  if(debug_mode==1) {
+    
+#include chunks/debug_mode.stan
+
+  }
   
   legis_x ~ normal(0,5);
   sigma_abs_x ~ normal(0,5);

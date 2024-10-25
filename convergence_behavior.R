@@ -12,7 +12,7 @@ paths <- 1:100
 
 # number of sims 
 
-sims <- 10
+sims <- 1:10
 
 results <- lapply(paths, function(p) {
   
@@ -49,3 +49,10 @@ results <- lapply(paths, function(p) {
   }) %>% bind_rows
   
 }) %>% bind_rows
+
+results %>% 
+  ggplot(aes(y=ll_rhat,x=path_num)) +
+  geom_point() +
+  stat_smooth(method="lm") +
+  ggthemes::theme_clean()
+  

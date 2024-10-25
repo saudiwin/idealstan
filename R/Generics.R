@@ -177,6 +177,13 @@ setMethod('sample_model',signature(object='idealdata'),
             if(init_pathfinder) {
               
               # try pathfinder first, if that fails try laplace
+              # turn off debug mode
+              
+              print("Running pathfinder to find starting values")
+              
+              debug_orig <- this_data$debug_mode
+              
+              this_data$debug_mode <- FALSE
               
               init_vals <- try(object@stanmodel_map$pathfinder(data=this_data,
                                           refresh=0,num_threads=ncores,
@@ -197,6 +204,8 @@ setMethod('sample_model',signature(object='idealdata'),
                                                           init=init_vals_orig[1]))
                 
               }
+              
+              this_data$debug_mode <- debug_orig
               
               # if it still doesn't work, do random inits
               
