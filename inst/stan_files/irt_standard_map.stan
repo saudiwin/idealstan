@@ -8,7 +8,7 @@ functions {
     
     real x = (y - lb) / lb_offset;
     
-    return(alpha - 1) * log(x) + (beta - 1) .* log1m(x) - log(lb_offset) - lbeta(alpha, beta);
+    return (alpha - 1) * log(x) + (beta - 1) .* log1m(x) - log(lb_offset) - lbeta(alpha, beta);
   }
   
     real genbeta_vec_lpdf(vector y, real alpha, real beta, real lb, real lb_offset) {
@@ -21,6 +21,12 @@ functions {
     vector[length_y] x = (y - lb) ./ lb_offset;
     vector[length_y] vec_offset = rep_vector(log_offset, length_y);
     vector[length_y] vec_lbeta = rep_vector(calc_lbeta, length_y);
+    
+    print("Value of x: ",x);
+    
+    vector[length_y] calc_ll = (alpha - 1) .* log(x) + (beta - 1) .* log1m(x) - vec_offset - vec_lbeta;
+    
+    print("Value of vec_beta log-likelihood: ",calc_ll);
     
     
     return sum( (alpha - 1) .* log(x) + (beta - 1) .* log1m(x) - vec_offset - vec_lbeta);
