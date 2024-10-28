@@ -331,6 +331,8 @@ model {
   
   if(debug_mode==1) {
     
+    print("Showing values for all parameters: ");
+    
 #include chunks/debug_mode.stan
 
   }
@@ -536,8 +538,10 @@ for(n in 1:num_legis) {
 if(S_type==1 && const_type==1) {
   // both ID and map for persons
   //sigma_reg_free ~ normal(0, discrim_reg_sd);
+  if(debug_mode==1) print("Adding genbeta_vec_lpdf(sigma_reg_free|discrim_reg_scale,discrim_reg_shape,discrim_reg_lb,discrim_reg_upb) to target(): ",genbeta_vec_lpdf(sigma_reg_free|discrim_reg_scale,discrim_reg_shape,discrim_reg_lb,discrim_reg_upb));
   target += genbeta_vec_lpdf(sigma_reg_free|discrim_reg_scale,discrim_reg_shape,discrim_reg_lb,discrim_reg_upb);
   //sigma_reg_pos ~ exponential(1/discrim_reg_scale);
+  if(debug_mode==1) print("Adding genbeta_vec_lpdf(sigma_abs_free|discrim_abs_scale,discrim_abs_shape,discrim_miss_lb,discrim_miss_upb) to target(): ",genbeta_vec_lpdf(sigma_abs_free|discrim_abs_scale,discrim_abs_shape,discrim_miss_lb,discrim_miss_upb));
   target += genbeta_vec_lpdf(sigma_abs_free|discrim_abs_scale,discrim_abs_shape,discrim_miss_lb,discrim_miss_upb);
   B_int_free ~ normal(0,diff_reg_sd);
   A_int_free ~ normal(0,diff_abs_sd);
@@ -545,6 +549,7 @@ if(S_type==1 && const_type==1) {
   // map persons, ID items
   B_int_free ~ normal(0,diff_reg_sd);
   A_int_free ~ normal(0,diff_abs_sd);
+  if(debug_mode==1) print("Adding genbeta_vec_lpdf(sigma_abs_free|discrim_abs_scale,discrim_abs_shape,discrim_miss_lb,discrim_miss_upb) to target(): ",genbeta_vec_lpdf(sigma_abs_free|discrim_abs_scale,discrim_abs_shape,discrim_miss_lb,discrim_miss_upb));
   target += genbeta_vec_lpdf(sigma_abs_free|discrim_abs_scale,discrim_abs_shape,discrim_miss_lb,discrim_miss_upb);
   
     target += id_params2(sigma_reg_free,
@@ -560,7 +565,8 @@ if(S_type==1 && const_type==1) {
                         discrim_reg_upb,
                         discrim_reg_lb,
                         restrict_N_high,
-                        restrict_N_low);
+                        restrict_N_low,
+                        debug_mode);
   
   
   
