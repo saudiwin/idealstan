@@ -212,9 +212,29 @@ setMethod('sample_model',signature(object='idealdata'),
               
               draws_init <- process_init_pathfinder(init_vals,num_procs=nchains)
               
+              # check and make sure that nothing is obviously wrong with the inits
+              # perhaps due to floating point errors
+              
+              draws_init <- lapply(draws_init, function(td) {
+                
+                if(any(td$sigma_reg_free==0.999)) {
+                  
+                  td$sigma_reg_free[td$sigma_reg_free==0.999] <- td$sigma_reg_free[td$sigma_reg_free==0.999] - 0.001
+                  
+                } 
+                
+                if(any(td$sigma_reg_free== -0.999)) {
+                  
+                  td$sigma_reg_free[td$sigma_reg_free== -0.999] <- td$sigma_reg_free[td$sigma_reg_free== -0.999] + 0.001
+                  
+                } 
+                
+                return(td)
+              })
+              
               if(this_data$debug_mode) {
                 
-                saveRDS(draws_init, "~/draws_init.rds")
+                saveRDS(draws_init, paste0("~/draws_init_",as.numeric(Sys.time()),".rds"))
                 
               }
               
