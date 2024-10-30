@@ -207,6 +207,17 @@ setMethod('sample_model',signature(object='idealdata'),
               
               this_data$debug_mode <- debug_orig
               
+              # manually extract init values and check for good inits
+              # return inits as list
+              
+              draws_init <- process_init_pathfinder(init_vals,num_procs=nchains)
+              
+              if(this_data$debug_mode) {
+                
+                saveRDS(draws_init, "~/draws_init.rds")
+                
+              }
+              
               # if it still doesn't work, do random inits
               
               c1 <- try(init_vals$draws())
@@ -217,6 +228,10 @@ setMethod('sample_model',signature(object='idealdata'),
                 
                 init_vals <- lapply(1:nchains,.init_stan,
                                     this_data=this_data)
+                
+              } else {
+                
+                init_vals <- draws_init
                 
               }
               

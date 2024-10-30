@@ -1,3 +1,212 @@
+# Functions imported from cmdstanr for pulling inits out of pathfinder
+# needed because sometimes pathfinder produces inits that evaluate to log(0)
+
+#' @noRd
+validate_fit_init = function(init, model_variables) {
+  # Convert from data.table to data.frame
+  if (all(init$return_codes() == 1)) {
+    stop("We are unable to create initial values from a model with no samples. Please check the results of the model used for inits before continuing.")
+  } else if (!is.null(model_variables) &&!any(names(model_variables$parameters) %in% init$metadata()$stan_variables)) {
+    stop("None of the names of the parameters for the model used for initial values match the names of parameters from the model currently running.")
+  }
+}
+
+#' Remove the leftmost dimension if equal to 1
+#' @noRd
+#' @param x An array like object
+.remove_leftmost_dim <- function(x) {
+  dims <- dim(x)
+  if (length(dims) == 1) {
+    return(drop(x))
+  } else if (dims[1] == 1) {
+    new_dims <- dims[-1]
+    # Create a call to subset the array, maintaining all remaining dimensions
+    subset_expr <- as.call(c(as.name("["), list(x), 1, rep(TRUE, length(new_dims)), drop = FALSE))
+    new_x <- eval(subset_expr)
+    return(array(new_x, dim = new_dims))
+  } else {
+    return(x)
+  }
+}
+
+# function that actually writes the to files 
+# only takes lists as input
+
+#' Write initial values to files if provided as list of lists
+#' @noRd
+#' @param init List of init lists.
+#' @param num_procs Number of inits needed.
+#' @param model_variables  A list of all parameters with their types and
+#'   number of dimensions. Typically the output of `model$variables()$parameters`.
+#' @param warn_partial Should a warning be thrown if inits are only specified
+#'   for a subset of parameters? Can be controlled by global option
+#'   `cmdstanr_warn_inits`.
+#' @return A character vector of file paths.
+#' @export
+process_init_list <- function(init, num_procs, model_variables = NULL,
+                              warn_partial = FALSE,
+                              ...) {
+  if (!all(sapply(init, function(x) is.list(x) && !is.data.frame(x)))) {
+    stop("If 'init' is a list it must be a list of lists.", call. = FALSE)
+  }
+  if (length(init) != num_procs) {
+    stop("'init' has the wrong length. See documentation of 'init' argument.", call. = FALSE)
+  }
+  if (any(sapply(init, function(x) length(x) == 0))) {
+    stop("'init' contains empty lists.", call. = FALSE)
+  }
+  if (!is.null(model_variables)) {
+    missing_parameter_values <- list()
+    parameter_names <- names(model_variables$parameters)
+    for (i in seq_along(init)) {
+      is_parameter_value_supplied <- parameter_names %in% names(init[[i]])
+      if (!all(is_parameter_value_supplied)) {
+        missing_parameter_values[[i]] <- parameter_names[!is_parameter_value_supplied]
+      }
+      for (par_name in parameter_names[is_parameter_value_supplied]) {
+        # Make sure that initial values for single-element containers don't get
+        # unboxed when writing to JSON
+        if (model_variables$parameters[[par_name]]$dimensions == 1 && length(init[[i]][[par_name]]) == 1) {
+          init[[i]][[par_name]] <- array(init[[i]][[par_name]], dim = 1)
+        }
+      }
+    }
+    if (length(missing_parameter_values) > 0 && isTRUE(warn_partial)) {
+      warning_message <- c(
+        "Init values were only set for a subset of parameters. \nMissing init values for the following parameters:\n"
+      )
+      for (i in seq_along(missing_parameter_values)) {
+        if (length(init) > 1) {
+          line_text <- paste0(" - chain ", i, ": ")
+        } else {
+          line_text <- ""
+        }
+        if (length(missing_parameter_values[[i]]) > 0) {
+          warning_message <- c(warning_message, paste0(line_text, paste0(missing_parameter_values[[i]], collapse = ", "), "\n"))
+        }
+      }
+      warning_message <- c(warning_message, "\nTo disable this message use options(cmdstanr_warn_inits = FALSE).\n")
+      message(warning_message)
+    }
+  }
+  if (any(grepl("\\[", names(unlist(init))))) {
+    stop(
+      "'init' contains entries with parameter names that include square-brackets, which is not permitted. ",
+      "To supply inits for a vector, matrix or array of parameters, ",
+      "create a single entry with the parameter's name in the 'init' list ",
+      "and specify initial values for the entire parameter container.",
+      call. = FALSE)
+  }
+  init_paths <-
+    tempfile(
+      pattern = "init-",
+      tmpdir = tempdir(),
+      fileext = ""
+    )
+  init_paths <- paste0(init_paths, "_", seq_along(init), ".json")
+  for (i in seq_along(init)) {
+    cmdstanr::write_stan_json(init[[i]], init_paths[i])
+  }
+  init_paths
+}
+
+
+#' Write initial values to files if provided as posterior `draws` object
+#' (taken from cmdstanr package)
+#' @noRd
+#' @param init A type that inherits the `posterior::draws` class.
+#' @param num_procs Number of inits requested
+#' @param model_variables  A list of all parameters with their types and
+#'   number of dimensions. Typically the output of `model$variables()$parameters`.
+#' @param warn_partial Should a warning be thrown if inits are only specified
+#'   for a subset of parameters? Can be controlled by global option
+#'   `cmdstanr_warn_inits`.
+#' @return A character vector of file paths.
+#' @importFrom posterior as_draws_df subset_draws draws_of
+process_init_draws <- function(init, num_procs, model_variables = NULL,
+                               warn_partial = FALSE,
+                               ...) {
+  
+  init$weight <- NULL
+  
+  variable_names <- variables(init, with_indices = F)
+  
+  draws <- as_draws_df(init)
+  
+  # Since all other process_init functions return `num_proc` inits
+  # This will only happen if a raw draws object is passed
+  if (nrow(draws) < num_procs) {
+    idx <- rep(1:nrow(draws), ceiling(num_procs / nrow(draws)))[1:num_procs]
+    draws <- draws[idx,]
+  } else if (nrow(draws) > num_procs) {
+    draws <- resample_draws(draws, ndraws = num_procs,
+                                       method ="simple_no_replace")
+  }
+  draws_rvar = as_draws_rvars(draws)
+  variable_names <- variable_names[variable_names %in% names(draws_rvar)]
+  model_variables <- model_variables[names(model_variables) %in% names(draws_rvar)]
+  draws_rvar <- subset_draws(draws_rvar, variable = variable_names)
+  inits = lapply(1:num_procs, function(draw_iter) {
+    init_i = lapply(variable_names, function(var_name) {
+      x = .remove_leftmost_dim(posterior::draws_of(
+        posterior::subset_draws(draws_rvar[[var_name]], draw=draw_iter)))
+      if (model_variables[[var_name]] == 0) {
+        return(as.double(x))
+      } else {
+        return(x)
+      }
+    })
+    bad_names = unlist(lapply(variable_names, function(var_name) {
+      x = drop(posterior::draws_of(drop(
+        posterior::subset_draws(draws_rvar[[var_name]], draw=draw_iter))))
+      if (any(is.infinite(x)) || any(is.na(x))) {
+        return(var_name)
+      }
+      return("")
+    }))
+    any_na_or_inf = bad_names != ""
+    if (any(any_na_or_inf)) {
+      err_msg = paste0(paste(bad_names[any_na_or_inf], collapse = ", "), " contains NA or Inf values!")
+      if (length(any_na_or_inf) > 1) {
+        err_msg = paste0("Variables: ", err_msg)
+      } else {
+        err_msg = paste0("Variable: ", err_msg)
+      }
+      stop(err_msg)
+    }
+    names(init_i) = variable_names
+    return(init_i)
+  })
+  #return(process_init_list(inits, num_procs, model_variables, warn_partial))
+  # just return the lists, let cmdstanr handle the rest
+  
+  return(inits)
+  
+}
+
+
+#' @noRd
+#' @importFrom posterior resample_draws
+process_init_pathfinder <- function(init, num_procs, model_variables = NULL,
+                                           warn_partial = FALSE,
+                                           ...) {
+  
+    validate_fit_init(init, model_variables)
+    # Convert from data.table to data.frame
+    draws_df = init$draws(format = "df")
+    if (is.null(model_variables)) {
+      model_variables = init$metadata()$stan_variable_sizes
+    }
+    draws_df$weight = rep(1.0, nrow(draws_df))
+    init_draws_df = resample_draws(draws_df, ndraws = num_procs,
+                                              weights = draws_df$weight, method = "simple_no_replace")
+    init_draws_lst = process_init_draws(init_draws_df,
+                                  num_procs = num_procs, model_variables = model_variables, warn_partial=warn_partial)
+    
+    return(init_draws_lst)
+    
+}
+
 #' @noRd
 .vb_fix <- function(object=NULL,
                     this_data=NULL,nfix=NULL,
