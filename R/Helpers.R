@@ -455,8 +455,15 @@
   # test out new chatGPT function
   # this works, oddly enough
   
-  generate_initial_values <- function(num_bills, num_legis, gp_N_fix, time_proc, num_ls, T, ar1_down, ar1_up, pos_discrim, LX, SRX, SAX, num_bills_grm, n_cats_rat, n_cats_grm, num_var, gp_N, restrict_var, num_basis) {
-    list(
+  generate_initial_values <- function(num_bills, num_legis, 
+                                      gp_N_fix, time_proc, num_ls, T, 
+                                      ar1_down, ar1_up, pos_discrim, 
+                                      LX, SRX, SAX, num_bills_grm, n_cats_rat, 
+                                      n_cats_grm, num_var, gp_N, restrict_var, 
+                                      num_basis,restrict_ind_high,
+                                      restrict_ind_low,
+                                      const_type) {
+   out_list <-  list(
       sigma_abs_free = rep(0L,num_bills),
       L_full = rep(0L,num_legis),
       m_sd_free = runif(gp_N_fix, 0.5, 1),
@@ -492,6 +499,25 @@
       time_var_free = if (T > 1 && time_proc != 4 && restrict_var == 1) runif(num_legis - 1, 0.5, 1) else if (T > 1 && time_proc != 4) runif(num_legis, 0.5, 1) else numeric(0),
       a_raw = if (num_basis > 1) array(rep(0L, num_legis * num_basis), dim = c(num_legis, num_basis)) else array(numeric(0), dim = c(num_legis, 0L))
     )
+   
+   # add in informative numbers for fixed parameters
+   
+   if(const_type==1) {
+     
+     out_list$L_full[restrict_ind_high] <- this_data$fix_high
+     out_list$L_full[restrict_ind_low] <- this_data$fix_low
+     
+   } else if(const_type==2) {
+     
+     # need to calculate mean of beta distribution
+     
+     out_list$sigma_reg_free[restrict_ind_high] <- this_data$restrict_N_high / (this_data$restrict_N_high + this_data$restrict_sd_high)
+     out_list$sigma_reg_free[restrict_ind_low] <- this_data$restrict_sd_low / (this_data$restrict_N_low + this_data$restrict_sd_low)
+
+   }
+
+   return(out_list)
+   
   }
   
   # need to figure out gp_N_fix
@@ -532,7 +558,10 @@
                                          this_data$num_var, 
                                          gp_N, 
                                          this_data$restrict_var, 
-                                         this_data$num_basis)
+                                         this_data$num_basis,
+                                         this_data$restrict_high,
+                                         this_data$restrict_low,
+                                         this_data$const_type)
   
   return(base_params)
   
