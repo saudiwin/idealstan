@@ -150,7 +150,7 @@ process_init_draws <- function(init, num_procs, model_variables = NULL,
     init_i = lapply(variable_names, function(var_name) {
       x = .remove_leftmost_dim(posterior::draws_of(
         posterior::subset_draws(draws_rvar[[var_name]], draw=draw_iter)))
-      if (model_variables[[var_name]] == 0) {
+      if (any(model_variables[[var_name]] == 0)) {
         return(as.double(x))
       } else {
         return(x)
