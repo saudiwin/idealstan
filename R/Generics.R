@@ -192,7 +192,7 @@ setMethod('sample_model',signature(object='idealdata'),
               #                             init=init_vals_orig,psis_resample=TRUE))
               
               init_vals <- try(object@stanmodel_map$laplace(data=this_data,
-                                                            refresh=100,threads=ncores,
+                                                            refresh=0,threads=ncores,
                                                             draws=1000,
                                                             init=init_vals_orig[1]))
               
