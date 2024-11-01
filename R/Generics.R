@@ -262,11 +262,13 @@ setMethod('sample_model',signature(object='idealdata'),
                 init_vals <- lapply(1:nchains,.init_stan,
                                     this_data=this_data)
                 
-              } else {
-                
-                init_vals <- draws_init
-                
-              }
+              } 
+              
+              # else {
+              #   
+              #   init_vals <- draws_init
+              #   
+              # }
               
             }
             
