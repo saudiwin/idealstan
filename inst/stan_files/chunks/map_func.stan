@@ -310,8 +310,10 @@ real partial_sum(array[,] int y_slice,
             real term = normal_lpdf(L_AR1[s] | 1, ar_sd);
             log_prob += term;
             if(debug_mode == 1) print("Added normal_lpdf(L_AR1[s] | 1, ar_sd) to log_prob: ", term);
+#include /chunks/l_hier_ar1_prior_map.stan
         } else if(time_proc == 2) {
             // Includes additional code for AR-1 priors if relevant...
+#include /chunks/l_hier_prior_map.stan
         } else if(time_proc == 4) {
             real term = inv_gamma_lpdf(time_var_gp_free[s] | 5, 5);
             log_prob += term;

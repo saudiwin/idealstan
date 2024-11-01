@@ -674,7 +674,8 @@ process_init_pathfinder <- function(init, num_procs, model_variables = NULL,
                                       const_type) {
    out_list <-  list(
       sigma_abs_free = rep(0L,num_bills),
-      L_full = rep(0L,num_legis),
+      #L_full = rep(0L,num_legis),
+      L_full = rnorm(num_legis),
       m_sd_free = runif(gp_N_fix, 0.5, 1),
       gp_sd_free = if (time_proc == 4) runif(1, 0.5, 1) else numeric(0),
       ls_int = rnorm(num_ls),

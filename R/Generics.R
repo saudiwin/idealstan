@@ -188,7 +188,8 @@ setMethod('sample_model',signature(object='idealdata'),
               init_vals <- try(object@stanmodel_map$pathfinder(data=this_data,
                                           refresh=0,num_threads=ncores,
                                           num_paths=num_pathfinder_paths,
-                                          init=init_vals_orig,psis_resample=FALSE))
+                                          single_path_draws = 10000,history_size=25,
+                                          init=init_vals_orig,psis_resample=TRUE))
               
               # if fitting fails, we won't get variance in the draws
               
@@ -196,12 +197,18 @@ setMethod('sample_model',signature(object='idealdata'),
               
               if(is.null(c1) || sd(init_vals$draws()[,1])==0) {
                 
-                print("Pathfinder failed; attempting Laplace.")
+                print("Pathfinder failed; attempting without PSIS resampling.")
                 
-                init_vals <- try(object@stanmodel_map$laplace(data=this_data,
-                                                          refresh=0,threads=ncores,
-                                                          draws=1000,
-                                                          init=init_vals_orig[1]))
+                # init_vals <- try(object@stanmodel_map$laplace(data=this_data,
+                #                                           refresh=0,threads=ncores,
+                #                                           draws=1000,
+                #                                           init=init_vals_orig[1]))
+                
+                init_vals <- try(object@stanmodel_map$pathfinder(data=this_data,
+                                                                 refresh=0,num_threads=ncores,
+                                                                 num_paths=num_pathfinder_paths,
+                                                                 single_path_draws = 1000,
+                                                                 init=init_vals_orig,psis_resample=FALSE))
                 
               }
               
