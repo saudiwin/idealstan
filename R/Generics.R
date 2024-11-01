@@ -185,11 +185,16 @@ setMethod('sample_model',signature(object='idealdata'),
               
               this_data$debug_mode <- FALSE
               
-              init_vals <- try(object@stanmodel_map$pathfinder(data=this_data,
-                                          refresh=0,num_threads=ncores,
-                                          num_paths=num_pathfinder_paths,
-                                          single_path_draws = 10000,history_size=25,
-                                          init=init_vals_orig,psis_resample=TRUE))
+              # init_vals <- try(object@stanmodel_map$pathfinder(data=this_data,
+              #                             refresh=0,num_threads=ncores,
+              #                             num_paths=num_pathfinder_paths,
+              #                             single_path_draws = 10000,history_size=25,
+              #                             init=init_vals_orig,psis_resample=TRUE))
+              
+              init_vals <- try(object@stanmodel_map$laplace(data=this_data,
+                                                            refresh=100,threads=ncores,
+                                                            draws=1000,
+                                                            init=init_vals_orig[1]))
               
               # if fitting fails, we won't get variance in the draws
               
@@ -208,7 +213,8 @@ setMethod('sample_model',signature(object='idealdata'),
                                                                  refresh=0,num_threads=ncores,
                                                                  num_paths=num_pathfinder_paths,
                                                                  single_path_draws = 1000,
-                                                                 init=init_vals_orig,psis_resample=FALSE))
+                                                                 init=init_vals_orig,
+                                                                 psis_resample=FALSE))
                 
               }
               
@@ -217,27 +223,27 @@ setMethod('sample_model',signature(object='idealdata'),
               # manually extract init values and check for good inits
               # return inits as list
               
-              draws_init <- process_init_pathfinder(init_vals,num_procs=nchains)
-              
-              # check and make sure that nothing is obviously wrong with the inits
-              # perhaps due to floating point errors
-              
-              draws_init <- lapply(draws_init, function(td) {
-                
-                if(any(td$sigma_reg_free==0.999)) {
-                  
-                  td$sigma_reg_free[td$sigma_reg_free==0.999] <- td$sigma_reg_free[td$sigma_reg_free==0.999] - 0.001
-                  
-                } 
-                
-                if(any(td$sigma_reg_free== -0.999)) {
-                  
-                  td$sigma_reg_free[td$sigma_reg_free== -0.999] <- td$sigma_reg_free[td$sigma_reg_free== -0.999] + 0.001
-                  
-                } 
-                
-                return(td)
-              })
+              # draws_init <- process_init_pathfinder(init_vals,num_procs=nchains)
+              # 
+              # # check and make sure that nothing is obviously wrong with the inits
+              # # perhaps due to floating point errors
+              # 
+              # draws_init <- lapply(draws_init, function(td) {
+              #   
+              #   if(any(td$sigma_reg_free==0.999)) {
+              #     
+              #     td$sigma_reg_free[td$sigma_reg_free==0.999] <- td$sigma_reg_free[td$sigma_reg_free==0.999] - 0.001
+              #     
+              #   } 
+              #   
+              #   if(any(td$sigma_reg_free== -0.999)) {
+              #     
+              #     td$sigma_reg_free[td$sigma_reg_free== -0.999] <- td$sigma_reg_free[td$sigma_reg_free== -0.999] + 0.001
+              #     
+              #   } 
+              #   
+              #   return(td)
+              # })
               
               if(this_data$debug_mode) {
                 
