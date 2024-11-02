@@ -721,8 +721,8 @@ process_init_pathfinder <- function(init, num_procs, model_variables = NULL,
      
      # need to calculate mean of beta distribution
      
-     out_list$sigma_reg_free[restrict_ind_high] <- this_data$restrict_sd_high / (this_data$restrict_N_high + this_data$restrict_sd_high)
-     out_list$sigma_reg_free[restrict_ind_low] <- this_data$restrict_sd_low / (this_data$restrict_N_low + this_data$restrict_sd_low)
+     out_list$sigma_reg_free[restrict_ind_high] <- .98
+     out_list$sigma_reg_free[restrict_ind_low] <- -.98
 
    }
 
