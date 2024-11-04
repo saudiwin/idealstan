@@ -189,7 +189,7 @@ setMethod('sample_model',signature(object='idealdata'),
                                           refresh=this_data$id_refresh,num_threads=ncores,
                                           num_paths=1,
                                           single_path_draws = 1000,history_size=25,
-                                          init=init_vals_orig,psis_resample=FALSE))
+                                          init=init_vals_orig[[1]],psis_resample=FALSE))
               
               # init_vals <- try(object@stanmodel_map$laplace(data=this_data,
               #                                               refresh=0,threads=ncores,
