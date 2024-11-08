@@ -309,10 +309,6 @@ transformed parameters {
     } else if(time_proc==4) {
       m_sd_full = append_row([m_sd_par]',
                               m_sd_free);
-      // gp_sd_full = append_row([gp_sd_par]',
-      //                         gp_sd_free);
-      // time_var_gp_full = append_row(gp_length,
-      //                                 time_var_gp_free);
       
       L_tp1 = L_tp1_var;
       
