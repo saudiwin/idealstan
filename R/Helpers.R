@@ -1,3 +1,42 @@
+
+# Generalized Beta Distribution Functions ---------------------------------
+
+#' Define the PDF of the generalized beta distribution
+#' @noRd
+.genbeta_pdf <- function(y, alpha, beta, lb, lb_offset) {
+  x <- (y - lb) / lb_offset
+  pdf_value <- (x^(alpha - 1)) * ((1 - x)^(beta - 1)) / (lb_offset * beta(alpha, beta))
+  return(pdf_value)
+}
+
+#' Function to generate random samples from the generalized beta distribution
+#' @noRd
+.genbeta_sample <- function(n, alpha, beta, lb, lb_offset) {
+  # Initialize a vector to store samples
+  samples <- numeric(n)
+  count <- 0
+  
+  # Set up the rejection sampling loop
+  while (count < n) {
+    # Propose values between lb and lb + lb_offset
+    y_proposal <- runif(1, lb, lb + lb_offset)
+    u <- runif(1)  # Uniformly distributed random number for acceptance
+    
+    # Calculate acceptance probability
+    pdf_val <- genbeta_pdf(y_proposal, alpha, beta, lb, lb_offset)
+    max_pdf <- genbeta_pdf(lb + lb_offset / 2, alpha, beta, lb, lb_offset) # peak near center
+    
+    if (u < pdf_val / max_pdf) {
+      # Accept the proposal
+      count <- count + 1
+      samples[count] <- y_proposal
+    }
+  }
+  
+  return(samples)
+}
+
+
 # Functions imported from cmdstanr for pulling inits out of pathfinder
 # needed because sometimes pathfinder produces inits that evaluate to log(0)
 

@@ -7,7 +7,7 @@
 #' models with binary, ordinal (GRM and rating-scale), Poisson, Normal and Log-Normal responses.
 #' 
 #' @param num_person The number of persons/persons
-#' @param num_bills The number of items/bills
+#' @param num_items The number of items (bills in the canonical ideal point model)
 #' @param model_type One of \code{'binary'}, \code{'ordinal_rating'}, \code{'ordinal_grm'}, \code{'poisson'}
 #' \code{'normal'}, or \code{'lognormal'}
 #' @param latent_space Whether to use the latent space formulation of the ideal point model 
@@ -16,8 +16,24 @@
 #' @param absence_discrim_sd The SD of the discrimination parameters for the inflated model
 #' @param absence_diff_mean The mean intercept for the inflated model; increasing it will lower the total number of
 #' missing data
-#' @param reg_discrim_sd The SD of the discrimination parameters for the non-inflated model
+#' @param discrim_reg_upb The upper bound of the generalized Beta distribution for the
+#' observed discrimination parameters (gamma)
+#' @param discrim_reg_lb The lower bound of the generalized Beta distribution for the
+#' observed discrimination parameters (gamma)
+#' @param discrim_miss_upb The upper bound of the generalized Beta distribution for the
+#' missingness discrimination parameters (nu)
+#' @param discrim_miss_lb The lower bound of the generalized Beta distribution for the
+#' missingness discrimination parameters (nu)
+#' @param discrim_reg_scale The scale parameter for the generalized Beta
+#' distribution for the observed discrimination parameters (gamma)
+#' @param discrim_reg_shape The shape parameter for the generalized Beta
+#' distribution for the observed discrimination parameters (gamma)
+#' @param discrim_miss_scale The scale parameter for the generalized Beta
+#' distribution for the missingness discrimination parameters (nu)
+#' @param discrim_miss_shape The shape parameter for the generalized Beta
+#' distribution for the missingness discrimination parameters (nu)
 #' @param diff_sd The SD of the difficulty parameters (bill/item intercepts)
+#' for both missing and observed parameters (beta and omega)
 #' @param time_points The number of time points for time-varying legislator/person parameters
 #' @param time_process The process used to generate the ideal points: either \code{'random'} 
 #' for a random walk, \code{'AR'} for an AR1 process,
@@ -25,7 +41,8 @@
 #' @param time_sd The standard deviation of the change in ideal points over time (should be low relative to 
 #' \code{ideal_pts_sd})
 #' @param ideal_pts_sd The SD for the person/person ideal points
-#' @param prior_type The statistical distribution that generates the data. Currently only 
+#' @param prior_type The statistical distribution that generates the data for
+#' ideal point parameters (alpha) and difficulty intercepts (beta and omega). Currently only 
 #' 'gaussian' is supported.
 #' @param ordinal_outcomes If \code{model} is \code{'ordinal'}, an integer giving the total number of categories
 #' @param inflate If \code{TRUE}, an missing-data-inflated dataset is produced.
@@ -37,15 +54,23 @@
 #' @seealso \code{\link{id_plot_sims}} for plotting fitted models versus true values.
 #' @import posterior
 #' @export
-id_sim_gen <- function(num_person=20,num_bills=50,
+id_sim_gen <- function(num_person=20,num_items=50,
                        model_type='binary',
                        latent_space=FALSE,
-                       absence_discrim_sd=2,absence_diff_mean=0.5,
-                             reg_discrim_sd=2,diff_sd=.25,
+                       absence_discrim_sd=3,absence_diff_mean=0,
+                       discrim_reg_upb=1,
+                       discrim_reg_lb=-1,
+                       discrim_miss_upb=1,
+                       discrim_miss_lb=-1,
+                       discrim_reg_scale=2,
+                       discrim_reg_shape=2,
+                       discrim_miss_scale=2,
+                       discrim_miss_shape=2,
+                       diff_sd=3,
                             time_points=1,
                             time_process='random',
                           time_sd=.1,
-                             ideal_pts_sd=1,prior_type='gaussian',ordinal_outcomes=3,
+                             ideal_pts_sd=3,prior_type='gaussian',ordinal_outcomes=3,
                         inflate=FALSE,
                        sigma_sd=1) {
   
@@ -76,11 +101,14 @@ id_sim_gen <- function(num_person=20,num_bills=50,
   # First simulate ideal points for person/legislators/bills
   # Bill difficulty parameters are fixed because they are not entirely interesting (they represent intercepts)
   
-  absence_diff <- prior_func(params=list(N=num_bills,mean=absence_diff_mean,sd=diff_sd)) 
+  absence_diff <- prior_func(params=list(N=num_items,mean=absence_diff_mean,sd=diff_sd)) 
   #Discrimination parameters more important because they reflect how much information a bill contributes
   # need to make some of them negative to reflect the switching nature of policies
-  #absence_discrim <- prior_func(params=list(N=num_bills,mean=1,sd=absence_discrim_sd)) * if_else(runif(num_bills-1)>0.5,1,-1)
-  absence_discrim <- prior_func(params=list(N=num_bills,mean=0,sd=absence_discrim_sd))
+  #absence_discrim <- prior_func(params=list(N=num_items,mean=1,sd=absence_discrim_sd)) * if_else(runif(num_items-1)>0.5,1,-1)
+  absence_discrim <- .genbeta_sample(n=num_items,alpha=discrim_miss_shape,
+                                     beta=discrim_miss_scale,lb=discrim_miss_lb,
+                                     offset=discrim_miss_upb - discrim_miss_lb)
+
   # person ideal points common to both types of models (absence and regular)
   
   ideal_pts_mean <- NULL
@@ -154,50 +182,52 @@ id_sim_gen <- function(num_person=20,num_bills=50,
   
   # First generate prob of absences
 
-  person_points <- rep(1:num_person,times=num_bills)
-  bill_points <- rep(1:num_bills,each=num_person)
+  person_points <- rep(1:num_person,times=num_items)
+  item_points <- rep(1:num_items,each=num_person)
 
   # generate time points
   
-  if((num_bills %% time_points)!=0) stop('Total number of time points must be a multiple of the number of bills/items.')
-  time_points <- rep(1:time_points,each=num_bills/time_points)
-  time_points <- time_points[bill_points]
+  if((num_items %% time_points)!=0) stop('Total number of time points must be a multiple of the number of bills/items.')
+  time_points <- rep(1:time_points,each=num_items/time_points)
+  time_points <- time_points[item_points]
   
   if(latent_space) {
     # use latent-space formulation for likelihood
 
     pr_absence <- sapply(1:length(person_points),function(n) {
-      -sqrt((ideal_pts[person_points[n],time_points[n]] - absence_diff[bill_points[n]])^2)
+      -sqrt((ideal_pts[person_points[n],time_points[n]] - absence_diff[item_points[n]])^2)
     }) %>% plogis()
   } else {
     # use IRT formulation for likelihood
     pr_absence <- sapply(1:length(person_points),function(n) {
-      ideal_pts[person_points[n],time_points[n]]*absence_discrim[bill_points[n]] - absence_diff[bill_points[n]]
+      ideal_pts[person_points[n],time_points[n]]*absence_discrim[item_points[n]] - absence_diff[item_points[n]]
     }) %>% plogis()
     
   }
 
-  reg_diff <- prior_func(params=list(N=num_bills,mean=0,sd=diff_sd))
-  reg_discrim <- prior_func(params=list(N=num_bills,mean=0,sd=reg_discrim_sd))
+  reg_diff <- prior_func(params=list(N=num_items,mean=0,sd=diff_sd))
+  reg_discrim <- .genbeta_sample(n=num_items,alpha=discrim_reg_shape,
+                                 beta=discrim_reg_scale,lb=discrim_reg_lb,
+                                 offset=discrim_reg_upb - discrim_reg_lb)
   
   # this is the same for all DGPs
   if(latent_space) {
     if(inflate) {
       pr_vote <- sapply(1:length(person_points),function(n) {
-        -sqrt((ideal_pts[person_points[n],time_points[n]] - reg_diff[bill_points[n]])^2)
+        -sqrt((ideal_pts[person_points[n],time_points[n]] - reg_diff[item_points[n]])^2)
       }) %>% plogis()
     } else {
       # latent space non-inflated formulation is different
       reg_discrim <- prior_func(params=list(N=num_person,mean=0,sd=ideal_pts_sd))
       pr_vote <- sapply(1:length(person_points),function(n) {
-        reg_discrim[person_points[n]] + absence_discrim[bill_points[n]] -
-          sqrt((ideal_pts[person_points[n],time_points[n]] - reg_diff[bill_points[n]])^2)
+        reg_discrim[person_points[n]] + absence_discrim[item_points[n]] -
+          sqrt((ideal_pts[person_points[n],time_points[n]] - reg_diff[item_points[n]])^2)
       }) %>% plogis()
     }
     
   } else {
     pr_vote <- sapply(1:length(person_points),function(n) {
-      ideal_pts[person_points[n],time_points[n]]*reg_discrim[bill_points[n]] - reg_diff[bill_points[n]]
+      ideal_pts[person_points[n],time_points[n]]*reg_discrim[item_points[n]] - reg_diff[item_points[n]]
     }) %>% plogis()
   }
 
@@ -222,12 +252,12 @@ id_sim_gen <- function(num_person=20,num_bills=50,
            inflate=inflate,
            latent_space=latent_space,
            time_points=time_points,
-           item_points=bill_points,
+           item_points=item_points,
            person_points=person_points,
            sigma_sd=sigma_sd)
   
   outobj@simul_data <- list(num_person=num_person,
-                                       num_bills=num_bills,
+                                       num_items=num_items,
                                        absence_discrim_sd=absence_discrim_sd,
                                        absence_diff_mean=absence_diff_mean,
                                        absence_diff=absence_diff,
@@ -278,7 +308,7 @@ id_sim_gen <- function(num_person=20,num_bills=50,
   }
   full_range <- seq(param_range[1],param_range[2],by=by)
   all_sims <- lapply(full_range, function(N){
-    sim_data <- simul_func(num_person=N,num_bills=N,ordinal=is.ordinal,absence=absence)
+    sim_data <- simul_func(num_person=N,num_items=N,ordinal=is.ordinal,absence=absence)
 
     true_param <- switch(restrict_params,
                              person=sim_data@simul_data$true_person,
