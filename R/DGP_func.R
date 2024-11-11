@@ -402,7 +402,7 @@
 
   #standard IRT 2-PL model
   if(type=='simulate') {
-    votes <- rpois(n = length(pr_vote),lambda = exp(pr_vote))
+    votes <- rpois(n = length(pr_vote),lambda = exp(qlogis(pr_vote)))
   } else if(type=='predict') {
     votes <- apply(pr_vote,2,function(c) rpois(n=length(c),lambda = exp(qlogis(c))))
   } else if(type=='log_lik') {

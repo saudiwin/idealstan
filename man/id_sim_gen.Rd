@@ -6,17 +6,24 @@
 \usage{
 id_sim_gen(
   num_person = 20,
-  num_bills = 50,
+  num_items = 50,
   model_type = "binary",
   latent_space = FALSE,
-  absence_discrim_sd = 2,
-  absence_diff_mean = 0.5,
-  reg_discrim_sd = 2,
-  diff_sd = 0.25,
+  absence_discrim_sd = 3,
+  absence_diff_mean = 0,
+  discrim_reg_upb = 1,
+  discrim_reg_lb = -1,
+  discrim_miss_upb = 1,
+  discrim_miss_lb = -1,
+  discrim_reg_scale = 2,
+  discrim_reg_shape = 2,
+  discrim_miss_scale = 2,
+  discrim_miss_shape = 2,
+  diff_sd = 3,
   time_points = 1,
   time_process = "random",
   time_sd = 0.1,
-  ideal_pts_sd = 1,
+  ideal_pts_sd = 3,
   prior_type = "gaussian",
   ordinal_outcomes = 3,
   inflate = FALSE,
@@ -26,7 +33,7 @@ id_sim_gen(
 \arguments{
 \item{num_person}{The number of persons/persons}
 
-\item{num_bills}{The number of items/bills}
+\item{num_items}{The number of items (bills in the canonical ideal point model)}
 
 \item{model_type}{One of \code{'binary'}, \code{'ordinal_rating'}, \code{'ordinal_grm'}, \code{'poisson'}
 \code{'normal'}, or \code{'lognormal'}}
@@ -40,9 +47,32 @@ binary response with the latent space formulation.}
 \item{absence_diff_mean}{The mean intercept for the inflated model; increasing it will lower the total number of
 missing data}
 
-\item{reg_discrim_sd}{The SD of the discrimination parameters for the non-inflated model}
+\item{discrim_reg_upb}{The upper bound of the generalized Beta distribution for the
+observed discrimination parameters (gamma)}
 
-\item{diff_sd}{The SD of the difficulty parameters (bill/item intercepts)}
+\item{discrim_reg_lb}{The lower bound of the generalized Beta distribution for the
+observed discrimination parameters (gamma)}
+
+\item{discrim_miss_upb}{The upper bound of the generalized Beta distribution for the
+missingness discrimination parameters (nu)}
+
+\item{discrim_miss_lb}{The lower bound of the generalized Beta distribution for the
+missingness discrimination parameters (nu)}
+
+\item{discrim_reg_scale}{The scale parameter for the generalized Beta
+distribution for the observed discrimination parameters (gamma)}
+
+\item{discrim_reg_shape}{The shape parameter for the generalized Beta
+distribution for the observed discrimination parameters (gamma)}
+
+\item{discrim_miss_scale}{The scale parameter for the generalized Beta
+distribution for the missingness discrimination parameters (nu)}
+
+\item{discrim_miss_shape}{The shape parameter for the generalized Beta
+distribution for the missingness discrimination parameters (nu)}
+
+\item{diff_sd}{The SD of the difficulty parameters (bill/item intercepts)
+for both missing and observed parameters (beta and omega)}
 
 \item{time_points}{The number of time points for time-varying legislator/person parameters}
 
@@ -55,7 +85,8 @@ or \code{'GP'} for a Gaussian process.}
 
 \item{ideal_pts_sd}{The SD for the person/person ideal points}
 
-\item{prior_type}{The statistical distribution that generates the data. Currently only 
+\item{prior_type}{The statistical distribution that generates the data for
+ideal point parameters (alpha) and difficulty intercepts (beta and omega). Currently only 
 'gaussian' is supported.}
 
 \item{ordinal_outcomes}{If \code{model} is \code{'ordinal'}, an integer giving the total number of categories}

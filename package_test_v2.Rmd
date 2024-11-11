@@ -342,6 +342,10 @@ ord_irt_poisson_est <- id_estimate(idealdata=ord_irt_poisson_sim,
                               restrict_ind_low = as.character(sort(ord_irt_poisson_sim@simul_data$true_person,
                                                                    decreasing=F,
                                                         index=T)$ix[1]),
+                              fix_high=sort(ord_irt_poisson_sim@simul_data$true_person,
+                                                                     decreasing=T)[1],
+                              fix_low=sort(ord_irt_poisson_sim@simul_data$true_person,
+                                                                   decreasing=F)[1],
                                fixtype='prefix')
 id_plot_rhats(ord_irt_poisson_est)
 ```

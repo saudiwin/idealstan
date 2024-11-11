@@ -37,10 +37,10 @@ id_estimate(
   discrim_reg_lb = -1,
   discrim_miss_upb = 1,
   discrim_miss_lb = -1,
-  discrim_reg_scale = 1,
-  discrim_reg_shape = 1,
-  discrim_miss_scale = 1,
-  discrim_miss_shape = 1,
+  discrim_reg_scale = 2,
+  discrim_reg_shape = 2,
+  discrim_miss_scale = 2,
+  discrim_miss_shape = 2,
   person_sd = 3,
   time_fix_sd = 0.1,
   time_var = 10,
@@ -53,10 +53,10 @@ id_estimate(
   restrict_var = FALSE,
   sample_stationary = FALSE,
   ar_sd = 1,
-  diff_reg_sd = 1,
-  diff_miss_sd = 1,
-  restrict_sd_high = 0.1,
-  restrict_sd_low = 0.1,
+  diff_reg_sd = 3,
+  diff_miss_sd = 3,
+  restrict_sd_high = 10,
+  restrict_sd_low = 10,
   restrict_N_high = 1000,
   restrict_N_low = 1000,
   tol_rel_obj = 0.001,
@@ -72,6 +72,7 @@ id_estimate(
   debug = FALSE,
   init_pathfinder = TRUE,
   num_pathfinder_paths = 4,
+  debug_mode = FALSE,
   ...
 )
 }
@@ -337,6 +338,10 @@ algorithm (see Stan documentation). If FALSE, will generate random start values.
 
 \item{num_pathfinder_paths}{Number of pathfinder runs. Default is 4. More runs
 may be necessary for very large or complex models to find good starting values.}
+
+\item{debug_mode}{Whether to print valuesof all parameters for debugging purposes.
+If this is used, only one iteration should be used as it generates a lot of 
+console output.}
 
 \item{...}{Additional parameters passed on to Stan's sampling engine. See \code{\link[rstan]{stan}} for more information.}
 

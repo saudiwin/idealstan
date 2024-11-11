@@ -107,7 +107,7 @@ id_sim_gen <- function(num_person=20,num_items=50,
   #absence_discrim <- prior_func(params=list(N=num_items,mean=1,sd=absence_discrim_sd)) * if_else(runif(num_items-1)>0.5,1,-1)
   absence_discrim <- .genbeta_sample(n=num_items,alpha=discrim_miss_shape,
                                      beta=discrim_miss_scale,lb=discrim_miss_lb,
-                                     offset=discrim_miss_upb - discrim_miss_lb)
+                                     lb_offset=discrim_miss_upb - discrim_miss_lb)
 
   # person ideal points common to both types of models (absence and regular)
   
@@ -208,7 +208,7 @@ id_sim_gen <- function(num_person=20,num_items=50,
   reg_diff <- prior_func(params=list(N=num_items,mean=0,sd=diff_sd))
   reg_discrim <- .genbeta_sample(n=num_items,alpha=discrim_reg_shape,
                                  beta=discrim_reg_scale,lb=discrim_reg_lb,
-                                 offset=discrim_reg_upb - discrim_reg_lb)
+                                 lb_offset=discrim_reg_upb - discrim_reg_lb)
   
   # this is the same for all DGPs
   if(latent_space) {
@@ -258,11 +258,15 @@ id_sim_gen <- function(num_person=20,num_items=50,
   
   outobj@simul_data <- list(num_person=num_person,
                                        num_items=num_items,
-                                       absence_discrim_sd=absence_discrim_sd,
                                        absence_diff_mean=absence_diff_mean,
                                        absence_diff=absence_diff,
+                                      discrim_reg_shape=discrim_reg_shape,
+                            discrim_reg_scale=discrim_reg_scale,
+                            discrim_reg_lb=discrim_reg_lb,
+                            discrim_miss_shape=discrim_miss_shape,
+                            discrim_miss_scale=discrim_miss_scale,
+                            discrim_miss_lb=discrim_miss_lb,
                                        reg_diff=reg_diff,
-                                       reg_discrim_sd=reg_discrim_sd,
                                        ideal_pts_sd=ideal_pts_sd,
                                        prior_func=prior_func,
                                        ordinal_outcomes=ordinal_outcomes,
