@@ -680,7 +680,8 @@
   
   return(list(stan_data=this_data,
               remove_list=remove_list,
-              idealdata=idealdata))
+              idealdata=idealdata,
+              out_list=out_list))
   
   
 }

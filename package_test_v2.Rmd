@@ -26,7 +26,7 @@ This Rmarkdown file has a series of simulations run on the models offered in `id
 First, the standard IRT 2-PL (for this one, the absence discriminations are not a part of the model):
 
 ```{r irt_binary}
-bin_irt_2pl_sim <- id_sim_gen(num_person=100,num_items=5,ordinal=F,inflate=F)
+bin_irt_2pl_sim <- id_sim_gen(num_person=100,num_items=20,ordinal=F,inflate=F)
 bin_irt_2pl_est <- id_estimate(idealdata=bin_irt_2pl_sim,
                                model_type=1,init_pathfinder = TRUE,
                                restrict_ind_high = as.character(sort(bin_irt_2pl_sim@simul_data$true_person,

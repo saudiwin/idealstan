@@ -67,6 +67,18 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
                                                                 use_cores=1,
                                                                 use_chain=NULL,
                                                                 newdata=NULL,...) {
+  
+  # need to regenerate data if newdata is not NULL
+  
+  if(!is.null(newdata)) {
+    
+    # first run the data through id_make
+    
+    browser()
+    
+    
+  }
+  
 
   n_votes <- object@this_data$N
   
