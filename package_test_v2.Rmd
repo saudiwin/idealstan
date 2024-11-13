@@ -333,10 +333,9 @@ Models I am adding to this release include the Poisson model:
 
 ```{r irt_ordinal_poisson}
 ord_irt_poisson_sim <- id_sim_gen(num_person=20,num_items=100,inflate=F,
-                               absence_diff_mean=0,model_type='poisson')
+                                  absence_diff_mean=0,model_type='poisson')
 ord_irt_poisson_est <- id_estimate(idealdata=ord_irt_poisson_sim,
-                               model_type=7,
-                               restrict_ind_high = as.character(sort(ord_irt_poisson_sim@simul_data$true_person,
+                               model_type=7,restrict_ind_high = as.character(sort(ord_irt_poisson_sim@simul_data$true_person,
                                                                      decreasing=T,
                                                         index=T)$ix[1]),
                               restrict_ind_low = as.character(sort(ord_irt_poisson_sim@simul_data$true_person,
@@ -346,7 +345,7 @@ ord_irt_poisson_est <- id_estimate(idealdata=ord_irt_poisson_sim,
                                                                      decreasing=T)[1],
                               fix_low=sort(ord_irt_poisson_sim@simul_data$true_person,
                                                                    decreasing=F)[1],
-                               fixtype='prefix')
+                               fixtype='prefix',nchains=2,ncores=8)
 id_plot_rhats(ord_irt_poisson_est)
 ```
 
@@ -830,7 +829,7 @@ all_low <- apply(time_gp_sim@simul_data$true_person,1,min)
 time_gp_est <- id_estimate(idealdata=time_gp_sim,
                                model_type=2,
                            use_vb=F,
-                           nchains=3,niters=1000,
+                           nchains=2,ncores=8,warmup=1000,niters=500,
                                vary_ideal_pts = 'GP',
                                restrict_ind_high = which(all_low==max(all_low)),
                               restrict_ind_low = which(all_low==min(all_low)),

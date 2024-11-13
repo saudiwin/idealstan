@@ -444,10 +444,10 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
         
         if(item$model_id %in% c(1,2,3,4,5,6,7,8,13,14)) {
           outcome <- Y_int[this_obs]
-          miss_val <- object@this_data$Y_int_miss
+          miss_val <- object@this_data$y_int_miss
         } else {
           outcome <- Y_cont[this_obs]
-          miss_val <- object@this_data$Y_cont_miss
+          miss_val <- object@this_data$y_cont_miss
         }
       
       out_predict <- rep_func(pr_absence=item$pr_absence,

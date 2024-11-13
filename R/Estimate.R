@@ -150,6 +150,18 @@ id_make <- function(score_data=NULL,
                     unbounded=FALSE,
                     exclude_level=NA,simulation=FALSE) {
   
+  # first, save all arguments to the function call
+  
+  func_args <- match.call()
+  
+  # force evaluation of first argument in case it was piped
+  
+  func_args_list <- as.list(func_args)
+  
+  func_args_list[[1]] <- NULL
+
+  func_args_list$score_data <- score_data
+  
   # only allow  missing values as NA
   
   miss_val <- c(NA,NA)
@@ -469,7 +481,6 @@ id_make <- function(score_data=NULL,
   score_rename$discrete <- as.numeric(score_rename$model_id %in% c(1,2,3,4,5,6,7,8,13,14))
   score_rename <- arrange(score_rename,desc(discrete),person_id,item_id)
   
-  
   outobj <- new('idealdata',
                 score_matrix=score_rename,
                 person_cov=person_cov_names,
@@ -478,7 +489,8 @@ id_make <- function(score_data=NULL,
                 item_cov_miss=item_cov_miss_names,
                 item_cov_formula=item_cov,
                 item_cov_miss_formula=item_cov_miss,
-                miss_val=miss_val)
+                miss_val=miss_val,
+                func_args=func_args_list)
   
   if(simulation==TRUE) {
     outobj@simul_data <- simul_data
@@ -965,13 +977,6 @@ id_estimate <- function(idealdata=NULL,model_type=2,
     print("You need to install cmdstan with cmdstanr to compile models. Use the function install_cmdstan() in the cmdstanr package.")
   }
   
-  
-  
-  if(use_subset==TRUE || sample_it==TRUE) {
-    idealdata <- subset_ideal(idealdata,use_subset=use_subset,sample_it=sample_it,subset_group=subset_group,
-                              subset_person=subset_person,sample_size=sample_size)
-  }
-  
   # set path if user specifies
   if(!is.null(cmdstan_path_user))
     set_cmdstan_path(cmdstan_path_user)
@@ -1036,651 +1041,70 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   }
   
   
+  # load and process data, return list to send to cmdstanr
   
+  # Pass all arguments to the second function
+  # make a list so we can save it for later
   
-  #Using an un-identified model with variational inference, find those parameters that would be most useful for
-  #constraining/pinning to have an identified model for full Bayesian inference
+  eval_data_args <- list(idealdata=idealdata,
+                         inflate_zero=inflate_zero,
+                         model_type=model_type,
+                         vary_ideal_pts=vary_ideal_pts,
+                         keep_param=keep_param,
+                         grainsize=grainsize,
+                         use_subset=use_subset,sample_it=sample_it,
+                         subset_group=subset_group,subset_person=subset_person,
+                         sample_size=sample_size,
+                         ignore_db=ignore_db,
+                         restrict_ind_high=restrict_ind_high,
+                         fix_high=fix_high,
+                         fix_low=fix_low,
+                         restrict_ind_low=restrict_ind_low,
+                         fixtype=fixtype,
+                         const_type=const_type,
+                         id_refresh=id_refresh,
+                         prior_only=prior_only,
+                         prior_fit=prior_fit,
+                         use_groups=use_groups,
+                         discrim_reg_upb=discrim_reg_upb,
+                         discrim_reg_lb=discrim_reg_lb,
+                         discrim_miss_upb=discrim_miss_upb,
+                         discrim_miss_lb=discrim_miss_lb,
+                         discrim_reg_scale=discrim_reg_scale,
+                         discrim_reg_shape=discrim_reg_shape,
+                         discrim_miss_scale=discrim_miss_scale,
+                         discrim_miss_shape=discrim_miss_shape,
+                         person_sd=person_sd,
+                         time_fix_sd=time_fix_sd,
+                         time_var=time_var,
+                         spline_knots=spline_knots,
+                         spline_degree=spline_degree,
+                         ar1_up=ar1_up,
+                         ar1_down=ar1_down,
+                         boundary_prior=boundary_prior,
+                         time_center_cutoff=time_center_cutoff,
+                         restrict_var=restrict_var,
+                         sample_stationary=sample_stationary,
+                         ar_sd=ar_sd,
+                         diff_reg_sd=diff_reg_sd,
+                         diff_miss_sd=diff_miss_sd,
+                         restrict_sd_high=restrict_sd_high,
+                         restrict_sd_low=restrict_sd_low,
+                         restrict_N_high=restrict_N_high,
+                         restrict_N_low=restrict_N_low,
+                         tol_rel_obj=tol_rel_obj,
+                         gp_sd_par=gp_sd_par,
+                         gp_num_diff=gp_num_diff,
+                         gp_m_sd_par=gp_m_sd_par,
+                         gp_min_length=gp_min_length,
+                         map_over_id=map_over_id,
+                         het_var=het_var)
   
-  # change time IDs if non time-varying model is being fit
-  if(vary_ideal_pts=='none') {
-    idealdata@score_matrix$time_id <- 1
-    # make sure that the covariate arrays are only one time point
-    #idealdata@person_cov <- idealdata@person_cov[1,,,drop=F]
-    #idealdata@group_cov <- idealdata@group_cov[1,,,drop=F]
-  } 
+  all_data <- do.call(.make_stan_data,eval_data_args)
   
-  vary_ideal_pts <- switch(vary_ideal_pts,
-                           none=1,
-                           random_walk=2,
-                           AR1=3,
-                           GP=4,
-                           splines=5)
-  
-  if(is.null(vary_ideal_pts))
-    stop("Please pass an option to vary_ideal_pts that is either 'none', 'random_walk', 'AR1', 'GP' or 'splines'.")
-  
-  # number of combined posterior models
-  
-  mod_count <- length(unique(idealdata@score_matrix$model_id))
-  
-  if(length(unique(idealdata@score_matrix$ordered_id))>1) {
-    mod_count <- mod_count + length(unique(idealdata@score_matrix$ordered_id)) - 1
-  }
-  
-  
-  
-  # set GP parameters
-  
-  # check if varying model IDs exist and replace with model type
-  # if not
-  
-  if(idealdata@score_matrix$model_id[1]=="missing") {
-    
-    idealdata@score_matrix$model_id <- model_type
-    idealdata@score_matrix$discrete <- as.numeric(model_type %in% c(1,2,3,4,5,6,7,8,13,14))
-    
-  } else {
-    if(!is.numeric(idealdata@score_matrix$model_id)) {
-      stop("Column model_id in the data is not a numeric series of 
-           integers. Please pass a numeric value in the id_make function
-           for model_id based on the available model types.")
-    }
-  }
-  
-  if((!(all(c(restrict_ind_high,restrict_ind_low) %in% unique(idealdata@score_matrix$person_id))) && !use_groups) && const_type=="persons") {
-    
-    stop("Your restricted persons/items are not in the data.")
-    
-  } else if(!(all(c(restrict_ind_high,restrict_ind_low) %in% unique(idealdata@score_matrix$item_id))) && const_type=="items") {
-    
-    stop("Your restricted persons/items are not in the data.")
-    
-  } else if((!(all(c(restrict_ind_high,restrict_ind_low) %in% unique(idealdata@score_matrix$group_id)))  && use_groups) && const_type=="persons") {
-    
-    stop("Your restricted persons/items are not in the data.")
-    
-  }
-  
-  # check if ordinal categories exist in the data if model_id>1
-  
-  if(any(c(3,4,5,6) %in% idealdata@score_matrix$model_id)) {
-    if(is.null(idealdata@score_matrix$ordered_id) || !is.numeric(idealdata@score_matrix$ordered_id)) {
-      stop("If you have an ordered categorical variable in a multi-distribution model, you must include a column in the data with the number of ordered categories for each row in the data.\n
-             See id_make documentation for more info.")
-    }
-  } else {
-    idealdata@score_matrix$ordered_id <- 0
-  }
-  
-  # sort data according to shard
-  
-  if(map_over_id=="persons") {
-    
-    if(use_groups) {
-      
-      idealdata@score_matrix <- arrange(idealdata@score_matrix, group_id, time_id)
-      
-    } else {
-      
-      idealdata@score_matrix <- arrange(idealdata@score_matrix, person_id, time_id)
-      
-    }
-    
-  } else {
-    
-    idealdata@score_matrix <- arrange(idealdata@score_matrix, item_id, time_id)
-    
-  }
-  
-  # use either row numbers for person/legislator IDs or use group IDs (static or time-varying)
-  
-  if(use_groups==T) {
-    legispoints <- as.numeric(idealdata@score_matrix$group_id)
-  } else {
-    legispoints <- as.numeric(idealdata@score_matrix$person_id)
-  }
-  
-  billpoints <- as.numeric(idealdata@score_matrix$item_id)
-  timepoints <- as.numeric(factor(as.numeric(idealdata@score_matrix$time_id)))
-  modelpoints <- as.integer(idealdata@score_matrix$model_id)
-  ordered_id <- as.integer(idealdata@score_matrix$ordered_id)
-  # for gaussian processes, need actual time values
-  time_ind <- switch(class(idealdata@score_matrix$time_id)[1],
-                     factor=unique(as.numeric(idealdata@score_matrix$time_id)),
-                     Date=unique(as.numeric(idealdata@score_matrix$time_id)),
-                     POSIXct=unique(as.numeric(idealdata@score_matrix$time_id)),
-                     POSIXlt=unique(as.numeric(idealdata@score_matrix$time_id)),
-                     numeric=unique(idealdata@score_matrix$time_id),
-                     integer=unique(idealdata@score_matrix$time_id))
-  
-  if(vary_ideal_pts==5) {
-    
-    if(!is.null(spline_knots) && length(spline_knots)==1 && spline_knots < 1)
-      stop("Please pass a value for the number of spline_knots that is at least equal to 1 but less than the number of time points.")
-    
-    if(spline_degree < 1)
-      stop("Please pass a value for spline_degree that is at least 1.")
-    
-    # code borrowed from very helpful Stan documentation by Milad Kharratzadeh
-    # see https://github.com/milkha/Splines_in_Stan/blob/master/splines_in_stan.pdf
-    
-    # need to rescale time_ind to an interval that is easy for sampling
-    # first get location of knots if they are present
-    
-    if(!is.null(spline_knots) && length(spline_knots)>1) {
-      
-      spline_knots <- switch(class(spline_knots),
-                         factor=unique(as.numeric(spline_knots,
-                                                  levels=levels(idealdata@score_matrix$time_id))),
-                         Date=unique(as.numeric(spline_knots)),
-                         POSIXct=unique(as.numeric(spline_knots)),
-                         POSIXlt=unique(as.numeric(spline_knots)),
-                         numeric=unique(spline_knots),
-                         integer=unique(spline_knots))
-      
-      spline_knots <- which(time_ind %in% spline_knots)
-      
-    }
-    
-    old_bounds <- c(min(time_ind,na.rm=T),max(time_ind, na.rm=T))
-    time_ind <- 2 * ((time_ind - min(time_ind))/(max(time_ind) - min(time_ind))) - 1
-    
-    if(!is.null(spline_knots) && length(spline_knots)>1) {
-      
-      spline_knots <- time_ind[spline_knots]
-      
-    } else if(!is.null(spline_knots)) {
-      
-      spline_knots <- quantile(time_ind, 
-                               probs=seq(0,1,length.out=spline_knots+2))
-      
-      # remove first and last knot, these should be internal
-      
-      spline_knots <- spline_knots[2:(length(spline_knots)-1)]
-      
-    }
-    
-    B <- t(splines::bs(time_ind, 
-                       knots = spline_knots,
-                       degree = spline_degree,intercept=TRUE))
-    
-    num_basis <- nrow(B)
-    
-    T_spline <- length(unique(time_ind))
-      
-  } else {
-    
-    B <- matrix(0L,
-                nrow=1,ncol=1)
-    num_basis <- 1
-    T_spline <- 1
-    
-  }
-  
-  # now need to generate max/min values for empirical length-scale prior in GP
-  if(gp_min_length>=gp_num_diff[1]) {
-    stop('The parameter gp_min_length cannot be equal to or greater than gp_num_diff[1].')
-  }
-  
-  if((any(c(9,10,11,12) %in% idealdata@score_matrix$model_id)) && (any(c(1,2,3,4,5,6,7,8,13,14) %in% idealdata@score_matrix$model_id))) {
-    Y_int <- idealdata@score_matrix$outcome_disc
-    Y_cont <- idealdata@score_matrix$outcome_cont
-  } else if (any(c(9,10,11,12) %in% idealdata@score_matrix$model_id)) {
-    Y_int <- array(0)
-    Y_cont <- idealdata@score_matrix$outcome_cont
-  } else {
-    Y_cont <- array(0)
-    Y_int <- idealdata@score_matrix$outcome_disc
-  }
-  
-  
-  #Remove NA values, which should have been coded correctly in the make_idealdata function
-  
-  # need to have a different way to remove missing values if multiple
-  # posteriors used
-  # set values for length of discrete/continuous outcomes  
-  remove_list <- .remove_nas(Y_int,
-                             Y_cont,
-                             discrete=idealdata@score_matrix$discrete,
-                             legispoints,
-                             billpoints,
-                             timepoints,
-                             modelpoints,
-                             ordered_id,
-                             idealdata,
-                             time_ind=as.array(time_ind),
-                             time_proc=vary_ideal_pts,
-                             ar_sd=ar_sd,
-                             gp_sd_par=gp_sd_par,
-                             num_diff=gp_num_diff,
-                             m_sd_par=gp_m_sd_par,
-                             min_length=gp_min_length,
-                             const_type=switch(const_type,
-                                               persons=1L,
-                                               items=2L),
-                             discrim_reg_scale=discrim_reg_scale,
-                             discrim_reg_shape=discrim_reg_shape,
-                             discrim_miss_scale=discrim_miss_scale,
-                             discrim_miss_shape=discrim_miss_shape,
-                             diff_reg_sd=diff_reg_sd,
-                             diff_miss_sd=diff_miss_sd,
-                             legis_sd=person_sd,
-                             restrict_sd_high=restrict_sd_high,
-                             restrict_sd_low=restrict_sd_low,
-                             restrict_N_high=restrict_N_high,
-                             restrict_N_low=restrict_N_low,
-                             restrict_high=idealdata@restrict_ind_high,
-                             restrict_low=idealdata@restrict_ind_low,
-                             fix_high=idealdata@restrict_num_high,
-                             fix_low=idealdata@restrict_num_low)
-  
-  # need to create new data if map_rect is in operation 
-  # and we have missing values / ragged arrays
-  
-  out_list <- .make_sum_vals(idealdata@score_matrix,map_over_id,use_groups=use_groups,
-                             remove_nas=remove_list$remove_nas)
-  
-  sum_vals <- out_list$sum_vals
-  
-  # need number of shards
-  
-  S <- nrow(sum_vals)
-  
-  # check for heterogenous variances
-  
-  if(het_var) {
-    
-    num_var <- length(unique(remove_list$billpoints[remove_list$modelpoints %in% c(9,10,11,12)]))
-    
-    mod_items <- tibble(model_id=remove_list$modelpoints,
-                        item_id=remove_list$billpoints) %>% 
-      distinct
-    
-    mod_items <- mutate(mod_items,cont=model_id %in% c(9,10,11,12)) %>% 
-      group_by(cont) %>% 
-      mutate(num_var=1:n())
-    
-    type_het_var <- arrange(mod_items, item_id) %>% pull(num_var)
-    
-  } else {
-    
-    num_var <- 1
-    
-    type_het_var <- rep(num_var, length(unique(billpoints)))
-    
-  }
-  
-  # check for boundary priors
-  
-  if(!is.null(boundary_prior)) {
-    
-    if(is.null(boundary_prior$beta)) {
-      
-      stop("If you want to use a boundary-avoiding prior for time-series variance, please pass a list with an element named beta, i.e. list(beta=1).")
-      
-    }
-    
-    if(boundary_prior$beta <= 0) {
-      
-      stop("Boundary prior beta value must be strictly positive (i.e. greater than 0).")
-      
-    }
-    
-    inv_gamma_beta <- boundary_prior$beta
-    
-  } else {
-    
-    inv_gamma_beta <- 0
-    
-  }
-  
-  if(remove_list$N_cont>0) {
-    
-    Y_cont <- remove_list$Y_cont[out_list$this_data$orig_order]
-    
-  } else {
-    
-    Y_cont <- remove_list$Y_cont
-    
-  }
-  
-  if(remove_list$N_int>0) {
-    
-    Y_int <- remove_list$Y_int[out_list$this_data$orig_order]
-    
-  } else {
-    
-    Y_int <- remove_list$Y_int
-    
-  }
-  
-  if(!is.null(ignore_db)) {
-    
-    # check for correct columns
-    
-    if(!all(c("person_id",
-             "time_id",
-             "ignore") %in% names(ignore_db))) {
-      stop("Ignore DB does not have the three necessary columns: time_id, person_id, and ignore (0 or 1).")
-      
-    }
-    
-    ignore_db <- mutate(ungroup(ignore_db),
-                        person_id=as.numeric(person_id),
-                        time_id=as.numeric(factor(as.numeric(ignore_db$time_id))))
-    
-    # filter out time_ids not in main data
-    
-    ignore_db <- filter(ignore_db, time_id %in% remove_list$timepoints,
-                        person_id %in% remove_list$legispoints) %>% 
-      select(person_id,time_id,ignore) %>% 
-      arrange(person_id,time_id) %>% 
-      as.matrix
-    
-  } else {
-    
-    ignore_db <- matrix(nrow=0,ncol=3)
-    
-  }
-  
-  this_data <- list(N=remove_list$N,
-                    N_cont=remove_list$N_cont,
-                    N_int=remove_list$N_int,
-                    Y_int=Y_int,
-                    Y_cont=Y_cont,
-                    y_int_miss=remove_list$y_int_miss,
-                    y_cont_miss=remove_list$y_cont_miss,
-                    num_var=num_var,
-                    B=B,
-                    debug_mode=debug_mode,
-                    num_basis=num_basis,
-                    T_spline=T_spline,
-                    type_het_var=array(type_het_var),
-                    S=nrow(sum_vals),
-                    S_type=as.numeric(map_over_id=="persons"),
-                    T=remove_list$max_t,
-                    num_legis=remove_list$num_legis,
-                    num_bills=remove_list$num_bills,
-                    num_ls=remove_list$num_ls,
-                    #num_bills_grm=remove_list$num_bills_grm,
-                    ll=remove_list$legispoints[out_list$this_data$orig_order],
-                    bb=remove_list$billpoints[out_list$this_data$orig_order],
-                    mm=remove_list$modelpoints[out_list$this_data$orig_order],
-                    ignore=as.numeric(nrow(ignore_db)>0),
-                    ignore_db=ignore_db,
-                    mod_count=length(unique(remove_list$modelpoints)),
-                    num_fix_high=as.integer(1),
-                    num_fix_low=as.integer(1),
-                    tot_cats=length(remove_list$n_cats_rat),
-                    n_cats_rat=remove_list$n_cats_rat,
-                    n_cats_grm=remove_list$n_cats_grm,
-                    order_cats_rat=remove_list$order_cats_rat[out_list$this_data$orig_order],
-                    order_cats_grm=remove_list$order_cats_grm[out_list$this_data$orig_order],
-                    num_bills_grm=ifelse(any(remove_list$modelpoints %in% c(5,6)),
-                                         remove_list$num_bills,0L),
-                    LX=remove_list$LX,
-                    SRX=remove_list$SRX,
-                    SAX=remove_list$SAX,
-                    legis_pred=remove_list$legis_pred[out_list$this_data$orig_order,,drop=FALSE],
-                    srx_pred=remove_list$srx_pred[out_list$this_data$orig_order,,drop=FALSE],
-                    sax_pred=remove_list$sax_pred[out_list$this_data$orig_order,,drop=FALSE],
-                    time=remove_list$timepoints[out_list$this_data$orig_order],
-                    time_proc=vary_ideal_pts,
-                    discrim_reg_upb=discrim_reg_upb - discrim_reg_lb,
-                    discrim_reg_lb=discrim_reg_lb,
-                    discrim_miss_upb=discrim_miss_upb - discrim_miss_lb,
-                    discrim_miss_lb=discrim_miss_lb,
-                    discrim_reg_scale=discrim_reg_scale,
-                    discrim_reg_shape=discrim_reg_shape,
-                    discrim_abs_scale=discrim_miss_scale,
-                    discrim_abs_shape=discrim_miss_shape,
-                    diff_reg_sd=diff_reg_sd,
-                    diff_abs_sd=diff_miss_sd,
-                    legis_sd=person_sd,
-                    restrict_sd_high=2,
-                    restrict_sd_low=2,
-                    restrict_N_high=2,
-                    restrict_N_low=2,
-                    time_sd=time_fix_sd,
-                    time_var_sd=time_var,
-                    ar1_up=ar1_up,
-                    ar1_down=ar1_down,
-                    inv_gamma_beta=inv_gamma_beta,
-                    center_cutoff=as.integer(time_center_cutoff),
-                    restrict_var=restrict_var,
-                    ar_sd=ar_sd,
-                    zeroes=as.numeric(inflate_zero),
-                    time_ind=as.array(time_ind),
-                    time_proc=vary_ideal_pts,
-                    gp_sd_par=gp_sd_par,
-                    m_sd_par=gp_m_sd_par,
-                    min_length=gp_min_length,
-                    id_refresh=id_refresh,
-                    sum_vals=as.matrix(sum_vals),
-                    const_type=switch(const_type,
-                                      persons=1L,
-                                      items=2L),
-                    restrict_high=1,
-                    restrict_low=2,
-                    fix_high=0,
-                    fix_low=0,
-                    num_diff=gp_num_diff,
-                    pos_discrim=as.integer(sign(discrim_reg_upb)==sign(discrim_reg_lb)),
-                    grainsize=grainsize,
-                    prior_only=as.integer(prior_only))
-  
-  idealdata <- id_model(object=idealdata,fixtype=fixtype,this_data=this_data,
-                        nfix=nfix,restrict_ind_high=restrict_ind_high,
-                        restrict_ind_low=restrict_ind_low,
-                        ncores=ncores,
-                        tol_rel_obj=tol_rel_obj,
-                        use_groups=use_groups,
-                        prior_fit=prior_fit,
-                        fix_high=fix_high,
-                        fix_low=fix_low,
-                        const_type=const_type)
-  
-  if(("outcome_cont" %in% names(idealdata@score_matrix)) && ("outcome_disc" %in% names(idealdata@score_matrix))) {
-    Y_int <- idealdata@score_matrix$outcome_disc
-    Y_cont <- idealdata@score_matrix$outcome_cont
-  } else if ("outcome_cont" %in% names(idealdata@score_matrix)) {
-    Y_int <- array(0)
-    Y_cont <- idealdata@score_matrix$outcome_cont
-  } else {
-    Y_cont <- array(0)
-    Y_int <- idealdata@score_matrix$outcome_disc
-  }
-  
-  
-  # need to redo everything post-identification
-  
-  remove_list <- .remove_nas(Y_int,
-                             Y_cont,
-                             discrete=idealdata@score_matrix$discrete,
-                             legispoints,
-                             billpoints,
-                             timepoints,
-                             modelpoints,
-                             ordered_id,
-                             idealdata,
-                             time_ind=as.array(time_ind),
-                             time_proc=vary_ideal_pts,
-                             ar_sd=ar_sd,
-                             gp_sd_par=gp_sd_par,
-                             m_sd_par=gp_m_sd_par,
-                             min_length=gp_min_length,
-                             const_type=switch(const_type,
-                                               persons=1L,
-                                               items=2L),
-                             discrim_reg_scale=discrim_reg_scale,
-                             discrim_reg_shape=discrim_reg_shape,
-                             discrim_miss_scale=discrim_miss_scale,
-                             discrim_miss_shape=discrim_miss_shape,
-                             diff_reg_sd=diff_reg_sd,
-                             diff_miss_sd=diff_miss_sd,
-                             legis_sd=person_sd,
-                             restrict_sd_high=restrict_sd_high,
-                             restrict_sd_low=restrict_sd_low,
-                             restrict_N_high=restrict_N_high,
-                             restrict_N_low=restrict_N_low,
-                             restrict_high=idealdata@restrict_ind_high,
-                             restrict_low=idealdata@restrict_ind_low,
-                             fix_high=idealdata@restrict_num_high,
-                             fix_low=idealdata@restrict_num_low)
-  
-  idealdata <- remove_list$idealdata
-  
-  # need to create new data if map_rect is in operation 
-  # and we have missing values / ragged arrays
-  
-  out_list <- .make_sum_vals(idealdata@score_matrix,map_over_id,use_groups=use_groups,
-                             remove_nas=remove_list$remove_nas)
-  
-  sum_vals <- out_list$sum_vals
-  
-  # make sure data is re-sorted by ID
-  
-  idealdata@score_matrix <- out_list$this_data
-  
-  # need number of shards
-  
-  S <- nrow(sum_vals)
-  
-  # check for heterogenous variances
-  
-  if(het_var) {
-    
-    num_var <- length(unique(remove_list$billpoints[remove_list$modelpoints %in% c(9,10,11,12)]))
-    
-    mod_items <- tibble(model_id=this_data$mm,
-                        item_id=this_data$bb) %>% 
-      distinct
-    
-    mod_items <- mutate(mod_items,cont=model_id %in% c(9,10,11,12)) %>% 
-      group_by(cont) %>% 
-      mutate(num_var=1:n())
-    
-    type_het_var <- arrange(mod_items, item_id) %>% pull(num_var)
-    
-  } else {
-    
-    num_var <- 1
-    
-    type_het_var <- rep(num_var, length(unique(billpoints)))
-    
-  }
-  
-  if(remove_list$N_cont>0) {
-    
-    Y_cont <- remove_list$Y_cont[out_list$this_data$orig_order]
-    
-  } else {
-    
-    Y_cont <- remove_list$Y_cont
-    
-  }
-  
-  if(remove_list$N_int>0) {
-    
-    Y_int <- remove_list$Y_int[out_list$this_data$orig_order]
-    
-    order_cats_rat <- remove_list$order_cats_rat[out_list$this_data$orig_order]
-    order_cats_grm <- remove_list$order_cats_grm[out_list$this_data$orig_order]
-    
-  } else {
-    
-    Y_int <- remove_list$Y_int
-    order_cats_rat <- remove_list$order_cats_rat
-    order_cats_grm <- remove_list$order_cats_grm
-    
-  }
-  
-  this_data <- list(N=remove_list$N,
-                    N_cont=remove_list$N_cont,
-                    N_int=remove_list$N_int,
-                    Y_int=Y_int,
-                    Y_cont=Y_cont,
-                    y_int_miss=remove_list$y_int_miss,
-                    y_cont_miss=remove_list$y_cont_miss,
-                    num_var=num_var,
-                    type_het_var=array(type_het_var),
-                    B=B,
-                    debug_mode=debug_mode,
-                    num_basis=num_basis,
-                    T_spline=T_spline,
-                    S=nrow(sum_vals),
-                    S_type=as.numeric(map_over_id=="persons"),
-                    T=remove_list$max_t,
-                    num_legis=remove_list$num_legis,
-                    num_bills=remove_list$num_bills,
-                    num_ls=remove_list$num_ls,
-                    #num_bills_grm=remove_list$num_bills_grm,
-                    ll=remove_list$legispoints[out_list$this_data$orig_order],
-                    bb=remove_list$billpoints[out_list$this_data$orig_order],
-                    mm=remove_list$modelpoints[out_list$this_data$orig_order],
-                    ignore=as.numeric(nrow(ignore_db)>0),
-                    ignore_db=ignore_db,
-                    mod_count=length(unique(remove_list$modelpoints)),
-                    num_fix_high=as.integer(1),
-                    num_fix_low=as.integer(1),
-                    tot_cats=length(remove_list$n_cats_rat),
-                    n_cats_rat=remove_list$n_cats_rat,
-                    n_cats_grm=remove_list$n_cats_grm,
-                    order_cats_rat=order_cats_rat,
-                    order_cats_grm=order_cats_grm,
-                    num_bills_grm=ifelse(any(remove_list$modelpoints %in% c(5,6)),
-                                         remove_list$num_bills,0L),
-                    LX=remove_list$LX,
-                    SRX=remove_list$SRX,
-                    SAX=remove_list$SAX,
-                    legis_pred=remove_list$legis_pred[out_list$this_data$orig_order,,drop=FALSE],
-                    srx_pred=remove_list$srx_pred[out_list$this_data$orig_order,,drop=FALSE],
-                    sax_pred=remove_list$sax_pred[out_list$this_data$orig_order,,drop=FALSE],
-                    time=remove_list$timepoints[out_list$this_data$orig_order],
-                    time_proc=vary_ideal_pts,
-                    discrim_reg_upb=discrim_reg_upb - discrim_reg_lb,
-                    discrim_reg_lb=discrim_reg_lb,
-                    discrim_miss_upb=discrim_miss_upb - discrim_miss_lb,
-                    discrim_miss_lb=discrim_miss_lb,
-                    discrim_reg_scale=discrim_reg_scale,
-                    discrim_reg_shape=discrim_reg_shape,
-                    discrim_abs_scale=discrim_miss_scale,
-                    discrim_abs_shape=discrim_miss_shape,
-                    diff_reg_sd=diff_reg_sd,
-                    diff_abs_sd=diff_miss_sd,
-                    legis_sd=person_sd,
-                    restrict_sd_high=restrict_sd_high,
-                    restrict_sd_low=restrict_sd_low,
-                    restrict_N_high=restrict_N_high,
-                    restrict_N_low=restrict_N_low,
-                    time_sd=time_fix_sd,
-                    time_var_sd=time_var,
-                    ar1_up=ar1_up,
-                    ar1_down=ar1_down,
-                    inv_gamma_beta=inv_gamma_beta,
-                    center_cutoff=as.integer(time_center_cutoff),
-                    restrict_var=restrict_var,
-                    ar_sd=ar_sd,
-                    zeroes=as.numeric(inflate_zero),
-                    time_ind=as.array(time_ind),
-                    gp_sd_par=gp_sd_par,
-                    m_sd_par=gp_m_sd_par,
-                    min_length=gp_min_length,
-                    id_refresh=id_refresh,
-                    sum_vals=as.matrix(sum_vals),
-                    const_type=switch(const_type,
-                                      persons=1L,
-                                      items=2L),
-                    num_restrict_high=length(idealdata@restrict_ind_high),
-                    num_restrict_low=length(idealdata@restrict_ind_low),
-                    restrict_high=idealdata@restrict_ind_high,
-                    restrict_low=idealdata@restrict_ind_low,
-                    fix_high=idealdata@restrict_num_high,
-                    fix_low=idealdata@restrict_num_low,
-                    num_diff=gp_num_diff,
-                    pos_discrim=as.integer(sign(discrim_reg_upb)==sign(discrim_reg_lb)),
-                    grainsize=grainsize,
-                    prior_only=as.integer(prior_only))
+  this_data <- all_data$this_data
+  remove_list <- all_data$remove_list
+  idealdata <- all_data$idealdata
   
   # need to save n_cats
   
@@ -1710,6 +1134,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   outobj@orig_order <- out_list$this_data$orig_order
   outobj@this_data <- this_data
   outobj@remove_nas <- remove_list$remove_nas
+  outobj@eval_data_args <- eval_data_args
   
   # need to recalculate legis points if time series used
   if(this_data$T>1 && ((!is.null(keep_param$person_vary) && keep_param$person_vary) || is.null(keep_param))) {

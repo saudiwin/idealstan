@@ -413,7 +413,7 @@ id_sim_rmse <- function(obj,rep=1) {
     
     param_length <- ncol(est_param)
   
-  if(class(true_param)=='matrix') {
+  if('matrix' %in% class(true_param)) {
     
     num_person <- length(unique(as.numeric(obj@score_data@score_matrix$person_id)))
     time <- length(unique(as.numeric(obj@score_data@score_matrix$time_id)))
@@ -429,7 +429,7 @@ id_sim_rmse <- function(obj,rep=1) {
       return(this_param)
     })
     
-  } else if(class(true_param)=='numeric') {
+  } else if('numeric' %in% class(true_param)) {
     
     all_rmse <- sapply(1:param_length, function(i) {
       this_param <- sqrt((est_param[,i] - true_param[i])^2)

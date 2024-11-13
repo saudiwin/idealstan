@@ -56,7 +56,8 @@ setClass('idealdata',
                     restrict_mean='logical',
                     person_start='numeric',
                     Y_int="ANY",
-                    Y_cont="ANY"))
+                    Y_cont="ANY",
+                    func_args="list"))
 
 
 #' Results of \code{\link{id_estimate}} function
@@ -86,7 +87,8 @@ setClass('idealstan',
                     this_data="ANY",
                     simulation='logical',
                     time_center_cutoff="numeric",
-                    remove_nas="ANY"))
+                    remove_nas="ANY",
+                    eval_data_args="list"))
 
 setGeneric('subset_ideal',signature='object',
            function(object,...) standardGeneric('subset_ideal'))
