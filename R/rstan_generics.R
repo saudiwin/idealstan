@@ -74,13 +74,29 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
     
     # first run the data through id_make
     
-    browser()
+    func_args <- object@score_data@func_args
+    
+    func_args$score_data <- newdata
+    
+    # now generate new data, plug it into object
+    
+    eval_data_args <- object@eval_data_args
+    
+    eval_data_args$idealdata <- do.call(id_make, func_args)
+    
+    new_stan_data <- do.call(.make_stan_data,eval_data_args)
+    
+  } else {
+    
+    # recreate the data just to keep it similar syntax
+    
+    new_stan_data <- do.call(.make_stan_data,object@eval_data_args)
     
     
   }
   
 
-  n_votes <- object@this_data$N
+  n_votes <- new_stan_data$stan_data$N
   
   if(is.null(use_chain)) {
     
@@ -120,7 +136,7 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
       
       # need to get item parameters
       
-      item_subset <- which(levels(object@score_data@score_matrix$item_id) %in% item_subset)
+      item_subset <- which(levels(new_stan_data$idealdata@score_data@score_matrix$item_id) %in% item_subset)
       
     }
   
@@ -128,63 +144,42 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
   print(paste0('Processing posterior replications for ',n_votes,' scores using ',draws,
                ' posterior samples out of a total of ',n_iters, ' samples.'))
 
-  if(length(object@this_data$Y_cont)>1) {
-    Y_cont <- object@this_data$Y_cont[this_sample]
+  if(length(new_stan_data$stan_data$Y_cont)>1) {
+    Y_cont <- new_stan_data$stan_data$Y_cont[this_sample]
   } else {
-    Y_cont <- object@this_data$Y_cont
+    Y_cont <- new_stan_data$stan_data$Y_cont
   }
   
   if(length(object@this_data$Y_int)>1) {
-    Y_int <- object@this_data$Y_int[this_sample]
+    Y_int <- new_stan_data$stan_data$Y_int[this_sample]
   } else {
-    Y_int <- object@this_data$Y_int
+    Y_int <- new_stan_data$stan_data$Y_int
   }
   
-  modelpoints <- object@this_data$mm[this_sample]
+  modelpoints <- new_stan_data$stan_data$mm[this_sample]
   #discrete <- object@score_data@score_matrix$discrete[this_sample]
-  ordered_id <- object@this_data$order_cats_rat[this_sample]
+  ordered_id <- new_stan_data$stan_data$order_cats_rat[this_sample]
   
-  person_points <- object@this_data$ll[this_sample]
+  person_points <- new_stan_data$stan_data$ll[this_sample]
 
-  bill_points <- object@this_data$bb[this_sample]
-  time_points <- object@this_data$time[this_sample]
+  bill_points <- new_stan_data$stan_data$bb[this_sample]
+  time_points <- new_stan_data$stan_data$time[this_sample]
   
   # check for covariates & newdata
   
-  if(length(object@score_data@person_cov_formula)>0) {
-    
-    if(is.null(newdata)) {
+  if(length(new_stan_data$idealdata@person_cov_formula)>0) {
       
-      # pull existing data & sample it
+    legis_x <- new_stan_data$stan_data$legis_pred[this_sample,]
       
-      legis_x <- object@this_data$legis_pred[this_sample,]
-      
-    } else {
-      
-      legis_x <- model.matrix(object@score_data@person_cov_formula,
-                              data=newdata)[,-1,drop=FALSE]
-
-      # remove NAs if necessary
-      
-      legis_x <- legis_x[object@remove_nas,]
-      
-      if(nrow(legis_x)!=nrow(object@this_data$legis_pred)) {
-        
-        stop("Newdata must be same number of rows as original data.")
-        
-      }
-      
-      legis_x <- legis_x[this_sample,]
-      
-    }
+    legis_x <- legis_x[this_sample,]
     
     cov_type <- "persons"
     
-  } else if(length(object@score_data@item_cov_formula)>0) {
+  } else if(length(new_stan_data$idealdata@item_cov_formula)>0) {
     
     cov_type <- "items"
     
-  } else if(length(object@score_data@item_cov_miss_formula)>0) {
+  } else if(length(new_stan_data$idealdata@item_cov_miss_formula)>0) {
     
     cov_type <- "items_missing"
     
@@ -197,7 +192,7 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
   # we can do the initial processing here
   
   # loop over posterior iterations
-  if(object@this_data$`T`>1) {
+  if(new_stan_data$stan_data$`T`>1) {
     
     if(is.null(use_chain)) {
       
@@ -205,8 +200,8 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
       
     } else {
       
-      L_tp1 <- .get_varying(object, time_id=object@this_data$time,
-                            person_id=object@this_data$ll,
+      L_tp1 <- .get_varying(object, time_id=new_stan_data$stan_data$time,
+                            person_id=new_stan_data$stan_data$ll,
                             use_chain=use_chain)
       
     }
@@ -270,7 +265,7 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
         
         this_obs <- which(bill_points==i)
         
-        if(length(unique(object@score_data@score_matrix$time_id))>1) {
+        if(length(unique(new_stan_data$idealdata@score_matrix$time_id))>1) {
           
             if(latent_space) {
               # use latent-space formulation for likelihood
@@ -393,7 +388,7 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
              cuts <- unique(ordered_id[this_obs])
 
              outcome <- Y_int[this_obs]
-             miss_val <- object@score_data@miss_val[1]
+             miss_val <- new_stan_data$idealdata@miss_val[1]
 
            if(item$model_id %in% c(3,4)) {
              cutpoints <- object@stan_samples$draws(paste0('steps_votes',cuts))[,use_chain,] %>% as_draws_matrix()
@@ -456,10 +451,10 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
         
         if(item$model_id %in% c(1,2,3,4,5,6,7,8,13,14)) {
           outcome <- Y_int[this_obs]
-          miss_val <- object@this_data$y_int_miss
+          miss_val <- new_stan_data$stan_data$y_int_miss
         } else {
           outcome <- Y_cont[this_obs]
-          miss_val <- object@this_data$y_cont_miss
+          miss_val <- new_stan_data$this_dat$y_cont_miss
         }
       
       out_predict <- rep_func(pr_absence=item$pr_absence,

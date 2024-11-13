@@ -1098,13 +1098,15 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                          gp_m_sd_par=gp_m_sd_par,
                          gp_min_length=gp_min_length,
                          map_over_id=map_over_id,
-                         het_var=het_var)
+                         het_var=het_var, 
+                         debug_mode=debug_mode)
   
   all_data <- do.call(.make_stan_data,eval_data_args)
   
-  this_data <- all_data$this_data
+  this_data <- all_data$stan_data
   remove_list <- all_data$remove_list
   idealdata <- all_data$idealdata
+  out_list <- all_data$out_list
   
   # need to save n_cats
   
@@ -1125,7 +1127,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                          ...)
   
   outobj@model_type <- model_type
-  outobj@time_proc <- vary_ideal_pts
+  outobj@time_proc <- this_data$time_proc
   outobj@use_groups <- use_groups
   outobj@map_over_id <- map_over_id
   outobj@time_fix_sd <- time_fix_sd
