@@ -3,7 +3,7 @@ Introduction to R Package Idealstan
 Robert Kubinec
 November 15, 2024
 
-*Note: This is a beta release of `idealstan` v1.0. While most features have been implemented and are stable, some have not (ideal point marginal effects), and there may be bugs that have not been sorted out. To report bugs with the package, please file an issue on the [Github page](https://github.com/saudiwin/idealstan/issues).* 
+*Note: This is a beta release of `idealstan` v1.0. While most features have been implemented and are stable, there may be bugs that have not been sorted out. To report bugs with the package, please file an issue on the [Github page](https://github.com/saudiwin/idealstan/issues).* 
 
 At present, `idealstan` is only available on Github as one of its main dependencies, `cmdstanr` is also not on CRAN. To use my package, `cmdstanr` must be first be set up with a local installation of `cmdstan`, which is used for estimation. To see how to install `cmdstanr`, [see this guide](https://mc-stan.org/cmdstanr/). Note that the `cmdstanr` default installation location should be used when installing `cmdstan`.
 
