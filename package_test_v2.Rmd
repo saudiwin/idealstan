@@ -35,6 +35,10 @@ bin_irt_2pl_est <- id_estimate(idealdata=bin_irt_2pl_sim,
                                restrict_ind_low = as.character(sort(bin_irt_2pl_sim@simul_data$true_person,
                                                                     decreasing=F, 
                                                         index=T)$ix[1]),
+                               fix_high = sort(bin_irt_2pl_sim@simul_data$true_person,
+                                                                     decreasing=T)[1],fix_low = sort(bin_irt_2pl_sim@simul_data$true_person,
+                                                                     decreasing=F)[1],
+
                                fixtype='prefix',
                            person_sd = 3,debug_mode = FALSE,
                            nchains=2,ncores=4,niters = 500,warmup=500,
@@ -94,6 +98,10 @@ bin_irt_2pl_abs_est <- id_estimate(idealdata=bin_irt_2pl_abs_sim,
                               restrict_ind_low = as.character(sort(bin_irt_2pl_abs_sim@simul_data$true_person,
                                                                    decreasing=F,
                                                         index=T)$ix[1]),
+                              fix_high=sort(bin_irt_2pl_abs_sim@simul_data$true_person,
+                                                                     decreasing=T)[1],
+                              fix_low=sort(bin_irt_2pl_abs_sim@simul_data$true_person,
+                                                                     decreasing=F)[1],
                                fixtype='prefix')
 id_plot_rhats(bin_irt_2pl_abs_est)
 ```
@@ -144,6 +152,8 @@ ord_irt_est <- id_estimate(idealdata=ord_irt_sim,
                                                         index=T)$ix[1]),
                               restrict_ind_low = as.character(sort(ord_irt_sim@simul_data$true_person,decreasing=F,
                                                         index=T)$ix[1]),
+                           fix_high=sort(ord_irt_sim@simul_data$true_person,decreasing=T)[1],
+                           fix_low=sort(ord_irt_sim@simul_data$true_person,decreasing=F)[1],
                                fixtype='prefix')
 id_plot_rhats(ord_irt_est)
 ```

@@ -67,6 +67,7 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
                                                                 use_cores=1,
                                                                 use_chain=NULL,
                                                                 newdata=NULL,...) {
+
   
   # need to regenerate data if newdata is not NULL
   
@@ -168,6 +169,7 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
   # check for covariates & newdata
   
   if(length(new_stan_data$idealdata@person_cov_formula)>0) {
+    
       
     legis_x <- new_stan_data$stan_data$legis_pred[this_sample,]
       

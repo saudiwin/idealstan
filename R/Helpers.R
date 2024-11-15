@@ -3778,7 +3778,7 @@ return(as.vector(idx))
       arrange(person_id, time_id)
     
     # missing covariate values (values not observed in data) are set to 0 
-
+    
     cov_vals <- legis_x %*% t(b) %>% t
     colnames(cov_vals) <- paste0("L_tp1[",df_id$time_id,",",df_id$person_id,"]")
     
@@ -3786,6 +3786,20 @@ return(as.vector(idx))
     
     all_time <- cbind(all_time[,which(colnames(all_time) %in% colnames(cov_vals))] + cov_vals,
                       all_time[,which(!(colnames(all_time) %in% colnames(cov_vals)))])
+    
+    all_time2 <- sapply(colnames(all_time), function(cn)  {
+      
+      if(cn %in% colnames(cov_vals)) {
+        
+        return(all_time[,cn] + cov_vals[,cn])
+        
+      } else {
+        
+        return(all_time[,cn])
+        
+      }
+
+    })
     
     print("Done!")
     
