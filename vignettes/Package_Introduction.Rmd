@@ -93,8 +93,10 @@ ord_ideal_est <- id_estimate(idealdata=ord_ideal_sim,
                              fixtype='prefix',
                              restrict_ind_high = as.character(high_leg$ix[1]),
                              restrict_ind_low=as.character(low_leg$ix[1]),
+                             fix_high = sort(true_legis,decreasing = TRUE)[1],
+                             fix_low = sort(true_legis,decreasing = FALSE)[1],
                              id_refresh=500,
-                             ncores=16,
+                             ncores=8,
                              nchains=2)
 ```
 
@@ -114,7 +116,7 @@ For example, using our simulated data and identifying the model automatically wi
 ord_ideal_est <- id_estimate(idealdata=ord_ideal_sim,
                              model_type=6,
                              id_refresh=2000,fixtype="vb_full",
-                             ncores=16,
+                             ncores=8,
                            nchains=2)
 ```
 
@@ -122,6 +124,7 @@ We can see from the plot of the Rhats, which is an MCMC convergence diagnostic, 
 
 ```{r rhats}
 id_plot_rhats(ord_ideal_est)
+id_plot_legis(ord_ideal_est)
 ```
 
 In general, it is always a good idea to check the Rhats before proceeding with further analysis. Identification of time-varying ideal point models can be more complicated and is discussed in the accompanying vignette.
@@ -171,17 +174,21 @@ senate_data <- id_make(senate114,outcome_disc = 'cast_code',
 
 We can then run a binary IRT ideal point model in which absences on particular bills are treated as a "hurdle" that the legislator must overcome in order to show up to vote. To do so, we specify `model_type=2`, which signifies a binary IRT model with missing-data (absence) inflation (see list above). In essence, the model is calculating a separate ideal point position for each bill/item that represents the bill's importance to different senators. Only if a bill is relatively salient will a legislator choose to show up and vote.
 
-This same missing-data mechanism also applies more broadly to situations of social choice. Any time that missing data might be a function of ideal points--people with certain ideal points are likely to avoid giving an answer--then these values should be marked as `miss_val` in the `id_make` function and an inflated model type should be used. 
+This same missing-data mechanism also applies more broadly to situations of social choice. Any time that missing data might be a function of ideal points--people with certain ideal points are likely to avoid giving an answer--then these values should be marked as `NA` in the data and an inflated model type should be used. 
 
-Because this dataset is relatively large, we will use the `use_vb` option to use Stan's variational Bayesian inference. This version of the sampler is less accurate and tends to underestimate uncertainty, but it runs much, much faster. Generally speaking, the values of the ideal points are close to the full posterior, and it is useful for exploratory model-building even with small datasets. For very large data, `use_vb` is the only viable option as estimation times may require days or longer. 
+<!-- Because this dataset is relatively large, we will use the `use_vb` option to use Stan's variational Bayesian inference. This version of the sampler is less accurate and tends to underestimate uncertainty, but it runs much, much faster. Generally speaking, the values of the ideal points are close to the full posterior, and it is useful for exploratory model-building even with small datasets. For very large data, `use_vb` is the only viable option as estimation times may require days or longer.  -->
 
-Ideal points are not identified without further information about the latent scale, especially its direction: should conservative ideal points be listed as positive or negative? To identify the latent scale, I constrain a conservative senator (John Barrasso) to be positive, and a liberal senator, Elizabeth Warren, to be negative in order to identify the polarity in the model. I have to pass in the names of the legislators as they exist in the IDs present in the `senate114` data (column `bionames`). Rather than specify the exact values to pin the legislators to, I set `fixtype` to `'vb_partial'` so that the function will first fit an un-identified model, and then use those estimates to determine what would be good values to pin these legislators to. Using `'vb_partial'` is the recommended way to identify models while using prior information about the direction of the latent scale as it avoids having to fix these ideal points to specific values. It will also create starting values for the ideal points that should speed convergence. 
+Ideal points are not identified without further information about the latent scale, especially its direction: should conservative ideal points be listed as positive or negative? To identify the latent scale, I constrain a conservative senator (John Barrasso) to be positive, and a liberal senator, Elizabeth Warren, to be negative in order to identify the polarity in the model. I have to pass in the names of the legislators as they exist in the IDs present in the `senate114` data (column `bionames`). The person ideal point parameters are pinned to +1 and -1 but these values can be changed with the `fix_high` and `fix_low` function arguments for `id_estimate`.
+
+It is important to note that the model can also be identified by fixing item (bill) discrimination parameters by setting the `const_type` argument to `"items"`. Then the values for `restrict_ind_high` and `restrict_ind_low` should be set to the character values of names for items in the data. Identifying the model based on item discrimination can have some excellent properties as it leaves all of the person ideal points to float. It is also very useful with time-varying models where fixing person ideal points can be very challenging.
+
+<!-- Rather than specify the exact values to pin the legislators to, I set `fixtype` to `'vb_partial'` so that the function will first fit an un-identified model, and then use those estimates to determine what would be good values to pin these legislators to. Using `'vb_partial'` is the recommended way to identify models while using prior information about the direction of the latent scale as it avoids having to fix these ideal points to specific values. It will also create starting values for the ideal points that should speed convergence.  -->
 
 To make the model fit faster, I set `nchains` at 2 and `ncores` at 16, which will allow for 8 cores to be used per chain for parallel processing (assuming of course the computer has access to 16 cores). 
 
 ```{r run_114_model,fig.height=7}
 sen_est <- id_estimate(senate_data,
-                model_type = 1,ncores=16,nchains=2,
+                model_type = 1,ncores=8,nchains=2,
                 fixtype='prefix',
                  restrict_ind_high = "WARREN, Elizabeth",
                  restrict_ind_low="BARRASSO, John A.",
@@ -249,7 +256,7 @@ knitr::kable(head(item_all))
 
 ## Hierarchical Covariates
 
-*Note: ideal point marginal effects have yet to be reimplemented. See bottom of section for how to extract covariate effect estimates.*
+*Note: ideal point marginal effects have yet to be implemented as a separate function. In this section I demonstrate how to estimate these effects using R code.*
 
 Finally, we can also fit a model where we include a covariate that varies by person/legislator. To do so, we need to pass a one-sided formula to the `id_make` function to prepare the data accordingly. By way of example, we will include a model where we include an interaction between party ID (`party_code`) and the legislator's age to see if younger/older legislators are more or less conservative. Because this is a static model, the effect of the covariate is averaged over all of the bills in the dataset and all the legislators in the dataset without taking into account the order or time period of the bills.
 
@@ -258,6 +265,13 @@ Finally, we can also fit a model where we include a covariate that varies by per
 ```{r create_cov_data}
 
 senate114$age <- 2018 - senate114$born
+# center the variable
+senate114$age <- senate114$age - mean(senate114$age)
+# put in units of 10 years
+senate114$age <- senate114$age / 10
+
+# doing this will improve estimation speed (variables mean-centered and with an SD
+# not much bigger than 1 or 2)
 
 senate_data <- id_make(senate114,outcome_disc = 'cast_code',
                        person_id = 'bioname',
@@ -270,7 +284,7 @@ sen_est_cov <- id_estimate(senate_data,
                 model_type = 1,
                 fixtype='prefix',
                 nchains=2,
-                ncores=16,
+                ncores=8,
                  restrict_ind_high = "BARRASSO, John A.",
                  restrict_ind_low="WARREN, Elizabeth",
             seed=84520)
@@ -278,17 +292,123 @@ sen_est_cov <- id_estimate(senate_data,
 
 ```
 
-`idealstan` implements a form of calculating marginal effects for these hierarchical covariates. Because the ideal point model is fundamentally a measurement model with a latent scale, the marginal effects are calculated separately for each end of the latent scale. To do so, the marginal effect of the covariate on one of the outcomes is calculated first for all items/bills with positive discrimination scores and then for items/bills with negative discrimination scores. The effect of the covariate can then be interpreted as having a conditional effect on either the positive or negatively associated latent scores.
+As discussed in the associated working paper (https://osf.io/preprints/osf/8j2bt), ideal point marginal effects can be derived from `idealstan` models in which the raw relationship between the hierarchical covariates and the actual outcomes (in this case, votes) can be shown at the item (vote) level. At present, this feature is not yet implemented in a function, but it can be calculated using code as shown below for a given covariate. In this case, we will look at the marginal effect of age on votes conditional on party affiliation. To do so, we will extract the hierarchical covariate effects from the underlying `cmdstanr` model and then use the `id_post_pred`, which allows us to predict the outcome given new data, to calculate the effects.
 
-For example, the following plot shows the effect of the age covariate on the probability that a senator votes yes separately for conservative bills (negative discrimination) and liberal bills (positive discrimination). In other words, the two marginal effects are for whether increasing in age is associated with casting a yes vote **when the bill is liberal** versus **when a bill is conservative**. While these two probabilities are likely to differ, they are not mirror images of each other as they depend on the model's estimates of how liberal or conservative the bills actually are. The following plot shows these marginal effects of age:
+```{r marg_effect}
 
-```{r cov_plot}
+# First make two new datasets that have different values for age
+# difference is quite small (0.001)
+# This is for numerical differentiation as described in the working paper
+# We need to begin with our original dataset that we passed to the id_make function
 
-# Ideal point marginal effects have yet to be re-implemented for v1.0
+  # parameter for the change we will calculate, just needs to be very small
+  eps <- 1e-5
+  
+  new_data1 <- mutate(senate114,
+                      age = age - eps / 2)
+  
+  new_data2 <- mutate(senate114,
+                      age = age + eps / 2)
+  
+  # now predict new outcome distributions given these slightly different datasets
+  
+  sen_mod_pred1 <- id_post_pred(sen_est_cov,newdata=new_data1,
+                                 use_cores=4,
+                                 type="epred")
+    
+  sen_mod_pred2 <- id_post_pred(sen_est_cov,newdata=new_data2,
+                                 use_cores=4,
+                                 type="epred")
+  
+  # now we need to difference the datasets at the item level to calculate the effects
+  # this will create some lists that will then be appended together to a big data frame
+  # with one observation per posterior draw
+  
+    print("Looping over items")
+    
+    # difference the predictions
+  
+  c1 <- purrr::map2(sen_mod_pred1[[1]],
+                    sen_mod_pred2[[1]],
+                    function(small,big) {
+                      
+                      # difference the effects
+                      
+                      (big - small) / eps
+                      
+                    })
+  
+  # combine into datasets for each item with item id + person (senator) id
+  
+  c2 <- lapply(c1, function(mat) {
+    
+    out_data <- attr(mat, "data")
+    colnames(mat) <- out_data$person_id
+    
+    as_tibble(mat) %>% 
+      mutate(draws=1:n(),
+             item_id=unique(out_data$item_id)) %>% 
+      gather(key="person_id",value="estimate",-draws,-item_id) %>% 
+      mutate(person_id=as.numeric(person_id),
+             estimate=as.numeric(estimate))
+    
+  }) %>% bind_rows
+  
+  # merge in some original data
+  to_merge <- mutate(sen_est_cov@score_data@score_matrix, 
+                     item_orig=item_id,
+                     person_orig=person_id,
+                     person_id=as.numeric(person_id),
+                     item_id=as.numeric(item_id)) %>% 
+    select(person_id, item_id, group_id,item_orig, person_orig) %>% 
+    distinct
+  
+  # add in party data so we can calculate party-specific effects
+  
+  c2 <- left_join(c2, to_merge, 
+                  by=c("item_id","person_id"))
+  
+  # get effect separately by democrats/republicans
+  
+   by_party <- group_by(c2, draws, group_id, item_id, item_orig) %>% 
+    summarize(mean_est1=mean(estimate)) %>% 
+    group_by(group_id, item_id, item_orig) %>% 
+    summarize(mean_est=mean(mean_est1),
+              low_est=quantile(mean_est1, .05),
+              high_est=quantile(mean_est1, .95))
+   
+   # merge in item discrimination to add some color / show high-discrim votes
+   
+   item_discrim <- filter(sen_est_cov@summary,
+                         grepl(x=variable, pattern="sigma\\_reg\\_free")) %>% 
+    mutate(item_id=as.numeric(stringr::str_extract(variable, "[0-9]+")))
+   
+   by_party <- left_join(by_party,
+                        select(item_discrim, median, item_id))
+   
+   # plot the result
+   
+   by_party %>% 
+    mutate(group_id=factor(group_id,levels=c("D","R","I"),
+                           labels=c("Democrats", "Republicans","Independent"))) %>% 
+    ggplot(aes(y=mean_est,
+               x=reorder(item_id,mean_est))) +
+    geom_linerange(aes(ymin=low_est,
+                       ymax=high_est,
+                       colour=`median`)) +
+    facet_wrap(~group_id) +
+    ggthemes::theme_tufte() + 
+    scale_colour_viridis_c(name="Discrimination") +
+    coord_flip() +
+    labs(y="Marginal Change in Probability of Voting",
+         x="Rollcalls",
+         caption="Marginal effect of unemployment on voting on a specific rollcall in the Senate.") +
+    geom_hline(yintercept=0,linetype=2) +
+    ggthemes::theme_clean() +
+    theme(axis.text.y=element_blank(),
+          axis.ticks.y=element_blank()) +
+  theme(legend.position = "bottom")
 
-# id_plot_cov(sen_est_cov,cov_type='person_cov',
-#             pred_outcome="Yes") +
-#   ggtitle("Conditional Marginal Effect of Age on Senator's Vote Choices")
 ```
 
 
