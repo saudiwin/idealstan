@@ -651,7 +651,7 @@ setMethod('summary',signature(object='idealstan'),
                                     `Parameter Name`=legis)
               } else {
                 # add in iteration numbers
-                ideal_pts <- group_by(ideal_pts,person_id) %>% 
+                ideal_pts <- group_by(ideal_pts,person_id,time_id) %>% 
                   mutate(Iteration=1:n())
                 ideal_pts <- select(ideal_pts,
                                     Person=person_id,

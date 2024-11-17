@@ -231,9 +231,10 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
   
   if(cov_type!="none" && object@this_data$`T`==1) {
     
-    # add in static covariates
+    L_full <- .add_person_cov(as_draws_array(L_full), object, legis_x, person_points, time_points,
+                              use_chain)
     
-    browser()
+    L_full <- as_draws_matrix(L_full)
     
   }
 
@@ -704,15 +705,15 @@ setMethod('id_plot_ppc',signature(object='idealstan'),function(object,
         
         # reshape if necessary
         
-        if(dim(ppc_pred[[1]])[2]==length(unique(all_data$person_id))) {
-          
+        # if(dim(ppc_pred[[1]])[2]==length(unique(all_data$person_id))) {
+        #   
           this_plot <- do.call(cbind, ppc_pred)
           
-        } else {
-          
-          this_plot <- t(do.call(rbind, ppc_pred))
-          
-        }
+        # } else {
+        #   
+        #   this_plot <- t(do.call(rbind, ppc_pred))
+        #   
+        # }
 
         mod <- which_mod
         group_id <- all_data$group_id

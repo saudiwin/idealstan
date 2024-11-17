@@ -14,8 +14,8 @@
                     type='simulate',
                     outcome=NULL,
                     latent_space=NULL,
-                    ...)
-                    {
+                    ...) {
+
   
   # need a factor to multiply the probability for latent-space models
   if(latent_space && inflate) {
@@ -28,7 +28,7 @@
   if(type=='simulate') {
     votes <- as.numeric((mul_fac*pr_vote)>runif(N))
   } else if(type=='predict') {
-    votes <- apply(pr_vote,2,function(c) as.numeric((c*mul_fac)>runif(N)))
+    votes <- t(apply(pr_vote,1,function(c) as.numeric((c*mul_fac)>runif(N))))
   } else if(type=="epred") {
     
     votes <- pr_vote
@@ -74,7 +74,7 @@
     
     return(out_data) 
   } else if(type=='predict') {
-    combined <- sapply(1:ncol(pr_absence), function(c) ifelse(pr_absence[,c]<(runif(N)+pr_boost),votes[,c],2))
+    combined <- sapply(1:nrow(pr_absence), function(c) ifelse(pr_absence[c,]<(runif(N)+pr_boost),votes[c,],2))
     # add one to have minimum = 1
     combined <- combined + 1
     attr(combined,'output') <- 'all'
@@ -83,12 +83,21 @@
     
   } else if(type=="epred") {
     
-    # nothing to do here really
+    # need to calculate pr(Yes)pr(Present) + Pr(Yes)pr(Absent)
     
-    combined <- votes
+    if(inflate) {
+      
+      combined <- (1 - pr_absence) * pr_vote
+
+    } else {
+      
+      combined <- pr_vote
+      
+    }
+
     attr(combined,'output') <- 'all'
     # transpose to make S x N matrix
-    return(t(combined))
+    return(combined)
     
   }
                    

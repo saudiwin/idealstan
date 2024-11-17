@@ -343,9 +343,14 @@
     
     Y_int <- remove_list$Y_int[out_list$this_data$orig_order]
     
+    order_cats_rat <- remove_list$order_cats_rat[out_list$this_data$orig_order]
+    order_cats_grm <- remove_list$order_cats_grm[out_list$this_data$orig_order]
+    
   } else {
     
     Y_int <- remove_list$Y_int
+    order_cats_rat <- remove_list$order_cats_rat
+    order_cats_grm <- remove_list$order_cats_grm
     
   }
   
@@ -379,90 +384,91 @@
   }
   
   this_data <- list(N=remove_list$N,
-                    N_cont=remove_list$N_cont,
-                    N_int=remove_list$N_int,
-                    Y_int=Y_int,
-                    Y_cont=Y_cont,
-                    y_int_miss=remove_list$y_int_miss,
-                    y_cont_miss=remove_list$y_cont_miss,
-                    num_var=num_var,
-                    B=B,
-                    debug_mode=debug_mode,
-                    num_basis=num_basis,
-                    T_spline=T_spline,
-                    type_het_var=array(type_het_var),
-                    S=nrow(sum_vals),
-                    S_type=as.numeric(map_over_id=="persons"),
-                    T=remove_list$max_t,
-                    num_legis=remove_list$num_legis,
-                    num_bills=remove_list$num_bills,
-                    num_ls=remove_list$num_ls,
-                    #num_bills_grm=remove_list$num_bills_grm,
-                    ll=remove_list$legispoints[out_list$this_data$orig_order],
-                    bb=remove_list$billpoints[out_list$this_data$orig_order],
-                    mm=remove_list$modelpoints[out_list$this_data$orig_order],
-                    ignore=as.numeric(nrow(ignore_db)>0),
-                    ignore_db=ignore_db,
-                    mod_count=length(unique(remove_list$modelpoints)),
-                    num_fix_high=as.integer(1),
-                    num_fix_low=as.integer(1),
-                    tot_cats=length(remove_list$n_cats_rat),
-                    n_cats_rat=remove_list$n_cats_rat,
-                    n_cats_grm=remove_list$n_cats_grm,
-                    order_cats_rat=remove_list$order_cats_rat[out_list$this_data$orig_order],
-                    order_cats_grm=remove_list$order_cats_grm[out_list$this_data$orig_order],
-                    num_bills_grm=ifelse(any(remove_list$modelpoints %in% c(5,6)),
-                                         remove_list$num_bills,0L),
-                    LX=remove_list$LX,
-                    SRX=remove_list$SRX,
-                    SAX=remove_list$SAX,
-                    legis_pred=remove_list$legis_pred[out_list$this_data$orig_order,,drop=FALSE],
-                    srx_pred=remove_list$srx_pred[out_list$this_data$orig_order,,drop=FALSE],
-                    sax_pred=remove_list$sax_pred[out_list$this_data$orig_order,,drop=FALSE],
-                    time=remove_list$timepoints[out_list$this_data$orig_order],
-                    time_proc=vary_ideal_pts,
-                    discrim_reg_upb=discrim_reg_upb - discrim_reg_lb,
-                    discrim_reg_lb=discrim_reg_lb,
-                    discrim_miss_upb=discrim_miss_upb - discrim_miss_lb,
-                    discrim_miss_lb=discrim_miss_lb,
-                    discrim_reg_scale=discrim_reg_scale,
-                    discrim_reg_shape=discrim_reg_shape,
-                    discrim_abs_scale=discrim_miss_scale,
-                    discrim_abs_shape=discrim_miss_shape,
-                    diff_reg_sd=diff_reg_sd,
-                    diff_abs_sd=diff_miss_sd,
-                    legis_sd=person_sd,
-                    restrict_sd_high=2,
-                    restrict_sd_low=2,
-                    restrict_N_high=2,
-                    restrict_N_low=2,
-                    time_sd=time_fix_sd,
-                    time_var_sd=time_var,
-                    ar1_up=ar1_up,
-                    ar1_down=ar1_down,
-                    inv_gamma_beta=inv_gamma_beta,
-                    center_cutoff=as.integer(time_center_cutoff),
-                    restrict_var=restrict_var,
-                    ar_sd=ar_sd,
-                    zeroes=as.numeric(inflate_zero),
-                    time_ind=as.array(time_ind),
-                    time_proc=vary_ideal_pts,
-                    gp_sd_par=gp_sd_par,
-                    m_sd_par=gp_m_sd_par,
-                    min_length=gp_min_length,
-                    id_refresh=id_refresh,
-                    sum_vals=as.matrix(sum_vals),
-                    const_type=switch(const_type,
-                                      persons=1L,
-                                      items=2L),
-                    restrict_high=1,
-                    restrict_low=2,
-                    fix_high=0,
-                    fix_low=0,
-                    num_diff=gp_num_diff,
-                    pos_discrim=as.integer(sign(discrim_reg_upb)==sign(discrim_reg_lb)),
-                    grainsize=grainsize,
-                    prior_only=as.integer(prior_only))
+  N_cont=remove_list$N_cont,
+  N_int=remove_list$N_int,
+  Y_int=Y_int,
+  Y_cont=Y_cont,
+  y_int_miss=remove_list$y_int_miss,
+  y_cont_miss=remove_list$y_cont_miss,
+  num_var=num_var,
+  type_het_var=array(type_het_var),
+  B=B,
+  debug_mode=debug_mode,
+  num_basis=num_basis,
+  T_spline=T_spline,
+  S=nrow(sum_vals),
+  S_type=as.numeric(map_over_id=="persons"),
+  T=remove_list$max_t,
+  num_legis=remove_list$num_legis,
+  num_bills=remove_list$num_bills,
+  num_ls=remove_list$num_ls,
+  #num_bills_grm=remove_list$num_bills_grm,
+  ll=remove_list$legispoints[out_list$this_data$orig_order],
+  bb=remove_list$billpoints[out_list$this_data$orig_order],
+  mm=remove_list$modelpoints[out_list$this_data$orig_order],
+  ignore=as.numeric(nrow(ignore_db)>0),
+  ignore_db=ignore_db,
+  mod_count=length(unique(remove_list$modelpoints)),
+  num_fix_high=as.integer(1),
+  num_fix_low=as.integer(1),
+  tot_cats=length(remove_list$n_cats_rat),
+  n_cats_rat=remove_list$n_cats_rat,
+  n_cats_grm=remove_list$n_cats_grm,
+  order_cats_rat=order_cats_rat,
+  order_cats_grm=order_cats_grm,
+  num_bills_grm=ifelse(any(remove_list$modelpoints %in% c(5,6)),
+                       remove_list$num_bills,0L),
+  LX=remove_list$LX,
+  SRX=remove_list$SRX,
+  SAX=remove_list$SAX,
+  legis_pred=remove_list$legis_pred[out_list$this_data$orig_order,,drop=FALSE],
+  srx_pred=remove_list$srx_pred[out_list$this_data$orig_order,,drop=FALSE],
+  sax_pred=remove_list$sax_pred[out_list$this_data$orig_order,,drop=FALSE],
+  time=remove_list$timepoints[out_list$this_data$orig_order],
+  time_proc=vary_ideal_pts,
+  discrim_reg_upb=discrim_reg_upb - discrim_reg_lb,
+  discrim_reg_lb=discrim_reg_lb,
+  discrim_miss_upb=discrim_miss_upb - discrim_miss_lb,
+  discrim_miss_lb=discrim_miss_lb,
+  discrim_reg_scale=discrim_reg_scale,
+  discrim_reg_shape=discrim_reg_shape,
+  discrim_abs_scale=discrim_miss_scale,
+  discrim_abs_shape=discrim_miss_shape,
+  diff_reg_sd=diff_reg_sd,
+  diff_abs_sd=diff_miss_sd,
+  legis_sd=person_sd,
+  restrict_sd_high=discrim_reg_scale,
+  restrict_sd_low=discrim_reg_shape,
+  restrict_N_high=discrim_reg_scale,
+  restrict_N_low=discrim_reg_shape,
+  time_sd=time_fix_sd,
+  time_var_sd=time_var,
+  ar1_up=ar1_up,
+  ar1_down=ar1_down,
+  inv_gamma_beta=inv_gamma_beta,
+  center_cutoff=as.integer(time_center_cutoff),
+  restrict_var=restrict_var,
+  ar_sd=ar_sd,
+  zeroes=as.numeric(inflate_zero),
+  time_ind=as.array(time_ind),
+  gp_sd_par=gp_sd_par,
+  m_sd_par=gp_m_sd_par,
+  min_length=gp_min_length,
+  id_refresh=id_refresh,
+  sum_vals=as.matrix(sum_vals),
+  const_type=switch(const_type,
+                    persons=1L,
+                    items=2L),
+  num_restrict_high=1,
+  num_restrict_low=1,
+  restrict_high=1,
+  restrict_low=2,
+  fix_high=0,
+  fix_low=0,
+  num_diff=gp_num_diff,
+  pos_discrim=as.integer(sign(discrim_reg_upb)==sign(discrim_reg_lb)),
+  grainsize=grainsize,
+  prior_only=as.integer(prior_only))
   
   idealdata <- id_model(object=idealdata,fixtype=fixtype,this_data=this_data,
                         nfix=nfix,restrict_ind_high=restrict_ind_high,
@@ -1224,9 +1230,17 @@ process_init_pathfinder <- function(init, num_procs, model_variables = NULL,
   } else {
     # need to match estimated parameters to original IDs
     if(type=='ideal_pts') {
-      
-        
+
         person_params <- object@stan_samples$draws('L_full')
+        
+        if(add_cov) {
+          
+          person_params <- .add_person_cov(person_params,object,object@this_data$legis_pred,
+                                           object@this_data$ll,
+                                           object@this_data$time,
+                                           use_chain)
+          
+        }
         
         if(!is.null(include)) {
           
@@ -3758,8 +3772,6 @@ return(as.vector(idx))
     
     b <- obj@stan_samples$draws("legis_x")[,use_chain,] %>% as_draws_matrix()
     
-    gc()
-    
     # loop over draws d for memory efficiency
     
     print("Collapsing covariates to person and time IDs.")
@@ -3780,26 +3792,50 @@ return(as.vector(idx))
     # missing covariate values (values not observed in data) are set to 0 
     
     cov_vals <- legis_x %*% t(b) %>% t
-    colnames(cov_vals) <- paste0("L_tp1[",df_id$time_id,",",df_id$person_id,"]")
+    
+    if(length(unique(df_id$time_id))>1) {
+      
+      colnames(cov_vals) <- paste0("L_tp1[",df_id$time_id,",",df_id$person_id,"]")
+      
+    } else {
+      
+      colnames(cov_vals) <- paste0("L_full[",df_id$person_id,"]")
+      
+    }
     
     # for person X time combinations for which we don't have data, set covariate = 0
     
-    all_time <- cbind(all_time[,which(colnames(all_time) %in% colnames(cov_vals))] + cov_vals,
-                      all_time[,which(!(colnames(all_time) %in% colnames(cov_vals)))])
-    
-    all_time2 <- sapply(colnames(all_time), function(cn)  {
+    if(length(unique(df_id$time_id))==1) {
       
-      if(cn %in% colnames(cov_vals)) {
+      all_time <- as_draws_matrix(all_time)
+      
+      all_attrs <- attributes(all_time)
+      
+      all_class <- class(all_time)
+      
+    }
+      
+      all_time <- sapply(colnames(all_time), function(cn)  {
         
-        return(all_time[,cn] + cov_vals[,cn])
+        if(cn %in% colnames(cov_vals)) {
+          
+          return(all_time[,cn] + cov_vals[,cn])
+          
+        } else {
+          
+          return(all_time[,cn])
+          
+        }
         
-      } else {
+      })
+      
+      if(length(unique(df_id$time_id))==1) { 
         
-        return(all_time[,cn])
-        
+        attributes(all_time) <- all_attrs
+        class(all_time) <- all_class
+        # convert back to draws array
+        all_time <- as_draws_array(all_time)
       }
-
-    })
     
     print("Done!")
     
