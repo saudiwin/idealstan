@@ -432,7 +432,7 @@ setMethod('sample_model',signature(object='idealdata'),
               out_model <- object@stanmodel_map$pathfinder(data=this_data,
                               draws=niters,
                               init=init_vals,
-                              num_paths=nchains,
+                              num_paths=nchains,num_threads=ncores,
                               refresh=this_data$id_refresh,
                               ...)
             }
