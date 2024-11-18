@@ -658,7 +658,7 @@ id_make <- function(score_data=NULL,
 #' a value of \code{"items"}. It is recommended to select whichever variable has more
 #' distinct values to improve parallelization.
 #' @param vary_ideal_pts Default \code{'none'}. If \code{'random_walk'}, \code{'AR1'}, 
-#' \code{'GP'}, or \code{'spline'}, a 
+#' \code{'GP'}, or \code{'splines'}, a 
 #' time-varying ideal point model will be fit with either a random-walk process, an 
 #' AR1 process, a Gaussian process or a spline. 
 #' Note that the spline is the easiest time-varying model to fit so long as the number
@@ -1120,6 +1120,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   outobj@this_data <- this_data
   outobj@remove_nas <- remove_list$remove_nas
   outobj@eval_data_args <- eval_data_args
+  outobj@use_vb <- use_vb
   
   # need to recalculate legis points if time series used
   if(this_data$T>1 && ((!is.null(keep_param$person_vary) && keep_param$person_vary) || is.null(keep_param))) {

@@ -415,7 +415,8 @@ id_plot_legis_var <- function(object,return_data=FALSE,
   person_params <- .prepare_legis_data(object,
                                        high_limit=high_limit,
                                        low_limit=low_limit,
-                                       type='variance')
+                                       type='variance',
+                                       aggregated=TRUE)
   
   if(object@use_groups) {
     person_params$person_id <- person_params$group_id 

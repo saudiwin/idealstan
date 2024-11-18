@@ -1088,13 +1088,14 @@ process_init_pathfinder <- function(init, num_procs, model_variables = NULL,
                                 use_chain=NULL,
                                 aggregated=NULL) {
   
+  if(object@use_vb) use_chain <- 1
   
   if(is.null(use_chain))
-      use_chain <- 1:dim(object@stan_samples$draws("L_full"))[2]
+      use_chain <- 1:dim(as_draws_array(object@stan_samples$draws("L_full")))[2]
   
   if(length(unique(object@score_data@score_matrix$time_id))>1 && type!='variance') {
     
-    if(length(use_chain)<dim(object@stan_samples$draws("L_full"))[2]) {
+    if(length(use_chain)<dim(as_draws_array(object@stan_samples$draws("L_full")))[2]) {
       
       print(paste0("Using only one chain: chain ",use_chain))
       
@@ -1224,7 +1225,7 @@ process_init_pathfinder <- function(init, num_procs, model_variables = NULL,
     # need to match estimated parameters to original IDs
     if(type=='ideal_pts') {
 
-        person_params <- object@stan_samples$draws('L_full')
+        person_params <- as_draws_array(object@stan_samples$draws('L_full'))
         
         if(add_cov) {
           
@@ -1754,7 +1755,7 @@ process_init_pathfinder <- function(init, num_procs, model_variables = NULL,
                        use_chain=NULL) {
   
   if(is.null(use_chain))
-    use_chain <- 1:dim(object@stan_samples$draws("L_full"))[2]
+    use_chain <- 1:dim(as_draws_array(object@stan_samples$draws("L_full")))[2]
   
   # first need to get num of the parameter
   
@@ -1762,10 +1763,10 @@ process_init_pathfinder <- function(init, num_procs, model_variables = NULL,
   
   # now get all the necessary components
   
-  reg_diff <- object@stan_samples$draws(paste0('B_int_free[',param_num,']'))[,use_chain,] %>% as_draws_matrix()
-  reg_discrim <- object@stan_samples$draws(paste0('sigma_reg_free[',param_num,']'))[,use_chain,] %>% as_draws_matrix()
-  abs_diff <- object@stan_samples$draws(paste0('A_int_free[',param_num,']'))[,use_chain,] %>% as_draws_matrix()
-  abs_discrim <- object@stan_samples$draws(paste0('sigma_abs_free[',param_num,']'))[,use_chain,] %>% as_draws_matrix()
+  reg_diff <- as_draws_array(object@stan_samples$draws(paste0('B_int_free[',param_num,']')))[,use_chain,] %>% as_draws_matrix()
+  reg_discrim <- as_draws_array(object@stan_samples$draws(paste0('sigma_reg_free[',param_num,']')))[,use_chain,] %>% as_draws_matrix()
+  abs_diff <- as_draws_array(object@stan_samples$draws(paste0('A_int_free[',param_num,']')))[,use_chain,] %>% as_draws_matrix()
+  abs_discrim <- as_draws_array(object@stan_samples$draws(paste0('sigma_abs_free[',param_num,']')))[,use_chain,] %>% as_draws_matrix()
   
   reg_mid <- reg_diff/reg_discrim
   abs_mid <- abs_diff/abs_discrim
@@ -1912,7 +1913,7 @@ process_init_pathfinder <- function(init, num_procs, model_variables = NULL,
                               use_chain=NULL) {
 
   if(is.null(use_chain))
-    use_chain <- 1:dim(object@stan_samples$draws("L_full"))[2]
+    use_chain <- 1:dim(as_draws_array(object@stan_samples$draws("L_full")))[2]
   
   # first need to get num of the parameter
   
@@ -1920,12 +1921,12 @@ process_init_pathfinder <- function(init, num_procs, model_variables = NULL,
   
   # now get all the necessary components
   
-  reg_diff <- object@stan_samples$draws(paste0('B_int_free[',param_num,']'))[,use_chain,] %>% as_draws_matrix()
-  reg_discrim <- object@stan_samples$draws(paste0('sigma_reg_free[',param_num,']'))[,use_chain,] %>% as_draws_matrix()
-  abs_diff <- object@stan_samples$draws(paste0('A_int_free[',param_num,']'))[,use_chain,] %>% as_draws_matrix()
-  abs_discrim <- object@stan_samples$draws(paste0('sigma_abs_free[',param_num,']'))[,use_chain,] %>% as_draws_matrix()
+  reg_diff <- as_draws_array(object@stan_samples$draws(paste0('B_int_free[',param_num,']')))[,use_chain,] %>% as_draws_matrix()
+  reg_discrim <- as_draws_array(object@stan_samples$draws(paste0('sigma_reg_free[',param_num,']')))[,use_chain,] %>% as_draws_matrix()
+  abs_diff <- as_draws_array(object@stan_samples$draws(paste0('A_int_free[',param_num,']')))[,use_chain,] %>% as_draws_matrix()
+  abs_discrim <- as_draws_array(object@stan_samples$draws(paste0('sigma_abs_free[',param_num,']')))[,use_chain,] %>% as_draws_matrix()
   
-  cuts <- object@stan_samples$draws('steps_votes')[,use_chain,] %>% as_draws_df
+  cuts <- as_draws_array(object@stan_samples$draws('steps_votes'))[,use_chain,] %>% as_draws_df
   
   if(class(object@score_data@score_matrix$outcome_disc)=='factor') {
     cut_names <- levels(object@score_data@score_matrix$outcome_disc)
@@ -2089,7 +2090,7 @@ process_init_pathfinder <- function(init, num_procs, model_variables = NULL,
                               use_chain=NULL) {
 
   if(is.null(use_chain))
-    use_chain <- 1:dim(object@stan_samples$draws("L_full"))[2]
+    use_chain <- 1:dim(as_draws_array(object@stan_samples$draws("L_full")))[2]
   
   # first need to get num of the parameter
   
@@ -2097,16 +2098,16 @@ process_init_pathfinder <- function(init, num_procs, model_variables = NULL,
   
   # now get all the necessary components
   
-  reg_diff <- object@stan_samples$draws(paste0('B_int_free[',param_num,']'))[,use_chain,] %>% as_draws_matrix()
-  reg_discrim <- object@stan_samples$draws(paste0('sigma_reg_free[',param_num,']'))[,use_chain,] %>% as_draws_matrix()
-  abs_diff <- object@stan_samples$draws(paste0('A_int_free[',param_num,']'))[,use_chain,] %>% as_draws_matrix()
-  abs_discrim <- object@stan_samples$draws(paste0('sigma_abs_free[',param_num,']'))[,use_chain,] %>% as_draws_matrix()
+  reg_diff <- as_draws_array(object@stan_samples$draws(paste0('B_int_free[',param_num,']')))[,use_chain,] %>% as_draws_matrix()
+  reg_discrim <- as_draws_array(object@stan_samples$draws(paste0('sigma_reg_free[',param_num,']')))[,use_chain,] %>% as_draws_matrix()
+  abs_diff <- as_draws_array(object@stan_samples$draws(paste0('A_int_free[',param_num,']')))[,use_chain,] %>% as_draws_matrix()
+  abs_discrim <- as_draws_array(object@stan_samples$draws(paste0('sigma_abs_free[',param_num,']')))[,use_chain,] %>% as_draws_matrix()
   
   # figure out how many categories we need
   
   total_cat <- length(as_draws_df(object@stan_samples$draws('steps_votes')))
   
-  cuts <- object@stan_samples$draws(paste0('steps_votes_grm[',param_num,',',total_cat,']'))[,use_chain,] %>% as_draws_df
+  cuts <- as_draws_array(object@stan_samples$draws(paste0('steps_votes_grm[',param_num,',',total_cat,']')))[,use_chain,] %>% as_draws_df
   
   if(class(object@score_data@score_matrix$outcome_disc)=='factor') {
     cut_names <- levels(object@score_data@score_matrix$outcome_disc)
@@ -2268,7 +2269,7 @@ process_init_pathfinder <- function(init, num_procs, model_variables = NULL,
                           use_chain=NULL) {
   
   if(is.null(use_chain))
-    use_chain <- 1:dim(object@stan_samples$draws("L_full"))[2]
+    use_chain <- 1:dim(as_draws_array(object@stan_samples$draws("L_full")))[2]
   
   # first need to get num of the parameter
   
@@ -2276,11 +2277,11 @@ process_init_pathfinder <- function(init, num_procs, model_variables = NULL,
   
   # now get all the necessary components
   
-  reg_diff <- object@stan_samples$draws(paste0('B_int_free[',param_num,']'))[,use_chain,] %>% as_draws_matrix()
-  reg_discrim <- object@stan_samples$draws(paste0('sigma_reg_free[',param_num,']'))[,use_chain,] %>% as_draws_matrix()
-  abs_diff <- object@stan_samples$draws(paste0('A_int_free[',param_num,']'))[,use_chain,] %>% as_draws_matrix()
-  item_int <- object@stan_samples$draws(paste0('sigma_abs_free[',param_num,']'))[,use_chain,] %>% as_draws_matrix()
-  ideal_int <- object@stan_samples$draws(paste0('ls_int[',param_num,']'))[,use_chain,] %>% as_draws_matrix()
+  reg_diff <- as_draws_array(object@stan_samples$draws(paste0('B_int_free[',param_num,']')))[,use_chain,] %>% as_draws_matrix()
+  reg_discrim <- as_draws_array(object@stan_samples$draws(paste0('sigma_reg_free[',param_num,']')))[,use_chain,] %>% as_draws_matrix()
+  abs_diff <- as_draws_array(object@stan_samples$draws(paste0('A_int_free[',param_num,']')))[,use_chain,] %>% as_draws_matrix()
+  item_int <- as_draws_array(object@stan_samples$draws(paste0('sigma_abs_free[',param_num,']')))[,use_chain,] %>% as_draws_matrix()
+  ideal_int <- as_draws_array(object@stan_samples$draws(paste0('ls_int[',param_num,']')))[,use_chain,] %>% as_draws_matrix()
   
   if(class(object@score_data@score_matrix$outcome_disc)=='factor') {
     cut_names <- levels(object@score_data@score_matrix$outcome_disc)
@@ -3340,7 +3341,9 @@ return(as.vector(idx))
                          person_id=NULL,
                          use_chain=NULL) {
   
-  num_chains <- dim(obj@stan_samples$draws("L_full"))[2]
+  if(obj@use_vb) use_chain <- 1
+  
+  num_chains <- dim(as_draws_array(obj@stan_samples$draws("L_full")))[2]
   
   if(is.null(use_chain)) {
     
@@ -3356,12 +3359,12 @@ return(as.vector(idx))
     
     # needs to be in the same format, varying in T then person
       
-      all_time <- obj@stan_samples$draws("L_tp1")[,use_chain,] %>% as_draws_matrix()
+      all_time <- as_draws_array(obj@stan_samples$draws("L_tp1"))[,use_chain,] %>% as_draws_matrix()
     
   } else {
     
     if(obj@time_proc!=5) 
-      L_tp1_var <- obj@stan_samples$draws("L_tp1_var")[,use_chain,] %>% as_draws_matrix()
+      L_tp1_var <- as_draws_array(obj@stan_samples$draws("L_tp1_var"))[,use_chain,] %>% as_draws_matrix()
     
     rebuilt <- TRUE
     
@@ -3369,15 +3372,15 @@ return(as.vector(idx))
     if(obj@time_proc==2 && length(unique(obj@score_data@score_matrix$time_id))<obj@time_center_cutoff) {
       
         
-        L_full <- obj@stan_samples$draws("L_full")[,use_chain,] %>% as_draws_matrix()
+        L_full <- as_draws_array(obj@stan_samples$draws("L_full"))[,use_chain,] %>% as_draws_matrix()
         
         if(obj@restrict_var) {
           
-          time_var_free <- obj@stan_samples$draws("time_var_full")[,use_chain,] %>% as_draws_matrix()
+          time_var_free <- as_draws_array(obj@stan_samples$draws("time_var_full"))[,use_chain,] %>% as_draws_matrix()
           
         } else {
           
-          time_var_free <- obj@stan_samples$draws("time_var_free")[,use_chain,] %>% as_draws_matrix()
+          time_var_free <- as_draws_array(obj@stan_samples$draws("time_var_free"))[,use_chain,] %>% as_draws_matrix()
           
         }
       
@@ -3528,11 +3531,11 @@ return(as.vector(idx))
       
     } else if(obj@time_proc==3  && length(unique(obj@score_data@score_matrix$time_id))<obj@time_center_cutoff) {
         
-        L_full <- obj@stan_samples$draws("L_full")[,use_chain,] %>% as_draws_matrix()
+        L_full <- as_draws_array(obj@stan_samples$draws("L_full"))[,use_chain,] %>% as_draws_matrix()
         
-        time_var_free <- obj@stan_samples$draws("time_var_free")[,use_chain,] %>% as_draws_matrix()
+        time_var_free <- as_draws_array(obj@stan_samples$draws("time_var_free"))[,use_chain,] %>% as_draws_matrix()
         
-        L_AR1 <- obj@stan_samples$draws("L_AR1")[,use_chain,] %>% as_draws_matrix()
+        L_AR1 <- as_draws_array(obj@stan_samples$draws("L_AR1"))[,use_chain,] %>% as_draws_matrix()
         
       #make a grid, time varying fastest
       
@@ -3691,13 +3694,13 @@ return(as.vector(idx))
       
     } else if(obj@time_proc==5) { 
       
-      L_full <- obj@stan_samples$draws("L_full")[,use_chain,] %>% as_draws_matrix()
+      L_full <- as_draws_array(obj@stan_samples$draws("L_full"))[,use_chain,] %>% as_draws_matrix()
       
-      time_var_free <- obj@stan_samples$draws("time_var_free")[,use_chain,] %>% as_draws_matrix()
+      time_var_free <- as_draws_array(obj@stan_samples$draws("time_var_free"))[,use_chain,] %>% as_draws_matrix()
       
       stan_data <- obj@this_data
       
-      a_raw <- obj@stan_samples$draws("a_raw")[,use_chain,] %>% tidybayes::spread_draws(a_raw[ll,basis])
+      a_raw <- as_draws_array(obj@stan_samples$draws("a_raw"))[,use_chain,] %>% tidybayes::spread_draws(a_raw[ll,basis])
       B <- stan_data$B
       time_ind <- stan_data$time_ind
       
@@ -3733,7 +3736,7 @@ return(as.vector(idx))
       
       rebuilt <- FALSE
       
-      all_time <- obj@stan_samples$draws("L_tp1_var") %>% as_draws_matrix()
+      all_time <- as_draws_array(obj@stan_samples$draws("L_tp1_var")) %>% as_draws_matrix()
       
       time_grid <- expand.grid(1:length(unique(obj@score_data@score_matrix$time_id)),
                                unique(as.numeric(obj@score_data@score_matrix$person_id)))
@@ -3771,7 +3774,7 @@ return(as.vector(idx))
       
     }
     
-    b <- obj@stan_samples$draws("legis_x")[,use_chain,] %>% as_draws_matrix()
+    b <- as_draws_array(obj@stan_samples$draws("legis_x"))[,use_chain,] %>% as_draws_matrix()
     
     # loop over draws d for memory efficiency
     

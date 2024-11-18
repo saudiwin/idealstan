@@ -92,16 +92,17 @@ One problem with time-varying models is that they introduce additional identific
 
 del_est <- id_estimate(delaware_data,
                 model_type = 1,
-                fixtype='prefix',
-                nchains = 2,
-                ncores = 16,time_var = 10,
-                restrict_var = F,
+                fixtype='prefix',const_type="items",
+                nchains = 2,use_vb = T,
+                ncores = 8,
                 vary_ideal_pts='random_walk',
-                 restrict_ind_high = "Brady, David 13",
-                 restrict_ind_low="Blakey, Donald 9",
+                 restrict_ind_high = 305,
+                 restrict_ind_low=	276,
             seed=84520,
             id_refresh=0)
 ```
+
+It is important to note that the warnings about importance resampling and the approximation do matter and a run with the Hamiltonian Markov Chain sampler should be used before final inferences by setting `use_vb=TRUE`. The approximation is only useful for exploratory model development. 
 
 Given the fitted model, we can now plot the ideal points. We will turn off the option for showing the uncertainty interval as there are a lot of lines, one for each legislator:
 
@@ -116,31 +117,7 @@ id_plot_legis_dyn(del_est,use_ci = T) +
 
 This plot does now show very much that is particularly interesting. Most of the ideal points are not changing over time, although it is important to note that polarization is increasing over time--both within parties and between parties as some legislators move to the extremes. 
 
-It is important to note that not all the parameters in this model converged per their Rhat values. Many of the non-converged parameters are discrimination parameters for bills, implying that there are bills that have unanimous votes (or few dissenters). It is not wrong per se to leave these bills in, and it does not hurt convergence for legislators, but the model can only converge if there is sufficient data and/or priors to estimate only one mode per parameter. An alternative would be to use items (bills) as identification restrictions rather than legislators/persons.
-
-What is important is that the sampler itself reported no issues, such as divergent transitions or reaching maximum treedepth. If it does so, that is a sign that the model is not fitting correctly, and needs to be diagnosed--or at least get an idea of why it is happening. 
-
-<!-- However, we can also change the model's parameters to induce more change over time. By default, `idealstan` restricts the over-time change in ideal points to have an SD of no more than .1. Restricting the variance this low helps with identification, however, it also prevents the ideal points from changing too much, such as switching signs from one time point to the next. We can relax that parameter and see if we get slightly more variation by increasing the `restrict_var_high` option have an SD of .5: -->
-
-<!-- ```{r more_rw_var,fig.height=8} -->
-<!-- del_est_rw2 <- id_estimate(delaware_data, -->
-<!--                 model_type = 2, -->
-<!--                 fixtype='prefix', -->
-<!--                 nchains=2, -->
-<!--                 ncores=16, -->
-<!--                 vary_ideal_pts='random_walk', -->
-<!--                  restrict_ind_high = "Brady, David 13", -->
-<!--                  restrict_ind_low="Blakey, Donald 9", -->
-<!--             seed=84520, -->
-<!--             refresh=0) -->
-
-<!-- id_plot_legis_dyn(del_est_rw2,use_ci = F) + ggtitle('Time-Varying Ideal Points of Delaware State Legislature',subtitle='Ideal Points Vary with Random-Walk Process') + -->
-<!--   scale_color_manual(values=c(R='red', -->
-<!--                               D='blue', -->
-<!--                               X='green')) -->
-<!-- ``` -->
-
-<!-- Now we can see a lot more movement, especially among Democrats, some of whom over the course of their careers moved from the liberal to conservative side of the ideal point spectrum.  -->
+<!-- It is important to note that not all the parameters in this model converged per their Rhat values. Many of the non-converged parameters are discrimination parameters for bills, implying that there are bills that have unanimous votes (or few dissenters). It is not wrong per se to leave these bills in, and it does not hurt convergence for legislators, but the model can only converge if there is sufficient data and/or priors to estimate only one mode per parameter. An alternative would be to use items (bills) as identification restrictions rather than legislators/persons. -->
 
 We can also look at the variance of the ideal points to see which of the legislators had the highest variance in their ideal points:
 
@@ -159,20 +136,20 @@ knitr::kable(head(out_d$plot_data))
 ```
 
 
-## Stationary Model
+## Spline Model
 
-We now fit a stationary version of the model by passing `'AR1'` to `vary_ideal_pts`. By default, this model does not put a hard upper limit on the over-time variance, but rather puts a tight prior on over-time variance that biases the variances to zero. We will put a hard upper limit as there are some legislators that move across the entire ideal point space, and we don't want oscillation to occur--i.e, a legislator bouncing from one side of the ideal point spectrum to another every time point. While this behavior is entire possible within the model's assumptions, it is unrealistic in the domain we are studying--legislative behavior. For that reason I put a hard `.05` limit on the variance, however, even with this constraint, there is still some oscillation in ideal points:
+We now fit a form of splines for the legislator trajectories by passing `'splines'` to `vary_ideal_pts`. This model has two main control parameters - `spline_degree` and `spline_knots`. The first is equal to the number of polynomial coefficients or "bends" in the time series -- for a value of 2 the model is quadratic, with 3 it is a sigmoid (three bends), with 4 there is an additional possible bend in the time series, and so on. We will fit a restrictive time-varying model with 0 knots (equivalent to a single polynomial function) and only 2 degrees for the polynomial function:
 
 
 ```{r ar1_1,fig.height=8}
 del_est_ar1 <- id_estimate(delaware_data,
                 model_type = 1,
-                fixtype='prefix',
+                fixtype='prefix',const_type="items",
                 nchains=2,
-                ncores=16,
-                vary_ideal_pts='AR1',time_var=10,
-                 restrict_ind_high = "Brady, David 13",
-                 restrict_ind_low="Blakey, Donald 9",
+                ncores=8,spline_knots = NULL,spline_degree = 2,
+                vary_ideal_pts='splines',use_vb=TRUE,
+                 restrict_ind_high = 305,
+                 restrict_ind_low=276,
             seed=84520)
 
 id_plot_legis_dyn(del_est_ar1,use_ci = F) +

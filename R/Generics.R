@@ -465,7 +465,7 @@ setMethod('sample_model',signature(object='idealdata'),
             
             outobj@summary <- to_sum
             
-            outobj@diagnostics <- out_model$sampler_diagnostics()
+            if(!use_vb) outobj@diagnostics <- out_model$sampler_diagnostics()
             
             outobj@stan_samples <- out_model
             
