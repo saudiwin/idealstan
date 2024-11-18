@@ -21,7 +21,7 @@
 \arguments{
 \item{object}{A fitted \code{idealstan} object}
 
-\item{draws}{The number of draws to use from the total number of posterior draws (default is 100).
+\item{draws}{The number of draws to use from the total number of posterior draws (default is 100). Set to "all" to use all draws in the chains.
 For reproducibility, you can also pass a vector of specific draws to use.}
 
 \item{output}{If the model has an unbounded outcome (Poisson, continuous, etc.), then

@@ -1,8 +1,8 @@
 Package: idealstan
 Type: Package
 Title: Generalized IRT Ideal Point Models with 'Stan'
-Version: 0.99
-Date: 2021-12-26
+Version: 0.99.1
+Date: 2024-11-18
 Authors@R: c(person("Robert","Kubinec", role = c("aut","cre"),
                      email = "rmk7@nyu.edu"),
               person("Jonah", "Gabry", role = "ctb"),

@@ -12,9 +12,10 @@ vignette: >
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE,warning=FALSE,fig.align = 'center',fig.width=6, fig.height=5)
-require(idealstan)
-require(dplyr)
-require(ggplot2)
+library(idealstan)
+library(dplyr)
+library(ggplot2)
+library(tidyr)
 ```
 
 *Note: To report bugs with the package, please file an issue on the [Github page](https://github.com/saudiwin/idealstan/issues).*
@@ -60,7 +61,7 @@ This vignette demonstrates basic usage of the package. I first show some crucial
 
 To use `idealstan`, you first have to have both `cmdstanr`, an R package, installed and `cmdstan`, the underlying MCMC library. Unfortunately, `cmdstanr` is not yet available on CRAN, but you can read complete installation instructions on this page: https://mc-stan.org/cmdstanr/articles/cmdstanr.html.
 
-Assuming you install `cmdstan` using the functions provided in the package, please allow it to install in the default location. Otherwise you wil always have to pass the path of the `cmdstan` installation to `id_estimate`. 
+Assuming you install `cmdstan` using the functions provided in the package, please allow it to install in the default location. Otherwise you will always have to pass the path of the `cmdstan` installation to `id_estimate`. 
 
 
 ## Simulation of Ordinal IRT with Missing Data
@@ -108,7 +109,7 @@ id_plot_legis(ord_ideal_est,show_true = TRUE)
 
 Given the small amount of data used to estimate the model, the imprecision with which the ideal points were recovered is not surprising.
 
-To automatically identify the model, simply change the `fixtype` option to `'vb_full'`. By default, the model will select the highest and lowest ideal points to constrain by running an approximation to the full posterior using `cmdstanr`'s `variational()` function. While this method works, the exact rotation is not known a priori, and so it may produce a different result with multiple runs.
+To automatically identify the model, simply change the `fixtype` option to `'vb_full'`. By default, the model will select the highest and lowest ideal points to constrain by running an approximation to the full posterior using `cmdstanr`'s `pathfinder()` function. While this method works, the exact rotation is not known a priori, and so it may produce a different result with multiple runs. Note that there will be two `pathfinder` runs as the first run identifies the parameters to constrain and the second is used to create starting values for the Hamiltonian Monte Carlo estimation. 
 
 For example, using our simulated data and identifying the model automatically with `'vb_full'`:
 
@@ -124,10 +125,10 @@ We can see from the plot of the Rhats, which is an MCMC convergence diagnostic, 
 
 ```{r rhats}
 id_plot_rhats(ord_ideal_est)
-id_plot_legis(ord_ideal_est)
+id_plot_legis(ord_ideal_est,show_true = T)
 ```
 
-In general, it is always a good idea to check the Rhats before proceeding with further analysis. Identification of time-varying ideal point models can be more complicated and is discussed in the accompanying vignette.
+In general, it is always a good idea to check the Rhats before proceeding with further analysis. Identification of time-varying ideal point models can be more complicated and is discussed in the accompanying vignette. As can be seen above, while the Pathfinder algorithm can identify a mode, it may not be the mode that is theoretically interesting.
 
 # Empirical Example: U.S. Senate
 
@@ -311,13 +312,16 @@ As discussed in the associated working paper (https://osf.io/preprints/osf/8j2bt
                       age = age + eps / 2)
   
   # now predict new outcome distributions given these slightly different datasets
+  # use draws="all" to avoid comparing different draws to each other
   
   sen_mod_pred1 <- id_post_pred(sen_est_cov,newdata=new_data1,
                                  use_cores=4,
+                                draws="all",
                                  type="epred")
     
   sen_mod_pred2 <- id_post_pred(sen_est_cov,newdata=new_data2,
                                  use_cores=4,
+                                draws="all",
                                  type="epred")
   
   # now we need to difference the datasets at the item level to calculate the effects
@@ -334,7 +338,7 @@ As discussed in the associated working paper (https://osf.io/preprints/osf/8j2bt
                       
                       # difference the effects
                       
-                      (big - small) / eps
+                      (big - small)/eps
                       
                     })
   
@@ -368,7 +372,8 @@ As discussed in the associated working paper (https://osf.io/preprints/osf/8j2bt
   c2 <- left_join(c2, to_merge, 
                   by=c("item_id","person_id"))
   
-  # get effect separately by democrats/republicans
+  # get effect separately by each item and party
+  # first have to aggregate to party level by draw, then take average by item
   
    by_party <- group_by(c2, draws, group_id, item_id, item_orig) %>% 
     summarize(mean_est1=mean(estimate)) %>% 
@@ -396,13 +401,13 @@ As discussed in the associated working paper (https://osf.io/preprints/osf/8j2bt
     geom_linerange(aes(ymin=low_est,
                        ymax=high_est,
                        colour=`median`)) +
-    facet_wrap(~group_id) +
+    facet_wrap(~group_id,scales="free_x") +
     ggthemes::theme_tufte() + 
     scale_colour_viridis_c(name="Discrimination") +
     coord_flip() +
     labs(y="Marginal Change in Probability of Voting",
          x="Rollcalls",
-         caption="Marginal effect of unemployment on voting on a specific rollcall in the Senate.") +
+         caption="Marginal effect of age on voting on a specific rollcall in the Senate.") +
     geom_hline(yintercept=0,linetype=2) +
     ggthemes::theme_clean() +
     theme(axis.text.y=element_blank(),
@@ -413,26 +418,7 @@ As discussed in the associated working paper (https://osf.io/preprints/osf/8j2bt
 
 
 
-
-Because of the scale of the plot, it can be difficult to see the values for the age interaction. However, because the plot is a `ggplot` object, we can restrict the x axis (we put the limits on the y axis to modify the x axis because the plot is flipped):
-
-```{r cov_plot_small}
-# id_plot_cov(sen_est_cov,cov_type='person_cov',pred_outcome = "Yes") + ylim(c(-0.02,0.02)) +
-#   ggtitle("Conditional Marginal Effect of Age on Senator's Vote Choices")
-```
-
-Or we can filter which parameters we want to exclude from the plot to focus on a few specific interaction effects:
-
-```{r cov_plot_filter}
-# id_plot_cov(sen_est_cov,cov_type='person_cov',
-#             filter_cov=c('age','party_codeI:age','party_codeI','(Intercept)'),
-#             pred_outcome="Yes") + 
-#   ggtitle("Conditional Marginal Effect of Age on Senator's Vote Choices")
-```
-
-Because these covariates are on the ideal point scale, the meaning of the scale in terms of party ideology must be kept in mind in order to interpret the plot. First, because we only have estimates for the "I" and "R" values of `party_code`, we know that the Democrats "D" are being used as the reference value. As a consequence, the coefficient for `age` is equal to the effect of age for Democrats (i.e., when the person is neither Republican or Independent). As a result, the way to interpret these plots is that for both Democrats and Republicans, increasing age is associated with voting for bills that are more conservative if they are Republican or more liberal if they are Democrat. In other words, younger party members show stronger ideological affiliation in terms of conservative or liberal bills (or perhaps party unity). Keeping the direction of the scale in mind is crucial for understanding hierarchical covariates in ideal point models.
-
-Of course, because this model was fit with variational inference (`use_vb=T`), the results are an approximation. It would be good to run full Bayesian inference to obtain final estimates. 
+Because these covariates are on the ideal point scale, the meaning of the scale in terms of party ideology must be kept in mind in order to interpret the plot. The way to interpret these plots is that for Republicans, increasing age is associated with voting for bills that are more conservative, while for Democrats, the opposite is true. In other words, older party members tend to vote for bills that are ideologically more extreme than younger party members, though the relationship is strongest for Republicans vs. others. Keeping the direction of the scale in mind is crucial for understanding hierarchical covariates in ideal point models.
 
 We can also extract the covariate summary values using the `summary` function:
 

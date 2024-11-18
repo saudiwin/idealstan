@@ -532,6 +532,8 @@ id_make <- function(score_data=NULL,
 #'   \item Positive-unbounded (Log-normal) IRT ideal point model with missing-data inflation
 #'   \item Latent Space (binary response) ideal point model with no missing data
 #'   \item Latent Space (binary response) ideal point model with missing-data inflation
+#'   \item Ordered Beta (proportion/percentage) with no missing data
+#'   \item Ordered Beta (proportion/percentage) with missing-data inflation
 #' }
 #' 
 #' @section Time-Varying Inferece
@@ -713,9 +715,9 @@ id_make <- function(score_data=NULL,
 #' of a legislator/person or bill/item to pin to a high value (default +1).
 #' @param restrict_ind_low If \code{fixtype} is not "vb_full", a vector of character values or integer indices of a 
 #' legislator/person or bill/item to pin to a low value (default -1). 
-#' @param num_fix_high If using variational inference for identification (\code{fixtype="vb_full"}),
+#' @param num_restrict_high If using variational inference for identification (\code{fixtype="vb_full"}),
 #' how many parameters to constraint to positive values? Default is 1.
-#' @param num_fix_low If using variational inference for identification (\code{ixtype="vb_full"}),
+#' @param num_restrict_low If using variational inference for identification (\code{ixtype="vb_full"}),
 #' how many parameters to constraint to positive negative values? Default is 1.
 #' @param fix_high The value that the high fixed ideal point(s) should be
 #' fixed to. Default is +1. Does not apply when \code{const_type="items"}; in that case,
@@ -799,8 +801,6 @@ id_make <- function(score_data=NULL,
 #' @param cmdstan_path_user Default is NULL, and so will default to whatever is set in
 #' \code{cmdstanr} package. Specify a file path  here to use a different \code{cmdtstan}
 #' installation.
-#' @param gpu Whether a GPU is available to speed computation (primarily for GP 
-#' time-varying models).
 #' @param save_files The location to save CSV files with MCMC draws from \code{cmdstanr}. 
 #' The default is \code{NULL}, which will use a folder in the package directory.
 #' @param het_var Whether to use a separate variance parameter for each item if using
@@ -916,8 +916,8 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                         fix_high=1,
                         fix_low=(-1),
                         restrict_ind_low=NULL,
-                        num_fix_high=1,
-                        num_fix_low=1,
+                        num_restrict_high=1,
+                        num_restrict_low=1,
                         fixtype='prefix',
                         const_type="persons",
                         id_refresh=0,
@@ -955,7 +955,6 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                         gp_m_sd_par=0.3,
                         gp_min_length=0,
                         cmdstan_path_user=NULL,
-                        #gpu=FALSE,
                         map_over_id="persons",
                         save_files=NULL,
                         het_var=TRUE,
@@ -983,9 +982,6 @@ id_estimate <- function(idealdata=NULL,model_type=2,
     print("Check out https://www.unicef.org/emergencies/yemen-crisis for more info.")
   }
   
-  stan_code <- system.file("stan_files","irt_pathfinder.stan",
-                           package="idealstan")
-  
   stan_code_map <- system.file("stan_files","irt_standard_map.stan",
                                package="idealstan")
   
@@ -999,10 +995,6 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     cpp_options = list(stan_threads = !debug,
                                        STAN_CPP_OPTIMS=TRUE),
                     force_recompile=debug)
-    
-    # for pathfinder
-    
-    # stan_code_compiled <- cmdstan_model(stan_code)
     
     # idealdata@stanmodel_gpu <- stan_code_gpu %>%
     #   cmdstan_model(include_paths=dirname(stan_code_map),
@@ -1021,8 +1013,6 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                     force_recompile=debug)
     
     # for pathfinder
-    
-    #stan_code_compiled <- cmdstan_model(stan_code)
     
     # idealdata@stanmodel_gpu <- stan_code_gpu %>%
     #   cmdstan_model(include_paths=dirname(stan_code_map),
@@ -1074,6 +1064,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                          spline_knots=spline_knots,
                          spline_degree=spline_degree,
                          ar1_up=ar1_up,
+                         ncores=ncores,
                          ar1_down=ar1_down,
                          boundary_prior=boundary_prior,
                          time_center_cutoff=time_center_cutoff,
@@ -1086,7 +1077,6 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                          restrict_sd_low=restrict_sd_low,
                          restrict_N_high=restrict_N_high,
                          restrict_N_low=restrict_N_low,
-                         tol_rel_obj=tol_rel_obj,
                          gp_sd_par=gp_sd_par,
                          gp_num_diff=gp_num_diff,
                          gp_m_sd_par=gp_m_sd_par,
@@ -1094,8 +1084,8 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                          map_over_id=map_over_id,
                          het_var=het_var, 
                          debug_mode=debug_mode,
-                         num_fix_high=num_fix_high,
-                         num_fix_low=num_fix_low)
+                         num_restrict_high=num_restrict_high,
+                         num_restrict_low=num_restrict_low)
   
   all_data <- do.call(.make_stan_data,eval_data_args)
   
@@ -1113,13 +1103,10 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   
   outobj <- sample_model(object=idealdata,nchains=nchains,niters=niters,warmup=warmup,ncores=ncores,
                          this_data=this_data,use_vb=use_vb,
-                         #gpu=gpu,
                          save_files=save_files,
                          keep_param=keep_param,
-                         tol_rel_obj=tol_rel_obj,within_chain=within_chain,
+                         within_chain=within_chain,
                          init_pathfinder=init_pathfinder,
-                         num_pathfinder_paths=num_pathfinder_paths,
-                         #pathfinder_object=stan_code_compiled,
                          ...)
   
   outobj@model_type <- model_type

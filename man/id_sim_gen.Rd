@@ -7,6 +7,7 @@
 id_sim_gen(
   num_person = 20,
   num_items = 50,
+  cov_effect = NULL,
   model_type = "binary",
   latent_space = FALSE,
   absence_discrim_sd = 3,
@@ -34,6 +35,11 @@ id_sim_gen(
 \item{num_person}{The number of persons/persons}
 
 \item{num_items}{The number of items (bills in the canonical ideal point model)}
+
+\item{cov_effect}{The effect of a hierarchical/external covariate on the person
+ideal points. The covariate will be a uniformly-distributed random variable on the
+[0,1] scale, so covariate effects in the [-2,2] approximate range would result in 
+noticeable effects on the ideal point scale.}
 
 \item{model_type}{One of \code{'binary'}, \code{'ordinal_rating'}, \code{'ordinal_grm'}, \code{'poisson'}
 \code{'normal'}, or \code{'lognormal'}}

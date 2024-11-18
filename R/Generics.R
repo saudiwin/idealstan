@@ -164,16 +164,14 @@ setMethod('sample_model',signature(object='idealdata'),
                    keep_param=NULL,
                    save_files=NULL,
                    init_pathfinder=TRUE,
-                   num_pathfinder_paths=NULL,
-                   #pathfinder_object=NULL,
-                   tol_rel_obj=NULL,...) {
+                   ...) {
             
             # need init values for pathfinder & other algos that work
             
             init_vals <- lapply(1:nchains,.init_stan,
                                 this_data=this_data)
 
-            init_vals_orig <- lapply(1:num_pathfinder_paths,.init_stan,
+            init_vals_orig <- lapply(1:nchains,.init_stan,
                                      this_data=this_data)
             
             if(init_pathfinder) {
@@ -414,7 +412,7 @@ setMethod('sample_model',signature(object='idealdata'),
                                                            ...))
                   if('try-error' %in% class(out_model)) {
                     
-                    print("Finding initialization with pathfinder/laplace failed, using random inits on (-2,2). You might have better luck with pathfinder if you increase the number of paths with the num_pathfinder_paths parameter (default is 4, try doubling it).")
+                    print("Finding initialization with pathfinder/laplace failed, using random inits on (-2,2).")
                     
                     out_model <- try(object@stanmodel_map$sample(data=this_data,chains=nchains,iter_sampling=niters,
                                                                  parallel_chains=nchains,
@@ -481,8 +479,7 @@ setGeneric('id_model',
            function(object,...) standardGeneric('id_model'))
 
 setMethod('id_model',signature(object='idealdata'),
-          function(object,fixtype='vb',model_type=NULL,this_data=NULL,nfix=10,
-                   tol_rel_obj=NULL,
+          function(object,fixtype='vb',model_type=NULL,this_data=NULL,
                    restrict_ind_high=NULL,
                    restrict_ind_low=NULL,
                    num_restrict_high=NULL,
