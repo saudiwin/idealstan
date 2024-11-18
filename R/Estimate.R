@@ -544,30 +544,24 @@ id_make <- function(score_data=NULL,
 #' move in a random direction. If \code{vary_ideal_pts} is set to \code{'AR1'}, a stationary ideal point model 
 #' is estimated where ideal points fluctuate around long-term mean. If \code{vary_ideal_pts} 
 #' is set to \code{'GP'}, then a semi-parametric Gaussian process time-series prior will be put
-#' around the ideal points. Please see the package vignette and associated paper for more detail
-#' about these time-varying models. Both the \code{'AR1'} and \code{'GP'} models can also 
-#' accept time-varying covariates.
+#' around the ideal points. If \code{vary_ideal_pts} 
+#' is set to \code{'splines'}, then the ideal point trajectories will be a basis spline defined by the parameters \code{spline_knots} and \code{spline_degree}. 
+#' Please see the package vignette and associated paper for more detail
+#' about these time-varying models.
 #' 
 #' @section Missing Data
 #' 
 #' The inflation model used to account for missing data assumes that missingness is a 
 #' function of the persons' (legislators')
 #' ideal points. In other words,the model will take into account if people with high or low ideal points
-#' tend to have more/less missing data on a specific item/bill. Missing data is whatever was 
-#' passed as \code{miss_val} to the \code{\link{id_make}} function. 
+#' tend to have more/less missing data on a specific item/bill. Missing data should be coded
+#' as \code{NA} when it is passed to the \link{id_make} function.
 #' If there isn't any relationship
 #' between missing data and ideal points, then the model assumes that the missingness is ignorable 
 #' conditional on each
 #' item, but it will still adjust the results to reflect these ignorable (random) missing
 #' values. The inflation is designed to be general enough to handle a wide array of potential
 #' situations where strategic social choices make missing data important to take into account.
-#' 
-#' The missing data is assumed to be any possible value of the outcome. The well-known 
-#' zero-inflated Poisson model is a special case where missing values are known to be all zeroes. 
-#' To fit a zero-inflated Poisson model, change \code{inflate_zeroes} to \code{TRUE} and also 
-#' make sure to set the value for zero as \code{miss_val} in the \code{\link{id_make}} function.
-#' This will only work for outcomes that are distributed as Poisson variables (i.e., 
-#' unbounded integers or counts).
 #' 
 #' To leave missing data out of the model, simply choose a version of the model in the list above
 #' that is non-inflated.
