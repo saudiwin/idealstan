@@ -90,7 +90,7 @@ zero must be passed as the \code{miss_val} option to \code{\link{id_make}} befor
 running a model so that zeroes are coded as missing data.}
 
 \item{vary_ideal_pts}{Default \code{'none'}. If \code{'random_walk'}, \code{'AR1'}, 
-\code{'GP'}, or \code{'spline'}, a 
+\code{'GP'}, or \code{'splines'}, a 
 time-varying ideal point model will be fit with either a random-walk process, an 
 AR1 process, a Gaussian process or a spline. 
 Note that the spline is the easiest time-varying model to fit so long as the number

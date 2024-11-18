@@ -142,7 +142,7 @@ We now fit a form of splines for the legislator trajectories by passing `'spline
 
 
 ```{r ar1_1,fig.height=8}
-del_est_ar1 <- id_estimate(delaware_data,
+del_est_spline <- id_estimate(delaware_data,
                 model_type = 1,
                 fixtype='prefix',const_type="items",
                 nchains=2,
@@ -152,26 +152,20 @@ del_est_ar1 <- id_estimate(delaware_data,
                  restrict_ind_low=276,
             seed=84520)
 
-id_plot_legis_dyn(del_est_ar1,use_ci = F) +
+id_plot_legis_dyn(del_est_spline,use_ci = F) +
   scale_color_manual(values=c(R='red',
                               D='blue',
                               X='green'))
 ```
 
-While most of the ideal points are relatively stationary, a handful oscillate across the ideal point spectrum, likely a sign of limited information about the true location of their ideal points. We could further crank down the variance to prevent oscillation, but I left this plot in as an illustration of when model-fitting produces a model that doesn't work for all legislators. This model could still work, though, if the sole purpose was to test the effect of covariates.
+These ideal points are similar to the random walk estimates and show the limited variation possible in a 2-degree polynomial function (essentially a quadratic function). For one session, this model would appear adequate at capturing monthly changes in legislator trajectories.
 
 Finally, we can also examine the individual ideal points by each time point using the summary function:
 
 ```{r sum_ideal_pt}
-summary(del_est_ar1,pars='ideal_pts') %>% 
+summary(del_est_spline,pars='ideal_pts') %>% 
   head %>% 
   knitr::kable(.)
-```
-
-To examine trace plots of the actual MCMC sampling, we can use the `stan_plot` function to look at posterior sampling for the first time point for Lamar Alexander based on the value shown in `Parameter Name` in the table above:
-
-```{r mcmc_stan}
-stan_trace(del_est_ar1,'L_tp1_var[1,1]')
 ```
 
 ## Group-level Time-varying Ideal Points
@@ -180,14 +174,12 @@ Finally, we can also change the model's parameters to look at group-level, i.e. 
 
 ```{r stationary_groups}
 del_est_rw3 <- id_estimate(delaware_data,
-                model_type = 1,
-                use_groups=T,
-                fixtype='prefix',
-                nchains=2,time_var = 10,
-                ncores=16,
+                fixtype='prefix',const_type="items",
+                nchains=2,use_groups = T,
+                ncores=8,use_vb=TRUE,
+                 restrict_ind_high = 305,
+                 restrict_ind_low=276,
                 vary_ideal_pts='random_walk',
-                 restrict_ind_high = "D",
-                 restrict_ind_low="R",
             seed=84520)
 id_plot_legis_dyn(del_est_rw3,
                   include=c('D','R')) + scale_colour_manual(values=c(R='red',
@@ -219,47 +211,29 @@ id_plot_legis_dyn(del_est_rw3,item_plot='342',
 
 As this plot shows, the line of indifference is very close to the Republican party, implying that the vote split the Republican party while Democrats voted as a bloc. Empirically that is very close to the observed votes; all 27 Democrats voted to confirm the judge while 7 out of 6 Republicans did so.
 
-I will now estimate additional AR(1) and a Gaussian process model to use as comparison points to the random-walk model for parties:
+I will now estimate an additional Gaussian process model to use as comparison points to the random-walk model for parties:
 
 ```{r ar1_and_gp}
-del_est_ar2 <- id_estimate(delaware_data,
-                model_type = 1,
-                use_groups = T,
-                fixtype='prefix',
-                nchains=2,time_var=10,
-                ncores=16,
-                vary_ideal_pts='AR1',
-                 restrict_ind_high = "D",
-                 restrict_ind_low="R",
-            seed=84520)
-
 del_est_gp1 <- id_estimate(delaware_data,
-                           model_type = 1,
-                           use_groups = T,
-                           fixtype='prefix',
-                           nchains=2,
-                           ncores=16,
-                           niters = 500,
-                           vary_ideal_pts='GP',
-                           restrict_ind_high = "D",
-                           restrict_ind_low="R",
-                            seed=84520)
+                fixtype='prefix',const_type="items",
+                nchains=2,use_groups=T,
+                ncores=8,use_vb=TRUE,
+                 restrict_ind_high = 305,
+                 restrict_ind_low=276,
+                vary_ideal_pts='GP',
+            seed=84520)
 ```
 
-We can the use an option in the `id_plot_legis_dyn` function to pass in all three models as a list to see how they compare to each other over the same groups:
+We can then examine the distributions for both models as plots:
 
 ```{r compare_mods}
-id_plot_legis_dyn(list(RW=del_est_rw3,
-                       AR1=del_est_ar2,
-                       GP=del_est_gp1),
-                  include=c('D','R'))
+id_plot_legis_dyn(del_est_rw3,include=c('D','R'))
+id_plot_legis_dyn(del_est_gp1,include=c('D','R'))
 ```
 
-This plot shows that are substantial divergences between the different models (each plot is faceted by `group_id`). Broadly speaking, the random-walk and GP models are close to each other, as we might expect given that both models impose relatively little structure on the time series. The GP/AR1 models show a lot more bounce over time relative to the random walk model. For these models, we may want to either reduce the prior on the over-time variances (`time_var`) for the AR1 model or for the GP model fiddle with the parameters that control over-time bounciness (see below).
+This plot shows that are substantial divergences between the different models (each plot is faceted by `group_id`). The GP model shows a lot more bounce over time relative to the random walk model, which is implausible given the latent trait we are trying to estimate is legislator ideology. In this case, we should prefer simpler models, such as random walks or splines, to estimate a more slowly-changing latent variable. Estimation with HMC rather than the variational approximation could also help.
 
-The GP model has several parameters that control the ability of the time series to wiggle or adjust to over-time change in the ideal points. These parameters are given defaults that restrict movement in the ideal points to help ensure identification. As such, they tend to be fairly conservative, and can be adjusted to see if the ideal points can handle greater variation. 
-
-The advantage of the GP model is that it combines the relatively minimalistic structure of the random walk with the ability to fit covariates on the time series. I refer the reader to the covariate vignette for more information about how to fit covariate models using `idealstan`. It is important to note, however, that the GP interpretation of a covariate is different than the AR1 covariate. In an AR1 model, the value of the covariate represents the shift in the long-term mean of the series, whereas in a GP model the covariate is a non-parametric effect of the covariate on the time series averaged over the entire series. These parameters are explained in the table below:
+We could also consider adjusting GP-specific parameters to force a more restrictive fit, though that type of prior adjustment depends on the particular dataset and context. These parameters are given defaults that restrict movement in the ideal points to help ensure identification. As such, they tend to be fairly conservative, but they can be made even more so when necessary. The table below shows these parameters' values.
 
 Table: Parameters in the Gaussian Process Time-Series Model
 
