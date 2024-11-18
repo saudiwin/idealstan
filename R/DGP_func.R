@@ -14,6 +14,8 @@
                     type='simulate',
                     outcome=NULL,
                     latent_space=NULL,
+                    cov_effect=NULL,
+                    person_x=NULL,
                     ...) {
 
   
@@ -70,7 +72,22 @@
                            item_id=item_points,
                            group_id='G')
     
-    out_data <- id_make(score_data=out_data)
+        if(!is.null(cov_effect)) {
+      
+      cov_data <- distinct(out_data,person_id,time_id) %>% 
+        arrange(person_id, time_id) %>% 
+        mutate(person_x=person_x)
+      
+      out_data <- left_join(out_data,
+                            cov_data,by=c("person_id","time_id"))
+      
+      out_data <- id_make(score_data=out_data,person_cov = ~ person_x)
+      
+    } else {
+      
+      out_data <- id_make(score_data=out_data)
+      
+    }
     
     return(out_data) 
   } else if(type=='predict') {
@@ -115,6 +132,8 @@
                     type='simulate',
                     y=NULL,
                     outcome=NULL,
+                    cov_effect=NULL,
+                    person_x=NULL,
                     ...)
 {
   
@@ -189,7 +208,22 @@
                            ordered_id=ordinal_outcomes,
                            group_id='G')
     
-    out_data <- id_make(score_data=out_data)
+    if(!is.null(cov_effect)) {
+      
+      cov_data <- distinct(out_data,person_id,time_id) %>% 
+        arrange(person_id, time_id) %>% 
+        mutate(person_x=person_x)
+      
+      out_data <- left_join(out_data,
+                            cov_data,by=c("person_id","time_id"))
+      
+      out_data <- id_make(score_data=out_data,person_cov = ~ person_x)
+      
+    } else {
+      
+      out_data <- id_make(score_data=out_data)
+      
+    }
     
     return(out_data) 
   } else if(type=='predict') {
@@ -265,6 +299,8 @@
                          cutpoints=NULL,
                          type='simulate',
                          outcome=NULL,
+                         cov_effect=NULL,
+                         person_x=NULL,
                                  ...)
 {
   
@@ -329,7 +365,22 @@
                            item_id=item_points,
                            group_id='G')
     
-    out_data <- id_make(score_data=out_data)
+    if(!is.null(cov_effect)) {
+      
+      cov_data <- distinct(out_data,person_id,time_id) %>% 
+        arrange(person_id, time_id) %>% 
+        mutate(person_x=person_x)
+      
+      out_data <- left_join(out_data,
+                            cov_data,by=c("person_id","time_id"))
+      
+      out_data <- id_make(score_data=out_data,person_cov = ~ person_x)
+      
+    } else {
+      
+      out_data <- id_make(score_data=out_data)
+      
+    }
     
     return(out_data)                      
   } else if(type=='predict') {
@@ -406,6 +457,8 @@
                     type='simulate',
                     output=NULL,
                     outcome=NULL,
+                    cov_effect=NULL,
+                    person_x=NULL,
                     ...)
 {
 
@@ -450,8 +503,26 @@
                            item_id=item_points,
                            group_id='G')
     
-    out_data <- id_make(score_data=out_data,
-                        unbounded=T)
+    if(!is.null(cov_effect)) {
+      
+      cov_data <- distinct(out_data,person_id,time_id) %>% 
+        arrange(person_id, time_id) %>% 
+        mutate(person_x=person_x)
+      
+      out_data <- left_join(out_data,
+                            cov_data,by=c("person_id","time_id"))
+      
+      out_data <- id_make(score_data=out_data,person_cov = ~ person_x,
+                          unbounded=T)
+      
+    } else {
+      
+      out_data <- id_make(score_data=out_data,
+                          unbounded=T)
+      
+    }
+    
+    
     
     return(out_data) 
   } else if(type=='predict') {
@@ -483,6 +554,8 @@
                     type='simulate',
                     output='observed',
                     outcome=NULL,
+                    cov_effect=NULL,
+                    person_x=NULL,
                      ...)
 {
 
@@ -529,8 +602,24 @@
                            item_id=item_points,
                            group_id='G')
     
-    out_data <- id_make(score_data=out_data,
-                        unbounded=T)
+    if(!is.null(cov_effect)) {
+      
+      cov_data <- distinct(out_data,person_id,time_id) %>% 
+        arrange(person_id, time_id) %>% 
+        mutate(person_x=person_x)
+      
+      out_data <- left_join(out_data,
+                            cov_data,by=c("person_id","time_id"))
+      
+      out_data <- id_make(score_data=out_data,person_cov = ~ person_x,
+                          unbounded=T)
+      
+    } else {
+      
+      out_data <- id_make(score_data=out_data,
+                          unbounded=T)
+      
+    }
     
     return(out_data) 
   } else if(type=='predict') {
@@ -562,6 +651,8 @@
                     type='simulate',
                     output='observed',
                     outcome=NULL,
+                    cov_effect=NULL,
+                    person_x=NULL,
                     ...)
 {
   
@@ -606,8 +697,24 @@
                            item_id=item_points,
                            group_id='G')
     
-    out_data <- id_make(score_data=out_data,
-                        unbounded=T)
+    if(!is.null(cov_effect)) {
+      
+      cov_data <- distinct(out_data,person_id,time_id) %>% 
+        arrange(person_id, time_id) %>% 
+        mutate(person_x=person_x)
+      
+      out_data <- left_join(out_data,
+                            cov_data,by=c("person_id","time_id"))
+      
+      out_data <- id_make(score_data=out_data,person_cov = ~ person_x,
+                          unbounded=T)
+      
+    } else {
+      
+      out_data <- id_make(score_data=out_data,
+                          unbounded=T)
+      
+    }
     
     return(out_data) 
   } else if(type=='predict') {

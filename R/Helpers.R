@@ -476,9 +476,10 @@
                         ncores=ncores,
                         tol_rel_obj=tol_rel_obj,
                         use_groups=use_groups,
-                        prior_fit=prior_fit,
                         fix_high=fix_high,
                         fix_low=fix_low,
+                        num_fix_high=num_fix_high,
+                        num_fix_low=num_fix_low,
                         const_type=const_type)
   
   if(("outcome_cont" %in% names(idealdata@score_matrix)) && ("outcome_disc" %in% names(idealdata@score_matrix))) {
@@ -942,7 +943,7 @@ process_init_pathfinder <- function(init, num_procs, model_variables = NULL,
 
 #' @noRd
 .vb_fix <- function(object=NULL,
-                    this_data=NULL,nfix=NULL,
+                    this_data=NULL,
                     ncores=NULL,all_args=NULL,
                     restrict_ind_high=NULL,
                     restrict_ind_low=NULL,
@@ -950,6 +951,8 @@ process_init_pathfinder <- function(init, num_procs, model_variables = NULL,
                     model_type=NULL,
                     use_groups=NULL,
                     const_type=NULL,
+                    num_restrict_high=NULL,
+                    num_restrict_low=NULL,
                     fixtype=NULL,...) {
   
   # collect additional arguments
@@ -958,22 +961,11 @@ process_init_pathfinder <- function(init, num_procs, model_variables = NULL,
   } 
 
   . <- NULL
-  
-  if(this_data$time_proc==4) {
-    tol_rel_obj <- .001
-    eval_elbo <- 100
-  } else {
-    eval_elbo <- 100
-    tol_rel_obj <- .001
-  }
 
-  print("(First Step): Estimating model with variational inference to identify modes to constrain.")
+  print("(First Step): Estimating model with Pathfinder (variational inference) to identify modes to constrain.")
 
-  post_modes <- object@stanmodel_map$variational(data =this_data,
-                          refresh=this_data$id_refresh,
-                          eval_elbo=eval_elbo,threads=1,
-                          tol_rel_obj=tol_rel_obj, # better convergence criterion than default
-                          output_samples=200)
+  post_modes <- object@stanmodel_map$pathfinder(data =this_data,num_threads=ncores,
+                                                num_paths=1,psis_resample=FALSE)
   
   # pull out unidentified parameters
   
@@ -983,10 +975,15 @@ process_init_pathfinder <- function(init, num_procs, model_variables = NULL,
     
     person <- apply(this_params,2,mean)
 
-    restrict_ind_high <- which(person==max(person))[1]
-    restrict_ind_low <- which(person==min(person))[1]
+    restrict_ind_high <- sort(person,index=T,decreasing=T)$ix[1:num_restrict_high]
+    restrict_ind_low <- sort(person,index=T,decreasing=F)$ix[1:num_restrict_low]
     val_high <- person[restrict_ind_high]
     val_low <- person[restrict_ind_low]
+    
+    # also save values to restrict
+    
+    fix_high <- sort(person,decreasing=T)[1:num_restrict_high]
+    fix_low <- sort(person,decreasing=F)[1:num_restrict_high]
     
   } else if(const_type=="items") {
     
@@ -994,8 +991,8 @@ process_init_pathfinder <- function(init, num_procs, model_variables = NULL,
     
     items <- apply(this_params,2,mean)
 
-    restrict_ind_high <- which(items==max(items))[1]
-    restrict_ind_low <- which(items==min(items))[1]
+    restrict_ind_high <- sort(items,index=T,decreasing=T)$ix[1:num_restrict_high]
+    restrict_ind_low <- restrict_ind_low <- sort(items,index=T,decreasing=F)$ix[1:num_restrict_low]
     val_high <- items[restrict_ind_high]
     val_low <- items[restrict_ind_low]
     
@@ -1006,6 +1003,8 @@ process_init_pathfinder <- function(init, num_procs, model_variables = NULL,
   object@restrict_ind_high <- restrict_ind_high
   object@restrict_ind_low <- restrict_ind_low
   object@constraint_type <- const_type
+  object@restrict_num_high <- fix_high
+  object@restrict_num_low <- fix_low
 
   return(object)
 
@@ -3769,6 +3768,14 @@ return(as.vector(idx))
     
     # need to do an adjustment by re-calculating ideal point scores and including hierarchical covariates
     print("Adding in hierarchical covariates values to the time-varying person scores.")
+    
+    if(is.numeric(legis_x) & !is.matrix(legis_x)) {
+      
+      # convert vector to matrix
+      
+      legis_x <- matrix(legis_x, ncol=1)
+      
+    }
     
     b <- obj@stan_samples$draws("legis_x")[,use_chain,] %>% as_draws_matrix()
     

@@ -672,14 +672,11 @@ id_make <- function(score_data=NULL,
 #' column
 #' @param sample_size If \code{sample_it} is \code{TRUE}, this value reflects how many legislators/persons will be sampled from
 #' the response matrix
-#' @param nchains The number of chains to use in Stan's sampler. Minimum is one. See \code{\link[rstan]{stan}} for more info.
+#' @param nchains The number of chains to use in Stan's sampler. Minimum is one. See \code{\link[rstan]{stan}} for more info. If \code{use_vb=TRUE}, this parameter
+#' will determine the number of Pathfinder paths to estimate.
 #' @param niters The number of iterations to run Stan's sampler. Shouldn't be set much lower than 500. See \code{\link[rstan]{stan}} for more info.
-#' @param use_vb Whether or not to use Stan's variational Bayesian inference engine instead of full Bayesian inference. Pros: it's much faster.
-#' Cons: it's not quite as accurate. See \code{\link[rstan]{vb}} for more info.
-#' @param tol_rel_obj If \code{use_vb} is \code{TRUE}, this parameter sets the stopping rule for the \code{vb} algorithm. 
-#' It's default is 0.001. A stricter threshold will require the sampler to run longer but may yield a
-#' better result in a difficult model with highly correlated parameters. Lowering the threshold should work fine for simpler
-#' models.
+#' @param use_vb Whether or not to use Stan's Pathfinder algorithm instead of full Bayesian inference. Pros: it's much faster but can be much less accurate. Note that Pathfinder is 
+#' also used by default for finding initial starting values for sfull HMC sampling.
 #' @param warmup The number of iterations to use to calibrate Stan's sampler on a given model. Shouldn't be less than 100. 
 #' See \code{\link[rstan]{stan}} for more info.
 #' @param ncores The number of cores in your computer to use for parallel processing in the Stan engine. 
@@ -691,10 +688,6 @@ id_make <- function(score_data=NULL,
 #' 'prefix' (two indices of ideal points or items to fix are provided to 
 #' options \code{restrict_ind_high} and \code{restrict_ind_low}).
 #'  See details for more information.
-#' @param prior_fit If a previous \code{idealstan} model was fit \emph{with the same} data, then the same
-#' identification constraints can be recycled from the prior fit if the \code{idealstan} object is passed 
-#' to this option. Note that means that all identification options, like \code{restrict_var}, will also 
-#' be the same
 #' @param prior_only Whether to only sample from priors as opposed to the full model
 #' with likelihood (the default). Useful for doing posterior predictive checks.
 #' @param mpi_export If \code{within_chains="mpi"}, this parameter should refer to the 
@@ -720,10 +713,16 @@ id_make <- function(score_data=NULL,
 #' of a legislator/person or bill/item to pin to a high value (default +1).
 #' @param restrict_ind_low If \code{fixtype} is not "vb_full", a vector of character values or integer indices of a 
 #' legislator/person or bill/item to pin to a low value (default -1). 
-#' @param fix_high The value of which the high fixed ideal point/item(s) should be
-#' fixed to. Default is +1.
-#' @param fix_low The value of which the high fixed ideal point/item(s) should be
-#' fixed to. Default is -1.
+#' @param num_fix_high If using variational inference for identification (\code{fixtype="vb_full"}),
+#' how many parameters to constraint to positive values? Default is 1.
+#' @param num_fix_low If using variational inference for identification (\code{ixtype="vb_full"}),
+#' how many parameters to constraint to positive negative values? Default is 1.
+#' @param fix_high The value that the high fixed ideal point(s) should be
+#' fixed to. Default is +1. Does not apply when \code{const_type="items"}; in that case,
+#' use \code{restrict_sd}/\code{restrict_N} parameters (see below).
+#' @param fix_low The value that the low fixed ideal point(s) should be
+#' fixed to. Default is -1. Does not apply when \code{const_type="items"}; in that case,
+#' use \code{restrict_sd}/\code{restrict_N} parameters (see below).
 #' @param discrim_reg_upb Upper bound of the rescaled Beta distribution for 
 #' observed discrimination parameters (default is +1)
 #' @param discrim_reg_lb Lower bound of the rescaled Beta distribution for 
@@ -807,14 +806,11 @@ id_make <- function(score_data=NULL,
 #' @param het_var Whether to use a separate variance parameter for each item if using
 #' Normal or Log-Normal distributions that have variance parameters. Defaults to TRUE and
 #' should be set to FALSE only if all items have a similar variance.
-#' @param compile_optim Whether to use Stan compile optimization flags (turn off if there
-#'   are any compile issues)
+#' @param compile_optim Whether to use Stan compile optimization flags (off by default)
 #' @param debug For debugging purposes, turns off threading to enable more informative
 #'   error messages from Stan. Also recompiles model objects.
 #' @param init_pathfinder Whether to generate initial values from the Pathfinder 
-#' algorithm (see Stan documentation). If FALSE, will generate random start values.
-#' @param num_pathfinder_paths Number of pathfinder runs. Default is 4. More runs
-#' may be necessary for very large or complex models to find good starting values.
+#' algorithm (see Stan documentation). If FALSE, will generate random start values..
 #' @param debug_mode Whether to print valuesof all parameters for debugging purposes.
 #' If this is used, only one iteration should be used as it generates a lot of 
 #' console output.
@@ -920,11 +916,12 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                         fix_high=1,
                         fix_low=(-1),
                         restrict_ind_low=NULL,
+                        num_fix_high=1,
+                        num_fix_low=1,
                         fixtype='prefix',
                         const_type="persons",
                         id_refresh=0,
                         prior_only=FALSE,
-                        prior_fit=NULL,
                         warmup=1000,ncores=4,
                         use_groups=FALSE,
                         discrim_reg_upb=1,
@@ -953,7 +950,6 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                         restrict_sd_low=10,
                         restrict_N_high=1000,
                         restrict_N_low=1000,
-                        tol_rel_obj=.001,
                         gp_sd_par=.025,
                         gp_num_diff=3,
                         gp_m_sd_par=0.3,
@@ -966,7 +962,6 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                         compile_optim=FALSE,
                         debug=FALSE,
                         init_pathfinder=TRUE,
-                        num_pathfinder_paths=4,
                         debug_mode=FALSE,
                         ...) {
   
@@ -1064,7 +1059,6 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                          const_type=const_type,
                          id_refresh=id_refresh,
                          prior_only=prior_only,
-                         prior_fit=prior_fit,
                          use_groups=use_groups,
                          discrim_reg_upb=discrim_reg_upb,
                          discrim_reg_lb=discrim_reg_lb,
@@ -1099,7 +1093,9 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                          gp_min_length=gp_min_length,
                          map_over_id=map_over_id,
                          het_var=het_var, 
-                         debug_mode=debug_mode)
+                         debug_mode=debug_mode,
+                         num_fix_high=num_fix_high,
+                         num_fix_low=num_fix_low)
   
   all_data <- do.call(.make_stan_data,eval_data_args)
   

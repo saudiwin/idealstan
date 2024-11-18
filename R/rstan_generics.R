@@ -34,7 +34,7 @@ setGeneric('id_post_pred',signature='object',
 #'  Also see \code{help("posterior_predict", package = "rstanarm")}
 #'
 #' @param object A fitted \code{idealstan} object
-#' @param draws The number of draws to use from the total number of posterior draws (default is 100).
+#' @param draws The number of draws to use from the total number of posterior draws (default is 100). Set to "all" to use all draws in the chains.
 #' For reproducibility, you can also pass a vector of specific draws to use.
 #' @param sample_scores In addition to reducing the number of posterior draws used to 
 #' calculate the posterior predictive distribution, which will reduce computational overhead.
@@ -67,7 +67,6 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
                                                                 use_cores=1,
                                                                 use_chain=NULL,
                                                                 newdata=NULL,...) {
-
   
   # need to regenerate data if newdata is not NULL
   
@@ -118,7 +117,14 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
     
     if(length(draws)==1) {
       
-      these_draws <- sample(1:n_iters,draws)
+      if(draws=="all") {
+        
+        these_draws <- 1:n_iters
+        
+      } else {
+        
+        these_draws <- sample(1:n_iters,draws)
+      }
       
     } else {
       
@@ -172,8 +178,6 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
     
       
     legis_x <- new_stan_data$stan_data$legis_pred[this_sample,]
-      
-    legis_x <- legis_x[this_sample,]
     
     cov_type <- "persons"
     

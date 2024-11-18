@@ -84,6 +84,191 @@ c1 <- id_post_pred(bin_irt_2pl_est, newdata=new_data)
 
 ```
 
+## IRT 2-PL Binary + Covariate
+
+Try this same model but add an external covariate with an ideal point effect of +2
+
+```{r irt_cov_binary}
+bin_irt_2pl_cov_sim <- id_sim_gen(num_person=100,num_items=20,ordinal=F,inflate=F,
+                              cov_effect = 3)
+bin_irt_2pl_cov_est <- id_estimate(idealdata=bin_irt_2pl_cov_sim,
+                               model_type=1,init_pathfinder = TRUE,
+                               restrict_ind_high = as.character(sort(bin_irt_2pl_cov_sim@simul_data$true_person,
+                                                                     decreasing=T,
+                                                        index=T)$ix[1]),
+                               restrict_ind_low = as.character(sort(bin_irt_2pl_cov_sim@simul_data$true_person,
+                                                                    decreasing=F, 
+                                                        index=T)$ix[1]),
+                               fix_high = sort(bin_irt_2pl_cov_sim@simul_data$true_person,
+                                                                     decreasing=T)[1],fix_low = sort(bin_irt_2pl_cov_sim@simul_data$true_person,
+                                                                     decreasing=F)[1],
+
+                               fixtype='prefix',
+                           person_sd = 3,debug_mode = FALSE,
+                           nchains=2,ncores=4,niters = 500,warmup=500,
+                           compile_optim = F,num_pathfinder_paths = 4)
+id_plot_rhats(bin_irt_2pl_cov_est)
+```
+
+```{r cov_plot_irt_cov_2pl}
+id_sim_coverage(bin_irt_2pl_cov_est) %>% 
+  bind_rows(.id='Parameter') %>% 
+  ggplot(aes(y=avg,x=Parameter)) +
+  stat_summary(fun.args=list(mult=1.96)) + 
+  theme_minimal() 
+```
+
+Plot true versus observed values:
+
+```{r irt_2pl_cov_plot}
+id_plot_legis(bin_irt_2pl_cov_est,show_true = T)
+```
+
+
+```{r irt_2pl_cov_resid}
+
+id_plot_sims(bin_irt_2pl_cov_est,type='Residuals')
+
+```
+
+```{r irt_2pl_cov_RMSE}
+
+id_plot_sims(bin_irt_2pl_cov_est)
+
+```
+
+```{r irt_2pl_cov_pred}
+
+new_data <- bin_irt_2pl_cov_est@score_data@func_args$score_data
+
+c1 <- id_post_pred(bin_irt_2pl_cov_est, newdata=new_data)
+
+  id_plot_ppc(bin_irt_2pl_cov_est,ppc_pred=c1,combine_item=FALSE,
+              prompt_plot=FALSE)
+
+```
+
+### Now check for covariate effects of ideal point covariates
+
+First, plot estimated coefficient `legis_x` against true value:
+
+```{r covcheck}
+
+mcmc_recover_hist(bin_irt_2pl_cov_est@stan_samples$draws("legis_x"),
+                  true=bin_irt_2pl_cov_sim@simul_data$cov_effect)
+
+```
+
+
+```{r coveffect}
+
+eps <- 1e-4
+  
+  new_data1 <- mutate(bin_irt_2pl_cov_sim@score_matrix,
+                      person_x = person_x - eps / 2)
+  
+  new_data2 <- mutate(bin_irt_2pl_cov_sim@score_matrix,
+                      person_x = person_x + eps / 2)
+  
+  # now predict new outcome distributions given these slightly different datasets
+  
+  cov_mod_pred1 <- id_post_pred(bin_irt_2pl_cov_est,newdata=new_data1,
+                                 use_cores=4,draws="all",
+                                item_subset=levels(new_data1$item),
+                                 type="epred")
+    
+  cov_mod_pred2 <- id_post_pred(bin_irt_2pl_cov_est,newdata=new_data2,
+                                 use_cores=4,draws="all",
+                                item_subset=levels(new_data2$item),
+                                 type="epred")
+  
+  # now we need to difference the datasets at the item level to calculate the effects
+  # this will create some lists that will then be appended together to a big data frame
+  # with one observation per posterior draw
+  
+    print("Looping over items")
+    
+    # difference the predictions
+  
+  c1 <- purrr::map2(cov_mod_pred1[[1]],
+                    cov_mod_pred2[[1]],
+                    function(small,big) {
+                      
+                      # difference the effects
+                      
+                      (big - small) / eps
+                      
+                    })
+  
+  # combine into datasets for each item with item id + person (senator) id
+  
+  c2 <- lapply(c1, function(mat) {
+    
+    out_data <- attr(mat, "data")
+    colnames(mat) <- out_data$person_id
+    
+    as_tibble(mat) %>% 
+      mutate(draws=1:n(),
+             item_id=unique(out_data$item_id)) %>% 
+      gather(key="person_id",value="estimate",-draws,-item_id) %>% 
+      mutate(person_id=as.numeric(person_id),
+             estimate=as.numeric(estimate))
+    
+  }) %>% bind_rows
+  
+  # merge in some original data
+  to_merge <- mutate(bin_irt_2pl_cov_est@score_data@score_matrix, 
+                     item_orig=item_id,
+                     person_orig=person_id,
+                     person_id=as.numeric(person_id),
+                     item_id=as.numeric(item_id)) %>% 
+    select(person_id, item_id, group_id,item_orig, person_orig) %>% 
+    distinct
+  
+  # add in party data so we can calculate party-specific effects
+  
+  c2 <- left_join(c2, to_merge, 
+                  by=c("item_id","person_id"))
+  
+  # get effect separately by democrats/republicans
+  
+   by_party <- group_by(c2, draws, group_id, item_id, item_orig) %>% 
+    summarize(mean_est1=mean(estimate)) %>% 
+    group_by(group_id, item_id, item_orig) %>% 
+    summarize(mean_est=mean(mean_est1),
+              low_est=quantile(mean_est1, .05),
+              high_est=quantile(mean_est1, .95))
+   
+   # merge in item discrimination to add some color / show high-discrim votes
+   
+   item_discrim <- filter(bin_irt_2pl_cov_est@summary,
+                         grepl(x=variable, pattern="sigma\\_reg\\_free")) %>% 
+    mutate(item_id=as.numeric(stringr::str_extract(variable, "[0-9]+")))
+   
+   by_party <- left_join(by_party,
+                        select(item_discrim, median, item_id))
+   
+   # plot the result
+   
+   by_party %>% 
+    ggplot(aes(y=mean_est,
+               x=reorder(item_id,mean_est))) +
+    geom_linerange(aes(ymin=low_est,
+                       ymax=high_est,
+                       colour=`median`)) +
+    ggthemes::theme_tufte() + 
+    scale_colour_viridis_c(name="Discrimination") +
+    coord_flip() +
+    geom_hline(yintercept=0,linetype=2) +
+    ggthemes::theme_clean() +
+    theme(axis.text.y=element_blank(),
+          axis.ticks.y=element_blank()) +
+  theme(legend.position = "bottom")
+
+```
+
+
+## Inflated 2-PL IRT (binary):
 
 Next, inflated 2-PL IRT (binary):
 

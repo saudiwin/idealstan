@@ -430,30 +430,11 @@ setMethod('sample_model',signature(object='idealdata'),
 
               } else {
                 
-              if(is.null(tol_rel_obj)) {
-                # set to this number for identification runs
-                tol_rel_obj <- 1e-02
-              }
-              if(this_data$time_proc==4) {
-                # increase the precision of the gradient ascent when 
-                # using the GP as it is more complicated
-                elbo_samples <- 100
-                grad_samples <- 1
-                eval_elbo <- 100
-                #tol_rel_obj <- .0005
-              } else {
-                elbo_samples <- 100
-                grad_samples <- 1
-                eval_elbo <- 100
-              }
-              print("Estimating model with variational inference (approximation of true posterior).")
-              out_model <- object@stanmodel_map$variational(data=this_data,
-                              tol_rel_obj=tol_rel_obj,
-                              iter=20000,
-                              init=init_vals[[1]],
-                              elbo_samples=elbo_samples,
-                              grad_samples=grad_samples,
-                              eval_elbo=eval_elbo,
+              print("Estimating model with Pathfinder for inference (approximation of true posterior).")
+              out_model <- object@stanmodel_map$pathfinder(data=this_data,
+                              draws=niters,
+                              init=init_vals,
+                              num_paths=nchains,
                               refresh=this_data$id_refresh,
                               ...)
             }
@@ -501,10 +482,11 @@ setGeneric('id_model',
 
 setMethod('id_model',signature(object='idealdata'),
           function(object,fixtype='vb',model_type=NULL,this_data=NULL,nfix=10,
-                   prior_fit=NULL,
                    tol_rel_obj=NULL,
                    restrict_ind_high=NULL,
                    restrict_ind_low=NULL,
+                   num_restrict_high=NULL,
+                   num_restrict_low=NULL,
                    fix_high=NULL,
                    fix_low=NULL,
                    ncores=NULL,
@@ -546,16 +528,16 @@ setMethod('id_model',signature(object='idealdata'),
             }
             
             if(fixtype=="vb_full") {
-              object <- .vb_fix(object=object,this_data=this_data,nfix=nfix,
+              object <- .vb_fix(object=object,this_data=this_data,
                                restrict_ind_high=restrict_ind_high,
                                restrict_ind_low=restrict_ind_low,
                                ncores=ncores,
                                const_type=const_type,
                                model_type=model_type,
                                use_groups=use_groups,
-                               fixtype=fixtype,
-                               prior_fit=prior_fit,
-                               tol_rel_obj=tol_rel_obj)
+                               num_restrict_high=num_restrict_high,
+                               num_restrict_low=num_restrict_low,
+                               fixtype=fixtype)
             } else {
               
               # need to convert character to IDs
@@ -725,7 +707,7 @@ setMethod('summary',signature(object='idealstan'),
               
               attributes(to_sum)$dimnames$variable <- new_names
               
-              if(!aggregate) {
+              if(!aggregated) {
                 return(to_sum)
               } else {
                 out_d <- data_frame(Covariate=new_names,
