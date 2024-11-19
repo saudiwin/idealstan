@@ -38,7 +38,11 @@ jobs:
       - name: Install cmdstanr
         run: |
           Rscript -e 'install.packages("cmdstanr", repos = c("https://stan-dev.r-universe.dev", getOption("repos")))'
-
+      
+      - name: Fix toolchain
+        run: |
+          Rscript -e 'cmdstanr::check_cmdstan_toolchain(fix = TRUE)'
+      
       - name: Install CmdStan
         run: |
           Rscript -e 'cmdstanr::install_cmdstan(cores = 1)'
