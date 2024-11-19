@@ -13,7 +13,7 @@ Description: Offers item-response theory (IRT) ideal-point estimation for binary
 License: GPL
 Depends: 
     methods,
-    R (>= 3.4.0)
+    R (>= 3.5.0)
 Imports: 
     dplyr,
     svDialogs,
@@ -34,14 +34,15 @@ Imports:
     ggthemes,
     posterior,
     R.rsp,
-    Rcpp
+    Rcpp,
+    cmdstanr
 Suggests:
     loo,
-    lubridate,
-    cmdstanr
+    lubridate
 Encoding: UTF-8
 LazyData: true
 NeedsCompilation: yes
 SystemRequirements: GNU make
+Additional_repositories: https://stan-dev.r-universe.dev
 VignetteBuilder: R.rsp
 RoxygenNote: 7.3.2
