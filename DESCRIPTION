@@ -34,11 +34,11 @@ Imports:
     ggthemes,
     posterior,
     R.rsp,
-    Rcpp
+    Rcpp,
+    cmdstanr
 Suggests:
     loo,
-    lubridate,
-    cmdstanr
+    lubridate
 Encoding: UTF-8
 LazyData: true
 NeedsCompilation: yes
