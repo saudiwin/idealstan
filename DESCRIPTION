@@ -43,5 +43,6 @@ Encoding: UTF-8
 LazyData: true
 NeedsCompilation: yes
 SystemRequirements: GNU make
+Additional_repositories: https://stan-dev.r-universe.dev
 VignetteBuilder: R.rsp
 RoxygenNote: 7.3.2

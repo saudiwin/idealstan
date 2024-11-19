@@ -28,12 +28,18 @@ jobs:
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       R_KEEP_PKG_SOURCE: yes
+      
     steps:
       - uses: actions/checkout@v4
 
       - uses: r-lib/actions/setup-r@v2
         with:
           use-public-rspm: true
+      
+      - name: Add cmdstanr repo
+        run: |
+          writeLines('options(repos = c(cmdstanr = "https://stan-dev.r-universe.dev", getOption(\"repos\")))', file("~/.Rprofile", "ab"))
+        shell: Rscript {0}
       
       - name: Install cmdstanr
         run: |
@@ -55,4 +61,4 @@ jobs:
       - uses: r-lib/actions/check-r-package@v2
         with:
           upload-snapshots: true
-          build_args: 'c("--no-manual","--compact-vignettes=gs+qpdf")'
+          build_args: 'c("--no-manual","--no-build-vignettes","--ignore-vignettes")'
