@@ -29,3 +29,4 @@ this_data.rds
 \.png
 ^CRAN-RELEASE$
 ^Meta$
+^\.github$
