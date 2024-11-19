@@ -4,4 +4,4 @@
 rmarkdown::render('vignettes/How_to_Evaluate_Models.Rmd')
 rmarkdown::render('vignettes/Package_Introduction.Rmd')
 rmarkdown::render('vignettes/Time_Series.Rmd')
-rmarkdown::render('package_test.Rmd')
+rmarkdown::render('package_test_v2.Rmd')
