@@ -17,3 +17,5 @@ src-x64
 *.Rproj
 *.o
 *.hpp
+altdoc/freeze.rds
+^_quarto$

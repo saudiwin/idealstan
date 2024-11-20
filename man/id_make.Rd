@@ -137,9 +137,6 @@ to_idealstan <-   id_make(score_data = senate114,
                person_id = 'bioname',
                item_id = 'rollnumber',
                group_id= 'party_code',
-               time_id='date',
-               high_val='Yes',
-               low_val='No',
-               miss_val='Absent')
+               time_id='date')
 
 }

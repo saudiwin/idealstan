@@ -127,10 +127,7 @@
 #'                person_id = 'bioname',
 #'                item_id = 'rollnumber',
 #'                group_id= 'party_code',
-#'                time_id='date',
-#'                high_val='Yes',
-#'                low_val='No',
-#'                miss_val='Absent')
+#'                time_id='date')
 #' 
 id_make <- function(score_data=NULL,
                     outcome_disc='outcome_disc',
