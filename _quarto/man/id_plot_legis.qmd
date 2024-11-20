@@ -1,0 +1,176 @@
+## Plot Legislator/Person and Bill/Item Ideal Points {.unnumbered}
+
+
+### Description
+
+This function can be used on a fitted <code>idealstan</code> object to plot the relative positions and 
+uncertainties of legislator/persons and bills/items.
+
+
+
+### Usage
+
+<pre><code class='language-R'>id_plot_legis(
+  object,
+  return_data = FALSE,
+  include = NULL,
+  high_limit = 0.95,
+  low_limit = 0.05,
+  item_plot = NULL,
+  item_plot_type = "non-inflated",
+  text_size_label = 2,
+  text_size_group = 2.5,
+  point_size = 1,
+  hjust_length = -0.7,
+  person_labels = TRUE,
+  group_labels = F,
+  person_ci_alpha = 0.2,
+  show_true = FALSE,
+  group_color = TRUE,
+  hpd_limit = 10,
+  sample_persons = NULL,
+  ...
+)
+</code></pre>
+
+
+### Arguments
+
+<table>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="object">object</code></td>
+<td>
+A fitted <code>idealstan</code> object or a named list
+of <code>idealstan</code> objects to compare across models
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="return_data">return_data</code></td>
+<td>
+If true, the calculated legislator/bill data is returned along with the plot in a list
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="include">include</code></td>
+<td>
+Specify a list of person/legislator IDs to include in the plot (all others excluded)
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="high_limit">high_limit</code></td>
+<td>
+The quantile (number between 0 and 1) for the high end of posterior uncertainty to show in plot
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="low_limit">low_limit</code></td>
+<td>
+The quantile (number between 0 and 1) for the low end of posterior uncertainty to show in plot
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="item_plot">item_plot</code></td>
+<td>
+The IDs (character vector) of the bill/item midpoints to overlay on the plot
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="item_plot_type">item_plot_type</code></td>
+<td>
+Whether to show the <code>'non-inflated'</code> item/bill midpoints, 
+the <code>'inflated'</code> item/bill midpoints, or produce plots for <code>'both'</code> kinds of models. 
+Defaults to <code>'non-inflated'</code> and will only display an item/bill midpoint if one has been 
+specified in <code>item_plot</code>.
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="text_size_label">text_size_label</code></td>
+<td>
+ggplot2 text size for legislator labels
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="text_size_group">text_size_group</code></td>
+<td>
+ggplot2 text size for group text used for points
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="point_size">point_size</code></td>
+<td>
+If <code>person_labels</code> and <code>group_labels</code> are set to <code>FALSE</code>, controls the size of the points plotted.
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="hjust_length">hjust_length</code></td>
+<td>
+horizontal adjustment of the legislator labels
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="person_labels">person_labels</code></td>
+<td>
+if <code>TRUE</code>, use the person_id column to plot labels for the person (legislator) ideal points
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="group_labels">group_labels</code></td>
+<td>
+if <code>TRUE</code>, use the group column to plot text markers for the group (parties) from the person/legislator data
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="person_ci_alpha">person_ci_alpha</code></td>
+<td>
+The transparency level of the dot plot and confidence bars for the person ideal points
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="show_true">show_true</code></td>
+<td>
+Whether to show the true values of the legislators (if model has been simulated)
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="group_color">group_color</code></td>
+<td>
+If <code>TRUE</code>, give each group/bloc a different color
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="hpd_limit">hpd_limit</code></td>
+<td>
+The greatest absolute difference in high-posterior density interval shown for any point. Useful for excluding imprecisely estimated persons/legislators from the plot. Leave NULL if you don't want to exclude any.
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="sample_persons">sample_persons</code></td>
+<td>
+If you don't want to use the full number of persons/legislators from the model, enter a proportion (between 0 and 1) to select
+only a fraction of the persons/legislators.
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="...">...</code></td>
+<td>
+Other options passed on to plotting function, currently ignored
+</td></tr>
+</table>
+
+
+### Details
+
+This plot shows the distribution of ideal points for the legislators/persons in the model. It will plot them as a vertical
+dot plot with associated high-density posterior interval (can be changed 
+with <code>high_limit</code> and <code>low_limit</code> options). In addition, if item/bill IDs
+as a character vector is passed to the <code>item_plot</code> option, then an item/bill midpoint will be overlain
+on the ideal point plot, showing the point at which legislators/persons are indifferent to voting/answering on the 
+bill/item. Note that because this is an ideal point model, it is not possible to tell from the midpoint itself
+which side will be voting which way. For that reason, the legislators/persons are colored by their votes/scores to
+make it clear.
+
+To compare across multiple <code>idealstan</code> models, pass a named list 
+<code>list(model1=model1,model2=model2,etc)</code> to the <code>object</code> option. 
+Note that these comparisons will done by individual persons/groups, so if there are a lot of 
+persons/groups, consider using the <code>include</code> option to only compare a specific set
+of persons/groups.
+
+
+
+### Examples
+```{r, warning=FALSE, message=FALSE, eval=FALSE}
+library(idealstan)
+
+
+
+# First create data and run a model
+
+to_idealstan <-   id_make(score_data = senate114,
+outcome = 'cast_code',
+person_id = 'bioname',
+item_id = 'rollnumber',
+group_id= 'party_code',
+time_id='date',
+high_val='Yes',
+low_val='No',
+miss_val='Absent')
+
+sen_est <- id_estimate(senate_data,
+model_type = 2,
+use_vb = TRUE,
+fixtype='vb_partial',
+restrict_ind_high = "BARRASSO, John A.",
+restrict_ind_low = "WARREN, Elizabeth")
+
+# After running the model, we can plot 
+# the results of the person/legislator ideal points
+
+id_plot_legis(sen_est)
+
+
+
+
+```

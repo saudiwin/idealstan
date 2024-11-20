@@ -1,0 +1,74 @@
+
+Function to compare two fitted idealstan models by plotting ideal points. Assumes that underlying data
+is the same for both models.
+
+### Description
+
+Function to compare two fitted idealstan models by plotting ideal points. Assumes that underlying data
+is the same for both models.
+
+
+
+### Usage
+
+<pre><code class='language-R'>id_plot_compare(
+  model1 = NULL,
+  model2 = NULL,
+  scale_flip = FALSE,
+  return_data = FALSE,
+  labels = NULL,
+  hjust = -0.1,
+  palette = "Set1",
+  color_direction = 1,
+  text_size_label = 2,
+  rescale = FALSE
+)
+</code></pre>
+
+
+### Arguments
+
+<table>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="model1">model1</code></td>
+<td>
+The first model to compare
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="model2">model2</code></td>
+<td>
+The second model to compare
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="scale_flip">scale_flip</code></td>
+<td>
+This parameter is set to true if you have two models that are reflected around the ideal point axis. This can happen as a result of identification and is harmless.
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="return_data">return_data</code></td>
+<td>
+Whether to return the underlying data
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="labels">labels</code></td>
+<td>
+<code>TRUE</code> or <code>FALSE</code>, whether to use labels for points
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="hjust">hjust</code></td>
+<td>
+The horizontal adjustment of point labels
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="palette">palette</code></td>
+<td>
+<code>colorbrewer</code> palette name
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="color_direction">color_direction</code></td>
+<td>
+Whether to reverse the color scale
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="text_size_label">text_size_label</code></td>
+<td>
+Size of point labels
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="rescale">rescale</code></td>
+<td>
+Whether to rescale the estimates from two models so they will match regardless of arbitrary scale shifts in the 
+ideal points
+</td></tr>
+</table>
+

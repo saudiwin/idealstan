@@ -1,0 +1,79 @@
+
+## Plot Posterior Predictive Distribution for <code>idealstan</code> Objects {.unnumbered}
+
+
+### Description
+
+This function is the actual method for generating posterior distributions 
+from a fitted <code>idealstan</code> model.
+
+
+
+### Usage
+
+<pre><code class='language-R'>## S4 method for signature 'idealstan'
+id_plot_ppc(
+  object,
+  ppc_pred = NULL,
+  group = NULL,
+  item = NULL,
+  combine_item = TRUE,
+  type = NULL,
+  only_observed = NULL,
+  which_mod = NULL,
+  prompt_plot = TRUE,
+  ...
+)
+</code></pre>
+
+
+### Arguments
+
+<table>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="object">object</code></td>
+<td>
+A fitted idealstan object
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="ppc_pred">ppc_pred</code></td>
+<td>
+The output of the <code>id_post_pred</code> function on a fitted idealstan object
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="group">group</code></td>
+<td>
+A character vector of the person or group IDs 
+over which to subset the predictive distribution
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="item">item</code></td>
+<td>
+A character vector of the item IDs
+over which to subset the predictive distribution
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="combine_item">combine_item</code></td>
+<td>
+Whether to combine all items together (TRUE) or create one plot for each item (FALSE)
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="type">type</code></td>
+<td>
+Whether to plot &quot;continuous&quot; or &quot;discrete&quot; responses
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="which_mod">which_mod</code></td>
+<td>
+If you are producing one plot aggregating data across multiple items and 
+you have different item distributions,
+then you need to specify the item type number to plot (see function documentation in
+<code>id_estimate</code>).
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="prompt_plot">prompt_plot</code></td>
+<td>
+Whether to expect a user prompt for each plot if multiple plots 
+are produced (defaults to TRUE)
+If NULL (default), will use the type specified in the data. 
+However, if both continuous and discrete items are present, will
+throw an error if NULL.
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="...">...</code></td>
+<td>
+Other arguments passed on to <code>ppc_bars</code>
+</td></tr>
+</table>
+

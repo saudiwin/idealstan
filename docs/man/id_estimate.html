@@ -1,0 +1,1616 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.5.57">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>id_estimate – idealstan</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<script src="../site_libs/quarto-html/quarto.js"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+</head>
+
+<body class="nav-sidebar floating nav-fixed fullcontent">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../index.html">
+    <span class="navbar-title">idealstan</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/saudiwin/idealstan"> <i class="bi bi-github" role="img" aria-label="idealstan GitHub">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../man/delaware.html">Reference</a></li><li class="breadcrumb-item"><a href="../man/id_estimate.html">id_estimate</a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Home</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="false">
+ <span class="menu-text">Articles</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../vignettes/Package_Introduction.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Introduction to Idealstan</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../vignettes/Time_Series.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Time-Varying Ideal Points</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true">
+ <span class="menu-text">Reference</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../man/delaware.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">delaware</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../man/derive_chain.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">derive_chain</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../man/id_estimate.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">id_estimate</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../man/id_extract-idealstan-method.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">id_extract-idealstan-method</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../man/id_extract.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">id_extract</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../man/id_make.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">id_make</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../man/id_plot_all_hist.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">id_plot_all_hist</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../man/id_plot_compare.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">id_plot_compare</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../man/id_plot_cov.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">id_plot_cov</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../man/id_plot_irf.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">id_plot_irf</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../man/id_plot_legis_dyn.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">id_plot_legis_dyn</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../man/id_plot_legis_var.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">id_plot_legis_var</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../man/id_plot_legis.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">id_plot_legis</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../man/id_plot_ppc-idealstan-method.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">id_plot_ppc-idealstan-method</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../man/id_plot_ppc.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">id_plot_ppc</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../man/id_plot_rhats.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">id_plot_rhats</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../man/id_plot_sims.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">id_plot_sims</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../man/id_plot-idealstan-method.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">id_plot-idealstan-method</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../man/id_plot.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">id_plot</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../man/id_post_pred-idealstan-method.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">id_post_pred-idealstan-method</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../man/id_post_pred.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">id_post_pred</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../man/id_rebuild_mpi.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">id_rebuild_mpi</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../man/id_sim_coverage.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">id_sim_coverage</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../man/id_sim_gen.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">id_sim_gen</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../man/id_sim_resid.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">id_sim_resid</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../man/id_sim_rmse.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">id_sim_rmse</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../man/idealdata-class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">idealdata-class</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../man/idealstan-class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">idealstan-class</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../man/idealstan.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">idealstan</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../man/launch_shinystan-idealstan-method.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">launch_shinystan-idealstan-method</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../man/launch_shinystan.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">launch_shinystan</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../man/release_questions.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">release_questions</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../man/senate114.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">senate114</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../man/stan_trace-idealstan-method.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">stan_trace-idealstan-method</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../man/stan_trace.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">stan_trace</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../man/summary-idealstan-method.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">summary-idealstan-method</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../NEWS.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">News</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../LICENSE.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">License</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../CITATION.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Citation</span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+
+
+
+<section id="estimate-an-idealstan-model" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="estimate-an-idealstan-model">Estimate an <code>idealstan</code> model</h2>
+<section id="description" class="level3">
+<h3 class="anchored" data-anchor-id="description">Description</h3>
+<p>This function will take a pre-processed <code>idealdata</code> vote/score dataframe and run one of the available IRT/latent space ideal point models on the data using Stan’s MCMC engine.</p>
+</section>
+<section id="usage" class="level3">
+<h3 class="anchored" data-anchor-id="usage">Usage</h3>
+<pre><code class="language-R">id_estimate(
+  idealdata = NULL,
+  model_type = 2,
+  inflate_zero = FALSE,
+  vary_ideal_pts = "none",
+  keep_param = NULL,
+  grainsize = 1,
+  mpi_export = NULL,
+  use_subset = FALSE,
+  sample_it = FALSE,
+  subset_group = NULL,
+  subset_person = NULL,
+  sample_size = 20,
+  nchains = 4,
+  niters = 1000,
+  use_vb = FALSE,
+  ignore_db = NULL,
+  restrict_ind_high = NULL,
+  fix_high = 1,
+  fix_low = (-1),
+  restrict_ind_low = NULL,
+  num_restrict_high = 1,
+  num_restrict_low = 1,
+  fixtype = "prefix",
+  const_type = "persons",
+  id_refresh = 0,
+  prior_only = FALSE,
+  warmup = 1000,
+  ncores = 4,
+  use_groups = FALSE,
+  discrim_reg_upb = 1,
+  discrim_reg_lb = -1,
+  discrim_miss_upb = 1,
+  discrim_miss_lb = -1,
+  discrim_reg_scale = 2,
+  discrim_reg_shape = 2,
+  discrim_miss_scale = 2,
+  discrim_miss_shape = 2,
+  person_sd = 3,
+  time_fix_sd = 0.1,
+  time_var = 10,
+  spline_knots = NULL,
+  spline_degree = 2,
+  ar1_up = 1,
+  ar1_down = 0,
+  boundary_prior = NULL,
+  time_center_cutoff = 50,
+  restrict_var = FALSE,
+  sample_stationary = FALSE,
+  ar_sd = 1,
+  diff_reg_sd = 3,
+  diff_miss_sd = 3,
+  restrict_sd_high = 10,
+  restrict_sd_low = 10,
+  restrict_N_high = 1000,
+  restrict_N_low = 1000,
+  gp_sd_par = 0.025,
+  gp_num_diff = 3,
+  gp_m_sd_par = 0.3,
+  gp_min_length = 0,
+  cmdstan_path_user = NULL,
+  map_over_id = "persons",
+  save_files = NULL,
+  het_var = TRUE,
+  compile_optim = FALSE,
+  debug = FALSE,
+  init_pathfinder = TRUE,
+  debug_mode = FALSE,
+  ...
+)
+</code></pre>
+</section>
+<section id="arguments" class="level3">
+<h3 class="anchored" data-anchor-id="arguments">Arguments</h3>
+<table>
+<tbody><tr>
+<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
+<code id="idealdata">idealdata</code>
+</td>
+<td>
+An object produced by the <code>id_make</code> containing a score/vote matrix for use for estimation &amp; plotting
+</td>
+</tr>
+<tr>
+<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
+<code id="model_type">model_type</code>
+</td>
+<td>
+An integer reflecting the kind of model to be estimated. See below.
+</td>
+</tr>
+<tr>
+<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
+<code id="inflate_zero">inflate_zero</code>
+</td>
+<td>
+If the outcome is distributed as Poisson (count/unbounded integer), setting this to <code>TRUE</code> will fit a traditional zero-inflated model. To use correctly, the value for zero must be passed as the <code>miss_val</code> option to <code>id_make</code> before running a model so that zeroes are coded as missing data.
+</td>
+</tr>
+<tr>
+<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
+<code id="vary_ideal_pts">vary_ideal_pts</code>
+</td>
+<td>
+Default <code>‘none’</code>. If <code>‘random_walk’</code>, <code>‘AR1’</code>, <code>‘GP’</code>, or <code>‘splines’</code>, a time-varying ideal point model will be fit with either a random-walk process, an AR1 process, a Gaussian process or a spline. Note that the spline is the easiest time-varying model to fit so long as the number of knots (option <code>spline_knots</code>) is significantly less than the number of time points in the data. See documentation for more info.
+</td>
+</tr>
+<tr>
+<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
+<code id="keep_param">keep_param</code>
+</td>
+<td>
+A list with logical values for different categories of paremeters which should/should not be kept following estimation. Can be any/all of <code>person_int</code> for the person-level intercepts (static ideal points), <code>person_vary</code> for person-varying ideal points, <code>item</code> for observed item parameters (discriminations/intercepts), <code>item_miss</code> for missing item parameters (discriminations/intercepts), and <code>extra</code> for other parameters (hierarchical covariates, ordinal intercepts, etc.). Takes the form <code>list(person_int=TRUE,person_vary=TRUE,item=TRUE,item_miss=TRUE,extra=TRUE)</code>. If any are missing in the list, it is assumed that those parameters will be excluded. If <code>NULL</code> (default), will save all parameters in output.
+</td>
+</tr>
+<tr>
+<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
+<code id="grainsize">grainsize</code>
+</td>
+<td>
+The grainsize parameter for the <code>reduce_sum</code> function used for within-chain parallelization. The default is 1, which means 1 chunk (item or person) per core. Set to -1. to use
+</td>
+</tr>
+<tr>
+<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
+<code id="mpi_export">mpi_export</code>
+</td>
+<td>
+If <code>within_chains=“mpi”</code>, this parameter should refer to the directory where the necessary data and Stan code will be exported to. If missing, an interactive dialogue will prompt the user for a directory.
+</td>
+</tr>
+<tr>
+<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
+<code id="use_subset">use_subset</code>
+</td>
+<td>
+Whether a subset of the legislators/persons should be used instead of the full response matrix
+</td>
+</tr>
+<tr>
+<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
+<code id="sample_it">sample_it</code>
+</td>
+<td>
+Whether or not to use a random subsample of the response matrix. Useful for testing.
+</td>
+</tr>
+<tr>
+<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
+<code id="subset_group">subset_group</code>
+</td>
+<td>
+If person/legislative data was included in the <code>id_make</code> function, then you can subset by any value in the <code>$group</code> column of that data if <code>use_subset</code> is <code>TRUE</code>.
+</td>
+</tr>
+<tr>
+<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
+<code id="subset_person">subset_person</code>
+</td>
+<td>
+A list of character values of names of persons/legislators to use to subset if <code>use_subset</code> is <code>TRUE</code> and person/legislative data was included in the <code>id_make</code> function with the required <code>$person.names</code> column
+</td>
+</tr>
+<tr>
+<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
+<code id="sample_size">sample_size</code>
+</td>
+<td>
+If <code>sample_it</code> is <code>TRUE</code>, this value reflects how many legislators/persons will be sampled from the response matrix
+</td>
+</tr>
+<tr>
+<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
+<code id="nchains">nchains</code>
+</td>
+<td>
+The number of chains to use in Stan’s sampler. Minimum is one. See <code>stan</code> for more info. If <code>use_vb=TRUE</code>, this parameter will determine the number of Pathfinder paths to estimate.
+</td>
+</tr>
+<tr>
+<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
+<code id="niters">niters</code>
+</td>
+<td>
+The number of iterations to run Stan’s sampler. Shouldn’t be set much lower than 500. See <code>stan</code> for more info.
+</td>
+</tr>
+<tr>
+<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
+<code id="use_vb">use_vb</code>
+</td>
+<td>
+Whether or not to use Stan’s Pathfinder algorithm instead of full Bayesian inference. Pros: it’s much faster but can be much less accurate. Note that Pathfinder is also used by default for finding initial starting values for sfull HMC sampling.
+</td>
+</tr>
+<tr>
+<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
+<code id="ignore_db">ignore_db</code>
+</td>
+<td>
+If there are multiple time periods (particularly when there are very many time periods), you can pass in a data frame (or tibble) with one row per person per time period and an indicator column <code>ignore</code> that is equal to 1 for periods that should be considered in sample and 0 for periods for periods that should be considered out of sample. This is useful for excluding time periods from estimation for persons when they could not be present, i.e.&nbsp;such as before entrance into an organization or following death. If <code>ignore</code> equals 0, the person’s ideal point is estimated as a standard Normal draw rather than an auto-correlated parameter, reducing computational burden substantially. Note that there can only be one pre-sample period of 0s, one in-sample period of 1s, and one post-sample period of 0s. Multiple in-sample periods cannot be interspersed with out of sample periods. The columns must be labeled as <code>person_id</code>, <code>time_id</code> and <code>ignore</code> and must match the formatting of the columns fed to the <code>id_make</code> function.
+</td>
+</tr>
+<tr>
+<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
+<code id="restrict_ind_high">restrict_ind_high</code>
+</td>
+<td>
+If <code>fixtype</code> is not "vb_full", a vector of character values or integer indices of a legislator/person or bill/item to pin to a high value (default +1).
+</td>
+</tr>
+<tr>
+<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
+<code id="fix_high">fix_high</code>
+</td>
+<td>
+The value that the high fixed ideal point(s) should be fixed to. Default is +1. Does not apply when <code>const_type=“items”</code>; in that case, use <code>restrict_sd</code>/<code>restrict_N</code> parameters (see below).
+</td>
+</tr>
+<tr>
+<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
+<code id="fix_low">fix_low</code>
+</td>
+<td>
+The value that the low fixed ideal point(s) should be fixed to. Default is -1. Does not apply when <code>const_type=“items”</code>; in that case, use <code>restrict_sd</code>/<code>restrict_N</code> parameters (see below).
+</td>
+</tr>
+<tr>
+<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
+<code id="restrict_ind_low">restrict_ind_low</code>
+</td>
+<td>
+If <code>fixtype</code> is not "vb_full", a vector of character values or integer indices of a legislator/person or bill/item to pin to a low value (default -1).
+</td>
+</tr>
+<tr>
+<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
+<code id="num_restrict_high">num_restrict_high</code>
+</td>
+<td>
+If using variational inference for identification (<code>fixtype=“vb_full”</code>), how many parameters to constraint to positive values? Default is 1.
+</td>
+</tr>
+<tr>
+<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
+<code id="num_restrict_low">num_restrict_low</code>
+</td>
+<td>
+If using variational inference for identification (<code>ixtype=“vb_full”</code>), how many parameters to constraint to positive negative values? Default is 1.
+</td>
+</tr>
+<tr>
+<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
+<code id="fixtype">fixtype</code>
+</td>
+<td>
+Sets the particular kind of identification used on the model, could be either ‘vb_full’ (identification provided exclusively by running a variational identification model with no prior info), or ‘prefix’ (two indices of ideal points or items to fix are provided to options <code>restrict_ind_high</code> and <code>restrict_ind_low</code>). See details for more information.
+</td>
+</tr>
+<tr>
+<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
+<code id="const_type">const_type</code>
+</td>
+<td>
+Whether <code>“persons”</code> are the parameters to be fixed for identification (the default) or <code>“items”</code>. Each of these pinned parameters should be specified to <code>fix_high</code> and <code>fix_low</code> if <code>fixtype</code> equals <code>“prefix”</code>, otherwise the model will select the parameters to pin to fixed values.
+</td>
+</tr>
+<tr>
+<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
+<code id="id_refresh">id_refresh</code>
+</td>
+<td>
+The number of times to report iterations from the variational run used to identify models. Default is 0 (nothing output to console).
+</td>
+</tr>
+<tr>
+<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
+<code id="prior_only">prior_only</code>
+</td>
+<td>
+Whether to only sample from priors as opposed to the full model with likelihood (the default). Useful for doing posterior predictive checks.
+</td>
+</tr>
+<tr>
+<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
+<code id="warmup">warmup</code>
+</td>
+<td>
+The number of iterations to use to calibrate Stan’s sampler on a given model. Shouldn’t be less than 100. See <code>stan</code> for more info.
+</td>
+</tr>
+<tr>
+<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
+<code id="ncores">ncores</code>
+</td>
+<td>
+The number of cores in your computer to use for parallel processing in the Stan engine. See <code>stan</code> for more info. If <code>within_chain</code> is set to <code>“threads”</code>, this parameter will determine the number of threads (independent processes) used for within-chain parallelization.
+</td>
+</tr>
+<tr>
+<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
+<code id="use_groups">use_groups</code>
+</td>
+<td>
+If <code>TRUE</code>, group parameters from the person/legis data given in <code>id_make</code> will be estimated instead of individual parameters.
+</td>
+</tr>
+<tr>
+<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
+<code id="discrim_reg_upb">discrim_reg_upb</code>
+</td>
+<td>
+Upper bound of the rescaled Beta distribution for observed discrimination parameters (default is +1)
+</td>
+</tr>
+<tr>
+<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
+<code id="discrim_reg_lb">discrim_reg_lb</code>
+</td>
+<td>
+Lower bound of the rescaled Beta distribution for observed discrimination parameters (default is -1). Set to 0 for conventional IRT.
+</td>
+</tr>
+<tr>
+<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
+<code id="discrim_miss_upb">discrim_miss_upb</code>
+</td>
+<td>
+Upper bound of the rescaled Beta distribution for missing discrimination parameters (default is +1)
+</td>
+</tr>
+<tr>
+<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
+<code id="discrim_miss_lb">discrim_miss_lb</code>
+</td>
+<td>
+Lower bound of the rescaled Beta distribution for missing discrimination parameters (default is -1). Set to 0 for conventional IRT.
+</td>
+</tr>
+<tr>
+<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
+<code id="discrim_reg_scale">discrim_reg_scale</code>
+</td>
+<td>
+Set the scale parameter for the rescaled Beta distribution of the discrimination parameters.
+</td>
+</tr>
+<tr>
+<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
+<code id="discrim_reg_shape">discrim_reg_shape</code>
+</td>
+<td>
+Set the shape parameter for the rescaled Beta distribution of the discrimination parameters.
+</td>
+</tr>
+<tr>
+<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
+<code id="discrim_miss_scale">discrim_miss_scale</code>
+</td>
+<td>
+Set the scale parameter for the rescaled Beta distribution of the missingness discrimination parameters.
+</td>
+</tr>
+<tr>
+<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
+<code id="discrim_miss_shape">discrim_miss_shape</code>
+</td>
+<td>
+Set the shape parameter for the rescaled Beta distribution of the missingness discrimination parameters.
+</td>
+</tr>
+<tr>
+<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
+<code id="time_fix_sd">time_fix_sd</code>
+</td>
+<td>
+The variance of the over-time component of the first person/legislator is fixed to this value as a reference. Default is 0.1.
+</td>
+</tr>
+<tr>
+<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
+<code id="spline_knots">spline_knots</code>
+</td>
+<td>
+Number of knots (essentially, number of points at which to calculate time-varying ideal points given T time points). Default is NULL, which means that the spline is equivalent to polynomial time trend of degree <code>spline_degree</code>. Note that the spline number (if not null) must be equal or less than the number of time points–and there is no reason to have it equal to the number of time points as that will likely over-fit the data.
+</td>
+</tr>
+<tr>
+<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
+<code id="spline_degree">spline_degree</code>
+</td>
+<td>
+The degree of the spline polynomial. The default is 2 which is a quadratic polynomial. A value of 1 will result in independent knots (essentially pooled across time points T). A higher value will result in wigglier time series. There is no "correct" value but lower values are likely more stable and easier to identify.
+</td>
+</tr>
+<tr>
+<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
+<code id="boundary_prior">boundary_prior</code>
+</td>
+<td>
+If your time series has very low variance (change over time), you may want to use this option to put a boundary-avoiding inverse gamma prior on the time series variance parameters if your model has a lot of divergent transitions. To do so, pass a list with a element called <code>beta</code> that signifies the rate parameter of the inverse-gamma distribution. For example, try <code>boundary_prior=list(beta=1)</code>. Increasing the value of <code>beta</code> will increase the "push" away from zero. Setting it too high will result in time series that exhibit a lot of "wiggle" without much need.
+</td>
+</tr>
+<tr>
+<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
+<code id="time_center_cutoff">time_center_cutoff</code>
+</td>
+<td>
+The number of time points above which the model will employ a centered time series approach for AR(1) and random walk models. Below this number the model will employ a non-centered approach. The default is 50 time points, which is relatively arbitrary and higher values may be better if sampling quality is poor above the threshold.
+</td>
+</tr>
+<tr>
+<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
+<code id="sample_stationary">sample_stationary</code>
+</td>
+<td>
+If <code>TRUE</code>, the AR(1) coefficients in a time-varying model will be sampled from an unconstrained space and then mapped back to a stationary space. Leaving this <code>TRUE</code> is slower but will work better when there is limited information to identify a model. If used, the <code>ar_sd</code> parameter should be increased to 5 to allow for wider sampling in the unconstrained space.
+</td>
+</tr>
+<tr>
+<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
+<code id="ar_sd">ar_sd</code>
+</td>
+<td>
+If an AR(1) model is used, this defines the prior scale of the Normal distribution. A lower number can help identify the model when there are few time points.
+</td>
+</tr>
+<tr>
+<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
+<code id="diff_reg_sd">diff_reg_sd</code>
+</td>
+<td>
+Set the prior standard deviation for the bill (item) intercepts for the non-inflated model.
+</td>
+</tr>
+<tr>
+<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
+<code id="diff_miss_sd">diff_miss_sd</code>
+</td>
+<td>
+Set the prior standard deviation for the bill (item) intercepts for the inflated model.
+</td>
+</tr>
+<tr>
+<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
+<code id="restrict_sd_high">restrict_sd_high</code>
+</td>
+<td>
+Set the prior shape for high pinned parameters. This has a default of 0.01 (equivalent to +0.99), but could be set lower if the data is really large.
+</td>
+</tr>
+<tr>
+<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
+<code id="restrict_sd_low">restrict_sd_low</code>
+</td>
+<td>
+Set the prior scale for low pinned parameters. This has a default of 0.01 (equivalent to -0.99), but could be set lower if the data is really large. To make the prior uninformative, set this value and <code>restrict_N_low</code> to +1 (or +2, +2 for weakly informative).
+</td>
+</tr>
+<tr>
+<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
+<code id="restrict_N_high">restrict_N_high</code>
+</td>
+<td>
+Set the prior scale for high pinned parameters. Default is 1000 (equivalent to 1,000 observations of the pinned value). Higher values make the pin stronger (for example if there is a lot of data).
+</td>
+</tr>
+<tr>
+<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
+<code id="restrict_N_low">restrict_N_low</code>
+</td>
+<td>
+Set the prior shape for high pinned parameters. Default is 1000 (equivalent to 1,000 observations of the pinned value). Higher values make the pin stronger (for example if there is a lot of data).
+</td>
+</tr>
+<tr>
+<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
+<code id="gp_sd_par">gp_sd_par</code>
+</td>
+<td>
+The upper limit on allowed residual variation of the Gaussian process prior. Increasing the limit will permit the GP to more closely follow the time points, resulting in much sharper bends in the function and potentially oscillation.
+</td>
+</tr>
+<tr>
+<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
+<code id="gp_num_diff">gp_num_diff</code>
+</td>
+<td>
+The number of time points to use to calculate the length-scale prior that determines the level of smoothness of the GP time process. Increasing this value will result in greater smoothness/autocorrelation over time by selecting a greater number of time points over which to calculate the length-scale prior.
+</td>
+</tr>
+<tr>
+<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
+<code id="gp_m_sd_par">gp_m_sd_par</code>
+</td>
+<td>
+The upper limit of the marginal standard deviation of the GP time process. Decreasing this value will result in smoother fits.
+</td>
+</tr>
+<tr>
+<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
+<code id="gp_min_length">gp_min_length</code>
+</td>
+<td>
+The minimum value of the GP length-scale parameter. This is a hard lower limit. Increasing this value will force a smoother GP fit. It should always be less than <code>gp_num_diff</code>.
+</td>
+</tr>
+<tr>
+<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
+<code id="cmdstan_path_user">cmdstan_path_user</code>
+</td>
+<td>
+Default is NULL, and so will default to whatever is set in <code>cmdstanr</code> package. Specify a file path here to use a different <code>cmdtstan</code> installation.
+</td>
+</tr>
+<tr>
+<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
+<code id="map_over_id">map_over_id</code>
+</td>
+<td>
+This parameter identifies which ID variable to use to construct the shards for within-chain parallelization. It defaults to <code>“persons”</code> but can also take a value of <code>“items”</code>. It is recommended to select whichever variable has more distinct values to improve parallelization.
+</td>
+</tr>
+<tr>
+<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
+<code id="save_files">save_files</code>
+</td>
+<td>
+The location to save CSV files with MCMC draws from <code>cmdstanr</code>. The default is <code>NULL</code>, which will use a folder in the package directory.
+</td>
+</tr>
+<tr>
+<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
+<code id="het_var">het_var</code>
+</td>
+<td>
+Whether to use a separate variance parameter for each item if using Normal or Log-Normal distributions that have variance parameters. Defaults to TRUE and should be set to FALSE only if all items have a similar variance.
+</td>
+</tr>
+<tr>
+<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
+<code id="compile_optim">compile_optim</code>
+</td>
+<td>
+Whether to use Stan compile optimization flags (off by default)
+</td>
+</tr>
+<tr>
+<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
+<code id="debug">debug</code>
+</td>
+<td>
+For debugging purposes, turns off threading to enable more informative error messages from Stan. Also recompiles model objects.
+</td>
+</tr>
+<tr>
+<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
+<code id="init_pathfinder">init_pathfinder</code>
+</td>
+<td>
+Whether to generate initial values from the Pathfinder algorithm (see Stan documentation). If FALSE, will generate random start values..
+</td>
+</tr>
+<tr>
+<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
+<code id="debug_mode">debug_mode</code>
+</td>
+<td>
+Whether to print valuesof all parameters for debugging purposes. If this is used, only one iteration should be used as it generates a lot of console output.
+</td>
+</tr>
+<tr>
+<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
+<code id="...">…</code>
+</td>
+<td>
+Additional parameters passed on to Stan’s sampling engine. See <code>stan</code> for more information.
+</td>
+</tr>
+</tbody></table>
+</section>
+<section id="details" class="level3">
+<h3 class="anchored" data-anchor-id="details">Details</h3>
+<p>To run an IRT ideal point model, you must first pre-process your data using the <code>id_make</code> function. Be sure to specify the correct options for the kind of model you are going to run: if you want to run an unbounded outcome (i.e.&nbsp;Poisson or continuous), the data needs to be processed differently. Also any hierarchical covariates at the person or item level need to be specified in <code>id_make</code>. If they are specified in <code>id_make</code>, than all subsequent models fit by this function will have these covariates.</p>
+<p><strong>Note that for static ideal point models, the covariates are only defined for those persons who are not being used as constraints.</strong></p>
+<p>As of this version of <code>idealstan</code>, the following model types are available. Simply pass the number of the model in the list to the <code>model_type</code> option to fit the model.</p>
+<ol>
+<li>
+<p>IRT 2-PL (binary response) ideal point model, no missing-data inflation</p>
+</li>
+<li>
+<p>IRT 2-PL ideal point model (binary response) with missing- inflation</p>
+</li>
+<li>
+<p>Ordinal IRT (rating scale) ideal point model no missing-data inflation</p>
+</li>
+<li>
+<p>Ordinal IRT (rating scale) ideal point model with missing-data inflation</p>
+</li>
+<li>
+<p>Ordinal IRT (graded response) ideal point model no missing-data inflation</p>
+</li>
+<li>
+<p>Ordinal IRT (graded response) ideal point model with missing-data inflation</p>
+</li>
+<li>
+<p>Poisson IRT (Wordfish) ideal point model with no missing data inflation</p>
+</li>
+<li>
+<p>Poisson IRT (Wordfish) ideal point model with missing-data inflation</p>
+</li>
+<li>
+<p>unbounded (Gaussian) IRT ideal point model with no missing data</p>
+</li>
+<li>
+<p>unbounded (Gaussian) IRT ideal point model with missing-data inflation</p>
+</li>
+<li>
+<p>Positive-unbounded (Log-normal) IRT ideal point model with no missing data</p>
+</li>
+<li>
+<p>Positive-unbounded (Log-normal) IRT ideal point model with missing-data inflation</p>
+</li>
+<li>
+<p>Latent Space (binary response) ideal point model with no missing data</p>
+</li>
+<li>
+<p>Latent Space (binary response) ideal point model with missing-data inflation</p>
+</li>
+<li>
+<p>Ordered Beta (proportion/percentage) with no missing data</p>
+</li>
+<li>
+<p>Ordered Beta (proportion/percentage) with missing-data inflation</p>
+</li>
+</ol>
+</section>
+<section id="value" class="level3">
+<h3 class="anchored" data-anchor-id="value">Value</h3>
+<p>A fitted <code>idealstan</code> object that contains posterior samples of all parameters either via full Bayesian inference or a variational approximation if <code>use_vb</code> is set to <code>TRUE</code>. This object can then be passed to the plotting functions for further analysis.</p>
+</section>
+<section id="identification" class="level3">
+<h3 class="anchored" data-anchor-id="identification">Identification</h3>
+<p>Identifying IRT models is challenging, and ideal point models are still more challenging because the discrimination parameters are not constrained. As a result, more care must be taken to obtain estimates that are the same regardless of starting values. The parameter <code>fixtype</code> enables you to change the type of identification used. The default, ‘vb_full’, does not require any further information from you in order for the model to be fit. In this version of identification, an unidentified model is run using variational Bayesian inference (see <code>vb</code>). The function will then select two persons/legislators or items/bills that end up on either end of the ideal point spectrum, and pin their ideal points to those specific values. To control whether persons/legislator or items/bills are constrained, the <code>const_type</code> can be set to either <code>“persons”</code> or <code>“items”</code> respectively. In many situations, it is prudent to select those persons or items ahead of time to pin to specific values. This allows the analyst to be more specific about what type of latent dimension is to be estimated. To do so, the <code>fixtype</code> option should be set to <code>“prefix”</code>. The values of the persons/items to be pinned can be passed as character values to <code>restrict_ind_high</code> and <code>restrict_ind_low</code> to pin the high/low ends of the latent scale respectively. Note that these should be the actual data values passed to the <code>id_make</code> function. If you don’t pass any values, you will see a prompt asking you to select certain values of persons/items.</p>
+<p>The pinned values for persons/items are set by default to +1/-1, though this can be changed using the <code>fix_high</code> and <code>fix_low</code> options. This pinned range is sufficient to identify all of the models implemented in idealstan, though fiddling with some parameters may be necessary in difficult cases. For time-series models, one of the person ideal point over-time variances is also fixed to .1, a value that can be changed using the option <code>time_fix_sd</code>.</p>
+</section>
+<section id="references" class="level3">
+<h3 class="anchored" data-anchor-id="references">References</h3>
+<ol>
+<li>
+<p>Clinton, J., Jackman, S., &amp; Rivers, D. (2004). The Statistical Analysis of Roll Call Data. <em>The American Political Science Review</em>, 98(2), 355-370. doi:10.1017/S0003055404001194</p>
+</li>
+<li>
+<p>Bafumi, J., Gelman, A., Park, D., &amp; Kaplan, N. (2005). Practical Issues in Implementing and Understanding Bayesian Ideal Point Estimation. <em>Political Analysis</em>, 13(2), 171-187. doi:10.1093/pan/mpi010</p>
+</li>
+<li>
+<p>Kubinec, R. "Generalized Ideal Point Models for Time-Varying and Missing-Data Inference". Working Paper.</p>
+</li>
+<li>
+<p>Betancourt, Michael. "Robust Gaussian Processes in Stan". (October 2017). Case Study.</p>
+</li>
+</ol>
+</section>
+<section id="see-also" class="level3">
+<h3 class="anchored" data-anchor-id="see-also">See Also</h3>
+<p><code>id_make</code> for pre-processing data, <code>id_plot_legis</code> for plotting results, <code>summary</code> for obtaining posterior quantiles, <code>posterior_predict</code> for producing predictive replications.</p>
+</section>
+<section id="examples" class="level3">
+<h3 class="anchored" data-anchor-id="examples">Examples</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(idealstan)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="co"># First we can simulate data for an IRT 2-PL model that is inflated for missing data</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co"># This code will take at least a few minutes to run </span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>bin_irt_2pl_abs_sim <span class="ot">&lt;-</span> <span class="fu">id_sim_gen</span>(<span class="at">model_type=</span><span class="st">'binary'</span>,<span class="at">inflate=</span>T)</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Now we can put that directly into the id_estimate function </span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="co"># to get full Bayesian posterior estimates</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="co"># We will constrain discrimination parameters </span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="co"># for identification purposes based on the true simulated values</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>bin_irt_2pl_abs_est <span class="ot">&lt;-</span> <span class="fu">id_estimate</span>(bin_irt_2pl_abs_sim,</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>                       <span class="at">model_type=</span><span class="dv">2</span>,</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>                       <span class="at">restrict_ind_high =</span> </span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>                       <span class="fu">sort</span>(bin_irt_2pl_abs_sim<span class="sc">@</span>simul_data<span class="sc">$</span>true_person,</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>                       <span class="at">decreasing=</span><span class="cn">TRUE</span>,</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>                       <span class="at">index=</span><span class="cn">TRUE</span>)<span class="sc">$</span>ix[<span class="dv">1</span>],</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>                       <span class="at">restrict_ind_low =</span> </span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>                       <span class="fu">sort</span>(bin_irt_2pl_abs_sim<span class="sc">@</span>simul_data<span class="sc">$</span>true_person,</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>                       <span class="at">decreasing=</span><span class="cn">FALSE</span>,</span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>                       <span class="at">index=</span><span class="cn">TRUE</span>)<span class="sc">$</span>ix[<span class="dv">1</span>],</span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>                       <span class="at">fixtype=</span><span class="st">'prefix'</span>,</span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>                       <span class="at">ncores=</span><span class="dv">2</span>,</span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>                       <span class="at">nchains=</span><span class="dv">2</span>)</span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>                                   </span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a><span class="co"># We can now see how well the model recovered the true parameters</span></span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a><span class="fu">id_sim_coverage</span>(bin_irt_2pl_abs_est) <span class="sc">%&gt;%</span> </span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>         <span class="fu">bind_rows</span>(<span class="at">.id=</span><span class="st">'Parameter'</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>         <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">y=</span>avg,<span class="at">x=</span>Parameter)) <span class="sc">+</span></span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>           <span class="fu">stat_summary</span>(<span class="at">fun.args=</span><span class="fu">list</span>(<span class="at">mult=</span><span class="fl">1.96</span>)) <span class="sc">+</span> </span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>           <span class="fu">theme_minimal</span>()</span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a> </span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a><span class="co"># In most cases, we will use pre-existing data </span></span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a><span class="co"># and we will need to use the id_make function first</span></span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a><span class="co"># We will use the full rollcall voting data </span></span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a><span class="co"># from the 114th Senate as a rollcall object</span></span>
+<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a><span class="fu">data</span>(<span class="st">'senate114'</span>)</span>
+<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a><span class="co"># Running this model will take at least a few minutes, even with </span></span>
+<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a><span class="co"># variational inference (use_vb=T) turned on</span></span>
+<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a>to_idealstan <span class="ot">&lt;-</span>   <span class="fu">id_make</span>(<span class="at">score_data =</span> senate114,</span>
+<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a><span class="at">outcome =</span> <span class="st">'cast_code'</span>,</span>
+<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a><span class="at">person_id =</span> <span class="st">'bioname'</span>,</span>
+<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a><span class="at">item_id =</span> <span class="st">'rollnumber'</span>,</span>
+<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a><span class="at">group_id=</span> <span class="st">'party_code'</span>,</span>
+<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a><span class="at">time_id=</span><span class="st">'date'</span>,</span>
+<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a><span class="at">high_val=</span><span class="st">'Yes'</span>,</span>
+<span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a><span class="at">low_val=</span><span class="st">'No'</span>,</span>
+<span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a><span class="at">miss_val=</span><span class="st">'Absent'</span>)</span>
+<span id="cb1-57"><a href="#cb1-57" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-58"><a href="#cb1-58" aria-hidden="true" tabindex="-1"></a>sen_est <span class="ot">&lt;-</span> <span class="fu">id_estimate</span>(to_idealstan,</span>
+<span id="cb1-59"><a href="#cb1-59" aria-hidden="true" tabindex="-1"></a><span class="at">model_type =</span> <span class="dv">2</span>,</span>
+<span id="cb1-60"><a href="#cb1-60" aria-hidden="true" tabindex="-1"></a><span class="at">use_vb =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb1-61"><a href="#cb1-61" aria-hidden="true" tabindex="-1"></a><span class="at">fixtype=</span><span class="st">'prefix'</span>,</span>
+<span id="cb1-62"><a href="#cb1-62" aria-hidden="true" tabindex="-1"></a><span class="at">restrict_ind_high =</span> <span class="st">"BARRASSO, John A."</span>,</span>
+<span id="cb1-63"><a href="#cb1-63" aria-hidden="true" tabindex="-1"></a><span class="at">restrict_ind_low =</span> <span class="st">"WARREN, Elizabeth"</span>)</span>
+<span id="cb1-64"><a href="#cb1-64" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-65"><a href="#cb1-65" aria-hidden="true" tabindex="-1"></a><span class="co"># After running the model, we can plot </span></span>
+<span id="cb1-66"><a href="#cb1-66" aria-hidden="true" tabindex="-1"></a><span class="co"># the results of the person/legislator ideal points</span></span>
+<span id="cb1-67"><a href="#cb1-67" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-68"><a href="#cb1-68" aria-hidden="true" tabindex="-1"></a><span class="fu">id_plot_legis</span>(sen_est)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+
+
+</section>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const onCopySuccess = function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  }
+  const getTextToCopy = function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+    text: getTextToCopy
+  });
+  clipboard.on('success', onCopySuccess);
+  if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+    // For code content inside modals, clipBoardJS needs to be initialized with a container option
+    // TODO: Check when it could be a function (https://github.com/zenorocha/clipboard.js/issues/860)
+    const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+      text: getTextToCopy,
+      container: window.document.getElementById('quarto-embedded-source-code-modal')
+    });
+    clipboardModal.on('success', onCopySuccess);
+  }
+    var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+    var mailtoRegex = new RegExp(/^mailto:/);
+      var filterRegex = new RegExp('/' + window.location.host + '/');
+    var isInternal = (href) => {
+        return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+    }
+    // Inspect non-navigation links and adorn them if external
+ 	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+    for (var i=0; i<links.length; i++) {
+      const link = links[i];
+      if (!isInternal(link.href)) {
+        // undo the damage that might have been done by quarto-nav.js in the case of
+        // links that we want to consider external
+        if (link.dataset.originalHref !== undefined) {
+          link.href = link.dataset.originalHref;
+        }
+      }
+    }
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+    const config = {
+      allowHTML: true,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start',
+    };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      if (note) {
+        return note.innerHTML;
+      } else {
+        return "";
+      }
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id === null || id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        container.appendChild(note.children[0].cloneNode(true));
+        for (let i = 1; i < note.children.length; i++) {
+          const child = note.children[i];
+          if (child.tagName === "P" && child.innerText === "") {
+            continue;
+          } else {
+            container.appendChild(child.cloneNode(true));
+            break;
+          }
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(container);
+        }
+        return container.innerHTML
+      } else {
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(note);
+      }
+      // TODO in 1.5, we should make sure this works without a callout special case
+      if (note.classList.contains("callout")) {
+        return note.outerHTML;
+      } else {
+        return note.innerHTML;
+      }
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      } else {
+        // See if we can fetch a full url (with no hash to target)
+        // This is a special case and we should probably do some content thinning / targeting
+        fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const htmlDoc = parser.parseFromString(html, "text/html");
+          const note = htmlDoc.querySelector('main.content');
+          if (note !== null) {
+            // This should only happen for chapter cross references
+            // (since there is no id in the URL)
+            // remove the first header
+            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+              note.children[0].remove();
+            }
+            const html = processXRef(null, note);
+            instance.setContent(html);
+          } 
+        }).finally(() => {
+          instance.enable();
+          instance.show();
+        });
+      }
+    }, function(instance) {
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            div.style.left = 0;
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

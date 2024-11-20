@@ -1,0 +1,99 @@
+project:
+  type: website
+website:
+  title: idealstan
+  navbar:
+    search: true
+    right:
+      - icon: github
+        href: https://github.com/saudiwin/idealstan
+        aria-label: idealstan GitHub
+  sidebar:
+    collapse-level: 1
+    contents:
+      - text: Home
+        file: index.qmd
+      - section: Articles
+        contents:
+          - vignettes/Package_Introduction.Rmd
+          - vignettes/Time_Series.Rmd
+      - section: Reference
+        contents:
+          - text: delaware
+            file: man/delaware.qmd
+          - text: derive_chain
+            file: man/derive_chain.qmd
+          - text: id_estimate
+            file: man/id_estimate.qmd
+          - text: id_extract-idealstan-method
+            file: man/id_extract-idealstan-method.qmd
+          - text: id_extract
+            file: man/id_extract.qmd
+          - text: id_make
+            file: man/id_make.qmd
+          - text: id_plot_all_hist
+            file: man/id_plot_all_hist.qmd
+          - text: id_plot_compare
+            file: man/id_plot_compare.qmd
+          - text: id_plot_cov
+            file: man/id_plot_cov.qmd
+          - text: id_plot_irf
+            file: man/id_plot_irf.qmd
+          - text: id_plot_legis_dyn
+            file: man/id_plot_legis_dyn.qmd
+          - text: id_plot_legis_var
+            file: man/id_plot_legis_var.qmd
+          - text: id_plot_legis
+            file: man/id_plot_legis.qmd
+          - text: id_plot_ppc-idealstan-method
+            file: man/id_plot_ppc-idealstan-method.qmd
+          - text: id_plot_ppc
+            file: man/id_plot_ppc.qmd
+          - text: id_plot_rhats
+            file: man/id_plot_rhats.qmd
+          - text: id_plot_sims
+            file: man/id_plot_sims.qmd
+          - text: id_plot-idealstan-method
+            file: man/id_plot-idealstan-method.qmd
+          - text: id_plot
+            file: man/id_plot.qmd
+          - text: id_post_pred-idealstan-method
+            file: man/id_post_pred-idealstan-method.qmd
+          - text: id_post_pred
+            file: man/id_post_pred.qmd
+          - text: id_rebuild_mpi
+            file: man/id_rebuild_mpi.qmd
+          - text: id_sim_coverage
+            file: man/id_sim_coverage.qmd
+          - text: id_sim_gen
+            file: man/id_sim_gen.qmd
+          - text: id_sim_resid
+            file: man/id_sim_resid.qmd
+          - text: id_sim_rmse
+            file: man/id_sim_rmse.qmd
+          - text: idealdata-class
+            file: man/idealdata-class.qmd
+          - text: idealstan-class
+            file: man/idealstan-class.qmd
+          - text: idealstan
+            file: man/idealstan.qmd
+          - text: launch_shinystan-idealstan-method
+            file: man/launch_shinystan-idealstan-method.qmd
+          - text: launch_shinystan
+            file: man/launch_shinystan.qmd
+          - text: release_questions
+            file: man/release_questions.qmd
+          - text: senate114
+            file: man/senate114.qmd
+          - text: stan_trace-idealstan-method
+            file: man/stan_trace-idealstan-method.qmd
+          - text: stan_trace
+            file: man/stan_trace.qmd
+          - text: summary-idealstan-method
+            file: man/summary-idealstan-method.qmd
+      - text: News
+        file: NEWS.md
+      - text: License
+        file: LICENSE.md
+      - text: Citation
+        file: CITATION.md

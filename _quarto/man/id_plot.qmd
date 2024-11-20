@@ -1,0 +1,29 @@
+
+## Generic Function for Plotting <code>idealstan</code> objects {.unnumbered}
+
+
+### Description
+
+This generic function will run all the plotting functions associated with fitted <code>idealstan</code> objects.
+
+
+
+### Usage
+
+<pre><code class='language-R'>id_plot(object, ...)
+</code></pre>
+
+
+### Arguments
+
+<table>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="object">object</code></td>
+<td>
+An <code>idealstan</code> object
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="...">...</code></td>
+<td>
+Other options passed onto the underlying plot function
+</td></tr>
+</table>
+

@@ -1,0 +1,29 @@
+
+## Generic Method to Use <code>shinystan</code> with <code>idealstan</code> {.unnumbered}
+
+
+### Description
+
+A generic function for launching <code>launch_shinystan</code>.
+
+
+
+### Usage
+
+<pre><code class='language-R'>launch_shinystan(object, ...)
+</code></pre>
+
+
+### Arguments
+
+<table>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="object">object</code></td>
+<td>
+A fitted <code>idealstan</code> object.
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="...">...</code></td>
+<td>
+Other arguments passed on to underlying function
+</td></tr>
+</table>
+

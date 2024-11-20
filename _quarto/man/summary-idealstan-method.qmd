@@ -1,0 +1,60 @@
+
+## Posterior Summaries for fitted <code>idealstan</code> object {.unnumbered}
+
+
+### Description
+
+This function produces quantiles and standard deviations for the posterior samples of <code>idealstan</code> objects.
+
+
+
+### Usage
+
+<pre><code class='language-R'>## S4 method for signature 'idealstan'
+summary(
+  object,
+  pars = "ideal_pts",
+  high_limit = 0.95,
+  low_limit = 0.05,
+  aggregated = TRUE,
+  use_chain = NULL
+)
+</code></pre>
+
+
+### Arguments
+
+<table>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="object">object</code></td>
+<td>
+An <code>idealstan</code> object fitted by <code>id_estimate</code>
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="pars">pars</code></td>
+<td>
+Either <code>'ideal_pts'</code> for person ideal points, 
+<code>'items'</code> for items/bills difficulty and discrimination parameters,
+and <code>'all'</code> for all parameters in the model, including incidental parameters.
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="high_limit">high_limit</code></td>
+<td>
+A number between 0 and 1 reflecting the upper limit of the 
+uncertainty interval (defaults to 0.95).
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="low_limit">low_limit</code></td>
+<td>
+A number between 0 and 1 reflecting the lower limit of the 
+uncertainty interval (defaults to 0.05).
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="aggregate">aggregate</code></td>
+<td>
+Whether to return summaries of the posterior values or the 
+full posterior samples. Defaults to <code>TRUE</code>.
+</td></tr>
+</table>
+
+
+### Value
+
+A <code>tibble</code> data frame with parameters as rows and descriptive statistics as columns
+
+

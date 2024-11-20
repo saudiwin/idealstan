@@ -123,7 +123,7 @@
 #' data('senate114')
 #' 
 #' to_idealstan <-   id_make(score_data = senate114,
-#'                outcome = 'cast_code',
+#'                outcome_disc = 'cast_code',
 #'                person_id = 'bioname',
 #'                item_id = 'rollnumber',
 #'                group_id= 'party_code',

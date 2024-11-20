@@ -1,0 +1,65 @@
+
+## Plot Results of <code>id_estimate</code> {.unnumbered}
+
+
+### Description
+
+This function allows you to access the full range of plotting options for fitted <code>idealstan</code> models.
+
+
+
+### Usage
+
+<pre><code class='language-R'>## S4 method for signature 'idealstan'
+id_plot(object, plot_type = "persons", ...)
+</code></pre>
+
+
+### Arguments
+
+<table>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="object">object</code></td>
+<td>
+A fitted <code>idealstan</code> object
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="plot_type">plot_type</code></td>
+<td>
+Specify the plot as a character string. Currently 'persons' for legislator/person ideal point plot, 
+'histogram' for a histogram of model estimates for given parameters. Alternatively,
+use the <code>param</code> option to specify a specific model parameter.
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="...">...</code></td>
+<td>
+Additional arguments passed on to the underlying functions. See individual function documentation for details.
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="param">param</code></td>
+<td>
+A character name of a parameter from an <code>idealstan</code> model.
+</td></tr>
+</table>
+
+
+### Details
+
+<code>id_plot</code> is a wrapper function that can access the various plotting functions available in the <code>idealstan</code> package. 
+Currently, the options are limited to a plot of legislator/person ideal points with bills/item midpoints as an optional overlay.
+Additional plots will be available in future versions of <code>idealstan</code>.
+
+
+
+### Value
+
+A <code>ggplot</code> object
+
+
+
+### See Also
+
+<code>id_plot_legis</code> for a legislator/person ideal point plot, 
+<code>id_plot_all_hist</code> for a standard histogram plot,
+<code>id_plot_compare</code> for an ideal point plot of two different models of the same data,
+<code>id_plot_rhats</code> for a histogram of <code>Rhat</code> values,
+<code>id_plot_sims</code> for plotting true versus estimated values,
+<code>id_estimate</code> for how to estimate an <code>idealstan</code> object.
+
+

@@ -1,0 +1,696 @@
+## Estimate an <code>idealstan</code> model {.unnumbered}
+
+
+### Description
+
+This function will take a pre-processed <code>idealdata</code> vote/score dataframe and 
+run one of the available IRT/latent space ideal point models on the data using
+Stan's MCMC engine.
+
+
+
+### Usage
+
+<pre><code class='language-R'>id_estimate(
+  idealdata = NULL,
+  model_type = 2,
+  inflate_zero = FALSE,
+  vary_ideal_pts = "none",
+  keep_param = NULL,
+  grainsize = 1,
+  mpi_export = NULL,
+  use_subset = FALSE,
+  sample_it = FALSE,
+  subset_group = NULL,
+  subset_person = NULL,
+  sample_size = 20,
+  nchains = 4,
+  niters = 1000,
+  use_vb = FALSE,
+  ignore_db = NULL,
+  restrict_ind_high = NULL,
+  fix_high = 1,
+  fix_low = (-1),
+  restrict_ind_low = NULL,
+  num_restrict_high = 1,
+  num_restrict_low = 1,
+  fixtype = "prefix",
+  const_type = "persons",
+  id_refresh = 0,
+  prior_only = FALSE,
+  warmup = 1000,
+  ncores = 4,
+  use_groups = FALSE,
+  discrim_reg_upb = 1,
+  discrim_reg_lb = -1,
+  discrim_miss_upb = 1,
+  discrim_miss_lb = -1,
+  discrim_reg_scale = 2,
+  discrim_reg_shape = 2,
+  discrim_miss_scale = 2,
+  discrim_miss_shape = 2,
+  person_sd = 3,
+  time_fix_sd = 0.1,
+  time_var = 10,
+  spline_knots = NULL,
+  spline_degree = 2,
+  ar1_up = 1,
+  ar1_down = 0,
+  boundary_prior = NULL,
+  time_center_cutoff = 50,
+  restrict_var = FALSE,
+  sample_stationary = FALSE,
+  ar_sd = 1,
+  diff_reg_sd = 3,
+  diff_miss_sd = 3,
+  restrict_sd_high = 10,
+  restrict_sd_low = 10,
+  restrict_N_high = 1000,
+  restrict_N_low = 1000,
+  gp_sd_par = 0.025,
+  gp_num_diff = 3,
+  gp_m_sd_par = 0.3,
+  gp_min_length = 0,
+  cmdstan_path_user = NULL,
+  map_over_id = "persons",
+  save_files = NULL,
+  het_var = TRUE,
+  compile_optim = FALSE,
+  debug = FALSE,
+  init_pathfinder = TRUE,
+  debug_mode = FALSE,
+  ...
+)
+</code></pre>
+
+
+### Arguments
+
+<table>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="idealdata">idealdata</code></td>
+<td>
+An object produced by the <code>id_make</code> 
+containing a score/vote matrix for use for estimation &amp; plotting
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="model_type">model_type</code></td>
+<td>
+An integer reflecting the kind of model to be estimated. 
+See below.
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="inflate_zero">inflate_zero</code></td>
+<td>
+If the outcome is distributed as Poisson (count/unbounded integer), 
+setting this to 
+<code>TRUE</code> will fit a traditional zero-inflated model. 
+To use correctly, the value for 
+zero must be passed as the <code>miss_val</code> option to <code>id_make</code> before
+running a model so that zeroes are coded as missing data.
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="vary_ideal_pts">vary_ideal_pts</code></td>
+<td>
+Default <code>'none'</code>. If <code>'random_walk'</code>, <code>'AR1'</code>, 
+<code>'GP'</code>, or <code>'splines'</code>, a 
+time-varying ideal point model will be fit with either a random-walk process, an 
+AR1 process, a Gaussian process or a spline. 
+Note that the spline is the easiest time-varying model to fit so long as the number
+of knots (option <code>spline_knots</code>) is significantly less than 
+the number of time points in the data. 
+See documentation for more info.
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="keep_param">keep_param</code></td>
+<td>
+A list with logical values for different categories of paremeters which
+should/should not be kept following estimation. Can be any/all of <code>person_int</code> for 
+the person-level intercepts (static ideal points), 
+<code>person_vary</code> for person-varying ideal points,
+<code>item</code> for observed item parameters (discriminations/intercepts),
+<code>item_miss</code> for missing item parameters (discriminations/intercepts),
+and <code>extra</code> for other parameters (hierarchical covariates, ordinal intercepts, etc.).
+Takes the form <code>list(person_int=TRUE,person_vary=TRUE,item=TRUE,item_miss=TRUE,extra=TRUE)</code>.
+If any are missing in the list, it is assumed that those parameters will be excluded.
+If <code>NULL</code> (default), will save all parameters in output.
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="grainsize">grainsize</code></td>
+<td>
+The grainsize parameter for the <code>reduce_sum</code> 
+function used for within-chain parallelization. The default is 1, 
+which means 1 chunk (item or person) per core. Set to -1. to use
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="mpi_export">mpi_export</code></td>
+<td>
+If <code>within_chains="mpi"</code>, this parameter should refer to the 
+directory where the necessary data and Stan code will be exported to. If missing, 
+an interactive dialogue will prompt the user for a directory.
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="use_subset">use_subset</code></td>
+<td>
+Whether a subset of the legislators/persons should be used instead of the full response matrix
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="sample_it">sample_it</code></td>
+<td>
+Whether or not to use a random subsample of the response matrix. Useful for testing.
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="subset_group">subset_group</code></td>
+<td>
+If person/legislative data was included in the <code>id_make</code> function, then you can subset by
+any value in the <code>\$group</code> column of that data if <code>use_subset</code> is <code>TRUE</code>.
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="subset_person">subset_person</code></td>
+<td>
+A list of character values of names of persons/legislators to use to subset if <code>use_subset</code> is 
+<code>TRUE</code> and person/legislative data was included in the <code>id_make</code> function with the required <code>\$person.names</code>
+column
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="sample_size">sample_size</code></td>
+<td>
+If <code>sample_it</code> is <code>TRUE</code>, this value reflects how many legislators/persons will be sampled from
+the response matrix
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="nchains">nchains</code></td>
+<td>
+The number of chains to use in Stan's sampler. Minimum is one. See <code>stan</code> for more info. If <code>use_vb=TRUE</code>, this parameter
+will determine the number of Pathfinder paths to estimate.
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="niters">niters</code></td>
+<td>
+The number of iterations to run Stan's sampler. Shouldn't be set much lower than 500. See <code>stan</code> for more info.
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="use_vb">use_vb</code></td>
+<td>
+Whether or not to use Stan's Pathfinder algorithm instead of full Bayesian inference. Pros: it's much faster but can be much less accurate. Note that Pathfinder is 
+also used by default for finding initial starting values for sfull HMC sampling.
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="ignore_db">ignore_db</code></td>
+<td>
+If there are multiple time periods (particularly when there are 
+very many time periods), you can pass in a data frame
+(or tibble) with one row per person per time period and an indicator column 
+<code>ignore</code> that is equal to 1 for periods that should be considered in sample
+and 0 for periods for periods that should be considered out of sample. This is 
+useful for excluding time periods from estimation for persons when they could not 
+be present, i.e. such as before entrance into an organization or following death.
+If <code>ignore</code> equals 0, the person's ideal point is estimated as a standard Normal
+draw rather than an auto-correlated parameter, reducing computational 
+burden substantially.
+Note that there can only be one pre-sample period of 0s, one in-sample period of 1s,
+and one post-sample period of 0s. Multiple in-sample periods cannot be interspersed
+with out of sample periods. The columns must be labeled as <code>person_id</code>, 
+<code>time_id</code> and <code>ignore</code> and must match the formatting of the columns
+fed to the <code>id_make</code> function.
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="restrict_ind_high">restrict_ind_high</code></td>
+<td>
+If <code>fixtype</code> is not &quot;vb_full&quot;, a vector of character values or integer indices
+of a legislator/person or bill/item to pin to a high value (default +1).
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="fix_high">fix_high</code></td>
+<td>
+The value that the high fixed ideal point(s) should be
+fixed to. Default is +1. Does not apply when <code>const_type="items"</code>; in that case,
+use <code>restrict_sd</code>/<code>restrict_N</code> parameters (see below).
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="fix_low">fix_low</code></td>
+<td>
+The value that the low fixed ideal point(s) should be
+fixed to. Default is -1. Does not apply when <code>const_type="items"</code>; in that case,
+use <code>restrict_sd</code>/<code>restrict_N</code> parameters (see below).
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="restrict_ind_low">restrict_ind_low</code></td>
+<td>
+If <code>fixtype</code> is not &quot;vb_full&quot;, a vector of character values or integer indices of a 
+legislator/person or bill/item to pin to a low value (default -1).
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="num_restrict_high">num_restrict_high</code></td>
+<td>
+If using variational inference for identification (<code>fixtype="vb_full"</code>),
+how many parameters to constraint to positive values? Default is 1.
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="num_restrict_low">num_restrict_low</code></td>
+<td>
+If using variational inference for identification (<code>ixtype="vb_full"</code>),
+how many parameters to constraint to positive negative values? Default is 1.
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="fixtype">fixtype</code></td>
+<td>
+Sets the particular kind of identification used on the model, could be either 'vb_full' 
+(identification provided exclusively by running a variational identification model with no prior info), or
+'prefix' (two indices of ideal points or items to fix are provided to 
+options <code>restrict_ind_high</code> and <code>restrict_ind_low</code>).
+See details for more information.
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="const_type">const_type</code></td>
+<td>
+Whether <code>"persons"</code> are the parameters to be 
+fixed for identification (the default) or <code>"items"</code>. Each of these
+pinned parameters should be specified to <code>fix_high</code> and <code>fix_low</code>
+if <code>fixtype</code> equals <code>"prefix"</code>, otherwise the model will
+select the parameters to pin to fixed values.
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="id_refresh">id_refresh</code></td>
+<td>
+The number of times to report iterations from the variational run used to 
+identify models. Default is 0 (nothing output to console).
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="prior_only">prior_only</code></td>
+<td>
+Whether to only sample from priors as opposed to the full model
+with likelihood (the default). Useful for doing posterior predictive checks.
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="warmup">warmup</code></td>
+<td>
+The number of iterations to use to calibrate Stan's sampler on a given model. Shouldn't be less than 100. 
+See <code>stan</code> for more info.
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="ncores">ncores</code></td>
+<td>
+The number of cores in your computer to use for parallel processing in the Stan engine. 
+See <code>stan</code> for more info. If <code>within_chain</code> is set to
+<code>"threads"</code>, this parameter will determine the number of threads 
+(independent processes) used for within-chain parallelization.
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="use_groups">use_groups</code></td>
+<td>
+If <code>TRUE</code>, group parameters from the person/legis data given in <code>id_make</code> will be 
+estimated instead of individual parameters.
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="discrim_reg_upb">discrim_reg_upb</code></td>
+<td>
+Upper bound of the rescaled Beta distribution for 
+observed discrimination parameters (default is +1)
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="discrim_reg_lb">discrim_reg_lb</code></td>
+<td>
+Lower bound of the rescaled Beta distribution for 
+observed discrimination parameters (default is -1). Set to 0 for 
+conventional IRT.
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="discrim_miss_upb">discrim_miss_upb</code></td>
+<td>
+Upper bound of the rescaled Beta distribution for 
+missing discrimination parameters (default is +1)
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="discrim_miss_lb">discrim_miss_lb</code></td>
+<td>
+Lower bound of the rescaled Beta distribution for 
+missing discrimination parameters (default is -1). Set to 0 for 
+conventional IRT.
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="discrim_reg_scale">discrim_reg_scale</code></td>
+<td>
+Set the scale parameter for the rescaled Beta distribution
+of the discrimination parameters.
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="discrim_reg_shape">discrim_reg_shape</code></td>
+<td>
+Set the shape parameter for the rescaled Beta distribution
+of the discrimination parameters.
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="discrim_miss_scale">discrim_miss_scale</code></td>
+<td>
+Set the scale parameter for the rescaled Beta distribution
+of the missingness discrimination parameters.
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="discrim_miss_shape">discrim_miss_shape</code></td>
+<td>
+Set the shape parameter for the rescaled Beta distribution
+of the missingness discrimination parameters.
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="time_fix_sd">time_fix_sd</code></td>
+<td>
+The variance of the over-time component of the first person/legislator
+is fixed to this value as a reference. 
+Default is 0.1.
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="spline_knots">spline_knots</code></td>
+<td>
+Number of knots (essentially, number of points
+at which to calculate time-varying ideal points given T time points). 
+Default is NULL, which means that the spline is equivalent to 
+polynomial time trend of degree <code>spline_degree</code>.
+Note that the spline number (if not null) must be equal or less than 
+the number of time points&ndash;and there is
+no reason to have it equal to the number of time points as that will likely 
+over-fit the data.
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="spline_degree">spline_degree</code></td>
+<td>
+The degree of the spline polynomial. The default is 2 which is a 
+quadratic polynomial. A value of 1 will result in independent knots (essentially 
+pooled across time points T). A higher value will result in wigglier time series. 
+There is no &quot;correct&quot; value but lower values are likely more stable and easier to 
+identify.
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="boundary_prior">boundary_prior</code></td>
+<td>
+If your time series has very low variance (change over time),
+you may want to use this option to put a boundary-avoiding inverse gamma prior on
+the time series variance parameters if your model has a lot of divergent transitions. 
+To do so, pass a list with a element called 
+<code>beta</code> that signifies the rate parameter of the inverse-gamma distribution. 
+For example, try <code>boundary_prior=list(beta=1)</code>. Increasing the value of <code>beta</code>
+will increase the &quot;push&quot; away from zero. Setting it too high will result in 
+time series that exhibit a lot of &quot;wiggle&quot; without much need.
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="time_center_cutoff">time_center_cutoff</code></td>
+<td>
+The number of time points above which
+the model will employ a centered time series approach for AR(1)
+and random walk models. Below this number the model will employ a 
+non-centered approach. The default is 50 time points, which is 
+relatively arbitrary and higher values may be better if sampling
+quality is poor above the threshold.
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="sample_stationary">sample_stationary</code></td>
+<td>
+If <code>TRUE</code>, the AR(1) coefficients in a time-varying model will be 
+sampled from an unconstrained space and then mapped back to a stationary space. Leaving this <code>TRUE</code> is 
+slower but will work better when there is limited information to identify a model. If used, the
+<code>ar_sd</code> parameter should be increased to 5 to allow for wider sampling in the unconstrained space.
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="ar_sd">ar_sd</code></td>
+<td>
+If an AR(1) model is used, this defines the prior scale of the Normal distribution. A lower number 
+can help 
+identify the model when there are few time points.
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="diff_reg_sd">diff_reg_sd</code></td>
+<td>
+Set the prior standard deviation for the bill (item) intercepts for the non-inflated model.
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="diff_miss_sd">diff_miss_sd</code></td>
+<td>
+Set the prior standard deviation for the bill (item) intercepts for the inflated model.
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="restrict_sd_high">restrict_sd_high</code></td>
+<td>
+Set the prior shape for high pinned parameters. This has a default of 
+0.01 (equivalent to +0.99), but could be set lower if the data is really large.
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="restrict_sd_low">restrict_sd_low</code></td>
+<td>
+Set the prior scale for low pinned parameters. This has a default of 
+0.01 (equivalent to -0.99), but could be set lower if the data is really large.
+To make the prior uninformative, set this value and <code>restrict_N_low</code> to +1 (or +2, +2 for weakly informative).
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="restrict_N_high">restrict_N_high</code></td>
+<td>
+Set the prior scale for high pinned parameters. Default is 1000 
+(equivalent to 1,000 observations of the pinned value). Higher values make the pin
+stronger (for example if there is a lot of data).
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="restrict_N_low">restrict_N_low</code></td>
+<td>
+Set the prior shape for high pinned parameters. Default is 1000 
+(equivalent to 1,000 observations of the pinned value). Higher values make the pin stronger
+(for example if there is a lot of data).
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="gp_sd_par">gp_sd_par</code></td>
+<td>
+The upper limit on allowed residual variation of the Gaussian process
+prior. Increasing the limit will permit the GP to more closely follow the time points, 
+resulting in much sharper bends in the function and potentially oscillation.
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="gp_num_diff">gp_num_diff</code></td>
+<td>
+The number of time points to use to calculate the length-scale prior
+that determines the level of smoothness of the GP time process. Increasing this value
+will result in greater smoothness/autocorrelation over time by selecting a greater number
+of time points over which to calculate the length-scale prior.
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="gp_m_sd_par">gp_m_sd_par</code></td>
+<td>
+The upper limit of the marginal standard deviation of the GP time 
+process. Decreasing this value will result in smoother fits.
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="gp_min_length">gp_min_length</code></td>
+<td>
+The minimum value of the GP length-scale parameter. This is a hard
+lower limit. Increasing this value will force a smoother GP fit. It should always be less than
+<code>gp_num_diff</code>.
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="cmdstan_path_user">cmdstan_path_user</code></td>
+<td>
+Default is NULL, and so will default to whatever is set in
+<code>cmdstanr</code> package. Specify a file path  here to use a different <code>cmdtstan</code>
+installation.
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="map_over_id">map_over_id</code></td>
+<td>
+This parameter identifies which ID variable to use to construct the 
+shards for within-chain parallelization. It defaults to <code>"persons"</code> but can also take
+a value of <code>"items"</code>. It is recommended to select whichever variable has more
+distinct values to improve parallelization.
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="save_files">save_files</code></td>
+<td>
+The location to save CSV files with MCMC draws from <code>cmdstanr</code>. 
+The default is <code>NULL</code>, which will use a folder in the package directory.
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="het_var">het_var</code></td>
+<td>
+Whether to use a separate variance parameter for each item if using
+Normal or Log-Normal distributions that have variance parameters. Defaults to TRUE and
+should be set to FALSE only if all items have a similar variance.
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="compile_optim">compile_optim</code></td>
+<td>
+Whether to use Stan compile optimization flags (off by default)
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="debug">debug</code></td>
+<td>
+For debugging purposes, turns off threading to enable more informative
+error messages from Stan. Also recompiles model objects.
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="init_pathfinder">init_pathfinder</code></td>
+<td>
+Whether to generate initial values from the Pathfinder 
+algorithm (see Stan documentation). If FALSE, will generate random start values..
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="debug_mode">debug_mode</code></td>
+<td>
+Whether to print valuesof all parameters for debugging purposes.
+If this is used, only one iteration should be used as it generates a lot of 
+console output.
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="...">...</code></td>
+<td>
+Additional parameters passed on to Stan's sampling engine. See <code>stan</code> for more information.
+</td></tr>
+</table>
+
+
+### Details
+
+To run an IRT ideal point model, you must first pre-process your data using the <code>id_make</code> function. Be sure to specify the correct options for the
+kind of model you are going to run: if you want to run an unbounded outcome (i.e. Poisson or continuous),
+the data needs to be processed differently. Also any hierarchical covariates at the person or item level
+need to be specified in <code>id_make</code>. If they are specified in <code>id_make</code>, than all 
+subsequent models fit by this function will have these covariates.
+
+<strong>Note that for static ideal point models, the covariates are only defined for those 
+persons who are not being used as constraints.</strong>
+
+As of this version of <code>idealstan</code>, the following model types are available. Simply pass 
+the number of the model in the list to the <code>model_type</code> option to fit the model.
+
+
+<ol>
+<li> IRT 2-PL (binary response) ideal point model, no missing-data inflation
+
+</li>
+<li> IRT 2-PL ideal point model (binary response) with missing- inflation
+
+</li>
+<li> Ordinal IRT (rating scale) ideal point model no missing-data inflation
+
+</li>
+<li> Ordinal IRT (rating scale) ideal point model with missing-data inflation
+
+</li>
+<li> Ordinal IRT (graded response) ideal point model no missing-data inflation
+
+</li>
+<li> Ordinal IRT (graded response) ideal point model with missing-data inflation
+
+</li>
+<li> Poisson IRT (Wordfish) ideal point model with no missing data inflation
+
+</li>
+<li> Poisson IRT (Wordfish) ideal point model with missing-data inflation
+
+</li>
+<li> unbounded (Gaussian) IRT ideal point model with no missing data
+
+</li>
+<li> unbounded (Gaussian) IRT ideal point model with missing-data inflation
+
+</li>
+<li> Positive-unbounded (Log-normal) IRT ideal point model with no missing data
+
+</li>
+<li> Positive-unbounded (Log-normal) IRT ideal point model with missing-data inflation
+
+</li>
+<li> Latent Space (binary response) ideal point model with no missing data
+
+</li>
+<li> Latent Space (binary response) ideal point model with missing-data inflation
+
+</li>
+<li> Ordered Beta (proportion/percentage) with no missing data
+
+</li>
+<li> Ordered Beta (proportion/percentage) with missing-data inflation
+
+</li></ol>
+
+
+
+### Value
+
+A fitted <code>idealstan</code> object that contains posterior samples of all parameters either via full Bayesian inference
+or a variational approximation if <code>use_vb</code> is set to <code>TRUE</code>. This object can then be passed to the plotting functions for further analysis.
+
+
+
+### Identification
+
+Identifying IRT models is challenging, and ideal point models are still more challenging 
+because the discrimination parameters are not constrained.
+As a result, more care must be taken to obtain estimates that are the same regardless of starting values. 
+The parameter <code>fixtype</code> enables you to change the type of identification used. The default, 'vb_full', 
+does not require any further
+information from you in order for the model to be fit. In this version of identification, 
+an unidentified model is run using
+variational Bayesian inference (see <code>vb</code>). The function will then select two 
+persons/legislators or items/bills that end up on either end of the ideal point spectrum, 
+and pin their ideal points
+to those specific values. 
+To control whether persons/legislator or items/bills are constrained,
+the <code>const_type</code> can be set to either <code>"persons"</code> or 
+<code>"items"</code> respectively. 
+In many situations, it is prudent to select those persons or items 
+ahead of time to pin to specific values. This allows the analyst to 
+be more specific about what type of latent dimension is to be 
+estimated. To do so, the <code>fixtype</code> option should be set to 
+<code>"prefix"</code>. The values of the persons/items to be pinned can be passed
+as character values to <code>restrict_ind_high</code> and 
+<code>restrict_ind_low</code> to pin the high/low ends of the latent 
+scale respectively. Note that these should be the actual data values 
+passed to the <code>id_make</code> function. If you don't pass any values, 
+you will see a prompt asking you to select certain values of persons/items.
+
+The pinned values for persons/items are set by default to +1/-1, though
+this can be changed using the <code>fix_high</code> and 
+<code>fix_low</code> options. This pinned range is sufficient to identify 
+all of the models
+implemented in idealstan, though fiddling with some parameters may be 
+necessary in difficult cases. For time-series models, one of the 
+person ideal point over-time variances is also fixed to .1, a value that
+can be changed using the option <code>time_fix_sd</code>.
+
+
+
+### References
+
+
+<ol>
+<li> Clinton, J., Jackman, S., &amp; Rivers, D. (2004). The Statistical Analysis of Roll Call Data. <em>The American Political Science Review</em>, 98(2), 355-370. doi:10.1017/S0003055404001194
+
+</li>
+<li> Bafumi, J., Gelman, A., Park, D., &amp; Kaplan, N. (2005). Practical Issues in Implementing and Understanding Bayesian Ideal Point Estimation. <em>Political Analysis</em>, 13(2), 171-187. doi:10.1093/pan/mpi010
+
+</li>
+<li> Kubinec, R. &quot;Generalized Ideal Point Models for Time-Varying and Missing-Data Inference&quot;. Working Paper.
+
+</li>
+<li> Betancourt, Michael. &quot;Robust Gaussian Processes in Stan&quot;. (October 2017). Case Study.
+
+</li></ol>
+
+
+
+### See Also
+
+<code>id_make</code> for pre-processing data,
+<code>id_plot_legis</code> for plotting results,
+<code>summary</code> for obtaining posterior quantiles,
+<code>posterior_predict</code> for producing predictive replications.
+
+
+
+### Examples
+```{r, warning=FALSE, message=FALSE, eval=FALSE}
+library(idealstan)
+
+# First we can simulate data for an IRT 2-PL model that is inflated for missing data
+library(ggplot2)
+library(dplyr)
+
+# This code will take at least a few minutes to run 
+bin_irt_2pl_abs_sim <- id_sim_gen(model_type='binary',inflate=T)
+
+# Now we can put that directly into the id_estimate function 
+# to get full Bayesian posterior estimates
+# We will constrain discrimination parameters 
+# for identification purposes based on the true simulated values
+
+bin_irt_2pl_abs_est <- id_estimate(bin_irt_2pl_abs_sim,
+                       model_type=2,
+                       restrict_ind_high = 
+                       sort(bin_irt_2pl_abs_sim@simul_data$true_person,
+                       decreasing=TRUE,
+                       index=TRUE)$ix[1],
+                       restrict_ind_low = 
+                       sort(bin_irt_2pl_abs_sim@simul_data$true_person,
+                       decreasing=FALSE,
+                       index=TRUE)$ix[1],
+                       fixtype='prefix',
+                       ncores=2,
+                       nchains=2)
+                                   
+# We can now see how well the model recovered the true parameters
+
+id_sim_coverage(bin_irt_2pl_abs_est) %>% 
+         bind_rows(.id='Parameter') %>% 
+         ggplot(aes(y=avg,x=Parameter)) +
+           stat_summary(fun.args=list(mult=1.96)) + 
+           theme_minimal()
+ 
+
+# In most cases, we will use pre-existing data 
+# and we will need to use the id_make function first
+# We will use the full rollcall voting data 
+# from the 114th Senate as a rollcall object
+
+data('senate114')
+
+# Running this model will take at least a few minutes, even with 
+# variational inference (use_vb=T) turned on
+
+to_idealstan <-   id_make(score_data = senate114,
+outcome = 'cast_code',
+person_id = 'bioname',
+item_id = 'rollnumber',
+group_id= 'party_code',
+time_id='date',
+high_val='Yes',
+low_val='No',
+miss_val='Absent')
+
+sen_est <- id_estimate(to_idealstan,
+model_type = 2,
+use_vb = TRUE,
+fixtype='prefix',
+restrict_ind_high = "BARRASSO, John A.",
+restrict_ind_low = "WARREN, Elizabeth")
+
+# After running the model, we can plot 
+# the results of the person/legislator ideal points
+
+id_plot_legis(sen_est)
+
+
+
+
+```

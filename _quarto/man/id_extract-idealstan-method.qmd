@@ -1,0 +1,47 @@
+
+## Extract <code>stan</code> joint posterior distribution from <code>idealstan</code> object {.unnumbered}
+
+
+### Description
+
+This convenience function allows you to extract the underlying <code>rstan</code> posterior estimates for the full parameters
+estimates of the <code>idealstan</code> model object. See <code>extract</code> for the underlying function and more options.
+
+You can use this function to access a matrix or array of the full posterior estimates of each of the parameters in an 
+<code>idealstan</code> object. There are available options to pick certain parameters of the model, such as the person (legislator)
+ideal points or item (bill) discrimination scores. Alternatively, you can leave the <code>extract_type</code> option blank and 
+receive a list of all of the available parameters. Please note that the list of parameters do not have particularly
+informative names. 
+
+All parameters are returned in the order in which they were input into the <code>id_make</code> function.
+
+
+
+### Usage
+
+<pre><code class='language-R'>## S4 method for signature 'idealstan'
+id_extract(object, extract_type = "persons", ...)
+</code></pre>
+
+
+### Arguments
+
+<table>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="object">object</code></td>
+<td>
+A fitted <code>idealstan</code> object (see <code>id_estimate</code>)
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="extract_type">extract_type</code></td>
+<td>
+Can be one of <code>'persons'</code> for person/legislator ideal points,
+<code>'obs_discrim'</code> for non-inflated item (bill) discrimination scores,
+<code>'obs_diff'</code> for non-inflated item (bill) difficulty scores,
+<code>'miss_discrim'</code> for inflated item (bill) discrimination scores,
+and <code>'miss_diff'</code> for inflated item (bill) difficulty scores.
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="...">...</code></td>
+<td>
+Any additional arguments passed on to the <code>extract</code> function.
+</td></tr>
+</table>
+

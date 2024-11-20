@@ -1,0 +1,11 @@
+
+## Results of <code>id_estimate</code> function {.unnumbered}
+
+
+### Description
+
+The <code>idealstan</code> objects store the results of estimations carried out by the <code>id_estimate</code> function. 
+These objects include the full results of Bayesian sampling performed by the <code>stan</code> function in the <span class="pkg">rstan</span>
+package.
+
+

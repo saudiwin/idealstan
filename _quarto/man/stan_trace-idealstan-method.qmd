@@ -1,0 +1,49 @@
+
+## Plot the MCMC posterior draws by chain {.unnumbered}
+
+
+### Description
+
+This function allows you to produce trace plots for assessing the quality
+and convergence of MCMC chains.
+
+
+
+### Usage
+
+<pre><code class='language-R'>## S4 method for signature 'idealstan'
+stan_trace(object, par = "L_full[1]")
+</code></pre>
+
+
+### Arguments
+
+<table>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="object">object</code></td>
+<td>
+A fitted <code>idealstan</code> model
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="par">par</code></td>
+<td>
+The character string  name of a parameter in the model
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="...">...</code></td>
+<td>
+Other options passed on to <code>mcmc_trace</code>
+</td></tr>
+</table>
+
+
+### Details
+
+To use this function, you must pass a fitted <code>idealstan</code> object
+along with the name of a parameter in the model. To determine these
+parameter names, use the <code>summary</code> function or obtain the data
+from a plot by passing the <code>return_data=TRUE</code> option to 
+<code>id_plog_legis</code> or <code>id_plot_legis_dyn</code> to find the 
+name of the parameter in the Stan model.
+
+This function is a simple wrapper around <code>mcmc_trace</code>. 
+Please refer to that function's documentation for further options.
+
+

@@ -1,0 +1,132 @@
+## Plot Legislator/Person Over-time Variances {.unnumbered}
+
+
+### Description
+
+This function can be used on a fitted <code>idealstan</code> object to plot the over-time variances 
+(average rates of change in ideal points) for all the persons/legislators in the model.
+
+
+
+### Usage
+
+<pre><code class='language-R'>id_plot_legis_var(
+  object,
+  return_data = FALSE,
+  include = NULL,
+  high_limit = 0.95,
+  low_limit = 0.05,
+  text_size_label = 2,
+  text_size_group = 2.5,
+  point_size = 1,
+  hjust_length = -0.7,
+  person_labels = TRUE,
+  group_labels = F,
+  person_ci_alpha = 0.1,
+  group_color = TRUE,
+  ...
+)
+</code></pre>
+
+
+### Arguments
+
+<table>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="object">object</code></td>
+<td>
+A fitted <code>idealstan</code> object
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="return_data">return_data</code></td>
+<td>
+If true, the calculated legislator/bill data is returned along with the plot in a list
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="include">include</code></td>
+<td>
+Specify a list of person/legislator IDs to include in the plot (all others excluded)
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="high_limit">high_limit</code></td>
+<td>
+The quantile (number between 0 and 1) for the high end of posterior uncertainty to show in plot
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="low_limit">low_limit</code></td>
+<td>
+The quantile (number between 0 and 1) for the low end of posterior uncertainty to show in plot
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="text_size_label">text_size_label</code></td>
+<td>
+ggplot2 text size for legislator labels
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="text_size_group">text_size_group</code></td>
+<td>
+ggplot2 text size for group text used for points
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="point_size">point_size</code></td>
+<td>
+If <code>person_labels</code> and <code>group_labels</code> are set to <code>FALSE</code>, controls the size of the points plotted.
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="hjust_length">hjust_length</code></td>
+<td>
+horizontal adjustment of the legislator labels
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="person_labels">person_labels</code></td>
+<td>
+if <code>TRUE</code>, use the person_id column to plot labels for the person (legislator) ideal points
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="group_labels">group_labels</code></td>
+<td>
+if <code>TRUE</code>, use the group column to plot text markers for the group (parties) from the person/legislator data
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="person_ci_alpha">person_ci_alpha</code></td>
+<td>
+The transparency level of the dot plot and confidence bars for the person ideal points
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="group_color">group_color</code></td>
+<td>
+If <code>TRUE</code>, give each group/bloc a different color
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="...">...</code></td>
+<td>
+Other options passed on to plotting function, currently ignored
+</td></tr>
+</table>
+
+
+### Details
+
+This function will plot the person/legislator over-time variances as a vertical
+dot plot with associated high-density posterior interval (can be changed 
+with <code>high_limit</code> and <code>low_limit</code> options).
+
+
+
+### Examples
+```{r, warning=FALSE, message=FALSE, eval=FALSE}
+library(idealstan)
+
+
+# To demonstrate, we load the 114th Senate data and fit a time-varying model
+
+data('senate114_fit')
+
+senate_data <- id_make(senate114,outcome = 'cast_code',
+person_id = 'bioname',
+item_id = 'rollnumber',
+group_id= 'party_code',
+time_id='date',
+miss_val='Absent')
+
+ senate114_time_fit <- id_estimate(senate_data,
+ model_type = 2,
+ use_vb = T,
+ fixtype='vb_partial',
+ vary_ideal_pts='random_walk',
+ restrict_ind_high = "WARREN, Elizabeth",
+ restrict_ind_low="BARRASSO, John A.",
+ seed=84520)
+# We plot the variances for all the Senators
+
+id_plot_legis_var(senate114_fit)
+
+
+
+```

@@ -1,0 +1,15 @@
+
+## Function that provides additional check questions for package release {.unnumbered}
+
+
+### Description
+
+Function that provides additional check questions for package release
+
+
+
+### Usage
+
+<pre><code class='language-R'>release_questions()
+</code></pre>
+

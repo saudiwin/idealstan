@@ -1,0 +1,25 @@
+
+## Plotting Function to Display Rhat Distribution {.unnumbered}
+
+
+### Description
+
+This plotting function displays a histogram of the Rhat values of all parameters in an <code>idealstan</code> model.
+
+
+
+### Usage
+
+<pre><code class='language-R'>id_plot_rhats(obj)
+</code></pre>
+
+
+### Arguments
+
+<table>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="obj">obj</code></td>
+<td>
+A fitted <code>idealstan</code> object.
+</td></tr>
+</table>
+

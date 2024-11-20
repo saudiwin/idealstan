@@ -1,0 +1,30 @@
+
+RMSE function for calculating individual RMSE values compared to true simulation scores
+Returns a data frame with RMSE plus quantiles.
+
+### Description
+
+RMSE function for calculating individual RMSE values compared to true simulation scores
+Returns a data frame with RMSE plus quantiles.
+
+
+
+### Usage
+
+<pre><code class='language-R'>id_sim_rmse(obj, rep = 1)
+</code></pre>
+
+
+### Arguments
+
+<table>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="obj">obj</code></td>
+<td>
+A fitted <code>idealstan</code> object with true data from <code>id_sim_gen</code>
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="rep">rep</code></td>
+<td>
+Over how many replicates to calculate RMSE? Currently can only be 1
+</td></tr>
+</table>
+

@@ -1,0 +1,16 @@
+
+## Data and Identification for <code>id_estimate</code> {.unnumbered}
+
+
+### Description
+
+<code>idealdata</code> objects contain the relevant legislator/bill (person/item) matrix of data along with slots containing information
+about the kind of identification used in the estimation.
+
+
+
+### See Also
+
+<code>id_make</code> to create an <code>idealdata</code> object suitable for estimation with <code>id_estimate</code>.
+
+

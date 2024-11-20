@@ -1,0 +1,39 @@
+
+## Generic Method for Obtaining Posterior Predictive Distribution from Stan Objects {.unnumbered}
+
+
+### Description
+
+This function is a generic that is used to match the functions used with <code>ppc_bars</code> to calculate
+the posterior predictive distribution of the data given the model.
+
+
+
+### Usage
+
+<pre><code class='language-R'>id_post_pred(object, ...)
+</code></pre>
+
+
+### Arguments
+
+<table>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="object">object</code></td>
+<td>
+A fitted <code>idealstan</code> object
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="...">...</code></td>
+<td>
+All other parameters passed on to the underlying function.
+</td></tr>
+</table>
+
+
+### Value
+
+<code>posterior_predict</code> methods should return a $D$ by $N$
+matrix, where $D$ is the number of draws from the posterior predictive
+distribution and $N$ is the number of data points being predicted per
+draw.
+
+

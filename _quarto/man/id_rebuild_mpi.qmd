@@ -1,0 +1,45 @@
+
+## DEPRECATED: Reconstitute an idealstan object after an MPI/cluster run {.unnumbered}
+
+
+### Description
+
+This convenience function takes as input a file location storing the results of a 
+MPI/cluster run.
+
+
+
+### Usage
+
+<pre><code class='language-R'>id_rebuild_mpi(file_loc = NULL, csv_name = NULL)
+</code></pre>
+
+
+### Arguments
+
+<table>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="file_loc">file_loc</code></td>
+<td>
+A string with the location of the original files exported by 
+<code>id_estimate</code>
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="csv_name">csv_name</code></td>
+<td>
+A vector of character names of CSV files with posterior estimates from 
+<code>cmdstan</code>. Should be located in the same place as <code>file_loc</code>.
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="object">object</code></td>
+<td>
+A fitted <code>idealstan</code> object (see <code>id_estimate</code>)
+</td></tr>
+</table>
+
+
+### Details
+
+Given the CSV output from cmdstan and the original files exported 
+from the <code>id_estimate</code> function, this function will create an <code>idealstan</code>
+object which can be further analyzed with other <code>idealstan</code> package helper
+functions.
+
+

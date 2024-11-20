@@ -1,0 +1,30 @@
+
+## Helper Function for 'loo' calculation {.unnumbered}
+
+
+### Description
+
+This function accepts a log-likelihood matrix produced by 'id_post_pred' and 
+extracts the IDs of the MCMC chains. It is necessary to use this function
+as the second argument to the 'loo' function along with an exponentiated 
+log-likelihood matrix. See the package vignette How to Evaluate Models 
+for more details.
+
+
+
+### Usage
+
+<pre><code class='language-R'>derive_chain(ll_matrix = NULL)
+</code></pre>
+
+
+### Arguments
+
+<table>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="ll_matrix">ll_matrix</code></td>
+<td>
+A log-likelihood matrix as produced by the <code>id_post_pred</code>
+function
+</td></tr>
+</table>
+

@@ -1,0 +1,47 @@
+
+## Function to Launch Shinystan with an <code>idealstan</code> Object {.unnumbered}
+
+
+### Description
+
+This wrapper will pull the <code>rstan</code> samples out of a fitted <code>idealstan</code> model and then launch
+<code>launch_shinystan</code>. This function is useful for examining convergence statistics of the 
+underlying MCMC sampling.
+
+
+
+### Usage
+
+<pre><code class='language-R'>## S4 method for signature 'idealstan'
+launch_shinystan(
+  object,
+  pars = c("L_full", "sigma_reg_full", "sigma_abs_free", "A_int_free", "B_int_free",
+    "steps_votes", "steps_votes_grm"),
+  ...
+)
+</code></pre>
+
+
+### Arguments
+
+<table>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="object">object</code></td>
+<td>
+A fitted <code>idealstan</code> object
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="pars">pars</code></td>
+<td>
+A character vector of parameters to select from the underlying <code>rstan</code> model object
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="...">...</code></td>
+<td>
+Other parameters passed on to <code>shinystan</code>
+</td></tr>
+</table>
+
+
+### See Also
+
+<code>shinystan</code>
+
+

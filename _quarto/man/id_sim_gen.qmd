@@ -1,0 +1,186 @@
+
+## Simulate IRT ideal point data {.unnumbered}
+
+
+### Description
+
+A function designed to simulate IRT ideal point data.
+
+
+
+### Usage
+
+<pre><code class='language-R'>id_sim_gen(
+  num_person = 20,
+  num_items = 50,
+  cov_effect = NULL,
+  model_type = "binary",
+  latent_space = FALSE,
+  absence_discrim_sd = 3,
+  absence_diff_mean = 0,
+  discrim_reg_upb = 1,
+  discrim_reg_lb = -1,
+  discrim_miss_upb = 1,
+  discrim_miss_lb = -1,
+  discrim_reg_scale = 2,
+  discrim_reg_shape = 2,
+  discrim_miss_scale = 2,
+  discrim_miss_shape = 2,
+  diff_sd = 3,
+  time_points = 1,
+  time_process = "random",
+  time_sd = 0.1,
+  ideal_pts_sd = 3,
+  prior_type = "gaussian",
+  ordinal_outcomes = 3,
+  inflate = FALSE,
+  sigma_sd = 1
+)
+</code></pre>
+
+
+### Arguments
+
+<table>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="num_person">num_person</code></td>
+<td>
+The number of persons/persons
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="num_items">num_items</code></td>
+<td>
+The number of items (bills in the canonical ideal point model)
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="cov_effect">cov_effect</code></td>
+<td>
+The effect of a hierarchical/external covariate on the person
+ideal points. The covariate will be a uniformly-distributed random variable on the
+[0,1] scale, so covariate effects in the [-2,2] approximate range would result in 
+noticeable effects on the ideal point scale.
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="model_type">model_type</code></td>
+<td>
+One of <code>'binary'</code>, <code>'ordinal_rating'</code>, <code>'ordinal_grm'</code>, <code>'poisson'</code>
+<code>'normal'</code>, or <code>'lognormal'</code>
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="latent_space">latent_space</code></td>
+<td>
+Whether to use the latent space formulation of the ideal point model 
+<code>FALSE</code> by default. NOTE: currently, the package only has estimation for a 
+binary response with the latent space formulation.
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="absence_discrim_sd">absence_discrim_sd</code></td>
+<td>
+The SD of the discrimination parameters for the inflated model
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="absence_diff_mean">absence_diff_mean</code></td>
+<td>
+The mean intercept for the inflated model; increasing it will lower the total number of
+missing data
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="discrim_reg_upb">discrim_reg_upb</code></td>
+<td>
+The upper bound of the generalized Beta distribution for the
+observed discrimination parameters (gamma)
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="discrim_reg_lb">discrim_reg_lb</code></td>
+<td>
+The lower bound of the generalized Beta distribution for the
+observed discrimination parameters (gamma)
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="discrim_miss_upb">discrim_miss_upb</code></td>
+<td>
+The upper bound of the generalized Beta distribution for the
+missingness discrimination parameters (nu)
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="discrim_miss_lb">discrim_miss_lb</code></td>
+<td>
+The lower bound of the generalized Beta distribution for the
+missingness discrimination parameters (nu)
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="discrim_reg_scale">discrim_reg_scale</code></td>
+<td>
+The scale parameter for the generalized Beta
+distribution for the observed discrimination parameters (gamma)
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="discrim_reg_shape">discrim_reg_shape</code></td>
+<td>
+The shape parameter for the generalized Beta
+distribution for the observed discrimination parameters (gamma)
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="discrim_miss_scale">discrim_miss_scale</code></td>
+<td>
+The scale parameter for the generalized Beta
+distribution for the missingness discrimination parameters (nu)
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="discrim_miss_shape">discrim_miss_shape</code></td>
+<td>
+The shape parameter for the generalized Beta
+distribution for the missingness discrimination parameters (nu)
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="diff_sd">diff_sd</code></td>
+<td>
+The SD of the difficulty parameters (bill/item intercepts)
+for both missing and observed parameters (beta and omega)
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="time_points">time_points</code></td>
+<td>
+The number of time points for time-varying legislator/person parameters
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="time_process">time_process</code></td>
+<td>
+The process used to generate the ideal points: either <code>'random'</code> 
+for a random walk, <code>'AR'</code> for an AR1 process,
+or <code>'GP'</code> for a Gaussian process.
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="time_sd">time_sd</code></td>
+<td>
+The standard deviation of the change in ideal points over time (should be low relative to 
+<code>ideal_pts_sd</code>)
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="ideal_pts_sd">ideal_pts_sd</code></td>
+<td>
+The SD for the person/person ideal points
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="prior_type">prior_type</code></td>
+<td>
+The statistical distribution that generates the data for
+ideal point parameters (alpha) and difficulty intercepts (beta and omega). Currently only 
+'gaussian' is supported.
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="ordinal_outcomes">ordinal_outcomes</code></td>
+<td>
+If <code>model</code> is <code>'ordinal'</code>, an integer giving the total number of categories
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="inflate">inflate</code></td>
+<td>
+If <code>TRUE</code>, an missing-data-inflated dataset is produced.
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="sigma_sd">sigma_sd</code></td>
+<td>
+If a normal or log-normal distribution is being fitted, this parameter gives the standard 
+deviation of the outcome (i.e. the square root of the variance).
+</td></tr>
+</table>
+
+
+### Details
+
+This function produces simulated data that matches (as closely as possible) the models
+used in the underlying Stan code. Currently the simulation can produce inflated and non-inflated
+models with binary, ordinal (GRM and rating-scale), Poisson, Normal and Log-Normal responses.
+
+
+
+### Value
+
+The results is a <code>idealdata</code> object that can be used in the 
+<code>id_estimate</code> function to run a model. It can also be used in the simulation
+plotting functions.
+
+
+
+### See Also
+
+<code>id_plot_sims</code> for plotting fitted models versus true values.
+
+

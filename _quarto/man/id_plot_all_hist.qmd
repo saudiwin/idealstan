@@ -1,0 +1,65 @@
+
+## Density plots of Posterior Parameters {.unnumbered}
+
+
+### Description
+
+This function produces density plots of the different types of parameters in an <code>idealstan</code> model: item (bill) difficulty and discrimination
+parameters, and person (legislator) ideal points.
+
+
+
+### Usage
+
+<pre><code class='language-R'>id_plot_all_hist(
+  object,
+  params = "person",
+  param_labels = NULL,
+  dens_type = "all",
+  return_data = FALSE,
+  func = median,
+  ...
+)
+</code></pre>
+
+
+### Arguments
+
+<table>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="object">object</code></td>
+<td>
+A fitted <code>idealstan</code> object
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="params">params</code></td>
+<td>
+Select the type of parameter from the model to plot. <code>'person'</code> for person/legislator ideal points,
+<code>'miss_diff'</code> and <code>'miss_discrim'</code> for difficulty and discrimination parameters from the missing/inflated item/bill parameters,
+and <code>'obs_diff'</code> and <code>'obs_discrim'</code> for difficulty and discrimination parameters from the non-missing/non-inflated 
+item/bill parameters.
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="param_labels">param_labels</code></td>
+<td>
+A vector of labels equal to the number of parameters. Primarily useful if <code>return_data</code> is <code>TRUE</code>.
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="dens_type">dens_type</code></td>
+<td>
+Can be <code>'all'</code> for showing 90
+Or to show one of those posterior estimates at a time, use <code>'high'</code> for 90
+<code>'low'</code> for 10
+in <code>func</code> (median by default).
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="return_data">return_data</code></td>
+<td>
+Whether or not to return the plot as a ggplot2 object and the data together in a list instead of
+plotting.
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="func">func</code></td>
+<td>
+The function to use if <code>'dens_type'</code> is set to <code>'function'</code>.
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="...">...</code></td>
+<td>
+Other options passed on to the plotting function, currently ignored.
+</td></tr>
+</table>
+

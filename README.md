@@ -1,6 +1,6 @@
 # README
 Robert Kubinec
-2024-11-19
+2024-11-20
 
 # Introduction to R Package Idealstan
 
