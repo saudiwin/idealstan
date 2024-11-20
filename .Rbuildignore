@@ -30,3 +30,6 @@ this_data.rds
 ^CRAN-RELEASE$
 ^Meta$
 ^\.github$
+^docs$
+^altdoc$
+^_quarto$
