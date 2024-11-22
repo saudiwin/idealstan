@@ -1,5 +1,5 @@
 # README
-Robert Kubinec
+Robert Kubinec and Michal Ovádek
 2024-11-22
 
 # Introduction to R Package Idealstan

@@ -1,6 +1,6 @@
 ---
 title: "README"
-author: Robert Kubinec
+author: Robert Kubinec and Michal Ovádek
 date: last-modified
 editor: visual
 page-layout: full
