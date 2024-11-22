@@ -34,12 +34,12 @@
 #' data as ignorable missing data that will be removed (list-wise deletion) before estimating a
 #' model.
 #' 
-#' @section Time-Varying Models
+#' @section Time-Varying Models:
 #' 
 #' To run a time-varying model, you need to include the name of a column with dates (or integers) that is passed 
 #' to the \code{time_id} option.
 #' 
-#' @section Continuous Outcomes
+#' @section Continuous Outcomes:
 #' 
 #' If the outcome is unbounded i.e. a continuous or an unbounded 
 #' discrete variable like Poisson, simply set \code{unbounded} to \code{TRUE}. You can ignore the
@@ -48,7 +48,7 @@
 #' missing values (\code{NA}) will be recoded to a specific value out of the range of the outcome to use
 #' for modeling the missingness.
 #' 
-#' @section Hierarchical Covariates
+#' @section Hierarchical Covariates:
 #' 
 #' Covariates can be fit on the person-level ideal point parameters as well as
 #' item discrimination parameters for either the inflated (missing) or non-inflated (observed) 
@@ -533,7 +533,7 @@ id_make <- function(score_data=NULL,
 #'   \item Ordered Beta (proportion/percentage) with missing-data inflation
 #' }
 #' 
-#' @section Time-Varying Inferece
+#' @section Time-Varying Inference:
 #' 
 #' In addition, each of these models can have time-varying ideal point (person) parameters if
 #' a column of dates is fed to the \code{\link{id_make}} function. If the option \code{vary_ideal_pts} is 
@@ -546,7 +546,7 @@ id_make <- function(score_data=NULL,
 #' Please see the package vignette and associated paper for more detail
 #' about these time-varying models.
 #' 
-#' @section Missing Data
+#' @section Missing Data:
 #' 
 #' The inflation model used to account for missing data assumes that missingness is a 
 #' function of the persons' (legislators')
@@ -566,7 +566,7 @@ id_make <- function(score_data=NULL,
 #' Models can be either fit on the person/legislator IDs or on group-level IDs (as specified to the 
 #' \code{id_make} function). If group-level parameters should be fit, set \code{use_groups} to \code{TRUE}.
 #' 
-#' @section Covariates
+#' @section Covariates:
 #' 
 #' Covariates are included in the model if they were specified as options to the 
 #' \code{\link{id_make}} function. The covariate plots can be accessed with 

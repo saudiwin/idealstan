@@ -380,6 +380,51 @@ the number of the model in the list to the \code{model_type} option to fit the m
   \item Ordered Beta (proportion/percentage) with missing-data inflation
 }
 }
+\section{Time-Varying Inference}{
+
+
+In addition, each of these models can have time-varying ideal point (person) parameters if
+a column of dates is fed to the \code{\link{id_make}} function. If the option \code{vary_ideal_pts} is 
+set to \code{'random_walk'}, \code{id_estimate} will estimate a random-walk ideal point model where ideal points 
+move in a random direction. If \code{vary_ideal_pts} is set to \code{'AR1'}, a stationary ideal point model 
+is estimated where ideal points fluctuate around long-term mean. If \code{vary_ideal_pts} 
+is set to \code{'GP'}, then a semi-parametric Gaussian process time-series prior will be put
+around the ideal points. If \code{vary_ideal_pts} 
+is set to \code{'splines'}, then the ideal point trajectories will be a basis spline defined by the parameters \code{spline_knots} and \code{spline_degree}. 
+Please see the package vignette and associated paper for more detail
+about these time-varying models.
+}
+
+\section{Missing Data}{
+
+
+The inflation model used to account for missing data assumes that missingness is a 
+function of the persons' (legislators')
+ideal points. In other words,the model will take into account if people with high or low ideal points
+tend to have more/less missing data on a specific item/bill. Missing data should be coded
+as \code{NA} when it is passed to the \link{id_make} function.
+If there isn't any relationship
+between missing data and ideal points, then the model assumes that the missingness is ignorable 
+conditional on each
+item, but it will still adjust the results to reflect these ignorable (random) missing
+values. The inflation is designed to be general enough to handle a wide array of potential
+situations where strategic social choices make missing data important to take into account.
+
+To leave missing data out of the model, simply choose a version of the model in the list above
+that is non-inflated.
+
+Models can be either fit on the person/legislator IDs or on group-level IDs (as specified to the 
+\code{id_make} function). If group-level parameters should be fit, set \code{use_groups} to \code{TRUE}.
+}
+
+\section{Covariates}{
+
+
+Covariates are included in the model if they were specified as options to the 
+\code{\link{id_make}} function. The covariate plots can be accessed with 
+\code{\link{id_plot_cov}} on a fitted \code{idealstan} model object.
+}
+
 \section{Identification}{
 
 Identifying IRT models is challenging, and ideal point models are still more challenging 

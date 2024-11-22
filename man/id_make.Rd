@@ -121,6 +121,39 @@ coded as \code{miss_val} as missing data that should be modeled and will treat t
 data as ignorable missing data that will be removed (list-wise deletion) before estimating a
 model.
 }
+\section{Time-Varying Models}{
+
+
+To run a time-varying model, you need to include the name of a column with dates (or integers) that is passed 
+to the \code{time_id} option.
+}
+
+\section{Continuous Outcomes}{
+
+
+If the outcome is unbounded i.e. a continuous or an unbounded 
+discrete variable like Poisson, simply set \code{unbounded} to \code{TRUE}. You can ignore the
+options that specify which values should be \code{high_val} or \code{low_val}. You can either specify
+a particular value as missing using \code{miss_val}, or all 
+missing values (\code{NA}) will be recoded to a specific value out of the range of the outcome to use
+for modeling the missingness.
+}
+
+\section{Hierarchical Covariates}{
+
+
+Covariates can be fit on the person-level ideal point parameters as well as
+item discrimination parameters for either the inflated (missing) or non-inflated (observed) 
+models. These covariates must be columns that were included with the data fed to the 
+\code{\link{id_make}} function. The covariate relationships are specified as 
+one-sided formulas, i.e. \code{~cov1 + cov2 + cov1*cov2}. To interact covariates with the 
+person-level ideal points you can use \code{~cov1 + person_id + cov1*person_id} and for
+group-level ideal poins you can use \code{~cov1 + group_id + cov1*group_id} where
+\code{group_id} or \code{person_id} is the same name as the name of the column 
+for these options that you passed to \code{id_make} (i.e., the names of the columns
+in the original data).
+}
+
 \examples{
 # You can either use a pscl rollcall object or a vote/score matrix 
 # where persons/legislators are in the rows

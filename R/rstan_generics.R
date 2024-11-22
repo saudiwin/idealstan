@@ -565,7 +565,7 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
 #' 
 #' This function is a wrapper around \code{\link[bayesplot]{ppc_bars}},
 #' \code{\link[bayesplot]{ppc_dens_overlay}} and 
-#' \code{\link[bayesplot]{ppc_violin_grouped} that plots the posterior predictive distribution
+#' \code{\link[bayesplot]{ppc_violin_grouped}} that plots the posterior predictive distribution
 #' derived from \code{\link{id_post_pred}} against the original data. You can also subset the 
 #' posterior predictions over
 #' legislators/persons or
@@ -592,7 +592,7 @@ setGeneric('id_plot_ppc',signature='object',
 #' 
 #' This function is a wrapper around \code{\link[bayesplot]{ppc_bars}},
 #' \code{\link[bayesplot]{ppc_dens_overlay}} and 
-#' \code{\link[bayesplot]{ppc_violin_grouped} that plots the posterior predictive distribution
+#' \code{\link[bayesplot]{ppc_violin_grouped}} that plots the posterior predictive distribution
 #' derived from \code{\link{id_post_pred}} against the original data. 
 #' Because \code{idealstan} allows for different distributions for each item,
 #' this function can either produce one predictive distribution for all items 

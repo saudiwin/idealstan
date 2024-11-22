@@ -764,7 +764,7 @@ setMethod(id_plot, signature(object='idealstan'),
 
 #' Generic Method for Extracting Posterior Samples
 #' 
-#' This generic will extract the full \code{\link[rstan]{stan}}} posterior samples from \code{idealstan} objects.
+#' This generic will extract the full \code{\link[rstan]{stan}} posterior samples from \code{idealstan} objects.
 #' 
 #' See the corresponding method definition for more information about what you can acccess with this generic.
 #' 

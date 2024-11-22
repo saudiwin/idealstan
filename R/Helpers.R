@@ -3752,8 +3752,8 @@ return(as.vector(idx))
     return(all_time)
 }
 
-#' @noRd
 #' Function to add in time-varying covariates to person time-varying ideal points
+#' @noRd
 .add_person_cov <- function(all_time, 
                             obj,
                             legis_x,

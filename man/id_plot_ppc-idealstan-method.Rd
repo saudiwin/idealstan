@@ -50,5 +50,25 @@ This function is the actual method for generating posterior distributions
 from a fitted \code{idealstan} model.
 }
 \details{
+This function is a wrapper around \code{\link[bayesplot]{ppc_bars}},
+\code{\link[bayesplot]{ppc_dens_overlay}} and 
+\code{\link[bayesplot]{ppc_violin_grouped}} that plots the posterior predictive distribution
+derived from \code{\link{id_post_pred}} against the original data. 
+Because \code{idealstan} allows for different distributions for each item,
+this function can either produce one predictive distribution for all items 
+(the default) or it can produce one distribution for each item 
+(set \code{combine_item} to \code{FALSE}). The latter is helpful if you have mixed 
+distributions between items, such as continuous and dichotomous values. 
+You can also subset the 
+posterior predictions over
+legislators/persons or
+bills/item sby specifying the ID of each in the original data as a character vector. 
+Only persons or items can be specified,
+not both.
 
+If you specify a value for \code{group} that is either a person ID or a group ID 
+(depending on whether a person or group-level model was fit), then you can see the 
+posterior distributions for those specific persons. Similarly, if an item ID is passed
+to \code{item}, you can see how well the model predictions compare to the true values
+for that specific item.
 }

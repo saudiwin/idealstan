@@ -15,5 +15,7 @@ id_extract(object, ...)
 This is a generic function.
 }
 \details{
+This generic will extract the full \code{\link[rstan]{stan}} posterior samples from \code{idealstan} objects.
 
+See the corresponding method definition for more information about what you can acccess with this generic.
 }
