@@ -5,6 +5,7 @@ Version: 0.99.1
 Date: 2024-11-18
 Authors@R: c(person("Robert","Kubinec", role = c("aut","cre"),
                      email = "rmk7@nyu.edu"),
+              person("Michal","Ovádek",role=c("ctb"),email="m.ovadek@ucl.ac.uk"),
               person("Jonah", "Gabry", role = "ctb"),
               person("Ben", "Goodrich", role = "ctb"),
               person("Trustees of Columbia University",role='cph'))
@@ -17,26 +18,18 @@ Depends:
 Imports: 
     dplyr,
     svDialogs,
-    scales,
     tidyr,
     stringr,
+    cmdstanr,
     bayesplot,
-    tidybayes,
-    ggplot2,
-    lazyeval,
-    rlang,
-    shinystan,
-    gghighlight,
-    forcats,
-    ggrepel,
-    jsonlite,
-    abind,
-    ggthemes,
     posterior,
-    R.rsp,
-    Rcpp,
-    cmdstanr
+    gghighlight,
+    ggrepel,
+    ggplot2
 Suggests:
+    tidybayes,
+    ggthemes,
+    R.rsp,
     loo,
     lubridate
 Encoding: UTF-8

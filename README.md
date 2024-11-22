@@ -1,6 +1,6 @@
 # README
 Robert Kubinec
-2024-11-20
+2024-11-22
 
 # Introduction to R Package Idealstan
 
@@ -10,7 +10,7 @@ been sorted out. To report bugs with the package, please file an issue
 on the [Github page](https://github.com/saudiwin/idealstan/issues).*
 
 At present, `idealstan` is only available on Github as one of its main
-dependencies, `cmdstanr` is also not on CRAN. To use my package,
+dependencies, `cmdstanr` is also not on CRAN. To use the package,
 `cmdstanr` must be first be set up with a local installation of
 `cmdstan`, which is used for estimation. To see how to install
 `cmdstanr`, [see this guide](https://mc-stan.org/cmdstanr/). Note that
@@ -18,17 +18,12 @@ the `cmdstanr` default installation location should be used when
 installing `cmdstan`.
 
 To install this package, type the command
-`remotes::install_github('saudiwin/idealstan',build_vignette=TRUE)` at
-the R console prompt (you first must have the `remotes` package
-installed from CRAN for this to work). The best way to learn how the
-package works is to look at the package vignettes, which can be accessed
-by running the R commands:
-
-    # General introduction to the package
-    vignette("Package_Introduction",package="idealstan")
-
-    # Focus on dynamic models
-    vignette("Time_Series",package="idealstan")
+`remotes::install_github('saudiwin/idealstan')` at the R console prompt
+(you first must have the `remotes` package installed from CRAN for this
+to work). The best way to learn how the package works is to look at the
+package vignettes, which can be accessed from the links on the left of
+this page (see Articles, especially [Introduction to
+Idealstan](vignettes/Package_Introduction.html)).
 
 **If you use this package, please cite the following:**
 
