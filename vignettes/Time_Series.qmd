@@ -1,8 +1,8 @@
 ---
 title: "Time-Varying Ideal Points"
 author: "Robert Kubinec"
-date: "`r Sys.Date()`"
-output: rmarkdown::html_vignette
+date: last-modified
+format: html
 vignette: >
   %\VignetteIndexEntry{Time-Varying Ideal Points}
   %\VignetteEngine{R.rsp::asis}

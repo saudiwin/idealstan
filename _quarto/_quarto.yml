@@ -15,8 +15,8 @@ website:
         file: index.qmd
       - section: Articles
         contents:
-          - vignettes/Package_Introduction.Rmd
-          - vignettes/Time_Series.Rmd
+          - vignettes/Package_Introduction.qmd
+          - vignettes/Time_Series.qmd
       - section: Reference
         contents:
           - text: delaware

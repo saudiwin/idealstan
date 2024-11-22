@@ -21,9 +21,10 @@ To install this package, type the command
 `remotes::install_github('saudiwin/idealstan')` at the R console prompt
 (you first must have the `remotes` package installed from CRAN for this
 to work). The best way to learn how the package works is to look at the
-package vignettes, which can be accessed from the links on the left of
-this page (see Articles, especially [Introduction to
-Idealstan](vignettes/Package_Introduction.html)).
+package vignettes, which can be accessed from the [package
+website](https://saudiwin.github.io/idealstan/), especially
+[Introduction to
+Idealstan](https://saudiwin.github.io/idealstan/vignettes/Package_Introduction.html).
 
 **If you use this package, please cite the following:**
 

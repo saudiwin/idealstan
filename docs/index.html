@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Robert Kubinec">
-<meta name="dcterms.date" content="2024-11-20">
+<meta name="dcterms.date" content="2024-11-22">
 
 <title>README – idealstan</title>
 <style>
@@ -132,7 +132,7 @@ ul.task-list li input[type="checkbox"] {
       <div>
       <div class="quarto-title-meta-heading">Published</div>
       <div class="quarto-title-meta-contents">
-        <p class="date">November 20, 2024</p>
+        <p class="date">November 22, 2024</p>
       </div>
     </div>
     
@@ -435,13 +435,8 @@ ul.task-list li input[type="checkbox"] {
 <section id="introduction-to-r-package-idealstan" class="level1">
 <h1>Introduction to R Package Idealstan</h1>
 <p><em>Note: This is a beta release of <code>idealstan</code> v1.0. While most features have been implemented and are stable, there may be bugs that have not been sorted out. To report bugs with the package, please file an issue on the <a href="https://github.com/saudiwin/idealstan/issues">Github page</a>.</em></p>
-<p>At present, <code>idealstan</code> is only available on Github as one of its main dependencies, <code>cmdstanr</code> is also not on CRAN. To use my package, <code>cmdstanr</code> must be first be set up with a local installation of <code>cmdstan</code>, which is used for estimation. To see how to install <code>cmdstanr</code>, <a href="https://mc-stan.org/cmdstanr/">see this guide</a>. Note that the <code>cmdstanr</code> default installation location should be used when installing <code>cmdstan</code>.</p>
-<p>To install this package, type the command <code>remotes::install_github('saudiwin/idealstan',build_vignette=TRUE)</code> at the R console prompt (you first must have the <code>remotes</code> package installed from CRAN for this to work). The best way to learn how the package works is to look at the package vignettes, which can be accessed by running the R commands:</p>
-<pre><code># General introduction to the package
-vignette("Package_Introduction",package="idealstan")
-
-# Focus on dynamic models
-vignette("Time_Series",package="idealstan")</code></pre>
+<p>At present, <code>idealstan</code> is only available on Github as one of its main dependencies, <code>cmdstanr</code> is also not on CRAN. To use the package, <code>cmdstanr</code> must be first be set up with a local installation of <code>cmdstan</code>, which is used for estimation. To see how to install <code>cmdstanr</code>, <a href="https://mc-stan.org/cmdstanr/">see this guide</a>. Note that the <code>cmdstanr</code> default installation location should be used when installing <code>cmdstan</code>.</p>
+<p>To install this package, type the command <code>remotes::install_github('saudiwin/idealstan')</code> at the R console prompt (you first must have the <code>remotes</code> package installed from CRAN for this to work). The best way to learn how the package works is to look at the package vignettes, which can be accessed from the <a href="https://saudiwin.github.io/idealstan/">package website</a>, especially <a href="https://saudiwin.github.io/idealstan/vignettes/Package_Introduction.html">Introduction to Idealstan</a>.</p>
 <p><strong>If you use this package, please cite the following:</strong></p>
 <p>Kubinec, Robert. “Generalized Ideal Point Models for Robust Measurement with Dirty Data in the Social Sciences”. <strong>SocArchiv</strong> (2024). doi:10.31219/osf.io/8j2bt.</p>
 <p>The paper is available from <a href="https://osf.io/8j2bt/">this link</a>.</p>
