@@ -1552,7 +1552,7 @@ id_plot_cov <- function(object,
 #' @param ci_alpha The alpha of the IRF credible interval (see \code{ggplot2} documentation)
 #' @param use_ci Whether or not to plot a credible interval around the lines
 #' @return a \code{ggplot2} object that can be further customized if necessary
-#' @noRD
+#' @noRd
 id_plot_irf <- function(object,
                         cov_name=NULL,
                         label_high="Liberal",
