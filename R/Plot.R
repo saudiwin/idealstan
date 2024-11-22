@@ -1511,7 +1511,7 @@ id_plot_cov <- function(object,
   
 }
 
-#' Generate Impulse Response Functions for Covariates
+#' NB: Deprecated Generate Impulse Response Functions for Covariates
 #' 
 #' This function will generate an impulse response function (IRF)
 #' for a given covariate. The IRF shows the marginal impact of a 1-unit
@@ -1552,8 +1552,7 @@ id_plot_cov <- function(object,
 #' @param ci_alpha The alpha of the IRF credible interval (see \code{ggplot2} documentation)
 #' @param use_ci Whether or not to plot a credible interval around the lines
 #' @return a \code{ggplot2} object that can be further customized if necessary
-#' @export
-#' @import scales
+#' @noRD
 id_plot_irf <- function(object,
                         cov_name=NULL,
                         label_high="Liberal",

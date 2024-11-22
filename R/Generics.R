@@ -825,7 +825,6 @@ setGeneric('launch_shinystan',signature='object',
 #' @param object A fitted \code{idealstan} object
 #' @param pars A character vector of parameters to select from the underlying \code{rstan} model object
 #' @param ... Other parameters passed on to \code{\link[shinystan]{shinystan}}
-#' @importFrom shinystan as.shinystan launch_shinystan
 #' @export
 setMethod(launch_shinystan,signature(object='idealstan'),
           function(object,pars=c('L_full',
@@ -835,8 +834,8 @@ setMethod(launch_shinystan,signature(object='idealstan'),
                                  "B_int_free",
                                  'steps_votes',
                                  'steps_votes_grm'),...) {
-            if(packageDescription("shinystan")$Version=="3.0.0") {
-              launch_shinystan(to_shiny@stan_samples,...)
+            if(requireNamespace("shinystan", quietly = FALSE) && packageDescription("shinystan")$Version=="3.0.0") {
+              shinystan::launch_shinystan(object@stan_samples,...)
             } else {
               stop("You need to install version 3.0.0 of package shinystan. To do so, use remotes::install_github('stan-dev/shinystan', ref='v3-alpha') ")
             }

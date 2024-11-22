@@ -711,6 +711,7 @@ setMethod('id_plot_ppc',signature(object='idealstan'),function(object,
         
         # if(dim(ppc_pred[[1]])[2]==length(unique(all_data$person_id))) {
         #   
+        
           this_plot <- do.call(cbind, ppc_pred)
           
         # } else {

@@ -25,10 +25,12 @@ Imports:
     posterior,
     gghighlight,
     ggrepel,
-    ggplot2
-Suggests:
+    ggplot2,
     tidybayes,
-    ggthemes,
+    lazyeval,
+    rlang,
+    ggthemes
+Suggests:
     R.rsp,
     loo,
     lubridate

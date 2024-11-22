@@ -160,7 +160,7 @@
     # over posterior draws
     cuts_iters <- sapply(1:nrow(cutpoints), function(i) {
       cuts <- sapply(1:ncol(cutpoints),function(y) {
-        qlogis(pr_vote[i,]) - cutpoints[i,y]
+        qlogis(pr_vote[i,]) - c(cutpoints[i,y])
       })
     },simplify='array')
 
@@ -173,7 +173,7 @@
     # over posterior draws
     cuts_iters <- sapply(1:nrow(cutpoints), function(i) {
       cuts <- sapply(1:ncol(cutpoints),function(y) {
-        qlogis(pr_vote[i,]) - cutpoints[i,y]
+        qlogis(pr_vote[i,]) - c(cutpoints[i,y])
       })
     },simplify='array')
     
@@ -247,7 +247,7 @@
 
     combined <- sapply(1:ncol(pr_absence), function(c) ifelse(pr_absence[,c]<(runif(N)+pr_boost),over_iters[,c],as.integer(ordinal_outcomes)+1L))
     attr(combined,'output') <- 'all'
-    return(t(combined))
+    return(combined)
   } else if(type=='log_lik') {
     over_iters <- sapply(1:ncol(pr_vote), function(d) {
       votes <- sapply(1:dim(cuts_iters)[1], function(i) {

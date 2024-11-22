@@ -107,7 +107,6 @@
 #' @import dplyr
 #' @importFrom tidyr gather spread
 #' @import bayesplot
-#' @import Rcpp
 #' @import methods
 #' @importFrom stats dbinom median plogis quantile reorder rexp rlnorm runif sd step rnorm
 #' @importFrom utils person
