@@ -40,9 +40,8 @@ bin_irt_2pl_est <- id_estimate(idealdata=bin_irt_2pl_sim,
                                                                      decreasing=F)[1],
 
                                fixtype='prefix',
-                           person_sd = 3,debug_mode = FALSE,
-                           nchains=2,ncores=4,niters = 500,warmup=500,
-                           compile_optim = F,num_pathfinder_paths = 4)
+                           person_sd = 3,
+                           nchains=2,ncores=4,niters = 500,warmup=500)
 id_plot_rhats(bin_irt_2pl_est)
 ```
 
@@ -104,9 +103,8 @@ bin_irt_2pl_cov_est <- id_estimate(idealdata=bin_irt_2pl_cov_sim,
                                                                      decreasing=F)[1],
 
                                fixtype='prefix',
-                           person_sd = 3,debug_mode = FALSE,
-                           nchains=2,ncores=4,niters = 500,warmup=500,
-                           compile_optim = F,num_pathfinder_paths = 4)
+                           person_sd = 3,
+                           nchains=2,ncores=4,niters = 500,warmup=500)
 id_plot_rhats(bin_irt_2pl_cov_est)
 ```
 
