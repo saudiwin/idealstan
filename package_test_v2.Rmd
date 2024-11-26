@@ -1047,6 +1047,11 @@ bin_time_ar_irt_2pl_abs_est <- id_estimate(idealdata=bin_time_ar_irt_2pl_abs_sim
 id_plot_rhats(bin_time_ar_irt_2pl_abs_est)
 ```
 
+Let's do a time-varying ideal point plot with true point overlay:
+
+```{r irt_2pl_ar1_spline_true_pt}
+id_plot_legis_dyn(bin_time_ar_irt_2pl_abs_est,plot_lines = 10) + guides(colour="none") + facet_wrap(~person_id,scales="free_y")
+```
 
 ## Time: Gaussian Process
 
@@ -1060,17 +1065,17 @@ time_gp_sim <- id_sim_gen(num_person=10,num_items=200,inflate=T,
                           time_process = 'GP',
                           time_points=20)
 
-# a little harder to constrain, need to figure out minimums
-
-all_low <- apply(time_gp_sim@simul_data$true_person,1,min)
-
 time_gp_est <- id_estimate(idealdata=time_gp_sim,
                                model_type=2,
-                           use_vb=F,
+                           use_vb=F,const_type="items",
+                           restrict_ind_high = as.character(sort(time_gp_sim@simul_data$true_reg_discrim,
+                                                                     decreasing=TRUE,
+                                                        index=TRUE)$ix[1]),
+                              restrict_ind_low = as.character(sort(time_gp_sim@simul_data$true_reg_discrim,,
+                                                                   decreasing=F,
+                                                        index=T)$ix[1]),
                            nchains=2,ncores=8,warmup=1000,niters=500,
                                vary_ideal_pts = 'GP',
-                               restrict_ind_high = which(all_low==max(all_low)),
-                              restrict_ind_low = which(all_low==min(all_low)),
                                fixtype='prefix')
 id_plot_rhats(time_gp_est)
 ```

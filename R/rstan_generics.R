@@ -390,7 +390,7 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
         
         this_obs <- item$this_obs
 
-        if(this_mid %in% c(3,4,5,6)) {
+        if(item$model_id %in% c(3,4,5,6)) {
 
              cuts <- unique(ordered_id[this_obs])
 
@@ -456,12 +456,12 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
          
       } else {
         
-        if(item$model_id %in% c(1,2,3,4,5,6,7,8,13,14)) {
+        if(item$model_id %in% c(1,2,7,8,13,14)) {
           outcome <- Y_int[this_obs]
           miss_val <- new_stan_data$stan_data$y_int_miss
         } else {
           outcome <- Y_cont[this_obs]
-          miss_val <- new_stan_data$this_dat$y_cont_miss
+          miss_val <- new_stan_data$stan_data$y_cont_miss
         }
       
       out_predict <- rep_func(pr_absence=item$pr_absence,
@@ -711,7 +711,6 @@ setMethod('id_plot_ppc',signature(object='idealstan'),function(object,
         
         # if(dim(ppc_pred[[1]])[2]==length(unique(all_data$person_id))) {
         #   
-        
           this_plot <- do.call(cbind, ppc_pred)
           
         # } else {
@@ -759,15 +758,22 @@ setMethod('id_plot_ppc',signature(object='idealstan'),function(object,
         } else if(outputs=='observed') {
           
           # only show observed data for yrep
-
-            to_remove <- y!=miss_val
           
-          y <- y[to_remove]
-          if(!is.null(group)) {
-            group_var <- group_var[to_remove]
+          if(!is.null(miss_val)) {
+            
+            to_remove <- y!=miss_val
+            
+            y <- y[to_remove]
+            
+            if(!is.null(group)) {
+              group_var <- group_var[to_remove]
+            }
+            
+            this_plot <- this_plot[,to_remove]
+            
           }
           
-          this_plot <- this_plot[,to_remove]
+          
           
           if(type=='continuous') {
             
@@ -794,6 +800,7 @@ setMethod('id_plot_ppc',signature(object='idealstan'),function(object,
           
           
         } else if(outputs=='missing') {
+          
           
             y <- as.numeric(y==miss_val)
           
