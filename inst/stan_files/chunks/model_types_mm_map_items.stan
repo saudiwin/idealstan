@@ -685,10 +685,10 @@ if(T==1) {
       //lognormal no inflation
       
       if(T==1) {
-        log_prob += lognormal_lpdf(Y_cont[n]|exp((sigma_reg_full[s] + sigma_reg_calc[n - start2 + 1]) *  (L_full[ll[n]] + legis_calc[n - start2 + 1]) - B_int_free[s]),
+        log_prob += lognormal_lpdf(Y_cont[n]|(sigma_reg_full[s] + sigma_reg_calc[n - start2 + 1]) *  (L_full[ll[n]] + legis_calc[n - start2 + 1]) - B_int_free[s],
         extra_sd[type_het_var[s]]);
       } else {
-        log_prob += lognormal_lpdf(Y_cont[n]|exp((sigma_reg_full[s] + sigma_reg_calc[n - start2 + 1]) *  (L_tp1[time[n],ll[n]] + legis_calc[n - start2 + 1]) - B_int_free[s]),
+        log_prob += lognormal_lpdf(Y_cont[n]|(sigma_reg_full[s] + sigma_reg_calc[n - start2 + 1]) *  (L_tp1[time[n],ll[n]] + legis_calc[n - start2 + 1]) - B_int_free[s],
         extra_sd[type_het_var[s]]);
       }
       
@@ -698,12 +698,12 @@ if(T==1) {
       if(Y_cont[n]<y_cont_miss) {
         // observed data 
         if(T==1) {
-          log_prob += lognormal_lpdf(Y_cont[n]|exp((sigma_reg_full[s] + sigma_reg_calc[n - start2 + 1]) *  (L_full[ll[n]] + legis_calc[n - start2 + 1]) - B_int_free[s]),
+          log_prob += lognormal_lpdf(Y_cont[n]|(sigma_reg_full[s] + sigma_reg_calc[n - start2 + 1]) *  (L_full[ll[n]] + legis_calc[n - start2 + 1]) - B_int_free[s],
           extra_sd[type_het_var[s]]);
           log_prob += bernoulli_logit_lpmf(0|(sigma_abs_free[s] + sigma_abs_calc[n - start2 + 1]) * (L_full[ll[n]] + legis_calc[n - start2 + 1]) - 
           A_int_free[s]);
         } else {
-          log_prob += lognormal_lpdf(Y_cont[n]|exp((sigma_reg_full[s] + sigma_reg_calc[n - start2 + 1]) *  (L_tp1[time[n],ll[n]] + legis_calc[n - start2 + 1]) - B_int_free[s]),
+          log_prob += lognormal_lpdf(Y_cont[n]|(sigma_reg_full[s] + sigma_reg_calc[n - start2 + 1]) *  (L_tp1[time[n],ll[n]] + legis_calc[n - start2 + 1]) - B_int_free[s],
           extra_sd[type_het_var[s]]);
           log_prob += bernoulli_logit_lpmf(0|(sigma_abs_free[s] + sigma_abs_calc[n - start2 + 1]) * (L_tp1[time[n],ll[n]] + legis_calc[n - start2 + 1]) - 
           A_int_free[s]);

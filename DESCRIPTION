@@ -29,7 +29,8 @@ Imports:
     tidybayes,
     lazyeval,
     rlang,
-    ggthemes
+    ggthemes,
+    forcats
 Suggests:
     R.rsp,
     loo,

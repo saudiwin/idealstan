@@ -536,7 +536,7 @@
       attr(combined,'output_type') <- 'discrete'
     }
     # transpose to make S x N matrix
-    return(t(combined))
+    return(combined)
   } 
   
 }
@@ -561,7 +561,7 @@
 
   #standard IRT 2-PL model
   if(type=='simulate') {
-    votes <- rnorm(n = length(pr_vote),mean = pr_vote,sd = sigma_sd)
+    votes <- rnorm(n = length(pr_vote),mean = qlogis(pr_vote),sd = sigma_sd)
   } else if(type=='predict') {
 
     votes <- sapply(1:ncol(pr_vote),function(c) rnorm(n=nrow(pr_vote),mean=qlogis(pr_vote[,c]),sd=sigma_sd[c]))
@@ -633,7 +633,7 @@
       attr(combined,'output_type') <- 'discrete'
     }
     # transpose to make S x N matrix
-    return(t(combined))
+    return(combined)
   } 
   
 }
@@ -658,7 +658,7 @@
   
   #standard IRT 2-PL model
   if(type=='simulate') {
-    votes <- rlnorm(n = length(pr_vote),meanlog = pr_vote,sdlog = sigma_sd)
+    votes <- rlnorm(n = length(pr_vote),meanlog = qlogis(pr_vote),sdlog = sigma_sd)
   } else if(type=='predict') {
     votes <- sapply(1:ncol(pr_vote),function(c) rlnorm(n=nrow(pr_vote),meanlog=qlogis(pr_vote[,c]),sdlog=sigma_sd[c]))
   } else if(type=='log_lik') {
@@ -728,7 +728,7 @@
       attr(combined,'output_type') <- 'discrete'
     }
     # transpose to make S x N matrix
-    return(t(combined))
+    return(combined)
   }               
 }
 

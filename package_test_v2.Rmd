@@ -584,13 +584,17 @@ Now Poisson-inflated:
 ord_irt_poisson_abs_sim <- id_sim_gen(num_person=20,num_items=100,inflate=T,
                                absence_diff_mean=0,model_type='poisson')
 ord_irt_poisson_abs_est <- id_estimate(idealdata=ord_irt_poisson_abs_sim,
-                               model_type=8,
+                               model_type=8,ncores = 8,
+                               nchains=2,
                                restrict_ind_high = as.character(sort(ord_irt_poisson_abs_sim@simul_data$true_person,
                                                                      decreasing=T,
                                                         index=T)$ix[1]),
                               restrict_ind_low = as.character(sort(ord_irt_poisson_abs_sim@simul_data$true_person,
                                                                    decreasing=F,
                                                         index=T)$ix[1]),
+                              fix_high = sort(ord_irt_poisson_abs_sim@simul_data$true_person,
+                                                                     decreasing=T)[1],fix_low = sort(ord_irt_poisson_abs_sim@simul_data$true_person,
+                                                                     decreasing=F)[1],
                                fixtype='prefix')
 id_plot_rhats(ord_irt_poisson_abs_est)
 ```
@@ -643,13 +647,16 @@ A Normally-distributed outcome with no inflation:
 ord_irt_normal_sim <- id_sim_gen(num_person=20,num_items=100,ordinal=F,inflate=F,
                                absence_diff_mean=0,model_type='normal')
 ord_irt_normal_est <- id_estimate(idealdata=ord_irt_normal_sim,
-                               model_type=9,
+                               model_type=9,restrict_sd_high = .1,
+                               restrict_sd_low=.1,
                                restrict_ind_high = as.character(sort(ord_irt_normal_sim@simul_data$true_person,
                                                                      decreasing=T,
                                                         index=T)$ix[1]),
                               restrict_ind_low = as.character(sort(ord_irt_normal_sim@simul_data$true_person,
                                                                    decreasing=F,
-                                                        index=T)$ix[1]),
+                                                        index=T)$ix[1]),fix_high = sort(ord_irt_normal_sim@simul_data$true_person,
+                                                                     decreasing=T)[1],fix_low = sort(ord_irt_normal_sim@simul_data$true_person,
+                                                                     decreasing=F)[1],
                                fixtype='prefix',compile_optim=F,
                               het_var=FALSE)
 id_plot_rhats(ord_irt_normal_est)
@@ -701,6 +708,9 @@ ord_irt_normal_abs_est <- id_estimate(idealdata=ord_irt_normal_abs_sim,
                               restrict_ind_low = as.character(sort(ord_irt_normal_abs_sim@simul_data$true_person,
                                                                    decreasing=F,
                                                         index=T)$ix[1]),
+                              fix_high = sort(ord_irt_normal_abs_sim@simul_data$true_person,
+                                                                     decreasing=T)[1],fix_low = sort(ord_irt_normal_abs_sim@simul_data$true_person,
+                                                                     decreasing=F)[1],nchains = 2,ncores=4,
                                fixtype='prefix')
 id_plot_rhats(ord_irt_normal_abs_est)
 ```
@@ -758,6 +768,9 @@ ord_irt_lognormal_est <- id_estimate(idealdata=ord_irt_lognormal_sim,
                               restrict_ind_low = as.character(sort(ord_irt_lognormal_sim@simul_data$true_person,
                                                                    decreasing=F,
                                                         index=T)$ix[1]),
+                              fix_high = sort(ord_irt_lognormal_sim@simul_data$true_person,
+                                                                     decreasing=T)[1],fix_low = sort(ord_irt_lognormal_sim@simul_data$true_person,
+                                                                     decreasing=F)[1],nchains = 2,ncores=4,
                                fixtype='prefix')
 id_plot_rhats(ord_irt_lognormal_est)
 ```
@@ -787,10 +800,20 @@ id_plot_sims(ord_irt_lognormal_est)
 
 ```
 
+```{r ord_irt_lognormal_pred}
+
+ord_irt_lognormal_est %>% 
+  id_post_pred %>% 
+  id_plot_ppc(ord_irt_lognormal_abs_est,ppc_pred=.) + 
+  scale_x_log10()
+
+```
+
+
 And last but not least, a lognormal model with inflation:
 
 ```{r irt_lognormal_abs}
-ord_irt_lognormal_abs_sim <- id_sim_gen(num_person=20,num_items=100,ordinal=F,inflate=F,
+ord_irt_lognormal_abs_sim <- id_sim_gen(num_person=20,num_items=100,ordinal=F,inflate=T,
                                absence_diff_mean=0,model_type='lognormal')
 ord_irt_lognormal_abs_est <- id_estimate(idealdata=ord_irt_lognormal_abs_sim,
                                model_type=12,
@@ -799,7 +822,10 @@ ord_irt_lognormal_abs_est <- id_estimate(idealdata=ord_irt_lognormal_abs_sim,
                                                         index=T)$ix[1]),
                               restrict_ind_low = as.character(sort(ord_irt_lognormal_abs_sim@simul_data$true_person,
                                                                    decreasing=F,
-                                                        index=T)$ix[1]),
+                                                        index=T)$ix[1]),fix_high = sort(ord_irt_lognormal_abs_sim@simul_data$true_person,
+                                                                     decreasing=T)[1],fix_low = sort(ord_irt_lognormal_abs_sim@simul_data$true_person,
+                                                                     decreasing=F)[1],nchains = 2,ncores=4,
+                              
                                fixtype='prefix')
 id_plot_rhats(ord_irt_lognormal_abs_est)
 ```
@@ -825,6 +851,23 @@ id_plot_sims(ord_irt_lognormal_abs_est,type='Residuals')
 ```{r ord_irt_lognormal_abs_RMSE}
 
 id_plot_sims(ord_irt_lognormal_abs_est)
+
+```
+
+```{r ord_irt_lognormal_abs_pred}
+
+ord_irt_lognormal_abs_est %>% 
+  id_post_pred %>% 
+  id_plot_ppc(ord_irt_lognormal_abs_est,ppc_pred=.) + 
+  scale_x_log10()
+
+```
+
+```{r ord_irt_lognormal_abs_miss_pred}
+
+ord_irt_lognormal_abs_est %>% 
+  id_post_pred(output='missing') %>% 
+  id_plot_ppc(ord_irt_lognormal_abs_est,ppc_pred=.)
 
 ```
 
@@ -910,10 +953,10 @@ id_plot_sims(bin_time_irt_2pl_abs_est)
 
 ```{r irt_binary_time_spline_inflate}
 
-bin_time_spline_irt_2pl_abs_sim <- id_sim_gen(num_person=100,num_items=200,inflate=F,
+bin_time_spline_irt_2pl_abs_sim <- id_sim_gen(num_person=100,num_items=100,inflate=F,
                                absence_diff_mean=0,
                                time_process = 'random',
-                               time_points=20,time_sd = .25)
+                               time_points=10,time_sd = .25)
 
 sort_ids_high <- sort(bin_time_spline_irt_2pl_abs_sim@simul_data$true_reg_discrim,
                                                                      decreasing=TRUE,

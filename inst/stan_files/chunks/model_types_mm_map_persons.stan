@@ -692,10 +692,10 @@ if(T==1) {
       int this_sd = type_het_var[bb[n]];
       
       if(T==1) {
-        log_prob += lognormal_lpdf(Y_cont[n]|exp((sigma_reg_full[bb[n]] + sigma_reg_calc[n - start2 + 1]) *  (L_full[s] + legis_calc[n - start2 + 1]) - B_int_free[bb[n]]),
+        log_prob += lognormal_lpdf(Y_cont[n]|(sigma_reg_full[bb[n]] + sigma_reg_calc[n - start2 + 1]) *  (L_full[s] + legis_calc[n - start2 + 1]) - B_int_free[bb[n]],
         extra_sd[this_sd]);
       } else {
-        log_prob += lognormal_lpdf(Y_cont[n]|exp((sigma_reg_full[bb[n]] + sigma_reg_calc[n - start2 + 1]) *  (lt[time[n]] + legis_calc[n - start2 + 1]) - B_int_free[bb[n]]),
+        log_prob += lognormal_lpdf(Y_cont[n]|(sigma_reg_full[bb[n]] + sigma_reg_calc[n - start2 + 1]) *  (lt[time[n]] + legis_calc[n - start2 + 1]) - B_int_free[bb[n]],
         extra_sd[this_sd]);
       }
       
@@ -708,12 +708,12 @@ if(T==1) {
       if(Y_cont[n]<y_cont_miss) {
         // observed data 
         if(T==1) {
-          log_prob += lognormal_lpdf(Y_cont[n]|exp((sigma_reg_full[bb[n]] + sigma_reg_calc[n - start2 + 1]) *  (L_full[s] + legis_calc[n - start2 + 1]) - B_int_free[bb[n]]),
+          log_prob += lognormal_lpdf(Y_cont[n]|(sigma_reg_full[bb[n]] + sigma_reg_calc[n - start2 + 1]) *  (L_full[s] + legis_calc[n - start2 + 1]) - B_int_free[bb[n]],
           extra_sd[this_sd]);
           log_prob += bernoulli_logit_lpmf(0|(sigma_abs_free[bb[n]] + sigma_abs_calc[n - start2 + 1]) * (L_full[s] + legis_calc[n - start2 + 1]) - 
           A_int_free[bb[n]]);
         } else {
-          log_prob += lognormal_lpdf(Y_cont[n]|exp((sigma_reg_full[bb[n]] + sigma_reg_calc[n - start2 + 1]) *  (lt[time[n]] + legis_calc[n - start2 + 1]) - B_int_free[bb[n]]),
+          log_prob += lognormal_lpdf(Y_cont[n]|(sigma_reg_full[bb[n]] + sigma_reg_calc[n - start2 + 1]) *  (lt[time[n]] + legis_calc[n - start2 + 1]) - B_int_free[bb[n]],
           extra_sd[this_sd]);
           log_prob += bernoulli_logit_lpmf(0|(sigma_abs_free[bb[n]] + sigma_abs_calc[n - start2 + 1]) * (lt[time[n]] + legis_calc[n - start2 + 1]) - 
           A_int_free[bb[n]]);

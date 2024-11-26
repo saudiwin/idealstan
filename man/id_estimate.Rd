@@ -56,8 +56,8 @@ id_estimate(
   ar_sd = 1,
   diff_reg_sd = 3,
   diff_miss_sd = 3,
-  restrict_sd_high = 10,
-  restrict_sd_low = 10,
+  restrict_sd_high = NULL,
+  restrict_sd_low = NULL,
   restrict_N_high = 1000,
   restrict_N_low = 1000,
   gp_sd_par = 0.025,
@@ -278,18 +278,27 @@ identify the model when there are few time points.}
 
 \item{diff_miss_sd}{Set the prior standard deviation for the bill (item) intercepts for the inflated model.}
 
-\item{restrict_sd_high}{Set the prior shape for high pinned parameters. This has a default of 
-0.01 (equivalent to +0.99), but could be set lower if the data is really large.}
+\item{restrict_sd_high}{Set the level of tightness for high fixed parameters 
+(top/positive end of scale).
+If NULL, the default, will set to .1 if \code{const_type="persons"} and 
+10 if \code{const_type="items"}. For \code{const_type="persons"}, value is the 
+SD of normal distribution centered around \code{fix_high}. For code{const_type="items"},
+parameter is equal to the prior shape for high pinned parameters 
+(divide by \code{restrict_N_high} + \code{restrict_sd_high}) to get expected value.}
 
-\item{restrict_sd_low}{Set the prior scale for low pinned parameters. This has a default of 
-0.01 (equivalent to -0.99), but could be set lower if the data is really large.
-To make the prior uninformative, set this value and \code{restrict_N_low} to +1 (or +2, +2 for weakly informative).}
+\item{restrict_sd_low}{Set the level of tightness for low fixed parameters 
+(low/negative end of scale).
+If NULL, the default, will set to .1 if \code{const_type="persons"} and 
+10 if \code{const_type="items"}. For \code{const_type="persons"}, value is the 
+SD of normal distribution centered around \code{fix_low}. For code{const_type="items"},
+parameter is equal to the prior shape for high pinned parameters 
+(divide by \code{restrict_N_low} + \code{restrict_sd_low}) to get expected value.}
 
-\item{restrict_N_high}{Set the prior scale for high pinned parameters. Default is 1000 
+\item{restrict_N_high}{Set the prior scale for high/positive pinned parameters. Default is 1000 
 (equivalent to 1,000 observations of the pinned value). Higher values make the pin
 stronger (for example if there is a lot of data).}
 
-\item{restrict_N_low}{Set the prior shape for high pinned parameters. Default is 1000 
+\item{restrict_N_low}{Set the prior shape for low/negative pinned parameters. Default is 1000 
 (equivalent to 1,000 observations of the pinned value). Higher values make the pin stronger
 (for example if there is a lot of data).}
 
