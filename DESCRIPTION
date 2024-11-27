@@ -14,7 +14,7 @@ Description: Offers item-response theory (IRT) ideal-point estimation for binary
 License: GPL
 Depends: 
     methods,
-    R (>= 3.5.0)
+    R (>= 4.0.0)
 Imports: 
     dplyr,
     svDialogs,

@@ -33,3 +33,7 @@ this_data.rds
 ^docs$
 ^altdoc$
 ^_quarto$
+convergence_behavior.R
+README.qmd
+Time_Series.qmd
+Package_Introduction.qmd

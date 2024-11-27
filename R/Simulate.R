@@ -56,7 +56,7 @@
 #' \code{\link{id_estimate}} function to run a model. It can also be used in the simulation
 #' plotting functions.
 #' @seealso \code{\link{id_plot_sims}} for plotting fitted models versus true values.
-#' @import posterior
+#' @importFrom posterior as_draws_df as_draws_matrix as_draws_array summarise_draws summarize_draws rhat
 #' @export
 id_sim_gen <- function(num_person=20,num_items=50,
                        cov_effect=NULL,
