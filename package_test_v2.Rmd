@@ -388,6 +388,10 @@ ord_irt_abs_est <- id_estimate(idealdata=ord_irt_abs_sim,
                               restrict_ind_low = as.character(sort(ord_irt_abs_sim@simul_data$true_person,
                                                                    decreasing=F,
                                                         index=T)$ix[1]),
+                              fix_high = sort(ord_irt_abs_sim@simul_data$true_person,
+                                                                     decreasing=T)[1],
+                              fix_low = sort(ord_irt_abs_sim@simul_data$true_person,
+                                                                     decreasing=F)[1],chains=2,ncores=4,
                                fixtype='prefix')
 id_plot_rhats(ord_irt_abs_est)
 ```
@@ -423,6 +427,7 @@ ord_irt_abs_est %>%
   id_plot_ppc(ord_irt_abs_est,ppc_pred=.)
 
 ```
+
 
 We can now try the ordinal graded response version (non-inflated):
 

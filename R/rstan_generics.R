@@ -395,7 +395,10 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
              cuts <- unique(ordered_id[this_obs])
 
              outcome <- Y_int[this_obs]
-             miss_val <- new_stan_data$idealdata@miss_val[1]
+
+             miss_val <- new_stan_data$stan_data$y_int_miss
+             
+             
 
            if(item$model_id %in% c(3,4)) {
              cutpoints <- object@stan_samples$draws(paste0('steps_votes',cuts))[,use_chain,] %>% as_draws_matrix()
@@ -412,7 +415,7 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
              out_predict <- rep_func(pr_absence=item$pr_absence,
                                      pr_vote=item$pr_vote,
                                      N=length(person_points[this_obs]),
-                                     ordinal_outcomes=1:cuts,
+                                     ordinal_outcomes=1:unique(object@score_data@score_matrix$ordered_id[this_obs]),
                                      inflate=item$model_id %in% c(2,4,6,8,10,12,14),
                                      latent_space=item$model_id %in% c(13,14),
                                      time_points=time_points[this_obs],
@@ -467,7 +470,7 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100
       out_predict <- rep_func(pr_absence=item$pr_absence,
                               pr_vote=item$pr_vote,
                               N=length(person_points[this_obs]),
-                              ordinal_outcomes=length(unique(object@score_data@score_matrix$outcome[this_obs])),
+                              ordinal_outcomes=1:unique(object@score_data@score_matrix$ordered_id[this_obs]),
                               inflate=item$model_id %in% c(2,4,6,8,10,12,14),
                               latent_space=item$model_id %in% c(13,14),
                               time_points=time_points[this_obs],
@@ -629,6 +632,9 @@ setGeneric('id_plot_ppc',signature='object',
 #' you have different item distributions,
 #' then you need to specify the item type number to plot (see function documentation in
 #' \code{\link{id_estimate}}).
+#' @param observed_only If the outcome is discrete and has missing data inflation, 
+#' set to TRUE to only see the observed responses in the plot or FALSE to see all of the
+#' responses (missing data category will be the largest).
 #' @param ... Other arguments passed on to \code{\link[bayesplot]{ppc_bars}}
 #' @export
 setMethod('id_plot_ppc',signature(object='idealstan'),function(object,
@@ -637,9 +643,9 @@ setMethod('id_plot_ppc',signature(object='idealstan'),function(object,
                                                                     item=NULL,
                                                                combine_item=TRUE,
                                                                type=NULL,
-                                                               only_observed=NULL,
                                                                which_mod=NULL,
                                                                prompt_plot=TRUE,
+                                                               observed_only=FALSE,
                                                                ...) {
   
   if(is.null(ppc_pred)) {
@@ -743,7 +749,7 @@ setMethod('id_plot_ppc',signature(object='idealstan'),function(object,
           grouped <- F
         }
         
-        if(outputs=='all') {
+        if(outputs=='all' && !observed_only) {
           y <- as.numeric(y)
           if(grouped) {
             
@@ -755,7 +761,8 @@ setMethod('id_plot_ppc',signature(object='idealstan'),function(object,
             
             
           }
-        } else if(outputs=='observed') {
+          
+        } else if(observed_only || outputs=='observed') {
           
           # only show observed data for yrep
           
@@ -820,7 +827,11 @@ setMethod('id_plot_ppc',signature(object='idealstan'),function(object,
         
         return(out_plot)
         
+        # END COMBINED ITEM
+        
       } else {
+        
+        # BEGIN DISAGGREGATED ITEM PLOT
         
         # likely ordered models that have multiple components
         

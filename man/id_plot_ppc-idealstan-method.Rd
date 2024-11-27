@@ -11,9 +11,9 @@
   item = NULL,
   combine_item = TRUE,
   type = NULL,
-  only_observed = NULL,
   which_mod = NULL,
   prompt_plot = TRUE,
+  observed_only = FALSE,
   ...
 )
 }
@@ -42,6 +42,10 @@ are produced (defaults to TRUE)
 If NULL (default), will use the type specified in the data. 
 However, if both continuous and discrete items are present, will
 throw an error if NULL.}
+
+\item{observed_only}{If the outcome is discrete and has missing data inflation, 
+set to TRUE to only see the observed responses in the plot or FALSE to see all of the
+responses (missing data category will be the largest).}
 
 \item{...}{Other arguments passed on to \code{\link[bayesplot]{ppc_bars}}}
 }

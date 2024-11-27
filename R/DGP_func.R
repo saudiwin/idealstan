@@ -134,12 +134,13 @@
                     outcome=NULL,
                     cov_effect=NULL,
                     person_x=NULL,
+                    miss_val=NULL,
                     ...)
 {
   
-  if(inflate && type!='simulate') {
-    ordinal_outcomes <- ordinal_outcomes -1
-  }
+  # if(inflate && type!='simulate') {
+  #   ordinal_outcomes <- ordinal_outcomes -1
+  # }
   
   if(!inflate) {
     pr_boost <- 1
@@ -241,11 +242,13 @@
         
         pr_top <- plogis(this_cut[length(this_cut)])
         
-        return(sample(1:(length(this_cut)+1),size=1,prob=c(pr_bottom,mid_prs,pr_top)))
+        return(sample(as.integer(ordinal_outcomes),
+                      size=1,prob=c(pr_bottom,mid_prs,pr_top)))
       })
     })
 
-    combined <- sapply(1:ncol(pr_absence), function(c) ifelse(pr_absence[,c]<(runif(N)+pr_boost),over_iters[,c],as.integer(ordinal_outcomes)+1L))
+    combined <- sapply(1:ncol(pr_absence), function(c) ifelse(pr_absence[,c]<(runif(N)+pr_boost),over_iters[c,],miss_val))
+    
     attr(combined,'output') <- 'all'
     return(combined)
   } else if(type=='log_lik') {
@@ -301,6 +304,7 @@
                          outcome=NULL,
                          cov_effect=NULL,
                          person_x=NULL,
+                         miss_val=NULL,
                                  ...)
 {
   
@@ -401,7 +405,7 @@
       })
     })
     
-    combined <- sapply(1:ncol(pr_absence), function(c) ifelse(pr_absence[,c]<(runif(N)+pr_boost),over_iters[,c],as.integer(ordinal_outcomes)+1L))
+    combined <- sapply(1:ncol(pr_absence), function(c) ifelse(pr_absence[,c]<(runif(N)+pr_boost),over_iters[c,],miss_val))
     attr(combined,'output') <- 'all'
     return(t(combined))
   } else if(type=='log_lik') {
