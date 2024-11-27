@@ -31,8 +31,7 @@ Imports:
     rlang,
     ggthemes,
     forcats,
-    scales,
-    rstudioapi
+    scales
 Suggests:
     R.rsp,
     loo,
