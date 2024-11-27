@@ -26,6 +26,11 @@ test.R
 generalized_beta.R
 four_param_beta.stan
 this_data.rds
+How_to_Evaluate_Models.qmd
+over_static_sims.rds
+psis_vb_diagnostic_fig_1.R
+^README_files$
+README.qmd
 \.png
 ^CRAN-RELEASE$
 ^Meta$
