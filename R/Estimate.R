@@ -912,6 +912,8 @@ id_make <- function(score_data=NULL,
 #' }
 #' @importFrom stats dnorm dpois model.matrix qlogis relevel rpois update aggregate dlnorm end formula start
 #' @importFrom utils person packageDescription
+#' @importFrom posterior as_draws_rvars ess_bulk ess_tail
+#' @importFrom bayesplot mcmc_intervals
 #' @import cmdstanr
 #' @export
 id_estimate <- function(idealdata=NULL,model_type=2,
