@@ -36,6 +36,7 @@ README.qmd
 ^Meta$
 ^\.github$
 ^docs$
+^doc$
 ^altdoc$
 ^_quarto$
 convergence_behavior.R
