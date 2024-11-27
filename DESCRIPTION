@@ -37,7 +37,8 @@ Suggests:
     loo,
     lubridate,
     rstan,
-    shinystan
+    shinystan,
+    pscl
 Encoding: UTF-8
 LazyData: true
 NeedsCompilation: yes
