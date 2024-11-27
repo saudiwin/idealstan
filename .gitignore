@@ -19,3 +19,5 @@ src-x64
 *.hpp
 altdoc/freeze.rds
 ^_quarto$
+/doc/
+/Meta/
