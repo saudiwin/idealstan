@@ -594,8 +594,10 @@ setMethod('id_model',signature(object='idealdata'),
 #' uncertainty interval (defaults to 0.95).
 #' @param low_limit A number between 0 and 1 reflecting the lower limit of the 
 #' uncertainty interval (defaults to 0.05).
-#' @param aggregate Whether to return summaries of the posterior values or the 
+#' @param aggregated Whether to return summaries of the posterior values or the 
 #' full posterior samples. Defaults to \code{TRUE}.
+#' @param use_chain ID of a specific MCMC chain to use. Default (NULL) is all the chains
+#' and is recommended.
 #' @return A \code{\link[dplyr]{tibble}} data frame with parameters as rows and descriptive statistics as columns
 #' 
 #' @export
@@ -718,49 +720,6 @@ setMethod('summary',signature(object='idealstan'),
             }
             
 })
-
-#' Generic Function for Plotting \code{idealstan} objects
-#' 
-#' This generic function will run all the plotting functions associated with fitted \code{idealstan} objects.
-#' 
-#' @param object An \code{idealstan} object
-#' @param ... Other options passed onto the underlying plot function
-#' 
-#' @export
-setGeneric('id_plot',
-           signature='object',
-           function(object,...) standardGeneric('id_plot'))
-
-#' Plot Results of \code{\link{id_estimate}}
-#' 
-#' This function allows you to access the full range of plotting options for fitted \code{idealstan} models.
-#' 
-#' \code{id_plot} is a wrapper function that can access the various plotting functions available in the \code{idealstan} package. 
-#'    Currently, the options are limited to a plot of legislator/person ideal points with bills/item midpoints as an optional overlay.
-#'    Additional plots will be available in future versions of \code{idealstan}.
-#' @param object A fitted \code{idealstan} object
-#' @param plot_type Specify the plot as a character string. Currently 'persons' for legislator/person ideal point plot, 
-#'    'histogram' for a histogram of model estimates for given parameters. Alternatively,
-#'    use the \code{param} option to specify a specific model parameter.
-#' @param param A character name of a parameter from an \code{idealstan} model.
-#' @param ... Additional arguments passed on to the underlying functions. See individual function documentation for details.
-#' @return A \code{\link[ggplot2]{ggplot}} object
-#' @seealso \code{\link{id_plot_legis}} for a legislator/person ideal point plot, 
-#' \code{\link{id_plot_all_hist}} for a standard histogram plot,
-#' \code{\link{id_plot_compare}} for an ideal point plot of two different models of the same data,
-#' \code{\link{id_plot_rhats}} for a histogram of \code{Rhat} values,
-#' \code{\link{id_plot_sims}} for plotting true versus estimated values,
-#' \code{\link{id_estimate}} for how to estimate an \code{idealstan} object.
-#' @export
-setMethod(id_plot, signature(object='idealstan'),
-          function(object,plot_type='persons',...) {
-            if(plot_type=='persons') {
-              id_plot_legis(object,...)
-            } else if(plot_type=='histogram') {
-              id_plot_all_hist(object,...)
-            }
-            
-          })
 
 #' Generic Method for Extracting Posterior Samples
 #' 
@@ -885,8 +844,8 @@ setGeneric('stan_trace',
 #' @param ... Other options passed on to \code{\link[bayesplot]{mcmc_trace}}
 #' @export
 setMethod('stan_trace',signature(object='idealstan'),
-          function(object,par='L_full[1]') {
+          function(object,par='L_full[1]',...) {
             
-        mcmc_trace(object@stan_samples$draws(par))
+        mcmc_trace(object@stan_samples$draws(par),...)
           })
 

@@ -30,11 +30,15 @@ Imports:
     lazyeval,
     rlang,
     ggthemes,
-    forcats
+    forcats,
+    scales,
+    rstudioapi
 Suggests:
     R.rsp,
     loo,
-    lubridate
+    lubridate,
+    rstan,
+    shinystan
 Encoding: UTF-8
 LazyData: true
 NeedsCompilation: yes

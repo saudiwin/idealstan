@@ -1,149 +1,72 @@
-#' Function that does automatic identification of models using VB
-#' @importFrom forcats fct_relevel
 #' @noRd
 .vb_fix <- function(object=NULL,
-                    this_data=NULL,nfix=NULL,
+                    this_data=NULL,
                     ncores=NULL,all_args=NULL,
                     restrict_ind_high=NULL,
                     restrict_ind_low=NULL,
-                    tol_rel_obj=NULL,
                     model_type=NULL,
                     use_groups=NULL,
+                    const_type=NULL,
+                    num_restrict_high=NULL,
+                    num_restrict_low=NULL,
                     fixtype=NULL,...) {
   
-  
-  . <- NULL
-  to_use <- stanmodels[['irt_standard_noid']]
-  
-  
-  eval_elbo <- 100
-  
-  print("(First Step): Estimating model with variational inference to identify modes to constrain.")
-  
-  post_modes <- rstan::vb(object=to_use,data =this_data,
-                          algorithm='meanfield',
-                          refresh=this_data$id_refresh,
-                          eval_elbo=eval_elbo,
-                          tol_rel_obj=tol_rel_obj, # better convergence criterion than default
-                          output_samples=200)
-  
-  # Test whether there is a lot of missing data
-  
-  #use_absence <- .det_missing(object=object,model_type=model_type)
-  
-  lookat_params <- rstan::extract(post_modes,permuted=FALSE)
-  this_params <- lookat_params[,1,]
+  # collect additional arguments
   if(is.null(all_args)) {
     all_args <- list(...) 
   } 
   
-  all_params <- attributes(this_params)$dimnames$parameters
+  . <- NULL
   
-  # Or constrain persons instead of discriminations
-  # adjust for which time point we are looking at -- use first time point person param
-  person <- apply(this_params[,grepl(pattern = 'L_full',x=all_params)],2,mean)
-  item <- apply(this_params[,grepl(pattern = 'sigma_reg_free',x=all_params)],2,mean)
+  print("(First Step): Estimating model with Pathfinder (variational inference) to identify modes to constrain.")
   
-  if(fixtype=='vb_full') {
+  post_modes <- object@stanmodel_map$pathfinder(data =this_data,num_threads=ncores,
+                                                num_paths=1,psis_resample=FALSE)
+  
+  # pull out unidentified parameters
+  
+  if(const_type=="persons") {
     
-    con_out <- .free_constrain(person=person,
-                               item=item,
-                               const_method=const_method,
-                               nfix_low=nfix_low,
-                               nfix_high=nfix_high,
-                               const_type=const_type,
-                               object=object)
+    this_params <- post_modes$draws("L_full") %>% as_draws_matrix
     
-  } else {
-    # use partial ID (we already know which ones to constrain, just figure out diff)
-    con_out <- .part_constrain(person=person,
-                               item=item,
-                               restrict_ind_high=restrict_ind_high,
-                               restrict_ind_low=restrict_ind_low,
-                               const_type=const_type,
-                               const_method=const_method,
-                               object=object)
+    person <- apply(this_params,2,mean)
+    
+    restrict_ind_high <- sort(person,index=T,decreasing=T)$ix[1:num_restrict_high]
+    restrict_ind_low <- sort(person,index=T,decreasing=F)$ix[1:num_restrict_low]
+    val_high <- person[restrict_ind_high]
+    val_low <- person[restrict_ind_low]
+    
+    # also save values to restrict
+    
+    fix_high <- sort(person,decreasing=T)[1:num_restrict_high]
+    fix_low <- sort(person,decreasing=F)[1:num_restrict_high]
+    
+  } else if(const_type=="items") {
+    
+    this_params <- post_modes$draws("sigma_reg_full") %>% as_draws_matrix
+    
+    items <- apply(this_params,2,mean)
+    
+    restrict_ind_high <- sort(items,index=T,decreasing=T)$ix[1:num_restrict_high]
+    restrict_ind_low <- restrict_ind_low <- sort(items,index=T,decreasing=F)$ix[1:num_restrict_low]
+    val_high <- items[restrict_ind_high]
+    val_low <- items[restrict_ind_low]
+    
   }
   
-  # need new order of variables
-  if(!use_groups) {
-    new_order <- c(1:length(person))
-  } else {
-    new_order <- c(1:length(levels(object@score_matrix$group_id)))
-  }
+  object@restrict_num_high <- val_high
+  object@restrict_num_low <- val_low
+  object@restrict_ind_high <- restrict_ind_high
+  object@restrict_ind_low <- restrict_ind_low
+  object@constraint_type <- const_type
+  object@restrict_num_high <- fix_high
+  object@restrict_num_low <- fix_low
   
-  new_order <- c(new_order[-c(to_constrain_low,
-                              to_constrain_high)],
-                 new_order[c(to_constrain_low,
-                             to_constrain_high)])
-  
-  if(this_data$T>1) {
-    # do some additional model identification if necessary for time-varying ideal pt models
-    # figure out upper limit of estimated variances
-    
-    ideal_pts_low <- rstan::extract(post_modes,'L_tp1')[[1]] %>% apply(c(2,3),quantile,.01) %>% .[,new_order]
-    ideal_pts_high <- rstan::extract(post_modes,'L_tp1')[[1]] %>% apply(c(2,3),quantile,.99) %>% .[,new_order]
-    ideal_pts_low <- ideal_pts_low*sign_flip
-    ideal_pts_high <- ideal_pts_high*sign_flip
-    
-    # now pull the lowest low and highest high
-    ideal_pts_low <- apply(ideal_pts_low,2,function(c) c[which(c==max(c))])
-    ideal_pts_high <- apply(ideal_pts_high,2,function(c) c[which(c==min(c))])
-    ideal_pts_mean <- rstan::extract(post_modes,'L_tp1')[[1]] %>% apply(c(2,3),median) %>% .[,new_order]
-    ideal_pts_mean <- ideal_pts_mean * sign_flip
-    time_var_restrict <-  max(apply(this_params[,grepl(pattern = 'time_var_restrict',x=all_params)],2,quantile,.95)[new_order])
-    
-    if(this_data$time_proc %in% c(2,3)) {
-      
-      
-    } else if(this_data$time_proc==4) {
-      
-      
-      
-    }
-    
-    # need four indices for GP fixing
-    restrict_mean_ind <- c(restrict_mean_ind_high_max,
-                           restrict_mean_ind_high_min,
-                           restrict_mean_ind_low_max,
-                           restrict_mean_ind_low_min)
-    restrict_mean_val <- c(ideal_pts_mean[restrict_mean_ind[1],restrict_mean_ind[2]] -
-                             ideal_pts_mean[restrict_mean_ind[5],restrict_mean_ind[6]],
-                           ideal_pts_mean[restrict_mean_ind[3],restrict_mean_ind[4]] -
-                             ideal_pts_mean[restrict_mean_ind[7],restrict_mean_ind[8]])
-    
-    if(fixtype=='vb_partial' && this_data$time_proc==4) {
-      if(restrict_mean_val[1]<0) {
-        restrict_mean_val <- restrict_mean_val * -1
-      }
-    } else if(fixtype=='vb_partial' && this_data$time_proc!=4) {
-      if(sign(person[to_constrain_high])<0) {
-        restrict_mean_val <- restrict_mean_val * -1
-      }
-    }
-    
-    
-    
-    object@restrict_mean_val <- restrict_mean_val
-    object@restrict_mean_ind <- restrict_mean_ind
-    object@restrict_var_high <- time_var_restrict
-  }
-  
-  
-  this_data$num_fix_high <- 1
-  this_data$num_fix_low <- 1
-  this_data$constraint_type <- 3
-  this_data$constrain_par <- 1
-  object@restrict_num_high <- 1
-  object@restrict_num_low <- 1
-  object@restrict_ind_high <- to_constrain_high
-  object@restrict_ind_low <- to_constrain_low
-  object@constraint_type <- this_data$constraint_type
-  object@diff <- diff
-  object@diff_high <- diff_high
-  object@person_start <- person[new_order]
   return(object)
+  
+  
 }
+
 
 #' Function that constrains certain known parameters
 #' @noRd

@@ -90,6 +90,9 @@ only a fraction of the persons/legislators.}
 \item{plot_sim}{Whether to plot the true values of parameters if a simulation was used to generate data 
 (see \code{\link{id_sim_gen}})}
 
+\item{use_chain}{ID of MCMC chain to use rather than combining all chains. 
+Default is NULL which will use all chains and is recommended.}
+
 \item{add_cov}{Whether to add values of hierarchical person-level covariates to the
 time trends (defaults to TRUE).}
 

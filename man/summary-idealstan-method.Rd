@@ -26,8 +26,11 @@ uncertainty interval (defaults to 0.95).}
 \item{low_limit}{A number between 0 and 1 reflecting the lower limit of the 
 uncertainty interval (defaults to 0.05).}
 
-\item{aggregate}{Whether to return summaries of the posterior values or the 
+\item{aggregated}{Whether to return summaries of the posterior values or the 
 full posterior samples. Defaults to \code{TRUE}.}
+
+\item{use_chain}{ID of a specific MCMC chain to use. Default (NULL) is all the chains
+and is recommended.}
 }
 \value{
 A \code{\link[dplyr]{tibble}} data frame with parameters as rows and descriptive statistics as columns

@@ -762,7 +762,6 @@ validate_fit_init = function(init, model_variables) {
 # only takes lists as input
 
 #' Write initial values to files if provided as list of lists
-#' @noRd
 #' @param init List of init lists.
 #' @param num_procs Number of inits needed.
 #' @param model_variables  A list of all parameters with their types and
@@ -771,7 +770,7 @@ validate_fit_init = function(init, model_variables) {
 #'   for a subset of parameters? Can be controlled by global option
 #'   `cmdstanr_warn_inits`.
 #' @return A character vector of file paths.
-#' @export
+#' @noRd
 process_init_list <- function(init, num_procs, model_variables = NULL,
                               warn_partial = FALSE,
                               ...) {
@@ -935,76 +934,6 @@ process_init_pathfinder <- function(init, num_procs, model_variables = NULL,
     return(init_draws_lst)
     
 }
-
-#' @noRd
-.vb_fix <- function(object=NULL,
-                    this_data=NULL,
-                    ncores=NULL,all_args=NULL,
-                    restrict_ind_high=NULL,
-                    restrict_ind_low=NULL,
-                    model_type=NULL,
-                    use_groups=NULL,
-                    const_type=NULL,
-                    num_restrict_high=NULL,
-                    num_restrict_low=NULL,
-                    fixtype=NULL,...) {
-  
-  # collect additional arguments
-  if(is.null(all_args)) {
-    all_args <- list(...) 
-  } 
-
-  . <- NULL
-
-  print("(First Step): Estimating model with Pathfinder (variational inference) to identify modes to constrain.")
-
-  post_modes <- object@stanmodel_map$pathfinder(data =this_data,num_threads=ncores,
-                                                num_paths=1,psis_resample=FALSE)
-  
-  # pull out unidentified parameters
-  
-  if(const_type=="persons") {
-    
-    this_params <- post_modes$draws("L_full") %>% as_draws_matrix
-    
-    person <- apply(this_params,2,mean)
-
-    restrict_ind_high <- sort(person,index=T,decreasing=T)$ix[1:num_restrict_high]
-    restrict_ind_low <- sort(person,index=T,decreasing=F)$ix[1:num_restrict_low]
-    val_high <- person[restrict_ind_high]
-    val_low <- person[restrict_ind_low]
-    
-    # also save values to restrict
-    
-    fix_high <- sort(person,decreasing=T)[1:num_restrict_high]
-    fix_low <- sort(person,decreasing=F)[1:num_restrict_high]
-    
-  } else if(const_type=="items") {
-    
-    this_params <- post_modes$draws("sigma_reg_full") %>% as_draws_matrix
-    
-    items <- apply(this_params,2,mean)
-
-    restrict_ind_high <- sort(items,index=T,decreasing=T)$ix[1:num_restrict_high]
-    restrict_ind_low <- restrict_ind_low <- sort(items,index=T,decreasing=F)$ix[1:num_restrict_low]
-    val_high <- items[restrict_ind_high]
-    val_low <- items[restrict_ind_low]
-    
-  }
-  
-  object@restrict_num_high <- val_high
-  object@restrict_num_low <- val_low
-  object@restrict_ind_high <- restrict_ind_high
-  object@restrict_ind_low <- restrict_ind_low
-  object@constraint_type <- const_type
-  object@restrict_num_high <- fix_high
-  object@restrict_num_low <- fix_low
-
-  return(object)
-
-  
-}
-
 
 
 #' @noRd

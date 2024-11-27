@@ -541,6 +541,8 @@ id_plot_legis_var <- function(object,return_data=FALSE,
 #' (see \code{\link{id_sim_gen}})
 #' @param add_cov Whether to add values of hierarchical person-level covariates to the
 #' time trends (defaults to TRUE).
+#' @param use_chain ID of MCMC chain to use rather than combining all chains. 
+#' Default is NULL which will use all chains and is recommended.
 #' @param ... Other options passed on to plotting function, currently ignored
 #' @importFrom gghighlight gghighlight
 #' @export
@@ -1144,6 +1146,10 @@ id_plot_rhats <- function(obj) {
 #' or binary models with missing data, which outcome to predict. This should 
 #' be a character value that matches what the outcome was coded as in the data
 #' passed to \code{\link{id_make}}.
+#' @param use_items If "all", the default, will calculate ideal point 
+#' marginal effects for all items. If not "all", should be a character vector
+#' of specific item names as passed to \code{id_make} to calculate ideal
+#' point marginal effects for.
 #' @param high_quantile The upper limit of the posterior density to use for 
 #' calculating credible intervals
 #' @param low_quantile The lower limit of the posterior density to use for

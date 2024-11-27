@@ -4,7 +4,7 @@
 \alias{stan_trace,idealstan-method}
 \title{Plot the MCMC posterior draws by chain}
 \usage{
-\S4method{stan_trace}{idealstan}(object, par = "L_full[1]")
+\S4method{stan_trace}{idealstan}(object, par = "L_full[1]", ...)
 }
 \arguments{
 \item{object}{A fitted \code{idealstan} model}

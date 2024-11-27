@@ -230,9 +230,16 @@ of the missingness discrimination parameters.}
 \item{discrim_miss_shape}{Set the shape parameter for the rescaled Beta distribution
 of the missingness discrimination parameters.}
 
+\item{person_sd}{The standard deviation of the Normal distribution prior for 
+persons (all non-constrained person ideal point parameters). Default is weakly informative (3)
+on the logit scale.}
+
 \item{time_fix_sd}{The variance of the over-time component of the first person/legislator
 is fixed to this value as a reference. 
 Default is 0.1.}
+
+\item{time_var}{The mean of the exponential distribution for over-time variances for
+ideal point parameters. Default (10) is weakly informative on the logit scale.}
 
 \item{spline_knots}{Number of knots (essentially, number of points
 at which to calculate time-varying ideal points given T time points). 
@@ -249,6 +256,11 @@ pooled across time points T). A higher value will result in wigglier time series
 There is no "correct" value but lower values are likely more stable and easier to 
 identify.}
 
+\item{ar1_up}{The upper bound of the AR(1) parameter, default is +1.}
+
+\item{ar1_down}{The lower bound of the AR(1) parameter, default is 0. Set to -1
+to allow for inverse responses to time shocks.}
+
 \item{boundary_prior}{If your time series has very low variance (change over time),
 you may want to use this option to put a boundary-avoiding inverse gamma prior on
 the time series variance parameters if your model has a lot of divergent transitions. 
@@ -264,6 +276,9 @@ and random walk models. Below this number the model will employ a
 non-centered approach. The default is 50 time points, which is 
 relatively arbitrary and higher values may be better if sampling
 quality is poor above the threshold.}
+
+\item{restrict_var}{Whether to fix the variance parameter for the first person trajectory. Default
+is FALSE (usually not necessary).}
 
 \item{sample_stationary}{If \code{TRUE}, the AR(1) coefficients in a time-varying model will be 
 sampled from an unconstrained space and then mapped back to a stationary space. Leaving this \code{TRUE} is 
@@ -282,7 +297,7 @@ identify the model when there are few time points.}
 (top/positive end of scale).
 If NULL, the default, will set to .1 if \code{const_type="persons"} and 
 10 if \code{const_type="items"}. For \code{const_type="persons"}, value is the 
-SD of normal distribution centered around \code{fix_high}. For code{const_type="items"},
+SD of normal distribution centered around \code{fix_high}. For \code{const_type="items"},
 parameter is equal to the prior shape for high pinned parameters 
 (divide by \code{restrict_N_high} + \code{restrict_sd_high}) to get expected value.}
 
@@ -290,7 +305,7 @@ parameter is equal to the prior shape for high pinned parameters
 (low/negative end of scale).
 If NULL, the default, will set to .1 if \code{const_type="persons"} and 
 10 if \code{const_type="items"}. For \code{const_type="persons"}, value is the 
-SD of normal distribution centered around \code{fix_low}. For code{const_type="items"},
+SD of normal distribution centered around \code{fix_low}. For \code{const_type="items"},
 parameter is equal to the prior shape for high pinned parameters 
 (divide by \code{restrict_N_low} + \code{restrict_sd_low}) to get expected value.}
 
@@ -555,5 +570,5 @@ id_plot_legis(sen_est)
 \code{\link{id_make}} for pre-processing data,
 \code{\link{id_plot_legis}} for plotting results,
 \code{\link{summary}} for obtaining posterior quantiles,
-\code{\link{posterior_predict}} for producing predictive replications.
+\code{\link{id_post_pred}} for producing predictive replications.
 }

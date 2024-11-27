@@ -3,36 +3,32 @@
 #' To run an IRT model using \code{idealstan}, you must first process your data using the \code{id_make} 
 #' function. 
 #' 
-#' @details This function can accept either a \code{rollcall} data object from package
-#' \code{pscl} or 
-#' a long data frame where one row equals one item-person (bill-legislator)
-#' observation with associated outcome. The preferred method is the long data frame 
-#' as passing a long data frame permits
-#' the inclusion of a wide range of covariates in the model, such as person-varying and item-varying 
-#' (bill-varying) covariates. 
-#' If a \code{rollcall} object is passed to the function, the \code{rollcall} data is converted
-#' to a long data frame with data from the \code{vote.data} matrix used to determine dates for bills.
-#' If passing a long data frame, you should specify the names of the 
-#' columns containing the IDs for persons, items and 
-#' groups (groups are IDs that may have multiple observations per ID, such as political parties or
-#' classes) to the \code{id_make} function, along with the name of the response/outcome. 
+#' @details This function accepts a long data frame where one row equals one item-person (bill-legislator)
+#' observation with associated continuous or discrete outcomes/responses.
+#' You either need to include columns with specific names as required by the \code{id_make}
+#' function such as \code{person_id} for person IDs and \code{item_id} for item IDs or
+#'  specify the names of the 
+#' columns containing the IDs to the \code{id_make} function for each column name (see examples).
 #' The only required columns are the item/bill ID and the person/legislator ID along with an 
-#' outcome column. 
+#' outcome column, \code{outcome_disc} for discrete variables and \code{outcome_cont} for
+#' continuous variables. If both columns are included, then any value can be included for 
+#' \code{outcome_disc} if there are values for \code{outcome_cont} and vice versa.
 #' 
-#' The preferred format for the outcome column for discrete variables (binary or ordinal)
-#' is to pass a factor variable with levels in the correct order, i.e., in ascending order.
-#' For example, if using legislative data, the levels of the factor should be \code{c('No','Yes')}.
-#' If a different kind of variable is passed, such as a character or numeric variable, 
-#' you should consider specifying \code{low_val},\code{high_val} and \code{middle_val} to 
-#' determine the correct order of the discrete outcome. Specifying \code{middle_val} is only
-#' necessary if you are estimating an ordinal model.
+#' If items of multiple types are included, a column \code{model_id} must be included with
+#' the model type (see \code{id_estimate} function documentation for list of model IDs)
+#' for the response distribution, such as 
+#' 1 for binary non-inflated, etc. If an ordinal outcome is included, an additional column
+#' \code{ordered_id} must be included that has the total count of categories for that 
+#' ordinal variable (i.e., 3 for 3 categories). 
 #' 
-#' If you do not specify a value for \code{miss_val}, then any \code{NA} are assumed to be 
-#' missing. If you do specify \code{miss_val} and you also have \code{NA} in your data 
-#' (assuming \code{miss_val} is not \code{NA}), then the function will treat the data
-#' coded as \code{miss_val} as missing data that should be modeled and will treat the \code{NA}
-#' data as ignorable missing data that will be removed (list-wise deletion) before estimating a
-#' model.
+#' For discrete data, it is recommended to include a numeric variable that starts at 0, such 
+#' as values of 0 and 1 for binary data and 0,1,2 for ordinal/categorical data.
+#' For continuous (unbounded) data, it is recommended to standardize the outcome to improve
+#' model convergence and fit. 
+#' 
+#' Missing data should be passed as \code{NA} values in either
+#' \code{outcome_disc} or \code{outcome_cont} and will be processed internally.
+#' 
 #' 
 #' @section Time-Varying Models:
 #' 
@@ -41,12 +37,9 @@
 #' 
 #' @section Continuous Outcomes:
 #' 
-#' If the outcome is unbounded i.e. a continuous or an unbounded 
-#' discrete variable like Poisson, simply set \code{unbounded} to \code{TRUE}. You can ignore the
-#' options that specify which values should be \code{high_val} or \code{low_val}. You can either specify
-#' a particular value as missing using \code{miss_val}, or all 
-#' missing values (\code{NA}) will be recoded to a specific value out of the range of the outcome to use
-#' for modeling the missingness.
+#' If the outcome is continuous, you need to pass a dataframe with one column named
+#' "outcome_disc" or pass the name of the column with the continuous data to the \code{outcome_disc}
+#' argument. 
 #' 
 #' @section Hierarchical Covariates:
 #' 
@@ -59,11 +52,21 @@
 #' group-level ideal poins you can use \code{~cov1 + group_id + cov1*group_id} where
 #' \code{group_id} or \code{person_id} is the same name as the name of the column 
 #' for these options that you passed to \code{id_make} (i.e., the names of the columns
-#' in the original data).
+#' in the original data). If you are also going to model these intercepts--i.e. you are 
+#' interacting the covariate with \code{person_id} and the model is estimating ideal points
+#' at the person level--then set \code{remove_cov_int} to TRUE to avoid multicollinearity with the
+#' ideal point intercepts.
 #' 
 #' @param score_data A data frame in long form, i.e., one row in the data for each 
 #' measured score or vote in the data or a \code{rollcall} data object from package \code{pscl}.
-#' @param outcome Column name of the outcome in \code{score_data}, default is \code{"outcome"}
+#' @param outcome_disc Column name of the outcome with discrete values in \code{score_data}, default is \code{"outcome_disc"}
+#' @param outcome_cont Column name of the outcome with discrete values in \code{score_data}, default is \code{"outcome_disc"}
+#' @param ordered_id Column name of the variable showing the count of categories for 
+#' ordinal/categorical items (must be at least 3 categories)
+#' @param ignore_id Optional column for identifying observations that should not be 
+#' modeled (i.e., not just treated as missing, rather removed during estimation). Should 
+#' be a binary vector (0 for remove and 1 for include). Useful for time-varying models where
+#' persons may not be present during particular periods and missing data is ignorable.
 #' @param person_id Column name of the person/legislator ID index in \code{score_data}, 
 #' default is \code{'person_id'}. Should be integer, character or factor.
 #' @param item_id Column name of the item/bill ID index in \code{score_data}, 
@@ -715,6 +718,9 @@ id_make <- function(score_data=NULL,
 #' @param fix_low The value that the low fixed ideal point(s) should be
 #' fixed to. Default is -1. Does not apply when \code{const_type="items"}; in that case,
 #' use \code{restrict_sd}/\code{restrict_N} parameters (see below).
+#' @param person_sd The standard deviation of the Normal distribution prior for 
+#' persons (all non-constrained person ideal point parameters). Default is weakly informative (3)
+#' on the logit scale.
 #' @param discrim_reg_upb Upper bound of the rescaled Beta distribution for 
 #' observed discrimination parameters (default is +1)
 #' @param discrim_reg_lb Lower bound of the rescaled Beta distribution for 
@@ -733,9 +739,16 @@ id_make <- function(score_data=NULL,
 #' of the missingness discrimination parameters.
 #' @param discrim_miss_shape Set the shape parameter for the rescaled Beta distribution
 #' of the missingness discrimination parameters.
+#' @param restrict_var Whether to fix the variance parameter for the first person trajectory. Default
+#' is FALSE (usually not necessary).
 #' @param time_fix_sd The variance of the over-time component of the first person/legislator
 #' is fixed to this value as a reference. 
 #' Default is 0.1.
+#' @param time_var The mean of the exponential distribution for over-time variances for
+#' ideal point parameters. Default (10) is weakly informative on the logit scale.
+#' @param ar1_up The upper bound of the AR(1) parameter, default is +1.
+#' @param ar1_down The lower bound of the AR(1) parameter, default is 0. Set to -1
+#' to allow for inverse responses to time shocks.
 #' @param spline_knots Number of knots (essentially, number of points
 #' at which to calculate time-varying ideal points given T time points). 
 #' Default is NULL, which means that the spline is equivalent to 
@@ -769,14 +782,14 @@ id_make <- function(score_data=NULL,
 #' (top/positive end of scale).
 #' If NULL, the default, will set to .1 if \code{const_type="persons"} and 
 #' 10 if \code{const_type="items"}. For \code{const_type="persons"}, value is the 
-#' SD of normal distribution centered around \code{fix_high}. For code{const_type="items"},
+#' SD of normal distribution centered around \code{fix_high}. For \code{const_type="items"},
 #' parameter is equal to the prior shape for high pinned parameters 
 #' (divide by \code{restrict_N_high} + \code{restrict_sd_high}) to get expected value.
 #' @param restrict_sd_low Set the level of tightness for low fixed parameters 
 #' (low/negative end of scale).
 #' If NULL, the default, will set to .1 if \code{const_type="persons"} and 
 #' 10 if \code{const_type="items"}. For \code{const_type="persons"}, value is the 
-#' SD of normal distribution centered around \code{fix_low}. For code{const_type="items"},
+#' SD of normal distribution centered around \code{fix_low}. For \code{const_type="items"},
 #' parameter is equal to the prior shape for high pinned parameters 
 #' (divide by \code{restrict_N_low} + \code{restrict_sd_low}) to get expected value.
 #' @param restrict_N_high Set the prior scale for high/positive pinned parameters. Default is 1000 
@@ -819,7 +832,7 @@ id_make <- function(score_data=NULL,
 #' @seealso \code{\link{id_make}} for pre-processing data,
 #' \code{\link{id_plot_legis}} for plotting results,
 #' \code{\link{summary}} for obtaining posterior quantiles,
-#' \code{\link{posterior_predict}} for producing predictive replications.
+#' \code{\link{id_post_pred}} for producing predictive replications.
 #' @examples
 #' # First we can simulate data for an IRT 2-PL model that is inflated for missing data
 #' library(ggplot2)
@@ -897,8 +910,8 @@ id_make <- function(score_data=NULL,
 #'    \item Kubinec, R. "Generalized Ideal Point Models for Time-Varying and Missing-Data Inference". Working Paper.
 #'    \item Betancourt, Michael. "Robust Gaussian Processes in Stan". (October 2017). Case Study.
 #' }
-#' @importFrom stats dnorm dpois model.matrix qlogis relevel rpois update
-#' @importFrom utils person
+#' @importFrom stats dnorm dpois model.matrix qlogis relevel rpois update aggregate dlnorm end formula start
+#' @importFrom utils person packageDescription
 #' @import cmdstanr
 #' @export
 id_estimate <- function(idealdata=NULL,model_type=2,
@@ -1159,62 +1172,5 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   }
   
   return(outobj)
-  
-}
-
-#' DEPRECATED: Reconstitute an idealstan object after an MPI/cluster run
-#' 
-#' This convenience function takes as input a file location storing the results of a 
-#' MPI/cluster run. 
-#' 
-#' Given the CSV output from cmdstan and the original files exported 
-#' from the \code{id_estimate} function, this function will create an \code{idealstan}
-#' object which can be further analyzed with other \code{idealstan} package helper
-#' functions.
-#'  
-#' @param object A fitted \code{idealstan} object (see \code{\link{id_estimate}})
-#' @param file_loc A string with the location of the original files exported by 
-#' \code{id_estimate}
-#' @param csv_name A vector of character names of CSV files with posterior estimates from 
-#' \code{cmdstan}. Should be located in the same place as \code{file_loc}.
-#' @importFrom posterior summarize_draws
-id_rebuild_mpi <- function(file_loc=NULL,
-                           csv_name=NULL) {
-  
-  
-  if(is.null(file_loc)) {
-    file_loc <- rstudioapi::selectDirectory(caption="Choose the directory containing relevant files to rebuild object:")
-  }
-  
-  all_csvs <- read_cmdstan_csv(paste0(file_loc,"/",csv_name))
-  
-  object <- readRDS(paste0(file_loc,"/","idealdata_object.rds"))
-  
-  extra_params <- readRDS(paste0(file_loc,"/",extra_params.rds))
-  
-  outobj <- new('idealstan',
-                score_data=object,
-                model_code=readLines(paste0(file_loc,"/","idealstan_stan_code.stan")),
-                stan_samples=all_csvs,
-                use_vb=extra_params$use_vb)
-  
-  # add safe summaries
-  
-  to_sum <- summarize_draws(outobj@stan_samples$post_warmup_draws)
-  
-  to_sum <- select(to_sum,variable,lower="q95",mean,median,upper="q5",rhat,ess_bulk,ess_tail)
-  
-  outobj@summary <- to_sum
-  
-  outobj@mpi <- T
-  
-  outobj@model_type <- extra_params$model_type
-  outobj@time_proc <- extra_params$vary_ideal_pts
-  outobj@use_groups <- extra_params$use_groups
-  outobj@map_over_id <- extra_params$map_over_id
-  outobj@time_fix_sd <- extra_params$time_fix_sd
-  
-  return(outobj)
-  
   
 }

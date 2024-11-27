@@ -36,6 +36,11 @@ latent scale}
 \code{'discrim_reg_cov'} for bill/item discrimination parameters from regular (non-inflated) model, and 
 \code{'discrim_infl_cov'} for bill/item discrimination parameters from inflated model.}
 
+\item{use_items}{If "all", the default, will calculate ideal point 
+marginal effects for all items. If not "all", should be a character vector
+of specific item names as passed to \code{id_make} to calculate ideal
+point marginal effects for.}
+
 \item{pred_outcome}{For discrete models with more than 2 categories, 
 or binary models with missing data, which outcome to predict. This should 
 be a character value that matches what the outcome was coded as in the data

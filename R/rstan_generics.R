@@ -34,6 +34,9 @@ setGeneric('id_post_pred',signature='object',
 #'  Also see \code{help("posterior_predict", package = "rstanarm")}
 #'
 #' @param object A fitted \code{idealstan} object
+#' @param newdata Optional: pass a data frame that must have all of the predictors that
+#' were given to the id_make function. Used to generate predictions from person or item
+#' covariates on to items.
 #' @param draws The number of draws to use from the total number of posterior draws (default is 100). Set to "all" to use all draws in the chains.
 #' For reproducibility, you can also pass a vector of specific draws to use.
 #' @param sample_scores In addition to reducing the number of posterior draws used to 
@@ -50,23 +53,22 @@ setGeneric('id_post_pred',signature='object',
 #' output \code{'missing'} showing whether an observation was predicted as missing or not
 #' @param covar What kind of covariates to include as part of the prediction -- either
 #' "person" (the default) or "items" if you included predictors for item discriminations.
-#' @param newdata Optional: pass a data frame that must have all of the predictors that
-#' were given to the id_make function. Used to generate predictions from person or item
-#' covariates on to items.
 #' @param use_cores Number of cores to use for multicore parallel processing with
 #' the base R \code{parallel} package
+#' @param use_chain ID of MCMC chain to use rather than all chains (the default). 
 #' @param ... Any other arguments passed on to posterior_predict (currently none available)
 #' 
 #' @export
-setMethod('id_post_pred',signature(object='idealstan'),function(object,draws=100,
+setMethod('id_post_pred',signature(object='idealstan'),function(object,
+                                                                newdata=NULL,
+                                                                draws=100,
                                                                 output='observed',
                                                                 type='predict',
                                                                 covar="person",
                                                                 sample_scores=NULL,
                                                                 item_subset=NULL,
                                                                 use_cores=1,
-                                                                use_chain=NULL,
-                                                                newdata=NULL,...) {
+                                                                use_chain=NULL,...) {
   
   # need to regenerate data if newdata is not NULL
   

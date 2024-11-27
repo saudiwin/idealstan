@@ -6,6 +6,7 @@
 \usage{
 \S4method{id_post_pred}{idealstan}(
   object,
+  newdata = NULL,
   draws = 100,
   output = "observed",
   type = "predict",
@@ -14,12 +15,15 @@
   item_subset = NULL,
   use_cores = 1,
   use_chain = NULL,
-  newdata = NULL,
   ...
 )
 }
 \arguments{
 \item{object}{A fitted \code{idealstan} object}
+
+\item{newdata}{Optional: pass a data frame that must have all of the predictors that
+were given to the id_make function. Used to generate predictions from person or item
+covariates on to items.}
 
 \item{draws}{The number of draws to use from the total number of posterior draws (default is 100). Set to "all" to use all draws in the chains.
 For reproducibility, you can also pass a vector of specific draws to use.}
@@ -46,9 +50,7 @@ items. Should be item IDs that match the \code{item_id} column passed to the \co
 \item{use_cores}{Number of cores to use for multicore parallel processing with
 the base R \code{parallel} package}
 
-\item{newdata}{Optional: pass a data frame that must have all of the predictors that
-were given to the id_make function. Used to generate predictions from person or item
-covariates on to items.}
+\item{use_chain}{ID of MCMC chain to use rather than all chains (the default).}
 
 \item{...}{Any other arguments passed on to posterior_predict (currently none available)}
 }
