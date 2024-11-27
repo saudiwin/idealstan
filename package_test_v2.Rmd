@@ -804,7 +804,7 @@ id_plot_sims(ord_irt_lognormal_est)
 
 ord_irt_lognormal_est %>% 
   id_post_pred %>% 
-  id_plot_ppc(ord_irt_lognormal_abs_est,ppc_pred=.) + 
+  id_plot_ppc(ord_irt_lognormal_est,ppc_pred=.) + 
   scale_x_log10()
 
 ```
