@@ -1,8 +1,4 @@
 .onLoad <- function(libname, pkgname) {
-  # check for cmdstanR installation
-  if (!requireNamespace("cmdstanr")) {
-    packageStartupMessage("Note: you have not installed cmdstanr. To do so, please go to https://mc-stan.org/cmdstanr/.")
-  } 
   
   # list of global variables to declare
   
@@ -49,3 +45,13 @@
   utils::globalVariables(variable_list)
   
 }
+
+.onAttach <- function(libname, pkgname) {
+  
+  # check for cmdstanR installation
+  if (!requireNamespace("cmdstanr")) {
+    packageStartupMessage("Note: you have not installed cmdstanr. To do so, please go to https://mc-stan.org/cmdstanr/.")
+  } 
+  
+}
+
