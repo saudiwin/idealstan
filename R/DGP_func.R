@@ -670,12 +670,12 @@
       over_iters <- sapply(1:ncol(pr_vote), function(c) {
         outdens <- ifelse(is.na(outcomel), 
                           dbinom(1,size = 1,prob=pr_absence[,c],log=T),
-                          dlnorm(outcome,mean=qlogis(pr_vote[,c]),sd=sigma_sd[c],log=T))
+                          dlnorm(outcome,meanlog=qlogis(pr_vote[,c]),sdlog=sigma_sd[c],log=T))
       })
 
     } else {
       over_iters <- sapply(1:ncol(pr_vote), function(c) {
-        outdens <- dlnorm(outcome,mean=qlogis(pr_vote[,c]),sd=sigma_sd[c],log=T)})
+        outdens <- dlnorm(outcome,meanlog=qlogis(pr_vote[,c]),sdlog=sigma_sd[c],log=T)})
     }
     return(t(over_iters))
   }

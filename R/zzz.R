@@ -7,7 +7,7 @@
   # list of global variables to declare
   
   variable_list <- c(
-    ".chain", ".draw", ".iteration", "ar_sd", "ar1_down", "ar1_up", "basis",
+    ".chain",".", ".draw", ".iteration", "ar_sd", "ar1_down", "ar1_up", "basis",
     "boundary_prior", "const_type", "cont", "debug_mode", "diff_miss_sd", "diff_reg_sd",
     "discrete", "discrim_miss_lb", "discrim_miss_scale", "discrim_miss_shape",
     "discrim_miss_upb", "discrim_reg_lb", "discrim_reg_scale", "discrim_reg_shape",

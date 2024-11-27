@@ -109,6 +109,7 @@
 #' @export
 #' @import dplyr
 #' @importFrom tidyr gather spread
+#' @importFrom forcats fct_relevel
 #' @import bayesplot
 #' @import methods
 #' @importFrom stats dbinom median plogis quantile reorder rexp rlnorm runif sd step rnorm
