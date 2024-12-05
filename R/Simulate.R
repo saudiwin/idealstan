@@ -50,7 +50,8 @@
 #' 'gaussian' is supported.
 #' @param ordinal_outcomes If \code{model} is \code{'ordinal'}, an integer giving the total number of categories
 #' @param inflate If \code{TRUE}, an missing-data-inflated dataset is produced.
-#' @param sigma_sd If a normal or log-normal distribution is being fitted, this parameter gives the standard 
+#' @param sigma_sd If a normal or log-normal distribution is being fitted, this parameter gives the standard
+#' @param phi The phi (dispersion) parameter for the ordered beta distribution
 #' deviation of the outcome (i.e. the square root of the variance).
 #' @return The results is a \code{idealdata} object that can be used in the 
 #' \code{\link{id_estimate}} function to run a model. It can also be used in the simulation
@@ -77,7 +78,8 @@ id_sim_gen <- function(num_person=20,num_items=50,
                           time_sd=.1,
                              ideal_pts_sd=3,prior_type='gaussian',ordinal_outcomes=3,
                         inflate=FALSE,
-                       sigma_sd=1) {
+                       sigma_sd=1,
+                       phi=1) {
   
   # Allow for different type of distributions for ideal points
 
@@ -276,7 +278,8 @@ id_sim_gen <- function(num_person=20,num_items=50,
                      `ordinal_grm`=.ordinal_grm,
                      `poisson`=.poisson,
                      normal=.normal,
-                     lognormal=.lognormal)
+                     lognormal=.lognormal,
+                     ordbeta=.ordbeta)
   
   if(is.null(run_func)) {
     stop("Please select one of the available options for model_type from the help file.")
@@ -293,7 +296,8 @@ id_sim_gen <- function(num_person=20,num_items=50,
            person_points=person_points,
            sigma_sd=sigma_sd,
            cov_effect=cov_effect,
-           person_x=person_x)
+           person_x=person_x,
+           phi=phi)
   
   outobj@simul_data <- list(num_person=num_person,
                                        num_items=num_items,
@@ -318,7 +322,8 @@ id_sim_gen <- function(num_person=20,num_items=50,
                             drift=drift,
                             ar_adj=ar_adj,
                             cov_effect=cov_effect,
-                            person_x=person_x)
+                            person_x=person_x,
+                            phi=1)
 
   outobj@person_data <- tibble(person.names=paste0('person_',1:nrow(outobj@score_matrix)),
                                                group='L')

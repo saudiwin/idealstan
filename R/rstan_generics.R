@@ -386,7 +386,9 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,
              `11`=.lognormal,
              `12`=.lognormal,
              `13`=.binary,
-             `14`=.binary)
+             `14`=.binary,
+             `15`=.ordbeta,
+             `16`=.ordbeta)
       
       over_models_obj <- lapply(m, function(item)  {
         
@@ -418,7 +420,7 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,
                                      pr_vote=item$pr_vote,
                                      N=length(person_points[this_obs]),
                                      ordinal_outcomes=1:unique(object@score_data@score_matrix$ordered_id[this_obs]),
-                                     inflate=item$model_id %in% c(2,4,6,8,10,12,14),
+                                     inflate=item$model_id %in% c(2,4,6,8,10,12,14,16),
                                      latent_space=item$model_id %in% c(13,14),
                                      time_points=time_points[this_obs],
                                      item_points=bill_points[this_obs],
@@ -468,12 +470,29 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,
           outcome <- Y_cont[this_obs]
           miss_val <- new_stan_data$stan_data$y_cont_miss
         }
+        
+        if(item$model_id %in% c(15,16)) {
+          
+          cutpoints <- object@stan_samples %>% 
+            gather_draws(ordbeta_cut[item_id,cut]) %>% 
+            filter(.chain %in% use_chain,
+                   .draw %in% these_draws)
+          
+          phi <- object@stan_samples$draws("phi")[,use_chain,] %>% as_draws_matrix()
+          phi <- phi[these_draws,]
+          
+        } else {
+          
+          cutpoints <- NULL
+          phi <- NULL
+          
+        }
       
       out_predict <- rep_func(pr_absence=item$pr_absence,
                               pr_vote=item$pr_vote,
                               N=length(person_points[this_obs]),
                               ordinal_outcomes=1:unique(object@score_data@score_matrix$ordered_id[this_obs]),
-                              inflate=item$model_id %in% c(2,4,6,8,10,12,14),
+                              inflate=item$model_id %in% c(2,4,6,8,10,12,14,16),
                               latent_space=item$model_id %in% c(13,14),
                               time_points=time_points[this_obs],
                               item_points=bill_points[this_obs],
@@ -482,7 +501,8 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,
                               miss_val=miss_val,
                               person_points=person_points[this_obs],
                               sigma_sd=as_draws_matrix(object@stan_samples$draws('extra_sd'))[these_draws,],
-                              cutpoints=NULL,
+                              phi=phi,
+                              cutpoints=cutpoints,
                               type=type,
                               output=output)
       
@@ -812,6 +832,10 @@ setMethod('id_plot_ppc',signature(object='idealstan'),function(object,
           
           
             y <- as.numeric(y==miss_val)
+            
+            # subtract away the minimum as the prediction is always at 0
+            
+            y <- y - min(y, na.rm=T)
           
           if(grouped) {
             
@@ -889,7 +913,7 @@ setMethod('id_plot_ppc',signature(object='idealstan'),function(object,
                 
                 
               }
-            } else if(attr(this_plot,'output')=='observed' && attr(this_plot,'output_type')!='continuous') {
+            } else if(attr(psub,'output')=='observed' && attr(psub,'output_type')!='continuous') {
               # only show observed data for yrep
               
               to_remove <- y==miss_val
@@ -906,29 +930,27 @@ setMethod('id_plot_ppc',signature(object='idealstan'),function(object,
               save_att$dim <- dim(psub)
               attributes(psub) <- save_att
               
-              if(attr(psub,'output_type')=='continuous') {
-                
-                #unbounded observed outcomes (i.e., continuous)
-                if(grouped) {
-                  out_plot <- bayesplot::ppc_violin_grouped(y=y,yrep=psub,
-                                                            group=group_var,
-                                                            ...)
-                } else {
-                  out_plot <- bayesplot::ppc_dens_overlay(y=y,yrep=psub,...)
-                }
-                
-              } else if(attr(psub,'output_type')=='discrete') {
-                
                 if(grouped) {
                   
-                  out_plot <- bayesplot::ppc_bars_grouped(y=as.numeric(factor(y)),yrep=psub,
+                  out_plot <- bayesplot::ppc_bars_grouped(y=y,yrep=psub,
                                                           group=group_var,...)
                   
                 } else {
-                  out_plot <- bayesplot::ppc_bars(y=as.numeric(factor(y)),yrep=psub,...)
+                  out_plot <- bayesplot::ppc_bars(y=y,yrep=psub,...)
                 }
-              }
               
+            } else if(attr(psub,'output')=='observed') {
+              
+              y <- as.numeric(y)
+              
+              #unbounded observed outcomes (i.e., continuous)
+              if(grouped) {
+                out_plot <- bayesplot::ppc_violin_grouped(y=y,yrep=psub,
+                                                          group=group_var,
+                                                          ...)
+              } else {
+                out_plot <- bayesplot::ppc_dens_overlay(y=y,yrep=psub,...)
+              }
               
             } else if(attr(psub,'output')=='missing') {
               
@@ -936,12 +958,12 @@ setMethod('id_plot_ppc',signature(object='idealstan'),function(object,
               
               if(grouped) {
                 
-                out_plot <- bayesplot::ppc_bars_grouped(y=as.numeric(factor(y)),yrep=psub,
+                out_plot <- bayesplot::ppc_bars_grouped(y=y,yrep=psub,
                                                         group=group_var,...)
                 
               } else {
                 
-                out_plot <- bayesplot::ppc_bars(y=as.numeric(factor(y)),yrep=psub,...)
+                out_plot <- bayesplot::ppc_bars(y=y,yrep=psub,...)
                 
               }
             }

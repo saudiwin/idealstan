@@ -876,6 +876,123 @@ ord_irt_lognormal_abs_est %>%
 
 ```
 
+
+## Ordered Beta: Uninflated
+
+```{r ordbeta}
+ordbeta_sim <- id_sim_gen(num_person=20,num_items=100,ordinal=F,inflate=F,
+                               absence_diff_mean=0,model_type='ordbeta',
+                          phi=1)
+ordbeta_est <- id_estimate(idealdata=ordbeta_sim,
+                               model_type=15,
+                               restrict_ind_high = as.character(sort(ordbeta_sim@simul_data$true_person,
+                                                                     decreasing=T,
+                                                        index=T)$ix[1]),
+                              restrict_ind_low = as.character(sort(ordbeta_sim@simul_data$true_person,
+                                                                   decreasing=F,
+                                                        index=T)$ix[1]),
+                              fix_high = sort(ordbeta_sim@simul_data$true_person,
+                                                                     decreasing=T)[1],fix_low = sort(ordbeta_sim@simul_data$true_person,
+                                                                     decreasing=F)[1],nchains = 2,ncores=8,
+                               fixtype='prefix')
+id_plot_rhats(ordbeta_est)
+```
+
+```{r ordbeta_plot}
+id_plot_legis(ordbeta_est,show_true = T)
+```
+
+
+```{r ordbeta_cov_plot}
+id_sim_coverage(ordbeta_est) %>% 
+  bind_rows(.id='Parameter') %>% 
+  ggplot(aes(y=avg,x=Parameter)) +
+  stat_summary(fun.args=list(mult=1.96)) + 
+  theme_minimal() 
+```
+
+```{r ordbeta_resid}
+
+id_plot_sims(ordbeta_est,type='Residuals')
+
+```
+
+```{r ordbeta_RMSE}
+
+id_plot_sims(ordbeta_est)
+
+```
+
+```{r ordbeta_pred}
+
+ordbeta_est %>% 
+  id_post_pred %>% 
+  id_plot_ppc(ordbeta_est,ppc_pred=.)
+
+```
+
+## Ordered Beta: Inflated
+
+```{r ordbeta_abs}
+ordbeta_abs_sim <- id_sim_gen(num_person=20,num_items=100,ordinal=F,inflate=T,
+                               absence_diff_mean=0,model_type='ordbeta')
+ordbeta_abs_est <- id_estimate(idealdata=ordbeta_abs_sim,
+                               model_type=16,
+                               restrict_ind_high = as.character(sort(ordbeta_abs_sim@simul_data$true_person,
+                                                                     decreasing=T,
+                                                        index=T)$ix[1]),
+                              restrict_ind_low = as.character(sort(ordbeta_abs_sim@simul_data$true_person,
+                                                                   decreasing=F,
+                                                        index=T)$ix[1]),fix_high = sort(ordbeta_abs_sim@simul_data$true_person,
+                                                                     decreasing=T)[1],fix_low = sort(ordbeta_abs_sim@simul_data$true_person,
+                                                                     decreasing=F)[1],nchains = 2,ncores=8,
+                              
+                               fixtype='prefix')
+id_plot_rhats(ordbeta_abs_est)
+```
+
+```{r ordbeta_abs_plot}
+id_plot_legis(ordbeta_abs_est,show_true = T)
+```
+
+```{r ordbeta_abs_cov_plot}
+id_sim_coverage(ordbeta_abs_est) %>% 
+  bind_rows(.id='Parameter') %>% 
+  ggplot(aes(y=avg,x=Parameter)) +
+  stat_summary(fun.args=list(mult=1.96)) + 
+  theme_minimal() 
+```
+
+```{r ordbeta_abs_resid}
+
+id_plot_sims(ordbeta_abs_est,type='Residuals')
+
+```
+
+```{r ordbeta_abs_RMSE}
+
+id_plot_sims(ordbeta_abs_est)
+
+```
+
+```{r ordbeta_abs_pred}
+
+ordbeta_abs_est %>% 
+  id_post_pred %>% 
+  id_plot_ppc(ordbeta_abs_est,ppc_pred=.)
+
+```
+
+```{r ordbeta_miss_pred}
+
+ordbeta_abs_est %>% 
+  id_post_pred(output='missing') %>% 
+  id_plot_ppc(ordbeta_abs_est,ppc_pred=.,combine_item=FALSE)
+
+```
+
+
+
 ## Time: Random Walk
 
 We won't test all the possible time auto-correlation settings, only a subset of them. I use an inflated binary model as it is a very common one. 

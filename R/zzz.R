@@ -40,7 +40,7 @@
       '5%',
       '95%',
       ":=",
-      'item_type')
+      'item_type',"item_id","cut",".chain",".draw","these_draws","use_chain",".value")
   
   utils::globalVariables(variable_list)
   

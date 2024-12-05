@@ -28,7 +28,8 @@ id_sim_gen(
   prior_type = "gaussian",
   ordinal_outcomes = 3,
   inflate = FALSE,
-  sigma_sd = 1
+  sigma_sd = 1,
+  phi = 1
 )
 }
 \arguments{
@@ -99,7 +100,9 @@ ideal point parameters (alpha) and difficulty intercepts (beta and omega). Curre
 
 \item{inflate}{If \code{TRUE}, an missing-data-inflated dataset is produced.}
 
-\item{sigma_sd}{If a normal or log-normal distribution is being fitted, this parameter gives the standard 
+\item{sigma_sd}{If a normal or log-normal distribution is being fitted, this parameter gives the standard}
+
+\item{phi}{The phi (dispersion) parameter for the ordered beta distribution
 deviation of the outcome (i.e. the square root of the variance).}
 }
 \value{

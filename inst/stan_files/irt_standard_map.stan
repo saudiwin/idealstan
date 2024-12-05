@@ -43,6 +43,7 @@ int r_in(int pos,array[] int pos_var) {
 #include /chunks/id_params.stan
 #include /chunks/id_params2.stan
 #include /chunks/map_func.stan
+#include /chunks/ordbeta.stan
 
 }
 
@@ -126,6 +127,11 @@ data {
   int num_var;
   array[num_bills] int type_het_var;
   int<lower=0,upper=1> debug_mode;
+  int<lower=0> num_ordbeta;
+  vector[num_ordbeta] phi_mean;
+  array[num_bills] int ordbeta_id;
+  array[num_ordbeta] vector[3] ordbeta_cut_alpha;
+  vector[num_ordbeta] ordbeta_cut_phi;
 }
 
 transformed data {
@@ -249,7 +255,7 @@ parameters {
   vector[SAX] sigma_abs_x;
   vector[num_bills] B_int_free;
   vector[num_bills] A_int_free;
-  ordered[n_cats_rat[1]-1] steps_votes3;
+  ordered[n_cats_rat[1]-1] steps_votes3; 
   ordered[n_cats_rat[2]-1] steps_votes4;
   ordered[n_cats_rat[3]-1] steps_votes5;
   ordered[n_cats_rat[4]-1] steps_votes6;
@@ -265,6 +271,8 @@ parameters {
   array[num_bills] ordered[n_cats_grm[6]-1] steps_votes_grm8;
   array[num_bills] ordered[n_cats_grm[7]-1] steps_votes_grm9;
   array[num_bills] ordered[n_cats_grm[8]-1] steps_votes_grm10;
+  array[num_ordbeta] ordered[num_ordbeta>0 ? 2 : 0] ordbeta_cut; // need this for ordbetareg
+  vector<lower=0>[num_ordbeta] phi;
   vector<lower=0>[num_var] extra_sd;
   vector<lower=0>[gp_N] time_var_gp_free;
   vector<lower=0>[(T>1 && time_proc!=4 && restrict_var==1) ? num_legis-1 : (T>1 && time_proc!=4 ? num_legis : 0)] time_var_free;
@@ -732,7 +740,10 @@ if(S_type==1 && const_type==1) {
         prior_only,
         restrict_N_high,
         restrict_N_low,
-        debug_mode);
+        debug_mode,
+        ordbeta_id,
+        phi,
+        ordbeta_cut);
 
 }
 generated quantities {

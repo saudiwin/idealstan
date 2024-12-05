@@ -102,7 +102,10 @@ real partial_sum(array[,] int y_slice,
                  int prior_only,
                  real restrict_N_high,
                  real restrict_N_low,
-                 int debug_mode) {
+                 int debug_mode,
+                 array[] int ordbeta_id,
+                 vector phi,
+                 array[] vector ordbeta_cut) {
   
   // big loop over states
   real log_prob = 0;

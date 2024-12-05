@@ -1,5 +1,13 @@
 // need separate calculation of priors for each type of ordinal outcome
 
+if(num_ordbeta>0) {
+  
+  phi ~ exponential(phi_mean);
+  for(i in 1:num_ordbeta) 
+      target += induced_dirichlet_lpdf(ordbeta_cut[i]|ordbeta_cut_alpha[i],
+                                      ordbeta_cut_phi[i]); 
+}
+
 if(n_cats_rat[1]>1) {
 
     vector[n_cats_rat[1]-1] spacing;

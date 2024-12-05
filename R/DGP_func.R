@@ -72,7 +72,7 @@
                            item_id=item_points,
                            group_id='G')
     
-        if(!is.null(cov_effect)) {
+        if(!is.null(cov_effect) && cov_effect!=0) {
       
       cov_data <- distinct(out_data,person_id,time_id) %>% 
         arrange(person_id, time_id) %>% 
@@ -120,6 +120,165 @@
                    
 }
 
+#' @importFrom ordbetareg rordbeta dordbeta
+.ordbeta <- function(pr_absence=NULL,
+                                 pr_vote=NULL,
+                                 N=NULL,
+                                 inflate=NULL,
+                                 person_points=NULL,
+                                 item_points=NULL,
+                                 time_points=NULL,
+                                 cutpoints=NULL,
+                                 ordinal_outcomes=NULL,
+                                 type='simulate',
+                                output=NULL,
+                                 y=NULL,
+                                 phi=NULL,
+                                 outcome=NULL,
+                                 cov_effect=NULL,
+                                 person_x=NULL,
+                                 miss_val=NULL,
+                                 ...)
+{
+  
+  if(!inflate) {
+    pr_boost <- 1
+  } else {
+    pr_boost <- 0
+  }
+  
+  if(type=='simulate') {
+    
+    cutpoints <- quantile(pr_vote,probs=seq(0,1,length.out = 3))
+    cutpoints <- cutpoints[c(1,3)]
+    
+  } else if(type=='predict') {
+    # over posterior draws
+    
+    cutpoints <- filter(cutpoints, item_id==item_points[1]) %>% 
+      ungroup %>% 
+      spread(key="cut",value=".value") %>% 
+      select(`1`,`2`) %>% 
+      as.matrix
+    # 
+    # cuts_iters <- sapply(1:nrow(cutpoints), function(i) {
+    #   cuts <- sapply(1:ncol(cutpoints),function(y) {
+    #     qlogis(pr_vote[i,]) - cutpoints[i,y]
+    #   })
+    # },simplify='array')
+    
+  } else if(type=='log_lik') {
+    if(inflate) {
+      n_outcomes <- length(unique(outcome)) - 1
+    } else {
+      n_outcomes <- length(unique(outcome))
+    }
+    # over posterior draws
+    cuts_iters <- sapply(1:nrow(cutpoints), function(i) {
+      cuts <- sapply(1:ncol(cutpoints),function(y) {
+        qlogis(pr_vote[i,]) - c(cutpoints[i,y])
+      })
+    },simplify='array')
+    
+  }
+  
+  # Now we pick votes as a function of the number of categories
+  # This code should work for any number of categories
+  
+  if(type=='simulate') {
+    
+    votes <- rordbeta(n=length(pr_vote),
+                      mu=pr_vote,
+                      phi=phi,
+                      cutpoints=qlogis(cutpoints))
+    
+    combined <- ifelse(pr_absence<(runif(N)+pr_boost),votes,NA)
+    
+    # Create a score dataset
+    
+    out_data <- data_frame(outcome_cont=combined,
+                           person_id=person_points,
+                           time_id=time_points,
+                           item_id=item_points,
+                           group_id='G')
+    
+    if(!is.null(cov_effect) && cov_effect!=0) {
+      
+      cov_data <- distinct(out_data,person_id,time_id) %>% 
+        arrange(person_id, time_id) %>% 
+        mutate(person_x=person_x)
+      
+      out_data <- left_join(out_data,
+                            cov_data,by=c("person_id","time_id"))
+      
+      out_data <- id_make(score_data=out_data,person_cov = ~ person_x)
+      
+    } else {
+      
+      out_data <- id_make(score_data=out_data)
+      
+    }
+    
+    return(out_data) 
+    
+  } else if(type=='predict') {
+    
+    if(output=='observed') {
+      
+      combined <- sapply(1:nrow(pr_vote), function(i) {
+        
+        rordbeta(n=ncol(pr_vote),mu=pr_vote[i,],phi=phi[i],
+                 cutpoints=cutpoints[i,])
+        
+              })
+      
+      combined <- t(combined)
+      
+      attr(combined,'output') <- 'observed'
+      attr(combined,'output_type') <- 'continuous'
+    } else if(output=='missing') {
+      
+      combined <- apply(pr_absence, 2,function(c) as.numeric(c>runif(N)))
+      
+      attr(combined,'output') <- 'missing'
+      attr(combined,'output_type') <- 'discrete'
+    }
+    
+    return(combined)
+    
+  } else if(type=='log_lik') {
+    
+    out_num <- as.numeric(outcome)
+    
+    over_iters <- sapply(1:ncol(pr_vote), function(d) {
+        
+        dordbeta(x=out_num,
+                 mu=pr_vote[,d],
+                 phi=phi[d],
+                 cutpoints=cuts_iters[,d])
+
+    },simplify='array')
+    
+    if(inflate) {
+      # remove top category for vote prediction
+      out_num[out_num==max(out_num)] <- max(out_num) - 1
+      over_iters <- sapply(1:ncol(pr_vote), function(c) {
+        outdens <- ifelse(is.na(outcome), 
+                          dbinom(1,size = 1,prob=pr_absence[,c],log=T),
+                          log(over_iters[out_num,,c]))
+      })
+    } else {
+      over_iters <- sapply(1:ncol(pr_vote), function(c) {
+        outdens <- log(over_iters[out_num,,c])
+      })
+    }
+    
+    attr(outdens,'output') <- 'all'
+    return(t(outdens))
+  }
+  
+}
+
 .ordinal_ratingscale <- function(pr_absence=NULL,
                     pr_vote=NULL,
                     N=NULL,
@@ -155,7 +314,7 @@
     #Generate outcomes by personlator
     
     cuts <- sapply(cutpoints,function(y) {
-      qlogis(pr_vote) - y
+      qlogis(pr_vote) - qlogis(y)
     },simplify='array')
   } else if(type=='predict') {
     # over posterior draws
@@ -209,7 +368,7 @@
                            ordered_id=ordinal_outcomes,
                            group_id='G')
     
-    if(!is.null(cov_effect)) {
+    if(!is.null(cov_effect) && cov_effect!=0) {
       
       cov_data <- distinct(out_data,person_id,time_id) %>% 
         arrange(person_id, time_id) %>% 
@@ -328,7 +487,7 @@
     #Generate outcomes by person and item
     
     cuts <- sapply(1:(ordinal_outcomes-1),function(y) {
-      qlogis(pr_vote) - all_cuts[y,]
+      qlogis(pr_vote) - qlogis(all_cuts[y,])
     },simplify='array')
   } else {
     # over posterior draws
@@ -369,7 +528,7 @@
                            item_id=item_points,
                            group_id='G')
     
-    if(!is.null(cov_effect)) {
+    if(!is.null(cov_effect) && cov_effect!=0) {
       
       cov_data <- distinct(out_data,person_id,time_id) %>% 
         arrange(person_id, time_id) %>% 
@@ -507,7 +666,7 @@
                            item_id=item_points,
                            group_id='G')
     
-    if(!is.null(cov_effect)) {
+    if(!is.null(cov_effect) && cov_effect!=0) {
       
       cov_data <- distinct(out_data,person_id,time_id) %>% 
         arrange(person_id, time_id) %>% 
@@ -606,7 +765,7 @@
                            item_id=item_points,
                            group_id='G')
     
-    if(!is.null(cov_effect)) {
+    if(!is.null(cov_effect) && cov_effect!=0) {
       
       cov_data <- distinct(out_data,person_id,time_id) %>% 
         arrange(person_id, time_id) %>% 
@@ -615,13 +774,11 @@
       out_data <- left_join(out_data,
                             cov_data,by=c("person_id","time_id"))
       
-      out_data <- id_make(score_data=out_data,person_cov = ~ person_x,
-                          unbounded=T)
+      out_data <- id_make(score_data=out_data,person_cov = ~ person_x)
       
     } else {
       
-      out_data <- id_make(score_data=out_data,
-                          unbounded=T)
+      out_data <- id_make(score_data=out_data)
       
     }
     
@@ -701,7 +858,7 @@
                            item_id=item_points,
                            group_id='G')
     
-    if(!is.null(cov_effect)) {
+    if(!is.null(cov_effect) && cov_effect!=0) {
       
       cov_data <- distinct(out_data,person_id,time_id) %>% 
         arrange(person_id, time_id) %>% 

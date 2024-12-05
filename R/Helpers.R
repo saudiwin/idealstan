@@ -217,10 +217,10 @@
     stop('The parameter gp_min_length cannot be equal to or greater than gp_num_diff[1].')
   }
   
-  if((any(c(9,10,11,12) %in% idealdata@score_matrix$model_id)) && (any(c(1,2,3,4,5,6,7,8,13,14) %in% idealdata@score_matrix$model_id))) {
+  if((any(c(9,10,11,12,15,16) %in% idealdata@score_matrix$model_id)) && (any(c(1,2,3,4,5,6,7,8,13,14) %in% idealdata@score_matrix$model_id))) {
     Y_int <- idealdata@score_matrix$outcome_disc
     Y_cont <- idealdata@score_matrix$outcome_cont
-  } else if (any(c(9,10,11,12) %in% idealdata@score_matrix$model_id)) {
+  } else if (any(c(9,10,11,12,15,16) %in% idealdata@score_matrix$model_id)) {
     Y_int <- array(0)
     Y_cont <- idealdata@score_matrix$outcome_cont
   } else {
@@ -281,27 +281,34 @@
   
   S <- nrow(sum_vals)
   
-  # check for heterogenous variances
+  # create IDs for auxiliary parameters (normal/lognormal/ordbeta)
   
   if(het_var) {
     
+    # for normal/lognormal (the sigma parameter is essentially identical)
+    
     num_var <- length(unique(remove_list$billpoints[remove_list$modelpoints %in% c(9,10,11,12)]))
+    
+    # for ordbeta
+    
+    num_ordbeta <- length(unique(remove_list$billpoints[remove_list$modelpoints %in% c(15,16)]))
     
     mod_items <- tibble(model_id=remove_list$modelpoints,
                         item_id=remove_list$billpoints) %>% 
       distinct
     
-    mod_items <- mutate(mod_items,cont=model_id %in% c(9,10,11,12)) %>% 
-      group_by(cont) %>% 
+    mod_items_sigma <- mutate(mod_items,normal_mods=model_id %in% c(9,10,11,12)) %>% 
+      group_by(normal_mods) %>% 
       mutate(num_var=1:n())
     
-    type_het_var <- arrange(mod_items, item_id) %>% pull(num_var)
+    mod_items_phi <- mutate(mod_items,ordbeta_mods=model_id %in% c(15,16)) %>% 
+      group_by(ordbeta_mods) %>% 
+      mutate(ordbeta_id=1:n())
     
-  } else {
+    type_het_var <- arrange(mod_items_sigma, item_id) %>% pull(num_var)
     
-    num_var <- 1
+    ordbeta_id <- arrange(mod_items_phi, item_id) %>% pull(ordbeta_id)
     
-    type_het_var <- rep(num_var, length(unique(billpoints)))
     
   }
   
@@ -466,7 +473,13 @@
   num_diff=gp_num_diff,
   pos_discrim=as.integer(sign(discrim_reg_upb)==sign(discrim_reg_lb)),
   grainsize=grainsize,
-  prior_only=as.integer(prior_only))
+  prior_only=as.integer(prior_only),
+  num_ordbeta=num_ordbeta,
+  ordbeta_id=ordbeta_id,
+  phi_mean=rep(ordbeta_phi_mean, times=num_ordbeta),
+  ordbeta_cut_phi=rep(ordbeta_cut_phi,times=num_ordbeta),
+  ordbeta_cut_alpha=matrix(rep(ordbeta_cut_alpha,times=num_ordbeta),nrow=num_ordbeta,
+                           ncol=3,byrow=T))
   
   idealdata <- id_model(object=idealdata,fixtype=fixtype,this_data=this_data,
                         restrict_ind_high=restrict_ind_high,
@@ -549,23 +562,30 @@
   
   if(het_var) {
     
+    # for normal/lognormal (the sigma parameter is essentially identical)
+    
     num_var <- length(unique(remove_list$billpoints[remove_list$modelpoints %in% c(9,10,11,12)]))
     
-    mod_items <- tibble(model_id=this_data$mm,
-                        item_id=this_data$bb) %>% 
+    # for ordbeta
+    
+    num_ordbeta <- length(unique(remove_list$billpoints[remove_list$modelpoints %in% c(15,16)]))
+    
+    mod_items <- tibble(model_id=remove_list$modelpoints,
+                        item_id=remove_list$billpoints) %>% 
       distinct
     
-    mod_items <- mutate(mod_items,cont=model_id %in% c(9,10,11,12)) %>% 
-      group_by(cont) %>% 
+    mod_items_sigma <- mutate(mod_items,normal_mods=model_id %in% c(9,10,11,12)) %>% 
+      group_by(normal_mods) %>% 
       mutate(num_var=1:n())
     
-    type_het_var <- arrange(mod_items, item_id) %>% pull(num_var)
+    mod_items_phi <- mutate(mod_items,ordbeta_mods=model_id %in% c(15,16)) %>% 
+      group_by(ordbeta_mods) %>% 
+      mutate(ordbeta_id=1:n())
     
-  } else {
+    type_het_var <- arrange(mod_items_sigma, item_id) %>% pull(num_var)
     
-    num_var <- 1
+    ordbeta_id <- arrange(mod_items_phi, item_id) %>% pull(ordbeta_id)
     
-    type_het_var <- rep(num_var, length(unique(billpoints)))
     
   }
   
@@ -677,7 +697,13 @@
                     num_diff=gp_num_diff,
                     pos_discrim=as.integer(sign(discrim_reg_upb)==sign(discrim_reg_lb)),
                     grainsize=grainsize,
-                    prior_only=as.integer(prior_only))
+                    prior_only=as.integer(prior_only),
+                    num_ordbeta=num_ordbeta,
+                    ordbeta_id=ordbeta_id,
+                    phi_mean=rep(ordbeta_phi_mean, times=num_ordbeta),
+                    ordbeta_cut_phi=rep(ordbeta_cut_phi,times=num_ordbeta),
+                    ordbeta_cut_alpha=matrix(rep(ordbeta_cut_alpha,times=num_ordbeta),nrow=num_ordbeta,
+                                             ncol=3,byrow=T))
   
   
   return(list(stan_data=this_data,
@@ -850,7 +876,7 @@ process_init_list <- function(init, num_procs, model_variables = NULL,
 #'   for a subset of parameters? Can be controlled by global option
 #'   `cmdstanr_warn_inits`.
 #' @return A character vector of file paths.
-#' @importFrom posterior as_draws_df subset_draws draws_of
+#' @importFrom posterior as_draws_df subset_draws draws_of variables
 process_init_draws <- function(init, num_procs, model_variables = NULL,
                                warn_partial = FALSE,
                                ...) {
@@ -1335,7 +1361,8 @@ process_init_pathfinder <- function(init, num_procs, model_variables = NULL,
                                       n_cats_grm, num_var, gp_N, restrict_var, 
                                       num_basis,restrict_ind_high,
                                       restrict_ind_low,
-                                      const_type) {
+                                      const_type,
+                                      num_ordbeta) {
    out_list <-  list(
       sigma_abs_free = rep(0L,num_bills),
       #L_full = rep(0L,num_legis),
@@ -1371,7 +1398,9 @@ process_init_pathfinder <- function(init, num_procs, model_variables = NULL,
       extra_sd = runif(num_var, 0.5, 1),
       time_var_gp_free = runif(gp_N, 0.5, 1),
       time_var_free = if (T > 1 && time_proc != 4 && restrict_var == 1) runif(num_legis - 1, 0.5, 1) else if (T > 1 && time_proc != 4) runif(num_legis, 0.5, 1) else numeric(0),
-      a_raw = if (num_basis > 1) array(rep(0L, num_legis * num_basis), dim = c(num_legis, num_basis)) else array(numeric(0), dim = c(num_legis, 0L))
+      a_raw = if (num_basis > 1) array(rep(0L, num_legis * num_basis), dim = c(num_legis, num_basis)) else array(numeric(0), dim = c(num_legis, 0L)),
+      ordbeta_cut = if(num_ordbeta>0) matrix(rep(c(-1,1),times=num_ordbeta),ncol=2,nrow=num_ordbeta,byrow=T) else array(numeric(0),dim=c(num_ordbeta,3L)),
+      phi = if(num_ordbeta>0) rep(0.25, num_ordbeta) else numeric(0)
     )
    
    # add in informative numbers for fixed parameters
@@ -1435,7 +1464,8 @@ process_init_pathfinder <- function(init, num_procs, model_variables = NULL,
                                          this_data$num_basis,
                                          this_data$restrict_high,
                                          this_data$restrict_low,
-                                         this_data$const_type)
+                                         this_data$const_type,
+                                         this_data$num_ordbeta)
   
   return(base_params)
   
@@ -2728,12 +2758,12 @@ return(as.vector(idx))
   
   # figure out if there are any missing values
   
-  some_missing_cont <- any(modelpoints %in% c(2,4,6,8,10,12,14)) && any(as.numeric(idealdata@miss_val[2]) %in% Y_cont)
-  some_missing_disc <- any(modelpoints %in% c(2,4,6,8,10,12,14)) && any(idealdata@miss_val[1] %in% Y_int)
+  some_missing_cont <- any(modelpoints %in% c(2,4,6,8,10,12,14,16)) && any(as.numeric(idealdata@miss_val[2]) %in% Y_cont)
+  some_missing_disc <- any(modelpoints %in% c(2,4,6,8,10,12,14,16)) && any(idealdata@miss_val[1] %in% Y_int)
 
   if(length(Y_cont)>1 && !is.na(idealdata@miss_val[2])) {
 
-      Y_cont <- ifelse(modelpoints %in% c(10,12),
+      Y_cont <- ifelse(modelpoints %in% c(10,12,16),
                        Y_cont,
                        .na_if(Y_cont,as.numeric(idealdata@miss_val[2])))
       

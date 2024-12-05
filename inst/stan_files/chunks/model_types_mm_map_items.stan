@@ -719,6 +719,47 @@ if(T==1) {
           A_int_free[s]);
         }
       }
+    } else if(mm[n]==15) {
+      //ordered beta no inflation
+      
+      if(T==1) {
+        log_prob += ordbeta_lpdf(Y_cont[n]|(sigma_reg_full[s] + sigma_reg_calc[n - start2 + 1]) *  (L_full[ll[n]] + legis_calc[n - start2 + 1]) - B_int_free[s],
+                    phi[ordbeta_id[s]],
+                    ordbeta_cut[ordbeta_id[s]]);
+      } else {
+        log_prob += ordbeta_lpdf(Y_cont[n]|(sigma_reg_full[s] + sigma_reg_calc[n - start2 + 1]) *  (L_tp1[time[n],ll[n]] + legis_calc[n - start2 + 1]) - B_int_free[s],
+                    phi[ordbeta_id[s]],
+                    ordbeta_cut[ordbeta_id[s]]);
+      }
+    } else if(mm[n]==16) {
+      //ordered beta with inflation
+      if(Y_cont[n]<y_cont_miss) {
+        // observed data 
+        if(T==1) {
+          log_prob += ordbeta_lpdf(Y_cont[n]|(sigma_reg_full[s] + sigma_reg_calc[n - start2 + 1]) *  (L_full[ll[n]] + legis_calc[n - start2 + 1]) - B_int_free[s],
+                    phi[ordbeta_id[s]],
+                    ordbeta_cut[ordbeta_id[s]]);
+          log_prob += bernoulli_logit_lpmf(0|(sigma_abs_free[s] + sigma_abs_calc[n - start2 + 1]) * (L_full[ll[n]] + legis_calc[n - start2 + 1]) - 
+          A_int_free[s]);
+        } else {
+          log_prob += ordbeta_lpdf(Y_cont[n]|(sigma_reg_full[s] + sigma_reg_calc[n - start2 + 1]) *  (L_tp1[time[n],ll[n]] + legis_calc[n - start2 + 1]) - B_int_free[s],
+                    phi[ordbeta_id[s]],
+                    ordbeta_cut[ordbeta_id[s]]);
+          log_prob += bernoulli_logit_lpmf(0|(sigma_abs_free[s] + sigma_abs_calc[n - start2 + 1]) * (L_tp1[time[n],ll[n]] + legis_calc[n - start2 + 1]) - 
+          A_int_free[s]);
+        }
+        
+      } else {
+        //missing data
+        if(T==1) {
+          log_prob += bernoulli_logit_lpmf(1|(sigma_abs_free[s] + sigma_abs_calc[n - start2 + 1]) * (L_full[ll[n]] + legis_calc[n - start2 + 1]) - 
+          A_int_free[s]);
+        } else {
+          log_prob += bernoulli_logit_lpmf(1|(sigma_abs_free[s] + sigma_abs_calc[n - start2 + 1]) * (L_tp1[time[n],ll[n]] + legis_calc[n - start2 + 1]) - 
+          A_int_free[s]);
+        }
+      }
+      
     }
     
   // if(r_in(mm[n],{9,10,11,12})==1  && het_var>1) {

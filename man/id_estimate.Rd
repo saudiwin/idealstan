@@ -60,6 +60,9 @@ id_estimate(
   restrict_sd_low = NULL,
   restrict_N_high = 1000,
   restrict_N_low = 1000,
+  ordbeta_phi_mean = 1,
+  ordbeta_cut_alpha = c(1, 1, 1),
+  ordbeta_cut_phi = 0,
   gp_sd_par = 0.025,
   gp_num_diff = 3,
   gp_m_sd_par = 0.3,
@@ -67,7 +70,6 @@ id_estimate(
   cmdstan_path_user = NULL,
   map_over_id = "persons",
   save_files = NULL,
-  het_var = TRUE,
   compile_optim = FALSE,
   debug = FALSE,
   init_pathfinder = TRUE,
@@ -317,6 +319,16 @@ stronger (for example if there is a lot of data).}
 (equivalent to 1,000 observations of the pinned value). Higher values make the pin stronger
 (for example if there is a lot of data).}
 
+\item{ordbeta_phi_mean}{The mean of the prior for phi, the dispersion parameter in the
+ordered beta distribution. Value of this parameter (default is 1) is given as the 
+mean of the exponential distribution for prior values of phi.}
+
+\item{ordbeta_cut_alpha}{A length 2 vector of positive continuous values for alpha 
+in the induced dirichlet distribution. This distribution is used for the cutpoints
+of the ordered beta distribution. Default is c(1,1), which is uninformative.}
+
+\item{ordbeta_cut_phi}{A value for the phi paremeter of the induced dirichlet distribution used for ordered beta cutpoint priors. Default is 0, which is weakly informative.}
+
 \item{gp_sd_par}{The upper limit on allowed residual variation of the Gaussian process
 prior. Increasing the limit will permit the GP to more closely follow the time points, 
 resulting in much sharper bends in the function and potentially oscillation.}
@@ -344,10 +356,6 @@ distinct values to improve parallelization.}
 
 \item{save_files}{The location to save CSV files with MCMC draws from \code{cmdstanr}. 
 The default is \code{NULL}, which will use a folder in the package directory.}
-
-\item{het_var}{Whether to use a separate variance parameter for each item if using
-Normal or Log-Normal distributions that have variance parameters. Defaults to TRUE and
-should be set to FALSE only if all items have a similar variance.}
 
 \item{compile_optim}{Whether to use Stan compile optimization flags (off by default)}
 
