@@ -1250,7 +1250,7 @@ latent_noninfl_est <- id_estimate(idealdata=latent_noninfl_sim,
                               restrict_ind_low = as.character(sort(latent_noninfl_sim@simul_data$true_person,
                                                                    decreasing=F,
                                                         index=T)$ix[1]),
-                               fixtype='prefix',id_refresh=100,warmup=250,niters=250,nchains=2,ncores=2)
+                               fixtype='prefix',id_refresh=100,warmup=500,niters=500,nchains=2,ncores=8)
 id_plot_rhats(latent_noninfl_est)
 ```
 

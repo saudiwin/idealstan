@@ -271,7 +271,7 @@ parameters {
   array[num_bills] ordered[n_cats_grm[6]-1] steps_votes_grm8;
   array[num_bills] ordered[n_cats_grm[7]-1] steps_votes_grm9;
   array[num_bills] ordered[n_cats_grm[8]-1] steps_votes_grm10;
-  array[num_ordbeta] ordered[num_ordbeta>0 ? 2 : 0] ordbeta_cut; // need this for ordbetareg
+  array[num_ordbeta > 0 ? num_ordbeta : 1] ordered[num_ordbeta > 0 ? 2 : 0] ordbeta_cut; // need this for ordbetareg
   vector<lower=0>[num_ordbeta] phi;
   vector<lower=0>[num_var] extra_sd;
   vector<lower=0>[gp_N] time_var_gp_free;
