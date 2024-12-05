@@ -231,12 +231,22 @@ id_sim_gen <- function(num_person=20,num_items=50,
   time_points <- time_points[item_points]
   
   if(latent_space) {
+    
+    # give the person intercepts the same SD as the person ideal points
+    # although not time-varying, time constant
+    
+    ls_int_abs <- prior_func(params=list(N=num_person,mean=0,sd=ideal_pts_sd))
+    
     # use latent-space formulation for likelihood
 
     pr_absence <- sapply(1:length(person_points),function(n) {
-      -sqrt((ideal_pts[person_points[n],time_points[n]] - absence_diff[item_points[n]])^2)
+      ls_int_abs[person_points[n]] + absence_diff[item_points[n]] -
+      sqrt((ideal_pts[person_points[n],time_points[n]] - absence_discrim[item_points[n]])^2)
     }) %>% plogis()
   } else {
+    
+    ls_int_abs <- NULL
+    
     # use IRT formulation for likelihood
     pr_absence <- sapply(1:length(person_points),function(n) {
       ideal_pts[person_points[n],time_points[n]]*absence_discrim[item_points[n]] - absence_diff[item_points[n]]
@@ -251,20 +261,20 @@ id_sim_gen <- function(num_person=20,num_items=50,
   
   # this is the same for all DGPs
   if(latent_space) {
-    if(inflate) {
-      pr_vote <- sapply(1:length(person_points),function(n) {
-        -sqrt((ideal_pts[person_points[n],time_points[n]] - reg_diff[item_points[n]])^2)
-      }) %>% plogis()
-    } else {
-      # latent space non-inflated formulation is different
-      reg_discrim <- prior_func(params=list(N=num_person,mean=0,sd=ideal_pts_sd))
-      pr_vote <- sapply(1:length(person_points),function(n) {
-        reg_discrim[person_points[n]] + absence_discrim[item_points[n]] -
-          sqrt((ideal_pts[person_points[n],time_points[n]] - reg_diff[item_points[n]])^2)
-      }) %>% plogis()
-    }
     
+    # give the person intercepts the same SD as the person ideal points
+    # although not time-varying, time constant
+    
+    ls_int <- prior_func(params=list(N=num_person,mean=0,sd=ideal_pts_sd))
+    
+      pr_vote <- sapply(1:length(person_points),function(n) {
+        ls_int[person_points[n]] + reg_diff[item_points[n]] -
+          sqrt((ideal_pts[person_points[n],time_points[n]] - reg_discrim[item_points[n]])^2)
+      }) %>% plogis()
   } else {
+    
+    ls_int <- NULL
+    
     pr_vote <- sapply(1:length(person_points),function(n) {
       ideal_pts[person_points[n],time_points[n]]*reg_discrim[item_points[n]] - reg_diff[item_points[n]]
     }) %>% plogis()
@@ -323,6 +333,8 @@ id_sim_gen <- function(num_person=20,num_items=50,
                             ar_adj=ar_adj,
                             cov_effect=cov_effect,
                             person_x=person_x,
+                            ls_int=ls_int,
+                            ls_int_abs=ls_int_abs,
                             phi=1)
 
   outobj@person_data <- tibble(person.names=paste0('person_',1:nrow(outobj@score_matrix)),
