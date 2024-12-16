@@ -615,9 +615,6 @@ id_make <- function(score_data=NULL,
 #' @param inflate_zero If the outcome is distributed as Poisson (count/unbounded integer), 
 #' setting this to 
 #' \code{TRUE} will fit a traditional zero-inflated model. 
-#' To use correctly, the value for 
-#' zero must be passed as the \code{miss_val} option to \code{\link{id_make}} before
-#' running a model so that zeroes are coded as missing data.
 #' @param ignore_db If there are multiple time periods (particularly when there are 
 #' very many time periods), you can pass in a data frame
 #' (or tibble) with one row per person per time period and an indicator column 
