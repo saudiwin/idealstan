@@ -21,7 +21,7 @@ id_plot_legis(
   person_ci_alpha = 0.2,
   show_true = FALSE,
   group_color = TRUE,
-  hpd_limit = 10,
+  hpd_limit = NULL,
   sample_persons = NULL,
   ...
 )
@@ -63,7 +63,7 @@ specified in \code{item_plot}.}
 
 \item{group_color}{If \code{TRUE}, give each group/bloc a different color}
 
-\item{hpd_limit}{The greatest absolute difference in high-posterior density interval shown for any point. Useful for excluding imprecisely estimated persons/legislators from the plot. Leave NULL if you don't want to exclude any.}
+\item{hpd_limit}{The greatest absolute difference in high-posterior density interval shown for any point. Useful for excluding imprecisely estimated persons/legislators from the plot. Default is NULL if you don't want to exclude any.}
 
 \item{sample_persons}{If you don't want to use the full number of persons/legislators from the model, enter a proportion (between 0 and 1) to select
 only a fraction of the persons/legislators.}

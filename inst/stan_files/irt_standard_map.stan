@@ -25,13 +25,12 @@ functions {
     return sum( (alpha - 1) .* log(x) + (beta - 1) .* log1m(x) - vec_offset - vec_lbeta);
   }
   
-// #include /chunks/r_in.stan
 int r_in(int pos,array[] int pos_var) {
   
   for (p in 1:(size(pos_var))) {
     if (pos_var[p]==pos) {
       // can return immediately, as soon as find a match
-      return 1;
+      return p;
     }
   }
   return 0;
@@ -91,8 +90,8 @@ data {
   int num_restrict_low; // number of items/persons constrained to be low
   array[num_restrict_high] int restrict_high; // position of high valued fixed parameter
   array[num_restrict_low] int restrict_low; // position of low valued fixed parameter
-  real fix_high; // value to fix high parameter to
-  real fix_low; // value to fix low parameter to
+  array[num_restrict_high] real fix_high; // value to fix high parameter to
+  array[num_restrict_high] real fix_low; // value to fix low parameter to
   real discrim_reg_upb;
   real discrim_reg_lb;
   real discrim_miss_upb;

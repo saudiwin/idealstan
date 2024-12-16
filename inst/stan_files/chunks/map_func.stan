@@ -31,8 +31,8 @@ real partial_sum(array[,] int y_slice,
                  array[] int restrict_high,
                  array[] int restrict_low,
                  int center_cutoff,
-                 real fix_high,
-                 real fix_low,
+                 array[] real fix_high,
+                 array[] real fix_low,
                  real restrict_sd_high,
                  real restrict_sd_low,
                  real discrim_reg_upb,
@@ -133,12 +133,16 @@ real partial_sum(array[,] int y_slice,
     
     // ID parameters
     
+    int to_fix_high = r_in(s, restrict_high);
+    int to_fix_low = r_in(s, restrict_low);
+    
 
     if(const_type == 1 && S_type == 1) {
         if(pos_discrim == 0) {
-            if(r_in(s, restrict_high)) {
+          
+            if(to_fix_high>0) {
                 if(time_proc == 2) {
-                    real term = normal_lpdf(L_tp1_var[1, s] | fix_high, restrict_sd_high);
+                    real term = normal_lpdf(L_tp1_var[1, s] | fix_high[to_fix_high], restrict_sd_high);
                     log_prob += term;
                     if(debug_mode == 1) print("Added normal_lpdf(L_tp1_var[1,s] | fix_high, restrict_sd_high) to log_prob: ", term);
                     
@@ -146,13 +150,13 @@ real partial_sum(array[,] int y_slice,
                     log_prob += term;
                     if(debug_mode == 1) print("Added normal_lpdf(L_full[s] | 0, legis_sd) to log_prob: ", term);
                 } else {
-                    real term = normal_lpdf(L_full[s] | fix_high, restrict_sd_high);
+                    real term = normal_lpdf(L_full[s] | fix_high[to_fix_high], restrict_sd_high);
                     log_prob += term;
                     if(debug_mode == 1) print("Added normal_lpdf(L_full[s] | fix_high, restrict_sd_high) to log_prob: ", term);
                 }
-            } else if(r_in(s, restrict_low)) {
+            } else if(to_fix_low>0) {
                 if(time_proc == 2) {
-                    real term = normal_lpdf(L_tp1_var[1, s] | fix_low, restrict_sd_low);
+                    real term = normal_lpdf(L_tp1_var[1, s] | fix_low[to_fix_low], restrict_sd_low);
                     log_prob += term;
                     if(debug_mode == 1) print("Added normal_lpdf(L_tp1_var[1, s] | fix_low, restrict_sd_low) to log_prob: ", term);
                     
@@ -160,7 +164,7 @@ real partial_sum(array[,] int y_slice,
                     log_prob += term;
                     if(debug_mode == 1) print("Added normal_lpdf(L_full[s] | 0, legis_sd) to log_prob: ", term);
                 } else {
-                    real term = normal_lpdf(L_full[s] | fix_low, restrict_sd_low);
+                    real term = normal_lpdf(L_full[s] | fix_low[to_fix_low], restrict_sd_low);
                     log_prob += term;
                     if(debug_mode == 1) print("Added normal_lpdf(L_full[s] | fix_low, restrict_sd_low) to log_prob: ", term);
                 }

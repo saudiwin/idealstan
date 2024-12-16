@@ -3,8 +3,8 @@ Chop up the parameter vector to be identified
 By constraining two parameters to almost-fixed values (very low SD)
 */
 real id_params2(vector p, array[] int high, array[] int low, 
-                  real fix_high, 
-                  real fix_low,
+                  array[] real fix_high, 
+                  array[] real fix_low,
                   real sd_fix_high,
                   real sd_fix_low,
                   real mean_val,
