@@ -1235,10 +1235,10 @@ id_plot_sims(time_gp_est)
 
 Another new addition is the latent space model, which is only a slight modification on the IRT model. 
 
-Non-inflated:
+## Non-inflated Latent Space
 
 ```{r latent_space_noninfl}
-latent_noninfl_sim <- id_sim_gen(num_person=10,num_items=125,ordinal=F,
+latent_noninfl_sim <- id_sim_gen(num_person=10,num_items=300,ordinal=F,
                                        inflate=F,
                                        model_type='binary',
                                        latent_space=T)
@@ -1246,12 +1246,12 @@ latent_noninfl_est <- id_estimate(idealdata=latent_noninfl_sim,
                                model_type=13,
                                restrict_ind_high = as.character(sort(latent_noninfl_sim@simul_data$true_person,
                                                                      decreasing=TRUE,
-                                                        index=T)$ix[1]),
+                                                        index=T)$ix[1:2]),
                               restrict_ind_low = as.character(sort(latent_noninfl_sim@simul_data$true_person,
                                                                    decreasing=F,
-                                                        index=T)$ix[1]),fix_high = sort(latent_noninfl_sim@simul_data$true_person,
-                                                                     decreasing=T)[1],fix_low = sort(latent_noninfl_sim@simul_data$true_person,
-                                                                     decreasing=F)[1],
+                                                        index=T)$ix[1:2]),fix_high = sort(latent_noninfl_sim@simul_data$true_person,
+                                                                     decreasing=T)[1:2],fix_low = sort(latent_noninfl_sim@simul_data$true_person,
+                                                                     decreasing=F)[1:2],
                                fixtype='prefix',id_refresh=100,warmup=500,niters=500,nchains=2,ncores=8)
 id_plot_rhats(latent_noninfl_est)
 ```
@@ -1268,11 +1268,19 @@ id_sim_coverage(latent_noninfl_est) %>%
   theme_minimal() 
 ```
 
-Inflated:
+```{r latent_pred}
+
+latent_noninfl_est %>% 
+  id_post_pred %>% 
+  id_plot_ppc(latent_noninfl_est,ppc_pred=.)
+
+```
+
+## Latent Space Inflated:
 
 ```{r latent_space_infl}
 # you can't have too few people relative to bills
-latent_infl_sim <- id_sim_gen(num_person=10,num_items=125,ordinal=F,
+latent_infl_sim <- id_sim_gen(num_person=10,num_items=400,ordinal=F,
                                        inflate=T,
                                        model_type='binary',
                                        latent_space=T)
@@ -1304,4 +1312,10 @@ id_sim_coverage(latent_infl_est) %>%
   stat_summary(fun.args=list(mult=1.96)) + 
   theme_minimal() 
 ```
+```{r latent_abs_pred}
 
+latent_infl_est %>% 
+  id_post_pred %>% 
+  id_plot_ppc(latent_infl_est,ppc_pred=.)
+
+```

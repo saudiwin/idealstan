@@ -40,7 +40,9 @@
       '5%',
       '95%',
       ":=",
-      'item_type',"item_id","cut",".chain",".draw","these_draws","use_chain",".value")
+      'item_type',"item_id","cut",".chain",".draw","these_draws","use_chain",".value",
+    "ordbeta_cut_alpha","ordbeta_cut_phi","ordbeta_phi_mean","ordbeta_phi_mean",
+    "normal_mods","1","2","ordbeta_cut")
   
   utils::globalVariables(variable_list)
   

@@ -281,7 +281,7 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,
               pr_absence_iter <- sapply(this_obs,function(n) {
 
                 this_time <- paste0("L_tp1[",time_points[n],",",person_points[n],"]")
-
+                
                 t(-sqrt((L_tp1[these_draws,this_time] - A_int_free[these_draws,bill_points[n]])^2))
               }) %>% plogis()
             } else {

@@ -19,13 +19,31 @@
 #' converts an id_make object to a Stan list
 #' @noRd
 .make_stan_data <- function(idealdata=NULL,...) {
-
+  
   # make all the original arguments accessible
   
   # Capture the arguments as a list
   args <- list(...)
   # Assign each argument as a variable in the current environment
   list2env(args, envir = environment())
+  
+  # check on restriction length
+  
+  if(length(restrict_ind_high) > 1 && length(fix_high)==1) {
+    
+    fix_high <- rep(fix_high, length(restrict_ind_high))
+    
+  }
+  
+  names(restrict_ind_high) <- fix_high
+  
+  if(length(restrict_ind_low) > 1 && length(fix_low)==1) {
+    
+    fix_low <- rep(fix_high, length(restrict_ind_low))
+    
+  }
+  
+  names(restrict_ind_low) <- fix_low
   
   
   if(use_subset==TRUE || sample_it==TRUE) {
@@ -266,8 +284,8 @@
                              restrict_N_low=restrict_N_low,
                              restrict_high=idealdata@restrict_ind_high,
                              restrict_low=idealdata@restrict_ind_low,
-                             fix_high=idealdata@restrict_num_high,
-                             fix_low=idealdata@restrict_num_low)
+                             fix_high=as.numeric(names(idealdata@restrict_ind_high)),
+                             fix_low=as.numeric(names(idealdata@restrict_ind_low)))
   
   # need to create new data if map_rect is in operation 
   # and we have missing values / ragged arrays
@@ -537,8 +555,8 @@
                              restrict_N_low=restrict_N_low,
                              restrict_high=idealdata@restrict_ind_high,
                              restrict_low=idealdata@restrict_ind_low,
-                             fix_high=idealdata@restrict_num_high,
-                             fix_low=idealdata@restrict_num_low)
+                             fix_high=as.numeric(names(idealdata@restrict_ind_high)),
+                             fix_low=as.numeric(names(idealdata@restrict_ind_low)))
   
   idealdata <- remove_list$idealdata
   
@@ -692,8 +710,8 @@
                     num_restrict_low=length(idealdata@restrict_ind_low),
                     restrict_high=idealdata@restrict_ind_high,
                     restrict_low=idealdata@restrict_ind_low,
-                    fix_high=idealdata@restrict_num_high,
-                    fix_low=idealdata@restrict_num_low,
+                    fix_high=as.numeric(names(idealdata@restrict_ind_high)),
+                    fix_low=as.numeric(names(idealdata@restrict_ind_low)),
                     num_diff=gp_num_diff,
                     pos_discrim=as.integer(sign(discrim_reg_upb)==sign(discrim_reg_lb)),
                     grainsize=grainsize,
@@ -1567,7 +1585,7 @@ process_init_pathfinder <- function(init, num_procs, model_variables = NULL,
   reg_mid <- reg_diff/reg_discrim
   abs_mid <- abs_diff/abs_discrim
   
-  if(class(object@score_data@score_matrix$outcome_disc)=='factor') {
+  if(inherits(object@score_data@score_matrix$outcome_disc,'factor')) {
     cut_names <- levels(object@score_data@score_matrix$outcome_disc)
   } else {
     cut_names <- as.character(unique(object@score_data@score_matrix$outcome_disc))
@@ -1724,7 +1742,7 @@ process_init_pathfinder <- function(init, num_procs, model_variables = NULL,
   
   cuts <- as_draws_array(object@stan_samples$draws('steps_votes'))[,use_chain,] %>% as_draws_df
   
-  if(class(object@score_data@score_matrix$outcome_disc)=='factor') {
+  if(inherits(object@score_data@score_matrix$outcome_disc,'factor')=='factor') {
     cut_names <- levels(object@score_data@score_matrix$outcome_disc)
   } else {
     cut_names <- as.character(unique(object@score_data@score_matrix$outcome_disc))
@@ -1905,7 +1923,7 @@ process_init_pathfinder <- function(init, num_procs, model_variables = NULL,
   
   cuts <- as_draws_array(object@stan_samples$draws(paste0('steps_votes_grm[',param_num,',',total_cat,']')))[,use_chain,] %>% as_draws_df
   
-  if(class(object@score_data@score_matrix$outcome_disc)=='factor') {
+  if(inherits(object@score_data@score_matrix$outcome_disc,'factor')=='factor') {
     cut_names <- levels(object@score_data@score_matrix$outcome_disc)
   } else {
     cut_names <- as.character(unique(object@score_data@score_matrix$outcome_disc))
@@ -2079,7 +2097,7 @@ process_init_pathfinder <- function(init, num_procs, model_variables = NULL,
   item_int <- as_draws_array(object@stan_samples$draws(paste0('sigma_abs_free[',param_num,']')))[,use_chain,] %>% as_draws_matrix()
   ideal_int <- as_draws_array(object@stan_samples$draws(paste0('ls_int[',param_num,']')))[,use_chain,] %>% as_draws_matrix()
   
-  if(class(object@score_data@score_matrix$outcome_disc)=='factor') {
+  if(inherits(object@score_data@score_matrix$outcome_disc,'factor')=='factor') {
     cut_names <- levels(object@score_data@score_matrix$outcome_disc)
   } else {
     cut_names <- as.character(unique(object@score_data@score_matrix$outcome_disc))
@@ -3130,7 +3148,7 @@ return(as.vector(idx))
 
 #' Need new function to re-create time-varying ideal points given reduce sum
 #' @importFrom tidyr unite
-#' @importFrom tidybayes spread_draws
+#' @importFrom tidybayes spread_draws gather_draws
 #' @noRd
 .get_varying <- function(obj,
                          time_id=NULL,

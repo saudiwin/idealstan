@@ -712,10 +712,12 @@ id_make <- function(score_data=NULL,
 #' how many parameters to constraint to positive values? Default is 1.
 #' @param num_restrict_low If using variational inference for identification (\code{ixtype="vb_full"}),
 #' how many parameters to constraint to positive negative values? Default is 1.
-#' @param fix_high The value that the high fixed ideal point(s) should be
+#' @param fix_high A vector of length \code{restrict_ind_high} with values 
+#' that the high fixed person ideal point(s) should be
 #' fixed to. Default is +1. Does not apply when \code{const_type="items"}; in that case,
 #' use \code{restrict_sd}/\code{restrict_N} parameters (see below).
-#' @param fix_low The value that the low fixed ideal point(s) should be
+#' @param fix_low A vector of length \code{restrict_ind_low} with values 
+#' that the high fixed person ideal point(s) should be
 #' fixed to. Default is -1. Does not apply when \code{const_type="items"}; in that case,
 #' use \code{restrict_sd}/\code{restrict_N} parameters (see below).
 #' @param person_sd The standard deviation of the Normal distribution prior for 
