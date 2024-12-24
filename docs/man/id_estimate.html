@@ -225,6 +225,18 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="../man/id_me-idealstan-method.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">id_me-idealstan-method</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../man/id_me.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">id_me</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="../man/id_plot_all_hist.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">id_plot_all_hist</span></a>
   </div>
@@ -239,12 +251,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <div class="sidebar-item-container"> 
   <a href="../man/id_plot_cov.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">id_plot_cov</span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../man/id_plot_irf.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">id_plot_irf</span></a>
   </div>
 </li>
           <li class="sidebar-item">
@@ -291,18 +297,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../man/id_plot-idealstan-method.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">id_plot-idealstan-method</span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../man/id_plot.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">id_plot</span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
   <a href="../man/id_post_pred-idealstan-method.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">id_post_pred-idealstan-method</span></a>
   </div>
@@ -311,12 +305,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <div class="sidebar-item-container"> 
   <a href="../man/id_post_pred.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">id_post_pred</span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../man/id_rebuild_mpi.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">id_rebuild_mpi</span></a>
   </div>
 </li>
           <li class="sidebar-item">
@@ -353,12 +341,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <div class="sidebar-item-container"> 
   <a href="../man/idealstan-class.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">idealstan-class</span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../man/idealstan.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">idealstan</span></a>
   </div>
 </li>
           <li class="sidebar-item">
@@ -495,10 +477,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   ar_sd = 1,
   diff_reg_sd = 3,
   diff_miss_sd = 3,
-  restrict_sd_high = 10,
-  restrict_sd_low = 10,
+  restrict_sd_high = NULL,
+  restrict_sd_low = NULL,
   restrict_N_high = 1000,
   restrict_N_low = 1000,
+  ordbeta_phi_mean = 1,
+  ordbeta_cut_alpha = c(1, 1, 1),
+  ordbeta_cut_phi = 0,
   gp_sd_par = 0.025,
   gp_num_diff = 3,
   gp_m_sd_par = 0.3,
@@ -506,7 +491,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   cmdstan_path_user = NULL,
   map_over_id = "persons",
   save_files = NULL,
-  het_var = TRUE,
   compile_optim = FALSE,
   debug = FALSE,
   init_pathfinder = TRUE,
@@ -659,7 +643,7 @@ If <code>fixtype</code> is not "vb_full", a vector of character values or intege
 <code id="fix_high">fix_high</code>
 </td>
 <td>
-The value that the high fixed ideal point(s) should be fixed to. Default is +1. Does not apply when <code>const_type=“items”</code>; in that case, use <code>restrict_sd</code>/<code>restrict_N</code> parameters (see below).
+A vector of length <code>restrict_ind_high</code> with values that the high fixed person ideal point(s) should be fixed to. Default is +1. Does not apply when <code>const_type=“items”</code>; in that case, use <code>restrict_sd</code>/<code>restrict_N</code> parameters (see below).
 </td>
 </tr>
 <tr>
@@ -667,7 +651,7 @@ The value that the high fixed ideal point(s) should be fixed to. Default is +1. 
 <code id="fix_low">fix_low</code>
 </td>
 <td>
-The value that the low fixed ideal point(s) should be fixed to. Default is -1. Does not apply when <code>const_type=“items”</code>; in that case, use <code>restrict_sd</code>/<code>restrict_N</code> parameters (see below).
+A vector of length <code>restrict_ind_low</code> with values that the high fixed person ideal point(s) should be fixed to. Default is -1. Does not apply when <code>const_type=“items”</code>; in that case, use <code>restrict_sd</code>/<code>restrict_N</code> parameters (see below).
 </td>
 </tr>
 <tr>
@@ -816,10 +800,26 @@ Set the shape parameter for the rescaled Beta distribution of the missingness di
 </tr>
 <tr>
 <td style="white-space: nowrap; font-family: monospace; vertical-align: top">
+<code id="person_sd">person_sd</code>
+</td>
+<td>
+The standard deviation of the Normal distribution prior for persons (all non-constrained person ideal point parameters). Default is weakly informative (3) on the logit scale.
+</td>
+</tr>
+<tr>
+<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
 <code id="time_fix_sd">time_fix_sd</code>
 </td>
 <td>
 The variance of the over-time component of the first person/legislator is fixed to this value as a reference. Default is 0.1.
+</td>
+</tr>
+<tr>
+<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
+<code id="time_var">time_var</code>
+</td>
+<td>
+The mean of the exponential distribution for over-time variances for ideal point parameters. Default (10) is weakly informative on the logit scale.
 </td>
 </tr>
 <tr>
@@ -840,6 +840,22 @@ The degree of the spline polynomial. The default is 2 which is a quadratic polyn
 </tr>
 <tr>
 <td style="white-space: nowrap; font-family: monospace; vertical-align: top">
+<code id="ar1_up">ar1_up</code>
+</td>
+<td>
+The upper bound of the AR(1) parameter, default is +1.
+</td>
+</tr>
+<tr>
+<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
+<code id="ar1_down">ar1_down</code>
+</td>
+<td>
+The lower bound of the AR(1) parameter, default is 0. Set to -1 to allow for inverse responses to time shocks.
+</td>
+</tr>
+<tr>
+<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
 <code id="boundary_prior">boundary_prior</code>
 </td>
 <td>
@@ -852,6 +868,14 @@ If your time series has very low variance (change over time), you may want to us
 </td>
 <td>
 The number of time points above which the model will employ a centered time series approach for AR(1) and random walk models. Below this number the model will employ a non-centered approach. The default is 50 time points, which is relatively arbitrary and higher values may be better if sampling quality is poor above the threshold.
+</td>
+</tr>
+<tr>
+<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
+<code id="restrict_var">restrict_var</code>
+</td>
+<td>
+Whether to fix the variance parameter for the first person trajectory. Default is FALSE (usually not necessary).
 </td>
 </tr>
 <tr>
@@ -891,7 +915,7 @@ Set the prior standard deviation for the bill (item) intercepts for the inflated
 <code id="restrict_sd_high">restrict_sd_high</code>
 </td>
 <td>
-Set the prior shape for high pinned parameters. This has a default of 0.01 (equivalent to +0.99), but could be set lower if the data is really large.
+Set the level of tightness for high fixed parameters (top/positive end of scale). If NULL, the default, will set to .1 if <code>const_type=“persons”</code> and 10 if <code>const_type=“items”</code>. For <code>const_type=“persons”</code>, value is the SD of normal distribution centered around <code>fix_high</code>. For <code>const_type=“items”</code>, parameter is equal to the prior shape for high pinned parameters (divide by <code>restrict_N_high</code> + <code>restrict_sd_high</code>) to get expected value.
 </td>
 </tr>
 <tr>
@@ -899,7 +923,7 @@ Set the prior shape for high pinned parameters. This has a default of 0.01 (equi
 <code id="restrict_sd_low">restrict_sd_low</code>
 </td>
 <td>
-Set the prior scale for low pinned parameters. This has a default of 0.01 (equivalent to -0.99), but could be set lower if the data is really large. To make the prior uninformative, set this value and <code>restrict_N_low</code> to +1 (or +2, +2 for weakly informative).
+Set the level of tightness for low fixed parameters (low/negative end of scale). If NULL, the default, will set to .1 if <code>const_type=“persons”</code> and 10 if <code>const_type=“items”</code>. For <code>const_type=“persons”</code>, value is the SD of normal distribution centered around <code>fix_low</code>. For <code>const_type=“items”</code>, parameter is equal to the prior shape for high pinned parameters (divide by <code>restrict_N_low</code> + <code>restrict_sd_low</code>) to get expected value.
 </td>
 </tr>
 <tr>
@@ -907,7 +931,7 @@ Set the prior scale for low pinned parameters. This has a default of 0.01 (equiv
 <code id="restrict_N_high">restrict_N_high</code>
 </td>
 <td>
-Set the prior scale for high pinned parameters. Default is 1000 (equivalent to 1,000 observations of the pinned value). Higher values make the pin stronger (for example if there is a lot of data).
+Set the prior scale for high/positive pinned parameters. Default is 1000 (equivalent to 1,000 observations of the pinned value). Higher values make the pin stronger (for example if there is a lot of data).
 </td>
 </tr>
 <tr>
@@ -915,7 +939,31 @@ Set the prior scale for high pinned parameters. Default is 1000 (equivalent to 1
 <code id="restrict_N_low">restrict_N_low</code>
 </td>
 <td>
-Set the prior shape for high pinned parameters. Default is 1000 (equivalent to 1,000 observations of the pinned value). Higher values make the pin stronger (for example if there is a lot of data).
+Set the prior shape for low/negative pinned parameters. Default is 1000 (equivalent to 1,000 observations of the pinned value). Higher values make the pin stronger (for example if there is a lot of data).
+</td>
+</tr>
+<tr>
+<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
+<code id="ordbeta_phi_mean">ordbeta_phi_mean</code>
+</td>
+<td>
+The mean of the prior for phi, the dispersion parameter in the ordered beta distribution. Value of this parameter (default is 1) is given as the mean of the exponential distribution for prior values of phi.
+</td>
+</tr>
+<tr>
+<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
+<code id="ordbeta_cut_alpha">ordbeta_cut_alpha</code>
+</td>
+<td>
+A length 2 vector of positive continuous values for alpha in the induced dirichlet distribution. This distribution is used for the cutpoints of the ordered beta distribution. Default is c(1,1), which is uninformative.
+</td>
+</tr>
+<tr>
+<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
+<code id="ordbeta_cut_phi">ordbeta_cut_phi</code>
+</td>
+<td>
+A value for the phi paremeter of the induced dirichlet distribution used for ordered beta cutpoint priors. Default is 0, which is weakly informative.
 </td>
 </tr>
 <tr>
@@ -972,14 +1020,6 @@ This parameter identifies which ID variable to use to construct the shards for w
 </td>
 <td>
 The location to save CSV files with MCMC draws from <code>cmdstanr</code>. The default is <code>NULL</code>, which will use a folder in the package directory.
-</td>
-</tr>
-<tr>
-<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
-<code id="het_var">het_var</code>
-</td>
-<td>
-Whether to use a separate variance parameter for each item if using Normal or Log-Normal distributions that have variance parameters. Defaults to TRUE and should be set to FALSE only if all items have a similar variance.
 </td>
 </tr>
 <tr>
@@ -1084,6 +1124,20 @@ Additional parameters passed on to Stan’s sampling engine. See <code>stan</cod
 <h3 class="anchored" data-anchor-id="value">Value</h3>
 <p>A fitted <code>idealstan</code> object that contains posterior samples of all parameters either via full Bayesian inference or a variational approximation if <code>use_vb</code> is set to <code>TRUE</code>. This object can then be passed to the plotting functions for further analysis.</p>
 </section>
+<section id="time-varying-inference" class="level3">
+<h3 class="anchored" data-anchor-id="time-varying-inference">Time-Varying Inference</h3>
+<p>In addition, each of these models can have time-varying ideal point (person) parameters if a column of dates is fed to the <code>id_make</code> function. If the option <code>vary_ideal_pts</code> is set to <code>‘random_walk’</code>, <code>id_estimate</code> will estimate a random-walk ideal point model where ideal points move in a random direction. If <code>vary_ideal_pts</code> is set to <code>‘AR1’</code>, a stationary ideal point model is estimated where ideal points fluctuate around long-term mean. If <code>vary_ideal_pts</code> is set to <code>‘GP’</code>, then a semi-parametric Gaussian process time-series prior will be put around the ideal points. If <code>vary_ideal_pts</code> is set to <code>‘splines’</code>, then the ideal point trajectories will be a basis spline defined by the parameters <code>spline_knots</code> and <code>spline_degree</code>. Please see the package vignette and associated paper for more detail about these time-varying models.</p>
+</section>
+<section id="missing-data" class="level3">
+<h3 class="anchored" data-anchor-id="missing-data">Missing Data</h3>
+<p>The inflation model used to account for missing data assumes that missingness is a function of the persons’ (legislators’) ideal points. In other words,the model will take into account if people with high or low ideal points tend to have more/less missing data on a specific item/bill. Missing data should be coded as <code>NA</code> when it is passed to the id_make function. If there isn’t any relationship between missing data and ideal points, then the model assumes that the missingness is ignorable conditional on each item, but it will still adjust the results to reflect these ignorable (random) missing values. The inflation is designed to be general enough to handle a wide array of potential situations where strategic social choices make missing data important to take into account.</p>
+<p>To leave missing data out of the model, simply choose a version of the model in the list above that is non-inflated.</p>
+<p>Models can be either fit on the person/legislator IDs or on group-level IDs (as specified to the <code>id_make</code> function). If group-level parameters should be fit, set <code>use_groups</code> to <code>TRUE</code>.</p>
+</section>
+<section id="covariates" class="level3">
+<h3 class="anchored" data-anchor-id="covariates">Covariates</h3>
+<p>Covariates are included in the model if they were specified as options to the <code>id_make</code> function. The covariate plots can be accessed with <code>id_plot_cov</code> on a fitted <code>idealstan</code> model object.</p>
+</section>
 <section id="identification" class="level3">
 <h3 class="anchored" data-anchor-id="identification">Identification</h3>
 <p>Identifying IRT models is challenging, and ideal point models are still more challenging because the discrimination parameters are not constrained. As a result, more care must be taken to obtain estimates that are the same regardless of starting values. The parameter <code>fixtype</code> enables you to change the type of identification used. The default, ‘vb_full’, does not require any further information from you in order for the model to be fit. In this version of identification, an unidentified model is run using variational Bayesian inference (see <code>vb</code>). The function will then select two persons/legislators or items/bills that end up on either end of the ideal point spectrum, and pin their ideal points to those specific values. To control whether persons/legislator or items/bills are constrained, the <code>const_type</code> can be set to either <code>“persons”</code> or <code>“items”</code> respectively. In many situations, it is prudent to select those persons or items ahead of time to pin to specific values. This allows the analyst to be more specific about what type of latent dimension is to be estimated. To do so, the <code>fixtype</code> option should be set to <code>“prefix”</code>. The values of the persons/items to be pinned can be passed as character values to <code>restrict_ind_high</code> and <code>restrict_ind_low</code> to pin the high/low ends of the latent scale respectively. Note that these should be the actual data values passed to the <code>id_make</code> function. If you don’t pass any values, you will see a prompt asking you to select certain values of persons/items.</p>
@@ -1108,7 +1162,7 @@ Additional parameters passed on to Stan’s sampling engine. See <code>stan</cod
 </section>
 <section id="see-also" class="level3">
 <h3 class="anchored" data-anchor-id="see-also">See Also</h3>
-<p><code>id_make</code> for pre-processing data, <code>id_plot_legis</code> for plotting results, <code>summary</code> for obtaining posterior quantiles, <code>posterior_predict</code> for producing predictive replications.</p>
+<p><code>id_make</code> for pre-processing data, <code>id_plot_legis</code> for plotting results, <code>summary</code> for obtaining posterior quantiles, <code>id_post_pred</code> for producing predictive replications.</p>
 </section>
 <section id="examples" class="level3">
 <h3 class="anchored" data-anchor-id="examples">Examples</h3>

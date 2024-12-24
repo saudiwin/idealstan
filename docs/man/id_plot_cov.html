@@ -191,6 +191,18 @@ ul.task-list li input[type="checkbox"] {
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="../man/id_me-idealstan-method.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">id_me-idealstan-method</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../man/id_me.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">id_me</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="../man/id_plot_all_hist.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">id_plot_all_hist</span></a>
   </div>
@@ -205,12 +217,6 @@ ul.task-list li input[type="checkbox"] {
   <div class="sidebar-item-container"> 
   <a href="../man/id_plot_cov.html" class="sidebar-item-text sidebar-link active">
  <span class="menu-text">id_plot_cov</span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../man/id_plot_irf.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">id_plot_irf</span></a>
   </div>
 </li>
           <li class="sidebar-item">
@@ -257,18 +263,6 @@ ul.task-list li input[type="checkbox"] {
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../man/id_plot-idealstan-method.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">id_plot-idealstan-method</span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../man/id_plot.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">id_plot</span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
   <a href="../man/id_post_pred-idealstan-method.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">id_post_pred-idealstan-method</span></a>
   </div>
@@ -277,12 +271,6 @@ ul.task-list li input[type="checkbox"] {
   <div class="sidebar-item-container"> 
   <a href="../man/id_post_pred.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">id_post_pred</span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../man/id_rebuild_mpi.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">id_rebuild_mpi</span></a>
   </div>
 </li>
           <li class="sidebar-item">
@@ -319,12 +307,6 @@ ul.task-list li input[type="checkbox"] {
   <div class="sidebar-item-container"> 
   <a href="../man/idealstan-class.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">idealstan-class</span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../man/idealstan.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">idealstan</span></a>
   </div>
 </li>
           <li class="sidebar-item">
@@ -411,17 +393,16 @@ ul.task-list li input[type="checkbox"] {
 <h3 class="anchored" data-anchor-id="usage">Usage</h3>
 <pre><code class="language-R">id_plot_cov(
   object,
-  calc_varying = T,
-  label_high = "Liberal",
-  label_low = "Conservative",
+  calc_param = NULL,
+  label_high = "High",
+  label_low = "Low",
   cov_type = "person_cov",
-  use_items = "all",
+  plot_model_id = NULL,
   pred_outcome = NULL,
   high_quantile = 0.95,
   low_quantile = 0.05,
-  filter_cov = NULL,
   new_cov_names = NULL,
-  recalc_vals = NULL
+  ...
 )
 </code></pre>
 </section>
@@ -438,10 +419,10 @@ A fitted <code>idealstan</code> object
 </tr>
 <tr>
 <td style="white-space: nowrap; font-family: monospace; vertical-align: top">
-<code id="calc_varying">calc_varying</code>
+<code id="calc_param">calc_param</code>
 </td>
 <td>
-Whether to marginalize covariate effects over discrimination parameters to calculate a meaningful quantity for the effect of covariates on the latent scale (see vignette). Defaults to <code>TRUE</code>
+Whether to calculate ideal point marginal effects for a given covariate. If NULL, the default, the function will instead produce a plot of the raw coefficients from the ideal point model. If passing the name of a covariate, should be a character value of a column in the data passed to the <code>id_make</code> function.
 </td>
 </tr>
 <tr>
@@ -470,10 +451,18 @@ Either <code>‘person_cov’</code> for person or group-level hierarchical para
 </tr>
 <tr>
 <td style="white-space: nowrap; font-family: monospace; vertical-align: top">
+<code id="plot_model_id">plot_model_id</code>
+</td>
+<td>
+The integer of the model ID to plot. If NULL and there are multiple model types, <code>facet_wrap</code> will be used to produce multiple plots with one for each model type.
+</td>
+</tr>
+<tr>
+<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
 <code id="pred_outcome">pred_outcome</code>
 </td>
 <td>
-For discrete models with more than 2 categories, or binary models with missing data, which outcome to predict. This should be a character value that matches what the outcome was coded as in the data passed to <code>id_make</code>.
+For discrete models with more than 2 categories, or binary models with missing data, which outcome to predict. This should be the value that matches what the outcome was coded as in the data passed to <code>id_make</code>.
 </td>
 </tr>
 <tr>
@@ -494,14 +483,6 @@ The lower limit of the posterior density to use for calculating credible interva
 </tr>
 <tr>
 <td style="white-space: nowrap; font-family: monospace; vertical-align: top">
-<code id="filter_cov">filter_cov</code>
-</td>
-<td>
-A character vector of coefficients from covariate plots to exclude from plotting (should be the names of coefficients as they appear in the plots)
-</td>
-</tr>
-<tr>
-<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
 <code id="new_cov_names">new_cov_names</code>
 </td>
 <td>
@@ -510,10 +491,18 @@ A character vector of length equal to the number of covariates (plus 1 for the i
 </tr>
 <tr>
 <td style="white-space: nowrap; font-family: monospace; vertical-align: top">
-<code id="recalc_vals">recalc_vals</code>
+<code id="...">…</code>
 </td>
 <td>
-A character value of length three that can be used to create a new variable that is a sum of two other variables. The first two values of the character vector are the names of these parameters, while the third value is the name of the new combined variable. Note that if the parameters are renamed, the new names should be used in this option.
+Additional argument passed on to <code>id_me</code>
+</td>
+</tr>
+<tr>
+<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
+<code id="filter_cov">filter_cov</code>
+</td>
+<td>
+A character vector of coefficients from covariate plots to exclude from plotting (should be the names of coefficients as they appear in the plots)
 </td>
 </tr>
 </tbody></table>

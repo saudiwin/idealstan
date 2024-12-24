@@ -6,25 +6,28 @@
 \usage{
 id_plot_cov(
   object,
-  calc_varying = T,
-  label_high = "Liberal",
-  label_low = "Conservative",
-  cov_type = "person_cov",
-  use_items = "all",
+  calc_param = NULL,
+  label_high = "High",
+  label_low = "Low",
+  group_effects = NULL,
+  plot_model_id = NULL,
   pred_outcome = NULL,
-  high_quantile = 0.95,
-  low_quantile = 0.05,
-  filter_cov = NULL,
-  new_cov_names = NULL,
-  recalc_vals = NULL
+  lb = 0.05,
+  upb = 0.95,
+  facet_ncol = 2,
+  cov_type = "person_cov",
+  ...
 )
 }
 \arguments{
 \item{object}{A fitted \code{idealstan} object}
 
-\item{calc_varying}{Whether to marginalize covariate effects over 
-discrimination parameters to calculate a meaningful quantity for the effect of
-covariates on the latent scale (see vignette). Defaults to \code{TRUE}}
+\item{calc_param}{Whether to calculate ideal point marginal effects for
+a given covariate. If NULL, the default, the function will instead produce
+a plot of the raw coefficients from the ideal point model. If passing the
+name of a covariate, should be a character value of a column in the data 
+passed to the
+\code{id_make} function.}
 
 \item{label_high}{What label to use on the plot for the high end of the 
 latent scale}
@@ -32,64 +35,43 @@ latent scale}
 \item{label_low}{What label to use on the plot for the low end of the 
 latent scale}
 
+\item{plot_model_id}{The integer of the model ID to plot. If NULL and there
+are multiple model types, \code{facet_wrap} will be used to produce multiple
+plots with one for each model type.}
+
+\item{pred_outcome}{For discrete models with more than 2 categories, 
+or binary models with missing data, which outcome to predict. This should 
+be the value that matches what the outcome was coded as in the data
+passed to \code{\link{id_make}}.}
+
+\item{lb}{The lower limit of the posterior density to use for
+calculating credible intervals}
+
+\item{upb}{The upper limit of the posterior density to use for 
+calculating credible intervals}
+
+\item{facet_ncol}{If facetting by multiple models or grouped factors, sets the 
+number of columns in the multiple plots}
+
 \item{cov_type}{Either \code{'person_cov'} for person or group-level hierarchical parameters,
 \code{'discrim_reg_cov'} for bill/item discrimination parameters from regular (non-inflated) model, and 
 \code{'discrim_infl_cov'} for bill/item discrimination parameters from inflated model.}
 
-\item{use_items}{If "all", the default, will calculate ideal point 
-marginal effects for all items. If not "all", should be a character vector
-of specific item names as passed to \code{id_make} to calculate ideal
-point marginal effects for.}
-
-\item{pred_outcome}{For discrete models with more than 2 categories, 
-or binary models with missing data, which outcome to predict. This should 
-be a character value that matches what the outcome was coded as in the data
-passed to \code{\link{id_make}}.}
-
-\item{high_quantile}{The upper limit of the posterior density to use for 
-calculating credible intervals}
-
-\item{low_quantile}{The lower limit of the posterior density to use for
-calculating credible intervals}
-
-\item{filter_cov}{A character vector of coefficients from covariate plots to exclude from
-plotting (should be the names of coefficients as they appear in the plots)}
-
-\item{new_cov_names}{A character vector of length equal to the number
-of covariates (plus 1 for the intercept) to change the default labels.
-To see the default labels, use the plot function with this option blank.
-The character vector should be of th form used by}
-
-\item{recalc_vals}{A character value of length three that can be used to create
-a new variable that is a sum of two other variables. The first two values of the
-character vector are the names of these parameters, while the third value is the name
-of the new combined variable. Note that if the parameters are renamed, the new names
-should be used in this option.}
+\item{...}{Additional argument passed on to \code{id_me}}
 }
 \value{
 A \code{ggplot2} plot that can be further customized with \code{ggplot2} functions if need be.
 }
 \description{
-This function will calculate marginal effects, or the first derivative
+This function will calculate and plot the ideal point marginal effects, or the first derivative
 of the IRT/ideal point model with respect to the hierarchical covariate,
-separately for the two poles of the latent variable. These two marginal
-effects permit the interpretation of the effect of the covariate on 
-with respect to either end of the latent variable.
+for each item in the model. The function \code{\link{id_me}} is used
+to first calculate the ideal point marginal effects.
 }
 \details{
-Because the marginal effects are always with respect to a given
-outcome/response, the outcome to be predicted must be specified 
-in \code{pred_outcome}. If it is not specified, the function
-will prompt you to select one of the outcome's values in the data.
-
 The ends of the latent variable can be specified via the 
 \code{label_low} and \code{label_high} options, which will use those
-labels in the ensuing plot.
-
-To exclude parameters from the plot, use the \code{filter_cov} option. 
-Note that the parameters must be specified using the underlying model 
-syntax (however they are labeled in the plot). You can also change
-the names of parameters using the \code{new_cov_names} option.
+labels for item discrimination.
 
 Note that the function produces a \code{ggplot2} object, which can 
 be further modified with \code{ggplot2} functions.

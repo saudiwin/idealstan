@@ -191,6 +191,18 @@ ul.task-list li input[type="checkbox"] {
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="../man/id_me-idealstan-method.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">id_me-idealstan-method</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../man/id_me.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">id_me</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="../man/id_plot_all_hist.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">id_plot_all_hist</span></a>
   </div>
@@ -205,12 +217,6 @@ ul.task-list li input[type="checkbox"] {
   <div class="sidebar-item-container"> 
   <a href="../man/id_plot_cov.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">id_plot_cov</span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../man/id_plot_irf.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">id_plot_irf</span></a>
   </div>
 </li>
           <li class="sidebar-item">
@@ -257,18 +263,6 @@ ul.task-list li input[type="checkbox"] {
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../man/id_plot-idealstan-method.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">id_plot-idealstan-method</span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../man/id_plot.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">id_plot</span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
   <a href="../man/id_post_pred-idealstan-method.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">id_post_pred-idealstan-method</span></a>
   </div>
@@ -277,12 +271,6 @@ ul.task-list li input[type="checkbox"] {
   <div class="sidebar-item-container"> 
   <a href="../man/id_post_pred.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">id_post_pred</span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../man/id_rebuild_mpi.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">id_rebuild_mpi</span></a>
   </div>
 </li>
           <li class="sidebar-item">
@@ -319,12 +307,6 @@ ul.task-list li input[type="checkbox"] {
   <div class="sidebar-item-container"> 
   <a href="../man/idealstan-class.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">idealstan-class</span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../man/idealstan.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">idealstan</span></a>
   </div>
 </li>
           <li class="sidebar-item">
@@ -432,6 +414,11 @@ Other arguments passed on to <code>ppc_bars</code>
 </td>
 </tr>
 </tbody></table>
+</section>
+<section id="details" class="level3">
+<h3 class="anchored" data-anchor-id="details">Details</h3>
+<p>This function is a wrapper around <code>ppc_bars</code>, <code>ppc_dens_overlay</code> and <code>ppc_violin_grouped</code> that plots the posterior predictive distribution derived from <code>id_post_pred</code> against the original data. You can also subset the posterior predictions over legislators/persons or bills/item sby specifying the ID of each in the original data as a character vector. Only persons or items can be specified, not both.</p>
+<p>If you specify a value for <code>group</code> that is either a person ID or a group ID (depending on whether a person or group-level model was fit), then you can see the posterior distributions for those specific persons. Similarly, if an item ID is passed to <code>item</code>, you can see how well the model predictions compare to the true values for that specific item.</p>
 
 
 </section>

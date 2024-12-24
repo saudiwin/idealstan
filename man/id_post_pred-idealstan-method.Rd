@@ -13,6 +13,7 @@
   covar = "person",
   sample_scores = NULL,
   item_subset = NULL,
+  pred_outcome = NULL,
   use_cores = 1,
   use_chain = NULL,
   ...
@@ -46,6 +47,9 @@ Only available for calculating predictive distributions, not log-likelihood valu
 \item{item_subset}{Whether to calculate marginal effects for only a subset of 
 items. Should be item IDs that match the \code{item_id} column passed to the \code{id_make}
  function.}
+
+\item{pred_outcome}{In the case of ordinal responses, the number of the category to
+predict. Defaults to top category.}
 
 \item{use_cores}{Number of cores to use for multicore parallel processing with
 the base R \code{parallel} package}

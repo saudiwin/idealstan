@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>idealstan – idealstan</title>
+<title>id_me-idealstan-method – idealstan</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -103,7 +103,7 @@ ul.task-list li input[type="checkbox"] {
       <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../man/delaware.html">Reference</a></li><li class="breadcrumb-item"><a href="../man/idealstan.html">idealstan</a></li></ol></nav>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../man/delaware.html">Reference</a></li><li class="breadcrumb-item"><a href="../man/id_me-idealstan-method.html">id_me-idealstan-method</a></li></ol></nav>
         <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
         </a>
     </div>
@@ -191,6 +191,18 @@ ul.task-list li input[type="checkbox"] {
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="../man/id_me-idealstan-method.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">id_me-idealstan-method</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../man/id_me.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">id_me</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="../man/id_plot_all_hist.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">id_plot_all_hist</span></a>
   </div>
@@ -205,12 +217,6 @@ ul.task-list li input[type="checkbox"] {
   <div class="sidebar-item-container"> 
   <a href="../man/id_plot_cov.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">id_plot_cov</span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../man/id_plot_irf.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">id_plot_irf</span></a>
   </div>
 </li>
           <li class="sidebar-item">
@@ -257,18 +263,6 @@ ul.task-list li input[type="checkbox"] {
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../man/id_plot-idealstan-method.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">id_plot-idealstan-method</span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../man/id_plot.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">id_plot</span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
   <a href="../man/id_post_pred-idealstan-method.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">id_post_pred-idealstan-method</span></a>
   </div>
@@ -277,12 +271,6 @@ ul.task-list li input[type="checkbox"] {
   <div class="sidebar-item-container"> 
   <a href="../man/id_post_pred.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">id_post_pred</span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../man/id_rebuild_mpi.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">id_rebuild_mpi</span></a>
   </div>
 </li>
           <li class="sidebar-item">
@@ -319,12 +307,6 @@ ul.task-list li input[type="checkbox"] {
   <div class="sidebar-item-container"> 
   <a href="../man/idealstan-class.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">idealstan-class</span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../man/idealstan.html" class="sidebar-item-text sidebar-link active">
- <span class="menu-text">idealstan</span></a>
   </div>
 </li>
           <li class="sidebar-item">
@@ -401,54 +383,103 @@ ul.task-list li input[type="checkbox"] {
 
 
 
-<section id="idealstan-package" class="level2 unnumbered">
-<h2 class="unnumbered anchored" data-anchor-id="idealstan-package"><code>idealstan</code> package</h2>
+<section id="calculate-ideal-point-marginal-effects" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="calculate-ideal-point-marginal-effects">Calculate ideal point marginal effects</h2>
 <section id="description" class="level3">
 <h3 class="anchored" data-anchor-id="description">Description</h3>
-<p>R Interface to Stan for Item-Response Theory Ideal Point Models</p>
+<p>This function allows you to calculate ideal point marginal effects for a given person-level hierarchical covariate.</p>
+</section>
+<section id="usage" class="level3">
+<h3 class="anchored" data-anchor-id="usage">Usage</h3>
+<pre><code class="language-R">## S4 method for signature 'idealstan'
+id_me(
+  object,
+  covariate = NULL,
+  pred_outcome = NULL,
+  eps = 1e-04,
+  draws = 100,
+  cores = 1,
+  lb = 0.05,
+  upb = 0.95
+)
+</code></pre>
+</section>
+<section id="arguments" class="level3">
+<h3 class="anchored" data-anchor-id="arguments">Arguments</h3>
+<table>
+<tbody><tr>
+<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
+<code id="object">object</code>
+</td>
+<td>
+A fitted <code>idealstan</code> model
+</td>
+</tr>
+<tr>
+<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
+<code id="covariate">covariate</code>
+</td>
+<td>
+The character value for a covariate passed to the ‘id_make’ function before model fitting. Only one covariate can be processed at a time.
+</td>
+</tr>
+<tr>
+<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
+<code id="pred_outcome">pred_outcome</code>
+</td>
+<td>
+Numeric value for level of outcome to predict for ordinal responses. Defaults to top level.
+</td>
+</tr>
+<tr>
+<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
+<code id="eps">eps</code>
+</td>
+<td>
+The value used for numerical differentiation. Default is 1e-4. Usually does not need to be changed.
+</td>
+</tr>
+<tr>
+<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
+<code id="draws">draws</code>
+</td>
+<td>
+The total number of draws to use when calculating the marginal effects. Defaults to 100. Use option "all" to use all available MCMC draws.
+</td>
+</tr>
+<tr>
+<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
+<code id="cores">cores</code>
+</td>
+<td>
+The total number of cores to use when calculating the marginal effects. Defaults to 1.
+</td>
+</tr>
+<tr>
+<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
+<code id="lb">lb</code>
+</td>
+<td>
+The quantile for the lower bound of the aggregated effects (default is 0.05)
+</td>
+</tr>
+<tr>
+<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
+<code id="upb">upb</code>
+</td>
+<td>
+The quantile for the upper bound of the aggregated effects (default is 0.95)
+</td>
+</tr>
+</tbody></table>
 </section>
 <section id="details" class="level3">
 <h3 class="anchored" data-anchor-id="details">Details</h3>
-<p>See the README on <a href="https://github.com/saudiwin/idealstan/blob/master/README.md">GitHub</a></p>
+<p>This function will calculate item-level ideal point marginal effects for a given covariate that was passed to the ‘id_make’ function using the ‘person_cov’ option. The function will iterate over all items in the model and use numerical differentiation to calculate responses in the scale of the outcome for each item. Note: if the covariate is binary (i.e., only has two values), then the function will calculate the difference between these two values instead of using numerical differentation.</p>
 </section>
-<section id="authors" class="level3">
-<h3 class="anchored" data-anchor-id="authors">Author(s)</h3>
-<p><strong>Maintainer</strong>: Robert Kubinec <a href="mailto:rmk7@nyu.edu">rmk7@nyu.edu</a></p>
-<p>Other contributors:</p>
-<ul>
-<li>
-<p>Jonah Gabry [contributor]</p>
-</li>
-<li>
-<p>Ben Goodrich [contributor]</p>
-</li>
-<li>
-<p>Trustees of Columbia University [copyright holder]</p>
-</li>
-</ul>
-</section>
-<section id="references" class="level3">
-<h3 class="anchored" data-anchor-id="references">References</h3>
-<ol>
-<li>
-<p>Kubinec, Robert. Generalized Ideal Point Models for Time-Varying and Missing-Data Inference. Working Paper.</p>
-</li>
-<li>
-<p>Clinton, J., Jackman, S., &amp; Rivers, D. (2004). The Statistical Analysis of Roll Call Data. <em>The American Political Science Review</em>, 98(2), 355-370. doi:10.1017/S0003055404001194</p>
-</li>
-<li>
-<p>Bafumi, J., Gelman, A., Park, D., &amp; Kaplan, N. (2005). Practical Issues in Implementing and Understanding Bayesian Ideal Point Estimation. <em>Political Analysis</em>, 13(2), 171-187. doi:10.1093/pan/mpi010</p>
-</li>
-</ol>
-</section>
-<section id="see-also" class="level3">
-<h3 class="anchored" data-anchor-id="see-also">See Also</h3>
-<p>Useful links:</p>
-<ul>
-<li>
-<p>Report bugs at <a href="https://github.com/saudiwin/idealstan/issues">https://github.com/saudiwin/idealstan/issues</a></p>
-</li>
-</ul>
+<section id="value" class="level3">
+<h3 class="anchored" data-anchor-id="value">Value</h3>
+<p>A list with two objects, <code>ideal_effects</code> with one estimate of the marginal effect per item and posterior draw and <code>sum_ideal_effects</code> with one row per item with that item’s median ideal point marginal effect with the quantiles defined by the <code>upb</code> and <code>lb</code> parameters.</p>
 
 
 </section>

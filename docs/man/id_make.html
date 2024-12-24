@@ -225,6 +225,18 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="../man/id_me-idealstan-method.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">id_me-idealstan-method</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../man/id_me.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">id_me</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="../man/id_plot_all_hist.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">id_plot_all_hist</span></a>
   </div>
@@ -239,12 +251,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <div class="sidebar-item-container"> 
   <a href="../man/id_plot_cov.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">id_plot_cov</span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../man/id_plot_irf.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">id_plot_irf</span></a>
   </div>
 </li>
           <li class="sidebar-item">
@@ -291,18 +297,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../man/id_plot-idealstan-method.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">id_plot-idealstan-method</span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../man/id_plot.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">id_plot</span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
   <a href="../man/id_post_pred-idealstan-method.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">id_post_pred-idealstan-method</span></a>
   </div>
@@ -311,12 +305,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <div class="sidebar-item-container"> 
   <a href="../man/id_post_pred.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">id_post_pred</span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../man/id_rebuild_mpi.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">id_rebuild_mpi</span></a>
   </div>
 </li>
           <li class="sidebar-item">
@@ -353,12 +341,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <div class="sidebar-item-container"> 
   <a href="../man/idealstan-class.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">idealstan-class</span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../man/idealstan.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">idealstan</span></a>
   </div>
 </li>
           <li class="sidebar-item">
@@ -478,6 +460,22 @@ A data frame in long form, i.e., one row in the data for each measured score or 
 </tr>
 <tr>
 <td style="white-space: nowrap; font-family: monospace; vertical-align: top">
+<code id="outcome_disc">outcome_disc</code>
+</td>
+<td>
+Column name of the outcome with discrete values in <code>score_data</code>, default is <code>“outcome_disc”</code>
+</td>
+</tr>
+<tr>
+<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
+<code id="outcome_cont">outcome_cont</code>
+</td>
+<td>
+Column name of the outcome with discrete values in <code>score_data</code>, default is <code>“outcome_disc”</code>
+</td>
+</tr>
+<tr>
+<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
 <code id="person_id">person_id</code>
 </td>
 <td>
@@ -514,6 +512,22 @@ Optional column name of a person/legislator group IDs (i.e., parties) in <code>s
 </td>
 <td>
 Column name of the model/response types in the data. Default is <code>“model_id”</code>. Only necessary if a model with multiple response types (i.e., binary + continuous outcomes). Must be a column with a series of integers matching the model types in <code>id_estimate</code> showing which row of the data matches which outcome.
+</td>
+</tr>
+<tr>
+<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
+<code id="ordered_id">ordered_id</code>
+</td>
+<td>
+Column name of the variable showing the count of categories for ordinal/categorical items (must be at least 3 categories)
+</td>
+</tr>
+<tr>
+<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
+<code id="ignore_id">ignore_id</code>
+</td>
+<td>
+Optional column for identifying observations that should not be modeled (i.e., not just treated as missing, rather removed during estimation). Should be a binary vector (0 for remove and 1 for include). Useful for time-varying models where persons may not be present during particular periods and missing data is ignorable.
 </td>
 </tr>
 <tr>
@@ -561,7 +575,7 @@ Whether to remove constituent terms from hierarchical covariates that interact c
 <code id="unbounded">unbounded</code>
 </td>
 <td>
-Whether or not the outcome/response is unbounded (i.e., continuous or Poisson). If it is, <code>miss_val</code> is recoded as the maximum of the outcome + 1.
+Whether or not the outcome/response is unbounded (i.e., continuous or Poisson). If it is, missing value is recoded as the maximum of the outcome + 1.
 </td>
 </tr>
 <tr>
@@ -569,7 +583,7 @@ Whether or not the outcome/response is unbounded (i.e., continuous or Poisson). 
 <code id="exclude_level">exclude_level</code>
 </td>
 <td>
-A vector of any values that should be treated as <code>NA</code> in the response matrix. Unlike the <code>miss_val</code> parameter, these values will be dropped from the data before estimation rather than modeled explicitly.
+A vector of any values that should be treated as <code>NA</code> in the response matrix. Unlike missing values, these values will be dropped from the data before estimation rather than modeled explicitly.
 </td>
 </tr>
 <tr>
@@ -580,25 +594,30 @@ A vector of any values that should be treated as <code>NA</code> in the response
 If <code>TRUE</code>, simulated values are saved in the <code>idealdata</code> object for later plotting with the <code>id_plot_sims</code> function
 </td>
 </tr>
-<tr>
-<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
-<code id="outcome">outcome</code>
-</td>
-<td>
-Column name of the outcome in <code>score_data</code>, default is <code>“outcome”</code>
-</td>
-</tr>
 </tbody></table>
 </section>
 <section id="details" class="level3">
 <h3 class="anchored" data-anchor-id="details">Details</h3>
-<p>This function can accept either a <code>rollcall</code> data object from package <code>pscl</code> or a long data frame where one row equals one item-person (bill-legislator) observation with associated outcome. The preferred method is the long data frame as passing a long data frame permits the inclusion of a wide range of covariates in the model, such as person-varying and item-varying (bill-varying) covariates. If a <code>rollcall</code> object is passed to the function, the <code>rollcall</code> data is converted to a long data frame with data from the <code>vote.data</code> matrix used to determine dates for bills. If passing a long data frame, you should specify the names of the columns containing the IDs for persons, items and groups (groups are IDs that may have multiple observations per ID, such as political parties or classes) to the <code>id_make</code> function, along with the name of the response/outcome. The only required columns are the item/bill ID and the person/legislator ID along with an outcome column.</p>
-<p>The preferred format for the outcome column for discrete variables (binary or ordinal) is to pass a factor variable with levels in the correct order, i.e., in ascending order. For example, if using legislative data, the levels of the factor should be <code>c(‘No’,‘Yes’)</code>. If a different kind of variable is passed, such as a character or numeric variable, you should consider specifying <code>low_val</code>,<code>high_val</code> and <code>middle_val</code> to determine the correct order of the discrete outcome. Specifying <code>middle_val</code> is only necessary if you are estimating an ordinal model.</p>
-<p>If you do not specify a value for <code>miss_val</code>, then any <code>NA</code> are assumed to be missing. If you do specify <code>miss_val</code> and you also have <code>NA</code> in your data (assuming <code>miss_val</code> is not <code>NA</code>), then the function will treat the data coded as <code>miss_val</code> as missing data that should be modeled and will treat the <code>NA</code> data as ignorable missing data that will be removed (list-wise deletion) before estimating a model.</p>
+<p>This function accepts a long data frame where one row equals one item-person (bill-legislator) observation with associated continuous or discrete outcomes/responses. You either need to include columns with specific names as required by the <code>id_make</code> function such as <code>person_id</code> for person IDs and <code>item_id</code> for item IDs or specify the names of the columns containing the IDs to the <code>id_make</code> function for each column name (see examples). The only required columns are the item/bill ID and the person/legislator ID along with an outcome column, <code>outcome_disc</code> for discrete variables and <code>outcome_cont</code> for continuous variables. If both columns are included, then any value can be included for <code>outcome_disc</code> if there are values for <code>outcome_cont</code> and vice versa.</p>
+<p>If items of multiple types are included, a column <code>model_id</code> must be included with the model type (see <code>id_estimate</code> function documentation for list of model IDs) for the response distribution, such as 1 for binary non-inflated, etc. If an ordinal outcome is included, an additional column <code>ordered_id</code> must be included that has the total count of categories for that ordinal variable (i.e., 3 for 3 categories).</p>
+<p>For discrete data, it is recommended to include a numeric variable that starts at 0, such as values of 0 and 1 for binary data and 0,1,2 for ordinal/categorical data. For continuous (unbounded) data, it is recommended to standardize the outcome to improve model convergence and fit.</p>
+<p>Missing data should be passed as <code>NA</code> values in either <code>outcome_disc</code> or <code>outcome_cont</code> and will be processed internally.</p>
 </section>
 <section id="value" class="level3">
 <h3 class="anchored" data-anchor-id="value">Value</h3>
 <p>A <code>idealdata</code> object that can then be used in the <code>id_estimate</code> function to fit a model.</p>
+</section>
+<section id="time-varying-models" class="level3">
+<h3 class="anchored" data-anchor-id="time-varying-models">Time-Varying Models</h3>
+<p>To run a time-varying model, you need to include the name of a column with dates (or integers) that is passed to the <code>time_id</code> option.</p>
+</section>
+<section id="continuous-outcomes" class="level3">
+<h3 class="anchored" data-anchor-id="continuous-outcomes">Continuous Outcomes</h3>
+<p>If the outcome is continuous, you need to pass a dataframe with one column named "outcome_disc" or pass the name of the column with the continuous data to the <code>outcome_disc</code> argument.</p>
+</section>
+<section id="hierarchical-covariates" class="level3">
+<h3 class="anchored" data-anchor-id="hierarchical-covariates">Hierarchical Covariates</h3>
+<p>Covariates can be fit on the person-level ideal point parameters as well as item discrimination parameters for either the inflated (missing) or non-inflated (observed) models. These covariates must be columns that were included with the data fed to the <code>id_make</code> function. The covariate relationships are specified as one-sided formulas, i.e.&nbsp;<code>~cov1 + cov2 + cov1<em>cov2</em></code><em>. To interact covariates with the person-level ideal points you can use <code>~cov1 + person_id + cov1</code></em><code>person_id</code> and for group-level ideal poins you can use <code>~cov1 + group_id + cov1*group_id</code> where <code>group_id</code> or <code>person_id</code> is the same name as the name of the column for these options that you passed to <code>id_make</code> (i.e., the names of the columns in the original data). If you are also going to model these intercepts–i.e.&nbsp;you are interacting the covariate with <code>person_id</code> and the model is estimating ideal points at the person level–then set <code>remove_cov_int</code> to TRUE to avoid multicollinearity with the ideal point intercepts.</p>
 </section>
 <section id="examples" class="level3">
 <h3 class="anchored" data-anchor-id="examples">Examples</h3>

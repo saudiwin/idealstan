@@ -81,11 +81,11 @@ including these constituent terms would cause multi-collinearity with other term
 with a person-level interaction).}
 
 \item{unbounded}{Whether or not the outcome/response is unbounded (i.e., continuous or
-Poisson). If it is, \code{miss_val} 
+Poisson). If it is, missing value 
 is recoded as the maximum of the outcome + 1.}
 
 \item{exclude_level}{A vector of any values that should be treated as \code{NA} in the response matrix. 
-Unlike the \code{miss_val} parameter, these values will be dropped from the data before 
+Unlike missing values, these values will be dropped from the data before 
 estimation rather than modeled explicitly.}
 
 \item{simulation}{If \code{TRUE}, simulated values are saved in the \code{idealdata} object for 

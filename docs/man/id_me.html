@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>id_plot-idealstan-method – idealstan</title>
+<title>id_me – idealstan</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -103,7 +103,7 @@ ul.task-list li input[type="checkbox"] {
       <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../man/delaware.html">Reference</a></li><li class="breadcrumb-item"><a href="../man/id_plot-idealstan-method.html">id_plot-idealstan-method</a></li></ol></nav>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../man/delaware.html">Reference</a></li><li class="breadcrumb-item"><a href="../man/id_me.html">id_me</a></li></ol></nav>
         <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
         </a>
     </div>
@@ -191,6 +191,18 @@ ul.task-list li input[type="checkbox"] {
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="../man/id_me-idealstan-method.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">id_me-idealstan-method</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../man/id_me.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">id_me</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="../man/id_plot_all_hist.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">id_plot_all_hist</span></a>
   </div>
@@ -205,12 +217,6 @@ ul.task-list li input[type="checkbox"] {
   <div class="sidebar-item-container"> 
   <a href="../man/id_plot_cov.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">id_plot_cov</span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../man/id_plot_irf.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">id_plot_irf</span></a>
   </div>
 </li>
           <li class="sidebar-item">
@@ -257,18 +263,6 @@ ul.task-list li input[type="checkbox"] {
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../man/id_plot-idealstan-method.html" class="sidebar-item-text sidebar-link active">
- <span class="menu-text">id_plot-idealstan-method</span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../man/id_plot.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">id_plot</span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
   <a href="../man/id_post_pred-idealstan-method.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">id_post_pred-idealstan-method</span></a>
   </div>
@@ -277,12 +271,6 @@ ul.task-list li input[type="checkbox"] {
   <div class="sidebar-item-container"> 
   <a href="../man/id_post_pred.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">id_post_pred</span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../man/id_rebuild_mpi.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">id_rebuild_mpi</span></a>
   </div>
 </li>
           <li class="sidebar-item">
@@ -319,12 +307,6 @@ ul.task-list li input[type="checkbox"] {
   <div class="sidebar-item-container"> 
   <a href="../man/idealstan-class.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">idealstan-class</span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../man/idealstan.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">idealstan</span></a>
   </div>
 </li>
           <li class="sidebar-item">
@@ -401,16 +383,15 @@ ul.task-list li input[type="checkbox"] {
 
 
 
-<section id="plot-results-of-id_estimate" class="level2 unnumbered">
-<h2 class="unnumbered anchored" data-anchor-id="plot-results-of-id_estimate">Plot Results of <code>id_estimate</code></h2>
+<section id="calculate-ideal-point-marginal-effects" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="calculate-ideal-point-marginal-effects">Calculate ideal point marginal effects</h2>
 <section id="description" class="level3">
 <h3 class="anchored" data-anchor-id="description">Description</h3>
-<p>This function allows you to access the full range of plotting options for fitted <code>idealstan</code> models.</p>
+<p>This function allows you to calculate ideal point marginal effects for a given person-level hierarchical covariate.</p>
 </section>
 <section id="usage" class="level3">
 <h3 class="anchored" data-anchor-id="usage">Usage</h3>
-<pre><code class="language-R">## S4 method for signature 'idealstan'
-id_plot(object, plot_type = "persons", ...)
+<pre><code class="language-R">id_me(object, ...)
 </code></pre>
 </section>
 <section id="arguments" class="level3">
@@ -421,46 +402,34 @@ id_plot(object, plot_type = "persons", ...)
 <code id="object">object</code>
 </td>
 <td>
-A fitted <code>idealstan</code> object
+A fitted <code>idealstan</code> model
 </td>
 </tr>
 <tr>
 <td style="white-space: nowrap; font-family: monospace; vertical-align: top">
-<code id="plot_type">plot_type</code>
+<code id="covariate">covariate</code>
 </td>
 <td>
-Specify the plot as a character string. Currently ‘persons’ for legislator/person ideal point plot, ‘histogram’ for a histogram of model estimates for given parameters. Alternatively, use the <code>param</code> option to specify a specific model parameter.
+The character value for a covariate passed to the ‘id_make’ function before model fitting. Only one covariate can be processed at a time.
 </td>
 </tr>
 <tr>
 <td style="white-space: nowrap; font-family: monospace; vertical-align: top">
-<code id="...">…</code>
+<code id="eps">eps</code>
 </td>
 <td>
-Additional arguments passed on to the underlying functions. See individual function documentation for details.
-</td>
-</tr>
-<tr>
-<td style="white-space: nowrap; font-family: monospace; vertical-align: top">
-<code id="param">param</code>
-</td>
-<td>
-A character name of a parameter from an <code>idealstan</code> model.
+The value used for numerical differentiation. Default is 1e-4. Usually does not need to be changed.
 </td>
 </tr>
 </tbody></table>
 </section>
 <section id="details" class="level3">
 <h3 class="anchored" data-anchor-id="details">Details</h3>
-<p><code>id_plot</code> is a wrapper function that can access the various plotting functions available in the <code>idealstan</code> package. Currently, the options are limited to a plot of legislator/person ideal points with bills/item midpoints as an optional overlay. Additional plots will be available in future versions of <code>idealstan</code>.</p>
+<p>This function will calculate item-level ideal point marginal effects for a given covariate that was passed to the ‘id_make’ function using the ‘person_cov’ option. The function will iterate over all items in the model and use numerical differentiation to calculate responses in the scale of the outcome for each item. Note: if the covariate is binary (i.e., only has two values), then the function will calculate the difference between these two values instead of using numerical differentation.</p>
 </section>
 <section id="value" class="level3">
 <h3 class="anchored" data-anchor-id="value">Value</h3>
-<p>A <code>ggplot</code> object</p>
-</section>
-<section id="see-also" class="level3">
-<h3 class="anchored" data-anchor-id="see-also">See Also</h3>
-<p><code>id_plot_legis</code> for a legislator/person ideal point plot, <code>id_plot_all_hist</code> for a standard histogram plot, <code>id_plot_compare</code> for an ideal point plot of two different models of the same data, <code>id_plot_rhats</code> for a histogram of <code>Rhat</code> values, <code>id_plot_sims</code> for plotting true versus estimated values, <code>id_estimate</code> for how to estimate an <code>idealstan</code> object.</p>
+<p>Returns a tibble that has one row per posterior draw per item-specific marginal effect in the scale of th eoutcome.</p>
 
 
 </section>
