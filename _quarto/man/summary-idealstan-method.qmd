@@ -45,10 +45,15 @@ uncertainty interval (defaults to 0.95).
 A number between 0 and 1 reflecting the lower limit of the 
 uncertainty interval (defaults to 0.05).
 </td></tr>
-<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="aggregate">aggregate</code></td>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="aggregated">aggregated</code></td>
 <td>
 Whether to return summaries of the posterior values or the 
 full posterior samples. Defaults to <code>TRUE</code>.
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="use_chain">use_chain</code></td>
+<td>
+ID of a specific MCMC chain to use. Default (NULL) is all the chains
+and is recommended.
 </td></tr>
 </table>
 

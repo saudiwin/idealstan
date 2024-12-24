@@ -1111,391 +1111,195 @@ id_plot_rhats <- function(obj) {
 
 #' Marginal Effects Plot for Hierarchical Covariates
 #' 
-#' This function will calculate marginal effects, or the first derivative
+#' This function will calculate and plot the ideal point marginal effects, or the first derivative
 #' of the IRT/ideal point model with respect to the hierarchical covariate,
-#' separately for the two poles of the latent variable. These two marginal
-#' effects permit the interpretation of the effect of the covariate on 
-#' with respect to either end of the latent variable.
-#' 
-#' Because the marginal effects are always with respect to a given
-#' outcome/response, the outcome to be predicted must be specified 
-#' in \code{pred_outcome}. If it is not specified, the function
-#' will prompt you to select one of the outcome's values in the data.
+#' for each item in the model. The function \code{\link{id_me}} is used
+#' to first calculate the ideal point marginal effects.
 #' 
 #' The ends of the latent variable can be specified via the 
 #' \code{label_low} and \code{label_high} options, which will use those
-#' labels in the ensuing plot.
-#' 
-#' To exclude parameters from the plot, use the \code{filter_cov} option. 
-#' Note that the parameters must be specified using the underlying model 
-#' syntax (however they are labeled in the plot). You can also change
-#' the names of parameters using the \code{new_cov_names} option.
+#' labels for item discrimination.
 #' 
 #' Note that the function produces a \code{ggplot2} object, which can 
 #' be further modified with \code{ggplot2} functions.
 #' 
 #' @param object A fitted \code{idealstan} object
-#' @param calc_varying Whether to marginalize covariate effects over 
-#' discrimination parameters to calculate a meaningful quantity for the effect of
-#' covariates on the latent scale (see vignette). Defaults to \code{TRUE}
+#' @param calc_param Whether to calculate ideal point marginal effects for
+#' a given covariate. If NULL, the default, the function will instead produce
+#' a plot of the raw coefficients from the ideal point model. If passing the
+#' name of a covariate, should be a character value of a column in the data 
+#' passed to the
+#' \code{id_make} function.
 #' @param label_high What label to use on the plot for the high end of the 
 #' latent scale
 #' @param label_low What label to use on the plot for the low end of the 
 #' latent scale
 #' @param pred_outcome For discrete models with more than 2 categories, 
 #' or binary models with missing data, which outcome to predict. This should 
-#' be a character value that matches what the outcome was coded as in the data
+#' be the value that matches what the outcome was coded as in the data
 #' passed to \code{\link{id_make}}.
-#' @param use_items If "all", the default, will calculate ideal point 
-#' marginal effects for all items. If not "all", should be a character vector
-#' of specific item names as passed to \code{id_make} to calculate ideal
-#' point marginal effects for.
-#' @param high_quantile The upper limit of the posterior density to use for 
+#' @param plot_model_id The integer of the model ID to plot. If NULL and there
+#' are multiple model types, \code{facet_wrap} will be used to produce multiple
+#' plots with one for each model type.
+#' @param upb The upper limit of the posterior density to use for 
 #' calculating credible intervals
-#' @param low_quantile The lower limit of the posterior density to use for
+#' @param lb The lower limit of the posterior density to use for
 #' calculating credible intervals
-#' @param new_cov_names A character vector of length equal to the number
-#' of covariates (plus 1 for the intercept) to change the default labels.
-#' To see the default labels, use the plot function with this option blank.
-#' The character vector should be of th form used by 
+#' @param facet_ncol If facetting by multiple models or grouped factors, sets the 
+#' number of columns in the multiple plots
 #' @param cov_type Either \code{'person_cov'} for person or group-level hierarchical parameters,
 #' \code{'discrim_reg_cov'} for bill/item discrimination parameters from regular (non-inflated) model, and 
 #' \code{'discrim_infl_cov'} for bill/item discrimination parameters from inflated model.
-#' @param filter_cov A character vector of coefficients from covariate plots to exclude from
-#' plotting (should be the names of coefficients as they appear in the plots)
-#' @param recalc_vals A character value of length three that can be used to create
-#' a new variable that is a sum of two other variables. The first two values of the
-#' character vector are the names of these parameters, while the third value is the name
-#' of the new combined variable. Note that if the parameters are renamed, the new names
-#' should be used in this option.
 #' @return A \code{ggplot2} plot that can be further customized with \code{ggplot2} functions if need be.
+#' @param ... Additional argument passed on to \code{id_me}
 #' @import svDialogs
 #' @export
 id_plot_cov <- function(object,
-                        calc_varying=T,
-                        label_high="Liberal",
-                        label_low="Conservative",
-                        cov_type='person_cov',
-                        use_items="all",
+                        calc_param=NULL,
+                        label_high="High",
+                        label_low="Low",
+                        group_effects=NULL,
+                        plot_model_id=NULL,
                         pred_outcome = NULL,
-                        high_quantile=0.95,
-                        low_quantile=0.05,
-                        filter_cov=NULL,
-                        new_cov_names=NULL,
-                        recalc_vals=NULL) {
+                        lb=0.05,
+                        upb=0.95,
+                        facet_ncol=2,
+                        cov_type='person_cov',
+                        ...) {
   
-  # determine which outcome to predict
-  # iterate over model types
+  # helper function for scale labels
   
-  
-  if(calc_varying) {
-  
-  all_plots <- lapply(unique(object@score_data@score_matrix$model_id), function(m) {
-
-    this_data <- filter(object@score_data@score_matrix,model_id==m)
-    
-    # iterate over item IDs
-    
-    if(!(use_items=="all")) {
-      this_data <- filter(this_data,item_id %in% use_items)
-    } 
-    
-    if(is.null(pred_outcome)) {
-      if(m %in% c(1,2,3,4,5,6,13,14)) {
-        # ask user for predicted outcome
-        pred_outcome <- svDialogs::dlg_list(levels(this_data$outcome_disc),
-                                            title="Type in the number referring to the level of the outcome you want to predict using covariates.")$res
-        if(m %in% c(3,4,5,6)) {
-          # need to calculate K
-          k <- which(pred_outcome==levels(this_data$outcome_disc))
-          K <- length(levels(this_data$outcome_disc))
-        } else {
-          K <- 0
-          k <- 0
-        }
-        
-        
-      } else if(m %in% c(7,8)) {
-        pred_outcome <- svDialogs::dlg_list(c("Missing","Percentage Change"),
-                                            title="Type in 1 to predict probability of missing data or 2 for observed data.")$res
-        if(pred_outcome=="Missing") {
-          m <- 1
-        }
-        
-        K <- 0
-        k <- 0
-      } else if(m %in% c(9,10,11,12)) {
-        pred_outcome <- svDialogs::dlg_list(c("Missing","Change in Mean Value"),
-                                            title="Type in 1 to predict probability of missing data or 2 for observed data.")$res
-        
-        if(pred_outcome=="Missing") {
-          m <- 1
-        }
-        
-        K <- 0
-        k <- 0
-      }
-    }
-    
-    # adjust labels to match predicted outcome
-    
-    if(m %in% c(1,2,3,4,5,6,13,14)) {
-      pred_outcome_high <- paste0("Pr(",pred_outcome,"|",label_high,")")
-      pred_outcome_low <- paste0("Pr(",pred_outcome,"|",label_low,")")
-      xlabel <- "Marginal Change in Probability"
-    } else if(m %in% c(7,8)) {
-      pred_outcome_high <- paste0("Change in Mean Count|",label_high)
-      pred_outcome_low <- paste0("Change in Mean Count|",label_low)
-      xlabel <- "Marginal Percentage Change in Mean Count"
-    } else {
-      pred_outcome_high <- paste0("Change in Mean Value|",label_high)
-      pred_outcome_low <- paste0("Change in Mean Value|",label_low)
-      xlabel <- "Marginal Change in Mean"
-    }
-    
-    # pull hierarchical covariates
-    
-    param_name <- switch(cov_type,person_cov='legis_x',
-                         discrim_reg_cov='sigma_reg_x',
-                         discrim_infl_cov='sigma_abs_x')
-    
-    to_plot <- object@stan_samples$draws(variables=param_name)
-    
-    # reset names of parameters
-    new_names <- switch(cov_type,person_cov=object@score_data@person_cov,
-                        discrim_reg=object@score_data@item_cov,
-                        discrim_abs=object@score_data@item_cov_miss)
-    
-    # recode these names if user supplies option
-    
-    if(!is.null(new_cov_names)) {
-      new_names <- recode(new_names,!!!new_cov_names)
-    }
-    
-    attributes(to_plot)$dimnames$variable <- new_names
-    
-    # remove unwanted coefficients
-    
-    if(!is.null(filter_cov)) {
-      to_plot <- to_plot[,,!(new_names %in% filter_cov),drop=F]
-      new_names <- new_names[!(new_names %in% filter_cov)]
-      new_cov_names <- new_cov_names[!(new_cov_names %in% filter_cov)]
-    }
-    
-    # need function to calculate outcome based on model_id
-    
-    if(m %in% c(1,2)) {
-      out_func <- .cov_bern
-    } else if(m %in% c(3,4,5,6)) {
-      out_func <- .cov_ord
-    } else if(m %in% c(7,8)) {
-      out_func <- .cov_pois
-    } else if(m %in% c(9,10)) {
-      out_func <- .cov_norm
-    } else if(m %in% c(11,12)) {
-      out_func <- .cov_lnorm
-    } else if(m %in% c(13,14)) {
-      stop("Latent space parameterization not currently supported in this function.")
-      out_func <- .cov_latsp
-    }
-    
-    # set up values to re-calculate
-    
-    if(!is.null(recalc_vals)) {
-      if(length(recalc_vals)!=3) {
-        stop("Option recalc_vals can only be a character vector of length 3 indicating which two variables to add together and their name.")
-      }
-      val1 <- which(attributes(to_plot)$dimnames$variable==recalc_vals[1])
-      val2 <- which(attributes(to_plot)$dimnames$variable==recalc_vals[2])
-      if(is.null(val1) || is.null(val2)) {
-        stop("The parameter names you passed to re-calculate did not match existing parameters. Please be sure to use recoded parameter names not original parameter names.")
-      }
-    }
-      # get all sigmas
-      
-      these_items <- unique(as.numeric(this_data$item_id))
-      
-      if(pred_outcome=="Missing") {
-        sigma_all <- object@stan_samples$draws(variables="sigma_abs_free") %>% 
-          as_draws_matrix
-        # only take the items in this data set
-        sigma_all <- sigma_all[,these_items,drop=F]
-      } else {
-        sigma_all <- object@stan_samples$draws(variables="sigma_reg_free") %>% 
-          as_draws_matrix
-        # only take the items in this data set
-        sigma_all <- sigma_all[,these_items,drop=F]
-      }
-      
-      # iterate over posterior draws and calculate effect conditional on pos/neg discrimination
-      # for all params in to_plot
-      
-      neg_eff <- lapply(1:nrow(sigma_all), function(i) {
-        this_discrim <- sigma_all[i,]
-        
-        # if cutpoints exist, need to pull the correct one
-        
-        if(K>1) {
-          cutp <- .get_cuts_cov(k,m,i,sigma_all,K,object,these_items)
-        } else {
-          cutp <- 0
-        }
-        
-        neg_discrim <- this_discrim[this_discrim<0]
-        
-        #calculate marginal changes in probability
-        to_plot_neg <- apply(to_plot,3,function(c) {
-          out_func(c[i]*neg_discrim,cutp,k,K)
-        })
-        tibble(estimate=to_plot_neg,
-               parameter=names(to_plot_neg)) %>% 
-          mutate(Type=pred_outcome_low)
-      }) %>% bind_rows
-      
-      pos_eff <- lapply(1:nrow(sigma_all), function(i) {
-        this_discrim <- sigma_all[i,]
-        pos_discrim <- this_discrim[this_discrim>0]
-        
-        if(K>1) {
-          cutp <- .get_cuts_cov(k,m,i,sigma_all,K,object,these_items)
-        } else {
-          cutp <- 0
-        }
-        
-        #calculate marginal changes in probability
-        to_plot_neg <- apply(to_plot,3,function(c) {
-          out_func(c[i]*pos_discrim,cutp,k,K)
-        })
-        tibble(estimate=to_plot_neg,
-               parameter=names(to_plot_neg)) %>% 
-          mutate(Type=pred_outcome_high)
-      }) %>% bind_rows
-      
-      if(!is.null(recalc_vals)) {
-        # do the same for re-calculated values
-        
-        neg_eff_recalc <- lapply(1:nrow(sigma_all), function(i) {
-          this_discrim <- sigma_all[i,]
-          
-          neg_discrim <- this_discrim[this_discrim<0]
-          
-          if(K>1) {
-            cutp <- .get_cuts_cov(k,m,i,sigma_all,K,object,these_items)
-          } else {
-            cutp <- 0
-          }
-          
-          #calculate marginal changes in probability
-          to_plot_neg <- out_func((to_plot[i,,val1]+to_plot[i,,val2])*neg_discrim,cutp,k,K)
-          
-          tibble(estimate=to_plot_neg,
-                 parameter=recalc_vals[3]) %>% 
-            mutate(Type=pred_outcome_low)
-        }) %>% bind_rows
-        
-        pos_eff_recalc <- lapply(1:nrow(sigma_all), function(i) {
-          this_discrim <- sigma_all[i,]
-          pos_discrim <- this_discrim[this_discrim>0]
-          
-          if(K>1) {
-            cutp <- .get_cuts_cov(k,m,i,sigma_all,K,object,these_items)
-          } else {
-            cutp <- 0
-          }
-          
-          
-          #calculate marginal changes in probability
-          to_plot_neg <- out_func((to_plot[i,,val1]+to_plot[i,,val2])*pos_discrim,cutp,k,K)
-          
-          tibble(estimate=to_plot_neg,
-                 parameter=recalc_vals[3]) %>% 
-            mutate(Type=pred_outcome_high)
-        }) %>% bind_rows
-      }
-      
-      if(!is.null(recalc_vals)) {
-        to_plot <- bind_rows(neg_eff,
-                             pos_eff,
-                             neg_eff_recalc,
-                             pos_eff_recalc)
-      } else {
-        to_plot <- bind_rows(neg_eff,
-                             pos_eff)
-      }
-      
-      # if new levels exist, reorder
-      
-      if(!is.null(new_cov_names)) {
-        if(is.null(recalc_vals)) {
-          to_plot$parameter <- fct_relevel(factor(to_plot$parameter),rev(new_cov_names))
-        } else {
-          to_plot$parameter <- fct_relevel(factor(to_plot$parameter),c(rev(new_cov_names),recalc_vals[3]))
-        }
-        
-      }
-    
-    return(mutate(to_plot,model_id=m,xlabel=xlabel))
-  }) %>% bind_rows
-  
-  sum_func <- function(this_data,high=high_quantile,
-                       low=low_quantile) {
-    tibble(y=median(this_data),
-           ymin=quantile(this_data,low_quantile),
-           ymax=quantile(this_data,high_quantile))
+  custom_labels <- function(limits,scale_ends) {
+    breaks <- seq(from=min(limits),to= max(limits),length.out=5)
+    labels <- c(as.character(scale_ends[1]), round(breaks[2:4] ,2),as.character(scale_ends[2]))
+    list(breaks = breaks, labels = labels)
   }
   
-  # remove missing values in case there were no negative/positive discriminations
-  all_plots_sum <- group_by(all_plots,parameter,Type,model_id) %>% 
-    summarize(Median=median(estimate,na.rm=T),
-              High=quantile(estimate,high_quantile,na.rm=T),
-              Low=quantile(estimate,low_quantile,na.rm=T)) %>% 
-    filter(!is.na(Median)) %>% 
-    mutate(model_id=recode(model_id,
-                           `1`="Binary Outcome",
-                           `2`="Binary Outcome",
-                           `3`="Rating-Scale Ordinal Outcome",
-                           `4`="Rating-Scale Ordinal Outcome",
-                           `5`="Graded-Response Ordinal Outcome",
-                           `6`="Graded-Response Ordinal Outcome",
-                           `7`="Poisson Outcome",
-                           `8`="Poisson Outcome",
-                           `9`="Gaussian Outcome",
-                           `10`="Gaussian Outcome",
-                           `11`="Log-Normal Outcome",
-                           `12`="Log-Normal Outcome",
-                           `13`="Binary Outcome Latent Space",
-                           `14`="Binary Outcome Latent Space"))
-
-    outplot <- all_plots_sum %>% 
-      ggplot(aes(x=parameter,y=Median)) +
-      geom_pointrange(aes(ymin=Low,
-                         ymax=High)) +
-      coord_flip() +
-      geom_hline(yintercept=0,linetype=2) +
-      theme(panel.grid=element_blank(),
-            panel.background = element_blank(),
-            strip.background = element_blank(),
-            strip.text = element_text(face="bold"),
-            axis.ticks.y=element_blank()) +
-      xlab("") + 
-      ylab("")
+  scale_ends <- c(label_low,
+                  label_high)
+  
+  # either calculate marginal effects or just plot the raw coefficients
+  
+  if(!is.null(calc_param)) {
     
-    if(unique(object@score_data@score_matrix$model_id)>1) {
+    # first calculate the effects
+    
+    all_effs <- id_me(object,
+                      pred_outcome=pred_outcome,
+                      lb=lb,upb=upb,
+                      covariate=calc_param,
+                      group_effects=group_effects,
+                      ...)
+    
+    all_effs$sum_ideal_effects <- mutate(all_effs$sum_ideal_effects,
+                                         model_id_label=recode(model_id,
+                                                         `1`="Binary Outcome",
+                                                         `2`="Binary Outcome",
+                                                         `3`="Rating-Scale Ordinal Outcome",
+                                                         `4`="Rating-Scale Ordinal Outcome",
+                                                         `5`="Graded-Response Ordinal Outcome",
+                                                         `6`="Graded-Response Ordinal Outcome",
+                                                         `7`="Poisson Outcome",
+                                                         `8`="Poisson Outcome",
+                                                         `9`="Gaussian Outcome",
+                                                         `10`="Gaussian Outcome",
+                                                         `11`="Log-Normal Outcome",
+                                                         `12`="Log-Normal Outcome",
+                                                         `13`="Binary Outcome Latent Space",
+                                                         `14`="Binary Outcome Latent Space"))
+    
+    max_scale <- max(all_effs$sum_ideal_effects$item_discrimination)
+    min_scale <- min(all_effs$sum_ideal_effects$item_discrimination)
+    
+    if(length(unique(all_effs$sum_ideal_effects$model_id))==1 || !is.null(plot_model_id)) {
       
-      outplot <- outplot + facet_wrap(~Type + model_id,scales="free_x")
+      if(!is.null(plot_model_id)) {
+        
+        message(paste0("Filtering estimates to model ID ",plot_model_id))
+        
+        all_effs$sum_ideal_effects <- all_effs$sum_ideal_effects %>% 
+          filter(model_id==plot_model_id)
+        
+      }
+      
+      # only a single model type to plot
+      outplot <- all_effs$sum_ideal_effects %>% 
+                ggplot(aes(y=mean_est,
+                           x=reorder(item_id,mean_est))) +
+                  geom_linerange(aes(ymin=low_est,
+                                     ymax=high_est,
+                                     colour=item_discrimination)) +
+                  ggthemes::theme_tufte() + 
+                  scale_colour_viridis_c(name="Item\nDiscrimination",
+                                         limits = c(min_scale,
+                                                    max_scale),
+                                         breaks = custom_labels(c(min_scale,
+                                                                  max_scale),
+                                                                scale_ends)$breaks,
+                                         labels = custom_labels(c(min_scale, 
+                                                                  max_scale),
+                                                                scale_ends)$labels) +
+                  coord_flip() +
+                  labs(y=paste0("Marginal Change in Probability of ",unique(all_effs$sum_ideal_effects$model_id_label)),
+                       x="Items",
+                       caption=paste0("Marginal effect of ",calc_param," on ", unique(all_effs$sum_ideal_effects$model_id_label)), " for a specific item.") +
+                  geom_hline(yintercept=0,linetype=2) +
+                  ggthemes::theme_clean() +
+                  theme(axis.text.y=element_blank(),
+                        axis.ticks.y=element_blank()) +
+                  theme(legend.position = "right")
+      
+      if(!is.null(group_effects)) outplot <- outplot + facet_wrap(as.formula(paste0("~ ", group_effects)),
+                                                                  scales="free_x",ncol = facet_ncol)
       
     } else {
-      if(unique(object@score_data@score_matrix$model_id) %in% c(1,2,3,4,5,6,7,8,13,14)) {
-        outplot <- outplot + scale_y_continuous(labels=scales::percent)
-      }
-      outplot <- outplot + facet_wrap(~Type)
+      
+      if(!is.null(group_effects)) message("Can't subset by groups due to multiple models. Please pass a value for plot_model_id to plot a specific model type and facet the plot by group.")
+      
+      # multiple model types to plot
+      
+      outplot <- all_effs$sum_ideal_effects %>% 
+        ggplot(aes(y=mean_est,
+                   x=reorder(item_id,mean_est))) +
+        geom_linerange(aes(ymin=low_est,
+                           ymax=high_est,
+                           colour=item_discrimination)) +
+        ggthemes::theme_tufte() + 
+        scale_colour_viridis_c(name="Item\nDiscrimination",
+                               limits = c(min_scale,
+                                                                     max_scale),
+                               breaks = custom_labels(c(min_scale,
+                                                        max_scale),
+                                                      scale_ends)$breaks,
+                               labels = custom_labels(c(min_scale, 
+                                                        max_scale),
+                                                      scale_ends)$labels) +
+        coord_flip() +
+        facet_wrap(~model_id_label,scales="free_x",ncol = facet_ncol) +
+        labs(y=paste0("Marginal Change in Probability of ",unique(all_effs$sum_ideal_effects$model_id_label)),
+             x="Items",
+             caption=paste0("Marginal effect of ",calc_param," on a ", tolower(unique(all_effs$sum_ideal_effects$model_id_label))), "\nfor each item/indicator in the model.") +
+        geom_hline(yintercept=0,linetype=2) +
+        ggthemes::theme_clean() +
+        theme(axis.text.y=element_blank(),
+              axis.ticks.y=element_blank()) +
+        theme(legend.position = "right")
+      
+      
+      
     }
     
-    
-    outplot
-    
-    invisible(all_plots)
-    
+    # if(unique(object@score_data@score_matrix$model_id)>1) {
+    #   
+    #   outplot <- outplot + facet_wrap(~Type + model_id,scales="free_x")
+    #   
+    # } else {
+    #   if(unique(object@score_data@score_matrix$model_id) %in% c(1,2,3,4,5,6,7,8,13,14)) {
+    #     outplot <- outplot + scale_y_continuous(labels=scales::percent)
+    #   }
+    #   outplot <- outplot + facet_wrap(~Type)
+    # }
+    # 
     
   } else {
     
@@ -1510,10 +1314,11 @@ id_plot_cov <- function(object,
                                                 discrim_reg_cov=object@score_data@item_cov,
                                                 discrim_infl_cov=object@score_data@item_cov_miss)
     
-    mcmc_intervals(to_plot) + xlab("Ideal Point Score")
+    outplot <- mcmc_intervals(to_plot) + xlab("Ideal Point Score")
     
-    invisible(as_draws_df(to_plot))
   }
+  
+  return(outplot)
   
 }
 

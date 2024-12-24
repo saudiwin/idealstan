@@ -19,9 +19,9 @@ id_plot_ppc(
   item = NULL,
   combine_item = TRUE,
   type = NULL,
-  only_observed = NULL,
   which_mod = NULL,
   prompt_plot = TRUE,
+  observed_only = FALSE,
   ...
 )
 </code></pre>
@@ -71,9 +71,41 @@ If NULL (default), will use the type specified in the data.
 However, if both continuous and discrete items are present, will
 throw an error if NULL.
 </td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="observed_only">observed_only</code></td>
+<td>
+If the outcome is discrete and has missing data inflation, 
+set to TRUE to only see the observed responses in the plot or FALSE to see all of the
+responses (missing data category will be the largest).
+</td></tr>
 <tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="...">...</code></td>
 <td>
 Other arguments passed on to <code>ppc_bars</code>
 </td></tr>
 </table>
+
+
+### Details
+
+This function is a wrapper around <code>ppc_bars</code>,
+<code>ppc_dens_overlay</code> and 
+<code>ppc_violin_grouped</code> that plots the posterior predictive distribution
+derived from <code>id_post_pred</code> against the original data. 
+Because <code>idealstan</code> allows for different distributions for each item,
+this function can either produce one predictive distribution for all items 
+(the default) or it can produce one distribution for each item 
+(set <code>combine_item</code> to <code>FALSE</code>). The latter is helpful if you have mixed 
+distributions between items, such as continuous and dichotomous values. 
+You can also subset the 
+posterior predictions over
+legislators/persons or
+bills/item sby specifying the ID of each in the original data as a character vector. 
+Only persons or items can be specified,
+not both.
+
+If you specify a value for <code>group</code> that is either a person ID or a group ID 
+(depending on whether a person or group-level model was fit), then you can see the 
+posterior distributions for those specific persons. Similarly, if an item ID is passed
+to <code>item</code>, you can see how well the model predictions compare to the true values
+for that specific item.
+
 

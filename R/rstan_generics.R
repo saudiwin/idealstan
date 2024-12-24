@@ -45,6 +45,8 @@ setGeneric('id_post_pred',signature='object',
 #' @param item_subset Whether to calculate marginal effects for only a subset of 
 #' items. Should be item IDs that match the \code{item_id} column passed to the \code{id_make}
 #'  function.
+#' @param pred_outcome In the case of ordinal responses, the number of the category to
+#' predict. Defaults to top category.
 #' @param type Whether to produce posterior predictive values (\code{'predict'}, the default),
 #' the posterior expected (average) values (\code{'epred'}),
 #' or log-likelihood values (\code{'log_lik'}). See the How to Evaluate Models vignette for more info.
@@ -67,6 +69,7 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,
                                                                 covar="person",
                                                                 sample_scores=NULL,
                                                                 item_subset=NULL,
+                                                                pred_outcome=NULL,
                                                                 use_cores=1,
                                                                 use_chain=NULL,...) {
   
@@ -420,6 +423,7 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,
                                      pr_vote=item$pr_vote,
                                      N=length(person_points[this_obs]),
                                      ordinal_outcomes=1:unique(object@score_data@score_matrix$ordered_id[this_obs]),
+                                     pred_outcome=pred_outcome,
                                      inflate=item$model_id %in% c(2,4,6,8,10,12,14,16),
                                      latent_space=item$model_id %in% c(13,14),
                                      time_points=time_points[this_obs],
@@ -492,6 +496,7 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,
                               pr_vote=item$pr_vote,
                               N=length(person_points[this_obs]),
                               ordinal_outcomes=1:unique(object@score_data@score_matrix$ordered_id[this_obs]),
+                              pred_outcome=pred_outcome,
                               inflate=item$model_id %in% c(2,4,6,8,10,12,14,16),
                               latent_space=item$model_id %in% c(13,14),
                               time_points=time_points[this_obs],

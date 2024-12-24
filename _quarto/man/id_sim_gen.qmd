@@ -34,7 +34,8 @@ A function designed to simulate IRT ideal point data.
   prior_type = "gaussian",
   ordinal_outcomes = 3,
   inflate = FALSE,
-  sigma_sd = 1
+  sigma_sd = 1,
+  phi = 1
 )
 </code></pre>
 
@@ -157,7 +158,11 @@ If <code>TRUE</code>, an missing-data-inflated dataset is produced.
 </td></tr>
 <tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="sigma_sd">sigma_sd</code></td>
 <td>
-If a normal or log-normal distribution is being fitted, this parameter gives the standard 
+If a normal or log-normal distribution is being fitted, this parameter gives the standard
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="phi">phi</code></td>
+<td>
+The phi (dispersion) parameter for the ordered beta distribution
 deviation of the outcome (i.e. the square root of the variance).
 </td></tr>
 </table>

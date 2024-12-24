@@ -35,7 +35,7 @@
     
   }
   
-  names(restrict_ind_high) <- fix_high
+  if(!is.null(restrict_ind_high)) names(restrict_ind_high) <- fix_high
   
   if(length(restrict_ind_low) > 1 && length(fix_low)==1) {
     
@@ -43,7 +43,7 @@
     
   }
   
-  names(restrict_ind_low) <- fix_low
+  if(!is.null(restrict_ind_low)) names(restrict_ind_low) <- fix_low
   
   
   if(use_subset==TRUE || sample_it==TRUE) {
@@ -282,10 +282,10 @@
                              restrict_sd_low=restrict_sd_low,
                              restrict_N_high=restrict_N_high,
                              restrict_N_low=restrict_N_low,
-                             restrict_high=idealdata@restrict_ind_high,
-                             restrict_low=idealdata@restrict_ind_low,
-                             fix_high=as.numeric(names(idealdata@restrict_ind_high)),
-                             fix_low=as.numeric(names(idealdata@restrict_ind_low)))
+                             restrict_high=restrict_ind_high,
+                             restrict_low=restrict_ind_low,
+                             fix_high=as.numeric(names(restrict_ind_high)),
+                             fix_low=as.numeric(names(restrict_ind_low)))
   
   # need to create new data if map_rect is in operation 
   # and we have missing values / ragged arrays
@@ -510,6 +510,9 @@
                         num_restrict_low=num_restrict_low,
                         const_type=const_type)
   
+  restrict_ind_high <- idealdata@restrict_ind_high
+  restrict_ind_low <- idealdata@restrict_ind_low
+  
   if(("outcome_cont" %in% names(idealdata@score_matrix)) && ("outcome_disc" %in% names(idealdata@score_matrix))) {
     Y_int <- idealdata@score_matrix$outcome_disc
     Y_cont <- idealdata@score_matrix$outcome_cont
@@ -553,10 +556,10 @@
                              restrict_sd_low=restrict_sd_low,
                              restrict_N_high=restrict_N_high,
                              restrict_N_low=restrict_N_low,
-                             restrict_high=idealdata@restrict_ind_high,
-                             restrict_low=idealdata@restrict_ind_low,
-                             fix_high=as.numeric(names(idealdata@restrict_ind_high)),
-                             fix_low=as.numeric(names(idealdata@restrict_ind_low)))
+                             restrict_high=restrict_ind_high,
+                             restrict_low=restrict_ind_low,
+                             fix_high=as.numeric(names(restrict_ind_high)),
+                             fix_low=as.numeric(names(restrict_ind_low)))
   
   idealdata <- remove_list$idealdata
   
@@ -706,12 +709,12 @@
                     const_type=switch(const_type,
                                       persons=1L,
                                       items=2L),
-                    num_restrict_high=length(idealdata@restrict_ind_high),
-                    num_restrict_low=length(idealdata@restrict_ind_low),
-                    restrict_high=idealdata@restrict_ind_high,
-                    restrict_low=idealdata@restrict_ind_low,
-                    fix_high=as.numeric(names(idealdata@restrict_ind_high)),
-                    fix_low=as.numeric(names(idealdata@restrict_ind_low)),
+                    num_restrict_high=length(restrict_ind_high),
+                    num_restrict_low=length(restrict_ind_low),
+                    restrict_high=restrict_ind_high,
+                    restrict_low=restrict_ind_low,
+                    fix_high=as.numeric(names(restrict_ind_high)),
+                    fix_low=as.numeric(names(restrict_ind_low)),
                     num_diff=gp_num_diff,
                     pos_discrim=as.integer(sign(discrim_reg_upb)==sign(discrim_reg_lb)),
                     grainsize=grainsize,

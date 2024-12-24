@@ -3,86 +3,104 @@ title: "Introduction to Idealstan"
 author: "Robert Kubinec"
 date: last-modified
 format: html
+cache: true
 vignette: >
   %\VignetteIndexEntry{Time-Varying Ideal Points}
   %\VignetteEngine{R.rsp::asis}
   %\VignetteEncoding{UTF-8}
 ---
 
-
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE,warning=FALSE,fig.align = 'center',fig.width=6, fig.height=5)
+options(cmdstanr_warn_inits = FALSE)
 library(idealstan)
 library(dplyr)
 library(ggplot2)
 library(tidyr)
+library(tinytable)
 ```
 
 *Note: To report bugs with the package, please file an issue on the [Github page](https://github.com/saudiwin/idealstan/issues).*
 
 **If you use this package, please cite the following:**
 
-Kubinec, Robert. "Generalized Ideal Point Models for Time-Varying and Missing-Data Inference". Working Paper.
+Kubinec, Robert. "Generalized Ideal Point Models for Time-Varying and Missing-Data Inference". Working Paper. <https://doi.org/10.31219/osf.io/8j2bt>.
 
 **Note: At present, `idealstan` uses the `cmdstanr` package, which is not on CRAN and must be installed separately. Please see below for instructions.**
 
 This package implements IRT (item response theory) ideal point models, which are models designed for situations in which actors make strategic choices that correlate with a unidimensional scale, such as the left-right axis in American politics, disagreement over product design in consumer choice, or psychometric scales in which the direction that items load on the latent scale is unknown. Compared to traditional IRT, ideal point models examine the polarizing influence of a set of items on a set of persons, and has similarities to models based on Euclidean latent spaces, such as multi-dimensional scaling. In fact, this package also implements a version of the latent space model for binary outcomes, which is an alternate formulation of an ideal point model.
 
-The goal of `idealstan` is to offer a wide variety of ideal point models that can model missing-data, time-varying ideal points, and incorporate a range of outcomes, including binary outcomes, counts, continuous and ordinal responses. In addition, `idealstan` uses the Stan estimation engine to offer full and variational Bayesian inference for all models so that every model is estimated with uncertainty. Variational inference provides a means to estimate Bayesian models on very large data sets when full Bayesian estimation is impractical. The package also exploits variational inference to automatically identify models instead of requiring users to pre-specify which persons or items in the data to constrain in advance.
+The goal of `idealstan` is to offer a wide variety of ideal point models that can model missing-data, time-varying ideal points, and incorporate a range of outcomes, including binary outcomes, counts, continuous and ordinal responses. In addition, `idealstan` uses the Stan estimation engine to offer full and variational Bayesian inference for all models so that every model is estimated with uncertainty. Variational inference–specifically the [Pathfinder algorithm](https://mc-stan.org/docs/reference-manual/pathfinder.html)–provides informative starting values to ensure convergence, and for very large models, the possibility of estimating ideal points when full MCMC is impractical. However, the MCMC algorithm has the ability to parallelize within chains using multiple cores, which makes it possible to estimate much larger models with full Bayesian inference than was previously possible.
 
-However, variational inference can fail and it is difficult to diagnose when it will do so. For that reason, the preferred approach is to use full MCMC inference with multiple computer cores per chain to permit parallel processing (explained below) when there is a need to speed up computation. Variational inference should only be used for exploratory analysis or when there are no other alternatives.
-
-The approach to handling missing data in this package is to model directly strategic censoring in observations. This particular version was developed to account for legislatures in which legislators (persons) are strategically absent for votes on bills (items), but it applies to any social choice situation in which actors' failure to respond to an item may be a function of their ideal point. This approach to missing data can be usefully applied to many contexts in which a missing outcome is a function of the person's ideal point (i.e., people will tend to be present in the data when the item is far away or very close to their ideal point). If missingness does not appear to arise as a function of ideal points, the models will still incorporate missing data but will assume it is essentially random.
+The approach to handling missing data in this package is to model cases where missing data is a function of a person's ideal point. In other words, the package will adjust estimates if missingness appears to be correlated with either high or low values of the latent trait. This general missing data adjustment can be usefully applied to many contexts in which a missing outcome is a function of the person's ideal point (i.e., people will tend to be present in the data when the item is far away or very close to their ideal point). If missingness does not appear to arise as a function of ideal points, the models will still incorporate missing data but will assume it is random conditional on each item.
 
 The package includes the following models:
 
-1. IRT 2-PL (binary response) ideal point model, no missing-data inflation
-2. IRT 2-PL ideal point model (binary response) with missing- inflation
-3. Ordinal IRT (rating scale) ideal point model no missing-data inflation
-4. Ordinal IRT (rating scale) ideal point model with missing-data inflation
-5. Ordinal IRT (graded response) ideal point model no missing-data inflation
-6. Ordinal IRT (graded response) ideal point model with missing-data inflation
-7. Poisson IRT (Wordfish) ideal point model with no missing data inflation
-8. Poisson IRT (Wordfish) ideal point model with missing-data inflation
-9. Continuous (Gaussian) IRT ideal point model with no missing data
-10. Continuous (Gaussian) IRT ideal point model with missing-data inflation
-11. Positive-Continuous (Log-normal) IRT ideal point model with no missing data
-12. Positive-Continuous (Log-normal) IRT ideal point model with missing-data inflation
-13. Latent Space (binary response) ideal point model with no missing data
-14. Latent Space (binary response) ideal point model with missing-data inflation
+| Model ID | Model Type | Response Type | Missing Data Adjustment |
+|-----------------|-----------------------|-----------------|-----------------|
+| 1 | IRT 2-PL | Binary | No |
+| 2 | IRT 2-PL | Binary | Yes |
+| 3 | IRT rating scale | Ordinal | No |
+| 4 | IRT rating scale | Ordinal | Yes |
+| 5 | IRT graded response | Ordinal | No |
+| 6 | IRT graded response | Ordinal | Yes |
+| 7 | IRT 2-PL (Wordfish) | Poisson | No |
+| 8 | IRT 2-PL (Wordfish) | Poisson | Yes |
+| 9 | IRT 2-PL | Continuous (Normal) | No |
+| 10 | IRT 2-PL | Continuous (Normal) | Yes |
+| 11 | IRT 2-PL | Positive-Continuous (Log-Normal) | No |
+| 12 | IRT 2-PL | Positive-Continuous (Log-Normal) | Yes |
+| 13 | Latent Space | Binary | No |
+| 14 | Latent Space | Binary | Yes |
+| 15 | IRT 2-PL | Ordered Beta: Proportion (0 to 1 Inclusive) | No |
+| 16 | IRT 2-PL | Ordered Beta: Proportion (0 to 1 Inclusive) | Yes |
 
-In addition, all of these models can be estimated with either time-varying or static ideal points if a column of dates for each item is passed to the model function. This package implements the standard time-varying ideal point model by Martin and Quinn (2002) in which ideal points follow a random walk, i.e., in each time period the ideal points can jump in a random direction. In addition, I have implemented a stationary AR(1) ideal point process for situations in which the random walk model does not appropriately reflect over-time change in ideal points. For more information, please see the vignette about time-varying models.
+: `idealstan` List of Specifications {#tbl-models}
 
-The package also has extensive plotting functions via `ggplot2` for model parameters, particularly the legislator (person) ideal points (ability parameters).
+In addition, all of these models can be estimated with either time-varying or static ideal points if a column of dates for each item is passed to the model function (see the [Time Series](https://saudiwin.github.io/idealstan/vignettes/Time_Series.html) vignette). This package implements a range of time series processes (random walk, AR(1), Gaussian processes, and splines). The package also has extensive plotting functions via `ggplot2` for model parameters, particularly the legislator (person) ideal points (ability parameters).
 
-This vignette demonstrates basic usage of the package. I first show some crucial installation pre-requisities. 
+This vignette demonstrates how to load data into the package, estimate static ideal points, and also calculate ideal point marginal effects for hierarchical predictors of ideal points.
 
 ## Installation Instructions
 
-To use `idealstan`, you first have to have both `cmdstanr`, an R package, installed and `cmdstan`, the underlying MCMC library. Unfortunately, `cmdstanr` is not yet available on CRAN, but you can read complete installation instructions on this page: https://mc-stan.org/cmdstanr/articles/cmdstanr.html.
+To use `idealstan`, you first have to have both `cmdstanr`, an R package, installed and `cmdstan`, the underlying MCMC library. Unfortunately, `cmdstanr` is not yet available on CRAN. Simply use the following command to install the package:
 
-Assuming you install `cmdstan` using the functions provided in the package, please allow it to install in the default location. Otherwise you will always have to pass the path of the `cmdstan` installation to `id_estimate`. 
+``` r
+# we recommend running this in a fresh R session or restarting your current session
+install.packages("cmdstanr", repos = c('https://stan-dev.r-universe.dev', getOption("repos")))
+```
 
+Then you will need to install `cmdstan`, which is the Stan engine. You can do so by loading `cmdstanr` and using the function `install_cmdstan`:
+
+``` r
+library(cmdstanr)
+install_cmdstan()
+```
+
+There are some pre-requisites to using `cmdstan` as you need to be able to compile models on your machine. For example, with Mac OS X you will first need to install Xcode from the Apple App Store. For more details, see complete installation instructions on this page: <https://mc-stan.org/cmdstanr/articles/cmdstanr.html>.
+
+Assuming you install `cmdstan` using the functions provided in the package, please allow it to install in the default location.
 
 ## Simulation of Ordinal IRT with Missing Data
 
 To begin with, we can simulate data from an ordinal ideal-point model in which there are three possible responses corresponding to a legislator voting: yes, abstain and no. An additional category is also simulated that indicates whether a legislator shows up to vote or is absent, which traditional IRT models would record as missing data and would drop from the estimation. This package can instead utilize missing data via a hurdle model in which the censoring of the vote/score data is estimated as a function of individual item/bill intercepts and discrimination parameters for the decision to be absent or present. In other words, if the missing data is a reflection of the person's ideal point, such as more conservative legislators refusing to show up to vote, than the model will make use of this missing data to infer additional information about the legislators' ideal points.
 
-The function `id_sim_gen()` allows you to simulate data from any of the fourteen models currently implemented in `idealstan` (see previous list). To include missing data, specify the `inflate` option as `TRUE`. For example, here we sample data from an ordinal graded response model:
+The function `id_sim_gen()` allows you to simulate data from any of the sixteen models currently implemented in `idealstan` (see previous list). To include missing data, specify the `inflate` option as `TRUE`. For example, here we sample data from an ordinal graded response model:
 
 ```{r sim_data}
 
 ord_ideal_sim <- id_sim_gen(model='ordinal_grm',inflate = T)
-knitr::kable(as_data_frame(head(ord_ideal_sim@score_matrix)))
+
+tt(head(ord_ideal_sim@score_matrix))
 ```
 
 The vote/score matrix in the `idealdata` object `ord_ideal_sim` has legislators/persons in the rows and bills/items in the columns. The `outcome_disc` column has the simulated 3-category ordered outcome.
 
-The function `id_estimate` will take this processed data and run an IRT ideal point model. To specify the model type, simply include the number of the model in the `id_estimate` function. It is also possible to have multiple outcome types in a given model, which requires passing the `model_id` option in the `id_make` function with a given model number per item in the data. The package also includes the ability to incorporate hierarchical (person or item-level) covariates, as discussed below.
+The function `id_estimate` will take this processed data and run an IRT ideal point model with the model ID . To specify the model type, either include the model ID from @tbl-models as the `model_id` argument in the `id_estimate` function *or*, in the case of multiple models/item types, pass a column `model_id` to the `id_make` function that specifies the model ID for each row in the data. This latter option is useful when you have items of mixed types, such as binary, ordinal and/or continuous items. The function `id_make` also includes the ability to incorporate hierarchical (person or item-level) covariates, as discussed below.
 
-To speed up processing, all of the models in this vignette make use of multiple core parallel computation. To use this option, the specified number of available cores in the `ncores` option must exceed the number of MCMC chains `nchains`. `cmdstanr` will automatically assign cores by dividing the number of chains by the number of cores. In all of the examples in this vignette, I use a machine with 16 cores and estimate 2 chains, so there are 8 cores per chain. By default, `id_estimate` parallelizes over persons, although that can be changed to items with the `map_over_id` option (only works with static models).
+To speed up processing, all of the models shown in @tbl-models make use of multiple core parallel computation. To use this option, the specified number of available cores in the `ncores` option must exceed the number of MCMC chains `nchains`. `cmdstanr` will automatically assign cores by dividing the number of chains by the number of cores. In all of the examples in this vignette, I use a machine with 8 cores and estimate 2 chains, so there are 4 cores per chain. By default, `id_estimate` parallelizes over persons, although that can be changed to items with the `map_over_id` option (only works with static models).
 
-The package has options for identification that are similar to other IRT packages in which the IDs of legislators/persons to constrain are specified to the `id_estimate` function. For example, we can use the true values of the simulated legislators to constrain one legislator/person with the highest simulated ideal point and one legislator/person with the lowest ideal point. Each constrained parameter must be fixed to a specific value, preferably at either end of the ideal point spectrum, to identify the model. In particular, two pieces of information are necessary: a value for the high ideal point, and the difference between the high and low points. In this example I pre-specify which parameters to constrain based on the simulated data, and leave the pinned values at their defaults, which are +1 and -1.
+The package has options for identification that are similar to other IRT packages in which the IDs of legislators/persons to constrain are specified to the `id_estimate` function. For example, we can use the true values of the simulated legislators to constrain one legislator/person with the highest simulated ideal point and one legislator/person with the lowest ideal point. Each constrained parameter must be fixed to a specific value, preferably at either end of the ideal point spectrum, to identify the model. In particular, two pieces of information are necessary: a value for the high ideal point, and the difference between the high and low points. In this example I pre-specify which parameters to constrain based on the simulated data as `restrict_ind_high` and `restrict_ind_low`, and use the actual values to pin the parameters to specific values with `fix_high` and `fix_low`.
 
 ```{r constrain_sim}
 true_legis <- ord_ideal_sim@simul_data$true_person
@@ -107,9 +125,9 @@ We can then check and see how well the Stan estimation engine was able to captur
 id_plot_legis(ord_ideal_est,show_true = TRUE)
 ```
 
-Given the small amount of data used to estimate the model, the imprecision with which the ideal points were recovered is not surprising.
+Given the small amount of data used to estimate the model, the imprecision with which the ideal points were recovered is not surprising. However, the uncertainty intervals generally include the true values, indicating a model that is functioning correctly at recovering estimates even with substantial measurement error.
 
-To automatically identify the model, simply change the `fixtype` option to `'vb_full'`. By default, the model will select the highest and lowest ideal points to constrain by running an approximation to the full posterior using `cmdstanr`'s `pathfinder()` function. While this method works, the exact rotation is not known a priori, and so it may produce a different result with multiple runs. Note that there will be two `pathfinder` runs as the first run identifies the parameters to constrain and the second is used to create starting values for the Hamiltonian Monte Carlo estimation. 
+To automatically identify the model (that is, identify people to fix high or low), simply change the `fixtype` option to `'vb_full'`. By default, the model will select the highest and lowest ideal points to constrain by running an approximation to the full posterior using `cmdstanr`'s `pathfinder()` function. While this method works, the exact rotation is not known a priori, and so it may produce a different result with multiple runs. Note that there will be two `pathfinder` runs as the first run identifies the parameters to constrain and the second is used to create starting values for the Hamiltonian Monte Carlo estimation.
 
 For example, using our simulated data and identifying the model automatically with `'vb_full'`:
 
@@ -128,11 +146,11 @@ id_plot_rhats(ord_ideal_est)
 id_plot_legis(ord_ideal_est,show_true = T)
 ```
 
-In general, it is always a good idea to check the Rhats before proceeding with further analysis. Identification of time-varying ideal point models can be more complicated and is discussed in the accompanying vignette. As can be seen above, while the Pathfinder algorithm can identify a mode, it may not be the mode that is theoretically interesting.
+In general, it is always a good idea to check the Rhats before proceeding with further analysis. Identification of time-varying ideal point models can be more complicated and is discussed in the accompanying vignette. As can be seen above, while the Pathfinder algorithm will usually identify *a* unique rotation of the ideal points without using any other prior information, it may not be the rotation that is theoretically interesting. For that reason, I recommend specifying persons or items to pin to specific values for applied use of the package as I show in the next section.
 
 # Empirical Example: U.S. Senate
 
-This package was developed for datasets that are in a long format, i.e., one row per person/legislator, item/bill, and any other covariate. This data format departs from the traditional way of storing/using IRT/ideal point data, which is more commonly stored in a wide format with legislators/persons in the rows and items/bills in the columns. 
+This package was developed for datasets that are in a long format, i.e., one row per person/legislator, item/bill, and any other covariates. This data format departs from the traditional way of storing/using IRT/ideal point data, which is more commonly stored in a wide format with legislators/persons in the rows and items/bills in the columns.
 
 To demonstrate how the package functions empirically, I include in the package a partial voting record of the 114th Senate (excluding rollcall votes without significant disagreement) from the website [www.voteview.com](http://www.voteview.com). We can convert this data, which is provided in a long data frame, to an `idealdata` object suitable for estimation by using the `id_make` function. Because the intention is to fit a binary outcome model (yes or no votes on bills), I recode the outcome to be 0 for no votes and 1 for yes votes as `idealstan` expects binary outcomes to be coded this way.
 
@@ -142,7 +160,7 @@ We can first take a look at the raw data:
 
 data('senate114')
 
-knitr::kable(select(head(senate114),1:8))
+tt(select(head(senate114),1:8))
 
 table(senate114$cast_code)
 
@@ -152,9 +170,9 @@ First, you can see that the data are in long form because there is one row for e
 
 The table shows that there are roughly twice as many yes votes versus no votes, with a small minority of absences. In this case, absences can be counted as missing data.
 
-To create an `idealdata` object for modeling from our long data frame, we pass it to the `id_make` function and specify the names of the columns that correspond to person IDs, item IDs, group IDs (i.e., party), time IDs and the outcome, although only person, item and outcome are required for the function to work for a static model. Because this is a discrete model, we pass the column name for the outcome to the `outcome_disc` argument. If we also had continuous models and data, we would need to specify the `model_id` column with the correct model number (see table above) and put all continuous (real) data in a separate column which we could pass to the `outcome_cont` argument.
+To create an `idealdata` object for modeling from our long data frame, we pass it to the `id_make` function and specify the names of the columns that correspond to person IDs, item IDs, group IDs (i.e., party), time IDs and the discrete outcome, although only person, item and outcome are required for the function to work for a static model. Because this is a discrete model, we pass the column name for the outcome to the `outcome_disc` argument. If we also had items with multiple outcome distributions, we would need to specify the `model_id` column with the correct model number for each item (see @tbl-models) and put all continuous (real) data in a separate column which we could pass to the `outcome_cont` argument.
 
-Note that all missing data should be coded as NA before passing it to `id_make`. 
+Note that all missing data should be coded as `NA` before passing it to `id_make`.
 
 There are many other columns in the `senate114` data. These can be used as person or item/bill covariates, as is discussed at the end of the vignette, but are essentially ignored unless specified to the `id_make` function.
 
@@ -173,9 +191,9 @@ senate_data <- id_make(senate114,outcome_disc = 'cast_code',
 
 ```
 
-We can then run a binary IRT ideal point model in which absences on particular bills are treated as a "hurdle" that the legislator must overcome in order to show up to vote. To do so, we specify `model_type=2`, which signifies a binary IRT model with missing-data (absence) inflation (see list above). In essence, the model is calculating a separate ideal point position for each bill/item that represents the bill's importance to different senators. Only if a bill is relatively salient will a legislator choose to show up and vote.
+We can then run a binary IRT ideal point model in which absences on particular bills are treated as a "hurdle" that the legislator must overcome in order to show up to vote. To do so, we specify `model_type=2`, which signifies a binary IRT model with missing-data (absence) inflation (see list in @tbl-models). In essence, the model is calculating a separate ideal point position for each bill/item that represents the bill's importance to different senators. Only if a bill is relatively salient will a legislator choose to show up and vote.
 
-This same missing-data mechanism also applies more broadly to situations of social choice. Any time that missing data might be a function of ideal points--people with certain ideal points are likely to avoid giving an answer--then these values should be marked as `NA` in the data and an inflated model type should be used. 
+This same missing-data mechanism also applies more broadly to situations of social choice. Any time that missing data might be a function of ideal points--people with certain ideal points are likely to avoid giving an answer--then these values should be marked as `NA` in the data and an inflated model type should be used. Otherwise, the missing data will be ignored during estimation.
 
 <!-- Because this dataset is relatively large, we will use the `use_vb` option to use Stan's variational Bayesian inference. This version of the sampler is less accurate and tends to underestimate uncertainty, but it runs much, much faster. Generally speaking, the values of the ideal points are close to the full posterior, and it is useful for exploratory model-building even with small datasets. For very large data, `use_vb` is the only viable option as estimation times may require days or longer.  -->
 
@@ -185,7 +203,7 @@ It is important to note that the model can also be identified by fixing item (bi
 
 <!-- Rather than specify the exact values to pin the legislators to, I set `fixtype` to `'vb_partial'` so that the function will first fit an un-identified model, and then use those estimates to determine what would be good values to pin these legislators to. Using `'vb_partial'` is the recommended way to identify models while using prior information about the direction of the latent scale as it avoids having to fix these ideal points to specific values. It will also create starting values for the ideal points that should speed convergence.  -->
 
-To make the model fit faster, I set `nchains` at 2 and `ncores` at 16, which will allow for 8 cores to be used per chain for parallel processing (assuming of course the computer has access to 16 cores). 
+To make the model fit faster, I set `nchains` at 2 and `ncores` at 8, which will allow for 4 cores to be used per chain for parallel processing (assuming of course the computer has access to 8 cores).
 
 ```{r run_114_model,fig.height=7}
 sen_est <- id_estimate(senate_data,
@@ -213,7 +231,7 @@ To look at the bill's absence midpoints, simply change the `item_plot_type` para
 
 ```{r abs_item_plot,fig.height=8}
 
-id_plot(sen_est,person_ci_alpha=0.1,item_plot='225',
+id_plot_legis(sen_est,person_ci_alpha=0.1,item_plot='225',
         item_plot_type='inflated') + 
   scale_color_manual(values=c(D='blue',R='red',I='green'))
 ```
@@ -226,7 +244,7 @@ We can obtain summary estimates of all the ideal points and item/bill discrimina
 
 ```{r ideal_pts_sum}
 ideal_pts_sum <- summary(sen_est,pars='ideal_pts')
-knitr::kable(head(ideal_pts_sum))
+tt(head(ideal_pts_sum))
 ```
 
 `Parameter Name` is the name of the parameter in the underlying Stan code, which can be useful f you want to peruse the fitted Stan model (and can be accessed as given in the code below). The name of the parameters for ideal points in the Stan model is `L_full` (as seen in the summary from above).
@@ -245,15 +263,12 @@ If we know the name of the Stan parameter, we can look at the trace plot to see 
 stan_trace(sen_est,par='L_full[1]')
 ```
 
-
 Finally we can also extract all of the posterior iterations to do additional calculations that average over posterior uncertainty by changing the `aggregate` option in `summary`. In the following code, I access the individual posterior iterations for the item/bill parameters, including difficulty (average probability of voting yes), discrimination (how strongly the item/bill loads on either end of the ideal point scale) and the midpoints (position where someone with that ideal point would be indifferent to voting yes/no).
 
 ```{r ideal_pts_ind}
 item_all <- summary(sen_est,pars='items', aggregate=F)
 knitr::kable(head(item_all))
 ```
-
-
 
 ## Hierarchical Covariates
 
@@ -293,138 +308,56 @@ sen_est_cov <- id_estimate(senate_data,
 
 ```
 
-As discussed in the associated working paper (https://osf.io/preprints/osf/8j2bt), ideal point marginal effects can be derived from `idealstan` models in which the raw relationship between the hierarchical covariates and the actual outcomes (in this case, votes) can be shown at the item (vote) level. At present, this feature is not yet implemented in a function, but it can be calculated using code as shown below for a given covariate. In this case, we will look at the marginal effect of age on votes conditional on party affiliation. To do so, we will extract the hierarchical covariate effects from the underlying `cmdstanr` model and then use the `id_post_pred`, which allows us to predict the outcome given new data, to calculate the effects.
+As discussed in the associated working paper (<https://osf.io/preprints/osf/8j2bt>), ideal point marginal effects can be derived from `idealstan` models in which the raw relationship between the hierarchical covariates and the actual outcomes (in this case, votes) can be shown at the item (vote) level. There are two functions that can be used to calculate and display ideal point marginal effects. The first, `id_me`, shown in the chunks, below, will produce data frames with summaries ideal point marginal effects given a covariate and also data frames with one row per posterior draw that are useful for further analysis or aggregation.
 
-```{r marg_effect}
+In the example below, ideal point marginal effects are calculated for the `"age"` covariate, first for the whole dataset and then for all distinct values of `"group_id"`, which is party ID in our data. This latter calculation is especially useful as we interaction `age` with `group_id`, and by calculating marginal effects for each distinct subset of `group_id` we can learn what the conditional marginal effect is by party ID.
 
-# First make two new datasets that have different values for age
-# difference is quite small (0.001)
-# This is for numerical differentiation as described in the working paper
-# We need to begin with our original dataset that we passed to the id_make function
+```{r examine_effects}
 
-  # parameter for the change we will calculate, just needs to be very small
-  eps <- 1e-5
-  
-  new_data1 <- mutate(senate114,
-                      age = age - eps / 2)
-  
-  new_data2 <- mutate(senate114,
-                      age = age + eps / 2)
-  
-  # now predict new outcome distributions given these slightly different datasets
-  # use draws="all" to avoid comparing different draws to each other
-  
-  sen_mod_pred1 <- id_post_pred(sen_est_cov,newdata=new_data1,
-                                 use_cores=4,
-                                draws="all",
-                                 type="epred")
-    
-  sen_mod_pred2 <- id_post_pred(sen_est_cov,newdata=new_data2,
-                                 use_cores=4,
-                                draws="all",
-                                 type="epred")
-  
-  # now we need to difference the datasets at the item level to calculate the effects
-  # this will create some lists that will then be appended together to a big data frame
-  # with one observation per posterior draw
-  
-    print("Looping over items")
-    
-    # difference the predictions
-  
-  c1 <- purrr::map2(sen_mod_pred1[[1]],
-                    sen_mod_pred2[[1]],
-                    function(small,big) {
-                      
-                      # difference the effects
-                      
-                      (big - small)/eps
-                      
-                    })
-  
-  # combine into datasets for each item with item id + person (senator) id
-  
-  c2 <- lapply(c1, function(mat) {
-    
-    out_data <- attr(mat, "data")
-    colnames(mat) <- out_data$person_id
-    
-    as_tibble(mat) %>% 
-      mutate(draws=1:n(),
-             item_id=unique(out_data$item_id)) %>% 
-      gather(key="person_id",value="estimate",-draws,-item_id) %>% 
-      mutate(person_id=as.numeric(person_id),
-             estimate=as.numeric(estimate))
-    
-  }) %>% bind_rows
-  
-  # merge in some original data
-  to_merge <- mutate(sen_est_cov@score_data@score_matrix, 
-                     item_orig=item_id,
-                     person_orig=person_id,
-                     person_id=as.numeric(person_id),
-                     item_id=as.numeric(item_id)) %>% 
-    select(person_id, item_id, group_id,item_orig, person_orig) %>% 
-    distinct
-  
-  # add in party data so we can calculate party-specific effects
-  
-  c2 <- left_join(c2, to_merge, 
-                  by=c("item_id","person_id"))
-  
-  # get effect separately by each item and party
-  # first have to aggregate to party level by draw, then take average by item
-  
-   by_party <- group_by(c2, draws, group_id, item_id, item_orig) %>% 
-    summarize(mean_est1=mean(estimate)) %>% 
-    group_by(group_id, item_id, item_orig) %>% 
-    summarize(mean_est=mean(mean_est1),
-              low_est=quantile(mean_est1, .05),
-              high_est=quantile(mean_est1, .95))
-   
-   # merge in item discrimination to add some color / show high-discrim votes
-   
-   item_discrim <- filter(sen_est_cov@summary,
-                         grepl(x=variable, pattern="sigma\\_reg\\_free")) %>% 
-    mutate(item_id=as.numeric(stringr::str_extract(variable, "[0-9]+")))
-   
-   by_party <- left_join(by_party,
-                        select(item_discrim, median, item_id))
-   
-   # plot the result
-   
-   by_party %>% 
-    mutate(group_id=factor(group_id,levels=c("D","R","I"),
-                           labels=c("Democrats", "Republicans","Independent"))) %>% 
-    ggplot(aes(y=mean_est,
-               x=reorder(item_id,mean_est))) +
-    geom_linerange(aes(ymin=low_est,
-                       ymax=high_est,
-                       colour=`median`)) +
-    facet_wrap(~group_id,scales="free_x") +
-    ggthemes::theme_tufte() + 
-    scale_colour_viridis_c(name="Discrimination") +
-    coord_flip() +
-    labs(y="Marginal Change in Probability of Voting",
-         x="Rollcalls",
-         caption="Marginal effect of age on voting on a specific rollcall in the Senate.") +
-    geom_hline(yintercept=0,linetype=2) +
-    ggthemes::theme_clean() +
-    theme(axis.text.y=element_blank(),
-          axis.ticks.y=element_blank()) +
-  theme(legend.position = "bottom")
+  # calculate marginal effects for age subset by item
+
+  marg_effs <- id_me(sen_est_cov,covariate="age")
+
+  head(marg_effs$ideal_effects) %>% 
+    tt
+
+  head(marg_effs$sum_ideal_effects) %>% 
+    tt
 
 ```
 
+```{r examine_effects_grouped}
 
+  # now group marginal effects by group_id (party ID)
 
-Because these covariates are on the ideal point scale, the meaning of the scale in terms of party ideology must be kept in mind in order to interpret the plot. The way to interpret these plots is that for Republicans, increasing age is associated with voting for bills that are more conservative, while for Democrats, the opposite is true. In other words, older party members tend to vote for bills that are ideologically more extreme than younger party members, though the relationship is strongest for Republicans vs. others. Keeping the direction of the scale in mind is crucial for understanding hierarchical covariates in ideal point models.
+  marg_effs_grouped <- id_me(sen_est_cov,covariate="age",
+                     group_effects="group_id")
+
+  marg_effs_grouped$sum_ideal_effects %>% 
+    arrange(item_id, group_id) %>% 
+    slice(1:10) %>% 
+    tt
+
+```
+
+In addition to the data frames of the results, the `id_plot_cov` can take the same arguments, calculate the ideal point marginal effects and then plot them. If we pass a grouping variable, the `id_plot_cov` function will plot marginal effects in distinct facets for each level of the grouping variable. If there are multiple model ID types, the function will produce distinct facets for each model ID type (note that only one kind of facetting can be used for a given plot).
+
+```{r plot_marg_effect}
+   
+   # plot the result
+   
+   sen_est_cov %>% 
+     id_plot_cov(calc_param="age",group_effects="group_id",
+                 label_high="Conservative",
+                 label_low="Liberal")
+
+```
+
+Because these covariates are on the ideal point scale, the meaning of the scale in terms of party ideology must be kept in mind in order to interpret the plot. The way to interpret these plots is that older Democrats tend to be more likely to vote for conservative bills, while younger Democrats vote more for liberal bills. The relationship does not hold true for Republicans, who are roughly equally as likely to vote for liberal or conservative bills regardless of age. Keeping the direction of the scale in mind–which is shown on the plot as the colour of the item discrimination for each vote–is crucial for understanding hierarchical covariates in ideal point models.
 
 We can also extract the covariate summary values using the `summary` function:
 
 ```{r cov_values}
 cov_sum <- summary(sen_est_cov,pars='person_cov')
-knitr::kable(cov_sum)
+tt(cov_sum)
 ```
-
-

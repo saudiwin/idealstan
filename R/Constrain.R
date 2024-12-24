@@ -54,6 +54,9 @@
     
   }
   
+  names(restrict_ind_high) <- val_high
+  names(restrict_ind_low) <- val_low
+  
   object@restrict_num_high <- val_high
   object@restrict_num_low <- val_low
   object@restrict_ind_high <- restrict_ind_high

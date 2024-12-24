@@ -11,7 +11,7 @@ Authors@R: c(person("Robert","Kubinec", role = c("aut","cre"),
               person("Trustees of Columbia University",role='cph'))
 BugReports: https://github.com/saudiwin/idealstan/issues
 Description: Offers item-response theory (IRT) ideal-point estimation for binary, ordinal, counts and continuous responses with time-varying and missing-data inference. Full and approximate Bayesian sampling with 'Stan' (<https://mc-stan.org/>). 
-License: GPL
+License: MIT
 Depends: 
     methods,
     R (>= 4.0.0)
@@ -39,7 +39,8 @@ Suggests:
     lubridate,
     rstan,
     shinystan,
-    pscl
+    pscl,
+    tinytable
 Encoding: UTF-8
 LazyData: true
 NeedsCompilation: yes

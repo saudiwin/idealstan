@@ -27,7 +27,7 @@ uncertainties of legislator/persons and bills/items.
   person_ci_alpha = 0.2,
   show_true = FALSE,
   group_color = TRUE,
-  hpd_limit = 10,
+  hpd_limit = NULL,
   sample_persons = NULL,
   ...
 )
@@ -107,7 +107,7 @@ If <code>TRUE</code>, give each group/bloc a different color
 </td></tr>
 <tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="hpd_limit">hpd_limit</code></td>
 <td>
-The greatest absolute difference in high-posterior density interval shown for any point. Useful for excluding imprecisely estimated persons/legislators from the plot. Leave NULL if you don't want to exclude any.
+The greatest absolute difference in high-posterior density interval shown for any point. Useful for excluding imprecisely estimated persons/legislators from the plot. Default is NULL if you don't want to exclude any.
 </td></tr>
 <tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="sample_persons">sample_persons</code></td>
 <td>

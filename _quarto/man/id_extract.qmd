@@ -27,3 +27,11 @@ Other arguments passed on to underlying functions
 </td></tr>
 </table>
 
+
+### Details
+
+This generic will extract the full <code>stan</code> posterior samples from <code>idealstan</code> objects.
+
+See the corresponding method definition for more information about what you can acccess with this generic.
+
+

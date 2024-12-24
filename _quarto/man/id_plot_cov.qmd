@@ -16,17 +16,16 @@ with respect to either end of the latent variable.
 
 <pre><code class='language-R'>id_plot_cov(
   object,
-  calc_varying = T,
-  label_high = "Liberal",
-  label_low = "Conservative",
+  calc_param = NULL,
+  label_high = "High",
+  label_low = "Low",
   cov_type = "person_cov",
-  use_items = "all",
+  plot_model_id = NULL,
   pred_outcome = NULL,
   high_quantile = 0.95,
   low_quantile = 0.05,
-  filter_cov = NULL,
   new_cov_names = NULL,
-  recalc_vals = NULL
+  ...
 )
 </code></pre>
 
@@ -38,11 +37,14 @@ with respect to either end of the latent variable.
 <td>
 A fitted <code>idealstan</code> object
 </td></tr>
-<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="calc_varying">calc_varying</code></td>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="calc_param">calc_param</code></td>
 <td>
-Whether to marginalize covariate effects over 
-discrimination parameters to calculate a meaningful quantity for the effect of
-covariates on the latent scale (see vignette). Defaults to <code>TRUE</code>
+Whether to calculate ideal point marginal effects for
+a given covariate. If NULL, the default, the function will instead produce
+a plot of the raw coefficients from the ideal point model. If passing the
+name of a covariate, should be a character value of a column in the data 
+passed to the
+<code>id_make</code> function.
 </td></tr>
 <tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="label_high">label_high</code></td>
 <td>
@@ -60,11 +62,17 @@ Either <code>'person_cov'</code> for person or group-level hierarchical paramete
 <code>'discrim_reg_cov'</code> for bill/item discrimination parameters from regular (non-inflated) model, and 
 <code>'discrim_infl_cov'</code> for bill/item discrimination parameters from inflated model.
 </td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="plot_model_id">plot_model_id</code></td>
+<td>
+The integer of the model ID to plot. If NULL and there
+are multiple model types, <code>facet_wrap</code> will be used to produce multiple
+plots with one for each model type.
+</td></tr>
 <tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="pred_outcome">pred_outcome</code></td>
 <td>
 For discrete models with more than 2 categories, 
 or binary models with missing data, which outcome to predict. This should 
-be a character value that matches what the outcome was coded as in the data
+be the value that matches what the outcome was coded as in the data
 passed to <code>id_make</code>.
 </td></tr>
 <tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="high_quantile">high_quantile</code></td>
@@ -77,11 +85,6 @@ calculating credible intervals
 The lower limit of the posterior density to use for
 calculating credible intervals
 </td></tr>
-<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="filter_cov">filter_cov</code></td>
-<td>
-A character vector of coefficients from covariate plots to exclude from
-plotting (should be the names of coefficients as they appear in the plots)
-</td></tr>
 <tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="new_cov_names">new_cov_names</code></td>
 <td>
 A character vector of length equal to the number
@@ -89,13 +92,14 @@ of covariates (plus 1 for the intercept) to change the default labels.
 To see the default labels, use the plot function with this option blank.
 The character vector should be of th form used by
 </td></tr>
-<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="recalc_vals">recalc_vals</code></td>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="...">...</code></td>
 <td>
-A character value of length three that can be used to create
-a new variable that is a sum of two other variables. The first two values of the
-character vector are the names of these parameters, while the third value is the name
-of the new combined variable. Note that if the parameters are renamed, the new names
-should be used in this option.
+Additional argument passed on to <code>id_me</code>
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="filter_cov">filter_cov</code></td>
+<td>
+A character vector of coefficients from covariate plots to exclude from
+plotting (should be the names of coefficients as they appear in the plots)
 </td></tr>
 </table>
 

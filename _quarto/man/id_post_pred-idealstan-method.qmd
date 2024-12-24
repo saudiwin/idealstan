@@ -24,15 +24,16 @@ Also see <code>help("posterior_predict", package = "rstanarm")</code>
 <pre><code class='language-R'>## S4 method for signature 'idealstan'
 id_post_pred(
   object,
+  newdata = NULL,
   draws = 100,
   output = "observed",
   type = "predict",
   covar = "person",
   sample_scores = NULL,
   item_subset = NULL,
+  pred_outcome = NULL,
   use_cores = 1,
   use_chain = NULL,
-  newdata = NULL,
   ...
 )
 </code></pre>
@@ -44,6 +45,12 @@ id_post_pred(
 <tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="object">object</code></td>
 <td>
 A fitted <code>idealstan</code> object
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="newdata">newdata</code></td>
+<td>
+Optional: pass a data frame that must have all of the predictors that
+were given to the id_make function. Used to generate predictions from person or item
+covariates on to items.
 </td></tr>
 <tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="draws">draws</code></td>
 <td>
@@ -79,16 +86,19 @@ Whether to calculate marginal effects for only a subset of
 items. Should be item IDs that match the <code>item_id</code> column passed to the <code>id_make</code>
 function.
 </td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="pred_outcome">pred_outcome</code></td>
+<td>
+In the case of ordinal responses, the number of the category to
+predict. Defaults to top category.
+</td></tr>
 <tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="use_cores">use_cores</code></td>
 <td>
 Number of cores to use for multicore parallel processing with
 the base R <code>parallel</code> package
 </td></tr>
-<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="newdata">newdata</code></td>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="use_chain">use_chain</code></td>
 <td>
-Optional: pass a data frame that must have all of the predictors that
-were given to the id_make function. Used to generate predictions from person or item
-covariates on to items.
+ID of MCMC chain to use rather than all chains (the default).
 </td></tr>
 <tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="...">...</code></td>
 <td>

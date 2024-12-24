@@ -489,7 +489,7 @@ setMethod('id_model',signature(object='idealdata'),
                    ncores=NULL,
                    const_type=NULL,
                    use_groups=NULL) {
-
+            
             x <- object@score_matrix
   
             
@@ -541,12 +541,21 @@ setMethod('id_model',signature(object='idealdata'),
               
               if(is.character(restrict_ind_high)) {
                 if(const_type=="items") {
-                  restrict_ind_high <- which(levels(object@score_matrix$item_id) %in% restrict_ind_high)
+                  n_old <- names(restrict_ind_high)
+                  restrict_ind_high <- as.numeric(restrict_ind_high,
+                                                  levels=levels(object@score_matrix$item_id))
+                  names(restrict_ind_high) <- n_old
                 } else {
                   if(use_groups) {
-                    restrict_ind_high <- which(levels(object@score_matrix$group_id) %in% restrict_ind_high)
+                    n_old <- names(restrict_ind_high)
+                    restrict_ind_high <- as.numeric(factor(restrict_ind_high,
+                                                    levels=levels(object@score_matrix$group_id)))
+                    names(restrict_ind_high) <- n_old
                   } else {
-                    restrict_ind_high <- which(levels(object@score_matrix$person_id) %in% restrict_ind_high)
+                    n_old <- names(restrict_ind_high)
+                    restrict_ind_high <- as.numeric(factor(restrict_ind_high,
+                                                    levels=levels(object@score_matrix$person_id)))
+                    names(restrict_ind_high) <- n_old
                   }
                   
                 }
@@ -555,12 +564,21 @@ setMethod('id_model',signature(object='idealdata'),
               
               if(is.character(restrict_ind_low)) {
                 if(const_type=="items") {
-                  restrict_ind_low <- which(levels(object@score_matrix$item_id) %in% restrict_ind_low)
+                  n_old <- names(restrict_ind_low)
+                  restrict_ind_low <- as.numeric(factor(restrict_ind_low,
+                                                 levels=levels(object@score_matrix$item_id)))
+                  names(restrict_ind_low) <- n_old
                 } else {
                   if(use_groups) {
-                    restrict_ind_low <- which(levels(object@score_matrix$group_id) %in% restrict_ind_low)
+                    n_old <- names(restrict_ind_low)
+                    restrict_ind_low <- as.numeric(factor(restrict_ind_low,
+                                                   levels=levels(object@score_matrix$group_id)))
+                    names(restrict_ind_low) <- n_old
                   } else {
-                    restrict_ind_low <- which(levels(object@score_matrix$person_id) %in% restrict_ind_low)
+                    n_old <- names(restrict_ind_low)
+                    restrict_ind_low <- as.numeric(factor(restrict_ind_low,
+                                                   levels=levels(object@score_matrix$person_id)))
+                    names(restrict_ind_low) <- n_old
                   }
                   
                 }
@@ -799,6 +817,219 @@ setMethod(launch_shinystan,signature(object='idealstan'),
               stop("You need to install version 3.0.0 of package shinystan. To do so, use remotes::install_github('stan-dev/shinystan', ref='v3-alpha') ")
             }
             
+          })
+
+#' Calculate ideal point marginal effects
+#' 
+#' This function allows you to calculate ideal point marginal effects for a
+#' given person-level hierarchical covariate.
+#' 
+#' This function will calculate item-level ideal point marginal effects
+#' for a given covariate that was passed to the `id_make` function using the
+#' `person_cov` option. The function will iterate over all items in the model
+#' and use numerical differentiation to calculate responses in the scale of the
+#' outcome for each item. Note: if the covariate is binary (i.e., only has two values),
+#' then the function will calculate the difference between these two values instead of
+#' using numerical differentation.
+#' 
+#' @returns Returns a tibble that has one row per posterior draw per item-specific
+#' marginal effect in the scale of th eoutcome.
+#' @param object A fitted \code{idealstan} model
+#' @param covariate The character value for a covariate passed to the
+#' `id_make` function before model fitting. Only one covariate can be processed
+#' at a time.
+#' @param eps The value used for numerical differentiation. Default is 1e-4. Usually 
+#' does not need to be changed.
+#' @export
+setGeneric('id_me',
+           signature='object',
+           function(object,...) standardGeneric('id_me'))
+
+#' Calculate ideal point marginal effects
+#' 
+#' This function allows you to calculate ideal point marginal effects for a
+#' given person-level hierarchical covariate.
+#' 
+#' This function will calculate item-level ideal point marginal effects
+#' for a given covariate that was passed to the `id_make` function using the
+#' `person_cov` option. The function will iterate over all items in the model
+#' and use numerical differentiation to calculate responses in the scale of the
+#' outcome for each item. Note: if the covariate is binary (i.e., only has two values),
+#' then the function will calculate the difference between these two values instead of
+#' using numerical differentation.
+#' 
+#' @returns A list with two objects, \code{ideal_effects} with one estimate of the 
+#' marginal effect per item and posterior draw and \code{sum_ideal_effects} with 
+#' one row per item with that item's median ideal point marginal effect with the quantiles
+#' defined by the \code{upb} and \code{lb} parameters.
+#' @param object A fitted \code{idealstan} model
+#' @param covariate The character value for a covariate passed to the
+#' `id_make` function before model fitting. Only one covariate can be processed
+#' at a time.
+#' @param group_effects character value of a covariate included in the formula passed
+#' to `id_make` for which marginal effect summaries should be grouped by. Useful
+#' when looking at the marginal effect of an interaction. Note that grouping by a covariate
+#' with many values will result in slow performance.
+#' @param pred_outcome Numeric value for level of outcome to predict for ordinal responses.
+#' Defaults to top level.
+#' @param eps The value used for numerical differentiation. Default is 1e-4. Usually 
+#' does not need to be changed.
+#' @param draws The total number of draws to use when calculating the marginal effects.
+#' Defaults to 100. Use option "all" to use all available MCMC draws.
+#' @param cores The total number of cores to use when calculating the marginal effects.
+#' Defaults to 1.
+#' @param lb The quantile for the lower bound of the aggregated effects (default is 0.05)
+#' @param upb The quantile for the upper bound of the aggregated effects (default is 0.95)
+#' @export
+setMethod('id_me',signature(object='idealstan'),
+          function(object,
+                   covariate=NULL,
+                   group_effects=NULL,
+                   pred_outcome=NULL,
+                   eps=1e-4,
+                   draws=100,
+                   cores=1,
+                   lb=0.05,
+                   upb=0.95) {
+          
+            # first need new data with the covariate differenced by eps
+            # if binary
+            # otherwise set to 1s and 0s
+            
+            # calc two separate datasets
+            # check if it's binary first
+            
+            # get original data
+            
+            func_args <- object@score_data@func_args
+            
+            is_binary <- length(unique(pull(func_args$score_data, {{covariate}} )))==2
+            
+            if(is_binary) {
+              
+              data1 <- func_args$score_data
+              
+              data0 <- mutate(func_args$score_data, {{covariate}} := 1 - .data[[covariate]])
+              
+            } else {
+              
+              data1 <- mutate(func_args$score_data, {{covariate}} := .data[[covariate]] + eps / 2)
+              
+              data0 <- mutate(func_args$score_data, {{covariate}} := .data[[covariate]] - eps / 2)
+              
+            }
+            
+            # now create predictions
+            
+            message("Creating predictions")
+            
+            # need to sample draws
+            
+            n_iters <- nrow(as_draws_matrix(object@stan_samples$draws("L_full")))
+            
+            if(draws!="all") {
+              
+              draws <- sample(1:n_iters,draws)
+              
+            }
+            
+            pred1 <- id_post_pred(object,newdata=data1,
+                                          use_cores=cores,
+                                          draws=draws,
+                                          pred_outcome=pred_outcome,
+                                          type="epred")
+            
+            pred0 <- id_post_pred(object,newdata=data0,
+                                          use_cores=cores,
+                                          draws=draws,
+                                          pred_outcome=pred_outcome,
+                                          type="epred")
+            
+            message("Differencing")
+            
+            c1 <- purrr::map2(pred0[[1]],
+                              pred1[[1]],
+                              function(small,big) {
+                                
+                                # difference the effects
+                                
+                                (big - small)/eps
+                                
+                              })
+            
+            # combine into datasets for each item with item id + person (senator) id
+            
+            c2 <- lapply(c1, function(mat) {
+              
+              out_data <- attr(mat, "data")
+              colnames(mat) <- out_data$person_id
+              
+              as_tibble(mat) %>% 
+                mutate(draws=1:n(),
+                       item_id=unique(out_data$item_id)) %>% 
+                gather(key="person_id",value="estimate",-draws,-item_id) %>% 
+                mutate(person_id=as.numeric(person_id),
+                       estimate=as.numeric(estimate))
+              
+            }) %>% bind_rows
+            
+            # merge in some original data
+            to_merge <- mutate(object@score_data@score_matrix, 
+                               item_orig=item_id,
+                               person_orig=person_id,
+                               person_id=as.numeric(person_id),
+                               item_id=as.numeric(item_id)) %>% 
+              select(person_id, item_id, group_id,item_orig, person_orig, model_id,
+                     all_of(group_effects)) %>% 
+              distinct
+            
+            # add in party data so we can calculate party-specific effects
+            
+            c2 <- left_join(c2, to_merge, 
+                            by=c("item_id","person_id"))
+            
+            # get effect separately by each item 
+            
+            if(!is.null(group_effects)) {
+              
+              message(paste0("Grouping marginal effect summaries by ", group_effects))
+              
+              group_effects <- rlang::sym(group_effects)
+              
+              sum_vals <- c2 %>% 
+                        group_by(draws, !! group_effects , item_id, item_orig, model_id) %>% 
+                summarize(mean_est1=mean(estimate)) %>% 
+                group_by( !! group_effects, item_id, item_orig, model_id) %>% 
+                summarize(mean_est=mean(mean_est1),
+                          low_est=quantile(mean_est1, lb),
+                          high_est=quantile(mean_est1, upb)) %>% 
+                ungroup
+              
+            } else {
+              
+              sum_vals <- group_by(c2, item_id, item_orig, model_id) %>% 
+                summarize(mean_est=mean(estimate),
+                          low_est=quantile(estimate, lb),
+                          high_est=quantile(estimate, upb)) %>% 
+                ungroup
+              
+            }
+            
+            
+            
+            # merge in item discrimination
+            
+            item_discrim <- filter(object@summary,
+                                   grepl(x=variable, pattern="sigma\\_reg\\_free")) %>% 
+              mutate(item_id=as.numeric(stringr::str_extract(variable, "[0-9]+")))
+            
+            sum_vals <- left_join(sum_vals,
+                                  select(item_discrim, item_discrimination='median', item_id))
+            
+            return(list(sum_ideal_effects=sum_vals,
+                        ideal_effects=c2))
+            
+          
           })
 
 #' Plot the MCMC posterior draws by chain

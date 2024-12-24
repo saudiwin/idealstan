@@ -12,7 +12,7 @@ and convergence of MCMC chains.
 ### Usage
 
 <pre><code class='language-R'>## S4 method for signature 'idealstan'
-stan_trace(object, par = "L_full[1]")
+stan_trace(object, par = "L_full[1]", ...)
 </code></pre>
 
 

@@ -31,14 +31,16 @@ website:
             file: man/id_extract.qmd
           - text: id_make
             file: man/id_make.qmd
+          - text: id_me-idealstan-method
+            file: man/id_me-idealstan-method.qmd
+          - text: id_me
+            file: man/id_me.qmd
           - text: id_plot_all_hist
             file: man/id_plot_all_hist.qmd
           - text: id_plot_compare
             file: man/id_plot_compare.qmd
           - text: id_plot_cov
             file: man/id_plot_cov.qmd
-          - text: id_plot_irf
-            file: man/id_plot_irf.qmd
           - text: id_plot_legis_dyn
             file: man/id_plot_legis_dyn.qmd
           - text: id_plot_legis_var
@@ -53,16 +55,10 @@ website:
             file: man/id_plot_rhats.qmd
           - text: id_plot_sims
             file: man/id_plot_sims.qmd
-          - text: id_plot-idealstan-method
-            file: man/id_plot-idealstan-method.qmd
-          - text: id_plot
-            file: man/id_plot.qmd
           - text: id_post_pred-idealstan-method
             file: man/id_post_pred-idealstan-method.qmd
           - text: id_post_pred
             file: man/id_post_pred.qmd
-          - text: id_rebuild_mpi
-            file: man/id_rebuild_mpi.qmd
           - text: id_sim_coverage
             file: man/id_sim_coverage.qmd
           - text: id_sim_gen
@@ -75,8 +71,6 @@ website:
             file: man/idealdata-class.qmd
           - text: idealstan-class
             file: man/idealstan-class.qmd
-          - text: idealstan
-            file: man/idealstan.qmd
           - text: launch_shinystan-idealstan-method
             file: man/launch_shinystan-idealstan-method.qmd
           - text: launch_shinystan

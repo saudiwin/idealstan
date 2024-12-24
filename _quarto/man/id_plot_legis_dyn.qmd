@@ -145,6 +145,11 @@ only a fraction of the persons/legislators.
 Whether to plot the true values of parameters if a simulation was used to generate data 
 (see <code>id_sim_gen</code>)
 </td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="use_chain">use_chain</code></td>
+<td>
+ID of MCMC chain to use rather than combining all chains. 
+Default is NULL which will use all chains and is recommended.
+</td></tr>
 <tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="add_cov">add_cov</code></td>
 <td>
 Whether to add values of hierarchical person-level covariates to the

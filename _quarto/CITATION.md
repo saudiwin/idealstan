@@ -3,8 +3,8 @@
 ```verbatim
 If you use idealstan, please cite:
 
-  Kubinec, Robert. 2018. Generalized Ideal Point Models for Time-Varying and
-  Missing-Data Inference. Working Paper.
+  Kubinec, Robert. 2018. Generalized Ideal Point Models for Time-Varying and Missing-Data
+  Inference. Working Paper.
 
 A BibTeX entry for LaTeX users is
 

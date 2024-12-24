@@ -1,0 +1,56 @@
+
+## Calculate ideal point marginal effects {.unnumbered}
+
+
+### Description
+
+This function allows you to calculate ideal point marginal effects for a
+given person-level hierarchical covariate.
+
+
+
+### Usage
+
+<pre><code class='language-R'>id_me(object, ...)
+</code></pre>
+
+
+### Arguments
+
+<table>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="object">object</code></td>
+<td>
+A fitted <code>idealstan</code> model
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="covariate">covariate</code></td>
+<td>
+The character value for a covariate passed to the
+'id_make' function before model fitting. Only one covariate can be processed
+at a time.
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="eps">eps</code></td>
+<td>
+The value used for numerical differentiation. Default is 1e-4. Usually 
+does not need to be changed.
+</td></tr>
+</table>
+
+
+### Details
+
+This function will calculate item-level ideal point marginal effects
+for a given covariate that was passed to the 'id_make' function using the
+'person_cov' option. The function will iterate over all items in the model
+and use numerical differentiation to calculate responses in the scale of the
+outcome for each item. Note: if the covariate is binary (i.e., only has two values),
+then the function will calculate the difference between these two values instead of
+using numerical differentation.
+
+
+
+### Value
+
+Returns a tibble that has one row per posterior draw per item-specific
+marginal effect in the scale of th eoutcome.
+
+
