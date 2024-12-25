@@ -3,7 +3,6 @@ title: "Introduction to Idealstan"
 author: "Robert Kubinec"
 date: last-modified
 format: html
-cache: true
 vignette: >
   %\VignetteIndexEntry{Time-Varying Ideal Points}
   %\VignetteEngine{R.rsp::asis}
@@ -37,7 +36,7 @@ The approach to handling missing data in this package is to model cases where mi
 The package includes the following models:
 
 | Model ID | Model Type | Response Type | Missing Data Adjustment |
-|-----------------|-----------------------|-----------------|-----------------|
+|-----------------|---------------------|-----------------|-----------------|
 | 1 | IRT 2-PL | Binary | No |
 | 2 | IRT 2-PL | Binary | Yes |
 | 3 | IRT rating scale | Ordinal | No |
@@ -88,6 +87,7 @@ To begin with, we can simulate data from an ordinal ideal-point model in which t
 The function `id_sim_gen()` allows you to simulate data from any of the sixteen models currently implemented in `idealstan` (see previous list). To include missing data, specify the `inflate` option as `TRUE`. For example, here we sample data from an ordinal graded response model:
 
 ```{r sim_data}
+#| cache: false
 
 ord_ideal_sim <- id_sim_gen(model='ordinal_grm',inflate = T)
 
@@ -157,6 +157,8 @@ To demonstrate how the package functions empirically, I include in the package a
 We can first take a look at the raw data:
 
 ```{r check_data}
+#| cache: false
+
 
 data('senate114')
 
@@ -243,6 +245,9 @@ The wide high-posterior density (HPD) interval of the absence midpoint ruglines 
 We can obtain summary estimates of all the ideal points and item/bill discrimination/difficulty parameters using the summary function that provides the median value of the parameters in addition to a specified posterior density interval (i.e., 5%-95%). For example, we can extract summaries for the ideal points:
 
 ```{r ideal_pts_sum}
+#| cache: false
+
+
 ideal_pts_sum <- summary(sen_est,pars='ideal_pts')
 tt(head(ideal_pts_sum))
 ```
@@ -266,8 +271,9 @@ stan_trace(sen_est,par='L_full[1]')
 Finally we can also extract all of the posterior iterations to do additional calculations that average over posterior uncertainty by changing the `aggregate` option in `summary`. In the following code, I access the individual posterior iterations for the item/bill parameters, including difficulty (average probability of voting yes), discrimination (how strongly the item/bill loads on either end of the ideal point scale) and the midpoints (position where someone with that ideal point would be indifferent to voting yes/no).
 
 ```{r ideal_pts_ind}
+#| cache: false
 item_all <- summary(sen_est,pars='items', aggregate=F)
-knitr::kable(head(item_all))
+tt(head(item_all))
 ```
 
 ## Hierarchical Covariates
@@ -358,6 +364,8 @@ Because these covariates are on the ideal point scale, the meaning of the scale 
 We can also extract the covariate summary values using the `summary` function:
 
 ```{r cov_values}
+#| cache: false
+
 cov_sum <- summary(sen_est_cov,pars='person_cov')
 tt(cov_sum)
 ```

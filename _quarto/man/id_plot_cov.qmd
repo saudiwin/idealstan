@@ -4,11 +4,10 @@
 
 ### Description
 
-This function will calculate marginal effects, or the first derivative
+This function will calculate and plot the ideal point marginal effects, or the first derivative
 of the IRT/ideal point model with respect to the hierarchical covariate,
-separately for the two poles of the latent variable. These two marginal
-effects permit the interpretation of the effect of the covariate on 
-with respect to either end of the latent variable.
+for each item in the model. The function <code>id_me</code> is used
+to first calculate the ideal point marginal effects.
 
 
 
@@ -19,12 +18,13 @@ with respect to either end of the latent variable.
   calc_param = NULL,
   label_high = "High",
   label_low = "Low",
-  cov_type = "person_cov",
+  group_effects = NULL,
   plot_model_id = NULL,
   pred_outcome = NULL,
-  high_quantile = 0.95,
-  low_quantile = 0.05,
-  new_cov_names = NULL,
+  lb = 0.05,
+  upb = 0.95,
+  facet_ncol = 2,
+  cov_type = "person_cov",
   ...
 )
 </code></pre>
@@ -56,12 +56,6 @@ latent scale
 What label to use on the plot for the low end of the 
 latent scale
 </td></tr>
-<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="cov_type">cov_type</code></td>
-<td>
-Either <code>'person_cov'</code> for person or group-level hierarchical parameters,
-<code>'discrim_reg_cov'</code> for bill/item discrimination parameters from regular (non-inflated) model, and 
-<code>'discrim_infl_cov'</code> for bill/item discrimination parameters from inflated model.
-</td></tr>
 <tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="plot_model_id">plot_model_id</code></td>
 <td>
 The integer of the model ID to plot. If NULL and there
@@ -75,50 +69,39 @@ or binary models with missing data, which outcome to predict. This should
 be the value that matches what the outcome was coded as in the data
 passed to <code>id_make</code>.
 </td></tr>
-<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="high_quantile">high_quantile</code></td>
-<td>
-The upper limit of the posterior density to use for 
-calculating credible intervals
-</td></tr>
-<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="low_quantile">low_quantile</code></td>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="lb">lb</code></td>
 <td>
 The lower limit of the posterior density to use for
 calculating credible intervals
 </td></tr>
-<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="new_cov_names">new_cov_names</code></td>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="upb">upb</code></td>
 <td>
-A character vector of length equal to the number
-of covariates (plus 1 for the intercept) to change the default labels.
-To see the default labels, use the plot function with this option blank.
-The character vector should be of th form used by
+The upper limit of the posterior density to use for 
+calculating credible intervals
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="facet_ncol">facet_ncol</code></td>
+<td>
+If facetting by multiple models or grouped factors, sets the 
+number of columns in the multiple plots
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="cov_type">cov_type</code></td>
+<td>
+Either <code>'person_cov'</code> for person or group-level hierarchical parameters,
+<code>'discrim_reg_cov'</code> for bill/item discrimination parameters from regular (non-inflated) model, and 
+<code>'discrim_infl_cov'</code> for bill/item discrimination parameters from inflated model.
 </td></tr>
 <tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="...">...</code></td>
 <td>
 Additional argument passed on to <code>id_me</code>
-</td></tr>
-<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="filter_cov">filter_cov</code></td>
-<td>
-A character vector of coefficients from covariate plots to exclude from
-plotting (should be the names of coefficients as they appear in the plots)
 </td></tr>
 </table>
 
 
 ### Details
 
-Because the marginal effects are always with respect to a given
-outcome/response, the outcome to be predicted must be specified 
-in <code>pred_outcome</code>. If it is not specified, the function
-will prompt you to select one of the outcome's values in the data.
-
 The ends of the latent variable can be specified via the 
 <code>label_low</code> and <code>label_high</code> options, which will use those
-labels in the ensuing plot.
-
-To exclude parameters from the plot, use the <code>filter_cov</code> option. 
-Note that the parameters must be specified using the underlying model 
-syntax (however they are labeled in the plot). You can also change
-the names of parameters using the <code>new_cov_names</code> option.
+labels for item discrimination.
 
 Note that the function produces a <code>ggplot2</code> object, which can 
 be further modified with <code>ggplot2</code> functions.

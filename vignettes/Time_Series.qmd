@@ -2,7 +2,6 @@
 title: "Time-Varying Ideal Points"
 author: "Robert Kubinec"
 date: last-modified
-cache: true
 format: html
 vignette: >
   %\VignetteIndexEntry{Time-Varying Ideal Points}

@@ -15,6 +15,7 @@ given person-level hierarchical covariate.
 id_me(
   object,
   covariate = NULL,
+  group_effects = NULL,
   pred_outcome = NULL,
   eps = 1e-04,
   draws = 100,
@@ -37,6 +38,13 @@ A fitted <code>idealstan</code> model
 The character value for a covariate passed to the
 'id_make' function before model fitting. Only one covariate can be processed
 at a time.
+</td></tr>
+<tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="group_effects">group_effects</code></td>
+<td>
+character value of a covariate included in the formula passed
+to 'id_make' for which marginal effect summaries should be grouped by. Useful
+when looking at the marginal effect of an interaction. Note that grouping by a covariate
+with many values will result in slow performance.
 </td></tr>
 <tr><td style = "white-space: nowrap; font-family: monospace; vertical-align: top"><code id="pred_outcome">pred_outcome</code></td>
 <td>
