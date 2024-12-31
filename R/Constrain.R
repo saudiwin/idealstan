@@ -52,6 +52,9 @@
     val_high <- items[restrict_ind_high]
     val_low <- items[restrict_ind_low]
     
+    fix_high <- sort(items,decreasing=T)[1:num_restrict_high]
+    fix_low <- sort(items,decreasing=F)[1:num_restrict_high]
+    
   }
   
   names(restrict_ind_high) <- val_high
