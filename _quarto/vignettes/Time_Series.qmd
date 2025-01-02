@@ -12,10 +12,12 @@ vignette: >
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE,message = FALSE,warning=FALSE,fig.align = 'center',fig.width=6, fig.height=5)
-require(idealstan)
-require(dplyr)
-require(ggplot2)
-require(lubridate)
+library(idealstan)
+library(dplyr)
+library(ggplot2)
+library(lubridate)
+
+options(cmdstanr_warn_inits = FALSE)
 ```
 
 *Note: To report bugs with the package, please file an issue on the [Github page](https://github.com/saudiwin/idealstan/issues).*
