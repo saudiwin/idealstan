@@ -86,10 +86,7 @@ See below.}
 
 \item{inflate_zero}{If the outcome is distributed as Poisson (count/unbounded integer), 
 setting this to 
-\code{TRUE} will fit a traditional zero-inflated model. 
-To use correctly, the value for 
-zero must be passed as the \code{miss_val} option to \code{\link{id_make}} before
-running a model so that zeroes are coded as missing data.}
+\code{TRUE} will fit a traditional zero-inflated model.}
 
 \item{vary_ideal_pts}{Default \code{'none'}. If \code{'random_walk'}, \code{'AR1'}, 
 \code{'GP'}, or \code{'splines'}, a 

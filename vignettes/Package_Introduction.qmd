@@ -3,6 +3,7 @@ title: "Introduction to Idealstan"
 author: "Robert Kubinec"
 date: last-modified
 format: html
+cache: false
 vignette: >
   %\VignetteIndexEntry{Time-Varying Ideal Points}
   %\VignetteEngine{R.rsp::asis}
@@ -11,12 +12,14 @@ vignette: >
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE,warning=FALSE,fig.align = 'center',fig.width=6, fig.height=5)
-options(cmdstanr_warn_inits = FALSE)
+
 library(idealstan)
 library(dplyr)
 library(ggplot2)
 library(tidyr)
 library(tinytable)
+
+options(cmdstanr_warn_inits = FALSE)
 ```
 
 *Note: To report bugs with the package, please file an issue on the [Github page](https://github.com/saudiwin/idealstan/issues).*
@@ -36,7 +39,7 @@ The approach to handling missing data in this package is to model cases where mi
 The package includes the following models:
 
 | Model ID | Model Type | Response Type | Missing Data Adjustment |
-|-----------------|---------------------|-----------------|-----------------|
+|----|----|----|----|
 | 1 | IRT 2-PL | Binary | No |
 | 2 | IRT 2-PL | Binary | Yes |
 | 3 | IRT rating scale | Ordinal | No |

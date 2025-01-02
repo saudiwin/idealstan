@@ -1358,7 +1358,7 @@ process_init_pathfinder <- function(init, num_procs, model_variables = NULL,
 .check_quoted <- function(quoted=NULL,default_val) {
   if(is.null(quoted)) {
     quoted <- default_val
-  } else if(class(quoted)=='character') {
+  } else if(inherits(quoted,'character')) {
     quoted <- as.name(quoted)
     quoted <- enquo(quoted)
   } else {

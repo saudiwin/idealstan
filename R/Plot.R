@@ -124,7 +124,7 @@ id_plot_legis <- function(object,return_data=FALSE,
   }
   
   
-  if(class(object)=='idealstan') {
+  if(inherits(object,'idealstan')) {
     person_params <- .prepare_legis_data(object,
                                          high_limit=high_limit,
                                          low_limit=low_limit,include=include,
@@ -635,7 +635,7 @@ id_plot_legis_dyn <- function(object,return_data=FALSE,
 
     }
   
-  if(class(object)=='idealstan') {
+  if(inherits(object,'idealstan')) {
     person_params <- .prepare_legis_data(object,
                                          high_limit=high_limit,
                                          low_limit=low_limit,
