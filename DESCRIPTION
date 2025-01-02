@@ -4,7 +4,7 @@ Title: Robust Measurement with 'Stan'
 Version: 0.99.2
 Date: 2025-01-02
 Authors@R: c(person("Robert","Kubinec", role = c("aut","cre"),
-                     email = "rmk7@nyu.edu"),
+                     email = "bobkubinec@gmail.com"),
               person("Michal","Ovádek",role=c("ctb"),email="m.ovadek@ucl.ac.uk"),
               person("Jonah", "Gabry", role = "ctb"),
               person("Ben", "Goodrich", role = "ctb"),
