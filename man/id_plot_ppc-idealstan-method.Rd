@@ -20,9 +20,9 @@
 \arguments{
 \item{object}{A fitted idealstan object}
 
-\item{ppc_pred}{The output of the \code{\link{id_post_pred}} function on a fitted idealstan object}
+\item{ppc_pred}{The output of the \code{\link[=id_post_pred]{id_post_pred()}} function on a fitted idealstan object}
 
-\item{group}{A character vector of the person or group IDs 
+\item{group}{A character vector of the person or group IDs
 over which to subset the predictive distribution}
 
 \item{item}{A character vector of the item IDs
@@ -32,46 +32,46 @@ over which to subset the predictive distribution}
 
 \item{type}{Whether to plot "continuous" or "discrete" responses}
 
-\item{which_mod}{If you are producing one plot aggregating data across multiple items and 
+\item{which_mod}{If you are producing one plot aggregating data across multiple items and
 you have different item distributions,
 then you need to specify the item type number to plot (see function documentation in
-\code{\link{id_estimate}}).}
+\code{\link[=id_estimate]{id_estimate()}}).}
 
-\item{prompt_plot}{Whether to expect a user prompt for each plot if multiple plots 
+\item{prompt_plot}{Whether to expect a user prompt for each plot if multiple plots
 are produced (defaults to TRUE)
-If NULL (default), will use the type specified in the data. 
+If NULL (default), will use the type specified in the data.
 However, if both continuous and discrete items are present, will
 throw an error if NULL.}
 
-\item{observed_only}{If the outcome is discrete and has missing data inflation, 
+\item{observed_only}{If the outcome is discrete and has missing data inflation,
 set to TRUE to only see the observed responses in the plot or FALSE to see all of the
 responses (missing data category will be the largest).}
 
-\item{...}{Other arguments passed on to \code{\link[bayesplot]{ppc_bars}}}
+\item{...}{Other arguments passed on to \code{\link[bayesplot:PPC-discrete]{bayesplot::ppc_bars()}}}
 }
 \description{
-This function is the actual method for generating posterior distributions 
+This function is the actual method for generating posterior distributions
 from a fitted \code{idealstan} model.
 }
 \details{
-This function is a wrapper around \code{\link[bayesplot]{ppc_bars}},
-\code{\link[bayesplot]{ppc_dens_overlay}} and 
-\code{\link[bayesplot]{ppc_violin_grouped}} that plots the posterior predictive distribution
-derived from \code{\link{id_post_pred}} against the original data. 
+This function is a wrapper around \code{\link[bayesplot:PPC-discrete]{bayesplot::ppc_bars()}},
+\code{\link[bayesplot:PPC-distributions]{bayesplot::ppc_dens_overlay()}} and
+\code{\link[bayesplot:PPC-distributions]{bayesplot::ppc_violin_grouped()}} that plots the posterior predictive distribution
+derived from \code{\link[=id_post_pred]{id_post_pred()}} against the original data.
 Because \code{idealstan} allows for different distributions for each item,
-this function can either produce one predictive distribution for all items 
-(the default) or it can produce one distribution for each item 
-(set \code{combine_item} to \code{FALSE}). The latter is helpful if you have mixed 
-distributions between items, such as continuous and dichotomous values. 
-You can also subset the 
+this function can either produce one predictive distribution for all items
+(the default) or it can produce one distribution for each item
+(set \code{combine_item} to \code{FALSE}). The latter is helpful if you have mixed
+distributions between items, such as continuous and dichotomous values.
+You can also subset the
 posterior predictions over
 legislators/persons or
-bills/item sby specifying the ID of each in the original data as a character vector. 
+bills/item sby specifying the ID of each in the original data as a character vector.
 Only persons or items can be specified,
 not both.
 
-If you specify a value for \code{group} that is either a person ID or a group ID 
-(depending on whether a person or group-level model was fit), then you can see the 
+If you specify a value for \code{group} that is either a person ID or a group ID
+(depending on whether a person or group-level model was fit), then you can see the
 posterior distributions for those specific persons. Similarly, if an item ID is passed
 to \code{item}, you can see how well the model predictions compare to the true values
 for that specific item.

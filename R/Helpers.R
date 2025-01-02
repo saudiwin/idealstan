@@ -1296,7 +1296,7 @@ process_init_pathfinder <- function(init, num_procs, model_variables = NULL,
 #' single matrix to fill out an array.
 #' 
 #' @param input_matrix Either a data.frame in long mode or a single matrix
-#' @param arr_dim If \code{input_matrix} is a single matrix, \code{arr_dim} determines the length of the resulting array
+#' @param arr_dim If `input_matrix` is a single matrix, `arr_dim` determines the length of the resulting array
 #' @param row_var Unquoted variable name that identifies the data.frame column corresponding to the rows (1st dimension) of the array (must be unique)
 #' @param col_var_name Unquoted variable name that identifies the data.frame column corresponding names of the columns (2nd dimension) of the array
 #' @param col_var_value Unquoted variable name that identifies the data.frame column corresponding to the values that populate the cells of the array
@@ -3361,7 +3361,7 @@ return(as.vector(idx))
       
       # what we use for the recursion
       
-      time_func <- function(t=NULL,
+      time_func2 <- function(t=NULL,
                             points=NULL,
                             prior_est=NULL,
                             time_var_free=NULL,
@@ -3403,7 +3403,7 @@ return(as.vector(idx))
             
             if(t<max(points)) { 
               
-              time_func(t=t+1,
+              time_func2(t=t+1,
                         points=points,
                         prior_est=prior_est,
                         time_var_free=time_var_free,
@@ -3441,7 +3441,7 @@ return(as.vector(idx))
             
             if(t<max(points)) { 
             
-              time_func(t=t+1,
+              time_func2(t=t+1,
                         points=points,
                         prior_est=prior_est,
                         time_var_free=time_var_free,
@@ -3474,7 +3474,7 @@ return(as.vector(idx))
                            
                            initial <- L_tp1_var[,(time_grid$Var1==1 & time_grid$Var2==p)]
                            
-                           out_d <- time_func(t=2,
+                           out_d <- time_func2(t=2,
                                      points=1:length(unique(obj@score_data@score_matrix$time_id)),
                                      time_var_free=time_var_free,
                                      initial=initial,

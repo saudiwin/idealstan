@@ -9,26 +9,26 @@ id_plot_ppc(object, ...)
 \arguments{
 \item{object}{A fitted \code{idealstan} object}
 
-\item{...}{Other arguments passed on to \code{\link[bayesplot]{ppc_bars}}}
+\item{...}{Other arguments passed on to \code{\link[bayesplot:PPC-discrete]{bayesplot::ppc_bars()}}}
 }
 \description{
-This function is the generic method for generating posterior distributions 
-from a fitted \code{idealstan} model. Functions are documented in the 
+This function is the generic method for generating posterior distributions
+from a fitted \code{idealstan} model. Functions are documented in the
 actual method.
 }
 \details{
-This function is a wrapper around \code{\link[bayesplot]{ppc_bars}},
-\code{\link[bayesplot]{ppc_dens_overlay}} and 
-\code{\link[bayesplot]{ppc_violin_grouped}} that plots the posterior predictive distribution
-derived from \code{\link{id_post_pred}} against the original data. You can also subset the 
+This function is a wrapper around \code{\link[bayesplot:PPC-discrete]{bayesplot::ppc_bars()}},
+\code{\link[bayesplot:PPC-distributions]{bayesplot::ppc_dens_overlay()}} and
+\code{\link[bayesplot:PPC-distributions]{bayesplot::ppc_violin_grouped()}} that plots the posterior predictive distribution
+derived from \code{\link[=id_post_pred]{id_post_pred()}} against the original data. You can also subset the
 posterior predictions over
 legislators/persons or
-bills/item sby specifying the ID of each in the original data as a character vector. 
+bills/item sby specifying the ID of each in the original data as a character vector.
 Only persons or items can be specified,
 not both.
 
-If you specify a value for \code{group} that is either a person ID or a group ID 
-(depending on whether a person or group-level model was fit), then you can see the 
+If you specify a value for \code{group} that is either a person ID or a group ID
+(depending on whether a person or group-level model was fit), then you can see the
 posterior distributions for those specific persons. Similarly, if an item ID is passed
 to \code{item}, you can see how well the model predictions compare to the true values
 for that specific item.

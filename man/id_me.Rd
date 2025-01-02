@@ -9,16 +9,11 @@ id_me(object, ...)
 \arguments{
 \item{object}{A fitted \code{idealstan} model}
 
-\item{covariate}{The character value for a covariate passed to the
-`id_make` function before model fitting. Only one covariate can be processed
-at a time.}
-
-\item{eps}{The value used for numerical differentiation. Default is 1e-4. Usually 
-does not need to be changed.}
+\item{...}{Other values passed on to methods.}
 }
 \value{
 Returns a tibble that has one row per posterior draw per item-specific
-marginal effect in the scale of th eoutcome.
+marginal effect in the scale of the outcome.
 }
 \description{
 This function allows you to calculate ideal point marginal effects for a
@@ -26,8 +21,8 @@ given person-level hierarchical covariate.
 }
 \details{
 This function will calculate item-level ideal point marginal effects
-for a given covariate that was passed to the `id_make` function using the
-`person_cov` option. The function will iterate over all items in the model
+for a given covariate that was passed to the \code{id_make} function using the
+\code{person_cov} option. The function will iterate over all items in the model
 and use numerical differentiation to calculate responses in the scale of the
 outcome for each item. Note: if the covariate is binary (i.e., only has two values),
 then the function will calculate the difference between these two values instead of

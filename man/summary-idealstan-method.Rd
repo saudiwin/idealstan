@@ -16,17 +16,17 @@
 \arguments{
 \item{object}{An \code{idealstan} object fitted by \code{\link{id_estimate}}}
 
-\item{pars}{Either \code{'ideal_pts'} for person ideal points, 
+\item{pars}{Either \code{'ideal_pts'} for person ideal points,
 \code{'items'} for items/bills difficulty and discrimination parameters,
 and \code{'all'} for all parameters in the model, including incidental parameters.}
 
-\item{high_limit}{A number between 0 and 1 reflecting the upper limit of the 
+\item{high_limit}{A number between 0 and 1 reflecting the upper limit of the
 uncertainty interval (defaults to 0.95).}
 
-\item{low_limit}{A number between 0 and 1 reflecting the lower limit of the 
+\item{low_limit}{A number between 0 and 1 reflecting the lower limit of the
 uncertainty interval (defaults to 0.05).}
 
-\item{aggregated}{Whether to return summaries of the posterior values or the 
+\item{aggregated}{Whether to return summaries of the posterior values or the
 full posterior samples. Defaults to \code{TRUE}.}
 
 \item{use_chain}{ID of a specific MCMC chain to use. Default (NULL) is all the chains

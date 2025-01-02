@@ -19,13 +19,13 @@ and \code{'miss_diff'} for inflated item (bill) difficulty scores.}
 }
 \description{
 This convenience function allows you to extract the underlying \code{\link[rstan]{rstan}} posterior estimates for the full parameters
-  estimates of the \code{idealstan} model object. See \code{\link[rstan]{extract}} for the underlying function and more options.
-  
-You can use this function to access a matrix or array of the full posterior estimates of each of the parameters in an 
- \code{idealstan} object. There are available options to pick certain parameters of the model, such as the person (legislator)
- ideal points or item (bill) discrimination scores. Alternatively, you can leave the \code{extract_type} option blank and 
- receive a list of all of the available parameters. Please note that the list of parameters do not have particularly
- informative names. 
- 
- All parameters are returned in the order in which they were input into the \code{\link{id_make}} function.
+estimates of the \code{idealstan} model object. See \code{\link[rstan]{extract}} for the underlying function and more options.
+
+You can use this function to access a matrix or array of the full posterior estimates of each of the parameters in an
+\code{idealstan} object. There are available options to pick certain parameters of the model, such as the person (legislator)
+ideal points or item (bill) discrimination scores. Alternatively, you can leave the \code{extract_type} option blank and
+receive a list of all of the available parameters. Please note that the list of parameters do not have particularly
+informative names.
+
+All parameters are returned in the order in which they were input into the \code{\link{id_make}} function.
 }

@@ -51,12 +51,12 @@ id_plot_legis_var(
 \item{...}{Other options passed on to plotting function, currently ignored}
 }
 \description{
-This function can be used on a fitted \code{idealstan} object to plot the over-time variances 
+This function can be used on a fitted \code{idealstan} object to plot the over-time variances
 (average rates of change in ideal points) for all the persons/legislators in the model.
 }
 \details{
 This function will plot the person/legislator over-time variances as a vertical
-dot plot with associated high-density posterior interval (can be changed 
+dot plot with associated high-density posterior interval (can be changed
 with \code{high_limit} and \code{low_limit} options).
 }
 \examples{

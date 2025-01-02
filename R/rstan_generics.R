@@ -3,13 +3,13 @@
 
 #' Generic Method for Obtaining Posterior Predictive Distribution from Stan Objects
 #' 
-#' This function is a generic that is used to match the functions used with \code{\link[bayesplot]{ppc_bars}} to calculate
+#' This function is a generic that is used to match the functions used with [bayesplot::ppc_bars()] to calculate
 #' the posterior predictive distribution of the data given the model.
 #' 
-#' @param object A fitted \code{idealstan} object
+#' @param object A fitted `idealstan` object
 #' @param ... All other parameters passed on to the underlying function.
 #' @export
-#' @return \code{posterior_predict} methods should return a \eqn{D} by \eqn{N}
+#' @return `posterior_predict` methods should return a \eqn{D} by \eqn{N}
 #'   matrix, where \eqn{D} is the number of draws from the posterior predictive
 #'   distribution and \eqn{N} is the number of data points being predicted per
 #'   draw.
@@ -18,22 +18,22 @@ setGeneric('id_post_pred',signature='object',
            function(object,...) standardGeneric('id_post_pred'))
 
 
-#' Posterior Prediction for \code{idealstan} objects
+#' Posterior Prediction for `idealstan` objects
 #' 
 #' This function will draw from the posterior distribution, whether in terms of the outcome (prediction)
 #' or to produce the log-likelihood values.  
 #'  
 #'  This function can also produce either distribution of the 
 #'  outcomes (i.e., predictions) or the log-likelihood values of the posterior (set option 
-#'  \code{type} to \code{'log_lik'}.
+#'  `type` to `'log_lik'`.
 #'  For more information, see the package vignette How to Evaluate Models.
 #'  
 #'  You can then use functions such as 
-#'  \code{\link{id_plot_ppc}} to see how well the model does returning the correct number of categories
+#'  [id_plot_ppc()] to see how well the model does returning the correct number of categories
 #'  in the score/vote matrix. 
-#'  Also see \code{help("posterior_predict", package = "rstanarm")}
+#'  Also see `help("posterior_predict", package = "rstanarm")`
 #'
-#' @param object A fitted \code{idealstan} object
+#' @param object A fitted `idealstan` object
 #' @param newdata Optional: pass a data frame that must have all of the predictors that
 #' were given to the id_make function. Used to generate predictions from person or item
 #' covariates on to items.
@@ -43,20 +43,20 @@ setGeneric('id_post_pred',signature='object',
 #' calculate the posterior predictive distribution, which will reduce computational overhead.
 #' Only available for calculating predictive distributions, not log-likelihood values.
 #' @param item_subset Whether to calculate marginal effects for only a subset of 
-#' items. Should be item IDs that match the \code{item_id} column passed to the \code{id_make}
+#' items. Should be item IDs that match the `item_id` column passed to the `id_make`
 #'  function.
 #' @param pred_outcome In the case of ordinal responses, the number of the category to
 #' predict. Defaults to top category.
-#' @param type Whether to produce posterior predictive values (\code{'predict'}, the default),
-#' the posterior expected (average) values (\code{'epred'}),
-#' or log-likelihood values (\code{'log_lik'}). See the How to Evaluate Models vignette for more info.
+#' @param type Whether to produce posterior predictive values (`'predict'`, the default),
+#' the posterior expected (average) values (`'epred'`),
+#' or log-likelihood values (`'log_lik'`). See the How to Evaluate Models vignette for more info.
 #' @param output If the model has an unbounded outcome (Poisson, continuous, etc.), then
-#' specify whether to show the \code{'observed'} data (the default) or the binary 
-#' output \code{'missing'} showing whether an observation was predicted as missing or not
+#' specify whether to show the `'observed'` data (the default) or the binary 
+#' output `'missing'` showing whether an observation was predicted as missing or not
 #' @param covar What kind of covariates to include as part of the prediction -- either
 #' "person" (the default) or "items" if you included predictors for item discriminations.
 #' @param use_cores Number of cores to use for multicore parallel processing with
-#' the base R \code{parallel} package
+#' the base R `parallel` package
 #' @param use_chain ID of MCMC chain to use rather than all chains (the default). 
 #' @param ... Any other arguments passed on to posterior_predict (currently none available)
 #' 
@@ -587,47 +587,47 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,
     
 })
 
-#' Plot Posterior Predictive Distribution for \code{idealstan} Objects
+#' Plot Posterior Predictive Distribution for `idealstan` Objects
 #' 
 #' This function is the generic method for generating posterior distributions 
-#' from a fitted \code{idealstan} model. Functions are documented in the 
+#' from a fitted `idealstan` model. Functions are documented in the 
 #' actual method.
 #' 
-#' This function is a wrapper around \code{\link[bayesplot]{ppc_bars}},
-#' \code{\link[bayesplot]{ppc_dens_overlay}} and 
-#' \code{\link[bayesplot]{ppc_violin_grouped}} that plots the posterior predictive distribution
-#' derived from \code{\link{id_post_pred}} against the original data. You can also subset the 
+#' This function is a wrapper around [bayesplot::ppc_bars()],
+#' [bayesplot::ppc_dens_overlay()] and 
+#' [bayesplot::ppc_violin_grouped()] that plots the posterior predictive distribution
+#' derived from [id_post_pred()] against the original data. You can also subset the 
 #' posterior predictions over
 #' legislators/persons or
 #' bills/item sby specifying the ID of each in the original data as a character vector. 
 #' Only persons or items can be specified,
 #' not both.
 #' 
-#' If you specify a value for \code{group} that is either a person ID or a group ID 
+#' If you specify a value for `group` that is either a person ID or a group ID 
 #' (depending on whether a person or group-level model was fit), then you can see the 
 #' posterior distributions for those specific persons. Similarly, if an item ID is passed
-#' to \code{item}, you can see how well the model predictions compare to the true values
+#' to `item`, you can see how well the model predictions compare to the true values
 #' for that specific item.
 #' 
-#' @param object A fitted \code{idealstan} object
-#' @param ... Other arguments passed on to \code{\link[bayesplot]{ppc_bars}}
+#' @param object A fitted `idealstan` object
+#' @param ... Other arguments passed on to [bayesplot::ppc_bars()]
 #' @export
 setGeneric('id_plot_ppc',signature='object',
            function(object,...) standardGeneric('id_plot_ppc'))
 
-#' Plot Posterior Predictive Distribution for \code{idealstan} Objects
+#' Plot Posterior Predictive Distribution for `idealstan` Objects
 #' 
 #' This function is the actual method for generating posterior distributions 
-#' from a fitted \code{idealstan} model.
+#' from a fitted `idealstan` model.
 #' 
-#' This function is a wrapper around \code{\link[bayesplot]{ppc_bars}},
-#' \code{\link[bayesplot]{ppc_dens_overlay}} and 
-#' \code{\link[bayesplot]{ppc_violin_grouped}} that plots the posterior predictive distribution
-#' derived from \code{\link{id_post_pred}} against the original data. 
-#' Because \code{idealstan} allows for different distributions for each item,
+#' This function is a wrapper around [bayesplot::ppc_bars()],
+#' [bayesplot::ppc_dens_overlay()] and 
+#' [bayesplot::ppc_violin_grouped()] that plots the posterior predictive distribution
+#' derived from [id_post_pred()] against the original data. 
+#' Because `idealstan` allows for different distributions for each item,
 #' this function can either produce one predictive distribution for all items 
 #' (the default) or it can produce one distribution for each item 
-#' (set \code{combine_item} to \code{FALSE}). The latter is helpful if you have mixed 
+#' (set `combine_item` to `FALSE`). The latter is helpful if you have mixed 
 #' distributions between items, such as continuous and dichotomous values. 
 #' You can also subset the 
 #' posterior predictions over
@@ -636,14 +636,14 @@ setGeneric('id_plot_ppc',signature='object',
 #' Only persons or items can be specified,
 #' not both.
 #' 
-#' If you specify a value for \code{group} that is either a person ID or a group ID 
+#' If you specify a value for `group` that is either a person ID or a group ID 
 #' (depending on whether a person or group-level model was fit), then you can see the 
 #' posterior distributions for those specific persons. Similarly, if an item ID is passed
-#' to \code{item}, you can see how well the model predictions compare to the true values
+#' to `item`, you can see how well the model predictions compare to the true values
 #' for that specific item.
 #' 
 #' @param object A fitted idealstan object
-#' @param ppc_pred The output of the \code{\link{id_post_pred}} function on a fitted idealstan object
+#' @param ppc_pred The output of the [id_post_pred()] function on a fitted idealstan object
 #' @param combine_item Whether to combine all items together (TRUE) or create one plot for each item (FALSE)
 #' @param group A character vector of the person or group IDs 
 #' over which to subset the predictive distribution
@@ -658,11 +658,11 @@ setGeneric('id_plot_ppc',signature='object',
 #' @param which_mod If you are producing one plot aggregating data across multiple items and 
 #' you have different item distributions,
 #' then you need to specify the item type number to plot (see function documentation in
-#' \code{\link{id_estimate}}).
+#' [id_estimate()]).
 #' @param observed_only If the outcome is discrete and has missing data inflation, 
 #' set to TRUE to only see the observed responses in the plot or FALSE to see all of the
 #' responses (missing data category will be the largest).
-#' @param ... Other arguments passed on to \code{\link[bayesplot]{ppc_bars}}
+#' @param ... Other arguments passed on to [bayesplot::ppc_bars()]
 #' @export
 setMethod('id_plot_ppc',signature(object='idealstan'),function(object,
                                                                   ppc_pred=NULL,
@@ -999,7 +999,7 @@ setMethod('id_plot_ppc',signature(object='idealstan'),function(object,
 #' log-likelihood matrix. See the package vignette How to Evaluate Models 
 #' for more details.
 #' 
-#' @param ll_matrix A log-likelihood matrix as produced by the \code{\link{id_post_pred}}
+#' @param ll_matrix A log-likelihood matrix as produced by the [id_post_pred()]
 #' function
 #' @export
 derive_chain <- function(ll_matrix=NULL) {

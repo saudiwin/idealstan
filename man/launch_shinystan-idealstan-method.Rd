@@ -20,7 +20,7 @@
 }
 \description{
 This wrapper will pull the \code{rstan} samples out of a fitted \code{idealstan} model and then launch
-\code{\link[shinystan]{launch_shinystan}}. This function is useful for examining convergence statistics of the 
+\code{\link[shinystan]{launch_shinystan}}. This function is useful for examining convergence statistics of the
 underlying MCMC sampling.
 }
 \seealso{

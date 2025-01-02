@@ -1,24 +1,24 @@
 #' Create data to run IRT model
 #' 
-#' To run an IRT model using \code{idealstan}, you must first process your data using the \code{id_make} 
+#' To run an IRT model using `idealstan`, you must first process your data using the `id_make` 
 #' function. 
 #' 
 #' @details This function accepts a long data frame where one row equals one item-person (bill-legislator)
 #' observation with associated continuous or discrete outcomes/responses.
-#' You either need to include columns with specific names as required by the \code{id_make}
-#' function such as \code{person_id} for person IDs and \code{item_id} for item IDs or
+#' You either need to include columns with specific names as required by the `id_make`
+#' function such as `person_id` for person IDs and `item_id` for item IDs or
 #'  specify the names of the 
-#' columns containing the IDs to the \code{id_make} function for each column name (see examples).
+#' columns containing the IDs to the `id_make` function for each column name (see examples).
 #' The only required columns are the item/bill ID and the person/legislator ID along with an 
-#' outcome column, \code{outcome_disc} for discrete variables and \code{outcome_cont} for
+#' outcome column, `outcome_disc` for discrete variables and `outcome_cont` for
 #' continuous variables. If both columns are included, then any value can be included for 
-#' \code{outcome_disc} if there are values for \code{outcome_cont} and vice versa.
+#' `outcome_disc` if there are values for `outcome_cont` and vice versa.
 #' 
-#' If items of multiple types are included, a column \code{model_id} must be included with
-#' the model type (see \code{id_estimate} function documentation for list of model IDs)
+#' If items of multiple types are included, a column `model_id` must be included with
+#' the model type (see `id_estimate` function documentation for list of model IDs)
 #' for the response distribution, such as 
 #' 1 for binary non-inflated, etc. If an ordinal outcome is included, an additional column
-#' \code{ordered_id} must be included that has the total count of categories for that 
+#' `ordered_id` must be included that has the total count of categories for that 
 #' ordinal variable (i.e., 3 for 3 categories). 
 #' 
 #' For discrete data, it is recommended to include a numeric variable that starts at 0, such 
@@ -26,19 +26,19 @@
 #' For continuous (unbounded) data, it is recommended to standardize the outcome to improve
 #' model convergence and fit. 
 #' 
-#' Missing data should be passed as \code{NA} values in either
-#' \code{outcome_disc} or \code{outcome_cont} and will be processed internally.
+#' Missing data should be passed as `NA` values in either
+#' `outcome_disc` or `outcome_cont` and will be processed internally.
 #' 
 #' 
 #' @section Time-Varying Models:
 #' 
 #' To run a time-varying model, you need to include the name of a column with dates (or integers) that is passed 
-#' to the \code{time_id} option.
+#' to the `time_id` option.
 #' 
 #' @section Continuous Outcomes:
 #' 
 #' If the outcome is continuous, you need to pass a dataframe with one column named
-#' "outcome_disc" or pass the name of the column with the continuous data to the \code{outcome_disc}
+#' "outcome_disc" or pass the name of the column with the continuous data to the `outcome_disc`
 #' argument. 
 #' 
 #' @section Hierarchical Covariates:
@@ -46,65 +46,65 @@
 #' Covariates can be fit on the person-level ideal point parameters as well as
 #' item discrimination parameters for either the inflated (missing) or non-inflated (observed) 
 #' models. These covariates must be columns that were included with the data fed to the 
-#' \code{\link{id_make}} function. The covariate relationships are specified as 
-#' one-sided formulas, i.e. \code{~cov1 + cov2 + cov1*cov2}. To interact covariates with the 
-#' person-level ideal points you can use \code{~cov1 + person_id + cov1*person_id} and for
-#' group-level ideal poins you can use \code{~cov1 + group_id + cov1*group_id} where
-#' \code{group_id} or \code{person_id} is the same name as the name of the column 
-#' for these options that you passed to \code{id_make} (i.e., the names of the columns
+#' [id_make()] function. The covariate relationships are specified as 
+#' one-sided formulas, i.e. `~cov1 + cov2 + cov1*cov2`. To interact covariates with the 
+#' person-level ideal points you can use `~cov1 + person_id + cov1*person_id` and for
+#' group-level ideal poins you can use `~cov1 + group_id + cov1*group_id` where
+#' `group_id` or `person_id` is the same name as the name of the column 
+#' for these options that you passed to `id_make` (i.e., the names of the columns
 #' in the original data). If you are also going to model these intercepts--i.e. you are 
-#' interacting the covariate with \code{person_id} and the model is estimating ideal points
-#' at the person level--then set \code{remove_cov_int} to TRUE to avoid multicollinearity with the
+#' interacting the covariate with `person_id` and the model is estimating ideal points
+#' at the person level--then set `remove_cov_int` to TRUE to avoid multicollinearity with the
 #' ideal point intercepts.
 #' 
 #' @param score_data A data frame in long form, i.e., one row in the data for each 
-#' measured score or vote in the data or a \code{rollcall} data object from package \code{pscl}.
-#' @param outcome_disc Column name of the outcome with discrete values in \code{score_data}, default is \code{"outcome_disc"}
-#' @param outcome_cont Column name of the outcome with discrete values in \code{score_data}, default is \code{"outcome_disc"}
+#' measured score or vote in the data or a `rollcall` data object from package `pscl`.
+#' @param outcome_disc Column name of the outcome with discrete values in `score_data`, default is `"outcome_disc"`
+#' @param outcome_cont Column name of the outcome with discrete values in `score_data`, default is `"outcome_disc"`
 #' @param ordered_id Column name of the variable showing the count of categories for 
 #' ordinal/categorical items (must be at least 3 categories)
 #' @param ignore_id Optional column for identifying observations that should not be 
 #' modeled (i.e., not just treated as missing, rather removed during estimation). Should 
 #' be a binary vector (0 for remove and 1 for include). Useful for time-varying models where
 #' persons may not be present during particular periods and missing data is ignorable.
-#' @param person_id Column name of the person/legislator ID index in \code{score_data}, 
-#' default is \code{'person_id'}. Should be integer, character or factor.
-#' @param item_id Column name of the item/bill ID index in \code{score_data}, 
-#' default is \code{'item_id'}.  Should be integer, character or factor.
-#' @param time_id Column name of the time values in \code{score_data}: 
-#' optional, default is \code{'time_id'}. Should be a date or date-time class, but can be an integer
+#' @param person_id Column name of the person/legislator ID index in `score_data`, 
+#' default is `'person_id'`. Should be integer, character or factor.
+#' @param item_id Column name of the item/bill ID index in `score_data`, 
+#' default is `'item_id'`.  Should be integer, character or factor.
+#' @param time_id Column name of the time values in `score_data`: 
+#' optional, default is `'time_id'`. Should be a date or date-time class, but can be an integer
 #' (i.e., years in whole numbers).
 #' @param model_id Column name of the model/response types in the data.
-#' Default is \code{"model_id"}. Only necessary if a model with multiple 
+#' Default is `"model_id"`. Only necessary if a model with multiple 
 #' response types (i.e., binary + continuous outcomes). Must be a 
 #' column with a series
-#' of integers matching the model types in \code{\link{id_estimate}} 
+#' of integers matching the model types in [id_estimate()] 
 #' showing which row of the data matches which outcome.
-#' @param group_id Optional column name of a person/legislator group IDs (i.e., parties) in \code{score_data}. 
-#' Optional, default is \code{'group_id'}. Should be integer, character or factor.
+#' @param group_id Optional column name of a person/legislator group IDs (i.e., parties) in `score_data`. 
+#' Optional, default is `'group_id'`. Should be integer, character or factor.
 #' @param person_cov A one-sided formula that specifies the covariates
-#' in \code{score_data} that will be used to hierarchically model the person/legislator ideal points
+#' in `score_data` that will be used to hierarchically model the person/legislator ideal points
 #' @param item_cov A one-sided formula that specifies the covariates
-#' in \code{score_data} that will be used to hierarchically model the 
+#' in `score_data` that will be used to hierarchically model the 
 #' item/bill discrimination parameters for the regular model
 #' @param item_cov_miss A one-sided formula that specifies the covariates
 #' in the dataset that will be used to hierarchically model the item/bill discrimination parameters for the
 #' missing data model.
 #' @param remove_cov_int Whether to remove constituent terms from hierarchical covariates that 
-#' interact covariates with IDs like \code{person_id} or \code{item_id}. Set to \code{TRUE} if
+#' interact covariates with IDs like `person_id` or `item_id`. Set to `TRUE` if
 #' including these constituent terms would cause multi-collinearity with other terms in the model
 #' (such as running a group-level model with a group-level interaction or a person-level model
 #' with a person-level interaction).
-#' @param simul_data Optionally, data that has been generated by the \code{\link{id_sim_gen}} function.
+#' @param simul_data Optionally, data that has been generated by the [id_sim_gen()] function.
 #' @param unbounded Whether or not the outcome/response is unbounded (i.e., continuous or
 #'  Poisson). If it is, missing value 
 #'  is recoded as the maximum of the outcome + 1. 
-#' @param exclude_level A vector of any values that should be treated as \code{NA} in the response matrix. 
+#' @param exclude_level A vector of any values that should be treated as `NA` in the response matrix. 
 #' Unlike missing values, these values will be dropped from the data before 
 #' estimation rather than modeled explicitly.
-#' @param simulation If \code{TRUE}, simulated values are saved in the \code{idealdata} object for 
-#' later plotting with the \code{\link{id_plot_sims}} function
-#' @return A \code{idealdata} object that can then be used in the \code{\link{id_estimate}} function 
+#' @param simulation If `TRUE`, simulated values are saved in the `idealdata` object for 
+#' later plotting with the [id_plot_sims()] function
+#' @return A `idealdata` object that can then be used in the [id_estimate()] function 
 #' to fit a model.
 #' @export
 #' @import dplyr
@@ -498,23 +498,23 @@ id_make <- function(score_data=NULL,
   return(outobj)
 }
 
-#' Estimate an \code{idealstan} model
+#' Estimate an `idealstan` model
 #' 
-#' This function will take a pre-processed \code{idealdata} vote/score dataframe and 
+#' This function will take a pre-processed `idealdata` vote/score dataframe and 
 #' run one of the available IRT/latent space ideal point models on the data using
 #' Stan's MCMC engine.
 #' 
-#' To run an IRT ideal point model, you must first pre-process your data using the \code{\link{id_make}} function. Be sure to specify the correct options for the
+#' To run an IRT ideal point model, you must first pre-process your data using the [id_make()] function. Be sure to specify the correct options for the
 #' kind of model you are going to run: if you want to run an unbounded outcome (i.e. Poisson or continuous),
 #' the data needs to be processed differently. Also any hierarchical covariates at the person or item level
-#' need to be specified in \code{\link{id_make}}. If they are specified in \code{\link{id_make}}, than all 
+#' need to be specified in [id_make()]. If they are specified in [id_make()], than all 
 #' subsequent models fit by this function will have these covariates.
 #' 
-#' \strong{Note that for static ideal point models, the covariates are only defined for those 
-#' persons who are not being used as constraints.}
+#' **Note that for static ideal point models, the covariates are only defined for those 
+#' persons who are not being used as constraints.**
 #' 
-#' As of this version of \code{idealstan}, the following model types are available. Simply pass 
-#' the number of the model in the list to the \code{model_type} option to fit the model.
+#' As of this version of `idealstan`, the following model types are available. Simply pass 
+#' the number of the model in the list to the `model_type` option to fit the model.
 #' 
 #' \enumerate{
 #'   \item IRT 2-PL (binary response) ideal point model, no missing-data inflation
@@ -538,13 +538,13 @@ id_make <- function(score_data=NULL,
 #' @section Time-Varying Inference:
 #' 
 #' In addition, each of these models can have time-varying ideal point (person) parameters if
-#' a column of dates is fed to the \code{\link{id_make}} function. If the option \code{vary_ideal_pts} is 
-#' set to \code{'random_walk'}, \code{id_estimate} will estimate a random-walk ideal point model where ideal points 
-#' move in a random direction. If \code{vary_ideal_pts} is set to \code{'AR1'}, a stationary ideal point model 
-#' is estimated where ideal points fluctuate around long-term mean. If \code{vary_ideal_pts} 
-#' is set to \code{'GP'}, then a semi-parametric Gaussian process time-series prior will be put
-#' around the ideal points. If \code{vary_ideal_pts} 
-#' is set to \code{'splines'}, then the ideal point trajectories will be a basis spline defined by the parameters \code{spline_knots} and \code{spline_degree}. 
+#' a column of dates is fed to the [id_make()] function. If the option `vary_ideal_pts` is 
+#' set to `'random_walk'`, `id_estimate` will estimate a random-walk ideal point model where ideal points 
+#' move in a random direction. If `vary_ideal_pts` is set to `'AR1'`, a stationary ideal point model 
+#' is estimated where ideal points fluctuate around long-term mean. If `vary_ideal_pts` 
+#' is set to `'GP'`, then a semi-parametric Gaussian process time-series prior will be put
+#' around the ideal points. If `vary_ideal_pts` 
+#' is set to `'splines'`, then the ideal point trajectories will be a basis spline defined by the parameters `spline_knots` and `spline_degree`. 
 #' Please see the package vignette and associated paper for more detail
 #' about these time-varying models.
 #' 
@@ -554,7 +554,7 @@ id_make <- function(score_data=NULL,
 #' function of the persons' (legislators')
 #' ideal points. In other words,the model will take into account if people with high or low ideal points
 #' tend to have more/less missing data on a specific item/bill. Missing data should be coded
-#' as \code{NA} when it is passed to the \link{id_make} function.
+#' as `NA` when it is passed to the [id_make] function.
 #' If there isn't any relationship
 #' between missing data and ideal points, then the model assumes that the missingness is ignorable 
 #' conditional on each
@@ -566,157 +566,157 @@ id_make <- function(score_data=NULL,
 #' that is non-inflated.
 #' 
 #' Models can be either fit on the person/legislator IDs or on group-level IDs (as specified to the 
-#' \code{id_make} function). If group-level parameters should be fit, set \code{use_groups} to \code{TRUE}.
+#' `id_make` function). If group-level parameters should be fit, set `use_groups` to `TRUE`.
 #' 
 #' @section Covariates:
 #' 
 #' Covariates are included in the model if they were specified as options to the 
-#' \code{\link{id_make}} function. The covariate plots can be accessed with 
-#' \code{\link{id_plot_cov}} on a fitted \code{idealstan} model object.
+#' [id_make()] function. The covariate plots can be accessed with 
+#' [id_plot_cov()] on a fitted `idealstan` model object.
 #' 
 #' @section Identification:
 #' Identifying IRT models is challenging, and ideal point models are still more challenging 
 #' because the discrimination parameters are not constrained.
 #' As a result, more care must be taken to obtain estimates that are the same regardless of starting values. 
-#' The parameter \code{fixtype} enables you to change the type of identification used. The default, 'vb_full', 
+#' The parameter `fixtype` enables you to change the type of identification used. The default, 'vb_full', 
 #' does not require any further
 #' information from you in order for the model to be fit. In this version of identification, 
 #' an unidentified model is run using
-#' variational Bayesian inference (see \code{\link[rstan]{vb}}). The function will then select two 
+#' variational Bayesian inference (see [rstan::vb()]). The function will then select two 
 #' persons/legislators or items/bills that end up on either end of the ideal point spectrum, 
 #' and pin their ideal points
 #' to those specific values. 
 #' To control whether persons/legislator or items/bills are constrained,
-#' the \code{const_type} can be set to either \code{"persons"} or 
-#' \code{"items"} respectively. 
+#' the `const_type` can be set to either `"persons"` or 
+#' `"items"` respectively. 
 #' In many situations, it is prudent to select those persons or items 
 #' ahead of time to pin to specific values. This allows the analyst to 
 #' be more specific about what type of latent dimension is to be 
-#' estimated. To do so, the \code{fixtype} option should be set to 
-#' \code{"prefix"}. The values of the persons/items to be pinned can be passed
-#' as character values to \code{restrict_ind_high} and 
-#' \code{restrict_ind_low} to pin the high/low ends of the latent 
+#' estimated. To do so, the `fixtype` option should be set to 
+#' `"prefix"`. The values of the persons/items to be pinned can be passed
+#' as character values to `restrict_ind_high` and 
+#' `restrict_ind_low` to pin the high/low ends of the latent 
 #' scale respectively. Note that these should be the actual data values 
-#' passed to the \code{id_make} function. If you don't pass any values, 
+#' passed to the `id_make` function. If you don't pass any values, 
 #' you will see a prompt asking you to select certain values of persons/items.
 #' 
 #' The pinned values for persons/items are set by default to +1/-1, though
-#' this can be changed using the \code{fix_high} and 
-#' \code{fix_low} options. This pinned range is sufficient to identify 
+#' this can be changed using the `fix_high` and 
+#' `fix_low` options. This pinned range is sufficient to identify 
 #' all of the models
 #' implemented in idealstan, though fiddling with some parameters may be 
 #' necessary in difficult cases. For time-series models, one of the 
 #' person ideal point over-time variances is also fixed to .1, a value that
-#' can be changed using the option \code{time_fix_sd}.
-#' @param idealdata An object produced by the \code{\link{id_make}} 
+#' can be changed using the option `time_fix_sd`.
+#' @param idealdata An object produced by the [id_make()] 
 #' containing a score/vote matrix for use for estimation & plotting
 #' @param model_type An integer reflecting the kind of model to be estimated. 
 #' See below.
 #' @param inflate_zero If the outcome is distributed as Poisson (count/unbounded integer), 
 #' setting this to 
-#' \code{TRUE} will fit a traditional zero-inflated model. 
+#' `TRUE` will fit a traditional zero-inflated model. 
 #' @param ignore_db If there are multiple time periods (particularly when there are 
 #' very many time periods), you can pass in a data frame
 #' (or tibble) with one row per person per time period and an indicator column 
-#' \code{ignore} that is equal to 1 for periods that should be considered in sample
+#' `ignore` that is equal to 1 for periods that should be considered in sample
 #' and 0 for periods for periods that should be considered out of sample. This is 
 #' useful for excluding time periods from estimation for persons when they could not 
 #' be present, i.e. such as before entrance into an organization or following death.
-#' If \code{ignore} equals 0, the person's ideal point is estimated as a standard Normal
+#' If `ignore` equals 0, the person's ideal point is estimated as a standard Normal
 #' draw rather than an auto-correlated parameter, reducing computational 
 #' burden substantially.
 #' Note that there can only be one pre-sample period of 0s, one in-sample period of 1s,
 #' and one post-sample period of 0s. Multiple in-sample periods cannot be interspersed
-#' with out of sample periods. The columns must be labeled as \code{person_id}, 
-#' \code{time_id} and \code{ignore} and must match the formatting of the columns
-#' fed to the \code{id_make} function.
+#' with out of sample periods. The columns must be labeled as `person_id`, 
+#' `time_id` and `ignore` and must match the formatting of the columns
+#' fed to the `id_make` function.
 #' @param keep_param A list with logical values for different categories of paremeters which
-#' should/should not be kept following estimation. Can be any/all of \code{person_int} for 
+#' should/should not be kept following estimation. Can be any/all of `person_int` for 
 #' the person-level intercepts (static ideal points), 
-#' \code{person_vary} for person-varying ideal points,
-#' \code{item} for observed item parameters (discriminations/intercepts),
-#' \code{item_miss} for missing item parameters (discriminations/intercepts),
-#' and \code{extra} for other parameters (hierarchical covariates, ordinal intercepts, etc.).
-#' Takes the form \code{list(person_int=TRUE,person_vary=TRUE,item=TRUE,item_miss=TRUE,extra=TRUE)}.
+#' `person_vary` for person-varying ideal points,
+#' `item` for observed item parameters (discriminations/intercepts),
+#' `item_miss` for missing item parameters (discriminations/intercepts),
+#' and `extra` for other parameters (hierarchical covariates, ordinal intercepts, etc.).
+#' Takes the form `list(person_int=TRUE,person_vary=TRUE,item=TRUE,item_miss=TRUE,extra=TRUE)`.
 #' If any are missing in the list, it is assumed that those parameters will be excluded.
-#' If \code{NULL} (default), will save all parameters in output.
-#' @param grainsize The grainsize parameter for the \code{reduce_sum} 
+#' If `NULL` (default), will save all parameters in output.
+#' @param grainsize The grainsize parameter for the `reduce_sum` 
 #' function used for within-chain parallelization. The default is 1, 
 #' which means 1 chunk (item or person) per core. Set to -1. to use
 #' @param map_over_id This parameter identifies which ID variable to use to construct the 
-#' shards for within-chain parallelization. It defaults to \code{"persons"} but can also take
-#' a value of \code{"items"}. It is recommended to select whichever variable has more
+#' shards for within-chain parallelization. It defaults to `"persons"` but can also take
+#' a value of `"items"`. It is recommended to select whichever variable has more
 #' distinct values to improve parallelization.
-#' @param vary_ideal_pts Default \code{'none'}. If \code{'random_walk'}, \code{'AR1'}, 
-#' \code{'GP'}, or \code{'splines'}, a 
+#' @param vary_ideal_pts Default `'none'`. If `'random_walk'`, `'AR1'`, 
+#' `'GP'`, or `'splines'`, a 
 #' time-varying ideal point model will be fit with either a random-walk process, an 
 #' AR1 process, a Gaussian process or a spline. 
 #' Note that the spline is the easiest time-varying model to fit so long as the number
-#' of knots (option \code{spline_knots}) is significantly less than 
+#' of knots (option `spline_knots`) is significantly less than 
 #' the number of time points in the data. 
 #' See documentation for more info.
 #' @param use_subset Whether a subset of the legislators/persons should be used instead of the full response matrix
 #' @param sample_it Whether or not to use a random subsample of the response matrix. Useful for testing.
-#' @param subset_group If person/legislative data was included in the \code{\link{id_make}} function, then you can subset by
-#' any value in the \code{$group} column of that data if \code{use_subset} is \code{TRUE}.
-#' @param subset_person A list of character values of names of persons/legislators to use to subset if \code{use_subset} is 
-#' \code{TRUE} and person/legislative data was included in the \code{\link{id_make}} function with the required \code{$person.names}
+#' @param subset_group If person/legislative data was included in the [id_make()] function, then you can subset by
+#' any value in the `$group` column of that data if `use_subset` is `TRUE`.
+#' @param subset_person A list of character values of names of persons/legislators to use to subset if `use_subset` is 
+#' `TRUE` and person/legislative data was included in the [id_make()] function with the required `$person.names`
 #' column
-#' @param sample_size If \code{sample_it} is \code{TRUE}, this value reflects how many legislators/persons will be sampled from
+#' @param sample_size If `sample_it` is `TRUE`, this value reflects how many legislators/persons will be sampled from
 #' the response matrix
-#' @param nchains The number of chains to use in Stan's sampler. Minimum is one. See \code{\link[rstan]{stan}} for more info. If \code{use_vb=TRUE}, this parameter
+#' @param nchains The number of chains to use in Stan's sampler. Minimum is one. See [rstan::stan()] for more info. If `use_vb=TRUE`, this parameter
 #' will determine the number of Pathfinder paths to estimate.
-#' @param niters The number of iterations to run Stan's sampler. Shouldn't be set much lower than 500. See \code{\link[rstan]{stan}} for more info.
+#' @param niters The number of iterations to run Stan's sampler. Shouldn't be set much lower than 500. See [rstan::stan()] for more info.
 #' @param use_vb Whether or not to use Stan's Pathfinder algorithm instead of full Bayesian inference. Pros: it's much faster but can be much less accurate. Note that Pathfinder is 
 #' also used by default for finding initial starting values for sfull HMC sampling.
 #' @param warmup The number of iterations to use to calibrate Stan's sampler on a given model. Shouldn't be less than 100. 
-#' See \code{\link[rstan]{stan}} for more info.
+#' See [rstan::stan()] for more info.
 #' @param ncores The number of cores in your computer to use for parallel processing in the Stan engine. 
-#' See \code{\link[rstan]{stan}} for more info. If \code{within_chain} is set to
-#' \code{"threads"}, this parameter will determine the number of threads 
+#' See [rstan::stan()] for more info. If `within_chain` is set to
+#' `"threads"`, this parameter will determine the number of threads 
 #' (independent processes) used for within-chain parallelization.
 #' @param fixtype Sets the particular kind of identification used on the model, could be either 'vb_full' 
 #' (identification provided exclusively by running a variational identification model with no prior info), or
 #' 'prefix' (two indices of ideal points or items to fix are provided to 
-#' options \code{restrict_ind_high} and \code{restrict_ind_low}).
+#' options `restrict_ind_high` and `restrict_ind_low`).
 #'  See details for more information.
 #' @param prior_only Whether to only sample from priors as opposed to the full model
 #' with likelihood (the default). Useful for doing posterior predictive checks.
-#' @param mpi_export If \code{within_chains="mpi"}, this parameter should refer to the 
+#' @param mpi_export If `within_chains="mpi"`, this parameter should refer to the 
 #' directory where the necessary data and Stan code will be exported to. If missing, 
 #' an interactive dialogue will prompt the user for a directory. 
 #' @param id_refresh The number of times to report iterations from the variational run used to 
 #' identify models. Default is 0 (nothing output to console).
-#' @param sample_stationary If \code{TRUE}, the AR(1) coefficients in a time-varying model will be 
-#' sampled from an unconstrained space and then mapped back to a stationary space. Leaving this \code{TRUE} is 
+#' @param sample_stationary If `TRUE`, the AR(1) coefficients in a time-varying model will be 
+#' sampled from an unconstrained space and then mapped back to a stationary space. Leaving this `TRUE` is 
 #' slower but will work better when there is limited information to identify a model. If used, the
-#' \code{ar_sd} parameter should be increased to 5 to allow for wider sampling in the unconstrained space.
+#' `ar_sd` parameter should be increased to 5 to allow for wider sampling in the unconstrained space.
 #' @param ar_sd If an AR(1) model is used, this defines the prior scale of the Normal distribution. A lower number 
 #' can help 
 #' identify the model when there are few time points.
-#' @param use_groups If \code{TRUE}, group parameters from the person/legis data given in \code{\link{id_make}} will be 
+#' @param use_groups If `TRUE`, group parameters from the person/legis data given in [id_make()] will be 
 #'  estimated instead of individual parameters. 
-#' @param const_type Whether \code{"persons"} are the parameters to be 
-#' fixed for identification (the default) or \code{"items"}. Each of these
-#' pinned parameters should be specified to \code{fix_high} and \code{fix_low}
-#' if \code{fixtype} equals \code{"prefix"}, otherwise the model will
+#' @param const_type Whether `"persons"` are the parameters to be 
+#' fixed for identification (the default) or `"items"`. Each of these
+#' pinned parameters should be specified to `fix_high` and `fix_low`
+#' if `fixtype` equals `"prefix"`, otherwise the model will
 #' select the parameters to pin to fixed values.
-#' @param restrict_ind_high If \code{fixtype} is not "vb_full", a vector of character values or integer indices
+#' @param restrict_ind_high If `fixtype` is not "vb_full", a vector of character values or integer indices
 #' of a legislator/person or bill/item to pin to a high value (default +1).
-#' @param restrict_ind_low If \code{fixtype} is not "vb_full", a vector of character values or integer indices of a 
+#' @param restrict_ind_low If `fixtype` is not "vb_full", a vector of character values or integer indices of a 
 #' legislator/person or bill/item to pin to a low value (default -1). 
-#' @param num_restrict_high If using variational inference for identification (\code{fixtype="vb_full"}),
+#' @param num_restrict_high If using variational inference for identification (`fixtype="vb_full"`),
 #' how many parameters to constraint to positive values? Default is 1.
-#' @param num_restrict_low If using variational inference for identification (\code{ixtype="vb_full"}),
+#' @param num_restrict_low If using variational inference for identification (`ixtype="vb_full"`),
 #' how many parameters to constraint to positive negative values? Default is 1.
-#' @param fix_high A vector of length \code{restrict_ind_high} with values 
+#' @param fix_high A vector of length `restrict_ind_high` with values 
 #' that the high fixed person ideal point(s) should be
-#' fixed to. Default is +1. Does not apply when \code{const_type="items"}; in that case,
-#' use \code{restrict_sd}/\code{restrict_N} parameters (see below).
-#' @param fix_low A vector of length \code{restrict_ind_low} with values 
+#' fixed to. Default is +1. Does not apply when `const_type="items"`; in that case,
+#' use `restrict_sd`/`restrict_N` parameters (see below).
+#' @param fix_low A vector of length `restrict_ind_low` with values 
 #' that the high fixed person ideal point(s) should be
-#' fixed to. Default is -1. Does not apply when \code{const_type="items"}; in that case,
-#' use \code{restrict_sd}/\code{restrict_N} parameters (see below).
+#' fixed to. Default is -1. Does not apply when `const_type="items"`; in that case,
+#' use `restrict_sd`/`restrict_N` parameters (see below).
 #' @param person_sd The standard deviation of the Normal distribution prior for 
 #' persons (all non-constrained person ideal point parameters). Default is weakly informative (3)
 #' on the logit scale.
@@ -751,7 +751,7 @@ id_make <- function(score_data=NULL,
 #' @param spline_knots Number of knots (essentially, number of points
 #' at which to calculate time-varying ideal points given T time points). 
 #' Default is NULL, which means that the spline is equivalent to 
-#' polynomial time trend of degree \code{spline_degree}.
+#' polynomial time trend of degree `spline_degree`.
 #' Note that the spline number (if not null) must be equal or less than 
 #' the number of time points--and there is
 #' no reason to have it equal to the number of time points as that will likely 
@@ -765,8 +765,8 @@ id_make <- function(score_data=NULL,
 #' you may want to use this option to put a boundary-avoiding inverse gamma prior on
 #' the time series variance parameters if your model has a lot of divergent transitions. 
 #' To do so, pass a list with a element called 
-#' \code{beta} that signifies the rate parameter of the inverse-gamma distribution. 
-#' For example, try \code{boundary_prior=list(beta=1)}. Increasing the value of \code{beta}
+#' `beta` that signifies the rate parameter of the inverse-gamma distribution. 
+#' For example, try `boundary_prior=list(beta=1)`. Increasing the value of `beta`
 #' will increase the "push" away from zero. Setting it too high will result in 
 #' time series that exhibit a lot of "wiggle" without much need.
 #' @param time_center_cutoff The number of time points above which
@@ -779,18 +779,18 @@ id_make <- function(score_data=NULL,
 #' @param diff_miss_sd Set the prior standard deviation for the bill (item) intercepts for the inflated model.
 #' @param restrict_sd_high Set the level of tightness for high fixed parameters 
 #' (top/positive end of scale).
-#' If NULL, the default, will set to .1 if \code{const_type="persons"} and 
-#' 10 if \code{const_type="items"}. For \code{const_type="persons"}, value is the 
-#' SD of normal distribution centered around \code{fix_high}. For \code{const_type="items"},
+#' If NULL, the default, will set to .1 if `const_type="persons"` and 
+#' 10 if `const_type="items"`. For `const_type="persons"`, value is the 
+#' SD of normal distribution centered around `fix_high`. For `const_type="items"`,
 #' parameter is equal to the prior shape for high pinned parameters 
-#' (divide by \code{restrict_N_high} + \code{restrict_sd_high}) to get expected value.
+#' (divide by `restrict_N_high` + `restrict_sd_high`) to get expected value.
 #' @param restrict_sd_low Set the level of tightness for low fixed parameters 
 #' (low/negative end of scale).
-#' If NULL, the default, will set to .1 if \code{const_type="persons"} and 
-#' 10 if \code{const_type="items"}. For \code{const_type="persons"}, value is the 
-#' SD of normal distribution centered around \code{fix_low}. For \code{const_type="items"},
+#' If NULL, the default, will set to .1 if `const_type="persons"` and 
+#' 10 if `const_type="items"`. For `const_type="persons"`, value is the 
+#' SD of normal distribution centered around `fix_low`. For `const_type="items"`,
 #' parameter is equal to the prior shape for high pinned parameters 
-#' (divide by \code{restrict_N_low} + \code{restrict_sd_low}) to get expected value.
+#' (divide by `restrict_N_low` + `restrict_sd_low`) to get expected value.
 #' @param restrict_N_high Set the prior scale for high/positive pinned parameters. Default is 1000 
 #' (equivalent to 1,000 observations of the pinned value). Higher values make the pin
 #' stronger (for example if there is a lot of data).
@@ -815,12 +815,12 @@ id_make <- function(score_data=NULL,
 #' process. Decreasing this value will result in smoother fits.
 #' @param gp_min_length The minimum value of the GP length-scale parameter. This is a hard
 #' lower limit. Increasing this value will force a smoother GP fit. It should always be less than
-#' \code{gp_num_diff}.
+#' `gp_num_diff`.
 #' @param cmdstan_path_user Default is NULL, and so will default to whatever is set in
-#' \code{cmdstanr} package. Specify a file path  here to use a different \code{cmdtstan}
+#' `cmdstanr` package. Specify a file path  here to use a different `cmdtstan`
 #' installation.
-#' @param save_files The location to save CSV files with MCMC draws from \code{cmdstanr}. 
-#' The default is \code{NULL}, which will use a folder in the package directory.
+#' @param save_files The location to save CSV files with MCMC draws from `cmdstanr`. 
+#' The default is `NULL`, which will use a folder in the package directory.
 #' @param compile_optim Whether to use Stan compile optimization flags (off by default)
 #' @param debug For debugging purposes, turns off threading to enable more informative
 #'   error messages from Stan. Also recompiles model objects.
@@ -829,13 +829,13 @@ id_make <- function(score_data=NULL,
 #' @param debug_mode Whether to print valuesof all parameters for debugging purposes.
 #' If this is used, only one iteration should be used as it generates a lot of 
 #' console output.
-#' @param ... Additional parameters passed on to Stan's sampling engine. See \code{\link[rstan]{stan}} for more information.
-#' @return A fitted \code{\link{idealstan}} object that contains posterior samples of all parameters either via full Bayesian inference
-#' or a variational approximation if \code{use_vb} is set to \code{TRUE}. This object can then be passed to the plotting functions for further analysis.
-#' @seealso \code{\link{id_make}} for pre-processing data,
-#' \code{\link{id_plot_legis}} for plotting results,
-#' \code{\link{summary}} for obtaining posterior quantiles,
-#' \code{\link{id_post_pred}} for producing predictive replications.
+#' @param ... Additional parameters passed on to Stan's sampling engine. See [rstan::stan()] for more information.
+#' @return A fitted [idealstan()] object that contains posterior samples of all parameters either via full Bayesian inference
+#' or a variational approximation if `use_vb` is set to `TRUE`. This object can then be passed to the plotting functions for further analysis.
+#' @seealso [id_make()] for pre-processing data,
+#' [id_plot_legis()] for plotting results,
+#' [summary()] for obtaining posterior quantiles,
+#' [id_post_pred()] for producing predictive replications.
 #' @examples
 #' # First we can simulate data for an IRT 2-PL model that is inflated for missing data
 #' library(ggplot2)
@@ -908,8 +908,8 @@ id_make <- function(score_data=NULL,
 #' }
 #' 
 #' @references \enumerate{
-#'    \item Clinton, J., Jackman, S., & Rivers, D. (2004). The Statistical Analysis of Roll Call Data. \emph{The American Political Science Review}, 98(2), 355-370. doi:10.1017/S0003055404001194
-#'    \item Bafumi, J., Gelman, A., Park, D., & Kaplan, N. (2005). Practical Issues in Implementing and Understanding Bayesian Ideal Point Estimation. \emph{Political Analysis}, 13(2), 171-187. doi:10.1093/pan/mpi010
+#'    \item Clinton, J., Jackman, S., & Rivers, D. (2004). The Statistical Analysis of Roll Call Data. *The American Political Science Review*, 98(2), 355-370. doi:10.1017/S0003055404001194
+#'    \item Bafumi, J., Gelman, A., Park, D., & Kaplan, N. (2005). Practical Issues in Implementing and Understanding Bayesian Ideal Point Estimation. *Political Analysis*, 13(2), 171-187. doi:10.1093/pan/mpi010
 #'    \item Kubinec, R. "Generalized Ideal Point Models for Time-Varying and Missing-Data Inference". Working Paper.
 #'    \item Betancourt, Michael. "Robust Gaussian Processes in Stan". (October 2017). Case Study.
 #' }

@@ -37,7 +37,7 @@ id_plot_compare(
 
 \item{text_size_label}{Size of point labels}
 
-\item{rescale}{Whether to rescale the estimates from two models so they will match regardless of arbitrary scale shifts in the 
+\item{rescale}{Whether to rescale the estimates from two models so they will match regardless of arbitrary scale shifts in the
 ideal points}
 }
 \description{

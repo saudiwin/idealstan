@@ -47,10 +47,10 @@ models (see Time Series vignette)}
 
 \item{text_size_group}{ggplot2 text size for group text used for points}
 
-\item{high_limit}{A number between 0 and 1 showing the upper limit to compute the 
+\item{high_limit}{A number between 0 and 1 showing the upper limit to compute the
 posterior uncertainty interval (defaults to 0.95).}
 
-\item{low_limit}{A number between 0 and 1 showing the lower limit to compute the 
+\item{low_limit}{A number between 0 and 1 showing the lower limit to compute the
 posterior uncertainty interval (defaults to 0.05).}
 
 \item{line_size}{Sets the size of the line of the time-varying ideal points.}
@@ -66,16 +66,16 @@ plotted over the estimates (turn off if the plot is too busy)}
 to draw on the plot. Note that these are grouped by persons. Specific draws selected at random
 from total number of draws of the estimation. Default is 0.}
 
-\item{draw_line_alpha}{The opacity of lines plotted over the distribution (should be 
+\item{draw_line_alpha}{The opacity of lines plotted over the distribution (should be
 between 0 and 1, default is 0.5).}
 
 \item{person_line_alpha}{The transparency level of the time-varying ideal point line}
 
 \item{person_ci_alpha}{The transparency level of ribbon confidence interval around the time-varying ideal points}
 
-\item{item_plot_type}{Whether to show the \code{'non-inflated'} item/bill midpoints, 
-the \code{'inflated'} item/bill midpoints, or produce plots for \code{'both'} kinds of models. 
-Defaults to \code{'non-inflated'} and will only display an item/bill midpoint if one has been 
+\item{item_plot_type}{Whether to show the \code{'non-inflated'} item/bill midpoints,
+the \code{'inflated'} item/bill midpoints, or produce plots for \code{'both'} kinds of models.
+Defaults to \code{'non-inflated'} and will only display an item/bill midpoint if one has been
 specified in \code{item_plot}.}
 
 \item{show_true}{Whether to show the true values of the legislators (if model has been simulated)}
@@ -87,10 +87,10 @@ specified in \code{item_plot}.}
 \item{sample_persons}{If you don't want to use the full number of persons/legislators from the model, enter a proportion (between 0 and 1) to select
 only a fraction of the persons/legislators.}
 
-\item{plot_sim}{Whether to plot the true values of parameters if a simulation was used to generate data 
-(see \code{\link{id_sim_gen}})}
+\item{plot_sim}{Whether to plot the true values of parameters if a simulation was used to generate data
+(see \code{\link[=id_sim_gen]{id_sim_gen()}})}
 
-\item{use_chain}{ID of MCMC chain to use rather than combining all chains. 
+\item{use_chain}{ID of MCMC chain to use rather than combining all chains.
 Default is NULL which will use all chains and is recommended.}
 
 \item{add_cov}{Whether to add values of hierarchical person-level covariates to the
@@ -99,16 +99,16 @@ time trends (defaults to TRUE).}
 \item{...}{Other options passed on to plotting function, currently ignored}
 }
 \description{
-This function can be used on a fitted \code{idealstan} object to plot the relative positions and 
+This function can be used on a fitted \code{idealstan} object to plot the relative positions and
 uncertainties of legislator/persons and bills/items when the legislator/person ideal points
 are allowed to vary over time.
 }
 \details{
 This plot shows the distribution of ideal points for the legislators/persons in the model,
 and also traces the path of these ideal points over time. It will plot them as a vertical
-line with associated high-density posterior interval (10\% to 90\%). In addition, if the column index for a 
+line with associated high-density posterior interval (10\\% to 90\\%). In addition, if the column index for a
 bill/item from the response matrix is passed to the \code{item_plot} option, then an item/bill midpoint will be overlain
-on the ideal point plot, showing the point at which legislators/persons are indifferent to voting/answering on the 
+on the ideal point plot, showing the point at which legislators/persons are indifferent to voting/answering on the
 bill/item. Note that because this is an ideal point model, it is not possible to tell from the midpoint itself
 which side will be voting which way. For that reason, the legislators/persons are colored by their votes/scores to
 make it clear.

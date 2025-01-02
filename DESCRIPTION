@@ -1,8 +1,8 @@
 Package: idealstan
 Type: Package
-Title: Generalized IRT Ideal Point Models with 'Stan'
-Version: 0.99.1
-Date: 2024-11-18
+Title: Robust Measurement with 'Stan'
+Version: 0.99.2
+Date: 2025-01-02
 Authors@R: c(person("Robert","Kubinec", role = c("aut","cre"),
                      email = "rmk7@nyu.edu"),
               person("Michal","Ovádek",role=c("ctb"),email="m.ovadek@ucl.ac.uk"),
@@ -10,8 +10,8 @@ Authors@R: c(person("Robert","Kubinec", role = c("aut","cre"),
               person("Ben", "Goodrich", role = "ctb"),
               person("Trustees of Columbia University",role='cph'))
 BugReports: https://github.com/saudiwin/idealstan/issues
-Description: Offers item-response theory (IRT) ideal-point estimation for binary, ordinal, counts and continuous responses with time-varying and missing-data inference. Full and approximate Bayesian sampling with 'Stan' (<https://mc-stan.org/>). 
-License: MIT
+Description: Offers item-response theory (IRT) ideal-point measurement modeling for diverse distributions, missing data, and over-time variation. Full and approximate Bayesian sampling with 'Stan' (<https://mc-stan.org/>). 
+License: MIT + file LICENSE
 Depends: 
     methods,
     R (>= 4.0.0)
@@ -48,3 +48,4 @@ SystemRequirements: GNU make
 Additional_repositories: https://stan-dev.r-universe.dev
 VignetteBuilder: R.rsp
 RoxygenNote: 7.3.2
+Roxygen: list(markdown = TRUE)

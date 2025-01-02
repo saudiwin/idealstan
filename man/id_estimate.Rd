@@ -78,28 +78,28 @@ id_estimate(
 )
 }
 \arguments{
-\item{idealdata}{An object produced by the \code{\link{id_make}} 
+\item{idealdata}{An object produced by the \code{\link[=id_make]{id_make()}}
 containing a score/vote matrix for use for estimation & plotting}
 
-\item{model_type}{An integer reflecting the kind of model to be estimated. 
+\item{model_type}{An integer reflecting the kind of model to be estimated.
 See below.}
 
-\item{inflate_zero}{If the outcome is distributed as Poisson (count/unbounded integer), 
-setting this to 
+\item{inflate_zero}{If the outcome is distributed as Poisson (count/unbounded integer),
+setting this to
 \code{TRUE} will fit a traditional zero-inflated model.}
 
-\item{vary_ideal_pts}{Default \code{'none'}. If \code{'random_walk'}, \code{'AR1'}, 
-\code{'GP'}, or \code{'splines'}, a 
-time-varying ideal point model will be fit with either a random-walk process, an 
-AR1 process, a Gaussian process or a spline. 
+\item{vary_ideal_pts}{Default \code{'none'}. If \code{'random_walk'}, \code{'AR1'},
+\code{'GP'}, or \code{'splines'}, a
+time-varying ideal point model will be fit with either a random-walk process, an
+AR1 process, a Gaussian process or a spline.
 Note that the spline is the easiest time-varying model to fit so long as the number
-of knots (option \code{spline_knots}) is significantly less than 
-the number of time points in the data. 
+of knots (option \code{spline_knots}) is significantly less than
+the number of time points in the data.
 See documentation for more info.}
 
 \item{keep_param}{A list with logical values for different categories of paremeters which
-should/should not be kept following estimation. Can be any/all of \code{person_int} for 
-the person-level intercepts (static ideal points), 
+should/should not be kept following estimation. Can be any/all of \code{person_int} for
+the person-level intercepts (static ideal points),
 \code{person_vary} for person-varying ideal points,
 \code{item} for observed item parameters (discriminations/intercepts),
 \code{item_miss} for missing item parameters (discriminations/intercepts),
@@ -108,66 +108,66 @@ Takes the form \code{list(person_int=TRUE,person_vary=TRUE,item=TRUE,item_miss=T
 If any are missing in the list, it is assumed that those parameters will be excluded.
 If \code{NULL} (default), will save all parameters in output.}
 
-\item{grainsize}{The grainsize parameter for the \code{reduce_sum} 
-function used for within-chain parallelization. The default is 1, 
+\item{grainsize}{The grainsize parameter for the \code{reduce_sum}
+function used for within-chain parallelization. The default is 1,
 which means 1 chunk (item or person) per core. Set to -1. to use}
 
-\item{mpi_export}{If \code{within_chains="mpi"}, this parameter should refer to the 
-directory where the necessary data and Stan code will be exported to. If missing, 
+\item{mpi_export}{If \code{within_chains="mpi"}, this parameter should refer to the
+directory where the necessary data and Stan code will be exported to. If missing,
 an interactive dialogue will prompt the user for a directory.}
 
 \item{use_subset}{Whether a subset of the legislators/persons should be used instead of the full response matrix}
 
 \item{sample_it}{Whether or not to use a random subsample of the response matrix. Useful for testing.}
 
-\item{subset_group}{If person/legislative data was included in the \code{\link{id_make}} function, then you can subset by
-any value in the \code{$group} column of that data if \code{use_subset} is \code{TRUE}.}
+\item{subset_group}{If person/legislative data was included in the \code{\link[=id_make]{id_make()}} function, then you can subset by
+any value in the \verb{$group} column of that data if \code{use_subset} is \code{TRUE}.}
 
-\item{subset_person}{A list of character values of names of persons/legislators to use to subset if \code{use_subset} is 
-\code{TRUE} and person/legislative data was included in the \code{\link{id_make}} function with the required \code{$person.names}
+\item{subset_person}{A list of character values of names of persons/legislators to use to subset if \code{use_subset} is
+\code{TRUE} and person/legislative data was included in the \code{\link[=id_make]{id_make()}} function with the required \verb{$person.names}
 column}
 
 \item{sample_size}{If \code{sample_it} is \code{TRUE}, this value reflects how many legislators/persons will be sampled from
 the response matrix}
 
-\item{nchains}{The number of chains to use in Stan's sampler. Minimum is one. See \code{\link[rstan]{stan}} for more info. If \code{use_vb=TRUE}, this parameter
+\item{nchains}{The number of chains to use in Stan's sampler. Minimum is one. See \code{\link[rstan:stan]{rstan::stan()}} for more info. If \code{use_vb=TRUE}, this parameter
 will determine the number of Pathfinder paths to estimate.}
 
-\item{niters}{The number of iterations to run Stan's sampler. Shouldn't be set much lower than 500. See \code{\link[rstan]{stan}} for more info.}
+\item{niters}{The number of iterations to run Stan's sampler. Shouldn't be set much lower than 500. See \code{\link[rstan:stan]{rstan::stan()}} for more info.}
 
-\item{use_vb}{Whether or not to use Stan's Pathfinder algorithm instead of full Bayesian inference. Pros: it's much faster but can be much less accurate. Note that Pathfinder is 
+\item{use_vb}{Whether or not to use Stan's Pathfinder algorithm instead of full Bayesian inference. Pros: it's much faster but can be much less accurate. Note that Pathfinder is
 also used by default for finding initial starting values for sfull HMC sampling.}
 
-\item{ignore_db}{If there are multiple time periods (particularly when there are 
+\item{ignore_db}{If there are multiple time periods (particularly when there are
 very many time periods), you can pass in a data frame
-(or tibble) with one row per person per time period and an indicator column 
+(or tibble) with one row per person per time period and an indicator column
 \code{ignore} that is equal to 1 for periods that should be considered in sample
-and 0 for periods for periods that should be considered out of sample. This is 
-useful for excluding time periods from estimation for persons when they could not 
+and 0 for periods for periods that should be considered out of sample. This is
+useful for excluding time periods from estimation for persons when they could not
 be present, i.e. such as before entrance into an organization or following death.
 If \code{ignore} equals 0, the person's ideal point is estimated as a standard Normal
-draw rather than an auto-correlated parameter, reducing computational 
+draw rather than an auto-correlated parameter, reducing computational
 burden substantially.
 Note that there can only be one pre-sample period of 0s, one in-sample period of 1s,
 and one post-sample period of 0s. Multiple in-sample periods cannot be interspersed
-with out of sample periods. The columns must be labeled as \code{person_id}, 
+with out of sample periods. The columns must be labeled as \code{person_id},
 \code{time_id} and \code{ignore} and must match the formatting of the columns
 fed to the \code{id_make} function.}
 
 \item{restrict_ind_high}{If \code{fixtype} is not "vb_full", a vector of character values or integer indices
 of a legislator/person or bill/item to pin to a high value (default +1).}
 
-\item{fix_high}{A vector of length \code{restrict_ind_high} with values 
+\item{fix_high}{A vector of length \code{restrict_ind_high} with values
 that the high fixed person ideal point(s) should be
 fixed to. Default is +1. Does not apply when \code{const_type="items"}; in that case,
 use \code{restrict_sd}/\code{restrict_N} parameters (see below).}
 
-\item{fix_low}{A vector of length \code{restrict_ind_low} with values 
+\item{fix_low}{A vector of length \code{restrict_ind_low} with values
 that the high fixed person ideal point(s) should be
 fixed to. Default is -1. Does not apply when \code{const_type="items"}; in that case,
 use \code{restrict_sd}/\code{restrict_N} parameters (see below).}
 
-\item{restrict_ind_low}{If \code{fixtype} is not "vb_full", a vector of character values or integer indices of a 
+\item{restrict_ind_low}{If \code{fixtype} is not "vb_full", a vector of character values or integer indices of a
 legislator/person or bill/item to pin to a low value (default -1).}
 
 \item{num_restrict_high}{If using variational inference for identification (\code{fixtype="vb_full"}),
@@ -176,47 +176,47 @@ how many parameters to constraint to positive values? Default is 1.}
 \item{num_restrict_low}{If using variational inference for identification (\code{ixtype="vb_full"}),
 how many parameters to constraint to positive negative values? Default is 1.}
 
-\item{fixtype}{Sets the particular kind of identification used on the model, could be either 'vb_full' 
+\item{fixtype}{Sets the particular kind of identification used on the model, could be either 'vb_full'
 (identification provided exclusively by running a variational identification model with no prior info), or
-'prefix' (two indices of ideal points or items to fix are provided to 
+'prefix' (two indices of ideal points or items to fix are provided to
 options \code{restrict_ind_high} and \code{restrict_ind_low}).
- See details for more information.}
+See details for more information.}
 
-\item{const_type}{Whether \code{"persons"} are the parameters to be 
+\item{const_type}{Whether \code{"persons"} are the parameters to be
 fixed for identification (the default) or \code{"items"}. Each of these
 pinned parameters should be specified to \code{fix_high} and \code{fix_low}
 if \code{fixtype} equals \code{"prefix"}, otherwise the model will
 select the parameters to pin to fixed values.}
 
-\item{id_refresh}{The number of times to report iterations from the variational run used to 
+\item{id_refresh}{The number of times to report iterations from the variational run used to
 identify models. Default is 0 (nothing output to console).}
 
 \item{prior_only}{Whether to only sample from priors as opposed to the full model
 with likelihood (the default). Useful for doing posterior predictive checks.}
 
-\item{warmup}{The number of iterations to use to calibrate Stan's sampler on a given model. Shouldn't be less than 100. 
-See \code{\link[rstan]{stan}} for more info.}
+\item{warmup}{The number of iterations to use to calibrate Stan's sampler on a given model. Shouldn't be less than 100.
+See \code{\link[rstan:stan]{rstan::stan()}} for more info.}
 
-\item{ncores}{The number of cores in your computer to use for parallel processing in the Stan engine. 
-See \code{\link[rstan]{stan}} for more info. If \code{within_chain} is set to
-\code{"threads"}, this parameter will determine the number of threads 
+\item{ncores}{The number of cores in your computer to use for parallel processing in the Stan engine.
+See \code{\link[rstan:stan]{rstan::stan()}} for more info. If \code{within_chain} is set to
+\code{"threads"}, this parameter will determine the number of threads
 (independent processes) used for within-chain parallelization.}
 
-\item{use_groups}{If \code{TRUE}, group parameters from the person/legis data given in \code{\link{id_make}} will be 
+\item{use_groups}{If \code{TRUE}, group parameters from the person/legis data given in \code{\link[=id_make]{id_make()}} will be
 estimated instead of individual parameters.}
 
-\item{discrim_reg_upb}{Upper bound of the rescaled Beta distribution for 
+\item{discrim_reg_upb}{Upper bound of the rescaled Beta distribution for
 observed discrimination parameters (default is +1)}
 
-\item{discrim_reg_lb}{Lower bound of the rescaled Beta distribution for 
-observed discrimination parameters (default is -1). Set to 0 for 
+\item{discrim_reg_lb}{Lower bound of the rescaled Beta distribution for
+observed discrimination parameters (default is -1). Set to 0 for
 conventional IRT.}
 
-\item{discrim_miss_upb}{Upper bound of the rescaled Beta distribution for 
+\item{discrim_miss_upb}{Upper bound of the rescaled Beta distribution for
 missing discrimination parameters (default is +1)}
 
-\item{discrim_miss_lb}{Lower bound of the rescaled Beta distribution for 
-missing discrimination parameters (default is -1). Set to 0 for 
+\item{discrim_miss_lb}{Lower bound of the rescaled Beta distribution for
+missing discrimination parameters (default is -1). Set to 0 for
 conventional IRT.}
 
 \item{discrim_reg_scale}{Set the scale parameter for the rescaled Beta distribution
@@ -231,30 +231,30 @@ of the missingness discrimination parameters.}
 \item{discrim_miss_shape}{Set the shape parameter for the rescaled Beta distribution
 of the missingness discrimination parameters.}
 
-\item{person_sd}{The standard deviation of the Normal distribution prior for 
+\item{person_sd}{The standard deviation of the Normal distribution prior for
 persons (all non-constrained person ideal point parameters). Default is weakly informative (3)
 on the logit scale.}
 
 \item{time_fix_sd}{The variance of the over-time component of the first person/legislator
-is fixed to this value as a reference. 
+is fixed to this value as a reference.
 Default is 0.1.}
 
 \item{time_var}{The mean of the exponential distribution for over-time variances for
 ideal point parameters. Default (10) is weakly informative on the logit scale.}
 
 \item{spline_knots}{Number of knots (essentially, number of points
-at which to calculate time-varying ideal points given T time points). 
-Default is NULL, which means that the spline is equivalent to 
+at which to calculate time-varying ideal points given T time points).
+Default is NULL, which means that the spline is equivalent to
 polynomial time trend of degree \code{spline_degree}.
-Note that the spline number (if not null) must be equal or less than 
+Note that the spline number (if not null) must be equal or less than
 the number of time points--and there is
-no reason to have it equal to the number of time points as that will likely 
+no reason to have it equal to the number of time points as that will likely
 over-fit the data.}
 
-\item{spline_degree}{The degree of the spline polynomial. The default is 2 which is a 
-quadratic polynomial. A value of 1 will result in independent knots (essentially 
-pooled across time points T). A higher value will result in wigglier time series. 
-There is no "correct" value but lower values are likely more stable and easier to 
+\item{spline_degree}{The degree of the spline polynomial. The default is 2 which is a
+quadratic polynomial. A value of 1 will result in independent knots (essentially
+pooled across time points T). A higher value will result in wigglier time series.
+There is no "correct" value but lower values are likely more stable and easier to
 identify.}
 
 \item{ar1_up}{The upper bound of the AR(1) parameter, default is +1.}
@@ -264,72 +264,72 @@ to allow for inverse responses to time shocks.}
 
 \item{boundary_prior}{If your time series has very low variance (change over time),
 you may want to use this option to put a boundary-avoiding inverse gamma prior on
-the time series variance parameters if your model has a lot of divergent transitions. 
-To do so, pass a list with a element called 
-\code{beta} that signifies the rate parameter of the inverse-gamma distribution. 
+the time series variance parameters if your model has a lot of divergent transitions.
+To do so, pass a list with a element called
+\code{beta} that signifies the rate parameter of the inverse-gamma distribution.
 For example, try \code{boundary_prior=list(beta=1)}. Increasing the value of \code{beta}
-will increase the "push" away from zero. Setting it too high will result in 
+will increase the "push" away from zero. Setting it too high will result in
 time series that exhibit a lot of "wiggle" without much need.}
 
 \item{time_center_cutoff}{The number of time points above which
 the model will employ a centered time series approach for AR(1)
-and random walk models. Below this number the model will employ a 
-non-centered approach. The default is 50 time points, which is 
+and random walk models. Below this number the model will employ a
+non-centered approach. The default is 50 time points, which is
 relatively arbitrary and higher values may be better if sampling
 quality is poor above the threshold.}
 
 \item{restrict_var}{Whether to fix the variance parameter for the first person trajectory. Default
 is FALSE (usually not necessary).}
 
-\item{sample_stationary}{If \code{TRUE}, the AR(1) coefficients in a time-varying model will be 
-sampled from an unconstrained space and then mapped back to a stationary space. Leaving this \code{TRUE} is 
+\item{sample_stationary}{If \code{TRUE}, the AR(1) coefficients in a time-varying model will be
+sampled from an unconstrained space and then mapped back to a stationary space. Leaving this \code{TRUE} is
 slower but will work better when there is limited information to identify a model. If used, the
 \code{ar_sd} parameter should be increased to 5 to allow for wider sampling in the unconstrained space.}
 
-\item{ar_sd}{If an AR(1) model is used, this defines the prior scale of the Normal distribution. A lower number 
-can help 
+\item{ar_sd}{If an AR(1) model is used, this defines the prior scale of the Normal distribution. A lower number
+can help
 identify the model when there are few time points.}
 
 \item{diff_reg_sd}{Set the prior standard deviation for the bill (item) intercepts for the non-inflated model.}
 
 \item{diff_miss_sd}{Set the prior standard deviation for the bill (item) intercepts for the inflated model.}
 
-\item{restrict_sd_high}{Set the level of tightness for high fixed parameters 
+\item{restrict_sd_high}{Set the level of tightness for high fixed parameters
 (top/positive end of scale).
-If NULL, the default, will set to .1 if \code{const_type="persons"} and 
-10 if \code{const_type="items"}. For \code{const_type="persons"}, value is the 
+If NULL, the default, will set to .1 if \code{const_type="persons"} and
+10 if \code{const_type="items"}. For \code{const_type="persons"}, value is the
 SD of normal distribution centered around \code{fix_high}. For \code{const_type="items"},
-parameter is equal to the prior shape for high pinned parameters 
+parameter is equal to the prior shape for high pinned parameters
 (divide by \code{restrict_N_high} + \code{restrict_sd_high}) to get expected value.}
 
-\item{restrict_sd_low}{Set the level of tightness for low fixed parameters 
+\item{restrict_sd_low}{Set the level of tightness for low fixed parameters
 (low/negative end of scale).
-If NULL, the default, will set to .1 if \code{const_type="persons"} and 
-10 if \code{const_type="items"}. For \code{const_type="persons"}, value is the 
+If NULL, the default, will set to .1 if \code{const_type="persons"} and
+10 if \code{const_type="items"}. For \code{const_type="persons"}, value is the
 SD of normal distribution centered around \code{fix_low}. For \code{const_type="items"},
-parameter is equal to the prior shape for high pinned parameters 
+parameter is equal to the prior shape for high pinned parameters
 (divide by \code{restrict_N_low} + \code{restrict_sd_low}) to get expected value.}
 
-\item{restrict_N_high}{Set the prior scale for high/positive pinned parameters. Default is 1000 
+\item{restrict_N_high}{Set the prior scale for high/positive pinned parameters. Default is 1000
 (equivalent to 1,000 observations of the pinned value). Higher values make the pin
 stronger (for example if there is a lot of data).}
 
-\item{restrict_N_low}{Set the prior shape for low/negative pinned parameters. Default is 1000 
+\item{restrict_N_low}{Set the prior shape for low/negative pinned parameters. Default is 1000
 (equivalent to 1,000 observations of the pinned value). Higher values make the pin stronger
 (for example if there is a lot of data).}
 
 \item{ordbeta_phi_mean}{The mean of the prior for phi, the dispersion parameter in the
-ordered beta distribution. Value of this parameter (default is 1) is given as the 
+ordered beta distribution. Value of this parameter (default is 1) is given as the
 mean of the exponential distribution for prior values of phi.}
 
-\item{ordbeta_cut_alpha}{A length 2 vector of positive continuous values for alpha 
+\item{ordbeta_cut_alpha}{A length 2 vector of positive continuous values for alpha
 in the induced dirichlet distribution. This distribution is used for the cutpoints
 of the ordered beta distribution. Default is c(1,1), which is uninformative.}
 
 \item{ordbeta_cut_phi}{A value for the phi paremeter of the induced dirichlet distribution used for ordered beta cutpoint priors. Default is 0, which is weakly informative.}
 
 \item{gp_sd_par}{The upper limit on allowed residual variation of the Gaussian process
-prior. Increasing the limit will permit the GP to more closely follow the time points, 
+prior. Increasing the limit will permit the GP to more closely follow the time points,
 resulting in much sharper bends in the function and potentially oscillation.}
 
 \item{gp_num_diff}{The number of time points to use to calculate the length-scale prior
@@ -337,7 +337,7 @@ that determines the level of smoothness of the GP time process. Increasing this 
 will result in greater smoothness/autocorrelation over time by selecting a greater number
 of time points over which to calculate the length-scale prior.}
 
-\item{gp_m_sd_par}{The upper limit of the marginal standard deviation of the GP time 
+\item{gp_m_sd_par}{The upper limit of the marginal standard deviation of the GP time
 process. Decreasing this value will result in smoother fits.}
 
 \item{gp_min_length}{The minimum value of the GP length-scale parameter. This is a hard
@@ -348,12 +348,12 @@ lower limit. Increasing this value will force a smoother GP fit. It should alway
 \code{cmdstanr} package. Specify a file path  here to use a different \code{cmdtstan}
 installation.}
 
-\item{map_over_id}{This parameter identifies which ID variable to use to construct the 
+\item{map_over_id}{This parameter identifies which ID variable to use to construct the
 shards for within-chain parallelization. It defaults to \code{"persons"} but can also take
 a value of \code{"items"}. It is recommended to select whichever variable has more
 distinct values to improve parallelization.}
 
-\item{save_files}{The location to save CSV files with MCMC draws from \code{cmdstanr}. 
+\item{save_files}{The location to save CSV files with MCMC draws from \code{cmdstanr}.
 The default is \code{NULL}, which will use a folder in the package directory.}
 
 \item{compile_optim}{Whether to use Stan compile optimization flags (off by default)}
@@ -361,67 +361,67 @@ The default is \code{NULL}, which will use a folder in the package directory.}
 \item{debug}{For debugging purposes, turns off threading to enable more informative
 error messages from Stan. Also recompiles model objects.}
 
-\item{init_pathfinder}{Whether to generate initial values from the Pathfinder 
+\item{init_pathfinder}{Whether to generate initial values from the Pathfinder
 algorithm (see Stan documentation). If FALSE, will generate random start values..}
 
 \item{debug_mode}{Whether to print valuesof all parameters for debugging purposes.
-If this is used, only one iteration should be used as it generates a lot of 
+If this is used, only one iteration should be used as it generates a lot of
 console output.}
 
-\item{...}{Additional parameters passed on to Stan's sampling engine. See \code{\link[rstan]{stan}} for more information.}
+\item{...}{Additional parameters passed on to Stan's sampling engine. See \code{\link[rstan:stan]{rstan::stan()}} for more information.}
 }
 \value{
-A fitted \code{\link{idealstan}} object that contains posterior samples of all parameters either via full Bayesian inference
+A fitted \code{\link[=idealstan]{idealstan()}} object that contains posterior samples of all parameters either via full Bayesian inference
 or a variational approximation if \code{use_vb} is set to \code{TRUE}. This object can then be passed to the plotting functions for further analysis.
 }
 \description{
-This function will take a pre-processed \code{idealdata} vote/score dataframe and 
+This function will take a pre-processed \code{idealdata} vote/score dataframe and
 run one of the available IRT/latent space ideal point models on the data using
 Stan's MCMC engine.
 }
 \details{
-To run an IRT ideal point model, you must first pre-process your data using the \code{\link{id_make}} function. Be sure to specify the correct options for the
+To run an IRT ideal point model, you must first pre-process your data using the \code{\link[=id_make]{id_make()}} function. Be sure to specify the correct options for the
 kind of model you are going to run: if you want to run an unbounded outcome (i.e. Poisson or continuous),
 the data needs to be processed differently. Also any hierarchical covariates at the person or item level
-need to be specified in \code{\link{id_make}}. If they are specified in \code{\link{id_make}}, than all 
+need to be specified in \code{\link[=id_make]{id_make()}}. If they are specified in \code{\link[=id_make]{id_make()}}, than all
 subsequent models fit by this function will have these covariates.
 
-\strong{Note that for static ideal point models, the covariates are only defined for those 
+\strong{Note that for static ideal point models, the covariates are only defined for those
 persons who are not being used as constraints.}
 
-As of this version of \code{idealstan}, the following model types are available. Simply pass 
+As of this version of \code{idealstan}, the following model types are available. Simply pass
 the number of the model in the list to the \code{model_type} option to fit the model.
 
 \enumerate{
-  \item IRT 2-PL (binary response) ideal point model, no missing-data inflation
-  \item IRT 2-PL ideal point model (binary response) with missing- inflation
-  \item Ordinal IRT (rating scale) ideal point model no missing-data inflation
-  \item Ordinal IRT (rating scale) ideal point model with missing-data inflation
-  \item Ordinal IRT (graded response) ideal point model no missing-data inflation
-  \item Ordinal IRT (graded response) ideal point model with missing-data inflation
-  \item Poisson IRT (Wordfish) ideal point model with no missing data inflation
-  \item Poisson IRT (Wordfish) ideal point model with missing-data inflation
-  \item unbounded (Gaussian) IRT ideal point model with no missing data
-  \item unbounded (Gaussian) IRT ideal point model with missing-data inflation
-  \item Positive-unbounded (Log-normal) IRT ideal point model with no missing data
-  \item Positive-unbounded (Log-normal) IRT ideal point model with missing-data inflation
-  \item Latent Space (binary response) ideal point model with no missing data
-  \item Latent Space (binary response) ideal point model with missing-data inflation
-  \item Ordered Beta (proportion/percentage) with no missing data
-  \item Ordered Beta (proportion/percentage) with missing-data inflation
+\item IRT 2-PL (binary response) ideal point model, no missing-data inflation
+\item IRT 2-PL ideal point model (binary response) with missing- inflation
+\item Ordinal IRT (rating scale) ideal point model no missing-data inflation
+\item Ordinal IRT (rating scale) ideal point model with missing-data inflation
+\item Ordinal IRT (graded response) ideal point model no missing-data inflation
+\item Ordinal IRT (graded response) ideal point model with missing-data inflation
+\item Poisson IRT (Wordfish) ideal point model with no missing data inflation
+\item Poisson IRT (Wordfish) ideal point model with missing-data inflation
+\item unbounded (Gaussian) IRT ideal point model with no missing data
+\item unbounded (Gaussian) IRT ideal point model with missing-data inflation
+\item Positive-unbounded (Log-normal) IRT ideal point model with no missing data
+\item Positive-unbounded (Log-normal) IRT ideal point model with missing-data inflation
+\item Latent Space (binary response) ideal point model with no missing data
+\item Latent Space (binary response) ideal point model with missing-data inflation
+\item Ordered Beta (proportion/percentage) with no missing data
+\item Ordered Beta (proportion/percentage) with missing-data inflation
 }
 }
 \section{Time-Varying Inference}{
 
 
 In addition, each of these models can have time-varying ideal point (person) parameters if
-a column of dates is fed to the \code{\link{id_make}} function. If the option \code{vary_ideal_pts} is 
-set to \code{'random_walk'}, \code{id_estimate} will estimate a random-walk ideal point model where ideal points 
-move in a random direction. If \code{vary_ideal_pts} is set to \code{'AR1'}, a stationary ideal point model 
-is estimated where ideal points fluctuate around long-term mean. If \code{vary_ideal_pts} 
+a column of dates is fed to the \code{\link[=id_make]{id_make()}} function. If the option \code{vary_ideal_pts} is
+set to \code{'random_walk'}, \code{id_estimate} will estimate a random-walk ideal point model where ideal points
+move in a random direction. If \code{vary_ideal_pts} is set to \code{'AR1'}, a stationary ideal point model
+is estimated where ideal points fluctuate around long-term mean. If \code{vary_ideal_pts}
 is set to \code{'GP'}, then a semi-parametric Gaussian process time-series prior will be put
-around the ideal points. If \code{vary_ideal_pts} 
-is set to \code{'splines'}, then the ideal point trajectories will be a basis spline defined by the parameters \code{spline_knots} and \code{spline_degree}. 
+around the ideal points. If \code{vary_ideal_pts}
+is set to \code{'splines'}, then the ideal point trajectories will be a basis spline defined by the parameters \code{spline_knots} and \code{spline_degree}.
 Please see the package vignette and associated paper for more detail
 about these time-varying models.
 }
@@ -429,13 +429,13 @@ about these time-varying models.
 \section{Missing Data}{
 
 
-The inflation model used to account for missing data assumes that missingness is a 
+The inflation model used to account for missing data assumes that missingness is a
 function of the persons' (legislators')
 ideal points. In other words,the model will take into account if people with high or low ideal points
 tend to have more/less missing data on a specific item/bill. Missing data should be coded
 as \code{NA} when it is passed to the \link{id_make} function.
 If there isn't any relationship
-between missing data and ideal points, then the model assumes that the missingness is ignorable 
+between missing data and ideal points, then the model assumes that the missingness is ignorable
 conditional on each
 item, but it will still adjust the results to reflect these ignorable (random) missing
 values. The inflation is designed to be general enough to handle a wide array of potential
@@ -444,51 +444,51 @@ situations where strategic social choices make missing data important to take in
 To leave missing data out of the model, simply choose a version of the model in the list above
 that is non-inflated.
 
-Models can be either fit on the person/legislator IDs or on group-level IDs (as specified to the 
+Models can be either fit on the person/legislator IDs or on group-level IDs (as specified to the
 \code{id_make} function). If group-level parameters should be fit, set \code{use_groups} to \code{TRUE}.
 }
 
 \section{Covariates}{
 
 
-Covariates are included in the model if they were specified as options to the 
-\code{\link{id_make}} function. The covariate plots can be accessed with 
-\code{\link{id_plot_cov}} on a fitted \code{idealstan} model object.
+Covariates are included in the model if they were specified as options to the
+\code{\link[=id_make]{id_make()}} function. The covariate plots can be accessed with
+\code{\link[=id_plot_cov]{id_plot_cov()}} on a fitted \code{idealstan} model object.
 }
 
 \section{Identification}{
 
-Identifying IRT models is challenging, and ideal point models are still more challenging 
+Identifying IRT models is challenging, and ideal point models are still more challenging
 because the discrimination parameters are not constrained.
-As a result, more care must be taken to obtain estimates that are the same regardless of starting values. 
-The parameter \code{fixtype} enables you to change the type of identification used. The default, 'vb_full', 
+As a result, more care must be taken to obtain estimates that are the same regardless of starting values.
+The parameter \code{fixtype} enables you to change the type of identification used. The default, 'vb_full',
 does not require any further
-information from you in order for the model to be fit. In this version of identification, 
+information from you in order for the model to be fit. In this version of identification,
 an unidentified model is run using
-variational Bayesian inference (see \code{\link[rstan]{vb}}). The function will then select two 
-persons/legislators or items/bills that end up on either end of the ideal point spectrum, 
+variational Bayesian inference (see \code{\link[rstan:stanmodel-method-vb]{rstan::vb()}}). The function will then select two
+persons/legislators or items/bills that end up on either end of the ideal point spectrum,
 and pin their ideal points
-to those specific values. 
+to those specific values.
 To control whether persons/legislator or items/bills are constrained,
-the \code{const_type} can be set to either \code{"persons"} or 
-\code{"items"} respectively. 
-In many situations, it is prudent to select those persons or items 
-ahead of time to pin to specific values. This allows the analyst to 
-be more specific about what type of latent dimension is to be 
-estimated. To do so, the \code{fixtype} option should be set to 
+the \code{const_type} can be set to either \code{"persons"} or
+\code{"items"} respectively.
+In many situations, it is prudent to select those persons or items
+ahead of time to pin to specific values. This allows the analyst to
+be more specific about what type of latent dimension is to be
+estimated. To do so, the \code{fixtype} option should be set to
 \code{"prefix"}. The values of the persons/items to be pinned can be passed
-as character values to \code{restrict_ind_high} and 
-\code{restrict_ind_low} to pin the high/low ends of the latent 
-scale respectively. Note that these should be the actual data values 
-passed to the \code{id_make} function. If you don't pass any values, 
+as character values to \code{restrict_ind_high} and
+\code{restrict_ind_low} to pin the high/low ends of the latent
+scale respectively. Note that these should be the actual data values
+passed to the \code{id_make} function. If you don't pass any values,
 you will see a prompt asking you to select certain values of persons/items.
 
 The pinned values for persons/items are set by default to +1/-1, though
-this can be changed using the \code{fix_high} and 
-\code{fix_low} options. This pinned range is sufficient to identify 
+this can be changed using the \code{fix_high} and
+\code{fix_low} options. This pinned range is sufficient to identify
 all of the models
-implemented in idealstan, though fiddling with some parameters may be 
-necessary in difficult cases. For time-series models, one of the 
+implemented in idealstan, though fiddling with some parameters may be
+necessary in difficult cases. For time-series models, one of the
 person ideal point over-time variances is also fixed to .1, a value that
 can be changed using the option \code{time_fix_sd}.
 }
@@ -567,15 +567,15 @@ id_plot_legis(sen_est)
 }
 \references{
 \enumerate{
-   \item Clinton, J., Jackman, S., & Rivers, D. (2004). The Statistical Analysis of Roll Call Data. \emph{The American Political Science Review}, 98(2), 355-370. doi:10.1017/S0003055404001194
-   \item Bafumi, J., Gelman, A., Park, D., & Kaplan, N. (2005). Practical Issues in Implementing and Understanding Bayesian Ideal Point Estimation. \emph{Political Analysis}, 13(2), 171-187. doi:10.1093/pan/mpi010
-   \item Kubinec, R. "Generalized Ideal Point Models for Time-Varying and Missing-Data Inference". Working Paper.
-   \item Betancourt, Michael. "Robust Gaussian Processes in Stan". (October 2017). Case Study.
+\item Clinton, J., Jackman, S., & Rivers, D. (2004). The Statistical Analysis of Roll Call Data. \emph{The American Political Science Review}, 98(2), 355-370. doi:10.1017/S0003055404001194
+\item Bafumi, J., Gelman, A., Park, D., & Kaplan, N. (2005). Practical Issues in Implementing and Understanding Bayesian Ideal Point Estimation. \emph{Political Analysis}, 13(2), 171-187. doi:10.1093/pan/mpi010
+\item Kubinec, R. "Generalized Ideal Point Models for Time-Varying and Missing-Data Inference". Working Paper.
+\item Betancourt, Michael. "Robust Gaussian Processes in Stan". (October 2017). Case Study.
 }
 }
 \seealso{
-\code{\link{id_make}} for pre-processing data,
-\code{\link{id_plot_legis}} for plotting results,
-\code{\link{summary}} for obtaining posterior quantiles,
-\code{\link{id_post_pred}} for producing predictive replications.
+\code{\link[=id_make]{id_make()}} for pre-processing data,
+\code{\link[=id_plot_legis]{id_plot_legis()}} for plotting results,
+\code{\link[=summary]{summary()}} for obtaining posterior quantiles,
+\code{\link[=id_post_pred]{id_post_pred()}} for producing predictive replications.
 }

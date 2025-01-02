@@ -1,6 +1,11 @@
 ^idealstan\.Rproj$
 ^\.Rproj\.user$
 ^\.travis\.yml$
+README.html
+irt_standard_map_modified.stan
+ordbeta.jpg
+output.txt
+r_genbeta.R
 package_test.html
 package_test.Rmd
 package_test_v2.Rmd
@@ -43,3 +48,9 @@ convergence_behavior.R
 README.qmd
 Time_Series.qmd
 Package_Introduction.qmd
+^LICENSE\.md$
+vignettes/Package_Introduction_cache
+vignettes/Package_Introduction_files
+vignettes/Time_Series_files
+vignettes/Time_Series_cache
+inst/stan_files/irt_standard_map

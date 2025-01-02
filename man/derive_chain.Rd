@@ -2,18 +2,18 @@
 % Please edit documentation in R/rstan_generics.R
 \name{derive_chain}
 \alias{derive_chain}
-\title{Helper Function for `loo` calculation}
+\title{Helper Function for \code{loo} calculation}
 \usage{
 derive_chain(ll_matrix = NULL)
 }
 \arguments{
-\item{ll_matrix}{A log-likelihood matrix as produced by the \code{\link{id_post_pred}}
+\item{ll_matrix}{A log-likelihood matrix as produced by the \code{\link[=id_post_pred]{id_post_pred()}}
 function}
 }
 \description{
-This function accepts a log-likelihood matrix produced by `id_post_pred` and 
+This function accepts a log-likelihood matrix produced by \code{id_post_pred} and
 extracts the IDs of the MCMC chains. It is necessary to use this function
-as the second argument to the `loo` function along with an exponentiated 
-log-likelihood matrix. See the package vignette How to Evaluate Models 
+as the second argument to the \code{loo} function along with an exponentiated
+log-likelihood matrix. See the package vignette How to Evaluate Models
 for more details.
 }

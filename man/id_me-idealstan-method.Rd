@@ -13,26 +13,27 @@
   draws = 100,
   cores = 1,
   lb = 0.05,
-  upb = 0.95
+  upb = 0.95,
+  ...
 )
 }
 \arguments{
 \item{object}{A fitted \code{idealstan} model}
 
 \item{covariate}{The character value for a covariate passed to the
-`id_make` function before model fitting. Only one covariate can be processed
+\code{id_make} function before model fitting. Only one covariate can be processed
 at a time.}
 
 \item{group_effects}{character value of a covariate included in the formula passed
-to `id_make` for which marginal effect summaries should be grouped by. Useful
+to \code{id_make} for which marginal effect summaries should be grouped by. Useful
 when looking at the marginal effect of an interaction. Note that grouping by a covariate
 with many values will result in slow performance.}
 
 \item{pred_outcome}{Numeric value for level of outcome to predict for ordinal responses.
 Defaults to top level.}
 
-\item{eps}{The value used for numerical differentiation. Default is 1e-4. Usually 
-does not need to be changed.}
+\item{eps}{Parameter for numerical differentiation (usually does not need to be changed)
+passed on to \link{id_post_pred}}
 
 \item{draws}{The total number of draws to use when calculating the marginal effects.
 Defaults to 100. Use option "all" to use all available MCMC draws.}
@@ -43,10 +44,12 @@ Defaults to 1.}
 \item{lb}{The quantile for the lower bound of the aggregated effects (default is 0.05)}
 
 \item{upb}{The quantile for the upper bound of the aggregated effects (default is 0.95)}
+
+\item{...}{Additional arguments passed on to \link{id_post_pred}}
 }
 \value{
-A list with two objects, \code{ideal_effects} with one estimate of the 
-marginal effect per item and posterior draw and \code{sum_ideal_effects} with 
+A list with two objects, \code{ideal_effects} with one estimate of the
+marginal effect per item and posterior draw and \code{sum_ideal_effects} with
 one row per item with that item's median ideal point marginal effect with the quantiles
 defined by the \code{upb} and \code{lb} parameters.
 }
@@ -56,8 +59,8 @@ given person-level hierarchical covariate.
 }
 \details{
 This function will calculate item-level ideal point marginal effects
-for a given covariate that was passed to the `id_make` function using the
-`person_cov` option. The function will iterate over all items in the model
+for a given covariate that was passed to the \code{id_make} function using the
+\code{person_cov} option. The function will iterate over all items in the model
 and use numerical differentiation to calculate responses in the scale of the
 outcome for each item. Note: if the covariate is binary (i.e., only has two values),
 then the function will calculate the difference between these two values instead of

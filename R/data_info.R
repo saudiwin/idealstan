@@ -1,12 +1,12 @@
 #' Rollcall vote data for 114th Senate
 #'
-#' This rollcall vote object (see \code{\link[pscl]{rollcall}}) contains voting records for the 114th Senate in the US
+#' This rollcall vote object (see [pscl::rollcall()]) contains voting records for the 114th Senate in the US
 #' Congress. Not all rollcalls are included, only those that had a 70-30 or closer split in the vote.
-#' The data can be pre-processed via the \code{\link{id_make}} function for estimation. 
+#' The data can be pre-processed via the [id_make()] function for estimation. 
 #' See package vignette for details.
 #'
 #' @format A long data frame with one row for every vote cast by a Senator.
-#' @source \url{http://www.voteview.com/}
+#' @source <http://www.voteview.com/>
 "senate114"
 
 #' Rollcall vote data for Delaware State Legislature
@@ -19,7 +19,7 @@
 #' American Legislatures", American Political Science Review.
 #'
 #' @format A long data frame with one row for every vote cast by a legislator.
-#' @source \url{https://www.cambridge.org/core/journals/american-political-science-review/article/ideological-mapping-of-american-legislatures/8E1192C22AA0B9F9B56167998A41CAB0}
+#' @source <https://www.cambridge.org/core/journals/american-political-science-review/article/ideological-mapping-of-american-legislatures/8E1192C22AA0B9F9B56167998A41CAB0>
 "delaware"
 
 

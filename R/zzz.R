@@ -42,7 +42,9 @@
       ":=",
       'item_type',"item_id","cut",".chain",".draw","these_draws","use_chain",".value",
     "ordbeta_cut_alpha","ordbeta_cut_phi","ordbeta_phi_mean","ordbeta_phi_mean",
-    "normal_mods","1","2","ordbeta_cut")
+    "normal_mods","1","2","ordbeta_cut",
+    "item_discrimination", "item_orig", "mean_est1", "ordbeta_mods",
+    "person_orig")
   
   utils::globalVariables(variable_list)
   

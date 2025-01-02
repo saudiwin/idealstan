@@ -30,7 +30,7 @@ covariates on to items.}
 For reproducibility, you can also pass a vector of specific draws to use.}
 
 \item{output}{If the model has an unbounded outcome (Poisson, continuous, etc.), then
-specify whether to show the \code{'observed'} data (the default) or the binary 
+specify whether to show the \code{'observed'} data (the default) or the binary
 output \code{'missing'} showing whether an observation was predicted as missing or not}
 
 \item{type}{Whether to produce posterior predictive values (\code{'predict'}, the default),
@@ -40,13 +40,13 @@ or log-likelihood values (\code{'log_lik'}). See the How to Evaluate Models vign
 \item{covar}{What kind of covariates to include as part of the prediction -- either
 "person" (the default) or "items" if you included predictors for item discriminations.}
 
-\item{sample_scores}{In addition to reducing the number of posterior draws used to 
+\item{sample_scores}{In addition to reducing the number of posterior draws used to
 calculate the posterior predictive distribution, which will reduce computational overhead.
 Only available for calculating predictive distributions, not log-likelihood values.}
 
-\item{item_subset}{Whether to calculate marginal effects for only a subset of 
+\item{item_subset}{Whether to calculate marginal effects for only a subset of
 items. Should be item IDs that match the \code{item_id} column passed to the \code{id_make}
- function.}
+function.}
 
 \item{pred_outcome}{In the case of ordinal responses, the number of the category to
 predict. Defaults to top category.}
@@ -60,15 +60,15 @@ the base R \code{parallel} package}
 }
 \description{
 This function will draw from the posterior distribution, whether in terms of the outcome (prediction)
-or to produce the log-likelihood values.  
- 
- This function can also produce either distribution of the 
- outcomes (i.e., predictions) or the log-likelihood values of the posterior (set option 
- \code{type} to \code{'log_lik'}.
- For more information, see the package vignette How to Evaluate Models.
- 
- You can then use functions such as 
- \code{\link{id_plot_ppc}} to see how well the model does returning the correct number of categories
- in the score/vote matrix. 
- Also see \code{help("posterior_predict", package = "rstanarm")}
+or to produce the log-likelihood values.
+
+This function can also produce either distribution of the
+outcomes (i.e., predictions) or the log-likelihood values of the posterior (set option
+\code{type} to \code{'log_lik'}.
+For more information, see the package vignette How to Evaluate Models.
+
+You can then use functions such as
+\code{\link[=id_plot_ppc]{id_plot_ppc()}} to see how well the model does returning the correct number of categories
+in the score/vote matrix.
+Also see \code{help("posterior_predict", package = "rstanarm")}
 }

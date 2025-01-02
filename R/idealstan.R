@@ -1,17 +1,17 @@
-#' \code{idealstan} package
+#' `idealstan` package
 #'
 #' R Interface to Stan for Item-Response Theory Ideal Point Models
 #'
 #' See the README on
-#' \href{https://github.com/saudiwin/idealstan/blob/master/README.md}{GitHub}
+#' [GitHub](https://github.com/saudiwin/idealstan/blob/master/README.md)
 #'
 #' @keywords internal
 #' @aliases idealstan-package
 #' @import methods
 #' @references \enumerate{
 #'    \item Kubinec, Robert. (2024). Generalized Ideal Point Models for Robust Measurement with Dirty Data in the Social Sciences. SocArchiv Preprint. doi.org:10.31219/osf.io/8j2bt
-#'    \item Clinton, J., Jackman, S., & Rivers, D. (2004). The Statistical Analysis of Roll Call Data. \emph{The American Political Science Review}, 98(2), 355-370. doi:10.1017/S0003055404001194
-#'    \item Bafumi, J., Gelman, A., Park, D., & Kaplan, N. (2005). Practical Issues in Implementing and Understanding Bayesian Ideal Point Estimation. \emph{Political Analysis}, 13(2), 171-187. doi:10.1093/pan/mpi010
+#'    \item Clinton, J., Jackman, S., & Rivers, D. (2004). The Statistical Analysis of Roll Call Data. *The American Political Science Review*, 98(2), 355-370. doi:10.1017/S0003055404001194
+#'    \item Bafumi, J., Gelman, A., Park, D., & Kaplan, N. (2005). Practical Issues in Implementing and Understanding Bayesian Ideal Point Estimation. *Political Analysis*, 13(2), 171-187. doi:10.1093/pan/mpi010
 #' }
 "_PACKAGE"
 

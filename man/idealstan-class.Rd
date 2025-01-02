@@ -5,7 +5,7 @@
 \alias{idealstan-class}
 \title{Results of \code{\link{id_estimate}} function}
 \description{
-The \code{idealstan} objects store the results of estimations carried out by the \code{\link{id_estimate}} function. 
+The \code{idealstan} objects store the results of estimations carried out by the \code{\link{id_estimate}} function.
 These objects include the full results of Bayesian sampling performed by the \code{\link[rstan]{stan}} function in the \pkg{rstan}
 package.
 }

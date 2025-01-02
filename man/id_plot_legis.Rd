@@ -40,9 +40,9 @@ of \code{idealstan} objects to compare across models}
 
 \item{item_plot}{The IDs (character vector) of the bill/item midpoints to overlay on the plot}
 
-\item{item_plot_type}{Whether to show the \code{'non-inflated'} item/bill midpoints, 
-the \code{'inflated'} item/bill midpoints, or produce plots for \code{'both'} kinds of models. 
-Defaults to \code{'non-inflated'} and will only display an item/bill midpoint if one has been 
+\item{item_plot_type}{Whether to show the \code{'non-inflated'} item/bill midpoints,
+the \code{'inflated'} item/bill midpoints, or produce plots for \code{'both'} kinds of models.
+Defaults to \code{'non-inflated'} and will only display an item/bill midpoint if one has been
 specified in \code{item_plot}.}
 
 \item{text_size_label}{ggplot2 text size for legislator labels}
@@ -71,22 +71,22 @@ only a fraction of the persons/legislators.}
 \item{...}{Other options passed on to plotting function, currently ignored}
 }
 \description{
-This function can be used on a fitted \code{idealstan} object to plot the relative positions and 
+This function can be used on a fitted \code{idealstan} object to plot the relative positions and
 uncertainties of legislator/persons and bills/items.
 }
 \details{
 This plot shows the distribution of ideal points for the legislators/persons in the model. It will plot them as a vertical
-dot plot with associated high-density posterior interval (can be changed 
+dot plot with associated high-density posterior interval (can be changed
 with \code{high_limit} and \code{low_limit} options). In addition, if item/bill IDs
 as a character vector is passed to the \code{item_plot} option, then an item/bill midpoint will be overlain
-on the ideal point plot, showing the point at which legislators/persons are indifferent to voting/answering on the 
+on the ideal point plot, showing the point at which legislators/persons are indifferent to voting/answering on the
 bill/item. Note that because this is an ideal point model, it is not possible to tell from the midpoint itself
 which side will be voting which way. For that reason, the legislators/persons are colored by their votes/scores to
 make it clear.
 
-To compare across multiple \code{idealstan} models, pass a named list 
-\code{list(model1=model1,model2=model2,etc)} to the \code{object} option. 
-Note that these comparisons will done by individual persons/groups, so if there are a lot of 
+To compare across multiple \code{idealstan} models, pass a named list
+\code{list(model1=model1,model2=model2,etc)} to the \code{object} option.
+Note that these comparisons will done by individual persons/groups, so if there are a lot of
 persons/groups, consider using the \code{include} option to only compare a specific set
 of persons/groups.
 }

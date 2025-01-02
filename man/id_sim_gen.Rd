@@ -39,14 +39,14 @@ id_sim_gen(
 
 \item{cov_effect}{The effect of a hierarchical/external covariate on the person
 ideal points. The covariate will be a uniformly-distributed random variable on the
-[0,1] scale, so covariate effects in the [-2,2] approximate range would result in 
+[0,1] scale, so covariate effects in the [-2,2] approximate range would result in
 noticeable effects on the ideal point scale.}
 
 \item{model_type}{One of \code{'binary'}, \code{'ordinal_rating'}, \code{'ordinal_grm'}, \code{'poisson'}
 \code{'normal'}, or \code{'lognormal'}}
 
-\item{latent_space}{Whether to use the latent space formulation of the ideal point model 
-\code{FALSE} by default. NOTE: currently, the package only has estimation for a 
+\item{latent_space}{Whether to use the latent space formulation of the ideal point model
+\code{FALSE} by default. NOTE: currently, the package only has estimation for a
 binary response with the latent space formulation.}
 
 \item{absence_discrim_sd}{The SD of the discrimination parameters for the inflated model}
@@ -83,17 +83,17 @@ for both missing and observed parameters (beta and omega)}
 
 \item{time_points}{The number of time points for time-varying legislator/person parameters}
 
-\item{time_process}{The process used to generate the ideal points: either \code{'random'} 
+\item{time_process}{The process used to generate the ideal points: either \code{'random'}
 for a random walk, \code{'AR'} for an AR1 process,
 or \code{'GP'} for a Gaussian process.}
 
-\item{time_sd}{The standard deviation of the change in ideal points over time (should be low relative to 
+\item{time_sd}{The standard deviation of the change in ideal points over time (should be low relative to
 \code{ideal_pts_sd})}
 
 \item{ideal_pts_sd}{The SD for the person/person ideal points}
 
 \item{prior_type}{The statistical distribution that generates the data for
-ideal point parameters (alpha) and difficulty intercepts (beta and omega). Currently only 
+ideal point parameters (alpha) and difficulty intercepts (beta and omega). Currently only
 'gaussian' is supported.}
 
 \item{ordinal_outcomes}{If \code{model} is \code{'ordinal'}, an integer giving the total number of categories}
@@ -106,8 +106,8 @@ ideal point parameters (alpha) and difficulty intercepts (beta and omega). Curre
 deviation of the outcome (i.e. the square root of the variance).}
 }
 \value{
-The results is a \code{idealdata} object that can be used in the 
-\code{\link{id_estimate}} function to run a model. It can also be used in the simulation
+The results is a \code{idealdata} object that can be used in the
+\link{id_estimate} function to run a model. It can also be used in the simulation
 plotting functions.
 }
 \description{
@@ -119,5 +119,5 @@ used in the underlying Stan code. Currently the simulation can produce inflated 
 models with binary, ordinal (GRM and rating-scale), Poisson, Normal and Log-Normal responses.
 }
 \seealso{
-\code{\link{id_plot_sims}} for plotting fitted models versus true values.
+\link{id_plot_sims} for plotting fitted models versus true values.
 }

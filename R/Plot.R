@@ -1,25 +1,25 @@
 #' Plot Legislator/Person and Bill/Item Ideal Points
 #' 
-#' This function can be used on a fitted \code{idealstan} object to plot the relative positions and 
+#' This function can be used on a fitted `idealstan` object to plot the relative positions and 
 #' uncertainties of legislator/persons and bills/items.
 #' 
 #' This plot shows the distribution of ideal points for the legislators/persons in the model. It will plot them as a vertical
 #' dot plot with associated high-density posterior interval (can be changed 
-#' with \code{high_limit} and \code{low_limit} options). In addition, if item/bill IDs
-#' as a character vector is passed to the \code{item_plot} option, then an item/bill midpoint will be overlain
+#' with `high_limit` and `low_limit` options). In addition, if item/bill IDs
+#' as a character vector is passed to the `item_plot` option, then an item/bill midpoint will be overlain
 #' on the ideal point plot, showing the point at which legislators/persons are indifferent to voting/answering on the 
 #' bill/item. Note that because this is an ideal point model, it is not possible to tell from the midpoint itself
 #' which side will be voting which way. For that reason, the legislators/persons are colored by their votes/scores to
 #' make it clear.
 #' 
-#' To compare across multiple \code{idealstan} models, pass a named list 
-#' \code{list(model1=model1,model2=model2,etc)} to the \code{object} option. 
+#' To compare across multiple `idealstan` models, pass a named list 
+#' `list(model1=model1,model2=model2,etc)` to the `object` option. 
 #' Note that these comparisons will done by individual persons/groups, so if there are a lot of 
-#' persons/groups, consider using the \code{include} option to only compare a specific set
+#' persons/groups, consider using the `include` option to only compare a specific set
 #' of persons/groups.
 #' 
-#' @param object A fitted \code{idealstan} object or a named list
-#' of \code{idealstan} objects to compare across models
+#' @param object A fitted `idealstan` object or a named list
+#' of `idealstan` objects to compare across models
 #' @param return_data If true, the calculated legislator/bill data is returned along with the plot in a list
 #' @param include Specify a list of person/legislator IDs to include in the plot (all others excluded)
 #' @param high_limit The quantile (number between 0 and 1) for the high end of posterior uncertainty to show in plot
@@ -27,17 +27,17 @@
 #' @param item_plot The IDs (character vector) of the bill/item midpoints to overlay on the plot
 #' @param text_size_label ggplot2 text size for legislator labels
 #' @param text_size_group ggplot2 text size for group text used for points
-#' @param point_size If \code{person_labels} and \code{group_labels} are set to \code{FALSE}, controls the size of the points plotted.
+#' @param point_size If `person_labels` and `group_labels` are set to `FALSE`, controls the size of the points plotted.
 #' @param hjust_length horizontal adjustment of the legislator labels
-#' @param person_labels if \code{TRUE}, use the person_id column to plot labels for the person (legislator) ideal points
-#' @param group_labels if \code{TRUE}, use the group column to plot text markers for the group (parties) from the person/legislator data
+#' @param person_labels if `TRUE`, use the person_id column to plot labels for the person (legislator) ideal points
+#' @param group_labels if `TRUE`, use the group column to plot text markers for the group (parties) from the person/legislator data
 #' @param person_ci_alpha The transparency level of the dot plot and confidence bars for the person ideal points
-#' @param item_plot_type Whether to show the \code{'non-inflated'} item/bill midpoints, 
-#' the \code{'inflated'} item/bill midpoints, or produce plots for \code{'both'} kinds of models. 
-#' Defaults to \code{'non-inflated'} and will only display an item/bill midpoint if one has been 
-#' specified in \code{item_plot}.
+#' @param item_plot_type Whether to show the `'non-inflated'` item/bill midpoints, 
+#' the `'inflated'` item/bill midpoints, or produce plots for `'both'` kinds of models. 
+#' Defaults to `'non-inflated'` and will only display an item/bill midpoint if one has been 
+#' specified in `item_plot`.
 #' @param show_true Whether to show the true values of the legislators (if model has been simulated)
-#' @param group_color If \code{TRUE}, give each group/bloc a different color
+#' @param group_color If `TRUE`, give each group/bloc a different color
 #' @param hpd_limit The greatest absolute difference in high-posterior density interval shown for any point. Useful for excluding imprecisely estimated persons/legislators from the plot. Default is NULL if you don't want to exclude any.
 #' @param sample_persons If you don't want to use the full number of persons/legislators from the model, enter a proportion (between 0 and 1) to select
 #'  only a fraction of the persons/legislators.
@@ -349,26 +349,26 @@ id_plot_legis <- function(object,return_data=FALSE,
 
 #' Plot Legislator/Person Over-time Variances
 #' 
-#' This function can be used on a fitted \code{idealstan} object to plot the over-time variances 
+#' This function can be used on a fitted `idealstan` object to plot the over-time variances 
 #' (average rates of change in ideal points) for all the persons/legislators in the model.
 #' 
 #' This function will plot the person/legislator over-time variances as a vertical
 #' dot plot with associated high-density posterior interval (can be changed 
-#' with \code{high_limit} and \code{low_limit} options). 
+#' with `high_limit` and `low_limit` options). 
 #' 
-#' @param object A fitted \code{idealstan} object
+#' @param object A fitted `idealstan` object
 #' @param return_data If true, the calculated legislator/bill data is returned along with the plot in a list
 #' @param include Specify a list of person/legislator IDs to include in the plot (all others excluded)
 #' @param high_limit The quantile (number between 0 and 1) for the high end of posterior uncertainty to show in plot
 #' @param low_limit The quantile (number between 0 and 1) for the low end of posterior uncertainty to show in plot
 #' @param text_size_label ggplot2 text size for legislator labels
 #' @param text_size_group ggplot2 text size for group text used for points
-#' @param point_size If \code{person_labels} and \code{group_labels} are set to \code{FALSE}, controls the size of the points plotted.
+#' @param point_size If `person_labels` and `group_labels` are set to `FALSE`, controls the size of the points plotted.
 #' @param hjust_length horizontal adjustment of the legislator labels
-#' @param person_labels if \code{TRUE}, use the person_id column to plot labels for the person (legislator) ideal points
-#' @param group_labels if \code{TRUE}, use the group column to plot text markers for the group (parties) from the person/legislator data
+#' @param person_labels if `TRUE`, use the person_id column to plot labels for the person (legislator) ideal points
+#' @param group_labels if `TRUE`, use the group column to plot text markers for the group (parties) from the person/legislator data
 #' @param person_ci_alpha The transparency level of the dot plot and confidence bars for the person ideal points
-#' @param group_color If \code{TRUE}, give each group/bloc a different color
+#' @param group_color If `TRUE`, give each group/bloc a different color
 #' @param ... Other options passed on to plotting function, currently ignored
 #' @import ggplot2
 #' @import lazyeval
@@ -491,29 +491,29 @@ id_plot_legis_var <- function(object,return_data=FALSE,
 
 #' Function to plot dynamic ideal point models
 #' 
-#' This function can be used on a fitted \code{idealstan} object to plot the relative positions and 
+#' This function can be used on a fitted `idealstan` object to plot the relative positions and 
 #' uncertainties of legislator/persons and bills/items when the legislator/person ideal points
 #' are allowed to vary over time.
 #' 
 #' This plot shows the distribution of ideal points for the legislators/persons in the model,
 #' and also traces the path of these ideal points over time. It will plot them as a vertical
 #' line with associated high-density posterior interval (10\% to 90\%). In addition, if the column index for a 
-#' bill/item from the response matrix is passed to the \code{item_plot} option, then an item/bill midpoint will be overlain
+#' bill/item from the response matrix is passed to the `item_plot` option, then an item/bill midpoint will be overlain
 #' on the ideal point plot, showing the point at which legislators/persons are indifferent to voting/answering on the 
 #' bill/item. Note that because this is an ideal point model, it is not possible to tell from the midpoint itself
 #' which side will be voting which way. For that reason, the legislators/persons are colored by their votes/scores to
 #' make it clear.
 #' 
-#' @param object A fitted \code{idealstan} object or a named list of \code{idealstan}
-#' objects if the plot is supposed to show a comparison of different fitted \code{idealstan}
+#' @param object A fitted `idealstan` object or a named list of `idealstan`
+#' objects if the plot is supposed to show a comparison of different fitted `idealstan`
 #' models (see Time Series vignette)
 #' @param return_data If true, the calculated legislator/bill data is returned along with the plot in a list
 #' @param include Specify a list of person/legislator IDs to include in the plot (all others excluded)
 #' @param item_plot The value of the item/bill for which to plot its midpoint (character value)
-#' @param item_plot_type Whether to show the \code{'non-inflated'} item/bill midpoints, 
-#' the \code{'inflated'} item/bill midpoints, or produce plots for \code{'both'} kinds of models. 
-#' Defaults to \code{'non-inflated'} and will only display an item/bill midpoint if one has been 
-#' specified in \code{item_plot}.
+#' @param item_plot_type Whether to show the `'non-inflated'` item/bill midpoints, 
+#' the `'inflated'` item/bill midpoints, or produce plots for `'both'` kinds of models. 
+#' Defaults to `'non-inflated'` and will only display an item/bill midpoint if one has been 
+#' specified in `item_plot`.
 #' @param text_size_label ggplot2 text size for legislator labels
 #' @param text_size_group ggplot2 text size for group text used for points
 #' @param high_limit A number between 0 and 1 showing the upper limit to compute the 
@@ -521,11 +521,11 @@ id_plot_legis_var <- function(object,return_data=FALSE,
 #' @param low_limit A number between 0 and 1 showing the lower limit to compute the 
 #' posterior uncertainty interval (defaults to 0.05).
 #' @param line_size Sets the size of the line of the time-varying ideal points.
-#' @param group_color If \code{TRUE}, use the groups instead of individuals to plot colours
-#' @param highlight A character referring to one of the persons in \code{person_labels} that the plot can highlight relative to other persons
+#' @param group_color If `TRUE`, use the groups instead of individuals to plot colours
+#' @param highlight A character referring to one of the persons in `person_labels` that the plot can highlight relative to other persons
 #' @param person_ci_alpha The transparency level of ribbon confidence interval around the time-varying ideal points
 #' @param person_line_alpha The transparency level of the time-varying ideal point line
-#' @param plot_text If \code{TRUE}, will plot \code{person_labels} over the lines.
+#' @param plot_text If `TRUE`, will plot `person_labels` over the lines.
 #' @param use_ci Whether or not high-posterior density intervals (credible intervals) should be
 #' plotted over the estimates (turn off if the plot is too busy)
 #' @param plot_lines The number of lines of actual draws of time-varying ideal points
@@ -538,7 +538,7 @@ id_plot_legis_var <- function(object,return_data=FALSE,
 #' @param sample_persons If you don't want to use the full number of persons/legislators from the model, enter a proportion (between 0 and 1) to select
 #'  only a fraction of the persons/legislators.
 #' @param plot_sim Whether to plot the true values of parameters if a simulation was used to generate data 
-#' (see \code{\link{id_sim_gen}})
+#' (see [id_sim_gen()])
 #' @param add_cov Whether to add values of hierarchical person-level covariates to the
 #' time trends (defaults to TRUE).
 #' @param use_chain ID of MCMC chain to use rather than combining all chains. 
@@ -929,9 +929,9 @@ id_plot_legis_dyn <- function(object,return_data=FALSE,
 #' @param model1 The first model to compare
 #' @param model2 The second model to compare
 #' @param return_data Whether to return the underlying data
-#' @param labels \code{TRUE} or \code{FALSE}, whether to use labels for points
+#' @param labels `TRUE` or `FALSE`, whether to use labels for points
 #' @param hjust The horizontal adjustment of point labels
-#' @param palette \code{colorbrewer} palette name
+#' @param palette `colorbrewer` palette name
 #' @param color_direction Whether to reverse the color scale
 #' @param text_size_label Size of point labels
 #' @param rescale Whether to rescale the estimates from two models so they will match regardless of arbitrary scale shifts in the 
@@ -981,22 +981,22 @@ id_plot_compare <- function(model1=NULL,model2=NULL,scale_flip=FALSE,return_data
 
 #' Density plots of Posterior Parameters
 #' 
-#' This function produces density plots of the different types of parameters in an \code{idealstan} model: item (bill) difficulty and discrimination
+#' This function produces density plots of the different types of parameters in an `idealstan` model: item (bill) difficulty and discrimination
 #'  parameters, and person (legislator) ideal points.
 #'  
-#' @param object A fitted \code{idealstan} object
-#' @param params Select the type of parameter from the model to plot. \code{'person'} for person/legislator ideal points,
-#'  \code{'miss_diff'} and \code{'miss_discrim'} for difficulty and discrimination parameters from the missing/inflated item/bill parameters,
-#'  and \code{'obs_diff'} and \code{'obs_discrim'} for difficulty and discrimination parameters from the non-missing/non-inflated 
+#' @param object A fitted `idealstan` object
+#' @param params Select the type of parameter from the model to plot. `'person'` for person/legislator ideal points,
+#'  `'miss_diff'` and `'miss_discrim'` for difficulty and discrimination parameters from the missing/inflated item/bill parameters,
+#'  and `'obs_diff'` and `'obs_discrim'` for difficulty and discrimination parameters from the non-missing/non-inflated 
 #'  item/bill parameters.
-#' @param param_labels A vector of labels equal to the number of parameters. Primarily useful if \code{return_data} is \code{TRUE}.
-#' @param dens_type Can be \code{'all'} for showing 90% HPD high, 10% HPD low and median posterior values. 
-#'  Or to show one of those posterior estimates at a time, use \code{'high'} for 90% high HPD posterior estimate,
-#'  \code{'low'} for 10% low HPD posterior estimate, and \code{'function'} for the whatever function is specificied
-#'  in \code{func} (median by default).
+#' @param param_labels A vector of labels equal to the number of parameters. Primarily useful if `return_data` is `TRUE`.
+#' @param dens_type Can be `'all'` for showing 90% HPD high, 10% HPD low and median posterior values. 
+#'  Or to show one of those posterior estimates at a time, use `'high'` for 90% high HPD posterior estimate,
+#'  `'low'` for 10% low HPD posterior estimate, and `'function'` for the whatever function is specificied
+#'  in `func` (median by default).
 #' @param return_data Whether or not to return the plot as a ggplot2 object and the data together in a list instead of
 #'  plotting.
-#' @param func The function to use if \code{'dens_type'} is set to \code{'function'}.
+#' @param func The function to use if `'dens_type'` is set to `'function'`.
 #' @param ... Other options passed on to the plotting function, currently ignored.
 #' @export
 id_plot_all_hist <- function(object,params='person',param_labels=NULL,dens_type='all',
@@ -1063,10 +1063,10 @@ id_plot_all_hist <- function(object,params='person',param_labels=NULL,dens_type=
   
   
 }
-#' This function plots the results from a simulation generated by \code{\link{id_sim_gen}}.
+#' This function plots the results from a simulation generated by [id_sim_gen()].
 #' 
-#' @param sims A fitted \code{idealstan} object that has true data generated by \code{\link{id_sim_gen}}
-#' @param type Type of analysis of true versus fitted values, can be \code{'RMSE'}, \code{'Residuals'} or \code{'Coverage'}
+#' @param sims A fitted `idealstan` object that has true data generated by [id_sim_gen()]
+#' @param type Type of analysis of true versus fitted values, can be `'RMSE'`, `'Residuals'` or `'Coverage'`
 #' @export
 id_plot_sims <- function(sims,type='RMSE') {
 
@@ -1093,9 +1093,9 @@ id_plot_sims <- function(sims,type='RMSE') {
 
 #' Plotting Function to Display Rhat Distribution
 #' 
-#' This plotting function displays a histogram of the Rhat values of all parameters in an \code{idealstan} model.
+#' This plotting function displays a histogram of the Rhat values of all parameters in an `idealstan` model.
 #' 
-#' @param obj A fitted \code{idealstan} object.
+#' @param obj A fitted `idealstan` object.
 #' @importFrom ggthemes theme_tufte
 #' @export
 id_plot_rhats <- function(obj) {
@@ -1113,23 +1113,25 @@ id_plot_rhats <- function(obj) {
 #' 
 #' This function will calculate and plot the ideal point marginal effects, or the first derivative
 #' of the IRT/ideal point model with respect to the hierarchical covariate,
-#' for each item in the model. The function \code{\link{id_me}} is used
+#' for each item in the model. The function [id_me()] is used
 #' to first calculate the ideal point marginal effects.
 #' 
 #' The ends of the latent variable can be specified via the 
-#' \code{label_low} and \code{label_high} options, which will use those
+#' `label_low` and `label_high` options, which will use those
 #' labels for item discrimination.
 #' 
-#' Note that the function produces a \code{ggplot2} object, which can 
-#' be further modified with \code{ggplot2} functions.
+#' Note that the function produces a `ggplot2` object, which can 
+#' be further modified with `ggplot2` functions.
 #' 
-#' @param object A fitted \code{idealstan} object
+#' @param object A fitted `idealstan` object
 #' @param calc_param Whether to calculate ideal point marginal effects for
 #' a given covariate. If NULL, the default, the function will instead produce
 #' a plot of the raw coefficients from the ideal point model. If passing the
 #' name of a covariate, should be a character value of a column in the data 
 #' passed to the
-#' \code{id_make} function.
+#' `id_make` function.
+#' @param group_effects Character value for name of column in data by which to 
+#' subset the data. Must be a column passed to the [id_make] function
 #' @param label_high What label to use on the plot for the high end of the 
 #' latent scale
 #' @param label_low What label to use on the plot for the low end of the 
@@ -1137,9 +1139,9 @@ id_plot_rhats <- function(obj) {
 #' @param pred_outcome For discrete models with more than 2 categories, 
 #' or binary models with missing data, which outcome to predict. This should 
 #' be the value that matches what the outcome was coded as in the data
-#' passed to \code{\link{id_make}}.
+#' passed to [id_make()].
 #' @param plot_model_id The integer of the model ID to plot. If NULL and there
-#' are multiple model types, \code{facet_wrap} will be used to produce multiple
+#' are multiple model types, `facet_wrap` will be used to produce multiple
 #' plots with one for each model type.
 #' @param upb The upper limit of the posterior density to use for 
 #' calculating credible intervals
@@ -1147,12 +1149,13 @@ id_plot_rhats <- function(obj) {
 #' calculating credible intervals
 #' @param facet_ncol If facetting by multiple models or grouped factors, sets the 
 #' number of columns in the multiple plots
-#' @param cov_type Either \code{'person_cov'} for person or group-level hierarchical parameters,
-#' \code{'discrim_reg_cov'} for bill/item discrimination parameters from regular (non-inflated) model, and 
-#' \code{'discrim_infl_cov'} for bill/item discrimination parameters from inflated model.
-#' @return A \code{ggplot2} plot that can be further customized with \code{ggplot2} functions if need be.
-#' @param ... Additional argument passed on to \code{id_me}
+#' @param cov_type Either `'person_cov'` for person or group-level hierarchical parameters,
+#' `'discrim_reg_cov'` for bill/item discrimination parameters from regular (non-inflated) model, and 
+#' `'discrim_infl_cov'` for bill/item discrimination parameters from inflated model.
+#' @return A `ggplot2` plot that can be further customized with `ggplot2` functions if need be.
+#' @param ... Additional argument passed on to `id_me`
 #' @import svDialogs
+#' @importFrom stats as.formula
 #' @export
 id_plot_cov <- function(object,
                         calc_param=NULL,
@@ -1327,42 +1330,42 @@ id_plot_cov <- function(object,
 #' This function will generate an impulse response function (IRF)
 #' for a given covariate. The IRF shows the marginal impact of a 1-unit
 #' change in the covariate on a person's ideal point over time. To use 
-#' this function, the \code{vary_ideal_pts} option in 
-#' \code{\link{id_estimate}} must have received the \code{'AR1'} option
+#' this function, the `vary_ideal_pts` option in 
+#' [id_estimate()] must have received the `'AR1'` option
 #' as IRFs are only available for the AR(1) auto-regressive model.
 #' 
-#' @param object A fitted \code{idealstan} object
+#' @param object A fitted `idealstan` object
 #' @param cov_name The name of the covariate to plot. Leave blank to select 
 #' from a list of available covariates
-#' @param calc_varying if \code{TRUE}, will calculate marginal effects of the
+#' @param calc_varying if `TRUE`, will calculate marginal effects of the
 #' covariates on each end of the latent scale (see vignette for more information)
 #' @param label_high The character label for the upper end of the latent scale
 #' @param label_low The character label for the lower end of the latent scale
 #' @param pred_outcome For discrete models with more than 2 categories, 
 #' or binary models with missing data, which outcome to predict. This should 
 #' be a character value that matches what the outcome was coded as in the data
-#' passed to \code{\link{id_make}}.
+#' passed to [id_make()].
 #' @param high_quantile The upper limit of the posterior density to use for 
 #' calculating credible intervals
 #' @param low_quantile The lower limit of the posterior density to use for
 #' calculating credible intervals
 #' @param recalc_vals Whether to combine two variables into one through addition before
-#' computing IRFs. If \code{TRUE}, two names of parameters should be passed to 
-#' \code{cov_name} or selected from the dialog list
+#' computing IRFs. If `TRUE`, two names of parameters should be passed to 
+#' `cov_name` or selected from the dialog list
 #' @param include A list of character names of person or group IDs for which to
 #' calculate IRFs
 #' @param time_calc The maximum number of time points over which to calculate the
 #' IRF
 #' @param time_label Character string specifying the type of time points (default is just
-#' \code{"Time Points"})
-#' @param line_type The line type of the IRF line (see \code{ggplot2} documentation)
-#' @param line_width The line width of the IRF line (see \code{ggplot2} documentation)
-#' @param line_alpha The line alpha (transparency) of the IRF line (see \code{ggplot2} documentation)
-#' @param line_color The color of the IRF line (see \code{ggplot2} documentation)
-#' @param ci_color The color of the IRF credible interval (see \code{ggplot2} documentation)
-#' @param ci_alpha The alpha of the IRF credible interval (see \code{ggplot2} documentation)
+#' `"Time Points"`)
+#' @param line_type The line type of the IRF line (see `ggplot2` documentation)
+#' @param line_width The line width of the IRF line (see `ggplot2` documentation)
+#' @param line_alpha The line alpha (transparency) of the IRF line (see `ggplot2` documentation)
+#' @param line_color The color of the IRF line (see `ggplot2` documentation)
+#' @param ci_color The color of the IRF credible interval (see `ggplot2` documentation)
+#' @param ci_alpha The alpha of the IRF credible interval (see `ggplot2` documentation)
 #' @param use_ci Whether or not to plot a credible interval around the lines
-#' @return a \code{ggplot2} object that can be further customized if necessary
+#' @return a `ggplot2` object that can be further customized if necessary
 #' @noRd
 id_plot_irf <- function(object,
                         cov_name=NULL,

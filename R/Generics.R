@@ -833,13 +833,9 @@ setMethod(launch_shinystan,signature(object='idealstan'),
 #' using numerical differentation.
 #' 
 #' @returns Returns a tibble that has one row per posterior draw per item-specific
-#' marginal effect in the scale of th eoutcome.
+#' marginal effect in the scale of the outcome.
 #' @param object A fitted \code{idealstan} model
-#' @param covariate The character value for a covariate passed to the
-#' `id_make` function before model fitting. Only one covariate can be processed
-#' at a time.
-#' @param eps The value used for numerical differentiation. Default is 1e-4. Usually 
-#' does not need to be changed.
+#' @param ... Other values passed on to methods.
 #' @export
 setGeneric('id_me',
            signature='object',
@@ -880,6 +876,9 @@ setGeneric('id_me',
 #' Defaults to 1.
 #' @param lb The quantile for the lower bound of the aggregated effects (default is 0.05)
 #' @param upb The quantile for the upper bound of the aggregated effects (default is 0.95)
+#' @param eps Parameter for numerical differentiation (usually does not need to be changed)
+#' passed on to [id_post_pred]
+#' @param ... Additional arguments passed on to [id_post_pred]
 #' @export
 setMethod('id_me',signature(object='idealstan'),
           function(object,
@@ -890,7 +889,8 @@ setMethod('id_me',signature(object='idealstan'),
                    draws=100,
                    cores=1,
                    lb=0.05,
-                   upb=0.95) {
+                   upb=0.95,
+                   ...) {
           
             # first need new data with the covariate differenced by eps
             # if binary
@@ -937,13 +937,13 @@ setMethod('id_me',signature(object='idealstan'),
                                           use_cores=cores,
                                           draws=draws,
                                           pred_outcome=pred_outcome,
-                                          type="epred")
+                                          type="epred",...)
             
             pred0 <- id_post_pred(object,newdata=data0,
                                           use_cores=cores,
                                           draws=draws,
                                           pred_outcome=pred_outcome,
-                                          type="epred")
+                                          type="epred",...)
             
             message("Differencing")
             

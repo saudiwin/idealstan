@@ -13,11 +13,11 @@ id_post_pred(object, ...)
 }
 \value{
 \code{posterior_predict} methods should return a \eqn{D} by \eqn{N}
-  matrix, where \eqn{D} is the number of draws from the posterior predictive
-  distribution and \eqn{N} is the number of data points being predicted per
-  draw.
+matrix, where \eqn{D} is the number of draws from the posterior predictive
+distribution and \eqn{N} is the number of data points being predicted per
+draw.
 }
 \description{
-This function is a generic that is used to match the functions used with \code{\link[bayesplot]{ppc_bars}} to calculate
+This function is a generic that is used to match the functions used with \code{\link[bayesplot:PPC-discrete]{bayesplot::ppc_bars()}} to calculate
 the posterior predictive distribution of the data given the model.
 }
