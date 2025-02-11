@@ -91,7 +91,7 @@ data {
   array[num_restrict_high] int restrict_high; // position of high valued fixed parameter
   array[num_restrict_low] int restrict_low; // position of low valued fixed parameter
   array[num_restrict_high] real fix_high; // value to fix high parameter to
-  array[num_restrict_high] real fix_low; // value to fix low parameter to
+  array[num_restrict_low] real fix_low; // value to fix low parameter to
   real discrim_reg_upb;
   real discrim_reg_lb;
   real discrim_miss_upb;

@@ -27,7 +27,7 @@ Useful links:
 
 }
 \author{
-\strong{Maintainer}: Robert Kubinec \email{rmk7@nyu.edu}
+\strong{Maintainer}: Robert Kubinec \email{bobkubinec@gmail.com}
 
 Other contributors:
 \itemize{
