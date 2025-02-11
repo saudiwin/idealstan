@@ -50,12 +50,3 @@
   
 }
 
-.onAttach <- function(libname, pkgname) {
-  
-  # check for cmdstanR installation
-  if (!requireNamespace("cmdstanr")) {
-    packageStartupMessage("Note: you have not installed cmdstanr. To do so, please go to https://mc-stan.org/cmdstanr/.")
-  } 
-  
-}
-

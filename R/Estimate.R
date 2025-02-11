@@ -878,11 +878,12 @@ id_make <- function(score_data=NULL,
 #' # We will use the full rollcall voting data 
 #' # from the 114th Senate as a rollcall object
 #' 
+#' \dontrun{
+#' 
 #' data('senate114')
 #' 
 #' # Running this model will take at least a few minutes, even with 
 #' # variational inference (use_vb=T) turned on
-#' \dontrun{
 #' 
 #' to_idealstan <-   id_make(score_data = senate114,
 #' outcome = 'cast_code',
@@ -893,6 +894,8 @@ id_make <- function(score_data=NULL,
 #' high_val='Yes',
 #' low_val='No',
 #' miss_val='Absent')
+#' 
+#' \dontrun{
 #' 
 #' sen_est <- id_estimate(to_idealstan,
 #' model_type = 2,
@@ -917,6 +920,7 @@ id_make <- function(score_data=NULL,
 #' @importFrom utils person packageDescription
 #' @importFrom posterior as_draws_rvars ess_bulk ess_tail
 #' @importFrom bayesplot mcmc_intervals
+#' @importFrom rlang check_installed is_installed
 #' @import cmdstanr
 #' @export
 id_estimate <- function(idealdata=NULL,model_type=2,
@@ -982,6 +986,39 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                         init_pathfinder=TRUE,
                         debug_mode=FALSE,
                         ...) {
+  
+  # small function to install cmdstanr
+  
+  install_cmdstanr <- function(pkg, ...) {
+    
+    install.packages(pkg, repos = c('https://stan-dev.r-universe.dev'))
+    
+  }
+  
+  check_installed("cmdstanr",
+                  version="0.8.1",
+                  reason="idealstan requires the package cmdstanr to run. This package is available from an external respository, https://stan-dev.r-universe.dev.",
+                  action=install_cmdstanr)
+  
+  # only allow estimation to proceed if cmdstanr is installed
+  
+  if(!is_installed("cmdstanr")) {
+    
+    message("The R package cmdstanr is not installed so idealstan cannot estimate models. Please go to https://mc-stan.org/cmdstanr/ for installation instructions for the package cmdstanr.")
+    
+    return(NULL)
+  }
+  
+  # only allow estimation to proceed if cmdstan is also installed
+  
+  if(is.null(
+    cmdstanr::cmdstan_version(error_on_NA = FALSE))) {
+    
+    message("R package cmdstanr is installed but cmdstan is not yet installed & set up. Please load the R package cmdstanr and use function install_cmdstan() to install cmdstan on your local machine. For more information, see https://mc-stan.org/cmdstanr/.")
+    
+    return(NULL)
+    
+  }
   
   # don't allow user to change this
   

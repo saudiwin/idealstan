@@ -14,13 +14,13 @@ Description: Offers item-response theory (IRT) ideal-point measurement modeling 
 License: MIT + file LICENSE
 Depends: 
     methods,
-    R (>= 4.0.0)
+    R (>= 4.0.0),
+    cmdstanr
 Imports: 
     dplyr,
     svDialogs,
     tidyr,
     stringr,
-    cmdstanr,
     bayesplot,
     posterior,
     gghighlight,

@@ -491,7 +491,6 @@ setMethod('id_model',signature(object='idealdata'),
                    use_groups=NULL) {
             
             x <- object@score_matrix
-  
             
             if(fixtype %in% c("prefix") && is.null(restrict_ind_high)) {
               
@@ -542,8 +541,8 @@ setMethod('id_model',signature(object='idealdata'),
               if(is.character(restrict_ind_high)) {
                 if(const_type=="items") {
                   n_old <- names(restrict_ind_high)
-                  restrict_ind_high <- as.numeric(restrict_ind_high,
-                                                  levels=levels(object@score_matrix$item_id))
+                  restrict_ind_high <- as.numeric(factor(restrict_ind_high,
+                                                  levels=levels(object@score_matrix$item_id)))
                   names(restrict_ind_high) <- n_old
                 } else {
                   if(use_groups) {

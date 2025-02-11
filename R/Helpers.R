@@ -39,7 +39,7 @@
   
   if(length(restrict_ind_low) > 1 && length(fix_low)==1) {
     
-    fix_low <- rep(fix_high, length(restrict_ind_low))
+    fix_low <- rep(fix_low, length(restrict_ind_low))
     
   }
   
