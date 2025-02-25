@@ -218,21 +218,39 @@ setMethod('sample_model',signature(object='idealdata'),
               
               draws_init <- process_init_pathfinder(init_vals,num_procs=nchains)
 
-              # check and make sure that nothing is obviously wrong with the inits
-              # perhaps due to floating point errors
+              # check for very high/low for discrimination parameters
+              # that might lead to overflow/underflow/log(0) errors
+              # on init
 
               draws_init <- lapply(draws_init, function(td) {
 
-                if(any(td$sigma_reg_free==0.999)) {
+                if(any(td$sigma_reg_free>0.9999)) {
 
-                  td$sigma_reg_free[td$sigma_reg_free==0.999] <- td$sigma_reg_free[td$sigma_reg_free==0.999] - 0.001
+                  td$sigma_reg_free[td$sigma_reg_free> 0.9999] <- td$sigma_reg_free[td$sigma_reg_free > 0.9999] - 0.001
 
                 }
 
-                if(any(td$sigma_reg_free== -0.999)) {
+                if(any(td$sigma_reg_free < -0.9999)) {
 
-                  td$sigma_reg_free[td$sigma_reg_free== -0.999] <- td$sigma_reg_free[td$sigma_reg_free== -0.999] + 0.001
+                  td$sigma_reg_free[td$sigma_reg_free < -0.9999] <- td$sigma_reg_free[td$sigma_reg_free < -0.9999] + 0.001
 
+                }
+                
+                if(any("sigma_abs_free") %in% names(td)) {
+                  
+                  if(any(td$sigma_abs_free>0.9999)) {
+                    
+                    td$sigma_reg_free[td$sigma_reg_free> 0.9999] <- td$sigma_reg_free[td$sigma_reg_free > 0.9999] - 0.001
+                    
+                  }
+                  
+                  if(any(td$sigma_abs_free < -0.9999)) {
+                    
+                    td$sigma_reg_free[td$sigma_reg_free < -0.9999] <- td$sigma_reg_free[td$sigma_reg_free < -0.9999] + 0.001
+                    
+                  }
+                  
+                  
                 }
 
                 return(td)
