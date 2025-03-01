@@ -173,22 +173,6 @@ id_make <- function(score_data=NULL,
   # make sure to ungroup it if it's a tidy data frame
   if('tbl' %in% class(score_data)) score_data <- ungroup(score_data)
   
-  # if object is a rollcall, pre-process data into long form
-  if('rollcall' %in% class(score_data)) {
-    score_data <- .prepare_rollcall(score_data,item_id=item_id,
-                                    time_id=time_id)
-    
-    time_id <- score_data$time_id
-    item_id <- score_data$item_id
-    score_data <- score_data$score_data
-    
-    miss_val <- 9
-    low_val <- 6
-    high_val <- 1
-    exclude_level <- c(3,7)
-    
-  } 
-  
   # data is already in long form
   
   # save original ID names as strings to filter later
@@ -223,7 +207,7 @@ id_make <- function(score_data=NULL,
   if(any('try-error' %in% class(test_model))) {
     score_rename$model_id <- "missing"
   } else {
-    score_rename$model_id <- test_model
+    score_rename$model_id <- as.integer(test_model)
   }
   
   # if time or group IDs don't exist, make dummies
@@ -235,12 +219,12 @@ id_make <- function(score_data=NULL,
   test_ordered <- try(pull(score_data,!!ordered_id),silent=TRUE)
   
   if(any('try-error' %in% class(test_group))) {
-    score_rename$group_id <- factor("G")
+    score_rename$group_id <- 1L
   } else {
-    score_rename$group_id <- test_group
+    score_rename$group_id <- as.integer(test_group)
   }
   if(any('try-error' %in% class(test_time))) {
-    score_rename$time_id <- 1
+    score_rename$time_id <- 1L
   } else {
     score_rename$time_id <- test_time
   }
@@ -248,7 +232,7 @@ id_make <- function(score_data=NULL,
   if(any('try-error' %in% class(test_out_disc))) {
     
   } else {
-    score_rename$outcome_disc <- test_out_disc
+    score_rename$outcome_disc <- as.integer(test_out_disc)
   }
   
   if(any('try-error' %in% class(test_out_cont))) {
@@ -321,6 +305,8 @@ id_make <- function(score_data=NULL,
     score_rename$personcov0 <- 0
     person_cov_names <- 'personcov0'
     person_cov <- formula()
+    # need to avoid picking up stuff from environment
+    environment(person_cov) <- emptyenv()
   }
   
   if(!is.null(item_cov)) {
@@ -359,6 +345,8 @@ id_make <- function(score_data=NULL,
     score_rename$itemcov0 <- 0
     item_cov_names <- 'itemcov0'
     item_cov <- formula()
+    # need to avoid picking up stuff from environment
+    environment(item_cov) <- emptyenv()
   }
   
   if(!is.null(item_cov_miss)) {
@@ -396,6 +384,8 @@ id_make <- function(score_data=NULL,
     score_rename$itemcovmiss0 <- 0
     item_cov_miss_names <- 'itemcovmiss0'
     item_cov_miss <- formula()
+    # need to avoid picking up stuff from environment
+    environment(item_cov_miss) <- emptyenv()
   }
   
   # recode score/outcome
