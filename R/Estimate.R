@@ -827,6 +827,7 @@ id_make <- function(score_data=NULL,
 #' [summary()] for obtaining posterior quantiles,
 #' [id_post_pred()] for producing predictive replications.
 #' @examples
+#' 
 #' # First we can simulate data for an IRT 2-PL model that is inflated for missing data
 #' library(ggplot2)
 #' library(dplyr)
@@ -884,8 +885,6 @@ id_make <- function(score_data=NULL,
 #' high_val='Yes',
 #' low_val='No',
 #' miss_val='Absent')
-#' 
-#' \dontrun{
 #' 
 #' sen_est <- id_estimate(to_idealstan,
 #' model_type = 2,

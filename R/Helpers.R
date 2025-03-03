@@ -408,6 +408,38 @@
     
   }
   
+  if(idealdata@person_cov[1]=="personcov0") {
+    
+    legis_pred <- remove_list$legis_pred
+    
+  } else {
+    
+    
+    legis_pred <- remove_list$legis_pred[out_list$this_data$orig_order,,drop=FALSE]
+  }
+  
+  if(idealdata@item_cov[1]=="itemcov0") {
+    
+    srx_pred <- remove_list$srx_pred
+    
+  } else {
+    
+    srx_pred <- remove_list$srx_pred[out_list$this_data$orig_order,,drop=FALSE]
+    
+  }
+  
+  if(idealdata@item_cov_miss[1]=="itemcovmiss0") {
+    
+    sax_pred <- remove_list$sax_pred
+    
+  } else {
+    
+    sax_pred <- remove_list$sax_pred[out_list$this_data$orig_order,,drop=FALSE]
+    
+  }
+
+
+  
   this_data <- list(N=remove_list$N,
   N_cont=remove_list$N_cont,
   N_int=remove_list$N_int,
@@ -446,9 +478,9 @@
   LX=remove_list$LX,
   SRX=remove_list$SRX,
   SAX=remove_list$SAX,
-  legis_pred=remove_list$legis_pred[out_list$this_data$orig_order,,drop=FALSE],
-  srx_pred=remove_list$srx_pred[out_list$this_data$orig_order,,drop=FALSE],
-  sax_pred=remove_list$sax_pred[out_list$this_data$orig_order,,drop=FALSE],
+  legis_pred=legis_pred,
+  srx_pred=srx_pred,
+  sax_pred=sax_pred,
   time=remove_list$timepoints[out_list$this_data$orig_order],
   time_proc=vary_ideal_pts,
   discrim_reg_upb=discrim_reg_upb - discrim_reg_lb,
@@ -635,6 +667,36 @@
     
   }
   
+  if(idealdata@person_cov[1]=="personcov0") {
+    
+    legis_pred <- remove_list$legis_pred
+    
+  } else {
+    
+    
+    legis_pred <- remove_list$legis_pred[out_list$this_data$orig_order,,drop=FALSE]
+  }
+  
+  if(idealdata@item_cov[1]=="itemcov0") {
+    
+    srx_pred <- remove_list$srx_pred
+    
+  } else {
+    
+    srx_pred <- remove_list$srx_pred[out_list$this_data$orig_order,,drop=FALSE]
+    
+  }
+  
+  if(idealdata@item_cov_miss[1]=="itemcovmiss0") {
+    
+    sax_pred <- remove_list$sax_pred
+    
+  } else {
+    
+    sax_pred <- remove_list$sax_pred[out_list$this_data$orig_order,,drop=FALSE]
+    
+  }
+  
   this_data <- list(N=remove_list$N,
                     N_cont=remove_list$N_cont,
                     N_int=remove_list$N_int,
@@ -671,9 +733,9 @@
                     LX=remove_list$LX,
                     SRX=remove_list$SRX,
                     SAX=remove_list$SAX,
-                    legis_pred=remove_list$legis_pred[out_list$this_data$orig_order,,drop=FALSE],
-                    srx_pred=remove_list$srx_pred[out_list$this_data$orig_order,,drop=FALSE],
-                    sax_pred=remove_list$sax_pred[out_list$this_data$orig_order,,drop=FALSE],
+                    legis_pred=legis_pred,
+                    srx_pred=srx_pred,
+                    sax_pred=sax_pred,
                     time=remove_list$timepoints[out_list$this_data$orig_order],
                     time_proc=vary_ideal_pts,
                     discrim_reg_upb=discrim_reg_upb - discrim_reg_lb,
@@ -2829,14 +2891,46 @@ return(as.vector(idx))
     
     # create covariates
     
-    legis_pred <- as.matrix(select(idealdata@score_matrix,
-                                      idealdata@person_cov))[remove_nas,,drop=F]
+    # switch this up so that if it's just personcov0 it'll be a 
+    # zero-length matrix
     
-    srx_pred <- as.matrix(select(idealdata@score_matrix,
-                                 idealdata@item_cov))[remove_nas,,drop=F]
+    if(idealdata@person_cov[1]=="personcov0") {
+      
+      legis_pred <- matrix(data=NA_real_,
+                           nrow=0,ncol=0)
+      
+    } else {
+      
+      legis_pred <- as.matrix(select(idealdata@score_matrix,
+                                     idealdata@person_cov))[remove_nas,,drop=F]
+      
+    }
     
-    sax_pred <- as.matrix(select(idealdata@score_matrix,
-                                 idealdata@item_cov_miss))[remove_nas,,drop=F]
+    if(idealdata@item_cov[1]=="itemcov0") {
+      
+      srx_pred <- matrix(data=NA_real_,
+                           nrow=0,ncol=0)
+      
+    } else {
+      
+      srx_pred <- as.matrix(select(idealdata@score_matrix,
+                                   idealdata@item_cov))[remove_nas,,drop=F]
+      
+    }
+    
+    if(idealdata@item_cov_miss[1]=="itemcovmiss0") {
+      
+      sax_pred <- matrix(data=NA_real_,
+                         nrow=0,ncol=0)
+      
+    } else {
+      
+      sax_pred <- as.matrix(select(idealdata@score_matrix,
+                                   idealdata@item_cov_miss))[remove_nas,,drop=F]
+      
+    }
+    
+
     
     LX <- ncol(legis_pred)
     SRX <- ncol(srx_pred)
