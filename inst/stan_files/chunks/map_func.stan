@@ -402,16 +402,9 @@ real partial_sum(array[,] int y_slice,
     }
 
 if(prior_only==0) {
-      
-      if(S_type==1) {
-      
-#include /chunks/model_types_mm_map_persons.stan
-
-    } else {
   
-#include /chunks/model_types_mm_map_items.stan
-
-    }
+#include /chunks/model_types_mm.stan
+    
   }
       
     }
