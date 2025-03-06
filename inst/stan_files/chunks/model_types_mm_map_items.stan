@@ -9,12 +9,140 @@ This file is specifically for mapping over items.*/
 
 for(n in start2:end2) {
   
-  real lin_mod_obs = lin_mod_obs;
-  real lin_mod_abs = lin_mod_abs); 
-          A_int_free[s];
+  // all models with missing data
+  array[7] int miss_mods = {2,4,6,8,10,12,16};
   
-  real lin_mod_obs_dyn = Y_int[n]|lin_mod_obs_dyn;
-  real lin_mod_abs_dyn = sigma_abs_free[s] + sigma_abs_calc[n - start2 + 1]) * (L_tp1[time[n],ll[n]] + legis_calc[n - start2 + 1]) - A_int_free[s];
+  real lin_mod_obs;
+  real lin_mod_abs;
+  real lin_mod_obs_dyn;
+  real lin_mod_abs_dyn;
+  
+ if(T==1) {
+   
+   if(S_type==1) {
+     
+     lin_mod_obs = (sigma_reg_full[bb[n]] + sigma_reg_calc[n - start2 + 1]) *  (L_full[s] + legis_calc[n - start2 + 1]) - B_int_free[bb[n]];
+    
+   } else {
+     
+      lin_mod_obs = (sigma_reg_full[s] + sigma_reg_calc[n - start2 + 1]) *  (L_full[ll[n]] + legis_calc[n - start2 + 1]) - B_int_free[s];
+     
+   }
+    
+    if(debug_mode==1) {
+     
+     if((is_nan(logit(lin_mod_obs)) || logit(lin_mod_obs)==0 || logit(lin_mod_obs)==1)) {
+      
+      print("Logit test failed for lin_mod_obs");
+      
+      if(is_nan(logit(lin_mod_obs))) print("Value is NAN");
+      if(logit(lin_mod_obs)==0) print("Value is 0");
+      if(logit(lin_mod_obs)==1) print("Value is 1");
+      
+      print("Data point ",n);
+      
+     }
+      
+    }
+    
+    
+  } else {
+    
+    if(S_type==1) {
+    
+    lin_mod_obs_dyn = (sigma_reg_full[bb[n]] + sigma_reg_calc[n - start2 + 1]) *  (lt[time[n]] + legis_calc[n - start2 + 1]) - B_int_free[bb[n]];
+    
+    } else {
+      
+      lin_mod_obs_dyn = (sigma_reg_full[s] + sigma_reg_calc[n - start2 + 1]) *  (L_tp1[time[n],ll[n]] + legis_calc[n - start2 + 1]) - B_int_free[s];
+      
+    }
+    
+    if(debug_mode==1) {
+     
+     if((is_nan(logit(lin_mod_obs_dyn)) || logit(lin_mod_obs_dyn)==0 || logit(lin_mod_obs_dyn)==1)) {
+      
+      print("Logit test failed for lin_mod_obs_dyn");
+      
+      if(is_nan(logit(lin_mod_obs_dyn))) print("Value is NAN");
+      if(logit(lin_mod_obs_dyn)==0) print("Value is 0");
+      if(logit(lin_mod_obs_dyn)==1) print("Value is 1");
+      
+      print("Data point ",n);
+      
+     }
+      
+    }
+    
+    
+  }
+  
+   if(r_in(mm[n],miss_mods)==1) {
+     
+    if(T==1) {
+      
+      if(S_type==1) {
+      
+          lin_mod_abs = (sigma_abs_free[bb[n]] + sigma_abs_calc[n - start2 + 1]) * (L_full[s] + legis_calc[n - start2 + 1]) - 
+          A_int_free[bb[n]];
+          
+      } else {
+        
+        lin_mod_abs = (sigma_abs_free[s] + sigma_abs_calc[n - start2 + 1]) * (L_full[ll[n]] + legis_calc[n - start2 + 1]) - A_int_free[s];
+        
+      }
+          
+     if(debug_mode==1) {
+     
+     if((is_nan(logit(lin_mod_abs)) || logit(lin_mod_abs)==0 || logit(lin_mod_abs)==1)) {
+      
+      print("Logit test failed for lin_mod_abs");
+      
+      if(is_nan(logit(lin_mod_abs))) print("Value is NAN");
+      if(logit(lin_mod_abs)==0) print("Value is 0");
+      if(logit(lin_mod_abs)==1) print("Value is 1");
+      
+      print("Data point ",n);
+      
+     }
+      
+    }
+      
+    } else {
+      
+      if(S_type==1) {
+      
+      lin_mod_abs_dyn = (sigma_abs_free[bb[n]] + sigma_abs_calc[n - start2 + 1]) * (lt[time[n]] + legis_calc[n - start2 + 1]) - A_int_free[bb[n]];
+      
+      } else {
+        
+        lin_mod_abs_dyn = (sigma_abs_free[s] + sigma_abs_calc[n - start2 + 1]) * (L_tp1[time[n],ll[n]] + legis_calc[n - start2 + 1]) - A_int_free[s];
+        
+      }
+      
+      if(debug_mode==1) {
+     
+     if((is_nan(logit(lin_mod_abs_dyn)) || logit(lin_mod_abs_dyn)==0 || logit(lin_mod_abs_dyn)==1)) {
+      
+      print("Logit test failed for lin_mod_abs");
+      
+      if(is_nan(logit(lin_mod_abs_dyn))) print("Value is NAN");
+      if(logit(lin_mod_abs_dyn)==0) print("Value is 0");
+      if(logit(lin_mod_abs_dyn)==1) print("Value is 1");
+      
+      print("Data point ",n);
+      
+     }
+      
+    }
+      
+    }
+     
+   }
+  
+  
+  
+  
   
     // first iterate over all the integer types
     
@@ -22,20 +150,20 @@ for(n in start2:end2) {
       //2 PL no inflation
       
       if(T==1) {
-        log_prob += bernoulli_logit_lpmf(Y_int[n]|lin_mod_obs;
+        log_prob += bernoulli_logit_lpmf(Y_int[n]|lin_mod_obs);
       } else {
-        log_prob += bernoulli_logit_lpmf(Y_int[n]|lin_mod_obs_dyn;
+        log_prob += bernoulli_logit_lpmf(Y_int[n]|lin_mod_obs_dyn);
       }
     } else if(mm[n]==2) {
       //2 PL inflation
       if(Y_int[n]<y_int_miss) {
         // observed data 
         if(T==1) {
-          log_prob += bernoulli_logit_lpmf(Y_int[n]|lin_mod_obs;
-          log_prob += bernoulli_logit_lpmf(0|lin_mod_abs;
+          log_prob += bernoulli_logit_lpmf(Y_int[n]|lin_mod_obs);
+          log_prob += bernoulli_logit_lpmf(0|lin_mod_abs);
         } else {
-          log_prob += bernoulli_logit_lpmf(Y_int[n]|lin_mod_obs_dyn;
-          log_prob += bernoulli_logit_lpmf(0|lin_mod_abs_dyn;
+          log_prob += bernoulli_logit_lpmf(Y_int[n]|lin_mod_obs_dyn);
+          log_prob += bernoulli_logit_lpmf(0|lin_mod_abs_dyn);
         }
         
       } else {
@@ -573,9 +701,9 @@ if(T==1) {
   //poisson no inflation
   
       if(T==1) {
-        log_prob += poisson_log_lpmf(Y_int[n]|lin_mod_obs;
+        log_prob += poisson_log_lpmf(Y_int[n]|lin_mod_obs);
       } else {
-        log_prob += poisson_log_lpmf(Y_int[n]|lin_mod_obs_dyn;
+        log_prob += poisson_log_lpmf(Y_int[n]|lin_mod_obs_dyn);
       }
         
         
@@ -587,11 +715,11 @@ if(T==1) {
       if(Y_int[n]<y_int_miss) {
         // observed data 
         if(T==1) {
-          log_prob += poisson_log_lpmf(Y_int[n]|lin_mod_obs;
+          log_prob += poisson_log_lpmf(Y_int[n]|lin_mod_obs);
           log_prob += bernoulli_logit_lpmf(0|lin_mod_abs); 
                                  
         } else {
-          log_prob += poisson_log_lpmf(Y_int[n]|lin_mod_obs_dyn;
+          log_prob += poisson_log_lpmf(Y_int[n]|lin_mod_obs_dyn);
           log_prob += bernoulli_logit_lpmf(0|lin_mod_abs_dyn); 
                                  
         }
