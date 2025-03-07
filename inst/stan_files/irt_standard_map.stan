@@ -125,7 +125,7 @@ data {
   int min_length; // the minimum threshold for GP length-scale prior
   int num_var;
   array[num_bills] int type_het_var;
-  int<lower=0,upper=1> debug_mode;
+  int<lower=0,upper=2> debug_mode;
   int<lower=0> num_ordbeta;
   vector[num_ordbeta] phi_mean;
   array[num_bills] int ordbeta_id;
@@ -332,7 +332,7 @@ model {
   
   // If in debug mode, spit out values of all parameters to see where the problem is
   
-  if(debug_mode==1) {
+  if(debug_mode==2) {
     
     print("Showing values for all parameters: ");
     
@@ -541,10 +541,10 @@ for(n in 1:num_legis) {
 if(S_type==1 && const_type==1) {
   // both ID and map for persons
   //sigma_reg_free ~ normal(0, discrim_reg_sd);
-  if(debug_mode==1) print("Adding genbeta_vec_lpdf(sigma_reg_free|discrim_reg_scale,discrim_reg_shape,discrim_reg_lb,discrim_reg_upb) to target(): ",genbeta_vec_lpdf(sigma_reg_free|discrim_reg_scale,discrim_reg_shape,discrim_reg_lb,discrim_reg_upb));
+  if(debug_mode==2) print("Adding genbeta_vec_lpdf(sigma_reg_free|discrim_reg_scale,discrim_reg_shape,discrim_reg_lb,discrim_reg_upb) to target(): ",genbeta_vec_lpdf(sigma_reg_free|discrim_reg_scale,discrim_reg_shape,discrim_reg_lb,discrim_reg_upb));
   target += genbeta_vec_lpdf(sigma_reg_free|discrim_reg_scale,discrim_reg_shape,discrim_reg_lb,discrim_reg_upb);
   //sigma_reg_pos ~ exponential(1/discrim_reg_scale);
-  if(debug_mode==1) print("Adding genbeta_vec_lpdf(sigma_abs_free|discrim_abs_scale,discrim_abs_shape,discrim_miss_lb,discrim_miss_upb) to target(): ",genbeta_vec_lpdf(sigma_abs_free|discrim_abs_scale,discrim_abs_shape,discrim_miss_lb,discrim_miss_upb));
+  if(debug_mode==2) print("Adding genbeta_vec_lpdf(sigma_abs_free|discrim_abs_scale,discrim_abs_shape,discrim_miss_lb,discrim_miss_upb) to target(): ",genbeta_vec_lpdf(sigma_abs_free|discrim_abs_scale,discrim_abs_shape,discrim_miss_lb,discrim_miss_upb));
   target += genbeta_vec_lpdf(sigma_abs_free|discrim_abs_scale,discrim_abs_shape,discrim_miss_lb,discrim_miss_upb);
   B_int_free ~ normal(0,diff_reg_sd);
   A_int_free ~ normal(0,diff_abs_sd);
@@ -552,7 +552,7 @@ if(S_type==1 && const_type==1) {
   // map persons, ID items
   B_int_free ~ normal(0,diff_reg_sd);
   A_int_free ~ normal(0,diff_abs_sd);
-  if(debug_mode==1) print("Adding genbeta_vec_lpdf(sigma_abs_free|discrim_abs_scale,discrim_abs_shape,discrim_miss_lb,discrim_miss_upb) to target(): ",genbeta_vec_lpdf(sigma_abs_free|discrim_abs_scale,discrim_abs_shape,discrim_miss_lb,discrim_miss_upb));
+  if(debug_mode==2) print("Adding genbeta_vec_lpdf(sigma_abs_free|discrim_abs_scale,discrim_abs_shape,discrim_miss_lb,discrim_miss_upb) to target(): ",genbeta_vec_lpdf(sigma_abs_free|discrim_abs_scale,discrim_abs_shape,discrim_miss_lb,discrim_miss_upb));
   target += genbeta_vec_lpdf(sigma_abs_free|discrim_abs_scale,discrim_abs_shape,discrim_miss_lb,discrim_miss_upb);
   
     target += id_params2(sigma_reg_free,
@@ -635,7 +635,7 @@ if(S_type==1 && const_type==1) {
   //L_full ~ normal(0,legis_sd);
 
   //all model types
-
+  if(debug_mode==1) print("target before reduce sum = ", target());
   target += reduce_sum(partial_sum,
                       sum_vals,
                      grainsize,
@@ -743,6 +743,8 @@ if(S_type==1 && const_type==1) {
         ordbeta_id,
         phi,
         ordbeta_cut);
+        
+      if(debug_mode==1) print("target after reduce sum = ", target());
 
 }
 generated quantities {

@@ -12,6 +12,10 @@ for(n in start2:end2) {
   // all models with missing data
   array[7] int miss_mods = {2,4,6,8,10,12,16};
   
+  // maximum number of reported debug issues
+  
+  int debug_issues = 0;
+  
   real lin_mod_obs;
   real lin_mod_abs;
   real lin_mod_obs_dyn;
@@ -31,12 +35,33 @@ for(n in start2:end2) {
     
     if(debug_mode==1) {
      
-     if((is_nan(inv_logit(lin_mod_obs)) || inv_logit(lin_mod_obs)==0 || inv_logit(lin_mod_obs)==1)) {
+     if((is_nan(inv_logit(lin_mod_obs)) || inv_logit(lin_mod_obs)==0) && debug_issues<5) {
+       
+       debug_issues = debug_issues + 1;
       
       print("Logit test failed for lin_mod_obs");
       
+      real sigma_reg_full_bb;
+      real L_full_s;
+      
+      if(S_type==1) sigma_reg_full_bb = sigma_reg_full[bb[n]];
+      if(S_type==0) sigma_reg_full_bb = sigma_reg_full[s];
+      real sigma_reg_calc_val = sigma_reg_calc[n - start2 + 1];
+      if(S_type==1) L_full_s = L_full[s];
+      if(S_type==0) L_full_s = L_full[ll[n]];
+      real legis_calc_val = legis_calc[n - start2 + 1];
+      real B_int_free_bb = B_int_free[bb[n]];
+      
       if(is_nan(inv_logit(lin_mod_obs))) print("Value is NAN");
       if(inv_logit(lin_mod_obs)==0) print("Value is 0");
+      if(S_type==1) print("sigma_reg_full[bb[n]] = ", sigma_reg_full_bb);
+      if(S_type==0) print("sigma_reg_full[s] = ", sigma_reg_full_bb);
+      print("sigma_reg_calc[n - start2 + 1] = ", sigma_reg_calc_val);
+      if(S_type==1) print("L_full[s] = ", L_full_s);
+      if(S_type==0) print("L_full[ll[n]] = ", L_full_s);
+      print("legis_calc[n - start2 + 1] = ", legis_calc_val);
+      print("B_int_free[bb[n]] = ", B_int_free_bb);
+      print("Final result = ", lin_mod_obs);
       //if(inv_logit(lin_mod_obs)==1) print("Value is 1");
       
       print("Data point ",n);
@@ -60,12 +85,33 @@ for(n in start2:end2) {
     
     if(debug_mode==1) {
      
-     if((is_nan(inv_logit(lin_mod_obs_dyn)) || inv_logit(lin_mod_obs_dyn)==0 || inv_logit(lin_mod_obs_dyn)==1)) {
+     if(is_nan(inv_logit(lin_mod_obs_dyn)) || inv_logit(lin_mod_obs_dyn)==0 && debug_issues<5) {
+       
+       debug_issues = debug_issues + 1;
+       real sigma_reg_full_bb;
+       real lt_time;
+       
+      if(S_type==1) sigma_reg_full_bb = sigma_reg_full[bb[n]];
+      if(S_type==0) sigma_reg_full_bb = sigma_reg_full[s];
+      real sigma_reg_calc_val = sigma_reg_calc[n - start2 + 1];
+      if(S_type==1) lt_time = lt[time[n]];
+      if(S_type==0) lt_time = L_tp1[time[n],ll[n]];
+      real legis_calc_val = legis_calc[n - start2 + 1];
+      real B_int_free_bb = B_int_free[bb[n]];
       
       print("Logit test failed for lin_mod_obs_dyn");
       
       if(is_nan(inv_logit(lin_mod_obs_dyn))) print("Value is NAN");
       if(inv_logit(lin_mod_obs_dyn)==0) print("Value is 0");
+      
+      if(S_type==1) print("sigma_reg_full[bb[n]] = ", sigma_reg_full_bb);
+      if(S_type==0) print("sigma_reg_full[s] = ", sigma_reg_full_bb);
+      print("sigma_reg_calc[n - start2 + 1] = ", sigma_reg_calc_val);
+      print("legis_calc[n - start2 + 1] = ", legis_calc_val);
+      print("B_int_free[bb[n]] = ", B_int_free_bb);
+      print("lin_mod_obs_dyn = ", lin_mod_obs_dyn);
+      if(S_type==1) print("lt[time[n]] = ", lt_time);
+      if(S_type==0) print("L_tp1[time[n],ll[n]] = ", lt_time);
       //if(inv_logit(lin_mod_obs_dyn)==1) print("Value is 1");
       
       print("Data point ",n);
@@ -94,13 +140,34 @@ for(n in start2:end2) {
           
      if(debug_mode==1) {
      
-     if((is_nan(inv_logit(lin_mod_abs)) || inv_logit(lin_mod_abs)==0 || inv_logit(lin_mod_abs)==1)) {
+     if(is_nan(inv_logit(lin_mod_abs)) || inv_logit(lin_mod_abs)==0 && debug_issues<5) {
+       
+       debug_issues = debug_issues + 1;
+       real sigma_abs_free_bb;
+       real L_full_s;
+       
+      if(S_type==1) sigma_abs_free_bb = sigma_abs_free[bb[n]];
+      if(S_type==0) sigma_abs_free_bb = sigma_abs_free[s];
+      real sigma_abs_calc_val = sigma_abs_calc[n - start2 + 1];
+      if(S_type==1) L_full_s = L_full[s];
+      if(S_type==0) L_full_s = L_full[ll[n]];
+      real legis_calc_val = legis_calc[n - start2 + 1];
+      real A_int_free_bb = A_int_free[bb[n]];
       
       print("Logit test failed for lin_mod_abs");
       
       if(is_nan(inv_logit(lin_mod_abs))) print("Value is NAN");
       if(inv_logit(lin_mod_abs)==0) print("Value is 0");
       //if(inv_logit(lin_mod_abs)==1) print("Value is 1");
+      
+      if(S_type==1) print("sigma_abs_free[bb[n]] = ", sigma_abs_free_bb);
+      if(S_type==0) print("sigma_abs_free[s] = ", sigma_abs_free_bb);
+      print("sigma_abs_calc[n - start2 + 1] = ", sigma_abs_calc_val);
+      if(S_type==1) print("L_full[s] = ", L_full_s);
+      if(S_type==0) print("L_full[ll[n]] = ", L_full_s);
+      print("legis_calc[n - start2 + 1] = ", legis_calc_val);
+      print("A_int_free[bb[n]] = ", A_int_free_bb);
+      print("Final result = ", lin_mod_abs);
       
       print("Data point ",n);
       
@@ -121,10 +188,30 @@ for(n in start2:end2) {
       }
       
       if(debug_mode==1) {
+        
+        real sigma_abs_free_bb;
+        real lt_time;
+        
+      if(S_type==1) sigma_abs_free_bb = sigma_abs_free[bb[n]];
+      if(S_type==0) sigma_abs_free_bb = sigma_abs_free[s];
+      real sigma_abs_calc_val = sigma_abs_calc[n - start2 + 1];
+      if(S_type==1) lt_time = lt[time[n]];
+      if(S_type==0) lt_time = L_tp1[time[n],ll[n]];
+      real legis_calc_val = legis_calc[n - start2 + 1];
+      real A_int_free_bb = A_int_free[bb[n]];
      
-     if((is_nan(inv_logit(lin_mod_abs_dyn)) || inv_logit(lin_mod_abs_dyn)==0 || inv_logit(lin_mod_abs_dyn)==1)) {
+     if((is_nan(inv_logit(lin_mod_abs_dyn)) || inv_logit(lin_mod_abs_dyn)==0 || inv_logit(lin_mod_abs_dyn)==1) && debug_issues<5) {
+       
+       debug_issues = debug_issues + 1;
       
       print("Logit test failed for lin_mod_abs");
+      
+      print("sigma_abs_free[bb[n]] = ", sigma_abs_free_bb);
+      print("sigma_abs_calc[n - start2 + 1] = ", sigma_abs_calc_val);
+      print("lt[time[n]] = ", lt_time);
+      print("legis_calc[n - start2 + 1] = ", legis_calc_val);
+      print("A_int_free[bb[n]] = ", A_int_free_bb);
+      print("lin_mod_abs_dyn = ", lin_mod_abs_dyn);
       
       if(is_nan(inv_logit(lin_mod_abs_dyn))) print("Value is NAN");
       if(inv_logit(lin_mod_abs_dyn)==0) print("Value is 0");

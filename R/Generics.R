@@ -183,7 +183,7 @@ setMethod('sample_model',signature(object='idealdata'),
               
               debug_orig <- this_data$debug_mode
               
-              this_data$debug_mode <- FALSE
+              this_data$debug_mode <- 0
               
               init_vals <- try(object@stanmodel_map$pathfinder(data=this_data,
                                           refresh=this_data$id_refresh,num_threads=ncores,
@@ -256,7 +256,7 @@ setMethod('sample_model',signature(object='idealdata'),
                 return(td)
               })
               
-              if(this_data$debug_mode) {
+              if(this_data$debug_mode>0) {
                 
                 saveRDS(draws_init, paste0("~/draws_init_",as.numeric(Sys.time()),".rds"))
                 

@@ -816,9 +816,10 @@ id_make <- function(score_data=NULL,
 #'   error messages from Stan. Also recompiles model objects.
 #' @param init_pathfinder Whether to generate initial values from the Pathfinder 
 #' algorithm (see Stan documentation). If FALSE, will generate random start values..
-#' @param debug_mode Whether to print valuesof all parameters for debugging purposes.
-#' If this is used, only one iteration should be used as it generates a lot of 
-#' console output.
+#' @param debug_mode Whether to debug code by printing values of log-probability
+#' statements to the console. A level of 1 will print log-probability before
+#' and after likelihood functions are calculated. A level of 2 will also 
+#' print out the log probability contributions of priors. Default is 0.
 #' @param ... Additional parameters passed on to Stan's sampling engine. See [rstan::stan()] for more information.
 #' @return A fitted [idealstan()] object that contains posterior samples of all parameters either via full Bayesian inference
 #' or a variational approximation if `use_vb` is set to `TRUE`. This object can then be passed to the plotting functions for further analysis.
@@ -973,7 +974,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                         compile_optim=FALSE,
                         debug=FALSE,
                         init_pathfinder=TRUE,
-                        debug_mode=FALSE,
+                        debug_mode=0,
                         ...) {
   
   # small function to install cmdstanr

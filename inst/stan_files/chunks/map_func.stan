@@ -144,119 +144,119 @@ real partial_sum(array[,] int y_slice,
                 if(time_proc == 2) {
                     real term = normal_lpdf(L_tp1_var[1, s] | fix_high[to_fix_high], restrict_sd_high);
                     log_prob += term;
-                    if(debug_mode == 1) print("Added normal_lpdf(L_tp1_var[1,s] | fix_high, restrict_sd_high) to log_prob: ", term);
+                    if(debug_mode==2) print("Added normal_lpdf(L_tp1_var[1,s] | fix_high, restrict_sd_high) to log_prob: ", term);
                     
                     term = normal_lpdf(L_full[s] | 0, legis_sd);
                     log_prob += term;
-                    if(debug_mode == 1) print("Added normal_lpdf(L_full[s] | 0, legis_sd) to log_prob: ", term);
+                    if(debug_mode==2) print("Added normal_lpdf(L_full[s] | 0, legis_sd) to log_prob: ", term);
                 } else {
                     real term = normal_lpdf(L_full[s] | fix_high[to_fix_high], restrict_sd_high);
                     log_prob += term;
-                    if(debug_mode == 1) print("Added normal_lpdf(L_full[s] | fix_high, restrict_sd_high) to log_prob: ", term);
+                    if(debug_mode==2) print("Added normal_lpdf(L_full[s] | fix_high, restrict_sd_high) to log_prob: ", term);
                 }
             } else if(to_fix_low>0) {
                 if(time_proc == 2) {
                     real term = normal_lpdf(L_tp1_var[1, s] | fix_low[to_fix_low], restrict_sd_low);
                     log_prob += term;
-                    if(debug_mode == 1) print("Added normal_lpdf(L_tp1_var[1, s] | fix_low, restrict_sd_low) to log_prob: ", term);
+                    if(debug_mode==2) print("Added normal_lpdf(L_tp1_var[1, s] | fix_low, restrict_sd_low) to log_prob: ", term);
                     
                     term = normal_lpdf(L_full[s] | 0, legis_sd);
                     log_prob += term;
-                    if(debug_mode == 1) print("Added normal_lpdf(L_full[s] | 0, legis_sd) to log_prob: ", term);
+                    if(debug_mode==2) print("Added normal_lpdf(L_full[s] | 0, legis_sd) to log_prob: ", term);
                 } else {
                     real term = normal_lpdf(L_full[s] | fix_low[to_fix_low], restrict_sd_low);
                     log_prob += term;
-                    if(debug_mode == 1) print("Added normal_lpdf(L_full[s] | fix_low, restrict_sd_low) to log_prob: ", term);
+                    if(debug_mode==2) print("Added normal_lpdf(L_full[s] | fix_low, restrict_sd_low) to log_prob: ", term);
                 }
             } else {
                 if(time_proc == 2) {
                     real term = normal_lpdf(L_tp1_var[1, s] | 0, legis_sd);
                     log_prob += term;
-                    if(debug_mode == 1) print("Added normal_lpdf(L_tp1_var[1, s] | 0, legis_sd) to log_prob: ", term);
+                    if(debug_mode==2) print("Added normal_lpdf(L_tp1_var[1, s] | 0, legis_sd) to log_prob: ", term);
                 }
                 real term = normal_lpdf(L_full[s] | 0, legis_sd);
                 log_prob += term;
-                if(debug_mode == 1) print("Added normal_lpdf(L_full[s] | 0, legis_sd) to log_prob: ", term);
+                if(debug_mode==2) print("Added normal_lpdf(L_full[s] | 0, legis_sd) to log_prob: ", term);
             }
         } else {
             real term = normal_lpdf(L_full[s] | 0, legis_sd);
             log_prob += term;
-            if(debug_mode == 1) print("Added normal_lpdf(L_full[s] | 0, legis_sd) to log_prob: ", term);
+            if(debug_mode==2) print("Added normal_lpdf(L_full[s] | 0, legis_sd) to log_prob: ", term);
         }
         if(rows(ls_int) > 0) {
             real term = normal_lpdf(ls_int[s] | 0, legis_sd);
             log_prob += term;
-            if(debug_mode == 1) print("Added normal_lpdf(ls_int[s] | 0, legis_sd) to log_prob: ", term);
+            if(debug_mode==2) print("Added normal_lpdf(ls_int[s] | 0, legis_sd) to log_prob: ", term);
             
             term = normal_lpdf(ls_int_abs[s] | 0, legis_sd);
             log_prob += term;
-            if(debug_mode == 1) print("Added normal_lpdf(ls_int_abs[s] | 0, legis_sd) to log_prob: ", term);
+            if(debug_mode==2) print("Added normal_lpdf(ls_int_abs[s] | 0, legis_sd) to log_prob: ", term);
         }
     } else if(S_type == 0 && const_type == 2) {
         if(pos_discrim == 0) {
             if(r_in(s, restrict_high)) {
                 real term = genbeta_lpdf(sigma_reg_full[s] | restrict_N_high, restrict_sd_high, discrim_reg_lb, discrim_reg_upb);
                 log_prob += term;
-                if(debug_mode == 1) print("Added genbeta_lpdf(sigma_reg_full[s] | restrict_N_high, restrict_sd_high, discrim_reg_lb, discrim_reg_upb) to log_prob: ", term);
+                if(debug_mode==2) print("Added genbeta_lpdf(sigma_reg_full[s] | restrict_N_high, restrict_sd_high, discrim_reg_lb, discrim_reg_upb) to log_prob: ", term);
             } else if(r_in(s, restrict_low)) {
                 real term = genbeta_lpdf(sigma_reg_full[s] | restrict_sd_low, restrict_N_low, discrim_reg_lb, discrim_reg_upb);
                 log_prob += term;
-                if(debug_mode == 1) print("Added genbeta_lpdf(sigma_reg_full[s] | restrict_sd_low, restrict_N_low, discrim_reg_lb, discrim_reg_upb) to log_prob: ", term);
+                if(debug_mode==2) print("Added genbeta_lpdf(sigma_reg_full[s] | restrict_sd_low, restrict_N_low, discrim_reg_lb, discrim_reg_upb) to log_prob: ", term);
             } else {
                 real term = genbeta_lpdf(sigma_reg_full[s] | discrim_reg_scale, discrim_reg_shape, discrim_reg_lb, discrim_reg_upb);
                 log_prob += term;
-                if(debug_mode == 1) print("Added genbeta_lpdf(sigma_reg_full[s] | discrim_reg_scale, discrim_reg_shape, discrim_reg_lb, discrim_reg_upb) to log_prob: ", term);
+                if(debug_mode==2) print("Added genbeta_lpdf(sigma_reg_full[s] | discrim_reg_scale, discrim_reg_shape, discrim_reg_lb, discrim_reg_upb) to log_prob: ", term);
             }
         } else {
             real term = exponential_lpdf(sigma_reg_full[s] | 1 / discrim_reg_scale);
             log_prob += term;
-            if(debug_mode == 1) print("Added exponential_lpdf(sigma_reg_full[s] | 1 / discrim_reg_scale) to log_prob: ", term);
+            if(debug_mode==2) print("Added exponential_lpdf(sigma_reg_full[s] | 1 / discrim_reg_scale) to log_prob: ", term);
         }
         real term = normal_lpdf(B_int_free[s] | 0, diff_reg_sd);
         log_prob += term;
-        if(debug_mode == 1) print("Added normal_lpdf(B_int_free[s] | 0, diff_reg_sd) to log_prob: ", term);
+        if(debug_mode==2) print("Added normal_lpdf(B_int_free[s] | 0, diff_reg_sd) to log_prob: ", term);
         
         term = genbeta_lpdf(sigma_abs_free[s] | discrim_abs_scale, discrim_abs_shape, discrim_miss_lb, discrim_miss_upb);
         log_prob += term;
-        if(debug_mode == 1) print("Added genbeta_lpdf(sigma_abs_free[s] | discrim_abs_scale, discrim_abs_shape, discrim_miss_lb, discrim_miss_upb) to log_prob: ", term);
+        if(debug_mode==2) print("Added genbeta_lpdf(sigma_abs_free[s] | discrim_abs_scale, discrim_abs_shape, discrim_miss_lb, discrim_miss_upb) to log_prob: ", term);
         
         term = normal_lpdf(A_int_free[s] | 0, diff_abs_sd);
         log_prob += term;
-        if(debug_mode == 1) print("Added normal_lpdf(A_int_free[s] | 0, diff_abs_sd) to log_prob: ", term);
+        if(debug_mode==2) print("Added normal_lpdf(A_int_free[s] | 0, diff_abs_sd) to log_prob: ", term);
     } else if(S_type == 0 && const_type == 1) {
         if(pos_discrim == 0) {
             real term = genbeta_lpdf(sigma_reg_full[s] | discrim_reg_scale, discrim_reg_shape, discrim_reg_lb, discrim_reg_upb);
             log_prob += term;
-            if(debug_mode == 1) print("Added genbeta_lpdf(sigma_reg_full[s] | discrim_reg_scale, discrim_reg_shape, discrim_reg_lb, discrim_reg_upb) to log_prob: ", term);
+            if(debug_mode==2) print("Added genbeta_lpdf(sigma_reg_full[s] | discrim_reg_scale, discrim_reg_shape, discrim_reg_lb, discrim_reg_upb) to log_prob: ", term);
         } else {
             real term = exponential_lpdf(sigma_reg_full[s] | 1 / discrim_reg_scale);
             log_prob += term;
-            if(debug_mode == 1) print("Added exponential_lpdf(sigma_reg_full[s] | 1 / discrim_reg_scale) to log_prob: ", term);
+            if(debug_mode==2) print("Added exponential_lpdf(sigma_reg_full[s] | 1 / discrim_reg_scale) to log_prob: ", term);
         }
         real term = genbeta_lpdf(sigma_abs_free[s] | discrim_abs_scale, discrim_abs_shape, discrim_miss_lb, discrim_miss_upb);
         log_prob += term;
-        if(debug_mode == 1) print("Added genbeta_lpdf(sigma_abs_free[s] | discrim_abs_scale, discrim_abs_shape, discrim_miss_lb, discrim_miss_upb) to log_prob: ", term);
+        if(debug_mode==2) print("Added genbeta_lpdf(sigma_abs_free[s] | discrim_abs_scale, discrim_abs_shape, discrim_miss_lb, discrim_miss_upb) to log_prob: ", term);
         
         term = normal_lpdf(B_int_free[s] | 0, diff_reg_sd);
         log_prob += term;
-        if(debug_mode == 1) print("Added normal_lpdf(B_int_free[s] | 0, diff_reg_sd) to log_prob: ", term);
+        if(debug_mode==2) print("Added normal_lpdf(B_int_free[s] | 0, diff_reg_sd) to log_prob: ", term);
         
         term = normal_lpdf(A_int_free[s] | 0, diff_abs_sd);
         log_prob += term;
-        if(debug_mode == 1) print("Added normal_lpdf(A_int_free[s] | 0, diff_abs_sd) to log_prob: ", term);
+        if(debug_mode==2) print("Added normal_lpdf(A_int_free[s] | 0, diff_abs_sd) to log_prob: ", term);
     } else if(const_type == 2 && S_type == 1) {
         real term = normal_lpdf(L_full[s] | 0, legis_sd);
         log_prob += term;
-        if(debug_mode == 1) print("Added normal_lpdf(L_full[s] | 0, legis_sd) to log_prob: ", term);
+        if(debug_mode==2) print("Added normal_lpdf(L_full[s] | 0, legis_sd) to log_prob: ", term);
         
         if(rows(ls_int) > 0) {
             term = normal_lpdf(ls_int[s] | 0, legis_sd);
             log_prob += term;
-            if(debug_mode == 1) print("Added normal_lpdf(ls_int[s] | 0, legis_sd) to log_prob: ", term);
+            if(debug_mode==2) print("Added normal_lpdf(ls_int[s] | 0, legis_sd) to log_prob: ", term);
             
             term = normal_lpdf(ls_int_abs[s] | 0, legis_sd);
             log_prob += term;
-            if(debug_mode == 1) print("Added normal_lpdf(ls_int_abs[s] | 0, legis_sd) to log_prob: ", term);
+            if(debug_mode==2) print("Added normal_lpdf(ls_int_abs[s] | 0, legis_sd) to log_prob: ", term);
         }
     }
 
@@ -265,13 +265,13 @@ real partial_sum(array[,] int y_slice,
             if(time_proc == 3 || (time_proc == 2 && const_type == 2)) {
                 real term = normal_lpdf(L_tp1_var[1, s] | 0, legis_sd);
                 log_prob += term;
-                if(debug_mode == 1) print("Added normal_lpdf(L_tp1_var[1, s] | 0, legis_sd) to log_prob: ", term);
+                if(debug_mode==2) print("Added normal_lpdf(L_tp1_var[1, s] | 0, legis_sd) to log_prob: ", term);
             }
         }
         if(T < center_cutoff && time_proc != 5) {
             real term = std_normal_lpdf(to_vector(L_tp1_var[2:T, s]));
             log_prob += term;
-            if(debug_mode == 1) print("Added std_normal_lpdf(to_vector(L_tp1_var[2:T, s])) to log_prob: ", term);
+            if(debug_mode==2) print("Added std_normal_lpdf(to_vector(L_tp1_var[2:T, s])) to log_prob: ", term);
         }
 
         if(restrict_var == 1 && time_proc != 4) {
@@ -279,29 +279,29 @@ real partial_sum(array[,] int y_slice,
                 if(inv_gamma_beta > 0) {
                     real term = inv_gamma_lpdf(time_var_free[s - 1] | 2, inv_gamma_beta);
                     log_prob += term;
-                    if(debug_mode == 1) print("Added inv_gamma_lpdf(time_var_free[s - 1] | 2, inv_gamma_beta) to log_prob: ", term);
+                    if(debug_mode==2) print("Added inv_gamma_lpdf(time_var_free[s - 1] | 2, inv_gamma_beta) to log_prob: ", term);
                 } else {
                     real term = exponential_lpdf(time_var_free[s - 1] | time_var_sd);
                     log_prob += term;
-                    if(debug_mode == 1) print("Added exponential_lpdf(time_var_free[s - 1] | time_var_sd) to log_prob: ", term);
+                    if(debug_mode==2) print("Added exponential_lpdf(time_var_free[s - 1] | time_var_sd) to log_prob: ", term);
                 }
             }
         } else if(time_proc != 4) {
             if(inv_gamma_beta > 0) {
                 real term = inv_gamma_lpdf(time_var_free[s] | 2, inv_gamma_beta);
                 log_prob += term;
-                if(debug_mode == 1) print("Added inv_gamma_lpdf(time_var_free[s] | 2, inv_gamma_beta) to log_prob: ", term);
+                if(debug_mode==2) print("Added inv_gamma_lpdf(time_var_free[s] | 2, inv_gamma_beta) to log_prob: ", term);
             } else {
                 real term = exponential_lpdf(time_var_free[s] | time_var_sd);
                 log_prob += term;
-                if(debug_mode == 1) print("Added exponential_lpdf(time_var_free[s] | time_var_sd) to log_prob: ", term);
+                if(debug_mode==2) print("Added exponential_lpdf(time_var_free[s] | time_var_sd) to log_prob: ", term);
             }
         }
         
         if(time_proc == 5) {
             real term = normal_lpdf(a_raw[s] | 0, legis_sd);
             log_prob += term;
-            if(debug_mode == 1) print("Added normal_lpdf(a_raw[s] | 0, legis_sd) to log_prob: ", term);
+            if(debug_mode==2) print("Added normal_lpdf(a_raw[s] | 0, legis_sd) to log_prob: ", term);
             if(restrict_var == 1) {
                 if(s == 1) {
                     a = a_raw[s] * time_sd;
@@ -316,7 +316,7 @@ real partial_sum(array[,] int y_slice,
         if(time_proc == 3) {
             real term = normal_lpdf(L_AR1[s] | 1, ar_sd);
             log_prob += term;
-            if(debug_mode == 1) print("Added normal_lpdf(L_AR1[s] | 1, ar_sd) to log_prob: ", term);
+            if(debug_mode==2) print("Added normal_lpdf(L_AR1[s] | 1, ar_sd) to log_prob: ", term);
 #include /chunks/l_hier_ar1_prior_map.stan
         } else if(time_proc == 2) {
             // Includes additional code for AR-1 priors if relevant...
@@ -324,11 +324,11 @@ real partial_sum(array[,] int y_slice,
         } else if(time_proc == 4) {
             real term = inv_gamma_lpdf(time_var_gp_free[s] | 5, 5);
             log_prob += term;
-            if(debug_mode == 1) print("Added inv_gamma_lpdf(time_var_gp_free[s] | 5, 5) to log_prob: ", term);
+            if(debug_mode==2) print("Added inv_gamma_lpdf(time_var_gp_free[s] | 5, 5) to log_prob: ", term);
             if(s > 1) {
                 term = exponential_lpdf(m_sd_free[s - 1] | 1);
                 log_prob += term;
-                if(debug_mode == 1) print("Added exponential_lpdf(m_sd_free[s - 1] | 1) to log_prob: ", term);
+                if(debug_mode==2) print("Added exponential_lpdf(m_sd_free[s - 1] | 1) to log_prob: ", term);
             }
       {
           matrix[T, T] cov; // zero-length if not a GP model
@@ -342,13 +342,13 @@ real partial_sum(array[,] int y_slice,
             if(s==1) {
               //cov =   gp_exp_quad_cov(time_ind, m_sd_par, gp_length[1]) + diag_matrix(rep_vector(square(gp_sd_par),T));
               cov =   gp_exp_quad_cov(time_ind, m_sd_par, time_var_gp_free[s]) + diag_matrix(rep_vector(gp_sd_free[1],T));
-              if(debug_mode == 1) {
+              if(debug_mode==2) {
                 term = sum(gp_exp_quad_cov(time_ind, m_sd_par, time_var_gp_free[s]) + diag_matrix(rep_vector(gp_sd_free[1],T)));
                 print("Added exponential_lpdf(m_sd_free[s - 1] | 1) to log_prob: ", term);
               }
             } else {
               
-              if(debug_mode == 1) {
+              if(debug_mode==2) {
                 term = sum(gp_exp_quad_cov(time_ind, m_sd_par, time_var_gp_free[s]) + diag_matrix(rep_vector(gp_sd_free[1],T)));
                 print("Calculated gp_exp_quad_cov(time_ind, m_sd_par, time_var_gp_free[s]) + diag_matrix(rep_vector(gp_sd_free[1],T)): ", term);
               }
@@ -358,7 +358,7 @@ real partial_sum(array[,] int y_slice,
 
             L_cov = cholesky_decompose(cov);
             
-            if(debug_mode == 1) {
+            if(debug_mode==2) {
                 term = multi_normal_cholesky_lpdf(to_vector(L_tp1_var[,s])|rep_vector(0,T) + L_full[s], L_cov);
                 print("Added multi_normal_cholesky_lpdf(to_vector(L_tp1_var[,s])|rep_vector(0,T) + L_full[s], L_cov) to log_prob: ", term);
               }
