@@ -687,7 +687,7 @@ setMethod('summary',signature(object='idealstan'),
 
               # a bit trickier with item points
               item_plot <- levels(object@score_data@score_matrix$item_id)
-              if(object@model_type %in% c(1,2) || (object@model_type>6 && object@model_type<13)) {
+              if(object@model_type %in% c(1,2,7,8,9,10,11,12,15,16) || (object@model_type>6 && object@model_type<13)) {
                 # binary models and continuous
                 item_points <- lapply(item_plot,.item_plot_binary,object=object,
                                       low_limit=low_limit,
