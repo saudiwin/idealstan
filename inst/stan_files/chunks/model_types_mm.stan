@@ -20,6 +20,22 @@ for(n in start2:end2) {
   real lin_mod_abs;
   real lin_mod_obs_dyn;
   real lin_mod_abs_dyn;
+  int this_ordbeta;
+  int this_sigma;
+  
+  //define other IDs
+  
+  if(S_type==1) {
+    
+    if(mm[n]>14) this_ordbeta = ordbeta_id[bb[n]];
+    if(mm[n]>8 && mm[n]<13) this_sigma = type_het_var[bb[n]];
+    
+  } else {
+    
+    if(mm[n]>14) this_ordbeta = ordbeta_id[s];
+    if(mm[n]>8 && mm[n]<13) this_sigma = type_het_var[s];
+    
+  }
   
  if(T==1) {
    
@@ -45,24 +61,23 @@ for(n in start2:end2) {
       real L_full_s;
       
       if(S_type==1) sigma_reg_full_bb = sigma_reg_full[bb[n]];
-      if(S_type==0) sigma_reg_full_bb = sigma_reg_full[s];
+      if(S_type==2) sigma_reg_full_bb = sigma_reg_full[s];
       real sigma_reg_calc_val = sigma_reg_calc[n - start2 + 1];
       if(S_type==1) L_full_s = L_full[s];
-      if(S_type==0) L_full_s = L_full[ll[n]];
+      if(S_type==2) L_full_s = L_full[ll[n]];
       real legis_calc_val = legis_calc[n - start2 + 1];
       real B_int_free_bb = B_int_free[bb[n]];
       
       if(is_nan(inv_logit(lin_mod_obs))) print("Value is NAN");
       if(inv_logit(lin_mod_obs)==0) print("Value is 0");
       if(S_type==1) print("sigma_reg_full[bb[n]] = ", sigma_reg_full_bb);
-      if(S_type==0) print("sigma_reg_full[s] = ", sigma_reg_full_bb);
+      if(S_type==2) print("sigma_reg_full[s] = ", sigma_reg_full_bb);
       print("sigma_reg_calc[n - start2 + 1] = ", sigma_reg_calc_val);
       if(S_type==1) print("L_full[s] = ", L_full_s);
-      if(S_type==0) print("L_full[ll[n]] = ", L_full_s);
+      if(S_type==2) print("L_full[ll[n]] = ", L_full_s);
       print("legis_calc[n - start2 + 1] = ", legis_calc_val);
       print("B_int_free[bb[n]] = ", B_int_free_bb);
       print("Final result = ", lin_mod_obs);
-      //if(inv_logit(lin_mod_obs)==1) print("Value is 1");
       
       print("Data point ",n);
       
@@ -92,10 +107,10 @@ for(n in start2:end2) {
        real lt_time;
        
       if(S_type==1) sigma_reg_full_bb = sigma_reg_full[bb[n]];
-      if(S_type==0) sigma_reg_full_bb = sigma_reg_full[s];
+      if(S_type==2) sigma_reg_full_bb = sigma_reg_full[s];
       real sigma_reg_calc_val = sigma_reg_calc[n - start2 + 1];
       if(S_type==1) lt_time = lt[time[n]];
-      if(S_type==0) lt_time = L_tp1[time[n],ll[n]];
+      if(S_type==2) lt_time = L_tp1[time[n],ll[n]];
       real legis_calc_val = legis_calc[n - start2 + 1];
       real B_int_free_bb = B_int_free[bb[n]];
       
@@ -105,13 +120,13 @@ for(n in start2:end2) {
       if(inv_logit(lin_mod_obs_dyn)==0) print("Value is 0");
       
       if(S_type==1) print("sigma_reg_full[bb[n]] = ", sigma_reg_full_bb);
-      if(S_type==0) print("sigma_reg_full[s] = ", sigma_reg_full_bb);
+      if(S_type==2) print("sigma_reg_full[s] = ", sigma_reg_full_bb);
       print("sigma_reg_calc[n - start2 + 1] = ", sigma_reg_calc_val);
       print("legis_calc[n - start2 + 1] = ", legis_calc_val);
       print("B_int_free[bb[n]] = ", B_int_free_bb);
       print("lin_mod_obs_dyn = ", lin_mod_obs_dyn);
       if(S_type==1) print("lt[time[n]] = ", lt_time);
-      if(S_type==0) print("L_tp1[time[n],ll[n]] = ", lt_time);
+      if(S_type==2) print("L_tp1[time[n],ll[n]] = ", lt_time);
       //if(inv_logit(lin_mod_obs_dyn)==1) print("Value is 1");
       
       print("Data point ",n);
@@ -147,10 +162,10 @@ for(n in start2:end2) {
        real L_full_s;
        
       if(S_type==1) sigma_abs_free_bb = sigma_abs_free[bb[n]];
-      if(S_type==0) sigma_abs_free_bb = sigma_abs_free[s];
+      if(S_type==2) sigma_abs_free_bb = sigma_abs_free[s];
       real sigma_abs_calc_val = sigma_abs_calc[n - start2 + 1];
       if(S_type==1) L_full_s = L_full[s];
-      if(S_type==0) L_full_s = L_full[ll[n]];
+      if(S_type==2) L_full_s = L_full[ll[n]];
       real legis_calc_val = legis_calc[n - start2 + 1];
       real A_int_free_bb = A_int_free[bb[n]];
       
@@ -161,10 +176,10 @@ for(n in start2:end2) {
       //if(inv_logit(lin_mod_abs)==1) print("Value is 1");
       
       if(S_type==1) print("sigma_abs_free[bb[n]] = ", sigma_abs_free_bb);
-      if(S_type==0) print("sigma_abs_free[s] = ", sigma_abs_free_bb);
+      if(S_type==2) print("sigma_abs_free[s] = ", sigma_abs_free_bb);
       print("sigma_abs_calc[n - start2 + 1] = ", sigma_abs_calc_val);
       if(S_type==1) print("L_full[s] = ", L_full_s);
-      if(S_type==0) print("L_full[ll[n]] = ", L_full_s);
+      if(S_type==2) print("L_full[ll[n]] = ", L_full_s);
       print("legis_calc[n - start2 + 1] = ", legis_calc_val);
       print("A_int_free[bb[n]] = ", A_int_free_bb);
       print("Final result = ", lin_mod_abs);
@@ -193,10 +208,10 @@ for(n in start2:end2) {
         real lt_time;
         
       if(S_type==1) sigma_abs_free_bb = sigma_abs_free[bb[n]];
-      if(S_type==0) sigma_abs_free_bb = sigma_abs_free[s];
+      if(S_type==2) sigma_abs_free_bb = sigma_abs_free[s];
       real sigma_abs_calc_val = sigma_abs_calc[n - start2 + 1];
       if(S_type==1) lt_time = lt[time[n]];
-      if(S_type==0) lt_time = L_tp1[time[n],ll[n]];
+      if(S_type==2) lt_time = L_tp1[time[n],ll[n]];
       real legis_calc_val = legis_calc[n - start2 + 1];
       real A_int_free_bb = A_int_free[bb[n]];
      
@@ -925,10 +940,10 @@ if(T==1) {
       
       if(T==1) {
         log_prob += normal_lpdf(Y_cont[n]|lin_mod_obs,
-        extra_sd[type_het_var[s]]);
+        extra_sd[this_sigma]);
       } else {
         log_prob += normal_lpdf(Y_cont[n]|lin_mod_obs_dyn,
-        extra_sd[type_het_var[s]]);
+        extra_sd[this_sigma]);
       }
       
       
@@ -940,12 +955,12 @@ if(T==1) {
         // observed data 
         if(T==1) {
           log_prob += normal_lpdf(Y_cont[n]|lin_mod_obs,
-          extra_sd[type_het_var[s]]);
+          extra_sd[this_sigma]);
           log_prob += bernoulli_logit_lpmf(0|lin_mod_abs); 
           
         } else {
           log_prob += normal_lpdf(Y_cont[n]|lin_mod_obs_dyn,
-          extra_sd[type_het_var[s]]);
+          extra_sd[this_sigma]);
           log_prob += bernoulli_logit_lpmf(0|lin_mod_abs_dyn); 
           
         }
@@ -966,10 +981,10 @@ if(T==1) {
       
       if(T==1) {
         log_prob += lognormal_lpdf(Y_cont[n]|lin_mod_obs,
-        extra_sd[type_het_var[s]]);
+        extra_sd[this_sigma]);
       } else {
         log_prob += lognormal_lpdf(Y_cont[n]|lin_mod_obs_dyn,
-        extra_sd[type_het_var[s]]);
+        extra_sd[this_sigma]);
       }
       
     } else if(mm[n]==12) {
@@ -979,12 +994,12 @@ if(T==1) {
         // observed data 
         if(T==1) {
           log_prob += lognormal_lpdf(Y_cont[n]|lin_mod_obs,
-          extra_sd[type_het_var[s]]);
+          extra_sd[this_sigma]);
           log_prob += bernoulli_logit_lpmf(0|lin_mod_abs); 
           
         } else {
           log_prob += lognormal_lpdf(Y_cont[n]|lin_mod_obs_dyn,
-          extra_sd[type_het_var[s]]);
+          extra_sd[this_sigma]);
           log_prob += bernoulli_logit_lpmf(0|lin_mod_abs_dyn); 
           
         }
@@ -1004,12 +1019,12 @@ if(T==1) {
       
       if(T==1) {
         log_prob += ordbeta_lpdf(Y_cont[n]|lin_mod_obs,
-                    phi[ordbeta_id[s]],
-                    ordbeta_cut[ordbeta_id[s]]);
+                    phi[this_ordbeta],
+                    ordbeta_cut[this_ordbeta]);
       } else {
         log_prob += ordbeta_lpdf(Y_cont[n]|lin_mod_obs_dyn,
-                    phi[ordbeta_id[s]],
-                    ordbeta_cut[ordbeta_id[s]]);
+                    phi[this_ordbeta],
+                    ordbeta_cut[this_ordbeta]);
       }
     } else if(mm[n]==16) {
       //ordered beta with inflation
@@ -1017,14 +1032,14 @@ if(T==1) {
         // observed data 
         if(T==1) {
           log_prob += ordbeta_lpdf(Y_cont[n]|lin_mod_obs,
-                    phi[ordbeta_id[s]],
-                    ordbeta_cut[ordbeta_id[s]]);
+                    phi[this_ordbeta],
+                    ordbeta_cut[this_ordbeta]);
           log_prob += bernoulli_logit_lpmf(0|lin_mod_abs); 
           
         } else {
           log_prob += ordbeta_lpdf(Y_cont[n]|lin_mod_obs_dyn,
-                    phi[ordbeta_id[s]],
-                    ordbeta_cut[ordbeta_id[s]]);
+                    phi[this_ordbeta],
+                    ordbeta_cut[this_ordbeta]);
           log_prob += bernoulli_logit_lpmf(0|lin_mod_abs_dyn); 
           
         }
