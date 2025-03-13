@@ -123,7 +123,7 @@ for(n in start2:end2) {
     
   }
   
-   if(r_in(mm[n],miss_mods)==1) {
+   if(r_in(mm[n],miss_mods)>0) {
      
     if(T==1) {
       

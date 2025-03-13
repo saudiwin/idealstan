@@ -186,10 +186,13 @@ setMethod('sample_model',signature(object='idealdata'),
               this_data$debug_mode <- 0
               
               init_vals <- try(object@stanmodel_map$pathfinder(data=this_data,
-                                          refresh=this_data$id_refresh,num_threads=ncores,
+                                          refresh=this_data$id_refresh,
+                                          num_threads=ncores,
                                           num_paths=1,
-                                          single_path_draws = 1000,history_size=25,
-                                          init=init_vals_orig[1],psis_resample=FALSE))
+                                          single_path_draws = 1000,
+                                          history_size=25,
+                                          init=init_vals_orig[1],
+                                          psis_resample=FALSE))
               
               # init_vals <- try(object@stanmodel_map$laplace(data=this_data,
               #                                               refresh=0,threads=ncores,
