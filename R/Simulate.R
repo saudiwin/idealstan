@@ -40,8 +40,8 @@
 #' for both missing and observed parameters (beta and omega)
 #' @param time_points The number of time points for time-varying legislator/person parameters
 #' @param time_process The process used to generate the ideal points: either `'random'` 
-#' for a random walk, `'AR'` for an AR1 process,
-#' or `'GP'` for a Gaussian process.
+#' for a random walk, `'AR'` for an AR1 process, `'GP'` for a Gaussian process, 
+#' or '`splines`' for a spline (see parameters `spline_knots` and `spline_degree`).
 #' @param time_sd The standard deviation of the change in ideal points over time (should be low relative to 
 #' `ideal_pts_sd`)
 #' @param ideal_pts_sd The SD for the person/person ideal points
@@ -51,6 +51,19 @@
 #' @param ordinal_outcomes If `model` is `'ordinal'`, an integer giving the total number of categories
 #' @param inflate If `TRUE`, an missing-data-inflated dataset is produced.
 #' @param sigma_sd If a normal or log-normal distribution is being fitted, this parameter gives the standard
+#' @param spline_knots Number of knots (essentially, number of points
+#' at which to calculate time-varying ideal points given T time points). 
+#' Default is NULL, which means that the spline is equivalent to 
+#' polynomial time trend of degree `spline_degree`.
+#' Note that the spline number (if not null) must be equal or less than 
+#' the number of time points.
+#' @param spline_degree The degree of the spline polynomial. The default is 2 which is a 
+#' quadratic polynomial. A value of 1 will result in independent knots (essentially 
+#' pooled across time points T). A higher value will result in wigglier time series.
+#' @param spline_intercept_sd The SD of the Normal distribution (centered on 0) used to
+#' draw the intercept for the basis spline function
+#' @param spline_basis_sd The SD of the Normal distribution (centered on 0) for the 
+#' coefficients used to create the simulated ideal points from the spline function
 #' @param phi The phi (dispersion) parameter for the ordered beta distribution
 #' deviation of the outcome (i.e. the square root of the variance).
 #' @return The results is a `idealdata` object that can be used in the 
@@ -79,6 +92,10 @@ id_sim_gen <- function(num_person=20,num_items=50,
                              ideal_pts_sd=3,prior_type='gaussian',ordinal_outcomes=3,
                         inflate=FALSE,
                        sigma_sd=1,
+                       spline_knots=NULL,
+                       spline_degree=2,
+                       spline_intercept_sd=0.5,
+                       spline_basis_sd=0.5,
                        phi=1) {
   
   # Allow for different type of distributions for ideal points
@@ -191,6 +208,46 @@ id_sim_gen <- function(num_person=20,num_items=50,
       
       time_sd_all <- time_sd
       
+    } else if(time_process=='splines') {
+      
+      # generate knots
+      
+      if(!is.null(spline_knots)) {
+        
+        spline_knots <- quantile(1:time_points, 
+                                 probs=seq(0,1,length.out=spline_knots+2))
+        
+        # remove first and last knot, these should be internal
+        
+        spline_knots <- spline_knots[2:(length(spline_knots)-1)]
+        
+      }
+      
+      # generate basis
+      
+      B <- t(splines::bs(1:time_points, knots=spline_knots,
+                degree=spline_degree,
+                intercept=TRUE))
+      
+      num_basis <- nrow(B)
+      
+      spline_int <- rnorm(num_person, 0, spline_intercept_sd)
+      spline_basis <- sapply(1:num_person, function(i) {
+        rnorm(num_basis , 0, spline_basis_sd)
+              })
+      
+      ideal_pts <- sapply(1:num_person, function(i) {
+        
+        as.vector(spline_int[i] * (1:time_points) + spline_basis[,i] %*% B)
+        
+        })
+      
+      ideal_pts <- t(ideal_pts)
+      
+      time_sd_all <- NULL
+      drift <- NULL
+      ar_adj <- NULL
+      
     } else {
       ideal_t1 <- prior_func(params=list(N=num_person,mean=0,sd=ideal_pts_sd))
       if(time_process=='AR') {
@@ -212,7 +269,9 @@ id_sim_gen <- function(num_person=20,num_items=50,
                                     init_sides=ideal_t1[i])
         return(this_person)
       }) %>% bind_cols %>% as.matrix
+      
       ideal_pts <- t(ideal_pts)
+      
     }
     
     ideal_pts <- ideal_pts + matrix(cov_value,nrow=num_person,ncol=time_points,byrow = T)
@@ -335,7 +394,9 @@ id_sim_gen <- function(num_person=20,num_items=50,
                             person_x=person_x,
                             ls_int=ls_int,
                             ls_int_abs=ls_int_abs,
-                            phi=1)
+                            phi=1,
+                            spline_basis=spline_basis,
+                            spline_int=spline_int)
 
   outobj@person_data <- tibble(person.names=paste0('person_',1:nrow(outobj@score_matrix)),
                                                group='L')

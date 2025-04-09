@@ -73,7 +73,7 @@ id_estimate(
   compile_optim = FALSE,
   debug = FALSE,
   init_pathfinder = TRUE,
-  debug_mode = FALSE,
+  debug_mode = 0,
   ...
 )
 }
@@ -364,9 +364,10 @@ error messages from Stan. Also recompiles model objects.}
 \item{init_pathfinder}{Whether to generate initial values from the Pathfinder
 algorithm (see Stan documentation). If FALSE, will generate random start values..}
 
-\item{debug_mode}{Whether to print valuesof all parameters for debugging purposes.
-If this is used, only one iteration should be used as it generates a lot of
-console output.}
+\item{debug_mode}{Whether to debug code by printing values of log-probability
+statements to the console. A level of 1 will print log-probability before
+and after likelihood functions are calculated. A level of 2 will also
+print out the log probability contributions of priors. Default is 0.}
 
 \item{...}{Additional parameters passed on to Stan's sampling engine. See \code{\link[rstan:stan]{rstan::stan()}} for more information.}
 }

@@ -662,8 +662,7 @@ ord_irt_normal_est <- id_estimate(idealdata=ord_irt_normal_sim,
                                                         index=T)$ix[1]),fix_high = sort(ord_irt_normal_sim@simul_data$true_person,
                                                                      decreasing=T)[1],fix_low = sort(ord_irt_normal_sim@simul_data$true_person,
                                                                      decreasing=F)[1],
-                               fixtype='prefix',compile_optim=F,
-                              het_var=FALSE)
+                               fixtype='prefix',compile_optim=F)
 id_plot_rhats(ord_irt_normal_est)
 ```
 
@@ -1077,8 +1076,9 @@ id_plot_sims(bin_time_irt_2pl_abs_est)
 
 bin_time_spline_irt_2pl_abs_sim <- id_sim_gen(num_person=100,num_items=100,inflate=F,
                                absence_diff_mean=0,
-                               time_process = 'random',
-                               time_points=10,time_sd = .25)
+                               time_process = 'splines',
+                               time_points=10,time_sd = .25,
+                               spline_degree=3)
 
 sort_ids_high <- sort(bin_time_spline_irt_2pl_abs_sim@simul_data$true_reg_discrim,
                                                                      decreasing=TRUE,

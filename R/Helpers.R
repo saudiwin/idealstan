@@ -200,11 +200,15 @@
     
     if(!is.null(spline_knots) && length(spline_knots)>1) {
       
-      spline_knots <- time_ind[spline_knots]
+      if(length(spline_knots)>(time_points-2)) stop("Please pass along knots that are 2 less than the number of time points.")
+      
+      spline_knots <- (1:time_points)[spline_knots]
       
     } else if(!is.null(spline_knots)) {
       
-      spline_knots <- quantile(time_ind, 
+      if(spline_knots>(time_points-2)) stop("Please pass along knots that are 2 less than the number of time points.")
+      
+      spline_knots <- quantile((1:time_points), 
                                probs=seq(0,1,length.out=spline_knots+2))
       
       # remove first and last knot, these should be internal

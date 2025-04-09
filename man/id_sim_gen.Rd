@@ -29,6 +29,10 @@ id_sim_gen(
   ordinal_outcomes = 3,
   inflate = FALSE,
   sigma_sd = 1,
+  spline_knots = NULL,
+  spline_degree = 2,
+  spline_intercept_sd = 0.5,
+  spline_basis_sd = 0.5,
   phi = 1
 )
 }
@@ -84,8 +88,8 @@ for both missing and observed parameters (beta and omega)}
 \item{time_points}{The number of time points for time-varying legislator/person parameters}
 
 \item{time_process}{The process used to generate the ideal points: either \code{'random'}
-for a random walk, \code{'AR'} for an AR1 process,
-or \code{'GP'} for a Gaussian process.}
+for a random walk, \code{'AR'} for an AR1 process, \code{'GP'} for a Gaussian process,
+or '\code{splines}' for a spline (see parameters \code{spline_knots} and \code{spline_degree}).}
 
 \item{time_sd}{The standard deviation of the change in ideal points over time (should be low relative to
 \code{ideal_pts_sd})}
@@ -101,6 +105,23 @@ ideal point parameters (alpha) and difficulty intercepts (beta and omega). Curre
 \item{inflate}{If \code{TRUE}, an missing-data-inflated dataset is produced.}
 
 \item{sigma_sd}{If a normal or log-normal distribution is being fitted, this parameter gives the standard}
+
+\item{spline_knots}{Number of knots (essentially, number of points
+at which to calculate time-varying ideal points given T time points).
+Default is NULL, which means that the spline is equivalent to
+polynomial time trend of degree \code{spline_degree}.
+Note that the spline number (if not null) must be equal or less than
+the number of time points.}
+
+\item{spline_degree}{The degree of the spline polynomial. The default is 2 which is a
+quadratic polynomial. A value of 1 will result in independent knots (essentially
+pooled across time points T). A higher value will result in wigglier time series.}
+
+\item{spline_intercept_sd}{The SD of the Normal distribution (centered on 0) used to
+draw the intercept for the basis spline function}
+
+\item{spline_basis_sd}{The SD of the Normal distribution (centered on 0) for the
+coefficients used to create the simulated ideal points from the spline function}
 
 \item{phi}{The phi (dispersion) parameter for the ordered beta distribution
 deviation of the outcome (i.e. the square root of the variance).}
