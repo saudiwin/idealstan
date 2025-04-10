@@ -208,6 +208,9 @@ id_sim_gen <- function(num_person=20,num_items=50,
       
       time_sd_all <- time_sd
       
+      spline_basis <- NULL
+      spline_int <- NULL
+      
     } else if(time_process=='splines') {
       
       # generate knots
@@ -271,6 +274,9 @@ id_sim_gen <- function(num_person=20,num_items=50,
       }) %>% bind_cols %>% as.matrix
       
       ideal_pts <- t(ideal_pts)
+      
+      spline_basis <- NULL
+      spline_int <- NULL
       
     }
     
