@@ -81,7 +81,7 @@ setClass('idealstan',
                     restrict_var="logical",
                     stan_samples='ANY',
                     keep_param='ANY',
-                    use_vb='logical',
+                    use_method='character',
                     orig_order="ANY",
                     use_groups='logical',
                     this_data="ANY",
@@ -160,10 +160,12 @@ setGeneric('sample_model',signature='object',
 
 setMethod('sample_model',signature(object='idealdata'),
           function(object,nchains=4,niters=2000,warmup=floor(niters/2),ncores=NULL,
-                   to_use=to_use,this_data=this_data,use_vb=FALSE,within_chain=NULL,
+                   to_use=to_use,this_data=this_data,use_method="mcmc",
+                   within_chain=NULL,
                    keep_param=NULL,
                    save_files=NULL,
                    init_pathfinder=TRUE,
+                   seed=NULL,
                    ...) {
             
             # need init values for pathfinder & other algos that work
@@ -192,7 +194,8 @@ setMethod('sample_model',signature(object='idealdata'),
                                           single_path_draws = 1000,
                                           history_size=25,
                                           init=init_vals_orig[1],
-                                          psis_resample=FALSE))
+                                          psis_resample=FALSE,
+                                          seed=seed))
               
               # init_vals <- try(object@stanmodel_map$laplace(data=this_data,
               #                                               refresh=0,threads=ncores,
@@ -210,7 +213,8 @@ setMethod('sample_model',signature(object='idealdata'),
                 init_vals <- try(object@stanmodel_map$laplace(data=this_data,
                                                           refresh=0,threads=ncores,
                                                           draws=1000,
-                                                          init=init_vals_orig[1]))
+                                                          init=init_vals_orig[1],
+                                                          seed=seed))
                 
               }
               
@@ -406,7 +410,7 @@ setMethod('sample_model',signature(object='idealdata'),
             if(is.null(ncores)) {
               ncores <- 1
             }
-            if(use_vb==FALSE) {
+            if(use_method=="mcmc") {
               print("Estimating model with full Stan MCMC sampler.")
 
                 # if(gpu) {
@@ -430,6 +434,7 @@ setMethod('sample_model',signature(object='idealdata'),
                                                            init=init_vals,
                                                            output_dir=save_files,
                                                            refresh=this_data$id_refresh,
+                                                           seed=seed,
                                                            ...))
                   if('try-error' %in% class(out_model)) {
                     
@@ -447,7 +452,7 @@ setMethod('sample_model',signature(object='idealdata'),
                   
                 # }
 
-              } else {
+              } else if (use_method=="pathfinder") {
                 
               print("Estimating model with Pathfinder for inference (approximation of true posterior).")
               out_model <- object@stanmodel_map$pathfinder(data=this_data,
@@ -455,13 +460,24 @@ setMethod('sample_model',signature(object='idealdata'),
                               init=init_vals,
                               num_paths=nchains,num_threads=ncores,
                               refresh=this_data$id_refresh,
+                              seed=seed,
                               ...)
+              } else if (use_method=="laplace") {
+              
+                out_model <- object@stanmodel_map$laplace(data=this_data,
+                                                             draws=niters,
+                                                             init=init_vals[1],
+                                                             threads=ncores,
+                                                             refresh=this_data$id_refresh,
+                                                             seed=seed,
+                                                             ...)
+                
             }
             
             outobj <- new('idealstan',
                           score_data=object,
                           model_code=object@stanmodel_map$code(),
-                          use_vb=use_vb)
+                          use_method=use_method)
             
             # add safe summaries
             
@@ -486,7 +502,7 @@ setMethod('sample_model',signature(object='idealdata'),
             
             outobj@summary <- to_sum
             
-            if(!use_vb) outobj@diagnostics <- out_model$sampler_diagnostics()
+            if(!(use_method %in% c("pathfinder","laplace"))) outobj@diagnostics <- out_model$sampler_diagnostics()
             
             outobj@stan_samples <- out_model
             

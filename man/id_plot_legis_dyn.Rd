@@ -131,7 +131,7 @@ miss_val='Absent')
 
 sen_est <- id_estimate(senate_data,
 model_type = 2,
-use_vb = TRUE,
+use_method = "pathfinder",
 vary_ideal_pts='random_walk',
 fixtype='vb_partial',
 restrict_ind_high = "BARRASSO, John A.",

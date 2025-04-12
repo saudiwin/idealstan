@@ -463,7 +463,7 @@ id_sim_gen <- function(num_person=20,num_items=50,
   est_models <- lapply(all_sims,function(m,...) {
 
     id_estimate(m$sim_data,
-                   use_vb=FALSE,
+                   use_method="mcmc",
                    restrict_ind_high=c(m$high_par,m$low_par),
                    pin_vals = c(m$high_par_est,m$low_par_est),
                    fixtype=fixtype,
@@ -476,7 +476,7 @@ id_sim_gen <- function(num_person=20,num_items=50,
   est_models_vb <-  lapply(all_sims,function(m,...) {
     
     id_estimate(m$sim_data,
-                   use_vb=TRUE,
+                   use_method="pathfinder",
                    restrict_ind_high=c(m$high_par,m$low_par),
                    pin_vals = c(m$high_par_est,m$low_par_est),
                    fixtype=fixtype,

@@ -645,6 +645,8 @@ id_make <- function(score_data=NULL,
 #' of knots (option `spline_knots`) is significantly less than 
 #' the number of time points in the data. 
 #' See documentation for more info.
+#' @param seed The integer seed passed on to the estimation engine (including the 
+#' algorithm used to obtain starting values)
 #' @param use_subset Whether a subset of the legislators/persons should be used instead of the full response matrix
 #' @param sample_it Whether or not to use a random subsample of the response matrix. Useful for testing.
 #' @param subset_group If person/legislative data was included in the [id_make()] function, then you can subset by
@@ -654,11 +656,14 @@ id_make <- function(score_data=NULL,
 #' column
 #' @param sample_size If `sample_it` is `TRUE`, this value reflects how many legislators/persons will be sampled from
 #' the response matrix
-#' @param nchains The number of chains to use in Stan's sampler. Minimum is one. See [rstan::stan()] for more info. If `use_vb=TRUE`, this parameter
+#' @param nchains The number of chains to use in Stan's sampler. Minimum is one. See [rstan::stan()] for more info. If `use_method="pathfinder"`, this parameter
 #' will determine the number of Pathfinder paths to estimate.
 #' @param niters The number of iterations to run Stan's sampler. Shouldn't be set much lower than 500. See [rstan::stan()] for more info.
-#' @param use_vb Whether or not to use Stan's Pathfinder algorithm instead of full Bayesian inference. Pros: it's much faster but can be much less accurate. Note that Pathfinder is 
-#' also used by default for finding initial starting values for sfull HMC sampling.
+#' @param use_method The type of estimation to use to estimate the posterior 
+#' distribution of the parameters. The default is `"mcmc"`, which uses Stan's 
+#' Hamiltonian Markov Chain Monte Carlo inference. The other options, `"pathfinder"` and `"laplace"`, are variational algorithms that derive an easier/faster to compute
+#" approximation. Pros: it's much faster but can be much less accurate. Note that Pathfinder is 
+#' also used by default for finding initial starting values for full HMC sampling.
 #' @param warmup The number of iterations to use to calibrate Stan's sampler on a given model. Shouldn't be less than 100. 
 #' See [rstan::stan()] for more info.
 #' @param ncores The number of cores in your computer to use for parallel processing in the Stan engine. 
@@ -820,9 +825,9 @@ id_make <- function(score_data=NULL,
 #' statements to the console. A level of 1 will print log-probability before
 #' and after likelihood functions are calculated. A level of 2 will also 
 #' print out the log probability contributions of priors. Default is 0.
-#' @param ... Additional parameters passed on to Stan's sampling engine. See [rstan::stan()] for more information.
+#' @param ... Additional parameters passed on to Stan's sampling engine. See [cmdstanr::sample] for more information.
 #' @return A fitted [idealstan()] object that contains posterior samples of all parameters either via full Bayesian inference
-#' or a variational approximation if `use_vb` is set to `TRUE`. This object can then be passed to the plotting functions for further analysis.
+#' or a variational approximation if `use_method` is set to `"pathfinder"` or `"laplace"`. This object can then be passed to the plotting functions for further analysis.
 #' @seealso [id_make()] for pre-processing data,
 #' [id_plot_legis()] for plotting results,
 #' [summary()] for obtaining posterior quantiles,
@@ -875,7 +880,7 @@ id_make <- function(score_data=NULL,
 #' data('senate114')
 #' 
 #' # Running this model will take at least a few minutes, even with 
-#' # variational inference (use_vb=T) turned on
+#' # variational inference (use_method="pathfinder") turned on
 #' 
 #' to_idealstan <-   id_make(score_data = senate114,
 #' outcome = 'cast_code',
@@ -889,7 +894,7 @@ id_make <- function(score_data=NULL,
 #' 
 #' sen_est <- id_estimate(to_idealstan,
 #' model_type = 2,
-#' use_vb = TRUE,
+#' use_method = "pathfinder",
 #' fixtype='prefix',
 #' restrict_ind_high = "BARRASSO, John A.",
 #' restrict_ind_low = "WARREN, Elizabeth")
@@ -916,12 +921,13 @@ id_make <- function(score_data=NULL,
 id_estimate <- function(idealdata=NULL,model_type=2,
                         inflate_zero=FALSE,
                         vary_ideal_pts='none',
+                        seed=NULL,
                         keep_param=NULL,
                         grainsize=1,
                         mpi_export=NULL,
                         use_subset=FALSE,sample_it=FALSE,
                         subset_group=NULL,subset_person=NULL,sample_size=20,
-                        nchains=4,niters=1000,use_vb=FALSE,
+                        nchains=4,niters=1000,use_method="mcmc",
                         ignore_db=NULL,
                         restrict_ind_high=NULL,
                         fix_high=1,
@@ -1185,11 +1191,12 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   idealdata@order_cats_grm <- remove_list$order_cats_grm
   
   outobj <- sample_model(object=idealdata,nchains=nchains,niters=niters,warmup=warmup,ncores=ncores,
-                         this_data=this_data,use_vb=use_vb,
+                         this_data=this_data,use_method=use_method,
                          save_files=save_files,
                          keep_param=keep_param,
                          within_chain=within_chain,
                          init_pathfinder=init_pathfinder,
+                         seed=seed,
                          ...)
   
   outobj@model_type <- model_type
@@ -1203,7 +1210,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   outobj@this_data <- this_data
   outobj@remove_nas <- remove_list$remove_nas
   outobj@eval_data_args <- eval_data_args
-  outobj@use_vb <- use_vb
+  outobj@use_method <- use_method
   
   # need to recalculate legis points if time series used
   if(this_data$T>1 && ((!is.null(keep_param$person_vary) && keep_param$person_vary) || is.null(keep_param))) {

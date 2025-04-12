@@ -213,12 +213,12 @@ To make the model fit faster, I set `nchains` at 2 and `ncores` at 8, which will
 ```{r run_114_model,fig.height=7}
 sen_est <- id_estimate(senate_data,
                 model_type = 1,ncores=8,nchains=2,
-                fixtype='prefix',
+                fixtype='prefix',fix_high=2,fix_low=-2,
                  restrict_ind_high = "WARREN, Elizabeth",
                  restrict_ind_low="BARRASSO, John A.",
             seed=84520)
 id_plot_legis(sen_est,person_ci_alpha=0.2) +
-  scale_color_manual(values=c(D='blue',R='red',I='green')) +
+  #scale_color_manual(values=c(D='blue',R='red',I='green')) +
   ggtitle('Ideal Points of the 114th Senate')
 ```
 
@@ -308,7 +308,7 @@ senate_data <- id_make(senate114,outcome_disc = 'cast_code',
 sen_est_cov <- id_estimate(senate_data,
                 model_type = 1,
                 fixtype='prefix',
-                nchains=2,
+                nchains=2,fix_high=2,fix_low=-2,
                 ncores=8,
                  restrict_ind_high = "BARRASSO, John A.",
                  restrict_ind_low="WARREN, Elizabeth",

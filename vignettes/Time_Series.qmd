@@ -55,7 +55,7 @@ The stationary model, by contrast, assumes that ideal points have a single long-
 
 A simpler kind of time series model is also available in `idealstan` known as splines. Splines are combinations of polynomial functions; the more combinations, the more flexible splines become. `idealstan` includes splines primarily because it is easy to estimate relatively simple time series functions that are useful when there is only a limited amount of data per time point and when the latent trait is unlikely change very quickly. In these cases, a spline can help estimate a latent trait that varies over time but only within certain bounds defined by the complexity of the polynomial function.
 
-To show what these models look like, we will fit each model to the `delaware` data in turn. We use the `use_vb` option to produce variational estimates of the true posterior; these approximations are much faster to fit than the full model but usually have some distortions. For finished analysis we would want to use the full sampler (`use_vb=FALSE`), unless we have so much data that processing time for the full model is infeasible. 
+To show what these models look like, we will fit each model to the `delaware` data in turn. We use the `use_method` option to produce variational estimates of the true posterior; these approximations are much faster to fit than the full model but usually have some distortions. For finished analysis we would want to use the full sampler (`use_method="mcmc"`), unless we have so much data that processing time for the full model is infeasible. 
 
 The models will be fit with parallel processing over the persons in the model (i.e. more `ncores` than `nchains` specified in `id_estimate`). Parallel processing is only possible for persons as time series model introduce dependence between time points. As such do not change the `map_over_id` option for dynamic models or you will get incorrect results.
 
@@ -95,7 +95,7 @@ One problem with time-varying models is that they introduce additional identific
 del_est <- id_estimate(delaware_data,
                 model_type = 1,
                 fixtype='prefix',const_type="items",
-                nchains = 2,use_vb = T,
+                nchains = 2,use_method = "pathfinder",
                 ncores = 8,
                 vary_ideal_pts='random_walk',
                  restrict_ind_high = 305,
@@ -104,16 +104,16 @@ del_est <- id_estimate(delaware_data,
             id_refresh=0)
 ```
 
-It is important to note that the warnings about importance resampling and the approximation do matter and a run with the Hamiltonian Markov Chain sampler should be used before final inferences by setting `use_vb=TRUE`. The approximation is only useful for exploratory model development. 
+It is important to note that the warnings about importance resampling and the approximation do matter and a run with the Hamiltonian Markov Chain sampler should be used before final inferences by setting `use_method="pathfinder"`. The approximation is only useful for exploratory model development. 
 
 Given the fitted model, we can now plot the ideal points. We will turn off the option for showing the uncertainty interval as there are a lot of lines, one for each legislator:
 
 ```{r plo_rw1, fig.height=8}
 id_plot_legis_dyn(del_est,use_ci = T) +
-  scale_color_manual(values=c(R='red',
-                              D='blue',
-                              X='green'),
-                     name="Party") +
+  # scale_color_manual(values=c(R='red',
+  #                             D='blue',
+  #                             X='green'),
+  #                    name="Party") +
   ggtitle("Yearly Ideal Point Scores for Delaware Legislature")
 ```
 
@@ -124,10 +124,10 @@ This plot does now show very much that is particularly interesting. Most of the 
 We can also look at the variance of the ideal points to see which of the legislators had the highest variance in their ideal points:
 
 ```{r rw_var_est,fig.height=8,message=FALSE}
-id_plot_legis_var(del_est) + ggtitle('Variances of Time-Varying Ideal Points in Delaware State Legislature',subtitle='Higher Variances Indicate Less Stable Ideal Points') +
-  scale_color_manual(values=c(R='red',
-                              D='blue',
-                              X='green'))
+id_plot_legis_var(del_est) + ggtitle('Variances of Time-Varying Ideal Points in Delaware State Legislature',subtitle='Higher Variances Indicate Less Stable Ideal Points')
+  # scale_color_manual(values=c(R='red',
+  #                             D='blue',
+  #                             X='green'))
 ```
 
 We can access the actual estimates of the variances by passing the `return_data=TRUE` option to the plot function:
@@ -149,15 +149,15 @@ del_est_spline <- id_estimate(delaware_data,
                 fixtype='prefix',const_type="items",
                 nchains=2,
                 ncores=8,spline_knots = NULL,spline_degree = 2,
-                vary_ideal_pts='splines',use_vb=TRUE,
+                vary_ideal_pts='splines',use_method="laplace",
                  restrict_ind_high = 305,
                  restrict_ind_low=276,
             seed=84520)
 
-id_plot_legis_dyn(del_est_spline,use_ci = F) +
-  scale_color_manual(values=c(R='red',
-                              D='blue',
-                              X='green'))
+id_plot_legis_dyn(del_est_spline,use_ci = F)
+  # scale_color_manual(values=c(R='red',
+  #                             D='blue',
+  #                             X='green'))
 ```
 
 These ideal points are similar to the random walk estimates and show the limited variation possible in a 2-degree polynomial function (essentially a quadratic function). For one session, this model would appear adequate at capturing monthly changes in legislator trajectories.
@@ -178,7 +178,7 @@ Finally, we can also change the model's parameters to look at group-level, i.e. 
 del_est_rw3 <- id_estimate(delaware_data,
                 fixtype='prefix',const_type="items",
                 nchains=2,use_groups = T,
-                ncores=8,use_vb=TRUE,
+                ncores=8,use_method="pathfinder",
                  restrict_ind_high = 305,
                  restrict_ind_low=276,
                 vary_ideal_pts='random_walk',
@@ -219,7 +219,7 @@ I will now estimate an additional Gaussian process model to use as comparison po
 del_est_gp1 <- id_estimate(delaware_data,
                 fixtype='prefix',const_type="items",
                 nchains=2,use_groups=T,
-                ncores=8,use_vb=TRUE,
+                ncores=8,use_method="pathfinder",
                  restrict_ind_high = 305,
                  restrict_ind_low=276,
                 vary_ideal_pts='GP',

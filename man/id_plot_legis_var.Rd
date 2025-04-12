@@ -75,7 +75,7 @@ miss_val='Absent')
 
  senate114_time_fit <- id_estimate(senate_data,
  model_type = 2,
- use_vb = T,
+ use_method="pathfinder",
  fixtype='vb_partial',
  vary_ideal_pts='random_walk',
  restrict_ind_high = "WARREN, Elizabeth",

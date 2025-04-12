@@ -9,6 +9,7 @@ id_estimate(
   model_type = 2,
   inflate_zero = FALSE,
   vary_ideal_pts = "none",
+  seed = NULL,
   keep_param = NULL,
   grainsize = 1,
   mpi_export = NULL,
@@ -19,7 +20,7 @@ id_estimate(
   sample_size = 20,
   nchains = 4,
   niters = 1000,
-  use_vb = FALSE,
+  use_method = "mcmc",
   ignore_db = NULL,
   restrict_ind_high = NULL,
   fix_high = 1,
@@ -97,6 +98,9 @@ of knots (option \code{spline_knots}) is significantly less than
 the number of time points in the data.
 See documentation for more info.}
 
+\item{seed}{The integer seed passed on to the estimation engine (including the
+algorithm used to obtain starting values)}
+
 \item{keep_param}{A list with logical values for different categories of paremeters which
 should/should not be kept following estimation. Can be any/all of \code{person_int} for
 the person-level intercepts (static ideal points),
@@ -130,13 +134,15 @@ column}
 \item{sample_size}{If \code{sample_it} is \code{TRUE}, this value reflects how many legislators/persons will be sampled from
 the response matrix}
 
-\item{nchains}{The number of chains to use in Stan's sampler. Minimum is one. See \code{\link[rstan:stan]{rstan::stan()}} for more info. If \code{use_vb=TRUE}, this parameter
+\item{nchains}{The number of chains to use in Stan's sampler. Minimum is one. See \code{\link[rstan:stan]{rstan::stan()}} for more info. If \code{use_method="pathfinder"}, this parameter
 will determine the number of Pathfinder paths to estimate.}
 
 \item{niters}{The number of iterations to run Stan's sampler. Shouldn't be set much lower than 500. See \code{\link[rstan:stan]{rstan::stan()}} for more info.}
 
-\item{use_vb}{Whether or not to use Stan's Pathfinder algorithm instead of full Bayesian inference. Pros: it's much faster but can be much less accurate. Note that Pathfinder is
-also used by default for finding initial starting values for sfull HMC sampling.}
+\item{use_method}{The type of estimation to use to estimate the posterior
+distribution of the parameters. The default is \code{"mcmc"}, which uses Stan's
+Hamiltonian Markov Chain Monte Carlo inference. The other options, \code{"pathfinder"} and \code{"laplace"}, are variational algorithms that derive an easier/faster to compute
+also used by default for finding initial starting values for full HMC sampling.}
 
 \item{ignore_db}{If there are multiple time periods (particularly when there are
 very many time periods), you can pass in a data frame
@@ -369,11 +375,11 @@ statements to the console. A level of 1 will print log-probability before
 and after likelihood functions are calculated. A level of 2 will also
 print out the log probability contributions of priors. Default is 0.}
 
-\item{...}{Additional parameters passed on to Stan's sampling engine. See \code{\link[rstan:stan]{rstan::stan()}} for more information.}
+\item{...}{Additional parameters passed on to Stan's sampling engine. See \link[cmdstanr:model-method-sample]{cmdstanr::sample} for more information.}
 }
 \value{
 A fitted \code{\link[=idealstan]{idealstan()}} object that contains posterior samples of all parameters either via full Bayesian inference
-or a variational approximation if \code{use_vb} is set to \code{TRUE}. This object can then be passed to the plotting functions for further analysis.
+or a variational approximation if \code{use_method} is set to \code{"pathfinder"} or \code{"laplace"}. This object can then be passed to the plotting functions for further analysis.
 }
 \description{
 This function will take a pre-processed \code{idealdata} vote/score dataframe and
@@ -542,7 +548,7 @@ id_sim_coverage(bin_irt_2pl_abs_est) \%>\%
 data('senate114')
 
 # Running this model will take at least a few minutes, even with 
-# variational inference (use_vb=T) turned on
+# variational inference (use_method="pathfinder") turned on
 
 to_idealstan <-   id_make(score_data = senate114,
 outcome = 'cast_code',
@@ -556,7 +562,7 @@ miss_val='Absent')
 
 sen_est <- id_estimate(to_idealstan,
 model_type = 2,
-use_vb = TRUE,
+use_method = "pathfinder",
 fixtype='prefix',
 restrict_ind_high = "BARRASSO, John A.",
 restrict_ind_low = "WARREN, Elizabeth")

@@ -66,7 +66,7 @@
 #' 
 #' sen_est <- id_estimate(senate_data,
 #' model_type = 2,
-#' use_vb = TRUE,
+#' use_method = "pathfinder",
 #' fixtype='vb_partial',
 #' restrict_ind_high = "BARRASSO, John A.",
 #' restrict_ind_low = "WARREN, Elizabeth")
@@ -390,7 +390,7 @@ id_plot_legis <- function(object,return_data=FALSE,
 #' 
 #'  senate114_time_fit <- id_estimate(senate_data,
 #'  model_type = 2,
-#'  use_vb = T,
+#'  use_method="pathfinder",
 #'  fixtype='vb_partial',
 #'  vary_ideal_pts='random_walk',
 #'  restrict_ind_high = "WARREN, Elizabeth",
@@ -564,7 +564,7 @@ id_plot_legis_var <- function(object,return_data=FALSE,
 #' 
 #' sen_est <- id_estimate(senate_data,
 #' model_type = 2,
-#' use_vb = TRUE,
+#' use_method = "pathfinder",
 #' vary_ideal_pts='random_walk',
 #' fixtype='vb_partial',
 #' restrict_ind_high = "BARRASSO, John A.",

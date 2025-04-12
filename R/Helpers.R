@@ -1130,7 +1130,7 @@ process_init_pathfinder <- function(init, num_procs, model_variables = NULL,
                                 use_chain=NULL,
                                 aggregated=NULL) {
   
-  if(object@use_vb) use_chain <- 1
+  if(object@use_method %in% c("laplace","pathfinder")) use_chain <- 1
   
   if(is.null(use_chain))
       use_chain <- 1:dim(as_draws_array(object@stan_samples$draws("L_full")))[2]
@@ -3256,7 +3256,7 @@ return(as.vector(idx))
                          person_id=NULL,
                          use_chain=NULL) {
   
-  if(obj@use_vb) use_chain <- 1
+  if(obj@use_method %in% c("pathfinder","laplace")) use_chain <- 1
   
   num_chains <- dim(as_draws_array(obj@stan_samples$draws("L_full")))[2]
   
