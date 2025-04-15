@@ -35,7 +35,8 @@ id_sim_gen(
   spline_basis_sd = 0.5,
   phi = 1,
   gp_rho = 0.5,
-  gp_alpha = 0.5
+  gp_alpha = 0.5,
+  gp_nugget = 0.1
 )
 }
 \arguments{
@@ -133,6 +134,9 @@ for the GP model}
 
 \item{gp_alpha}{The alpha parameter to the squared exponential kernel function
 for the GP model}
+
+\item{gp_nugget}{The nugget of the squared-exponential kernel (equals additional
+variance of the GP-distributed ideal points)}
 }
 \value{
 The results is a \code{idealdata} object that can be used in the

@@ -117,7 +117,6 @@ data {
   int restrict_var; // whether to fix the over-time variance of the first person to a value
   array[S,3] int sum_vals; // what to loop over for reduce sum
   int time_proc;
-  array[T] real time_ind; // the actual indices/values of time points, used for Gaussian processes
   int zeroes; // whether to use traditional zero-inflation for bernoulli and poisson models
   int num_var;
   array[num_bills] int type_het_var;
@@ -145,7 +144,12 @@ transformed data {
 	int gp_1; // zero-length gp-related scalars
 	int gp_nT; // used to make L_tp1 go to model block if GPs are used
 	int gp_oT; // used to make L_tp1 go to model block if GPs are used
+	array[T] real time_ind; // the actual indices/values of time points, used for Gaussian processes
 	array[(ignore==1) ? num_legis : 0, 2] int ignore_mat;
+	
+	for (t in 1:T) {
+    time_ind[t] = t;
+  }
 	
 	// set mean of log-normal distribution for GP length-scale prior
 	

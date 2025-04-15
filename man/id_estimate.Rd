@@ -64,7 +64,7 @@ id_estimate(
   ordbeta_phi_mean = 1,
   ordbeta_cut_alpha = c(1, 1, 1),
   ordbeta_cut_phi = 0,
-  gp_nugget = 1e-10,
+  gp_nugget = 0.1,
   gp_rho = 0.5,
   gp_alpha = 0.5,
   cmdstan_path_user = NULL,

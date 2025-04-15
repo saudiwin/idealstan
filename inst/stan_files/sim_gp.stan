@@ -4,7 +4,7 @@ int<lower=1> T;
 array[T] real x;
 vector[N] ideal_pts;
 array[N] real<lower=0> rho;
-real<lower=0> alpha;
+array[N] real<lower=0> alpha;
 real<lower=0> sigma;
 }
 
@@ -13,8 +13,8 @@ transformed data {
 array[N] matrix[T, T] cov;
 array[N] matrix[T, T] L_cov;
 for(n in 1:N) {
-cov[n] =   gp_exp_quad_cov(x, alpha, rho[n])
-+ diag_matrix(rep_vector(1e-10, T));
+cov[n] =   gp_exp_quad_cov(x, alpha[n], rho[n])
++ diag_matrix(rep_vector(sigma, T));
 L_cov[n] = cholesky_decompose(cov[n]);
 }
 

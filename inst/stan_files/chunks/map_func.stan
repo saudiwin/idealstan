@@ -319,19 +319,22 @@ real partial_sum(array[,] int y_slice,
             // Includes additional code for AR-1 priors if relevant...
 #include /chunks/l_hier_prior_map.stan
         } else if(time_proc == 4) {
+              //calculated values for GPs
+  
+            matrix[T, T] cov; // zero-length if not a GP model
+            matrix[T, T] L_cov;// zero-length if not a GP model
+            
             //real term = inv_gamma_lpdf(time_var_gp_free[s] | 5, 5);
             real term = exponential_lpdf(time_var_gp_free[s]|gp_rho);
+            
             log_prob += term;
+            
             if(debug_mode==2) print("Added inv_gamma_lpdf(time_var_gp_free[s] | 5, 5) to log_prob: ", term);
-                term = exponential_lpdf(m_sd_free[s] | gp_alpha);
-                log_prob += term;
-                if(debug_mode==2) print("Added exponential_lpdf(m_sd_free[s - 1] | 1) to log_prob: ", term);
-      {
-          matrix[T, T] cov; // zero-length if not a GP model
-          matrix[T, T] L_cov;// zero-length if not a GP model
-          array[T] real time_ind_center;
-
-          for(t in 1:T)
+            
+            term = exponential_lpdf(m_sd_free[s] | gp_alpha);
+            log_prob += term;
+            
+            if(debug_mode==2) print("Added exponential_lpdf(m_sd_free[s - 1] | 1) to log_prob: ", term);
 
           // chunk giving a GP prior to legislators/persons
             //create covariance matrices given current values of hiearchical parameters
@@ -357,11 +360,11 @@ real partial_sum(array[,] int y_slice,
                 term = multi_normal_cholesky_lpdf(to_vector(L_tp1_var[,s])|rep_vector(0,T) + L_full[s], L_cov);
                 print("Added multi_normal_cholesky_lpdf(to_vector(L_tp1_var[,s])|rep_vector(0,T) + L_full[s], L_cov) to log_prob: ", term);
               }
+              
+              // + L_full[s]
 
-            log_prob += multi_normal_cholesky_lpdf(to_vector(L_tp1_var[,s])|rep_vector(0,T) + L_full[s], L_cov);
-
-
-          }
+            log_prob += multi_normal_cholesky_lpdf(to_vector(L_tp1_var[,s])|rep_vector(0,T), L_cov);
+            //log_prob += normal_lpdf(to_vector(L_tp1_var[,s])|0, 1);
 
         lt = to_vector(L_tp1_var[,s]);
         
