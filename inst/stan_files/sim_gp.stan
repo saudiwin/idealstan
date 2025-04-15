@@ -30,7 +30,8 @@ matrix[N,T] Y;
 for(n in 1:N) {
 f[n,] = multi_normal_cholesky_rng(rep_vector(0, T) + ideal_pts[n], L_cov[n])';
     for(t in 1:T) {
-      Y[n,t] = normal_rng(f[n,t],sigma);
+      //Y[n,t] = normal_rng(f[n,t],sigma);
+      Y[n,t] = f[n,t];
     }
     
   }  

@@ -799,18 +799,12 @@ id_make <- function(score_data=NULL,
 #' in the induced dirichlet distribution. This distribution is used for the cutpoints
 #' of the ordered beta distribution. Default is c(1,1), which is uninformative.
 #' @param ordbeta_cut_phi A value for the phi paremeter of the induced dirichlet distribution used for ordered beta cutpoint priors. Default is 0, which is weakly informative.
-#' @param gp_sd_par The upper limit on allowed residual variation of the Gaussian process
-#' prior. Increasing the limit will permit the GP to more closely follow the time points, 
-#' resulting in much sharper bends in the function and potentially oscillation.
-#' @param gp_num_diff The number of time points to use to calculate the length-scale prior
-#' that determines the level of smoothness of the GP time process. Increasing this value
-#' will result in greater smoothness/autocorrelation over time by selecting a greater number
-#' of time points over which to calculate the length-scale prior.
-#' @param gp_m_sd_par The upper limit of the marginal standard deviation of the GP time 
-#' process. Decreasing this value will result in smoother fits.
-#' @param gp_min_length The minimum value of the GP length-scale parameter. This is a hard
-#' lower limit. Increasing this value will force a smoother GP fit. It should always be less than
-#' `gp_num_diff`.
+#' @param gp_nugget The nugget of the squared-exponential kernel (equals additional
+#' variance of the GP-distributed ideal points)
+#' @param gp_alpha The mean of the exponential prior of the alpha parameters of the 
+#' GP squared-exponential kernel
+#' @param gp_rho The mean of the exponential prior of the rho parameters of the GP
+#' squared-exponential kernel
 #' @param cmdstan_path_user Default is NULL, and so will default to whatever is set in
 #' `cmdstanr` package. Specify a file path  here to use a different `cmdtstan`
 #' installation.
@@ -970,10 +964,9 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                         ordbeta_phi_mean=1,
                         ordbeta_cut_alpha=c(1,1,1),
                         ordbeta_cut_phi=0,
-                        gp_sd_par=.025,
-                        gp_num_diff=3,
-                        gp_m_sd_par=0.3,
-                        gp_min_length=0,
+                        gp_nugget=.1,
+                        gp_rho=.5,
+                        gp_alpha=.5,
                         cmdstan_path_user=NULL,
                         map_over_id="persons",
                         save_files=NULL,
@@ -1163,10 +1156,9 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                          restrict_sd_low=restrict_sd_low,
                          restrict_N_high=restrict_N_high,
                          restrict_N_low=restrict_N_low,
-                         gp_sd_par=gp_sd_par,
-                         gp_num_diff=gp_num_diff,
-                         gp_m_sd_par=gp_m_sd_par,
-                         gp_min_length=gp_min_length,
+                         gp_nugget=gp_nugget,
+                         gp_rho=gp_rho,
+                         gp_alpha=gp_alpha,
                          map_over_id=map_over_id,
                          het_var=het_var, 
                          debug_mode=debug_mode,

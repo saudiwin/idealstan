@@ -66,6 +66,12 @@
 #' coefficients used to create the simulated ideal points from the spline function
 #' @param phi The phi (dispersion) parameter for the ordered beta distribution
 #' deviation of the outcome (i.e. the square root of the variance).
+#' @param gp_rho The rho parameter to the squared exponential kernel function
+#' for the GP model
+#' @param gp_alpha The alpha parameter to the squared exponential kernel function
+#' for the GP model
+#' @param gp_nugget The nugget of the squared-exponential kernel (equals additional
+#' variance of the GP-distributed ideal points)
 #' @return The results is a `idealdata` object that can be used in the 
 #' [id_estimate] function to run a model. It can also be used in the simulation
 #' plotting functions.
@@ -96,7 +102,10 @@ id_sim_gen <- function(num_person=20,num_items=50,
                        spline_degree=2,
                        spline_intercept_sd=0.5,
                        spline_basis_sd=0.5,
-                       phi=1) {
+                       phi=1,
+                       gp_rho=0.5,
+                       gp_alpha=0.5,
+                       gp_nugget=.1) {
   
   # Allow for different type of distributions for ideal points
 
@@ -171,15 +180,17 @@ id_sim_gen <- function(num_person=20,num_items=50,
     # if more than 1 time point, generate via an AR, random-walk or GP process
     if(time_process=='GP') {
       
+      drift <- 0
+      
       ideal_pts_mean <- prior_func(params=list(N=num_person,mean=0,sd=ideal_pts_sd))
-      ar_adj <- runif(n=num_person,2.5,5.5) # rho parameter in GPs
-      drift <- 0.5 # marginal standard deviation
+      ar_adj <- rexp(n=num_person,gp_rho) # rho parameter in GPs
+      
       simu_data <- list(N=num_person,
                         T=time_points,
                         x=1:time_points,
                         ideal_pts=ideal_pts_mean,
                         rho=ar_adj,
-                        alpha=drift,
+                        alpha=gp_alpha,
                         sigma=time_sd)
       # loop over persons and construct GP with stan code
       
@@ -396,6 +407,8 @@ id_sim_gen <- function(num_person=20,num_items=50,
                             time_sd_all=time_sd_all,
                             drift=drift,
                             ar_adj=ar_adj,
+                            gp_rho=gp_rho,
+                            gp_alpha=gp_alpha,
                             cov_effect=cov_effect,
                             person_x=person_x,
                             ls_int=ls_int,

@@ -5,7 +5,6 @@
 print("sigma_abs_free (vector with bounds -0.999 to 0.999, length: ", num_bills, "): ", sigma_abs_free);
 print("L_full (vector length: ", num_legis, "): ", L_full);
 print("m_sd_free (vector with lower bound 0, length: ", gp_N_fix, "): ", m_sd_free);
-print("gp_sd_free (vector with lower bound 0, conditional on time_proc==4): ", gp_sd_free);
 print("ls_int (vector length: ", num_ls, "): ", ls_int);
 print("ls_int_abs (vector length: ", num_ls, "): ", ls_int_abs);
 print("L_tp1_var (array of vectors with conditional length on T and time_proc): ", L_tp1_var);

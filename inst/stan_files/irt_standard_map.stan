@@ -119,10 +119,6 @@ data {
   int time_proc;
   array[T] real time_ind; // the actual indices/values of time points, used for Gaussian processes
   int zeroes; // whether to use traditional zero-inflation for bernoulli and poisson models
-  real gp_sd_par; // residual variation in GP
-  real num_diff; // number of time points used to calculate GP length-scale prior
-  real m_sd_par; // the marginal standard deviation of the GP
-  int min_length; // the minimum threshold for GP length-scale prior
   int num_var;
   array[num_bills] int type_het_var;
   int<lower=0,upper=2> debug_mode;
@@ -131,6 +127,9 @@ data {
   array[num_bills] int ordbeta_id;
   array[num_ordbeta] vector[3] ordbeta_cut_alpha;
   vector[num_ordbeta] ordbeta_cut_phi;
+  real gp_alpha; // prior for the GP alpha parameter
+  real gp_rho; // prior for the GP rho parameter
+  real gp_nugget; // residual variation in GP
 }
 
 transformed data {
@@ -146,16 +145,15 @@ transformed data {
 	int gp_1; // zero-length gp-related scalars
 	int gp_nT; // used to make L_tp1 go to model block if GPs are used
 	int gp_oT; // used to make L_tp1 go to model block if GPs are used
-	vector[1] gp_length; 
 	array[(ignore==1) ? num_legis : 0, 2] int ignore_mat;
 	
 	// set mean of log-normal distribution for GP length-scale prior
 	
-	if(time_proc==4) {
-	  gp_length = gp_prior_mean(time_ind,num_diff,min_length);
-	} else {
-	  gp_length = [0.0]';
-	}
+	// if(time_proc==4) {
+	//   gp_length = gp_prior_mean(time_ind,num_diff,min_length);
+	// } else {
+	//   gp_length = [0.0]';
+	// }
 	
 	
 	//reset these values to use GP-specific parameters
@@ -241,8 +239,7 @@ transformed data {
 parameters {
   vector<lower=-0.999,upper=0.999>[num_bills] sigma_abs_free;
   vector[num_legis] L_full; // first T=1 params to constrain
-  vector<lower=0>[gp_N_fix] m_sd_free; // marginal standard deviation of GP
-  vector<lower=0>[time_proc==4 ? 1 : 0] gp_sd_free; // residual GP variation in Y
+  vector<lower=0>[gp_N] m_sd_free; // marginal standard deviation of GP
   vector[num_ls] ls_int; // extra intercepts for non-inflated latent space
   vector[num_ls] ls_int_abs; // extra intercepts for non-inflated latent space
   array[T] vector[(T>1 && time_proc!=5) ? num_legis : 0] L_tp1_var; // non-centered variance, don't need for splines
@@ -314,8 +311,8 @@ transformed parameters {
       // in RW model, intercepts are used for first time period
 #include /chunks/l_hier_prior.stan
     } else if(time_proc==4) {
-      m_sd_full = append_row([m_sd_par]',
-                              m_sd_free);
+      // m_sd_full = append_row([m_sd_par]',
+      //                         m_sd_free);
       
       L_tp1 = L_tp1_var;
       
@@ -362,8 +359,8 @@ for(n in 1:num_legis) {
   
   //create covariance matrices given current values of hiearchical parameters
   
-  cov[n] =   gp_exp_quad_cov(time_ind, m_sd_full[n], time_var_free[n])
-      + diag_matrix(rep_vector(gp_sd_free[1],T));
+  cov[n] =   gp_exp_quad_cov(time_ind, m_sd_free[n], time_var_free[n])
+      + diag_matrix(rep_vector(gp_nugget,T));
   L_cov[n] = cholesky_decompose(cov[n]);
 
   to_vector(L_tp1_var[1:T,n]) ~ multi_normal_cholesky(rep_vector(0,T) + L_full[n], L_cov[n]); 
@@ -518,8 +515,6 @@ for(n in 1:num_legis) {
     ls_int_abs ~ normal(0,legis_sd);
   }
   
-  gp_sd_free ~ exponential(1); // length 1
-  
   if(T>1 && S_type==0) {
     
     if(inv_gamma_beta>0) {
@@ -531,8 +526,9 @@ for(n in 1:num_legis) {
       time_var_free ~ exponential(time_var_sd);    
         
     }
-    time_var_gp_free ~ inv_gamma(5,5); // tight-ish prior on additional variances
-    m_sd_free ~ exponential(1);
+    //time_var_gp_free ~ inv_gamma(5,5); // tight-ish prior on additional variances
+    time_var_gp_free ~ exponential(gp_rho);
+    m_sd_free ~ exponential(gp_alpha);
   }
 
   //priors for parameters not included in reduce_sum
@@ -688,14 +684,10 @@ if(S_type==1 && const_type==1) {
         time_var_sd,
         time_proc,
         zeroes, // whether to use traditional zero-inflation for bernoulli and poisson models
-        gp_sd_par, // residual variation in GP
-        num_diff, // number of time points used to calculate GP length-scale prior
-        m_sd_par, // the marginal standard deviation of the GP
-        min_length, // the minimum threshold for GP length-scale prior,
         sigma_abs_free,
         L_full, // first T=1 params to constrain
         m_sd_free, // marginal standard deviation of GP
-        gp_sd_free, // residual GP variation in Y
+        gp_nugget, // residual GP variation in Y
         ls_int, // extra intercepts for non-inflated latent space
         ls_int_abs, // extra intercepts for non-inflated latent space
         L_tp1_var, // non-centered variance
@@ -727,7 +719,6 @@ if(S_type==1 && const_type==1) {
         L_tp1,
         time_var_free,
         inv_gamma_beta,
-        gp_length,
         num_var,
         type_het_var,
         restrict_var,
@@ -742,7 +733,9 @@ if(S_type==1 && const_type==1) {
         debug_mode,
         ordbeta_id,
         phi,
-        ordbeta_cut);
+        ordbeta_cut,
+        gp_rho,
+        gp_alpha);
         
       if(debug_mode==1) print("target after reduce sum = ", target());
 

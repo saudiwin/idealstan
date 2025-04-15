@@ -33,7 +33,9 @@ id_sim_gen(
   spline_degree = 2,
   spline_intercept_sd = 0.5,
   spline_basis_sd = 0.5,
-  phi = 1
+  phi = 1,
+  gp_rho = 0.5,
+  gp_alpha = 0.5
 )
 }
 \arguments{
@@ -125,6 +127,12 @@ coefficients used to create the simulated ideal points from the spline function}
 
 \item{phi}{The phi (dispersion) parameter for the ordered beta distribution
 deviation of the outcome (i.e. the square root of the variance).}
+
+\item{gp_rho}{The rho parameter to the squared exponential kernel function
+for the GP model}
+
+\item{gp_alpha}{The alpha parameter to the squared exponential kernel function
+for the GP model}
 }
 \value{
 The results is a \code{idealdata} object that can be used in the

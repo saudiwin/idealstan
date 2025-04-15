@@ -51,14 +51,10 @@ real partial_sum(array[,] int y_slice,
                  real time_var_sd,
                  int time_proc,
                  int zeroes, // whether to use traditional zero-inflation for bernoulli and poisson models
-                 real gp_sd_par, // residual variation in GP
-                 real num_diff, // number of time points used to calculate GP length-scale prior
-                 real m_sd_par, // the marginal standard deviation of the GP
-                 int min_length, // the minimum threshold for GP length-scale prior,
                  vector sigma_abs_free,
                  vector L_full, // first T=1 params to constrain
                  vector m_sd_free, // marginal standard deviation of GP
-                 vector gp_sd_free, // residual GP variation in Y
+                 real gp_nugget, // residual variation in GP
                  vector ls_int, // extra intercepts for non-inflated latent space
                  vector ls_int_abs, // extra intercepts for non-inflated latent space
                  array[] vector L_tp1_var, // non-centered variance
@@ -90,7 +86,6 @@ real partial_sum(array[,] int y_slice,
                  array[] vector L_tp1,
                  vector time_var_free,
                  real inv_gamma_beta,
-                 vector gp_length,
                  int het_var,
                  array[] int type_het_var,
                  int restrict_var,
@@ -105,7 +100,9 @@ real partial_sum(array[,] int y_slice,
                  int debug_mode,
                  array[] int ordbeta_id,
                  vector phi,
-                 array[] vector ordbeta_cut) {
+                 array[] vector ordbeta_cut,
+                 real gp_rho,
+                 real gp_alpha) {
   
   // big loop over states
   real log_prob = 0;
@@ -322,14 +319,13 @@ real partial_sum(array[,] int y_slice,
             // Includes additional code for AR-1 priors if relevant...
 #include /chunks/l_hier_prior_map.stan
         } else if(time_proc == 4) {
-            real term = inv_gamma_lpdf(time_var_gp_free[s] | 5, 5);
+            //real term = inv_gamma_lpdf(time_var_gp_free[s] | 5, 5);
+            real term = exponential_lpdf(time_var_gp_free[s]|gp_rho);
             log_prob += term;
             if(debug_mode==2) print("Added inv_gamma_lpdf(time_var_gp_free[s] | 5, 5) to log_prob: ", term);
-            if(s > 1) {
-                term = exponential_lpdf(m_sd_free[s - 1] | 1);
+                term = exponential_lpdf(m_sd_free[s] | gp_alpha);
                 log_prob += term;
                 if(debug_mode==2) print("Added exponential_lpdf(m_sd_free[s - 1] | 1) to log_prob: ", term);
-            }
       {
           matrix[T, T] cov; // zero-length if not a GP model
           matrix[T, T] L_cov;// zero-length if not a GP model
@@ -339,22 +335,21 @@ real partial_sum(array[,] int y_slice,
 
           // chunk giving a GP prior to legislators/persons
             //create covariance matrices given current values of hiearchical parameters
-            if(s==1) {
-              //cov =   gp_exp_quad_cov(time_ind, m_sd_par, gp_length[1]) + diag_matrix(rep_vector(square(gp_sd_par),T));
-              cov =   gp_exp_quad_cov(time_ind, m_sd_par, time_var_gp_free[s]) + diag_matrix(rep_vector(gp_sd_free[1],T));
-              if(debug_mode==2) {
-                term = sum(gp_exp_quad_cov(time_ind, m_sd_par, time_var_gp_free[s]) + diag_matrix(rep_vector(gp_sd_free[1],T)));
-                print("Added exponential_lpdf(m_sd_free[s - 1] | 1) to log_prob: ", term);
-              }
-            } else {
+            // if(s==1) {
+            //   //cov =   gp_exp_quad_cov(time_ind, m_sd_par, gp_length[1]) + diag_matrix(rep_vector(square(gp_sd_par),T));
+            //   cov =   gp_exp_quad_cov(time_ind, m_sd_par, time_var_gp_free[s]) + diag_matrix(rep_vector(gp_sd_free[1],T));
+            //   if(debug_mode==2) {
+            //     term = sum(gp_exp_quad_cov(time_ind, m_sd_par, time_var_gp_free[s]) + diag_matrix(rep_vector(gp_sd_free[1],T)));
+            //     print("Added exponential_lpdf(m_sd_free[s - 1] | 1) to log_prob: ", term);
+            //   }
+            // } else {
               
               if(debug_mode==2) {
-                term = sum(gp_exp_quad_cov(time_ind, m_sd_par, time_var_gp_free[s]) + diag_matrix(rep_vector(gp_sd_free[1],T)));
+                term = sum(gp_exp_quad_cov(time_ind, m_sd_free[s], time_var_gp_free[s]) + diag_matrix(rep_vector(gp_nugget,T)));
                 print("Calculated gp_exp_quad_cov(time_ind, m_sd_par, time_var_gp_free[s]) + diag_matrix(rep_vector(gp_sd_free[1],T)): ", term);
               }
               
-              cov =   gp_exp_quad_cov(time_ind, m_sd_free[s-1], time_var_gp_free[s]) + diag_matrix(rep_vector(gp_sd_free[1],T));
-            }
+              cov =   gp_exp_quad_cov(time_ind, m_sd_free[s], time_var_gp_free[s]) + diag_matrix(rep_vector(gp_nugget,T));
 
             L_cov = cholesky_decompose(cov);
             

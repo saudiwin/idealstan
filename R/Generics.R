@@ -462,6 +462,7 @@ setMethod('sample_model',signature(object='idealdata'),
                               refresh=this_data$id_refresh,
                               seed=seed,
                               ...)
+              
               } else if (use_method=="laplace") {
               
                 out_model <- object@stanmodel_map$laplace(data=this_data,
