@@ -265,7 +265,7 @@ real partial_sum(array[,] int y_slice,
                 if(debug_mode==2) print("Added normal_lpdf(L_tp1_var[1, s] | 0, legis_sd) to log_prob: ", term);
             }
         }
-        if(T < center_cutoff && time_proc != 5) {
+        if(T < center_cutoff && (time_proc < 4 && time_proc>1)) {
             real term = std_normal_lpdf(to_vector(L_tp1_var[2:T, s]));
             log_prob += term;
             if(debug_mode==2) print("Added std_normal_lpdf(to_vector(L_tp1_var[2:T, s])) to log_prob: ", term);
@@ -363,7 +363,7 @@ real partial_sum(array[,] int y_slice,
               
               // + L_full[s]
 
-            log_prob += multi_normal_cholesky_lpdf(to_vector(L_tp1_var[,s])|rep_vector(0,T), L_cov);
+            log_prob += multi_normal_cholesky_lpdf(to_vector(L_tp1_var[,s])|rep_vector(0,T) + L_full[s], L_cov);
             //log_prob += normal_lpdf(to_vector(L_tp1_var[,s])|0, 1);
 
         lt = to_vector(L_tp1_var[,s]);
