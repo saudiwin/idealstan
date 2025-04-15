@@ -181,17 +181,19 @@ id_sim_gen <- function(num_person=20,num_items=50,
     if(time_process=='GP') {
       
       drift <- 0
+      ar_adj <- 0
       
       ideal_pts_mean <- prior_func(params=list(N=num_person,mean=0,sd=ideal_pts_sd))
-      ar_adj <- rexp(n=num_person,gp_rho) # rho parameter in GPs
+      gp_rho_gen <- rexp(n=num_person,gp_rho) # rho parameter in GPs
+      gp_alpha_gen <- rexp(n=num_person,gp_alpha)
       
       simu_data <- list(N=num_person,
                         T=time_points,
                         x=1:time_points,
                         ideal_pts=ideal_pts_mean,
-                        rho=ar_adj,
-                        alpha=gp_alpha,
-                        sigma=time_sd)
+                        rho=gp_rho_gen,
+                        alpha=gp_alpha_gen,
+                        sigma=gp_nugget)
       # loop over persons and construct GP with stan code
       
       stan_code <- system.file("stan_files","sim_gp.stan",
@@ -407,8 +409,8 @@ id_sim_gen <- function(num_person=20,num_items=50,
                             time_sd_all=time_sd_all,
                             drift=drift,
                             ar_adj=ar_adj,
-                            gp_rho=gp_rho,
-                            gp_alpha=gp_alpha,
+                            gp_rho=gp_rho_gen,
+                            gp_alpha=gp_alpha_gen,
                             cov_effect=cov_effect,
                             person_x=person_x,
                             ls_int=ls_int,
