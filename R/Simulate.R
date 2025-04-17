@@ -107,6 +107,13 @@ id_sim_gen <- function(num_person=20,num_items=50,
                        gp_alpha=0.5,
                        gp_nugget=.1) {
   
+  # values that may not get set in particular functions
+  
+  gp_rho_gen <- NULL
+  gp_alpha_gen <- NULL
+  
+  if(! (time_process %in% c("GP","AR","splines","random"))) stop("time_process should be one of 'GP', 'AR', 'splines', or 'random'.")
+  
   # Allow for different type of distributions for ideal points
 
   if(prior_type=='gaussian') {
