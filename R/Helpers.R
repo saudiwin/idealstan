@@ -1486,8 +1486,9 @@ process_init_pathfinder <- function(init, num_procs, model_variables = NULL,
      
      # need to calculate mean of beta distribution
      
-     out_list$sigma_reg_free[restrict_ind_high] <- .98
-     out_list$sigma_reg_free[restrict_ind_low] <- -.98
+     out_list$sigma_reg_free[restrict_ind_high] <- .mean_gbeta(this_data$restrict_N_high,this_data$restrict_sd_high)
+     out_list$sigma_reg_free[restrict_ind_low] <- .mean_gbeta(this_data$restrict_sd_low,
+                                                              this_data$restrict_N_low)
 
    }
 
@@ -3743,4 +3744,8 @@ return(as.vector(idx))
   
   return(all_time)
   
+}
+
+.mean_gbeta <- function(alpha, beta, a = -1, b = +1) {
+  a + (b - a) * (alpha / (alpha + beta))
 }

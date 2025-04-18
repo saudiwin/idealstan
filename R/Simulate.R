@@ -111,6 +111,8 @@ id_sim_gen <- function(num_person=20,num_items=50,
   
   gp_rho_gen <- NULL
   gp_alpha_gen <- NULL
+  spline_basis <- NULL
+  spline_int <- NULL
   
   if(! (time_process %in% c("GP","AR","splines","random"))) stop("time_process should be one of 'GP', 'AR', 'splines', or 'random'.")
   
