@@ -29,19 +29,39 @@
   
   # check on restriction length
   
-  if(length(restrict_ind_high) > 1 && length(fix_high)==1) {
+  if(length(restrict_ind_high) > 1 && (length(fix_high)==1)) {
     
     fix_high <- rep(fix_high, length(restrict_ind_high))
     
   }
   
-  if(!is.null(restrict_ind_high)) names(restrict_ind_high) <- fix_high
-  
-  if(length(restrict_ind_low) > 1 && length(fix_low)==1) {
+  if(length(restrict_ind_high) > 1 && (length(restrict_sd_low)==1 || length(restrict_N_low)==1)) {
     
-    fix_low <- rep(fix_low, length(restrict_ind_low))
+    restrict_N_high <- rep(restrict_N_high, length(restrict_ind_high))
+    restrict_sd_high <- rep(restrict_sd_high, length(restrict_ind_high))
     
   }
+
+  
+  if(!is.null(restrict_ind_high)) names(restrict_ind_high) <- fix_high
+  
+  if(length(restrict_ind_low) > 1 && (length(fix_low)==1)) {
+    
+    fix_low <- rep(fix_low, length(restrict_ind_low))
+
+  }
+  
+  if(length(restrict_ind_low) > 1 && (length(restrict_sd_low)==1 || length(restrict_N_low)==1)) {
+    
+    restrict_N_low <- rep(restrict_N_low, length(restrict_ind_low))
+    restrict_sd_low <- rep(restrict_sd_low, length(restrict_ind_low))
+    
+  }
+  
+  if(length(fix_high)>length(restrict_ind_high) || length(restrict_N_high)>length(restrict_ind_high) || length(restrict_sd_high)>length(restrict_ind_high)) stop("Please pass a number of discrimination constrained parameters restrict_N_high/restrict_sd_high that is equal to the number of constrained parameters passed to fix_high.")
+  
+  if(length(fix_low)>length(restrict_ind_low) || length(restrict_N_low)>length(restrict_ind_low) || length(restrict_sd_low)>length(restrict_ind_low)) stop("Please pass a number of discrimination constrained parameters restrict_N_low/restrict_sd_low that is equal to the number of constrained parameters passed to fix_low.")
+
   
   if(!is.null(restrict_ind_low)) names(restrict_ind_low) <- fix_low
   

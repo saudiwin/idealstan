@@ -277,7 +277,7 @@ id_sim_gen <- function(num_person=20,num_items=50,
       ideal_t1 <- prior_func(params=list(N=num_person,mean=0,sd=ideal_pts_sd))
       if(time_process=='AR') {
         # random AR parameters
-        ar_adj <- runif(n = num_person,min = -0.5,max=0.5)
+        ar_adj <- runif(n = num_person,min = -0.99,max=0.99)
       } else if(time_process=='random') {
         ar_adj <- rep(1,num_person)
       }

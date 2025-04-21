@@ -1567,3 +1567,123 @@ id_plot_irf <- function(object,
   
   
 }
+
+#' Launch the Generalized Beta Distribution Explorer Shiny App
+#'
+#' This function starts an interactive Shiny application to visualize a generalized Beta distribution
+#' on a symmetrical interval [–scale, +scale] in order to calculate the distribution paramters α (the `restrict_sd_high`/`restrict_N_low` parameter to `id_estimate`) and β (the `restrict_N_high`/`restrict_sd_low` parameter to `id_estimate`). This function is useful for understanding what values to use to pin item discrimination parameters in `id_estimate` given a specific prior mean `initial_y` and a relative level of precision `prior_sample_size` (also known as `phi`). Higher values of `prior_sample_size` will imply a tighter prior around the pinned discrimination parameter.
+#'
+#' The function is also useful for calculating the prior for all non-constrained discrimination parameters as well (`discrim_reg_shape` and `discrim_reg_scale`). These parameters are denoted in the Shiny app output for easy cut and paste to the `id_estimate` function call.
+#' @param initial_y             Initial observed variate `y` (default: 0)
+#' @param prior_sample_size     Relative level of precision/tightness around `y` (default: 200). Can be thought of as the relative sample size used to estimate `y`.
+#' @param limits                Limits of prior. Default is `[-1,1]`. Set to `[0,1]` for a conventional IRT with all positive discrimination parameters (i.e. as in a test-taking scenario).
+#' @export
+id_plot_gbeta_prior <- function(
+    initial_y = 0,
+    prior_sample_size = 200,
+    limits = c(-1,1)
+) {
+  ui <- shiny::fluidPage(
+    shiny::titlePanel("Explore Prior Distributions for Discrimination Parameters (Generalized Beta)"),
+    shiny::sidebarLayout(
+      shiny::sidebarPanel(
+        shiny::sliderInput(
+          inputId = "limits", label = "Limits of Prior\n(set to 0 and 1 for standard IRT/all positive constraint):",
+          min = -1, max = 1, value = limits, step = 0.1
+        ),
+        shiny::sliderInput(
+          inputId = "y", label = "Value to fix prior at:",
+          min = -1, max = 1,
+          value = initial_y, step = 0.001
+        ),
+        shiny::numericInput(
+          inputId = "y_numeric", label = "Manual input prior value:",
+          value = initial_y
+        ),
+        shiny::sliderInput(
+          inputId = "prior_sample_size", label = "Prior sample size (set to 2 for uninformative and 3 for weakly informative):",
+          min = 1, max = 10000,
+          value = prior_sample_size, step = 1
+        ),
+        shiny::numericInput(
+          inputId = "prior_sample_size_numeric", label = "Manual input prior sample size:",
+          value = prior_sample_size, min = 1
+        )
+      ),
+      shiny::mainPanel(
+        shiny::plotOutput("distPlot"),
+        shiny::verbatimTextOutput("shapeVals")
+      )
+    )
+  )
+  
+  server <- function(input, output, session) {
+    # Sync 'y' limits with 'limits'
+    shiny::observeEvent(input$limits, {
+      shiny::updateSliderInput(
+        session, "y",
+        min = input$limits[1], max = input$limits[2],
+        value = pmin(pmax(input$y, input$limits[1]), input$limits[2])
+      )
+    })
+    
+    output$shapeVals <- shiny::renderPrint({
+      a     <- input$limits[1]
+      b     <-  input$limits[2]
+      x     <- (input$y - a) / (b - a)
+      alpha <- input$prior_sample_size * x
+      beta  <- input$prior_sample_size * (1 - x)
+      
+      if(input$y != a && input$y != b) {
+        
+        cat(sprintf("To fix a discrimination parameter to this value/shape, use these function arguments:\n\n Constrain high:\n.  restrict_N_high = %.2f\n.  restrict_sd_high  = %.2f\n. Constrain low:\n.   restrict_sd_low = %.2f\n.   restrict_N_low  = %.2f\n Default discrimination parameters:\n.  discrim_reg_scale = %.2f\n.  discrim_miss_scale = %.2f\n.   discrim_reg_shape  = %.2f\n.  discrim_miss_shape  = %.2f", alpha, beta, alpha, beta, alpha, alpha, beta, beta))
+        
+      } else {
+        
+        
+        cat("WARNING: Prior is undefined because the prior mean is equal to the prior scale limit (high or low).")
+        
+      }
+      
+      
+    })
+    
+    # Sync slider and numeric inputs for prior_sample_size
+    shiny::observeEvent(input$prior_sample_size_numeric, {
+      if(!is.na(input$prior_sample_size_numeric)) shiny::updateSliderInput(
+        session, "prior_sample_size",
+        value = input$prior_sample_size_numeric
+      )
+    })
+    
+    # Sync slider and numeric inputs for y
+    shiny::observeEvent(input$y_numeric, {
+      if(!is.na(input$y_numeric)) shiny::updateSliderInput(
+        session, "y",
+        value = input$y_numeric
+      )
+    })
+    
+    output$distPlot <- shiny::renderPlot({
+      a     <- input$limits[1]
+      b     <-  input$limits[2]
+      xGrid <- seq(a, b, length.out = 400)
+      x0    <- (xGrid - a) / (b - a)
+      alpha <- input$prior_sample_size * ((input$y - a) / (b - a))
+      beta  <- input$prior_sample_size * (1 - ((input$y - a) / (b - a)))
+      dens  <- stats::dbeta(x0, shape1 = alpha, shape2 = beta) / (b - a)
+      graphics::plot(
+        xGrid, dens, type = "l", lwd = 2,
+        xlab = "Expected value (average) of prior on discrimination", ylab = "Density",
+        main = sprintf(
+          "Generalized Beta on [%.2f, %.2f]\nPrecision φ=%d",
+          a, b, input$prior_sample_size
+        )
+      )
+    })
+  }
+  
+  shiny::runApp(shiny::shinyApp(ui = ui, server = server))
+}
+
+
