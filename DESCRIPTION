@@ -32,7 +32,8 @@ Imports:
     ggthemes,
     forcats,
     ordbetareg,
-    scales
+    scales,
+    shiny
 Suggests:
     R.rsp,
     loo,

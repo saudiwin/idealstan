@@ -5,8 +5,8 @@ By constraining two parameters to almost-fixed values (very low SD)
 real id_params(vector p, array[] int high, array[] int low, 
                   array[] real fix_high, 
                   array[] real fix_low,
-                  real sd_fix_high,
-                  real sd_fix_low,
+                  array[] real sd_fix_high,
+                  array[] real sd_fix_low,
                   real mean_val,
                   real sd_val) {
     
@@ -19,13 +19,15 @@ real id_params(vector p, array[] int high, array[] int low,
       
       if(r_in(n,high)) {
         
-        prob_dens += normal_lpdf(p[n]|fix_high[fix_high_count],sd_fix_high);
+        prob_dens += normal_lpdf(p[n]|fix_high[fix_high_count],
+        sd_fix_high[fix_high_count]);
         
         fix_high_count = fix_high_count + 1;
         
       } else if(r_in(n,low)) {
         
-        prob_dens += normal_lpdf(p[n]|fix_low[fix_low_count],sd_fix_low);
+        prob_dens += normal_lpdf(p[n]|fix_low[fix_low_count],
+        sd_fix_low[fix_low_count]);
         
         fix_low_count = fix_low_count + 1;
         

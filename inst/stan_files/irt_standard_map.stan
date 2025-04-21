@@ -103,10 +103,10 @@ data {
   real legis_sd;
   real diff_abs_sd;
   real diff_reg_sd;
-  real<lower=0> restrict_sd_high;
-  real<lower=0> restrict_sd_low;
-  real<lower=0> restrict_N_high;
-  real<lower=0> restrict_N_low;
+  array[num_restrict_high] real<lower=0> restrict_sd_high;
+  array[num_restrict_low] real<lower=0> restrict_sd_low;
+  array[num_restrict_high] real<lower=0> restrict_N_high;
+  array[num_restrict_low] real<lower=0> restrict_N_low;
   real ar_sd;
   real time_sd;
   real time_var_sd; // over-time variance of persons

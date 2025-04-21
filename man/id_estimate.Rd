@@ -23,8 +23,8 @@ id_estimate(
   use_method = "mcmc",
   ignore_db = NULL,
   restrict_ind_high = NULL,
-  fix_high = 1,
-  fix_low = (-1),
+  fix_high = 2,
+  fix_low = (-2),
   restrict_ind_low = NULL,
   num_restrict_high = 1,
   num_restrict_low = 1,
@@ -164,12 +164,12 @@ of a legislator/person or bill/item to pin to a high value (default +1).}
 
 \item{fix_high}{A vector of length \code{restrict_ind_high} with values
 that the high fixed person ideal point(s) should be
-fixed to. Default is +1. Does not apply when \code{const_type="items"}; in that case,
+fixed to. Default is +2. Does not apply when \code{const_type="items"}; in that case,
 use \code{restrict_sd}/\code{restrict_N} parameters (see below).}
 
 \item{fix_low}{A vector of length \code{restrict_ind_low} with values
 that the high fixed person ideal point(s) should be
-fixed to. Default is -1. Does not apply when \code{const_type="items"}; in that case,
+fixed to. Default is -2. Does not apply when \code{const_type="items"}; in that case,
 use \code{restrict_sd}/\code{restrict_N} parameters (see below).}
 
 \item{restrict_ind_low}{If \code{fixtype} is not "vb_full", a vector of character values or integer indices of a

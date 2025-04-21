@@ -33,8 +33,8 @@ real partial_sum(array[,] int y_slice,
                  int center_cutoff,
                  array[] real fix_high,
                  array[] real fix_low,
-                 real restrict_sd_high,
-                 real restrict_sd_low,
+                 array[] real restrict_sd_high,
+                 array[] real restrict_sd_low,
                  real discrim_reg_upb,
                  real discrim_reg_lb,
                  real discrim_miss_upb,
@@ -95,8 +95,8 @@ real partial_sum(array[,] int y_slice,
                  array[] row_vector a_raw,
                  matrix B,
                  int prior_only,
-                 real restrict_N_high,
-                 real restrict_N_low,
+                 array[] real restrict_N_high,
+                 array[] real restrict_N_low,
                  int debug_mode,
                  array[] int ordbeta_id,
                  vector phi,
@@ -191,12 +191,20 @@ real partial_sum(array[,] int y_slice,
         }
     } else if(S_type == 0 && const_type == 2) {
         if(pos_discrim == 0) {
+          
+          int num_high = num_elements(restrict_high);
+          int num_low = num_elements(restrict_low);
+          int count_high = 1;
+          int count_low = 1;
+          
             if(r_in(s, restrict_high)) {
-                real term = genbeta_lpdf(sigma_reg_full[s] | restrict_N_high, restrict_sd_high, discrim_reg_lb, discrim_reg_upb);
+                real term = genbeta_lpdf(sigma_reg_full[s] | restrict_N_high[count_high], restrict_sd_high[count_high], discrim_reg_lb, discrim_reg_upb);
+                count_high = count_high + 1;
                 log_prob += term;
                 if(debug_mode==2) print("Added genbeta_lpdf(sigma_reg_full[s] | restrict_N_high, restrict_sd_high, discrim_reg_lb, discrim_reg_upb) to log_prob: ", term);
             } else if(r_in(s, restrict_low)) {
-                real term = genbeta_lpdf(sigma_reg_full[s] | restrict_sd_low, restrict_N_low, discrim_reg_lb, discrim_reg_upb);
+                real term = genbeta_lpdf(sigma_reg_full[s] | restrict_sd_low[count_low], restrict_N_low[count_low], discrim_reg_lb, discrim_reg_upb);
+                count_low = count_low + 1;
                 log_prob += term;
                 if(debug_mode==2) print("Added genbeta_lpdf(sigma_reg_full[s] | restrict_sd_low, restrict_N_low, discrim_reg_lb, discrim_reg_upb) to log_prob: ", term);
             } else {

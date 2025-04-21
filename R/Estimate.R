@@ -706,11 +706,11 @@ id_make <- function(score_data=NULL,
 #' how many parameters to constraint to positive negative values? Default is 1.
 #' @param fix_high A vector of length `restrict_ind_high` with values 
 #' that the high fixed person ideal point(s) should be
-#' fixed to. Default is +1. Does not apply when `const_type="items"`; in that case,
+#' fixed to. Default is +2. Does not apply when `const_type="items"`; in that case,
 #' use `restrict_sd`/`restrict_N` parameters (see below).
 #' @param fix_low A vector of length `restrict_ind_low` with values 
 #' that the high fixed person ideal point(s) should be
-#' fixed to. Default is -1. Does not apply when `const_type="items"`; in that case,
+#' fixed to. Default is -2. Does not apply when `const_type="items"`; in that case,
 #' use `restrict_sd`/`restrict_N` parameters (see below).
 #' @param person_sd The standard deviation of the Normal distribution prior for 
 #' persons (all non-constrained person ideal point parameters). Default is weakly informative (3)
@@ -924,8 +924,8 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                         nchains=4,niters=1000,use_method="mcmc",
                         ignore_db=NULL,
                         restrict_ind_high=NULL,
-                        fix_high=1,
-                        fix_low=(-1),
+                        fix_high=2,
+                        fix_low=(-2),
                         restrict_ind_low=NULL,
                         num_restrict_high=1,
                         num_restrict_low=1,
