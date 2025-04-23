@@ -107,7 +107,7 @@ data {
   array[num_restrict_low] real<lower=0> restrict_sd_low;
   array[num_restrict_high] real<lower=0> restrict_N_high;
   array[num_restrict_low] real<lower=0> restrict_N_low;
-  real ar_sd;
+  vector[2] ar_prior;
   real time_sd;
   real time_var_sd; // over-time variance of persons
   real ar1_up;  // upper ar1 limit
@@ -347,7 +347,7 @@ model {
   extra_sd ~ exponential(1);
   
   if(time_proc==3 && S_type==0 && T>1) {
-    L_AR1 ~ normal(1,ar_sd);
+    target += genbeta_vec_lpdf(L_AR1 | ar_prior[1],ar_prior[2],ar1_down, ar1_up - ar1_down);
   }
   
 
@@ -467,7 +467,7 @@ for(n in 1:num_legis) {
     
               }
               
-              L_tp1_var[(start+1):end,n] ~ normal(L_full[n] + L_AR1[n]*to_vector(L_tp1_var[start:(end-1),n]),time_var_full[n]);
+              L_tp1_var[(start+1):end,n] ~ normal(L_tp1_var[start,n] + L_AR1[n]*to_vector(L_tp1_var[start:(end-1),n]),time_var_full[n]);
             
           }
               
@@ -492,7 +492,7 @@ for(n in 1:num_legis) {
     
               }
               
-              L_tp1_var[(start+1):end,n] ~ normal(L_full[n] + L_AR1[n]*to_vector(L_tp1_var[start:(end-1),n]),time_var_free[n]);
+              L_tp1_var[(start+1):end,n] ~ normal(L_tp1_var[start,n] + L_AR1[n]*to_vector(L_tp1_var[start:(end-1),n]),time_var_free[n]);
           }
                 
           
@@ -683,7 +683,7 @@ if(S_type==1 && const_type==1) {
         legis_sd,
         diff_abs_sd,
         diff_reg_sd,
-        ar_sd,
+        ar_prior,
         time_sd,
         time_var_sd,
         time_proc,
@@ -739,7 +739,9 @@ if(S_type==1 && const_type==1) {
         phi,
         ordbeta_cut,
         gp_rho,
-        gp_alpha);
+        gp_alpha,
+        ar1_down,
+        ar1_up);
         
       if(debug_mode==1) print("target after reduce sum = ", target());
 

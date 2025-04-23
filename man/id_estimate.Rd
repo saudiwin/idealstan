@@ -49,12 +49,11 @@ id_estimate(
   spline_knots = NULL,
   spline_degree = 2,
   ar1_up = 1,
-  ar1_down = 0,
+  ar1_down = -1,
   boundary_prior = NULL,
   time_center_cutoff = 50,
   restrict_var = FALSE,
-  sample_stationary = FALSE,
-  ar_sd = 1,
+  ar_prior = c(2, 2),
   diff_reg_sd = 3,
   diff_miss_sd = 3,
   restrict_sd_high = NULL,
@@ -286,14 +285,11 @@ quality is poor above the threshold.}
 \item{restrict_var}{Whether to fix the variance parameter for the first person trajectory. Default
 is FALSE (usually not necessary).}
 
-\item{sample_stationary}{If \code{TRUE}, the AR(1) coefficients in a time-varying model will be
-sampled from an unconstrained space and then mapped back to a stationary space. Leaving this \code{TRUE} is
-slower but will work better when there is limited information to identify a model. If used, the
-\code{ar_sd} parameter should be increased to 5 to allow for wider sampling in the unconstrained space.}
-
-\item{ar_sd}{If an AR(1) model is used, this defines the prior scale of the Normal distribution. A lower number
-can help
-identify the model when there are few time points.}
+\item{ar_prior}{If an AR(1) model is used, this 2-length vector sets the
+shape (alpha) and scale (beta) of the Beta prior on the AR-1 adjustment
+parameters (often denoted phi). The first element of the vector is alpha
+and the second is beta. See Stan documentation of the Beta distribution
+for more info.}
 
 \item{diff_reg_sd}{Set the prior standard deviation for the bill (item) intercepts for the non-inflated model.}
 

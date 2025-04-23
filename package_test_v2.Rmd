@@ -26,20 +26,57 @@ This Rmarkdown file has a series of simulations run on the models offered in `id
 First, the standard IRT 2-PL (for this one, the absence discriminations are not a part of the model):
 
 ```{r irt_binary}
+
 bin_irt_2pl_sim <- id_sim_gen(num_person=100,num_items=20,ordinal=F,inflate=F)
+
+# use item restrictions, test with 2
+
+# convert values to shape/scale for idealstan prior fixing
+
+item_time_ids <- distinct(bin_irt_2pl_sim@score_matrix, item_id, time_id)
+  
+  true_item <- tibble(discrim=bin_irt_2pl_sim@simul_data$true_reg_discrim) %>% 
+    mutate(item_id=factor(1:n()))
+  
+  item_time_ids <- left_join(item_time_ids, true_item)
+  
+  # need to cut
+  
+  item_time_ids <- mutate(item_time_ids,
+                          time_id=as.numeric(time_id),
+                          time_period=as.numeric(cut(time_id, 2, 
+                                          labels=c(1,2)))) %>% 
+    group_by(time_period) %>% 
+    filter(discrim %in% c(max(discrim),min(discrim)))
+  
+  # need to convert to beta regression parameters
+  
+  get_gbeta_shapes <- function(y, a = -1, b = +1, phi = 100,
+                               return="alpha") {
+    x     <- (y - a) / (b - a)
+    alpha <- phi * x
+    beta  <- phi * (1 - x)
+    if(return=="alpha") return(alpha)
+    if(return=="beta") return(beta)
+  }
+  
+  item_time_ids <- mutate(item_time_ids,
+                          shape=get_gbeta_shapes(discrim,phi=200),
+                          scale=get_gbeta_shapes(discrim, return="beta",phi=200))
+  
+  
+  high_ids <- arrange(ungroup(item_time_ids), desc(discrim)) %>% slice(c(1:2))
+  low_ids <- arrange(ungroup(item_time_ids), discrim) %>% slice(c(1:2))
+
 bin_irt_2pl_est <- id_estimate(idealdata=bin_irt_2pl_sim,
                                model_type=1,init_pathfinder = TRUE,
-                               restrict_ind_high = as.character(sort(bin_irt_2pl_sim@simul_data$true_person,
-                                                                     decreasing=T,
-                                                        index=T)$ix[1]),
-                               restrict_ind_low = as.character(sort(bin_irt_2pl_sim@simul_data$true_person,
-                                                                    decreasing=F, 
-                                                        index=T)$ix[1]),
-                               fix_high = sort(bin_irt_2pl_sim@simul_data$true_person,
-                                                                     decreasing=T)[1],fix_low = sort(bin_irt_2pl_sim@simul_data$true_person,
-                                                                     decreasing=F)[1],
-
-                               fixtype='prefix',
+                               restrict_ind_high = high_ids$item_id,
+                restrict_ind_low = low_ids$item_id,
+                restrict_N_high = high_ids$shape,
+                restrict_sd_low = low_ids$shape,
+                restrict_sd_high = high_ids$scale,
+                restrict_N_low = low_ids$scale,
+                               fixtype='prefix',const_type = "items",
                            person_sd = 3,
                            nchains=2,ncores=4,niters = 500,warmup=500)
 id_plot_rhats(bin_irt_2pl_est)
@@ -80,6 +117,51 @@ c1 <- id_post_pred(bin_irt_2pl_est, newdata=new_data)
 
   id_plot_ppc(bin_irt_2pl_est,ppc_pred=c1,combine_item=FALSE,
               prompt_plot=FALSE)
+
+```
+
+```{r irt_bin_discrim_params}
+
+mcmc_recover_intervals(bin_irt_2pl_est@stan_samples$draws("sigma_reg_free"),
+                       true = bin_irt_2pl_sim@simul_data$true_reg_discrim)
+
+```
+
+
+## IRT 2-PL Binary VB Fix
+
+Try the auto-vb routine to make sure it works.
+
+```{r vb_fix}
+
+bin_vb_sim <- id_sim_gen(num_person=100,num_items=20,ordinal=F,inflate=F)
+
+# use item restrictions, test with 2
+
+bin_vb_fix <- id_estimate(idealdata=bin_vb_sim,
+                               model_type=1,init_pathfinder = TRUE,
+                          fixtype="vb_full",
+                               num_restrict_high = 2,
+                          num_restrict_low = 2,
+                               const_type = "items",
+                           person_sd = 3,
+                           nchains=2,ncores=4,niters = 500,warmup=500)
+
+id_plot_rhats(bin_vb_fix)
+
+```
+
+Plot the true params:
+
+```{r}
+id_plot_legis(bin_vb_fix, show_true = T)
+```
+
+
+```{r vbfix_params}
+
+mcmc_recover_intervals(bin_vb_fix@stan_samples$draws("sigma_reg_free"),
+                       true = bin_vb_sim@simul_data$true_reg_discrim)
 
 ```
 
@@ -1148,8 +1230,8 @@ And autocorrelation:
 
 ```{r irt_binary_time_ar_inflate}
 
-bin_time_ar_irt_2pl_abs_sim <- id_sim_gen(num_person=20,num_items=100,inflate=T,
-                               absence_diff_mean=0,time_process = 'AR',time_points=20,time_sd = .1)
+bin_time_ar_irt_2pl_abs_sim <- id_sim_gen(num_person=20,num_items=200,inflate=T,
+                               absence_diff_mean=0,time_process = 'AR',time_points=20,time_sd = 1)
 
 bin_time_ar_irt_2pl_abs_sim@score_matrix$group_id <- forcats::fct_collapse(bin_time_ar_irt_2pl_abs_sim@score_matrix$person_id,
                                                                            `1`=c("1","2","3"))
@@ -1157,7 +1239,7 @@ bin_time_ar_irt_2pl_abs_sim@score_matrix$group_id <- forcats::fct_collapse(bin_t
 bin_time_ar_irt_2pl_abs_est <- id_estimate(idealdata=bin_time_ar_irt_2pl_abs_sim,
                                model_type=2,
                                ncores = parallel::detectCores(),
-                               vary_ideal_pts = 'AR1',
+                               vary_ideal_pts = 'AR1',ar1_down = -1,
                                const_type = "items",
                                restrict_ind_high = as.character(sort(bin_time_ar_irt_2pl_abs_sim@simul_data$true_reg_discrim,
                                                                      decreasing=TRUE,
@@ -1172,8 +1254,17 @@ id_plot_rhats(bin_time_ar_irt_2pl_abs_est)
 Let's do a time-varying ideal point plot with true point overlay:
 
 ```{r irt_2pl_ar1_spline_true_pt}
-id_plot_legis_dyn(bin_time_ar_irt_2pl_abs_est,plot_lines = 10) + guides(colour="none") + facet_wrap(~person_id,scales="free_y")
+id_plot_legis_dyn(bin_time_ar_irt_2pl_abs_est,show_true = F) + guides(colour="none") + facet_wrap(~person_id,scales="free_y")
 ```
+
+See whether we are capturing the AR(1) parameters:
+
+```{r plot_ar_param_true}
+
+mcmc_recover_intervals(bin_time_ar_irt_2pl_abs_est@stan_samples$draws("L_AR1"),true = bin_time_ar_irt_2pl_abs_sim@simul_data$ar_adj)
+
+```
+
 
 ## Time: Gaussian Process
 
@@ -1182,7 +1273,7 @@ The Gaussian process differs in that is a non-parametric approach to time-series
 
 ```{r time_gp_inflate}
 
-time_gp_sim <- id_sim_gen(num_person=100,num_items=300,inflate=T,
+time_gp_sim <- id_sim_gen(num_person=50,num_items=300,inflate=T,
                                absence_diff_mean=0,
                           time_process = 'GP',
                           time_points=20,gp_rho = 0.5,

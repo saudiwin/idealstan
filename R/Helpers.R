@@ -29,38 +29,38 @@
   
   # check on restriction length
   
-  if(length(restrict_ind_high) > 1 && (length(fix_high)==1)) {
+  if((length(restrict_ind_high) > 1 || num_restrict_high > 1) && (length(fix_high)==1)) {
     
-    fix_high <- rep(fix_high, length(restrict_ind_high))
+    fix_high <- rep(fix_high, pmax(length(restrict_ind_high), num_restrict_high))
     
   }
   
-  if(length(restrict_ind_high) > 1 && (length(restrict_sd_low)==1 || length(restrict_N_low)==1)) {
+  if((length(restrict_ind_high) > 1 || num_restrict_high > 1) && (length(restrict_sd_high)==1 || length(restrict_N_high)==1)) {
     
-    restrict_N_high <- rep(restrict_N_high, length(restrict_ind_high))
-    restrict_sd_high <- rep(restrict_sd_high, length(restrict_ind_high))
+    restrict_N_high <- rep(restrict_N_high, pmax(length(restrict_ind_high), num_restrict_high))
+    restrict_sd_high <- rep(restrict_sd_high, pmax(length(restrict_ind_high), num_restrict_high))
     
   }
 
   
   if(!is.null(restrict_ind_high)) names(restrict_ind_high) <- fix_high
   
-  if(length(restrict_ind_low) > 1 && (length(fix_low)==1)) {
+  if((length(restrict_ind_low) > 1 || num_restrict_low > 1) && (length(fix_low)==1)) {
     
-    fix_low <- rep(fix_low, length(restrict_ind_low))
+    fix_low <- rep(fix_low, pmax(length(restrict_ind_low), num_restrict_low))
 
   }
   
-  if(length(restrict_ind_low) > 1 && (length(restrict_sd_low)==1 || length(restrict_N_low)==1)) {
+  if((length(restrict_ind_low) > 1 || num_restrict_low > 1) && (length(restrict_sd_low)==1 || length(restrict_N_low)==1)) {
     
-    restrict_N_low <- rep(restrict_N_low, length(restrict_ind_low))
-    restrict_sd_low <- rep(restrict_sd_low, length(restrict_ind_low))
+    restrict_N_low <- rep(restrict_N_low, pmax(length(restrict_ind_low), num_restrict_low))
+    restrict_sd_low <- rep(restrict_sd_low, pmax(length(restrict_ind_low), num_restrict_low))
     
   }
   
-  if(length(fix_high)>length(restrict_ind_high) || length(restrict_N_high)>length(restrict_ind_high) || length(restrict_sd_high)>length(restrict_ind_high)) stop("Please pass a number of discrimination constrained parameters restrict_N_high/restrict_sd_high that is equal to the number of constrained parameters passed to fix_high.")
+  if(fixtype != "vb_full" && (length(fix_high)>length(restrict_ind_high) || length(restrict_N_high)>length(restrict_ind_high) || length(restrict_sd_high)>length(restrict_ind_high))) stop("Please pass a number of discrimination constrained parameters restrict_N_high/restrict_sd_high that is equal to the number of constrained parameters passed to fix_high.")
   
-  if(length(fix_low)>length(restrict_ind_low) || length(restrict_N_low)>length(restrict_ind_low) || length(restrict_sd_low)>length(restrict_ind_low)) stop("Please pass a number of discrimination constrained parameters restrict_N_low/restrict_sd_low that is equal to the number of constrained parameters passed to fix_low.")
+  if(fixtype != "vb_full" && (length(fix_low)>length(restrict_ind_low) || length(restrict_N_low)>length(restrict_ind_low) || length(restrict_sd_low)>length(restrict_ind_low))) stop("Please pass a number of discrimination constrained parameters restrict_N_low/restrict_sd_low that is equal to the number of constrained parameters passed to fix_low.")
 
   
   if(!is.null(restrict_ind_low)) names(restrict_ind_low) <- fix_low
@@ -282,7 +282,7 @@
                              idealdata,
                              time_ind=as.array(time_ind),
                              time_proc=vary_ideal_pts,
-                             ar_sd=ar_sd,
+                             ar_prior=ar_prior,
                              const_type=switch(const_type,
                                                persons=1L,
                                                items=2L),
@@ -520,7 +520,7 @@
   inv_gamma_beta=inv_gamma_beta,
   center_cutoff=as.integer(time_center_cutoff),
   restrict_var=restrict_var,
-  ar_sd=ar_sd,
+  ar_prior=ar_prior,
   zeroes=as.numeric(inflate_zero),
   time_ind=as.array(time_ind),
   gp_rho=gp_rho,
@@ -584,7 +584,7 @@
                              idealdata,
                              time_ind=as.array(time_ind),
                              time_proc=vary_ideal_pts,
-                             ar_sd=ar_sd,
+                             ar_prior=ar_prior,
                              const_type=switch(const_type,
                                                persons=1L,
                                                items=2L),
@@ -771,7 +771,7 @@
                     inv_gamma_beta=inv_gamma_beta,
                     center_cutoff=as.integer(time_center_cutoff),
                     restrict_var=restrict_var,
-                    ar_sd=ar_sd,
+                    ar_prior=ar_prior,
                     zeroes=as.numeric(inflate_zero),
                     time_ind=as.array(time_ind),
                     gp_rho=gp_rho,
@@ -2668,7 +2668,7 @@ return(as.vector(idx))
                         restrict_N_low=NULL,
                         restrict_high=NULL,
                         restrict_low=NULL,
-                        ar_sd=NULL,
+                        ar_prior=NULL,
                         diff_reg_sd=NULL,
                         diff_miss_sd=NULL,
                         discrim_reg_scale=NULL,
@@ -2944,7 +2944,7 @@ return(as.vector(idx))
     
     if(!is.infinite(max(Y_int)) && some_missing_disc) {
       
-      if(N_cont>0 && some_missing) {
+      if(N_cont>0 && some_missing_cont) {
         
         # Top level is always joint posterior
         
@@ -2966,7 +2966,7 @@ return(as.vector(idx))
     
     if(!is.infinite(max(Y_cont)) && some_missing_cont) {
       
-      if(N_int>0 && some_missing) {
+      if(N_int>0 && some_missing_disc) {
         
         y_cont_miss <- max(Y_cont) - 1
         
@@ -3489,13 +3489,13 @@ return(as.vector(idx))
             
             if(t==2) {
               
-              prior_est <- L_full[,p] + L_AR1[,p]*initial + time_var_free[,p_time]*L_tp1_var[,(time_grid$Var1==t & time_grid$Var2==p)]
+              prior_est <- initial + L_AR1[,p]*initial + time_var_free[,p_time]*L_tp1_var[,(time_grid$Var1==t & time_grid$Var2==p)]
               
               prior_est <- cbind(initial,prior_est)
               
             } else {
               
-              this_t <- L_full[,p] + L_AR1[,p]*prior_est[,t-1]  + time_var_free[,p_time]*L_tp1_var[,(time_grid$Var1==t & time_grid$Var2==p)]
+              this_t <- initial + L_AR1[,p]*prior_est[,t-1]  + time_var_free[,p_time]*L_tp1_var[,(time_grid$Var1==t & time_grid$Var2==p)]
               prior_est <- cbind(prior_est,this_t)
               
               
@@ -3508,6 +3508,7 @@ return(as.vector(idx))
                         prior_est=prior_est,
                         time_var_free=time_var_free,
                         p=p,
+                        initial=initial,
                         L_AR1=L_AR1,
                         L_full=L_full,
                         L_tp1_var=L_tp1_var)
@@ -3527,13 +3528,13 @@ return(as.vector(idx))
             
             if(t==2) {
               
-              prior_est <- L_full[,p] + L_AR1[,p]*initial + time_fix_sd*L_tp1_var[,(time_grid$Var1==t & time_grid$Var2==p)]
+              prior_est <- initial + L_AR1[,p]*initial + time_fix_sd*L_tp1_var[,(time_grid$Var1==t & time_grid$Var2==p)]
               
               prior_est <- cbind(initial,prior_est)
               
             } else {
               
-              this_t <- L_full[,p] + L_AR1[,p]*prior_est[,t-1]  + time_fix_sd*L_tp1_var[,(time_grid$Var1==t & time_grid$Var2==p)]
+              this_t <- initial + L_AR1[,p]*prior_est[,t-1]  + time_fix_sd*L_tp1_var[,(time_grid$Var1==t & time_grid$Var2==p)]
               prior_est <- cbind(prior_est,this_t)
               
               
@@ -3545,7 +3546,7 @@ return(as.vector(idx))
                         points=points,
                         prior_est=prior_est,
                         time_var_free=time_var_free,
-                        p=p,
+                        p=p,initial=initial,
                         L_AR1=L_AR1,
                         L_full=L_full,
                         L_tp1_var=L_tp1_var)

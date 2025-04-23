@@ -682,13 +682,11 @@ id_make <- function(score_data=NULL,
 #' an interactive dialogue will prompt the user for a directory. 
 #' @param id_refresh The number of times to report iterations from the variational run used to 
 #' identify models. Default is 0 (nothing output to console).
-#' @param sample_stationary If `TRUE`, the AR(1) coefficients in a time-varying model will be 
-#' sampled from an unconstrained space and then mapped back to a stationary space. Leaving this `TRUE` is 
-#' slower but will work better when there is limited information to identify a model. If used, the
-#' `ar_sd` parameter should be increased to 5 to allow for wider sampling in the unconstrained space.
-#' @param ar_sd If an AR(1) model is used, this defines the prior scale of the Normal distribution. A lower number 
-#' can help 
-#' identify the model when there are few time points.
+#' @param ar_prior If an AR(1) model is used, this 2-length vector sets the 
+#' shape (alpha) and scale (beta) of the Beta prior on the AR-1 adjustment 
+#' parameters (often denoted phi). The first element of the vector is alpha
+#' and the second is beta. See Stan documentation of the Beta distribution
+#' for more info.
 #' @param use_groups If `TRUE`, group parameters from the person/legis data given in [id_make()] will be 
 #'  estimated instead of individual parameters. 
 #' @param const_type Whether `"persons"` are the parameters to be 
@@ -949,12 +947,11 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                         spline_knots=NULL,
                         spline_degree=2,
                         ar1_up=1,
-                        ar1_down=0,
+                        ar1_down=-1,
                         boundary_prior=NULL,
                         time_center_cutoff=50,
                         restrict_var=FALSE,
-                        sample_stationary=FALSE,
-                        ar_sd=1,
+                        ar_prior=c(2,2),
                         diff_reg_sd=3,
                         diff_miss_sd=3,
                         restrict_sd_high=NULL,
@@ -1148,8 +1145,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                          boundary_prior=boundary_prior,
                          time_center_cutoff=time_center_cutoff,
                          restrict_var=restrict_var,
-                         sample_stationary=sample_stationary,
-                         ar_sd=ar_sd,
+                         ar_prior=ar_prior,
                          diff_reg_sd=diff_reg_sd,
                          diff_miss_sd=diff_miss_sd,
                          restrict_sd_high=restrict_sd_high,

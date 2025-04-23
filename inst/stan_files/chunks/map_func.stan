@@ -46,7 +46,7 @@ real partial_sum(array[,] int y_slice,
                  real legis_sd,
                  real diff_abs_sd,
                  real diff_reg_sd,
-                 real ar_sd,
+                 vector ar_prior,
                  real time_sd,
                  real time_var_sd,
                  int time_proc,
@@ -102,7 +102,9 @@ real partial_sum(array[,] int y_slice,
                  vector phi,
                  array[] vector ordbeta_cut,
                  real gp_rho,
-                 real gp_alpha) {
+                 real gp_alpha,
+                 real ar1_down,
+                 real ar1_up) {
   
   // big loop over states
   real log_prob = 0;
@@ -319,12 +321,12 @@ real partial_sum(array[,] int y_slice,
         }
 
         if(time_proc == 3) {
-            real term = normal_lpdf(L_AR1[s] | 1, ar_sd);
+            real term = genbeta_lpdf(L_AR1[s] | ar_prior[1], ar_prior[2], ar1_down, ar1_up - ar1_down);
             log_prob += term;
-            if(debug_mode==2) print("Added normal_lpdf(L_AR1[s] | 1, ar_sd) to log_prob: ", term);
+            if(debug_mode==2) print("Added genbeta_lpdf(L_AR1[s] | ar_prior[1], ar_prior[2]) to log_prob: ", term);
 #include /chunks/l_hier_ar1_prior_map.stan
         } else if(time_proc == 2) {
-            // Includes additional code for AR-1 priors if relevant...
+            
 #include /chunks/l_hier_prior_map.stan
         } else if(time_proc == 4) {
               //calculated values for GPs
