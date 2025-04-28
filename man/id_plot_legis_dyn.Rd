@@ -26,7 +26,6 @@ id_plot_legis_dyn(
   group_color = TRUE,
   hpd_limit = 10,
   sample_persons = NULL,
-  plot_sim = FALSE,
   use_chain = NULL,
   add_cov = TRUE,
   ...
@@ -85,9 +84,7 @@ specified in \code{item_plot}.}
 \item{hpd_limit}{The greatest absolute difference in high-posterior density interval shown for any point. Useful for excluding imprecisely estimated persons/legislators from the plot. Leave NULL if you don't want to exclude any.}
 
 \item{sample_persons}{If you don't want to use the full number of persons/legislators from the model, enter a proportion (between 0 and 1) to select
-only a fraction of the persons/legislators.}
-
-\item{plot_sim}{Whether to plot the true values of parameters if a simulation was used to generate data
+only a fraction of the persons/legislators.
 (see \code{\link[=id_sim_gen]{id_sim_gen()}})}
 
 \item{use_chain}{ID of MCMC chain to use rather than combining all chains.

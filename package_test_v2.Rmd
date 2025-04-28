@@ -1083,11 +1083,11 @@ While these models are identified, it appears that sometimes given the amount of
 First random walks:
 
 ```{r irt_binary_time_inflate}
-bin_time_irt_2pl_abs_sim <- id_sim_gen(num_person=50,num_items=100,
+bin_time_irt_2pl_abs_sim <- id_sim_gen(num_person=50,num_items=200,
                                        ordinal=F,inflate=T,
-                               absence_diff_mean=0,
+                               absence_diff_mean=0,time_sd = 1,
                                time_process = 'random',
-                               time_points=10)
+                               time_points=20)
 
 # as.character(sort(bin_time_irt_2pl_abs_sim@simul_data$true_reg_discrim,
 #                                                                   
@@ -1108,7 +1108,7 @@ best_second_time <- 500
 
 bin_time_irt_2pl_abs_est <- id_estimate(idealdata=bin_time_irt_2pl_abs_sim,
                                model_type=2,nchains=2,ncores = 6,
-                               id_refresh=100,time_var = 10,
+                               id_refresh=100,time_var = 1,
                                niters = 500,warmup = 500,const_type = "items",
                           keep_param=list(person_vary=T,person_int=F,item=TRUE,
                                                            extra=T),
@@ -1123,6 +1123,7 @@ bin_time_irt_2pl_abs_est <- id_estimate(idealdata=bin_time_irt_2pl_abs_sim,
                                                                    decreasing=F,
                                                         index=T)$ix[1]),
                                fixtype='prefix')
+
 id_plot_rhats(bin_time_irt_2pl_abs_est) + theme(text=element_text(family=""))
 ```
 
@@ -1137,7 +1138,7 @@ id_sim_coverage(bin_time_irt_2pl_abs_est) %>%
 Let's do a time-varying ideal point plot with true point overlay:
 
 ```{r irt_2pl_abs_time_true_pt}
-id_plot_legis_dyn(bin_time_irt_2pl_abs_est,plot_sim = T) + facet_wrap(~person_id,scales="free_y")
+id_plot_legis_dyn(bin_time_irt_2pl_abs_est,show_true = T) + facet_wrap(~person_id,scales="free_y")
 ```
 
 ```{r irt_2pl_time_abs_resid}
@@ -1149,6 +1150,21 @@ id_plot_sims(bin_time_irt_2pl_abs_est,type='Residuals')
 ```{r irt_2pl_time_abs_RMSE}
 
 id_plot_sims(bin_time_irt_2pl_abs_est)
+
+```
+
+```{r plot_rw_param_true1}
+
+mcmc_recover_intervals(bin_time_irt_2pl_abs_est@stan_samples$draws("sigma_reg_free"),true = bin_time_irt_2pl_abs_sim@simul_data$true_reg_discrim)
+
+```
+
+See how well we are capturing time sigma:
+
+
+```{r plot_rw_param_true2}
+
+mcmc_recover_intervals(bin_time_irt_2pl_abs_est@stan_samples$draws("time_var_free"),true = bin_time_irt_2pl_abs_sim@simul_data$time_sd_all)
 
 ```
 
@@ -1230,17 +1246,18 @@ And autocorrelation:
 
 ```{r irt_binary_time_ar_inflate}
 
-bin_time_ar_irt_2pl_abs_sim <- id_sim_gen(num_person=20,num_items=200,inflate=T,
+bin_time_ar_irt_2pl_abs_sim <- id_sim_gen(num_person=20,num_items=400,inflate=T,
                                absence_diff_mean=0,time_process = 'AR',time_points=20,time_sd = 1)
 
 bin_time_ar_irt_2pl_abs_sim@score_matrix$group_id <- forcats::fct_collapse(bin_time_ar_irt_2pl_abs_sim@score_matrix$person_id,
                                                                            `1`=c("1","2","3"))
 
 bin_time_ar_irt_2pl_abs_est <- id_estimate(idealdata=bin_time_ar_irt_2pl_abs_sim,
-                               model_type=2,
+                               model_type=2,nchains = 2,
                                ncores = parallel::detectCores(),
                                vary_ideal_pts = 'AR1',ar1_down = -1,
                                const_type = "items",
+                               time_var=1,
                                restrict_ind_high = as.character(sort(bin_time_ar_irt_2pl_abs_sim@simul_data$true_reg_discrim,
                                                                      decreasing=TRUE,
                                                         index=TRUE)$ix[1]),
@@ -1254,7 +1271,7 @@ id_plot_rhats(bin_time_ar_irt_2pl_abs_est)
 Let's do a time-varying ideal point plot with true point overlay:
 
 ```{r irt_2pl_ar1_spline_true_pt}
-id_plot_legis_dyn(bin_time_ar_irt_2pl_abs_est,show_true = F) + guides(colour="none") + facet_wrap(~person_id,scales="free_y")
+id_plot_legis_dyn(bin_time_ar_irt_2pl_abs_est,show_true = T,plot_lines = 10,use_ci=FALSE) + guides(colour="none") + facet_wrap(~person_id,scales="free_y")
 ```
 
 See whether we are capturing the AR(1) parameters:
@@ -1265,6 +1282,36 @@ mcmc_recover_intervals(bin_time_ar_irt_2pl_abs_est@stan_samples$draws("L_AR1"),t
 
 ```
 
+See whether we are capturing the intercepts:
+
+```{r plot_ar_param_true2}
+
+# create parameter vector 
+
+param_vec <- paste0("L_tp1_var[1,",1:length(bin_time_ar_irt_2pl_abs_sim@simul_data$drift),"]")
+
+mcmc_recover_intervals(bin_time_ar_irt_2pl_abs_est@stan_samples$draws(param_vec),
+                       true = bin_time_ar_irt_2pl_abs_sim@simul_data$drift)
+
+```
+
+See how well we are capturing discriminations:
+
+
+```{r plot_ar_param_true3}
+
+mcmc_recover_intervals(bin_time_ar_irt_2pl_abs_est@stan_samples$draws("sigma_reg_free"),true = bin_time_ar_irt_2pl_abs_sim@simul_data$true_reg_discrim)
+
+```
+
+See how well we are capturing time sigma:
+
+
+```{r plot_ar_param_true4}
+
+mcmc_recover_intervals(bin_time_ar_irt_2pl_abs_est@stan_samples$draws("time_var_free"),true = bin_time_ar_irt_2pl_abs_sim@simul_data$time_sd_all)
+
+```
 
 ## Time: Gaussian Process
 

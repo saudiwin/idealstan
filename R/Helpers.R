@@ -2944,7 +2944,7 @@ return(as.vector(idx))
     
     if(!is.infinite(max(Y_int)) && some_missing_disc) {
       
-      if(N_cont>0 && some_missing_cont) {
+      if(N_cont>0) {
         
         # Top level is always joint posterior
         
@@ -2966,7 +2966,7 @@ return(as.vector(idx))
     
     if(!is.infinite(max(Y_cont)) && some_missing_cont) {
       
-      if(N_int>0 && some_missing_disc) {
+      if(N_int>0) {
         
         y_cont_miss <- max(Y_cont) - 1
         

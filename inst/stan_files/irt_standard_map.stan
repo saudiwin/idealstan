@@ -548,6 +548,7 @@ if(S_type==1 && const_type==1) {
   target += genbeta_vec_lpdf(sigma_abs_free|discrim_abs_scale,discrim_abs_shape,discrim_miss_lb,discrim_miss_upb);
   B_int_free ~ normal(0,diff_reg_sd);
   A_int_free ~ normal(0,diff_abs_sd);
+  
 } else if(S_type==1 && const_type==2) {
   // map persons, ID items
   B_int_free ~ normal(0,diff_reg_sd);
@@ -611,9 +612,10 @@ if(S_type==1 && const_type==1) {
     
     L_full ~ normal(0,legis_sd);
     
-    if(time_proc==2) {
+    if(time_proc==2 || time_proc==3) {
       to_vector(L_tp1_var[1,1:num_legis]) ~ normal(0,legis_sd);
     }
+    
   }
    
   
@@ -623,7 +625,7 @@ if(S_type==1 && const_type==1) {
   
   L_full ~ normal(0,legis_sd);
   
-  if(time_proc==2) {
+  if(time_proc==2 || time_proc==3) {
     
       to_vector(L_tp1_var[1,1:num_legis]) ~ normal(0,legis_sd);
       

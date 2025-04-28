@@ -137,10 +137,11 @@ real partial_sum(array[,] int y_slice,
     
 
     if(const_type == 1 && S_type == 1) {
+      
         if(pos_discrim == 0) {
           
             if(to_fix_high>0) {
-                if(time_proc == 2) {
+                if(time_proc == 2 || time_proc==3) {
                     real term = normal_lpdf(L_tp1_var[1, s] | fix_high[to_fix_high], restrict_sd_high);
                     log_prob += term;
                     if(debug_mode==2) print("Added normal_lpdf(L_tp1_var[1,s] | fix_high, restrict_sd_high) to log_prob: ", term);
@@ -154,7 +155,7 @@ real partial_sum(array[,] int y_slice,
                     if(debug_mode==2) print("Added normal_lpdf(L_full[s] | fix_high, restrict_sd_high) to log_prob: ", term);
                 }
             } else if(to_fix_low>0) {
-                if(time_proc == 2) {
+                if(time_proc == 2 || time_proc==3) {
                     real term = normal_lpdf(L_tp1_var[1, s] | fix_low[to_fix_low], restrict_sd_low);
                     log_prob += term;
                     if(debug_mode==2) print("Added normal_lpdf(L_tp1_var[1, s] | fix_low, restrict_sd_low) to log_prob: ", term);
@@ -269,7 +270,7 @@ real partial_sum(array[,] int y_slice,
 
     if(S_type == 1 && T > 1) {
         if(time_proc != 4) {
-            if(time_proc == 3 || (time_proc == 2 && const_type == 2)) {
+            if((time_proc == 3 || time_proc == 2) && const_type == 2) {
                 real term = normal_lpdf(L_tp1_var[1, s] | 0, legis_sd);
                 log_prob += term;
                 if(debug_mode==2) print("Added normal_lpdf(L_tp1_var[1, s] | 0, legis_sd) to log_prob: ", term);
