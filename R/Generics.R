@@ -185,7 +185,7 @@ setMethod('sample_model',signature(object='idealdata'),
             
             # remove duplicated names in data
             
-            this_data <- this_data[[!duplicated(names(this_data))]]
+            this_data <- this_data[!duplicated(names(this_data))]
             
             if(!is.null(keep_param)) {
               
