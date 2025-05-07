@@ -183,6 +183,10 @@ setMethod('sample_model',signature(object='idealdata'),
                                 restrict_var=this_data$restrict_var,
                                 actual=TRUE)
             
+            # remove duplicated names in data
+            
+            this_data <- this_data[[!duplicated(names(this_data))]]
+            
             if(!is.null(keep_param)) {
               
               # check for logical vectors
