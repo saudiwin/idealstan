@@ -3331,13 +3331,13 @@ return(as.vector(idx))
           
           if(t==2) {
             
-            prior_est <- initial + time_var_free[,p_time]*L_tp1_var[,(time_grid$Var1==(t-1) & time_grid$Var2==p)]
+            prior_est <- initial + time_var_free[,p_time]*L_tp1_var[,(time_grid$Var1==t & time_grid$Var2==p)]
             
             prior_est <- cbind(initial,prior_est)
             
           } else {
             
-            this_t <- prior_est[,t-1]  + time_var_free[,p_time]*L_tp1_var[,(time_grid$Var1==(t-1) & time_grid$Var2==p)]
+            this_t <- prior_est[,t-1]  + time_var_free[,p_time]*L_tp1_var[,(time_grid$Var1==t & time_grid$Var2==p)]
             prior_est <- cbind(prior_est,this_t)
             
             
@@ -3368,13 +3368,13 @@ return(as.vector(idx))
           
           if(t==2) {
             
-            prior_est <- initial + time_fix_sd*L_tp1_var[,(time_grid$Var1==(t-1) & time_grid$Var2==p)]
+            prior_est <- initial + time_fix_sd*L_tp1_var[,(time_grid$Var1==t & time_grid$Var2==p)]
             
             prior_est <- cbind(initial,prior_est)
             
           } else {
             
-            this_t <- prior_est[,t-1]  + time_fix_sd*L_tp1_var[,(time_grid$Var1==(t-1) & time_grid$Var2==p)]
+            this_t <- prior_est[,t-1]  + time_fix_sd*L_tp1_var[,(time_grid$Var1==t & time_grid$Var2==p)]
             prior_est <- cbind(prior_est,this_t)
             
             

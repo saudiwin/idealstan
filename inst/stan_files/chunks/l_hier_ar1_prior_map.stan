@@ -32,13 +32,13 @@ if(T<center_cutoff) {
         
       } else {
         
-        lt[t] = L_tp1_var[1,s] + L_AR1[s]*lt[t-1] + time_var_free[s-1] * L_tp1_var[t-1,s];
+        lt[t] = L_tp1_var[1,s] + L_AR1[s]*lt[t-1] + time_var_free[s-1] * L_tp1_var[t,s];
         
       }
       
     } else {
         
-        lt[t] = L_tp1_var[1,s] + L_AR1[s]*lt[t-1] + time_var_free[s] * L_tp1_var[t-1,s];
+        lt[t] = L_tp1_var[1,s] + L_AR1[s]*lt[t-1] + time_var_free[s] * L_tp1_var[t,s];
       
     }
      

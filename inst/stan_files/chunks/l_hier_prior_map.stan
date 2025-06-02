@@ -28,17 +28,17 @@ if(T<center_cutoff) {
       
       if(s==1) {
         
-        lt[t] = lt[t-1] + time_sd * L_tp1_var[t-1,s];
+        lt[t] = lt[t-1] + time_sd * L_tp1_var[t,s];
         
       } else {
         
-        lt[t] = lt[t-1] + time_var_free[s-1] * L_tp1_var[t-1,s];
+        lt[t] = lt[t-1] + time_var_free[s-1] * L_tp1_var[t,s];
         
       }
       
     } else {
         
-        lt[t] = lt[t-1] + time_var_free[s] * L_tp1_var[t-1,s];
+        lt[t] = lt[t-1] + time_var_free[s] * L_tp1_var[t,s];
       
     }
       
