@@ -1172,7 +1172,7 @@ mcmc_recover_intervals(bin_time_irt_2pl_abs_est@stan_samples$draws("time_var_fre
 
 ```{r irt_binary_time_spline_inflate}
 
-bin_time_spline_irt_2pl_abs_sim <- id_sim_gen(num_person=100,num_items=100,inflate=F,
+bin_time_spline_irt_2pl_abs_sim <- id_sim_gen(num_person=10,num_items=100,inflate=F,
                                absence_diff_mean=0,
                                time_process = 'splines',
                                time_points=10,time_sd = .25,

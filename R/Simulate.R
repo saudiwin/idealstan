@@ -263,7 +263,8 @@ id_sim_gen <- function(num_person=20,num_items=50,
       
       ideal_pts <- sapply(1:num_person, function(i) {
         
-        as.vector(spline_int[i] * (1:time_points) + spline_basis[,i] %*% B)
+        #as.vector(spline_int[i] * (1:time_points) + spline_basis[,i] %*% B)
+        as.vector(spline_basis[,i] %*% B)
         
         })
       
