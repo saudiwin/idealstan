@@ -946,7 +946,23 @@ setMethod('id_me',signature(object='idealstan'),
               
               data1 <- func_args$score_data
               
-              data0 <- mutate(func_args$score_data, {{covariate}} := 1 - .data[[covariate]])
+              if(is.numeric(pull(func_args$score_data, {{covariate}} ))) {
+                
+                un_vals <- unique(pull(func_args$score_data, {{covariate}} ))
+                
+                data0 <- mutate(func_args$score_data, {{covariate}} := ifelse(.data[[covariate]]==un_vals[1],
+                                                                              un_vals[2],un_vals[1])) 
+                
+                
+              } else {
+                
+                cov_rev <- .reverse_two(pull(func_args$score_data, {{covariate}} ))
+                
+                data0 <- mutate(func_args$score_data, {{covariate}} := cov_rev) 
+                
+              } 
+              
+              
               
             } else {
               

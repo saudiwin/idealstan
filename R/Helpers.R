@@ -107,7 +107,7 @@
   # check if varying model IDs exist and replace with model type
   # if not
   
-  if(idealdata@score_matrix$model_id[1]=="missing") {
+  if(is.na(idealdata@score_matrix$model_id[1]) || idealdata@score_matrix$model_id[1]=="missing") {
     
     idealdata@score_matrix$model_id <- model_type
     idealdata@score_matrix$discrete <- as.numeric(model_type %in% c(1,2,3,4,5,6,7,8,13,14))
@@ -120,15 +120,15 @@
     }
   }
   
-  if((!(all(c(restrict_ind_high,restrict_ind_low) %in% unique(idealdata@score_matrix$person_id))) && !use_groups) && const_type=="persons") {
+  if((!(all(c(restrict_ind_high,restrict_ind_low) %in% levels(idealdata@score_matrix$person_id))) && !use_groups) && const_type=="persons") {
     
     stop("Your restricted persons/items are not in the data.")
     
-  } else if(!(all(c(restrict_ind_high,restrict_ind_low) %in% unique(idealdata@score_matrix$item_id))) && const_type=="items") {
+  } else if(!(all(c(restrict_ind_high,restrict_ind_low) %in% levels(idealdata@score_matrix$item_id))) && const_type=="items") {
     
     stop("Your restricted persons/items are not in the data.")
     
-  } else if((!(all(c(restrict_ind_high,restrict_ind_low) %in% unique(idealdata@score_matrix$group_id)))  && use_groups) && const_type=="persons") {
+  } else if((!(all(c(restrict_ind_high,restrict_ind_low) %in% levels(idealdata@score_matrix$group_id)))  && use_groups) && const_type=="persons") {
     
     stop("Your restricted persons/items are not in the data.")
     
@@ -1455,9 +1455,13 @@ process_init_pathfinder <- function(init, num_procs, model_variables = NULL,
                                       num_basis,restrict_ind_high,
                                       restrict_ind_low,
                                       const_type,
-                                      num_ordbeta) {
+                                      num_ordbeta,
+                                      discrim_reg_upb,
+                                      discrim_reg_lb,
+                                      discrim_miss_upb,
+                                      discrim_miss_lb) {
    out_list <-  list(
-      sigma_abs_free = rep(0L,num_bills),
+      sigma_abs_free = rep( discrim_miss_lb + (discrim_miss_upb - discrim_miss_lb)/2,num_bills),
       #L_full = rep(0L,num_legis),
       L_full = rnorm(num_legis),
       m_sd_free = runif(gp_N, 0.25, .75),
@@ -1465,7 +1469,7 @@ process_init_pathfinder <- function(init, num_procs, model_variables = NULL,
       ls_int_abs = rnorm(num_ls),
       L_tp1_var = if (T > 1 && time_proc != 5) array(rep(0L,num_legis * T), dim = c(T, num_legis)) else array(numeric(0), dim = c(T, 0)),
       L_AR1 = if (T > 1 && time_proc == 3) rep(0.1,num_legis) else numeric(0),
-      sigma_reg_free = if (pos_discrim == 0) rep(0L,num_bills) else numeric(0),
+      sigma_reg_free = rep((discrim_reg_lb +  (discrim_reg_upb - discrim_reg_lb)/2),num_bills),
       legis_x = rnorm(LX,sd=0.25),
       sigma_reg_x = rnorm(SRX,sd=0.25),
       sigma_abs_x = rnorm(SAX,sd=0.25),
@@ -1506,9 +1510,11 @@ process_init_pathfinder <- function(init, num_procs, model_variables = NULL,
      
      # need to calculate mean of beta distribution
      
-     out_list$sigma_reg_free[restrict_ind_high] <- .mean_gbeta(this_data$restrict_N_high,this_data$restrict_sd_high)
+     out_list$sigma_reg_free[restrict_ind_high] <- .mean_gbeta(this_data$restrict_N_high,this_data$restrict_sd_high,
+                                                               a=discrim_reg_lb,b=discrim_reg_upb)
      out_list$sigma_reg_free[restrict_ind_low] <- .mean_gbeta(this_data$restrict_sd_low,
-                                                              this_data$restrict_N_low)
+                                                              this_data$restrict_N_low,
+                                                              a=discrim_reg_lb,b=discrim_reg_upb)
 
    }
 
@@ -1558,7 +1564,11 @@ process_init_pathfinder <- function(init, num_procs, model_variables = NULL,
                                          this_data$restrict_high,
                                          this_data$restrict_low,
                                          this_data$const_type,
-                                         this_data$num_ordbeta)
+                                         this_data$num_ordbeta,
+                                         this_data$discrim_reg_upb,
+                                         this_data$discrim_reg_lb,
+                                         this_data$discrim_miss_upb,
+                                         this_data$discrim_miss_lb)
   
   return(base_params)
   
@@ -3769,4 +3779,33 @@ return(as.vector(idx))
 
 .mean_gbeta <- function(alpha, beta, a = -1, b = +1) {
   a + (b - a) * (alpha / (alpha + beta))
+}
+
+.reverse_two <- function(x) {
+  # only character or factor supported
+  if (!is.character(x) && !is.factor(x)) {
+    stop("`x` must be a character or factor vector")
+  }
+  
+  # handle factors: just flip the level labels
+  if (is.factor(x)) {
+    if (length(levels(x)) != 2) {
+      stop("factor `x` must have exactly two levels")
+    }
+    levels(x) <- rev(levels(x))
+    return(x)
+  } else {
+    
+    # handle character vectors
+    vals <- unique(x)
+    if (length(vals) != 2) {
+      stop("character `x` must have exactly two unique values")
+    }
+    # if x == vals[1] → vals[2], else → vals[1]
+    return(ifelse(x == vals[1], vals[2], vals[1]))
+    
+    
+  }
+  
+  
 }

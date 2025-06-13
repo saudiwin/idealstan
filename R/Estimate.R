@@ -283,11 +283,11 @@ id_make <- function(score_data=NULL,
     # need to remove any constituent terms for IDs from the model matrix to avoid collinearity with 
     # model parameters
     
-    check_ids <- sapply(unique(score_rename$person_id), function(c) {
+    check_ids <- sapply(levels(score_rename$person_id), function(pers) {
       check_all <- grepl(x=colnames(personm),
-                         pattern=c)
+                         pattern=as.character(pers))
       check_all_colon <- grepl(x=colnames(personm),
-                               pattern=paste0(c,":","|",":",c))
+                               pattern=paste0(as.character(pers),":","|",":",as.character(pers)))
       matrix(check_all & !check_all_colon,nrow=length(check_all))
     },simplify = F) %>% 
       do.call(rbind, .) %>% 
@@ -322,7 +322,7 @@ id_make <- function(score_data=NULL,
     # need to remove any constituent terms for IDs from the model matrix to avoid collinearity with 
     # model parameters
     
-    check_ids <- sapply(unique(score_rename$item_id), function(c) {
+    check_ids <- sapply(levels(score_rename$item_id), function(c) {
       check_all <- grepl(x=colnames(itemm),
                          pattern=c)
       check_all_colon <- grepl(x=colnames(itemm),
@@ -362,7 +362,7 @@ id_make <- function(score_data=NULL,
     # need to remove any constituent terms for IDs from the model matrix to avoid collinearity with 
     # model parameters
     
-    check_ids <- sapply(unique(score_rename$item_id), function(c) {
+    check_ids <- sapply(levels(score_rename$item_id), function(c) {
       check_all <- grepl(x=colnames(itemmissm),
                          pattern=c)
       check_all_colon <- grepl(x=colnames(itemmissm),
