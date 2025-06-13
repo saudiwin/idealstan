@@ -1511,10 +1511,10 @@ process_init_pathfinder <- function(init, num_procs, model_variables = NULL,
      # need to calculate mean of beta distribution
      
      out_list$sigma_reg_free[restrict_ind_high] <- .mean_gbeta(this_data$restrict_N_high,this_data$restrict_sd_high,
-                                                               a=discrim_reg_lb,b=discrim_reg_upb)
+                                                               a=discrim_reg_lb,b=discrim_reg_upb + discrim_reg_lb)
      out_list$sigma_reg_free[restrict_ind_low] <- .mean_gbeta(this_data$restrict_sd_low,
                                                               this_data$restrict_N_low,
-                                                              a=discrim_reg_lb,b=discrim_reg_upb)
+                                                              a=discrim_reg_lb,b=discrim_reg_upb + discrim_reg_lb)
 
    }
 
