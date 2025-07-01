@@ -58,6 +58,7 @@ setGeneric('id_post_pred',signature='object',
 #' @param use_cores Number of cores to use for multicore parallel processing with
 #' the base R `parallel` package
 #' @param use_chain ID of MCMC chain to use rather than all chains (the default). 
+#' @param skip_cov Whether to skip adding in hierarchical person-level covariates. Defaults to FALSE.
 #' @param ... Any other arguments passed on to posterior_predict (currently none available)
 #' 
 #' @export
@@ -71,7 +72,9 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,
                                                                 item_subset=NULL,
                                                                 pred_outcome=NULL,
                                                                 use_cores=1,
-                                                                use_chain=NULL,...) {
+                                                                use_chain=NULL,
+                                                                skip_cov=FALSE,
+                                                                ...) {
   
   # need to regenerate data if newdata is not NULL
   
@@ -221,7 +224,7 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,
     
     # add in person covariates if present
     
-    if(cov_type=="persons") {
+    if(cov_type=="persons" && !skip_cov) {
       
       L_tp1 <- .add_person_cov(L_tp1, object, legis_x, person_points, time_points,
                                use_chain)
@@ -238,7 +241,7 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,
   
   # check if we need to update covariates
   
-  if(cov_type!="none" && object@this_data$`T`==1) {
+  if(cov_type!="none" && object@this_data$`T`==1 && !skip_cov) {
     
     L_full <- .add_person_cov(as_draws_array(L_full), object, legis_x, person_points, time_points,
                               use_chain)

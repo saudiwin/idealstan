@@ -1087,7 +1087,7 @@ bin_time_irt_2pl_abs_sim <- id_sim_gen(num_person=50,num_items=200,
                                        ordinal=F,inflate=T,
                                absence_diff_mean=0,time_sd = 1,
                                time_process = 'random',
-                               time_points=20)
+                               time_points=2)
 
 # as.character(sort(bin_time_irt_2pl_abs_sim@simul_data$true_reg_discrim,
 #                                                                   

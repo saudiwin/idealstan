@@ -16,6 +16,7 @@
   pred_outcome = NULL,
   use_cores = 1,
   use_chain = NULL,
+  skip_cov = FALSE,
   ...
 )
 }
@@ -55,6 +56,8 @@ predict. Defaults to top category.}
 the base R \code{parallel} package}
 
 \item{use_chain}{ID of MCMC chain to use rather than all chains (the default).}
+
+\item{skip_cov}{Whether to skip adding in hierarchical person-level covariates. Defaults to FALSE.}
 
 \item{...}{Any other arguments passed on to posterior_predict (currently none available)}
 }

@@ -911,8 +911,8 @@ setGeneric('id_me',
 #' Defaults to 100. Use option "all" to use all available MCMC draws.
 #' @param cores The total number of cores to use when calculating the marginal effects.
 #' Defaults to 1.
-#' @param lb The quantile for the lower bound of the aggregated effects (default is 0.05)
-#' @param upb The quantile for the upper bound of the aggregated effects (default is 0.95)
+#' @param lb The quantile for the lower bound of the aggregated effects (default is 0.025 for a 95% interval)
+#' @param upb The quantile for the upper bound of the aggregated effects (default is 0.975 for a 95% interval)
 #' @param eps Parameter for numerical differentiation (usually does not need to be changed)
 #' passed on to [id_post_pred]
 #' @param ... Additional arguments passed on to [id_post_pred]
@@ -925,8 +925,8 @@ setMethod('id_me',signature(object='idealstan'),
                    eps=1e-4,
                    draws=100,
                    cores=1,
-                   lb=0.05,
-                   upb=0.95,
+                   lb=0.025,
+                   upb=0.975,
                    ...) {
           
             # first need new data with the covariate differenced by eps
@@ -944,23 +944,25 @@ setMethod('id_me',signature(object='idealstan'),
             
             if(is_binary) {
               
-              data1 <- func_args$score_data
+              data1 <- mutate(func_args$score_data, {{covariate}} := 1)
               
-              if(is.numeric(pull(func_args$score_data, {{covariate}} ))) {
-                
-                un_vals <- unique(pull(func_args$score_data, {{covariate}} ))
-                
-                data0 <- mutate(func_args$score_data, {{covariate}} := ifelse(.data[[covariate]]==un_vals[1],
-                                                                              un_vals[2],un_vals[1])) 
-                
-                
-              } else {
-                
-                cov_rev <- .reverse_two(pull(func_args$score_data, {{covariate}} ))
-                
-                data0 <- mutate(func_args$score_data, {{covariate}} := cov_rev) 
-                
-              } 
+              data0 <- mutate(func_args$score_data, {{covariate}} := 0)
+              
+              # un_vals <- unique(pull(func_args$score_data, {{covariate}} ))
+              # 
+              #  
+              # 
+              # if(is.numeric(pull(func_args$score_data, {{covariate}} ))) {
+              #   
+              #   data0 <- mutate(func_args$score_data, {{covariate}} := ifelse(.data[[covariate]]==un_vals[1],
+              #                                                                 un_vals[2],un_vals[1])) 
+              #   
+              #   
+              # } else {
+              #   
+              #   
+              #   
+              # } 
               
               
               
@@ -992,6 +994,9 @@ setMethod('id_me',signature(object='idealstan'),
                                           pred_outcome=pred_outcome,
                                           type="epred",...)
             
+            # if binary covariate, simply leave it out when
+            # predicting the outcome
+            
             pred0 <- id_post_pred(object,newdata=data0,
                                           use_cores=cores,
                                           draws=draws,
@@ -1006,7 +1011,15 @@ setMethod('id_me',signature(object='idealstan'),
                                 
                                 # difference the effects
                                 
-                                (big - small)/eps
+                                if(is_binary) {
+                                  
+                                  return(big - small)
+                                  
+                                } else {
+                                  
+                                  return((big - small)/eps)
+                                  
+                                }
                                 
                               })
             
