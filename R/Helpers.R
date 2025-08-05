@@ -991,13 +991,22 @@ process_init_draws <- function(init, num_procs, model_variables = NULL,
   }
   draws_rvar = as_draws_rvars(draws)
   variable_names <- variable_names[variable_names %in% names(draws_rvar)]
+  variable_names <- variable_names[!(variable_names %in% c("lp__",
+                                                              "time_var_full"))]
+  
   model_variables <- model_variables[names(model_variables) %in% names(draws_rvar)]
+  
+  # remove lp__ and time_var_full
+  
+  
+  
   draws_rvar <- subset_draws(draws_rvar, variable = variable_names)
+
   inits = lapply(1:num_procs, function(draw_iter) {
     init_i = lapply(variable_names, function(var_name) {
       x = .remove_leftmost_dim(posterior::draws_of(
         posterior::subset_draws(draws_rvar[[var_name]], draw=draw_iter)))
-      if (any(model_variables[[var_name]] == 0)) {
+      if (any(model_variables[[var_name]] == 0) || any(is.nan(model_variables[[var_name]]))) {
         return(as.double(x))
       } else {
         return(x)
@@ -1006,7 +1015,7 @@ process_init_draws <- function(init, num_procs, model_variables = NULL,
     bad_names = unlist(lapply(variable_names, function(var_name) {
       x = drop(posterior::draws_of(drop(
         posterior::subset_draws(draws_rvar[[var_name]], draw=draw_iter))))
-      if (any(is.infinite(x)) || any(is.na(x))) {
+      if (any(is.infinite(x)) || any(is.na(x)) || any(is.nan(x))) {
         return(var_name)
       }
       return("")
