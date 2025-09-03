@@ -979,6 +979,10 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                         debug_mode=0,
                         ...) {
   
+  # check for correct use_method option
+  
+  if(!(use_method) %in% c("mcmc","pathfinder","laplace")) stop("You have entered a value for use_method that is not supported. At present the estimation routines are 'mcmc', 'pathfinder', or 'laplace'. Please see the associated working paper for more details at https://osf.io/preprints/osf/8j2bt_v3")
+  
   # small function to install cmdstanr
   
   install_cmdstanr <- function(pkg, ...) {
