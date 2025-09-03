@@ -538,15 +538,21 @@ data('senate114')
 # Running this model will take at least a few minutes, even with 
 # variational inference (use_method="pathfinder") turned on
 
+# first convert absences to NA values
+
+senate114$cast_code[senate114$cast_code=="NA"] <- NA
+
+# reset factor levels
+
+senate114$cast_code <- factor(senate114$cast_code, 
+                              levels=c("No","Yes"))
+
 to_idealstan <-   id_make(score_data = senate114,
-outcome = 'cast_code',
+outcome_disc = 'cast_code',
 person_id = 'bioname',
 item_id = 'rollnumber',
 group_id= 'party_code',
-time_id='date',
-high_val='Yes',
-low_val='No',
-miss_val='Absent')
+time_id='date')
 
 sen_est <- id_estimate(to_idealstan,
 model_type = 2,
