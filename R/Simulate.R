@@ -75,7 +75,7 @@
 #' @return The results is a `idealdata` object that can be used in the 
 #' [id_estimate] function to run a model. It can also be used in the simulation
 #' plotting functions.
-#' @seealso [id_plot_sims] for plotting fitted models versus true values.
+#' @seealso [id_show_trues()] for plotting fitted models versus true values.
 #' @importFrom posterior as_draws_df as_draws_matrix as_draws_array summarise_draws summarize_draws rhat
 #' @export
 

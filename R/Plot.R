@@ -1569,7 +1569,7 @@ id_plot_irf <- function(object,
 #' Launch the Generalized Beta Distribution Explorer Shiny App
 #'
 #' This function starts an interactive Shiny application to visualize a generalized Beta distribution
-#' on a symmetrical interval [–scale, +scale] in order to calculate the distribution paramters α (the `restrict_sd_high`/`restrict_N_low` parameter to `id_estimate`) and β (the `restrict_N_high`/`restrict_sd_low` parameter to `id_estimate`). This function is useful for understanding what values to use to pin item discrimination parameters in `id_estimate` given a specific prior mean `initial_y` and a relative level of precision `prior_sample_size` (also known as `phi`). Higher values of `prior_sample_size` will imply a tighter prior around the pinned discrimination parameter.
+#' on a symmetrical interval from -scale to +scale in order to calculate the distribution paramters alpha (the `restrict_sd_high`/`restrict_N_low` parameter to `id_estimate`) and beta (the `restrict_N_high`/`restrict_sd_low` parameter to `id_estimate`). This function is useful for understanding what values to use to pin item discrimination parameters in `id_estimate` given a specific prior mean `initial_y` and a relative level of precision `prior_sample_size` (also known as `phi`). Higher values of `prior_sample_size` will imply a tighter prior around the pinned discrimination parameter.
 #'
 #' The function is also useful for calculating the prior for all non-constrained discrimination parameters as well (`discrim_reg_shape` and `discrim_reg_scale`). These parameters are denoted in the Shiny app output for easy cut and paste to the `id_estimate` function call.
 #' @param initial_y             Initial observed variate `y` (default: 0)
@@ -1674,7 +1674,7 @@ id_plot_gbeta_prior <- function(
         xGrid, dens, type = "l", lwd = 2,
         xlab = "Expected value (average) of prior on discrimination", ylab = "Density",
         main = sprintf(
-          "Generalized Beta on [%.2f, %.2f]\nPrecision φ=%d",
+          "Generalized Beta on [%.2f, %.2f]\nPrecision phi=%d",
           a, b, input$prior_sample_size
         )
       )

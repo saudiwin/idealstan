@@ -44,7 +44,16 @@
     "ordbeta_cut_alpha","ordbeta_cut_phi","ordbeta_phi_mean","ordbeta_phi_mean",
     "normal_mods","1","2","ordbeta_cut",
     "item_discrimination", "item_orig", "mean_est1", "ordbeta_mods",
-    "person_orig")
+    "person_orig", "time_points", "ar_prior", "gp_rho", "gp_alpha",
+    "gp_nugget", "spline_knots", "keep_param", "legis", "median_pt",
+    "low_pt", "high_pt", "param_id", "ci_type", "ci_value", "id_num",
+    "long_name", "obs_type", "value", "avg", "high", "low", "Params",
+    "this_model", "draws", "estimate", "rhat", "ess_bulk", "ess_tail",
+    "covariate", "Type", "outcome_disc", "ordered_id", "ignore_db",
+    "legis_x", "sigma_reg_x", "sigma_abs_x", "n", "wrap_id", "base_id",
+    "already_facet", "person_lines", "sampled_data", "highlight",
+    "draw_line_alpha", "person_line_alpha", "line_size", "plot_text",
+    "text_size_label", "use_ci", "plot_lines")
   
   utils::globalVariables(variable_list)
   

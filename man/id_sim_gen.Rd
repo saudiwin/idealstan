@@ -152,5 +152,5 @@ used in the underlying Stan code. Currently the simulation can produce inflated 
 models with binary, ordinal (GRM and rating-scale), Poisson, Normal and Log-Normal responses.
 }
 \seealso{
-\link{id_plot_sims} for plotting fitted models versus true values.
+\code{\link[=id_show_trues]{id_show_trues()}} for plotting fitted models versus true values.
 }

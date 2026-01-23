@@ -155,7 +155,7 @@ In general, it is always a good idea to check the Rhats before proceeding with f
 
 This package was developed for datasets that are in a long format, i.e., one row per person/legislator, item/bill, and any other covariates. This data format departs from the traditional way of storing/using IRT/ideal point data, which is more commonly stored in a wide format with legislators/persons in the rows and items/bills in the columns.
 
-To demonstrate how the package functions empirically, I include in the package a partial voting record of the 114th Senate (excluding rollcall votes without significant disagreement) from the website [www.voteview.com](http://www.voteview.com). We can convert this data, which is provided in a long data frame, to an `idealdata` object suitable for estimation by using the `id_make` function. Because the intention is to fit a binary outcome model (yes or no votes on bills), I recode the outcome to be 0 for no votes and 1 for yes votes as `idealstan` expects binary outcomes to be coded this way.
+To demonstrate how the package functions empirically, I include in the package a partial voting record of the 114th Senate (excluding rollcall votes without significant disagreement) from the website [www.voteview.com](https://voteview.com). We can convert this data, which is provided in a long data frame, to an `idealdata` object suitable for estimation by using the `id_make` function. Because the intention is to fit a binary outcome model (yes or no votes on bills), I recode the outcome to be 0 for no votes and 1 for yes votes as `idealstan` expects binary outcomes to be coded this way.
 
 We can first take a look at the raw data:
 
@@ -265,7 +265,7 @@ stan_obj$draws(c("L_full[1]",
                         'L_full[3]'))
 ```
 
-If we know the name of the Stan parameter, we can look at the trace plot to see how the quality of the Markov Chain Monte Carlo (MCMC) sampling used to fit the model. A good trace plot shows a bouncy line that is stable around an average value. For more info, see the [Stan documentation](http://mc-stan.org/users/documentation/case-studies/rstan_workflow.html).
+If we know the name of the Stan parameter, we can look at the trace plot to see how the quality of the Markov Chain Monte Carlo (MCMC) sampling used to fit the model. A good trace plot shows a bouncy line that is stable around an average value. For more info, see the [Stan documentation](https://mc-stan.org/users/documentation/case-studies/rstan_workflow.html).
 
 ```{r stan_trace}
 stan_trace(sen_est,par='L_full[1]')

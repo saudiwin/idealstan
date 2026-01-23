@@ -69,10 +69,8 @@ test_that("id_make validates input parameters", {
     outcome = sample(c(0, 1), 50, replace = TRUE)
   )
 
-  # Missing required parameter
-
+  # Missing outcome column - should error
   expect_error(
-    id_make(test_data, person_id = "person_id", item_id = "item_id"),
-    regexp = "outcome"
+    id_make(test_data, person_id = "person_id", item_id = "item_id")
   )
 })

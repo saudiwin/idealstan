@@ -2,7 +2,7 @@ Package: idealstan
 Type: Package
 Title: Robust Measurement with 'Stan'
 Version: 0.99.2
-Date: 2025-01-02
+Date: 2026-01-23
 Authors@R: c(person("Robert","Kubinec", role = c("aut","cre"),
                      email = "bobkubinec@gmail.com"),
               person("Michal","Ovádek",role=c("ctb"),email="m.ovadek@ucl.ac.uk"),

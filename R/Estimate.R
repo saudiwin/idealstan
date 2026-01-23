@@ -103,7 +103,7 @@
 #' Unlike missing values, these values will be dropped from the data before 
 #' estimation rather than modeled explicitly.
 #' @param simulation If `TRUE`, simulated values are saved in the `idealdata` object for 
-#' later plotting with the [id_plot_sims()] function
+#' later plotting with the [id_show_trues()] function
 #' @return A `idealdata` object that can then be used in the [id_estimate()] function 
 #' to fit a model.
 #' @export
@@ -910,7 +910,7 @@ id_make <- function(score_data=NULL,
 #'    \item Betancourt, Michael. "Robust Gaussian Processes in Stan". (October 2017). Case Study.
 #' }
 #' @importFrom stats dnorm dpois model.matrix qlogis relevel rpois update aggregate dlnorm end formula start
-#' @importFrom utils person packageDescription
+#' @importFrom utils person packageDescription install.packages
 #' @importFrom posterior as_draws_rvars ess_bulk ess_tail
 #' @importFrom bayesplot mcmc_intervals
 #' @importFrom rlang check_installed is_installed

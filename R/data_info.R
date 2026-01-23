@@ -6,7 +6,7 @@
 #' See package vignette for details.
 #'
 #' @format A long data frame with one row for every vote cast by a Senator.
-#' @source <http://www.voteview.com/>
+#' @source <https://voteview.com/>
 "senate114"
 
 #' Rollcall vote data for Delaware State Legislature

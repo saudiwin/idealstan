@@ -53,3 +53,8 @@ vignettes/Package_Introduction_cache
 vignettes/Package_Introduction_files
 vignettes/Time_Series_files
 vignettes/Time_Series_cache
+inst/stan_files/irt_standard_map
+^\.claude$
+model-.*\.stan$
+.*\.RData$
+.*\.rds$

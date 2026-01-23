@@ -8,7 +8,7 @@
 A long data frame with one row for every vote cast by a Senator.
 }
 \source{
-\url{http://www.voteview.com/}
+\url{https://voteview.com/}
 }
 \usage{
 senate114

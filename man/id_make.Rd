@@ -89,7 +89,7 @@ Unlike missing values, these values will be dropped from the data before
 estimation rather than modeled explicitly.}
 
 \item{simulation}{If \code{TRUE}, simulated values are saved in the \code{idealdata} object for
-later plotting with the \code{\link[=id_plot_sims]{id_plot_sims()}} function}
+later plotting with the \code{\link[=id_show_trues]{id_show_trues()}} function}
 }
 \value{
 A \code{idealdata} object that can then be used in the \code{\link[=id_estimate]{id_estimate()}} function
