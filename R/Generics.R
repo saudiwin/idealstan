@@ -102,13 +102,13 @@ setMethod('subset_ideal',signature(object='idealdata'),
             x <- object@score_matrix
             parliament <- object@person_data
             
-            if(use_subset==TRUE & !is.null(subset_group)) {
+            if(use_subset && !is.null(subset_group)) {
               if(!all(subset_group %in% parliament$group)) stop('The specified parliament bloc/party must be in the list of blocs/parties in the legislature data.')
               x <- x[parliament$group %in% subset_group,]
               
               object@subset_group <- subset_group
             } 
-            if(use_subset==TRUE & !is.null(subset_person)) {
+            if(use_subset && !is.null(subset_person)) {
               if(!all(subset_person %in% parliament$person.names[parliament$group%in% subset_group])) {
                 stop('The legislators to subset must be members of the subsetted bloc as well.')
               }
@@ -116,7 +116,7 @@ setMethod('subset_ideal',signature(object='idealdata'),
               object@subset_person <- subset_person
             }
             
-            if(sample_it==TRUE) {
+            if(sample_it) {
               object@to_sample <- sample(1:nrow(x),sample_size)
               x <- x[object@to_sample,]
             }

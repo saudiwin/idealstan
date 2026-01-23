@@ -458,12 +458,12 @@ id_sim_gen <- function(num_person=20,num_items=50,
   
   if(simul_type=='absence') {
     simul_func <- id_sim_gen
-    if(is.ordinal==TRUE) {
+    if(is.ordinal) {
       model_type <- 4
     } else {
       model_type <- 2
     }
-    absence <- T
+    absence <- TRUE
   }
   full_range <- seq(param_range[1],param_range[2],by=by)
   all_sims <- lapply(full_range, function(N){

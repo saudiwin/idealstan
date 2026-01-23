@@ -66,7 +66,7 @@
   if(!is.null(restrict_ind_low)) names(restrict_ind_low) <- fix_low
   
   
-  if(use_subset==TRUE || sample_it==TRUE) {
+  if(use_subset || sample_it) {
     idealdata <- subset_ideal(idealdata,use_subset=use_subset,sample_it=sample_it,subset_group=subset_group,
                               subset_person=subset_person,sample_size=sample_size)
   }
@@ -77,9 +77,6 @@
   # change time IDs if non time-varying model is being fit
   if(vary_ideal_pts=='none') {
     idealdata@score_matrix$time_id <- 1
-    # make sure that the covariate arrays are only one time point
-    #idealdata@person_cov <- idealdata@person_cov[1,,,drop=F]
-    #idealdata@group_cov <- idealdata@group_cov[1,,,drop=F]
   } 
   
   vary_ideal_pts <- switch(vary_ideal_pts,
@@ -167,7 +164,7 @@
   
   # use either row numbers for person/legislator IDs or use group IDs (static or time-varying)
   
-  if(use_groups==T) {
+  if(use_groups) {
     legispoints <- as.numeric(idealdata@score_matrix$group_id)
   } else {
     legispoints <- as.numeric(idealdata@score_matrix$person_id)
@@ -474,7 +471,6 @@
   num_legis=remove_list$num_legis,
   num_bills=remove_list$num_bills,
   num_ls=remove_list$num_ls,
-  #num_bills_grm=remove_list$num_bills_grm,
   ll=remove_list$legispoints[out_list$this_data$orig_order],
   bb=remove_list$billpoints[out_list$this_data$orig_order],
   mm=remove_list$modelpoints[out_list$this_data$orig_order],
@@ -1033,9 +1029,7 @@ process_init_draws <- function(init, num_procs, model_variables = NULL,
     names(init_i) = variable_names
     return(init_i)
   })
-  #return(process_init_list(inits, num_procs, model_variables, warn_partial))
-  # just return the lists, let cmdstanr handle the rest
-  
+
   return(inits)
   
 }
@@ -2825,29 +2819,13 @@ return(as.vector(idx))
         
         min_ord <- min(Y_int[modelpoints %in% c(3,4,5,6)],na.rm=T)
         max_ord <-  Y_int + ordered_id
-        
-        # in_ord_num <- sapply(1:length(Y_int[modelpoints %in% c(3,4,5,6)]), function(i) {
-        #   
-        #   if(!is.na(Y_int[modelpoints %in% c(3,4,5,6)][i])) {
-        #     
-        #     return(Y_int[modelpoints %in% c(3,4,5,6)][i] %in% min(Y_int[modelpoints %in% c(3,4,5,6)],na.rm=T):(Y_int[modelpoints %in% c(3,4,5,6)][i] + ordered_id[modelpoints %in% c(3,4,5,6)][i]) )
-        #     
-        #   } else {
-        #     
-        #     return(FALSE)
-        #     
-        #   }
-        #   
-        # })
-        
+
         conditions <- !is.na(Y_int) & modelpoints %in% c(3,4,5,6) & Y_int <= max_ord
         
         Y_int[conditions] <- Y_int[conditions] - (min(Y_int[conditions],na.rm=T) - 1)
         
         
       }
-      
-    #Y_int[modelpoints %in% c(1,2) & Y_int<3] <- Y_int[modelpoints %in% c(1,2)  & Y_int<3] - 1
 
   }
   

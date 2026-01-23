@@ -91,7 +91,7 @@
   
   # change to group parameters if index is for groups
   
-  if(use_groups==T) {
+  if(use_groups) {
     # reorder group parameters
     object@score_matrix <- mutate(ungroup(object@score_matrix), 
                                   group_id=factor(!! quo(group_id)),

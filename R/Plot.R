@@ -180,8 +180,8 @@ id_plot_legis <- function(object,return_data=FALSE,
   
   # Rescale simulated values to ensure that they match estimated values in terms of scale multiplicativity
 
-  if(show_true==TRUE) {
-    
+  if(show_true) {
+
     true_vals <- data_frame(true_vals=object@score_data@simul_data$true_person[,1]) %>% 
       slice(as.numeric(levels(person_params$person_id))) %>% 
       mutate(id_num=1:n())
@@ -273,14 +273,14 @@ id_plot_legis <- function(object,return_data=FALSE,
     
     # determine if legislator names should be plotted
 
-  if(person_labels==TRUE & group_color==TRUE) {
+  if(person_labels && group_color) {
     outplot <- outplot + geom_text_repel(aes(x=reorder(person_id,median_pt),y=median_pt,label=reorder(person_id,median_pt),color=group_id),
                                        nudge_x=hjust_length,size=text_size_label,show.legend = FALSE,
                                        segment.alpha=0,data=distinct(person_params,
                                                                      person_id,
                                                                      median_pt,
                                                                      group_id))
-  } else if(person_labels==TRUE & group_color==FALSE) {
+  } else if(person_labels && !group_color) {
     outplot <- outplot + geom_text_repel(aes(x=reorder(person_id,median_pt),y=median_pt,label=reorder(person_id,median_pt)),
                                    nudge_x=hjust_length,size=text_size_label,
                                    segment.alpha=0,data=distinct(person_params,
@@ -312,13 +312,13 @@ id_plot_legis <- function(object,return_data=FALSE,
   
   # Add a dirty trick to enable the legend to show what group labels instead of just the letter 'a'
   
-  if(group_color==TRUE) {
-    
+  if(group_color) {
+
     outplot <- outplot + geom_point(aes(x=reorder(person_id,median_pt),y=median_pt,color=group_id),size=0,stroke=0) +
       guides(colour = guide_legend(title="",override.aes = list(size = 5)))
   }
-  
-  if(show_true==TRUE) {
+
+  if(show_true) {
     outplot <- outplot + geom_point(aes(x=reorder(person_id,median_pt),y=true_vals),color='black',shape=2)
     
   }
@@ -335,16 +335,16 @@ id_plot_legis <- function(object,return_data=FALSE,
   }
 
   
-  if(return_data==TRUE) {
-    
+  if(return_data) {
+
     return_list <- list(outplot=outplot,plot_data=person_params)
 
     return(return_list)
-    
+
   } else (
     return(outplot)
   )
-  
+
 }
 
 #' Plot Legislator/Person Over-time Variances
@@ -431,7 +431,7 @@ id_plot_legis_var <- function(object,return_data=FALSE,
   
   # Default plot: group names plotted as points
   
-  if(group_color==TRUE) {
+  if(group_color) {
     outplot <- person_params %>% ggplot() +
       geom_linerange(aes(x=reorder(person_id,median_pt),
                          ymin=low_pt,ymax=high_pt,color=group_id),
@@ -439,8 +439,8 @@ id_plot_legis_var <- function(object,return_data=FALSE,
                      show.legend = FALSE) +
       geom_text(aes(x=reorder(person_id,median_pt),
                     y=median_pt,label=reorder(group_id,median_pt),
-                    color=group_id),size=text_size_group,show.legend = FALSE) 
-  } else if(group_color==FALSE) {
+                    color=group_id),size=text_size_group,show.legend = FALSE)
+  } else if(!group_color) {
     outplot <- person_params %>% ggplot() +
       geom_linerange(aes(x=reorder(person_id,
                                    median_pt),
@@ -453,32 +453,32 @@ id_plot_legis_var <- function(object,return_data=FALSE,
   
   # determine if legislator names should be plotted
   
-  if(person_labels==TRUE & group_color==TRUE) {
+  if(person_labels && group_color) {
     outplot <- outplot + geom_text_repel(aes(x=reorder(person_id,median_pt),y=median_pt,label=reorder(person_id,median_pt),color=group_id),
                                    nudge_x=hjust_length,size=text_size_label,show.legend = FALSE,
                                    segment.alpha=0)
-  } else if(person_labels==TRUE & group_color==FALSE) {
+  } else if(person_labels && !group_color) {
     outplot <- outplot + geom_text_repel(aes(x=reorder(person_id,median_pt),y=median_pt,label=reorder(person_id,median_pt)),
                                    nudge_x=hjust_length,size=text_size_label,
                                    segment.alpha=0)
   }
-  
-  
+
+
   # Add a dirty trick to enable the legend to show what group labels instead of just the letter 'a'
-  
-  if(group_color==TRUE) {
-    
+
+  if(group_color) {
+
     outplot <- outplot + geom_point(aes(x=reorder(person_id,median_pt),y=median_pt,color=group_id),size=0,stroke=0) +
       guides(colour = guide_legend(title="",override.aes = list(size = 5)))
   }
-  
+
   # Add theme elements
-  
+
   outplot <- outplot  + theme_minimal() + ylab("") + xlab("") +
-    theme(axis.text.y=element_blank(),panel.grid.major.y = element_blank()) + coord_flip() 
-  
-  
-  if(return_data==TRUE) {
+    theme(axis.text.y=element_blank(),panel.grid.major.y = element_blank()) + coord_flip()
+
+
+  if(return_data) {
     
     return_list <- list(outplot=outplot,plot_data=person_params)
     return(return_list)
@@ -743,8 +743,8 @@ id_plot_legis_dyn <- function(object,return_data=FALSE,
   }
   
   # allow the option of plotting "true" ideal points instead of estimated ones as lines
-  if(!is.null(object@score_data@simul_data) && show_true==T) {
-    
+  if(!is.null(object@score_data@simul_data) && show_true) {
+
     true_pts <- object@score_data@simul_data$true_person
     colnames(true_pts) <- c(as.character(1:ncol(true_pts)))
     true_pts <- as_data_frame(true_pts) %>% mutate(person_id=1:n()) %>% 
@@ -772,7 +772,7 @@ id_plot_legis_dyn <- function(object,return_data=FALSE,
   
   # plot CIs first for background
   
-  if(use_ci==T) {
+  if(use_ci) {
     outplot <- person_params %>% ggplot(aes_(x=~time_id)) + geom_ribbon(aes_(ymin=~low_pt,
                                           ymax=~high_pt,
                                           group=base_id),
@@ -783,8 +783,8 @@ id_plot_legis_dyn <- function(object,return_data=FALSE,
     outplot <- person_params %>% ggplot(aes_(x=~time_id))
   } 
   
-  # add time-varying ideal points\
-  if(!is.null(object@score_data@simul_data) && show_true==T) {
+  # add time-varying ideal points
+  if(!is.null(object@score_data@simul_data) && show_true) {
     
     outplot <- outplot + 
       geom_line(aes_(y=~true_pt,colour=base_id),
@@ -853,8 +853,8 @@ id_plot_legis_dyn <- function(object,return_data=FALSE,
 
   # plot random labels
   
-  if(plot_text==TRUE) {
-    
+  if(plot_text) {
+
     # need new data that scatters names around the plot
     if(model_wrap) {
       sampled_data <- group_by(person_params,!!as_quosure(base_id),!!as_quosure(wrap_id)) %>% sample_n(1)
@@ -885,7 +885,7 @@ id_plot_legis_dyn <- function(object,return_data=FALSE,
   
   # only use a legend if groups are used or highlights
   
-  if(group_color==F || (group_color==F && is.null(highlight))) {
+  if(!group_color || (!group_color && is.null(highlight))) {
     output <- outplot + 
       guides(color="none",
              fill="none")
@@ -946,15 +946,15 @@ id_plot_compare <- function(model1=NULL,model2=NULL,scale_flip=FALSE,return_data
   data1 <- mutate(data1,this_model='Model1')
   data2 <- mutate(data2,this_model='Model2')
   
-  if(scale_flip==TRUE) {
+  if(scale_flip) {
     data1 <- mutate(data1,low_pt=low_pt*-1,
                     high_pt=high_pt*-1,
                     median_pt=median_pt*-1)
   }
-  
+
   combined_data <- bind_rows(data1,data2)
-  
-  if(rescale==TRUE) {
+
+  if(rescale) {
     combined_data <- mutate(combined_data, median_pt=scale(median_pt)[,1])
   }
   
@@ -969,12 +969,12 @@ id_plot_compare <- function(model1=NULL,model2=NULL,scale_flip=FALSE,return_data
                                              guide=guide_legend(title=''))
   }
   
-  if(return_data==TRUE) {
+  if(return_data) {
     return(list(plot=outplot,plot_data=combined_data))
   } else {
     return(outplot)
   }
-  
+
 }
 
 #' Density plots of Posterior Parameters
@@ -1053,13 +1053,13 @@ id_plot_all_hist <- function(object,params='person',param_labels=NULL,dens_type=
   }
   outplot <- outplot + xlab('Parameter Posterior Values') + ylab('Density') + 
     theme(panel.grid=element_blank())
-  if(return_data==TRUE) {
+  if(return_data) {
     return(list(plot=outplot,plot_data=estimates))
   } else {
     return(outplot)
   }
-  
-  
+
+
 }
 #' This function plots the results from a simulation generated by [id_sim_gen()].
 #' 

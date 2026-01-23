@@ -481,7 +481,7 @@ id_make <- function(score_data=NULL,
                 miss_val=miss_val,
                 func_args=func_args_list)
   
-  if(simulation==TRUE) {
+  if(simulation) {
     outobj@simul_data <- simul_data
     outobj@simulation <- simulation
   }
@@ -1018,7 +1018,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   
   # don't allow user to change this
   
-  het_var <- T
+  het_var <- TRUE
   
   
   # check to make sure cmdstanr is working
