@@ -53,6 +53,15 @@ test_that("full pipeline works for binary model with pathfinder", {
 
     summary_items <- summary(fit, pars = "items")
     expect_true(is.data.frame(summary_items) || inherits(summary_items, "tbl_df"))
+
+    # Test parallel processing in summary (GitHub issue #37)
+    # cores parameter should work without error
+    summary_items_parallel <- summary(fit, pars = "items", cores = 2)
+    expect_true(is.data.frame(summary_items_parallel) || inherits(summary_items_parallel, "tbl_df"))
+
+    # Results should be identical regardless of cores used
+    expect_equal(nrow(summary_items), nrow(summary_items_parallel))
+    expect_equal(names(summary_items), names(summary_items_parallel))
   }
 })
 

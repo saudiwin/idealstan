@@ -10,7 +10,8 @@
   high_limit = 0.95,
   low_limit = 0.05,
   aggregated = TRUE,
-  use_chain = NULL
+  use_chain = NULL,
+  cores = 1
 )
 }
 \arguments{
@@ -31,6 +32,12 @@ full posterior samples. Defaults to \code{TRUE}.}
 
 \item{use_chain}{ID of a specific MCMC chain to use. Default (NULL) is all the chains
 and is recommended.}
+
+\item{cores}{Number of cores to use for parallel processing when summarizing
+item parameters. Defaults to 1 (no parallelization). Values greater than 1 use
+\code{parallel::mclapply} for faster computation with many items. Note that
+parallelization only works on Unix-like systems (Linux, macOS); on Windows,
+this parameter is ignored and single-core processing is used.}
 }
 \value{
 A \code{\link[dplyr]{tibble}} data frame with parameters as rows and descriptive statistics as columns

@@ -638,30 +638,36 @@ setMethod('id_model',signature(object='idealdata'),
           })
 
 #' Posterior Summaries for fitted \code{idealstan} object
-#' 
+#'
 #' This function produces quantiles and standard deviations for the posterior samples of \code{idealstan} objects.
-#' 
+#'
 #' @param object An \code{idealstan} object fitted by \code{\link{id_estimate}}
-#' @param pars Either \code{'ideal_pts'} for person ideal points, 
+#' @param pars Either \code{'ideal_pts'} for person ideal points,
 #' \code{'items'} for items/bills difficulty and discrimination parameters,
 #' and \code{'all'} for all parameters in the model, including incidental parameters.
-#' @param high_limit A number between 0 and 1 reflecting the upper limit of the 
+#' @param high_limit A number between 0 and 1 reflecting the upper limit of the
 #' uncertainty interval (defaults to 0.95).
-#' @param low_limit A number between 0 and 1 reflecting the lower limit of the 
+#' @param low_limit A number between 0 and 1 reflecting the lower limit of the
 #' uncertainty interval (defaults to 0.05).
-#' @param aggregated Whether to return summaries of the posterior values or the 
+#' @param aggregated Whether to return summaries of the posterior values or the
 #' full posterior samples. Defaults to \code{TRUE}.
 #' @param use_chain ID of a specific MCMC chain to use. Default (NULL) is all the chains
 #' and is recommended.
+#' @param cores Number of cores to use for parallel processing when summarizing
+#' item parameters. Defaults to 1 (no parallelization). Values greater than 1 use
+#' \code{parallel::mclapply} for faster computation with many items. Note that
+#' parallelization only works on Unix-like systems (Linux, macOS); on Windows,
+#' this parameter is ignored and single-core processing is used.
 #' @return A \code{\link[dplyr]{tibble}} data frame with parameters as rows and descriptive statistics as columns
-#' 
+#'
 #' @export
 setMethod('summary',signature(object='idealstan'),
           function(object,pars='ideal_pts',
                    high_limit=0.95,
                    low_limit=0.05,
                    aggregated=TRUE,
-                   use_chain=NULL) {
+                   use_chain=NULL,
+                   cores=1) {
             
             options(tibble.print_max=1000,
                     tibble.print_min=100)
@@ -704,9 +710,17 @@ setMethod('summary',signature(object='idealstan'),
 
               # a bit trickier with item points
               item_plot <- levels(object@score_data@score_matrix$item_id)
+
+              # Use parallel processing if cores > 1 and on Unix-like system
+              if(cores > 1 && .Platform$OS.type == "unix") {
+                apply_func <- function(...) parallel::mclapply(..., mc.cores = cores)
+              } else {
+                apply_func <- lapply
+              }
+
               if(object@model_type %in% c(1,2,7,8,9,10,11,12,15,16) || (object@model_type>6 && object@model_type<13)) {
                 # binary models and continuous
-                item_points <- lapply(item_plot,.item_plot_binary,object=object,
+                item_points <- apply_func(item_plot,.item_plot_binary,object=object,
                                       low_limit=low_limit,
                                       high_limit=high_limit,
                                       all=T,
@@ -714,7 +728,7 @@ setMethod('summary',signature(object='idealstan'),
                                       use_chain=use_chain) %>% bind_rows()
               } else if(object@model_type %in% c(3,4)) {
                 # rating scale
-                item_points <- lapply(item_plot,.item_plot_ord_rs,object=object,
+                item_points <- apply_func(item_plot,.item_plot_ord_rs,object=object,
                                       low_limit=low_limit,
                                       high_limit=high_limit,
                                       all=T,
@@ -722,7 +736,7 @@ setMethod('summary',signature(object='idealstan'),
                                       use_chain=use_chain) %>% bind_rows()
               } else if(object@model_type %in% c(5,6)) {
                 # grm
-                item_points <- lapply(item_plot,.item_plot_ord_grm,object=object,
+                item_points <- apply_func(item_plot,.item_plot_ord_grm,object=object,
                                       low_limit=low_limit,
                                       high_limit=high_limit,
                                       all=T,
@@ -730,7 +744,7 @@ setMethod('summary',signature(object='idealstan'),
                                       use_chain=use_chain) %>% bind_rows()
               } else if(object@model_type %in% c(13,14)) {
                 # latent space
-                item_points <- lapply(item_plot,.item_plot_ls,object=object,
+                item_points <- apply_func(item_plot,.item_plot_ls,object=object,
                                       low_limit=low_limit,
                                       high_limit=high_limit,
                                       all=T,
