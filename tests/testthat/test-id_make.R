@@ -229,6 +229,144 @@ test_that("id_make handles item covariates", {
   expect_s4_class(result, "idealdata")
 })
 
+# Covariate prefix tests (GitHub issue #32) ----
+
+test_that("id_make adds person_ prefix to person covariates", {
+  skip_on_cran()
+
+  test_data <- data.frame(
+    person_id = rep(1:10, each = 5),
+    item_id = rep(1:5, times = 10),
+    outcome = sample(c(0, 1), 50, replace = TRUE),
+    age = rep(rnorm(10), each = 5)
+  )
+
+  result <- id_make(
+    test_data,
+    outcome_disc = "outcome",
+    person_id = "person_id",
+    item_id = "item_id",
+    person_cov = ~ age
+  )
+
+  expect_s4_class(result, "idealdata")
+  # Check that person_cov names have person_ prefix
+  expect_true(all(grepl("^person_", result@person_cov)))
+  expect_true("person_age" %in% names(result@score_matrix))
+})
+
+test_that("id_make adds item_ prefix to item covariates", {
+  skip_on_cran()
+
+  test_data <- data.frame(
+    person_id = rep(1:10, each = 5),
+    item_id = rep(1:5, times = 10),
+    outcome = sample(c(0, 1), 50, replace = TRUE),
+    difficulty = rep(rnorm(5), times = 10)
+  )
+
+  result <- id_make(
+    test_data,
+    outcome_disc = "outcome",
+    person_id = "person_id",
+    item_id = "item_id",
+    item_cov = ~ difficulty
+  )
+
+  expect_s4_class(result, "idealdata")
+  # Check that item_cov names have item_ prefix
+  expect_true(all(grepl("^item_", result@item_cov)))
+  expect_true("item_difficulty" %in% names(result@score_matrix))
+})
+
+test_that("id_make adds item_miss_ prefix to item_cov_miss covariates", {
+  skip_on_cran()
+
+  test_data <- data.frame(
+    person_id = rep(1:10, each = 5),
+    item_id = rep(1:5, times = 10),
+    outcome = sample(c(0, 1, NA), 50, replace = TRUE),
+    miss_covar = rep(rnorm(5), times = 10)
+  )
+
+  result <- id_make(
+    test_data,
+    outcome_disc = "outcome",
+    person_id = "person_id",
+    item_id = "item_id",
+    item_cov_miss = ~ miss_covar
+  )
+
+  expect_s4_class(result, "idealdata")
+  # Check that item_cov_miss names have item_miss_ prefix
+  expect_true(all(grepl("^item_miss_", result@item_cov_miss)))
+  expect_true("item_miss_miss_covar" %in% names(result@score_matrix))
+})
+
+test_that("id_make handles overlapping covariates in item_cov and item_cov_miss without conflicts", {
+  skip_on_cran()
+
+  # This test addresses GitHub issue #32
+  # When the same covariate appears in both item_cov and item_cov_miss,
+  # the prefixes should prevent naming conflicts
+
+  test_data <- data.frame(
+    person_id = rep(1:10, each = 5),
+    item_id = rep(1:5, times = 10),
+    outcome = sample(c(0, 1, NA), 50, replace = TRUE),
+    shared_covar = rep(rnorm(5), times = 10)
+  )
+
+  result <- id_make(
+    test_data,
+    outcome_disc = "outcome",
+    person_id = "person_id",
+    item_id = "item_id",
+    item_cov = ~ shared_covar,
+    item_cov_miss = ~ shared_covar
+  )
+
+  expect_s4_class(result, "idealdata")
+
+  # Both prefixed versions should exist without automatic renaming (no ...1, ...2 suffixes)
+  expect_true("item_shared_covar" %in% names(result@score_matrix))
+  expect_true("item_miss_shared_covar" %in% names(result@score_matrix))
+
+  # No columns should have automatic rename suffixes like ...21 or ...22
+  expect_false(any(grepl("\\.\\.\\.[0-9]+$", names(result@score_matrix))))
+})
+
+test_that("id_make handles all three covariate types with same variable name", {
+  skip_on_cran()
+
+  test_data <- data.frame(
+    person_id = rep(1:10, each = 5),
+    item_id = rep(1:5, times = 10),
+    outcome = sample(c(0, 1, NA), 50, replace = TRUE),
+    x = rnorm(50)
+  )
+
+  result <- id_make(
+    test_data,
+    outcome_disc = "outcome",
+    person_id = "person_id",
+    item_id = "item_id",
+    person_cov = ~ x,
+    item_cov = ~ x,
+    item_cov_miss = ~ x
+  )
+
+  expect_s4_class(result, "idealdata")
+
+  # All three prefixed versions should exist
+  expect_true("person_x" %in% names(result@score_matrix))
+  expect_true("item_x" %in% names(result@score_matrix))
+  expect_true("item_miss_x" %in% names(result@score_matrix))
+
+  # No automatic rename suffixes
+  expect_false(any(grepl("\\.\\.\\.[0-9]+$", names(result@score_matrix))))
+})
+
 # Factor handling tests ----
 
 test_that("id_make handles factor person_id", {

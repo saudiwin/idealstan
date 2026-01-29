@@ -294,9 +294,12 @@ id_make <- function(score_data=NULL,
       apply(2,any)
     
     if(remove_cov_int) {
-      personm <- personm[,!check_ids,drop=F] 
+      personm <- personm[,!check_ids,drop=F]
     }
-    
+
+    # Add prefix to person covariate names to avoid conflicts (issue #32)
+    colnames(personm) <- paste0("person_", colnames(personm))
+
     score_rename <- bind_cols(score_rename,
                               as_tibble(personm))
     person_cov_names <- dimnames(personm)[[2]]
@@ -335,8 +338,10 @@ id_make <- function(score_data=NULL,
     if(remove_cov_int) {
       itemm <- itemm[,!check_ids]
     }
-    
-    
+
+    # Add prefix to item covariate names to avoid conflicts (issue #32)
+    colnames(itemm) <- paste0("item_", colnames(itemm))
+
     score_rename <- bind_cols(score_rename,
                               as_tibble(itemm))
     item_cov_names <- dimnames(itemm)[[2]]
@@ -375,7 +380,10 @@ id_make <- function(score_data=NULL,
     if(remove_cov_int) {
       itemmissm <- itemmissm[,!check_ids]
     }
-    
+
+    # Add prefix to item_miss covariate names to avoid conflicts (issue #32)
+    colnames(itemmissm) <- paste0("item_miss_", colnames(itemmissm))
+
     score_rename <- bind_cols(score_rename,
                               as_tibble(itemmissm))
     item_cov_miss_names <- dimnames(itemmissm)[[2]]

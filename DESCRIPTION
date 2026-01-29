@@ -32,7 +32,8 @@ Imports:
     forcats,
     ordbetareg,
     scales,
-    shiny
+    shiny,
+    tibble
 Suggests:
     cmdstanr,
     R.rsp,
