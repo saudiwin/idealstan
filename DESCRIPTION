@@ -14,8 +14,7 @@ Description: Offers item-response theory (IRT) ideal-point measurement modeling 
 License: MIT + file LICENSE
 Depends: 
     methods,
-    R (>= 4.0.0),
-    cmdstanr
+    R (>= 4.0.0)
 Imports: 
     dplyr,
     svDialogs,
@@ -35,6 +34,7 @@ Imports:
     scales,
     shiny
 Suggests:
+    cmdstanr,
     R.rsp,
     loo,
     lubridate,

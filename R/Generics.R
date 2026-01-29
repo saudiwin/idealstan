@@ -243,7 +243,7 @@ setMethod('sample_model',signature(object='idealdata'),
 
                 }
                 
-                if(any("sigma_abs_free") %in% names(td)) {
+                if("sigma_abs_free" %in% names(td)) {
                   
                   if(any(td$sigma_abs_free>0.9999)) {
                     
@@ -673,7 +673,7 @@ setMethod('summary',signature(object='idealstan'),
                                                low_limit=low_limit,
                                                aggregated=aggregated,
                                                use_chain=use_chain)
-              if(is.null(ideal_pts$time_id)) {
+              if(!("time_id" %in% names(ideal_pts))) {
                 ideal_pts$time_id=1
               }
               if(aggregated) {
@@ -764,7 +764,7 @@ setMethod('summary',signature(object='idealstan'),
               if(!aggregated) {
                 return(to_sum)
               } else {
-                out_d <- data_frame(Covariate=new_names,
+                out_d <- tibble(Covariate=new_names,
                                     `Posterior Median`=apply(to_sum,3,median),
                                     `Posterior High Interval`=apply(to_sum,3,quantile,high_limit),
                                     `Posterior Low Interval`=apply(to_sum,3,quantile,low_limit),

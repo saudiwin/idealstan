@@ -209,13 +209,14 @@ id_sim_gen <- function(num_person=20,num_items=50,
       stan_code <- system.file("stan_files","sim_gp.stan",
                             package="idealstan")
       
-      simu_mod <- stan_code %>% 
-        cmdstan_model(include_paths=dirname(stan_code))
+      simu_mod <- stan_code %>%
+        cmdstanr::cmdstan_model(include_paths=dirname(stan_code))
       
       simu_fit <- simu_mod$sample(data=simu_data, iter_sampling=1,
                                   chains=1, fixed_param=T)
       
       ideal_pts <- simu_fit$draws("Y") %>% as_draws_df %>% 
+        as.data.frame %>%
         select(-`.iteration`,-`.draw`,-`.chain`) %>% 
         gather(key="variable",value="value") %>% 
         mutate(person=as.numeric(stringr::str_extract(variable,"(?<=\\[)[0-9]+")),
@@ -299,7 +300,10 @@ id_sim_gen <- function(num_person=20,num_items=50,
                                     sigma=time_sd_all[i],
                                     init_sides=ideal_t1[i])
         return(this_person)
-      }) %>% bind_cols %>% as.matrix
+      }) %>% bind_cols(.name_repair = "minimal")
+      # Set matrix-friendly column names before conversion
+      names(ideal_pts) <- paste0("V", seq_len(ncol(ideal_pts)))
+      ideal_pts <- as.matrix(ideal_pts)
       
       ideal_pts <- t(ideal_pts)
       

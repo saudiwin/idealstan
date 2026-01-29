@@ -410,7 +410,10 @@ id_make <- function(score_data=NULL,
     } else {
       # variable does not need to be recoded, only move missing to the end
       score_rename$outcome_disc <- factor(score_rename$outcome_disc)
-      score_rename$outcome_disc <- fct_relevel(score_rename$outcome_disc,as.character(miss_val[1]),after=Inf)
+      # Only relevel if the missing level actually exists in the data
+      if(as.character(miss_val[1]) %in% levels(score_rename$outcome_disc)) {
+        score_rename$outcome_disc <- fct_relevel(score_rename$outcome_disc,as.character(miss_val[1]),after=Inf)
+      }
     }
     
     # reconvert if continuous values present
@@ -914,7 +917,6 @@ id_make <- function(score_data=NULL,
 #' @importFrom posterior as_draws_rvars ess_bulk ess_tail
 #' @importFrom bayesplot mcmc_intervals
 #' @importFrom rlang check_installed is_installed
-#' @import cmdstanr
 #' @export
 id_estimate <- function(idealdata=NULL,model_type=2,
                         inflate_zero=FALSE,
@@ -980,29 +982,37 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                         ...) {
   
   # check for correct use_method option
-  
+
   if(!(use_method) %in% c("mcmc","pathfinder","laplace")) stop("You have entered a value for use_method that is not supported. At present the estimation routines are 'mcmc', 'pathfinder', or 'laplace'. Please see the associated working paper for more details at https://osf.io/preprints/osf/8j2bt_v3")
-  
-  # small function to install cmdstanr
-  
-  install_cmdstanr <- function(pkg, ...) {
-    
-    install.packages(pkg, repos = c('https://stan-dev.r-universe.dev'))
-    
-  }
-  
-  check_installed("cmdstanr",
-                  version="0.8.1",
-                  reason="idealstan requires the package cmdstanr to run. This package is available from an external respository, https://stan-dev.r-universe.dev.",
-                  action=install_cmdstanr)
-  
-  # only allow estimation to proceed if cmdstanr is installed
-  
+
+  # Check if cmdstanr is installed first (before attempting check_installed)
+  # This prevents errors in non-interactive sessions
+
   if(!is_installed("cmdstanr")) {
-    
-    message("The R package cmdstanr is not installed so idealstan cannot estimate models. Please go to https://mc-stan.org/cmdstanr/ for installation instructions for the package cmdstanr.")
-    
-    return(NULL)
+
+    # In interactive sessions, offer to install
+    if(interactive()) {
+
+      install_cmdstanr <- function(pkg, ...) {
+        install.packages(pkg, repos = c('https://stan-dev.r-universe.dev'))
+      }
+
+      check_installed("cmdstanr",
+                      version="0.8.1",
+                      reason="idealstan requires the package cmdstanr to run. This package is available from an external repository, https://stan-dev.r-universe.dev.",
+                      action=install_cmdstanr)
+
+      # Check again after potential installation
+      if(!is_installed("cmdstanr")) {
+        message("The R package cmdstanr is not installed so idealstan cannot estimate models. Please go to https://mc-stan.org/cmdstanr/ for installation instructions for the package cmdstanr.")
+        return(NULL)
+      }
+
+    } else {
+      # Non-interactive: just return NULL with message
+      message("The R package cmdstanr is not installed so idealstan cannot estimate models. Please go to https://mc-stan.org/cmdstanr/ for installation instructions for the package cmdstanr.")
+      return(NULL)
+    }
   }
   
   # only allow estimation to proceed if cmdstan is also installed
@@ -1029,7 +1039,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   
   # set path if user specifies
   if(!is.null(cmdstan_path_user))
-    set_cmdstan_path(cmdstan_path_user)
+    cmdstanr::set_cmdstan_path(cmdstan_path_user)
   
   if(!file.exists(system.file("stan_files","irt_standard_map",
                               package="idealstan"))) {
@@ -1045,9 +1055,9 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   #                              package="idealstan")
   # 
   if(compile_optim) {
-    
+
     idealdata@stanmodel_map <- stan_code_map %>%
-      cmdstan_model(include_paths=dirname(stan_code_map),
+      cmdstanr::cmdstan_model(include_paths=dirname(stan_code_map),
                     cpp_options = list(stan_threads = !debug,
                                        STAN_CPP_OPTIMS=TRUE),
                     force_recompile=debug)
@@ -1062,9 +1072,9 @@ id_estimate <- function(idealdata=NULL,model_type=2,
     #                 force_recompile=debug)
     
   } else {
-    
+
     idealdata@stanmodel_map <- stan_code_map %>%
-      cmdstan_model(include_paths=dirname(stan_code_map),
+      cmdstanr::cmdstan_model(include_paths=dirname(stan_code_map),
                     cpp_options = list(stan_threads = !debug),
                     force_recompile=debug)
     
