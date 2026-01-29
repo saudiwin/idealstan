@@ -1,6 +1,8 @@
 # Integration tests for full idealstan pipeline
 # These tests run the complete workflow: simulate -> estimate -> extract -> plot
 
+options(cmdstanr_warn_inits = FALSE)
+
 # Skip helper for cmdstanr availability
 skip_if_no_cmdstanr <- function() {
   skip_on_cran()
@@ -50,7 +52,7 @@ test_that("full pipeline works for binary model with pathfinder", {
     # Test summary function (GitHub issue #39)
     summary_pts <- summary(fit, pars = "ideal_pts")
     expect_true(is.data.frame(summary_pts) || inherits(summary_pts, "tbl_df"))
-
+    
     summary_items <- summary(fit, pars = "items")
     expect_true(is.data.frame(summary_items) || inherits(summary_items, "tbl_df"))
 
@@ -104,6 +106,78 @@ test_that("summary function works for ordinal rating scale model", {
     # Test summary with pars="ideal_pts"
     summary_pts <- summary(fit, pars = "ideal_pts")
     expect_true(is.data.frame(summary_pts) || inherits(summary_pts, "tbl_df"))
+  }
+})
+
+# Test id_plot_compare function (GitHub issue #35) ----
+
+test_that("id_plot_compare works with two fitted models", {
+  skip_if_no_cmdstanr()
+  skip_on_ci()  # Skip on CI due to time constraints
+
+  set.seed(42)
+
+  # Fit first model (binary)
+  sim_data1 <- id_sim_gen(
+    num_person = 15,
+    num_items = 8,
+    model_type = "binary"
+  )
+
+  fit1 <- tryCatch(
+    id_estimate(
+      sim_data1,
+      model_type = 1,
+      use_method = "pathfinder",
+      fixtype = "prefix",
+      restrict_ind_high = 1,
+      restrict_ind_low = 2
+    ),
+    error = function(e) NULL
+  )
+
+  # Fit second model (also binary but different data)
+  sim_data2 <- id_sim_gen(
+    num_person = 15,
+    num_items = 8,
+    model_type = "binary"
+  )
+
+  fit2 <- tryCatch(
+    id_estimate(
+      sim_data2,
+      model_type = 1,
+      use_method = "pathfinder",
+      fixtype = "prefix",
+      restrict_ind_high = 1,
+      restrict_ind_low = 2
+    ),
+    error = function(e) NULL
+  )
+
+  # Test id_plot_compare if both models fitted successfully
+  if (!is.null(fit1) && !is.null(fit2)) {
+    # This was failing with "could not find function legis_plot" (issue #35)
+    expect_no_error({
+      plot_result <- id_plot_compare(model1 = fit1, model2 = fit2)
+    })
+
+    # Check that result is a ggplot object
+    expect_true(inherits(plot_result, "ggplot"))
+
+    # Test with return_data = TRUE
+    plot_with_data <- id_plot_compare(
+      model1 = fit1,
+      model2 = fit2,
+      return_data = TRUE
+    )
+    expect_true(is.list(plot_with_data))
+    expect_true("plot" %in% names(plot_with_data))
+    expect_true("plot_data" %in% names(plot_with_data))
+    expect_true(inherits(plot_with_data$plot, "ggplot"))
+    expect_true(is.data.frame(plot_with_data$plot_data))
+  } else {
+    skip("Model fitting failed, skipping id_plot_compare test")
   }
 })
 

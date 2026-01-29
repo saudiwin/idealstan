@@ -1,5 +1,7 @@
 # Tests for id_estimate function
 
+options(cmdstanr_warn_inits = FALSE)
+
 test_that("id_estimate validates use_method parameter", {
   skip_on_cran()
 

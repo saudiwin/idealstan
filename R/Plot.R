@@ -248,27 +248,27 @@ id_plot_legis <- function(object,return_data=FALSE,
 
   if(is.null(item_plot)) {
     outplot <- person_params %>% ggplot() +
-      geom_linerange(aes_(x=~reorder(person_id,median_pt),
-                         ymin=~low_pt,ymax=~high_pt,color=groupc),
+      geom_linerange(aes(x=reorder(person_id,median_pt),
+                         ymin=low_pt,ymax=high_pt,color=groupc),
                      alpha=person_ci_alpha,
                      show.legend = FALSE) +
-      geom_text(aes_(x=~reorder(person_id,median_pt),
-                    y=~median_pt,label=~reorder(group_id,median_pt),
+      geom_text(aes(x=reorder(person_id,median_pt),
+                    y=median_pt,label=reorder(group_id,median_pt),
                     color=groupc),size=text_size_group,
                 show.legend = FALSE,
-                check_overlap = T) 
-      
+                check_overlap = T)
+
   } else {
     # if an item plot is being made, use the actual outcomes as points
 
     outplot <- person_params %>% ggplot() +
-      geom_linerange(aes_(x=~reorder(person_id,median_pt),colour=groupc,
-                         ymin=~low_pt,ymax=~high_pt),alpha=person_ci_alpha) +
-      geom_text(aes_(x=~reorder(person_id,median_pt),y=~median_pt,
+      geom_linerange(aes(x=reorder(person_id,median_pt),colour=groupc,
+                         ymin=low_pt,ymax=high_pt),alpha=person_ci_alpha) +
+      geom_text(aes(x=reorder(person_id,median_pt),y=median_pt,
                     colour=groupc,
-                    label=~reorder(outcome_disc,median_pt)),size=text_size_group,
+                    label=reorder(outcome_disc,median_pt)),size=text_size_group,
                 check_overlap = T)
-    
+
   }
     
     # determine if legislator names should be plotted
@@ -773,44 +773,44 @@ id_plot_legis_dyn <- function(object,return_data=FALSE,
   # plot CIs first for background
   
   if(use_ci) {
-    outplot <- person_params %>% ggplot(aes_(x=~time_id)) + geom_ribbon(aes_(ymin=~low_pt,
-                                          ymax=~high_pt,
+    outplot <- person_params %>% ggplot(aes(x=time_id)) + geom_ribbon(aes(ymin=low_pt,
+                                          ymax=high_pt,
                                           group=base_id),
                                      fill='grey80',
                                      colour=NA,
                                      alpha=person_ci_alpha)
   } else {
-    outplot <- person_params %>% ggplot(aes_(x=~time_id))
-  } 
-  
+    outplot <- person_params %>% ggplot(aes(x=time_id))
+  }
+
   # add time-varying ideal points
   if(!is.null(object@score_data@simul_data) && show_true) {
-    
-    outplot <- outplot + 
-      geom_line(aes_(y=~true_pt,colour=base_id),
+
+    outplot <- outplot +
+      geom_line(aes(y=true_pt,colour=base_id),
                 alpha=person_line_alpha,
                 size=line_size)
-    
+
   } else {
     if(group_color) {
       if(model_wrap) {
-        outplot <- outplot + 
-          geom_line(aes_(y=~median_pt,group=base_id,
-                         colour=~Model),
+        outplot <- outplot +
+          geom_line(aes(y=median_pt,group=base_id,
+                         colour=Model),
                     alpha=person_line_alpha,
                     size=line_size)
       } else {
-        outplot <- outplot + 
-          geom_line(aes_(y=~median_pt,group=base_id,
-                         colour=~group_id),
+        outplot <- outplot +
+          geom_line(aes(y=median_pt,group=base_id,
+                         colour=group_id),
                     alpha=person_line_alpha,
                     size=line_size)
       }
-      
+
     } else {
-      
-      outplot <- outplot + 
-        geom_line(aes_(y=~median_pt,group=base_id),
+
+      outplot <- outplot +
+        geom_line(aes(y=median_pt,group=base_id),
                   alpha=person_line_alpha,
                   size=line_size)
     }
@@ -868,8 +868,8 @@ id_plot_legis_dyn <- function(object,return_data=FALSE,
       sampled_data <- filter(sampled_data,!(!!as_quosure(base_id) %in% highlight))
     }
     
-    outplot <- outplot + 
-      geom_text_repel(aes_(x=~time_id,y=~median_pt,label=base_id),data=sampled_data,
+    outplot <- outplot +
+      geom_text_repel(aes(x=time_id,y=median_pt,label=base_id),data=sampled_data,
                 size=text_size_label,segment.colour='grey50',segment.alpha = 0.5)
     
   }
@@ -941,8 +941,8 @@ id_plot_compare <- function(model1=NULL,model2=NULL,scale_flip=FALSE,return_data
                            rescale=FALSE) {
   
 
-  data1 <- legis_plot(model1,return_data=TRUE)$plot_data
-  data2 <- legis_plot(model2,return_data=TRUE)$plot_data
+  data1 <- id_plot_legis(model1,return_data=TRUE)$plot_data
+  data2 <- id_plot_legis(model2,return_data=TRUE)$plot_data
   data1 <- mutate(data1,this_model='Model1')
   data2 <- mutate(data2,this_model='Model2')
   
@@ -957,17 +957,20 @@ id_plot_compare <- function(model1=NULL,model2=NULL,scale_flip=FALSE,return_data
   if(rescale) {
     combined_data <- mutate(combined_data, median_pt=scale(median_pt)[,1])
   }
+
+  if(is.null(labels)) {
+    labels <- c("Model 1","Model 2")
+  }
   
   outplot <- combined_data %>% ggplot(aes(y=reorder(person_id,median_pt),x=median_pt,color=this_model)) + 
-    geom_point() + geom_text_repel(aes(label=reorder(person_id,median_pt)),size=text_size_label,
-                             hjust=hjust) +
-    geom_errorbarh(aes(xmin=low_pt,xmax=high_pt)) + theme_minimal() + ylab("") + xlab("") +
-    theme(axis.text.y=element_blank(),panel.grid.major.y = element_blank())
-  
-  if(!is.null(labels)) {
-    outplot <- outplot + scale_colour_brewer(palette=palette,labels=labels,direction=color_direction,
-                                             guide=guide_legend(title=''))
-  }
+    geom_pointrange(aes(xmin=low_pt,xmax=high_pt),
+  position=position_dodge(width=1)) + 
+    geom_text(aes(label=reorder(person_id,median_pt)),size=text_size_label,fontface="bold",
+                             hjust=hjust,check_overlap = T,colour="black") +
+    theme_minimal() + ylab("") + xlab("Ideal Point Score") +
+    theme(axis.text.y=element_blank(),panel.grid.major.y = element_blank()) + 
+    scale_colour_brewer(palette=palette,labels=labels,direction=color_direction,
+                                             guide=guide_legend(title='Models'))
   
   if(return_data) {
     return(list(plot=outplot,plot_data=combined_data))

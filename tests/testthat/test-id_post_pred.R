@@ -1,5 +1,5 @@
 # Tests for id_post_pred function
-
+options(cmdstanr_warn_inits = FALSE)
 # Function existence and signature tests ----
 
 test_that("id_post_pred generic exists", {
