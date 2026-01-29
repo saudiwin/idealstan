@@ -181,6 +181,69 @@ test_that("id_plot_compare works with two fitted models", {
   }
 })
 
+# Test for mixed binary/ordinal items (GitHub issue #27) ----
+
+test_that("id_make handles mixed binary and ordinal items with ordered_id", {
+  skip_on_cran()
+
+  # Create data with both binary (2 outcomes) and ordinal (3 outcomes) items
+  # This is the scenario from issue #27
+  set.seed(42)
+
+  n_persons <- 15
+  n_items <- 8
+  n_time <- 2
+
+  test_data <- expand.grid(
+    person_id = paste0("P", 1:n_persons),
+    item_id = paste0("I", 1:n_items),
+    time_id = 1:n_time
+  )
+
+  # Items I1-I4 are ordinal (3 categories), I5-I8 are binary (2 categories)
+  test_data$is_ordinal <- test_data$item_id %in% c("I1", "I2", "I3", "I4")
+
+  test_data$outcome_disc <- ifelse(
+    test_data$is_ordinal,
+    sample(1:3, nrow(test_data), replace = TRUE),
+    sample(1:2, nrow(test_data), replace = TRUE)
+  )
+
+  # ordered_id indicates number of categories per item
+  test_data$ordered_id <- ifelse(test_data$is_ordinal, 3, 2)
+
+  test_data$group_id <- rep(c("A", "B"), length.out = nrow(test_data))
+
+  # All use GRM model
+  test_data$model_id <- 5
+
+  # Test id_make with ordered_id
+  result <- id_make(
+    score_data = test_data,
+    person_id = "person_id",
+    item_id = "item_id",
+    time_id = "time_id",
+    group_id = "group_id",
+    model_id = "model_id",
+    outcome_disc = "outcome_disc",
+    ordered_id = "ordered_id"
+  )
+
+  expect_s4_class(result, "idealdata")
+
+  # Check that ordered_id is properly stored and varies by item
+  expect_true("ordered_id" %in% names(result@score_matrix))
+  expect_equal(sort(unique(result@score_matrix$ordered_id)), c(2, 3))
+
+  # Verify ordinal items have ordered_id = 3
+  ordinal_items <- result@score_matrix$item_id %in% c("I1", "I2", "I3", "I4")
+  expect_true(all(result@score_matrix$ordered_id[ordinal_items] == 3))
+
+  # Verify binary items have ordered_id = 2
+  binary_items <- result@score_matrix$item_id %in% c("I5", "I6", "I7", "I8")
+  expect_true(all(result@score_matrix$ordered_id[binary_items] == 2))
+})
+
 # Simulation to estimation consistency test ----
 
 test_that("simulated data can be used with id_make", {

@@ -2030,15 +2030,31 @@ process_init_pathfinder <- function(init, num_procs, model_variables = NULL,
   abs_diff <- as_draws_array(object@stan_samples$draws(paste0('A_int_free[',param_num,']')))[,use_chain,] %>% as_draws_matrix()
   abs_discrim <- as_draws_array(object@stan_samples$draws(paste0('sigma_abs_free[',param_num,']')))[,use_chain,] %>% as_draws_matrix()
 
-  # Determine the number of categories from outcome_disc
+  # Determine the number of categories for THIS SPECIFIC ITEM from ordered_id
+  # This is important when different items have different numbers of categories (issue #27)
+  item_rows <- object@score_data@score_matrix$item_id == param_name
+  if("ordered_id" %in% names(object@score_data@score_matrix) &&
+     any(!is.na(object@score_data@score_matrix$ordered_id[item_rows]))) {
+    n_cats <- unique(object@score_data@score_matrix$ordered_id[item_rows])
+    n_cats <- n_cats[!is.na(n_cats)][1]
+  } else {
+    # Fallback to counting unique outcomes for this item
+    item_outcomes <- object@score_data@score_matrix$outcome_disc[item_rows]
+    item_outcomes <- item_outcomes[!is.na(item_outcomes)]
+    n_cats <- length(unique(item_outcomes))
+  }
+
+  # Get cut names for labeling
   if(inherits(object@score_data@score_matrix$outcome_disc,'factor')) {
     cut_names <- levels(object@score_data@score_matrix$outcome_disc)
   } else {
-    cut_names <- as.character(unique(object@score_data@score_matrix$outcome_disc))
+    cut_names <- as.character(sort(unique(object@score_data@score_matrix$outcome_disc)))
   }
   # Remove NA from cut_names if present
   cut_names <- cut_names[!is.na(cut_names) & cut_names != "NA"]
-  n_cats <- length(cut_names)
+  # Limit to n_cats for this item
+  cut_names <- cut_names[1:min(n_cats, length(cut_names))]
+
   total_cat <- n_cats - 1  # number of cutpoints for GRM
 
   # Parameter name is steps_votes_grm{N} where N is number of categories
