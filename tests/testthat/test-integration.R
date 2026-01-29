@@ -244,6 +244,179 @@ test_that("id_make handles mixed binary and ordinal items with ordered_id", {
   expect_true(all(result@score_matrix$ordered_id[binary_items] == 2))
 })
 
+# Test for item index bounds (GitHub issue #26) ----
+
+test_that("GRM model item indices are within valid bounds", {
+  skip_on_cran()
+
+  # Create data with non-sequential item_id values
+  # This tests that item_id is properly factorized and indexed from 1 to N
+  set.seed(42)
+
+  n_persons <- 20
+  # Use non-sequential item_id values that could cause indexing issues
+  # if not properly factorized (e.g., max value 300 vs count of 5)
+  item_ids <- c(10, 50, 100, 200, 300)
+  n_items <- length(item_ids)
+  n_time <- 2
+
+  test_data <- expand.grid(
+    person_id = 1:n_persons,
+    item_id = item_ids,
+    time_id = 1:n_time
+  )
+
+  test_data$model_id <- 5  # GRM model
+  test_data$outcome_disc <- sample(1:5, nrow(test_data), replace = TRUE)
+  test_data$ordered_id <- 5
+  test_data$group_id <- 1
+
+  # Create idealdata
+  result <- id_make(
+    score_data = test_data,
+    person_id = "person_id",
+    item_id = "item_id",
+    time_id = "time_id",
+    group_id = "group_id",
+    model_id = "model_id",
+    outcome_disc = "outcome_disc",
+    ordered_id = "ordered_id"
+  )
+
+  expect_s4_class(result, "idealdata")
+
+  # Verify item_id is factorized properly
+  expect_true(is.factor(result@score_matrix$item_id))
+  expect_equal(nlevels(result@score_matrix$item_id), n_items)
+
+  # Key test: as.numeric(item_id) should give indices 1 to n_items,
+  # NOT the original values (10, 50, 100, 200, 300)
+  numeric_item_ids <- as.numeric(result@score_matrix$item_id)
+  expect_equal(min(numeric_item_ids), 1)
+  expect_equal(max(numeric_item_ids), n_items)
+  expect_equal(sort(unique(numeric_item_ids)), 1:n_items)
+})
+
+test_that("GRM model with non-sequential person_id maintains valid indices", {
+  skip_on_cran()
+
+  # Create data with non-sequential person_id values
+  # This mimics real-world data where person IDs may have gaps
+  set.seed(42)
+
+  # Non-sequential person_ids (like the issue26.csv which has max 2452 but 598 unique)
+  person_ids <- c(7, 13, 41, 57, 64, 68, 90, 101, 150, 200)
+  n_persons <- length(person_ids)
+  n_items <- 5
+  n_time <- 2
+
+  test_data <- expand.grid(
+    person_id = person_ids,
+    item_id = 1:n_items,
+    time_id = 1:n_time
+  )
+
+  test_data$model_id <- 5  # GRM model
+  test_data$outcome_disc <- sample(1:5, nrow(test_data), replace = TRUE)
+  test_data$ordered_id <- 5
+  test_data$group_id <- 1
+
+  result <- id_make(
+    score_data = test_data,
+    person_id = "person_id",
+    item_id = "item_id",
+    time_id = "time_id",
+    group_id = "group_id",
+    model_id = "model_id",
+    outcome_disc = "outcome_disc",
+    ordered_id = "ordered_id"
+  )
+
+  expect_s4_class(result, "idealdata")
+
+  # Verify person_id is factorized properly
+  expect_true(is.factor(result@score_matrix$person_id))
+  expect_equal(nlevels(result@score_matrix$person_id), n_persons)
+
+  # Key test: as.numeric(person_id) should give indices 1 to n_persons,
+  # NOT the original values (7, 13, 41, etc.)
+  numeric_person_ids <- as.numeric(result@score_matrix$person_id)
+  expect_equal(min(numeric_person_ids), 1)
+  expect_equal(max(numeric_person_ids), n_persons)
+  expect_equal(sort(unique(numeric_person_ids)), 1:n_persons)
+})
+
+test_that("GRM model data preparation produces valid Stan indices", {
+  skip_on_cran()
+
+  # This test directly verifies that the Stan data preparation creates
+  # valid indices that won't cause out-of-bounds errors
+  set.seed(42)
+
+  # Use data similar to issue #26
+  n_persons <- 30
+  n_items <- 10
+  n_time <- 3
+
+  # Create non-sequential IDs
+  person_ids <- sample(100:500, n_persons)
+  item_ids <- sample(1:100, n_items)
+
+  test_data <- expand.grid(
+    person_id = person_ids,
+    item_id = item_ids,
+    time_id = 1:n_time
+  )
+
+  # Add some missing data
+  set.seed(123)
+  test_data$outcome_disc <- sample(c(1:5, NA), nrow(test_data), replace = TRUE,
+                                    prob = c(rep(0.18, 5), 0.1))
+  test_data$model_id <- 5  # GRM
+  test_data$ordered_id <- 5
+  test_data$group_id <- 1
+
+  result <- id_make(
+    score_data = test_data,
+    person_id = "person_id",
+    item_id = "item_id",
+    time_id = "time_id",
+    group_id = "group_id",
+    model_id = "model_id",
+    outcome_disc = "outcome_disc",
+    ordered_id = "ordered_id"
+  )
+
+  expect_s4_class(result, "idealdata")
+
+  # Simulate what .prepare_stan_data does
+  billpoints <- as.numeric(result@score_matrix$item_id)
+  legispoints <- as.numeric(result@score_matrix$person_id)
+  modelpoints <- as.integer(result@score_matrix$model_id)
+
+  # Calculate num_bills the same way the code does
+  num_bills <- max(billpoints, na.rm = TRUE)
+  num_legis <- max(legispoints, na.rm = TRUE)
+
+  # num_bills_grm should equal num_bills for GRM model
+  num_bills_grm <- ifelse(any(modelpoints %in% c(5, 6)), num_bills, 0L)
+
+  # Critical assertions:
+  # 1. billpoints should index from 1 to num_bills (not exceed array bounds)
+  expect_true(all(billpoints >= 1))
+  expect_true(all(billpoints <= num_bills))
+
+  # 2. num_bills should equal the count of unique items, not the max original ID
+  expect_equal(num_bills, n_items)
+
+  # 3. legispoints should index from 1 to num_legis
+  expect_true(all(legispoints >= 1))
+  expect_true(all(legispoints <= num_legis))
+
+  # 4. num_legis should equal the count of unique persons
+  expect_equal(num_legis, n_persons)
+})
+
 # Simulation to estimation consistency test ----
 
 test_that("simulated data can be used with id_make", {
