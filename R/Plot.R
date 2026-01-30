@@ -729,12 +729,12 @@ id_plot_legis_dyn <- function(object,return_data=FALSE,
   }
   
   if(use_groups && !model_wrap) {
-    base_id <- ~group_id
+    base_id <- "group_id"
   } else if(!use_groups && !model_wrap) {
-    base_id <- ~person_id
+    base_id <- "person_id"
   } else {
     # set base id to the model type
-    base_id <- ~Model
+    base_id <- "Model"
     if(use_groups) {
       wrap_id <- ~group_id
     } else {
@@ -775,7 +775,7 @@ id_plot_legis_dyn <- function(object,return_data=FALSE,
   if(use_ci) {
     outplot <- person_params %>% ggplot(aes(x=time_id)) + geom_ribbon(aes(ymin=low_pt,
                                           ymax=high_pt,
-                                          group=base_id),
+                                          group= .data[[base_id]]),
                                      fill='grey80',
                                      colour=NA,
                                      alpha=person_ci_alpha)
@@ -787,7 +787,7 @@ id_plot_legis_dyn <- function(object,return_data=FALSE,
   if(!is.null(object@score_data@simul_data) && show_true) {
 
     outplot <- outplot +
-      geom_line(aes(y=true_pt,colour=base_id),
+      geom_line(aes(y=true_pt,colour=.data[[base_id]]),
                 alpha=person_line_alpha,
                 size=line_size)
 
@@ -795,13 +795,13 @@ id_plot_legis_dyn <- function(object,return_data=FALSE,
     if(group_color) {
       if(model_wrap) {
         outplot <- outplot +
-          geom_line(aes(y=median_pt,group=base_id,
+          geom_line(aes(y=median_pt,group=.data[[base_id]],
                          colour=Model),
                     alpha=person_line_alpha,
                     size=line_size)
       } else {
         outplot <- outplot +
-          geom_line(aes(y=median_pt,group=base_id,
+          geom_line(aes(y=median_pt,group=.data[[base_id]],
                          colour=group_id),
                     alpha=person_line_alpha,
                     size=line_size)
@@ -810,7 +810,7 @@ id_plot_legis_dyn <- function(object,return_data=FALSE,
     } else {
 
       outplot <- outplot +
-        geom_line(aes(y=median_pt,group=base_id),
+        geom_line(aes(y=median_pt,group=.data[[base_id]]),
                   alpha=person_line_alpha,
                   size=line_size)
     }
@@ -857,19 +857,19 @@ id_plot_legis_dyn <- function(object,return_data=FALSE,
 
     # need new data that scatters names around the plot
     if(model_wrap) {
-      sampled_data <- group_by(person_params,!!as_quosure(base_id),!!as_quosure(wrap_id)) %>% sample_n(1)
+      sampled_data <- group_by(person_params,.data[[base_id]],!!as_quosure(wrap_id)) %>% sample_n(1)
     } else {
-      sampled_data <- group_by(person_params,!!as_quosure(base_id)) %>% sample_n(1)
+      sampled_data <- group_by(person_params,.data[[base_id]]) %>% sample_n(1)
     }
     
     
     if(!is.null(highlight)) {
       
-      sampled_data <- filter(sampled_data,!(!!as_quosure(base_id) %in% highlight))
+      sampled_data <- filter(sampled_data,!(.data[[base_id]]) %in% highlight)
     }
     
     outplot <- outplot +
-      geom_text_repel(aes(x=time_id,y=median_pt,label=base_id),data=sampled_data,
+      geom_text_repel(aes(x=time_id,y=median_pt,label=.data[[base_id]]),data=sampled_data,
                 size=text_size_label,segment.colour='grey50',segment.alpha = 0.5)
     
   }
@@ -880,7 +880,7 @@ id_plot_legis_dyn <- function(object,return_data=FALSE,
     # give some of the persons a special color and make bigger
     
     outplot <- outplot + 
-      gghighlight(!!as_quosure(base_id) %in% highlight,use_group_by = F)
+      gghighlight(.data[[base_id]] %in% highlight,use_group_by = F)
   }
   
   # only use a legend if groups are used or highlights
