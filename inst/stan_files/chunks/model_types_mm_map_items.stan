@@ -598,101 +598,102 @@ if(T==1) {
   }
 } else {
   // same but time-varying
+  // Use order_cats_grm[n] for missing detection (consistent with static case)
   if(order_cats_grm[n]==3) {
-    if(Y_int[n]>y_int_miss) {
+    if(Y_int[n]>order_cats_grm[n]) {
       // missing
-      log_prob += bernoulli_logit_lpmf(1|lin_mod_abs_dyn); 
-                                        
+      log_prob += bernoulli_logit_lpmf(1|lin_mod_abs_dyn);
+
     } else {
       //observed
       log_prob += ordered_logistic_lpmf(Y_int[n]|lin_mod_obs_dyn,
                                       steps_votes_grm3[s]);
-      log_prob += bernoulli_logit_lpmf(0|lin_mod_abs_dyn); 
-                                        
+      log_prob += bernoulli_logit_lpmf(0|lin_mod_abs_dyn);
+
     }
   } else if(order_cats_grm[n]==4) {
-    if(Y_int[n]>y_int_miss) {
+    if(Y_int[n]>order_cats_grm[n]) {
       // missing
-      log_prob += bernoulli_logit_lpmf(1|lin_mod_abs_dyn); 
-                                        
+      log_prob += bernoulli_logit_lpmf(1|lin_mod_abs_dyn);
+
     } else {
       //observed
       log_prob += ordered_logistic_lpmf(Y_int[n]|lin_mod_obs_dyn,
                                       steps_votes_grm4[s]);
-      log_prob += bernoulli_logit_lpmf(0|lin_mod_abs_dyn); 
-                                        
+      log_prob += bernoulli_logit_lpmf(0|lin_mod_abs_dyn);
+
     }
   } else if(order_cats_grm[n]==5) {
-    if(Y_int[n]>y_int_miss) {
+    if(Y_int[n]>order_cats_grm[n]) {
       // missing
-      log_prob += bernoulli_logit_lpmf(1|lin_mod_abs_dyn); 
-                                        
+      log_prob += bernoulli_logit_lpmf(1|lin_mod_abs_dyn);
+
     } else {
       //observed
       log_prob += ordered_logistic_lpmf(Y_int[n]|lin_mod_obs_dyn,
                                       steps_votes_grm5[s]);
-      log_prob += bernoulli_logit_lpmf(0|lin_mod_abs_dyn); 
-                                        
+      log_prob += bernoulli_logit_lpmf(0|lin_mod_abs_dyn);
+
     }
   }else if(order_cats_grm[n]==6) {
-    if(Y_int[n]>y_int_miss) {
+    if(Y_int[n]>order_cats_grm[n]) {
       // missing
-      log_prob += bernoulli_logit_lpmf(1|lin_mod_abs_dyn); 
-                                        
+      log_prob += bernoulli_logit_lpmf(1|lin_mod_abs_dyn);
+
     } else {
       //observed
       log_prob += ordered_logistic_lpmf(Y_int[n]|lin_mod_obs_dyn,
                                       steps_votes_grm6[s]);
-      log_prob += bernoulli_logit_lpmf(0|lin_mod_abs_dyn); 
-                                        
+      log_prob += bernoulli_logit_lpmf(0|lin_mod_abs_dyn);
+
     }
   }else if(order_cats_grm[n]==7) {
-    if(Y_int[n]>y_int_miss) {
+    if(Y_int[n]>order_cats_grm[n]) {
       // missing
-      log_prob += bernoulli_logit_lpmf(1|lin_mod_abs_dyn); 
-                                        
+      log_prob += bernoulli_logit_lpmf(1|lin_mod_abs_dyn);
+
     } else {
       //observed
       log_prob += ordered_logistic_lpmf(Y_int[n]|lin_mod_obs_dyn,
                                       steps_votes_grm7[s]);
-      log_prob += bernoulli_logit_lpmf(0|lin_mod_abs_dyn); 
-                                        
+      log_prob += bernoulli_logit_lpmf(0|lin_mod_abs_dyn);
+
     }
   }else if(order_cats_grm[n]==8) {
-    if(Y_int[n]>y_int_miss) {
+    if(Y_int[n]>order_cats_grm[n]) {
       // missing
-      log_prob += bernoulli_logit_lpmf(1|lin_mod_abs_dyn); 
-                                        
+      log_prob += bernoulli_logit_lpmf(1|lin_mod_abs_dyn);
+
     } else {
       //observed
       log_prob += ordered_logistic_lpmf(Y_int[n]|lin_mod_obs_dyn,
                                       steps_votes_grm8[s]);
-      log_prob += bernoulli_logit_lpmf(0|lin_mod_abs_dyn); 
-                                        
+      log_prob += bernoulli_logit_lpmf(0|lin_mod_abs_dyn);
+
     }
   }else if(order_cats_grm[n]==9) {
-    if(Y_int[n]>y_int_miss) {
+    if(Y_int[n]>order_cats_grm[n]) {
       // missing
-      log_prob += bernoulli_logit_lpmf(1|lin_mod_abs_dyn); 
-                                        
+      log_prob += bernoulli_logit_lpmf(1|lin_mod_abs_dyn);
+
     } else {
       //observed
       log_prob += ordered_logistic_lpmf(Y_int[n]|lin_mod_obs_dyn,
                                       steps_votes_grm9[s]);
-      log_prob += bernoulli_logit_lpmf(0|lin_mod_abs_dyn); 
-                                        
+      log_prob += bernoulli_logit_lpmf(0|lin_mod_abs_dyn);
+
     }
   }else if(order_cats_grm[n]==10) {
-    if(Y_int[n]>y_int_miss) {
+    if(Y_int[n]>order_cats_grm[n]) {
       // missing
-      log_prob += bernoulli_logit_lpmf(1|lin_mod_abs_dyn); 
-                                        
+      log_prob += bernoulli_logit_lpmf(1|lin_mod_abs_dyn);
+
     } else {
       //observed
       log_prob += ordered_logistic_lpmf(Y_int[n]|lin_mod_obs_dyn,
                                       steps_votes_grm10[s]);
-      log_prob += bernoulli_logit_lpmf(0|lin_mod_abs_dyn); 
-                                        
+      log_prob += bernoulli_logit_lpmf(0|lin_mod_abs_dyn);
+
     }
   }
 }

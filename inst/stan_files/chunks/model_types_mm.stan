@@ -704,8 +704,9 @@ if(T==1) {
   }
 } else {
   // same but time-varying
+  // Use order_cats_grm[n] for missing detection (consistent with static case)
   if(order_cats_grm[n]==3) {
-    if(Y_int[n]>y_int_miss) {
+    if(Y_int[n]>order_cats_grm[n]) {
       // missing
       log_prob += bernoulli_logit_lpmf(1|lin_mod_abs_dyn);
 
@@ -717,7 +718,7 @@ if(T==1) {
 
     }
   } else if(order_cats_grm[n]==4) {
-    if(Y_int[n]>y_int_miss) {
+    if(Y_int[n]>order_cats_grm[n]) {
       // missing
       log_prob += bernoulli_logit_lpmf(1|lin_mod_abs_dyn);
 
@@ -729,7 +730,7 @@ if(T==1) {
 
     }
   } else if(order_cats_grm[n]==5) {
-    if(Y_int[n]>y_int_miss) {
+    if(Y_int[n]>order_cats_grm[n]) {
       // missing
       log_prob += bernoulli_logit_lpmf(1|lin_mod_abs_dyn);
 
@@ -741,7 +742,7 @@ if(T==1) {
 
     }
   }else if(order_cats_grm[n]==6) {
-    if(Y_int[n]>y_int_miss) {
+    if(Y_int[n]>order_cats_grm[n]) {
       // missing
       log_prob += bernoulli_logit_lpmf(1|lin_mod_abs_dyn);
 
@@ -753,7 +754,7 @@ if(T==1) {
 
     }
   }else if(order_cats_grm[n]==7) {
-    if(Y_int[n]>y_int_miss) {
+    if(Y_int[n]>order_cats_grm[n]) {
       // missing
       log_prob += bernoulli_logit_lpmf(1|lin_mod_abs_dyn);
 
@@ -765,7 +766,7 @@ if(T==1) {
 
     }
   }else if(order_cats_grm[n]==8) {
-    if(Y_int[n]>y_int_miss) {
+    if(Y_int[n]>order_cats_grm[n]) {
       // missing
       log_prob += bernoulli_logit_lpmf(1|lin_mod_abs_dyn);
 
@@ -777,7 +778,7 @@ if(T==1) {
 
     }
   }else if(order_cats_grm[n]==9) {
-    if(Y_int[n]>y_int_miss) {
+    if(Y_int[n]>order_cats_grm[n]) {
       // missing
       log_prob += bernoulli_logit_lpmf(1|lin_mod_abs_dyn);
 
@@ -789,7 +790,7 @@ if(T==1) {
 
     }
   }else if(order_cats_grm[n]==10) {
-    if(Y_int[n]>y_int_miss) {
+    if(Y_int[n]>order_cats_grm[n]) {
       // missing
       log_prob += bernoulli_logit_lpmf(1|lin_mod_abs_dyn);
 

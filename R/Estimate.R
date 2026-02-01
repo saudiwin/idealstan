@@ -301,7 +301,7 @@ id_make <- function(score_data=NULL,
     colnames(personm) <- paste0("person_", colnames(personm))
 
     score_rename <- bind_cols(score_rename,
-                              as_tibble(personm))
+                              as_tibble(personm, .name_repair = "minimal"))
     person_cov_names <- dimnames(personm)[[2]]
   } else {
     # make a dummy column if no covariate data
@@ -343,7 +343,7 @@ id_make <- function(score_data=NULL,
     colnames(itemm) <- paste0("item_", colnames(itemm))
 
     score_rename <- bind_cols(score_rename,
-                              as_tibble(itemm))
+                              as_tibble(itemm, .name_repair = "minimal"))
     item_cov_names <- dimnames(itemm)[[2]]
   } else {
     # make a dummy column if no covariate data
@@ -385,7 +385,7 @@ id_make <- function(score_data=NULL,
     colnames(itemmissm) <- paste0("item_miss_", colnames(itemmissm))
 
     score_rename <- bind_cols(score_rename,
-                              as_tibble(itemmissm))
+                              as_tibble(itemmissm, .name_repair = "minimal"))
     item_cov_miss_names <- dimnames(itemmissm)[[2]]
   } else {
     # make a dummy column if no covariate data

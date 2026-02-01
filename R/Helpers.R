@@ -183,8 +183,11 @@
                      numeric=unique(idealdata@score_matrix$time_id),
                      integer=unique(idealdata@score_matrix$time_id))
   
+  # Calculate number of time points for spline validation
+  time_points <- length(time_ind)
+
   if(vary_ideal_pts==5) {
-    
+
     if(!is.null(spline_knots) && length(spline_knots)==1 && spline_knots < 1)
       stop("Please pass a value for the number of spline_knots that is at least equal to 1 but less than the number of time points.")
     
@@ -1078,9 +1081,9 @@ process_init_pathfinder <- function(init, num_procs, model_variables = NULL,
                       obs_diff='B_int_free',
                       miss_diff='A_int_free')
     }
-    as_tibble(obj@stan_samples$draws(c(param,...)))
+    as_tibble(obj@stan_samples$draws(c(param,...)), .name_repair = "minimal")
   } else {
-    as_tibble(obj@stan_samples$draws(...))
+    as_tibble(obj@stan_samples$draws(...), .name_repair = "minimal")
   }
 
 
@@ -1193,9 +1196,9 @@ process_init_pathfinder <- function(init, num_procs, model_variables = NULL,
         dplyr::select(-`.chain`,-`.iteration`,-`.draw`)
       
     } else {
-      
-      person_params <- as_tibble(person_params)
-      
+
+      person_params <- as_tibble(person_params, .name_repair = "minimal")
+
     }
     
     if(sample_draws>0) {
@@ -2781,8 +2784,8 @@ return(as.vector(idx))
       if(all(modelpoints %in% c(7,8))) {
         
         # easiest version, all Poisson, simply convert
-        
-        Y_int <- as.numeric(as.character(Y_int))
+        # suppressWarnings: "Missing" converts to NA intentionally
+        Y_int <- suppressWarnings(as.numeric(as.character(Y_int)))
         max_Y_int <- if(any(!is.na(Y_int))) max(Y_int, na.rm=TRUE) else 0
         Y_int <- ifelse(Y_int_old=="Joint Posterior", max_Y_int + 2,
                         Y_int)
@@ -2794,8 +2797,8 @@ return(as.vector(idx))
       } else {
         
         # mixed outcome, more tricky
-        
-        Y_int_poisson <- as.numeric(as.character(Y_int))
+        # suppressWarnings: "Missing" converts to NA intentionally
+        Y_int_poisson <- suppressWarnings(as.numeric(as.character(Y_int)))
         Y_int_disc <- as.numeric(Y_int)
         
         # check for which has bigger max
@@ -3405,7 +3408,7 @@ return(as.vector(idx))
           } else {
             # break recursion
             
-            out_d <- as_tibble(prior_est) 
+            out_d <- as_tibble(prior_est, .name_repair = "minimal") 
             names(out_d) <- as.character(1:length(unique(obj@score_data@score_matrix$time_id)))
             
             out_d <- mutate(out_d,person_id=p,
@@ -3442,7 +3445,7 @@ return(as.vector(idx))
           } else {
             # break recursion
             
-            out_d <- as_tibble(prior_est) 
+            out_d <- as_tibble(prior_est, .name_repair = "minimal") 
             names(out_d) <- as.character(1:length(unique(obj@score_data@score_matrix$time_id)))
             
             out_d <- mutate(out_d,person_id=p,
@@ -3565,7 +3568,7 @@ return(as.vector(idx))
             } else {
               # break recursion
               
-              out_d <- as_tibble(prior_est) 
+              out_d <- as_tibble(prior_est, .name_repair = "minimal") 
               names(out_d) <- as.character(1:length(unique(obj@score_data@score_matrix$time_id)))
               
               out_d <- mutate(out_d,person_id=p,
@@ -3603,7 +3606,7 @@ return(as.vector(idx))
             } else {
               # break recursion
               
-              out_d <- as_tibble(prior_est) 
+              out_d <- as_tibble(prior_est, .name_repair = "minimal") 
               names(out_d) <- as.character(1:length(unique(obj@score_data@score_matrix$time_id)))
               
               out_d <- mutate(out_d,person_id=p,

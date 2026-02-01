@@ -747,7 +747,7 @@ id_plot_legis_dyn <- function(object,return_data=FALSE,
 
     true_pts <- object@score_data@simul_data$true_person
     colnames(true_pts) <- c(as.character(1:ncol(true_pts)))
-    true_pts <- as_tibble(true_pts) %>% mutate(person_id=1:n()) %>% 
+    true_pts <- as_tibble(true_pts, .name_repair = "minimal") %>% mutate(person_id=1:n()) %>% 
       gather(key = time_id,value=true_pt,-person_id) %>% 
       # need to flip for identification
       mutate(time_id=as.numeric(time_id),

@@ -1044,7 +1044,7 @@ setMethod('id_me',signature(object='idealstan'),
               out_data <- attr(mat, "data")
               colnames(mat) <- out_data$person_id
               
-              as_tibble(mat) %>% 
+              as_tibble(mat, .name_repair = "minimal") %>%
                 mutate(draws=1:n(),
                        item_id=unique(out_data$item_id)) %>% 
                 gather(key="person_id",value="estimate",-draws,-item_id) %>% 
