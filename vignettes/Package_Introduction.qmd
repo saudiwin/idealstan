@@ -3,14 +3,14 @@ title: "Introduction to Idealstan"
 author: "Robert Kubinec"
 date: last-modified
 format: html
-cache: true
+cache: false
 vignette: >
   %\VignetteIndexEntry{Time-Varying Ideal Points}
   %\VignetteEngine{R.rsp::asis}
   %\VignetteEncoding{UTF-8}
 ---
 
-```{r setup, include=FALSE}
+```{r setup, include=FALSE, cache=FALSE}
 knitr::opts_chunk$set(echo = TRUE,warning=FALSE,fig.align = 'center',fig.width=6, fig.height=5)
 
 library(idealstan)

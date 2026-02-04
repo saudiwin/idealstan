@@ -1239,16 +1239,35 @@ process_init_pathfinder <- function(init, num_procs, model_variables = NULL,
     
       
 
-    # get ids out 
-    
+    # get ids out
+
     person_ids <- select(object@score_data@score_matrix,
                          !!quo(person_id),
                          !!quo(time_id),
-                         !!quo(group_id)) %>% 
-      distinct %>% 
+                         !!quo(group_id)) %>%
+      distinct %>%
       mutate(person_id_num=as.numeric(!!quo(person_id)),
              time_id_num=as.numeric(factor(!!quo(time_id))),
              group_id_num=as.numeric(!!quo(group_id)))
+
+    # Map numeric group_id back to original labels if available
+    func_args <- object@score_data@func_args
+    if(!is.null(func_args$score_data) && !is.null(func_args$group_id)) {
+      orig_group_col <- func_args$group_id
+      if(orig_group_col %in% names(func_args$score_data)) {
+        orig_groups <- func_args$score_data[[orig_group_col]]
+        if(is.factor(orig_groups) || is.character(orig_groups)) {
+          group_mapping <- tibble(
+            group_id_int = as.integer(factor(orig_groups)),
+            group_label = as.character(orig_groups)
+          ) %>% distinct()
+          person_ids <- person_ids %>%
+            left_join(group_mapping, by = c("group_id" = "group_id_int")) %>%
+            mutate(group_id = if_else(!is.na(group_label), group_label, as.character(group_id))) %>%
+            select(-group_label)
+        }
+      }
+    }
     
     if(object@use_groups) {
       person_params <-  person_params %>% 
@@ -1350,11 +1369,29 @@ process_init_pathfinder <- function(init, num_procs, model_variables = NULL,
     
     person_data <- distinct(select(object@score_data@score_matrix,
                                    person_id,group_id))
-    
-    
+
+    # Map numeric group_id back to original labels if available
+    func_args <- object@score_data@func_args
+    if(!is.null(func_args$score_data) && !is.null(func_args$group_id)) {
+      orig_group_col <- func_args$group_id
+      if(orig_group_col %in% names(func_args$score_data)) {
+        orig_groups <- func_args$score_data[[orig_group_col]]
+        if(is.factor(orig_groups) || is.character(orig_groups)) {
+          group_mapping <- tibble(
+            group_id = as.integer(factor(orig_groups)),
+            group_label = as.character(orig_groups)
+          ) %>% distinct()
+          person_data <- person_data %>%
+            left_join(group_mapping, by = "group_id") %>%
+            mutate(group_id = if_else(!is.na(group_label), group_label, as.character(group_id))) %>%
+            select(-group_label)
+        }
+      }
+    }
+
     # add in all data in the person_data object
     if(object@use_groups) {
-      person_data <- mutate(person_data,id_num=as.numeric(group_id))
+      person_data <- mutate(person_data,id_num=as.numeric(factor(group_id)))
 
     } else {
       person_data <- mutate(person_data,id_num=as.numeric(person_id))
