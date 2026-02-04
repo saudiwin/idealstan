@@ -20,6 +20,7 @@ altdoc/freeze.rds
 ^_quarto$
 /Meta/
 /doc/
+idealstan.Rcheck/
 *.js
 *.css
 *.png

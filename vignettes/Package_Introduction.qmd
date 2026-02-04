@@ -125,7 +125,7 @@ ord_ideal_est <- id_estimate(idealdata=ord_ideal_sim,
 We can then check and see how well the Stan estimation engine was able to capture the "true" values used in the simulation by plotting the true ideal points relative to the estimated ones:
 
 ```{r check_true}
-id_plot_legis(ord_ideal_est,show_true = TRUE)
+id_plot_persons(ord_ideal_est,show_true = TRUE)
 ```
 
 Given the small amount of data used to estimate the model, the imprecision with which the ideal points were recovered is not surprising. However, the uncertainty intervals generally include the true values, indicating a model that is functioning correctly at recovering estimates even with substantial measurement error.
@@ -146,7 +146,7 @@ We can see from the plot of the Rhats, which is an MCMC convergence diagnostic, 
 
 ```{r rhats}
 id_plot_rhats(ord_ideal_est)
-id_plot_legis(ord_ideal_est,show_true = T)
+id_plot_persons(ord_ideal_est,show_true = T)
 ```
 
 In general, it is always a good idea to check the Rhats before proceeding with further analysis. Identification of time-varying ideal point models can be more complicated and is discussed in the accompanying vignette. As can be seen above, while the Pathfinder algorithm will usually identify *a* unique rotation of the ideal points without using any other prior information, it may not be the rotation that is theoretically interesting. For that reason, I recommend specifying persons or items to pin to specific values for applied use of the package as I show in the next section.
@@ -217,7 +217,7 @@ sen_est <- id_estimate(senate_data,
                  restrict_ind_high = "WARREN, Elizabeth",
                  restrict_ind_low="BARRASSO, John A.",
             seed=84520)
-id_plot_legis(sen_est,person_ci_alpha=0.2) +
+id_plot_persons(sen_est,person_ci_alpha=0.2) +
   #scale_color_manual(values=c(D='blue',R='red',I='green')) +
   ggtitle('Ideal Points of the 114th Senate')
 ```
@@ -225,7 +225,7 @@ id_plot_legis(sen_est,person_ci_alpha=0.2) +
 The `id_plot` function has many other options which are documented in the help files. One notable option, though, is to plot bill midpoints along with the legislator ideal points. The midpoints show the line of equiprobability, i.e., at what ideal point is a legislator with that ideal point indifferent to voting on a bill (or answering an item correctly). To plot a bill midpoint overlay, simply include the character ID of the bill (equivalent to the column name of the bill in the rollcall vote matrix) as the `item_plot` option:
 
 ```{r item_plot,fig.height=8}
-id_plot_legis(sen_est,person_ci_alpha=0.1,item_plot='94') +
+id_plot_persons(sen_est,person_ci_alpha=0.1,item_plot='94') +
   scale_color_manual(values=c(D='blue',R='red',I='green')) +
   ggtitle('Ideal Points of the 114th Senate with Vote 94 Midpoint')
 ```
@@ -236,7 +236,7 @@ To look at the bill's absence midpoints, simply change the `item_plot_type` para
 
 ```{r abs_item_plot,fig.height=8}
 
-id_plot_legis(sen_est,person_ci_alpha=0.1,item_plot='225',
+id_plot_persons(sen_est,person_ci_alpha=0.1,item_plot='225',
         item_plot_type='inflated') + 
   scale_color_manual(values=c(D='blue',R='red',I='green'))
 ```

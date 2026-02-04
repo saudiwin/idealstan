@@ -230,6 +230,304 @@ test_that("id_sim_gen validates cov_effect is numeric", {
   )
 })
 
+# Person covariate tests ----
+
+test_that("id_sim_gen handles continuous person covariate", {
+  skip_on_cran()
+
+  result <- id_sim_gen(
+    num_person = 20,
+    num_items = 10,
+    model_type = "binary",
+    person_cov = "continuous",
+    person_cov_effect = 1.5
+  )
+
+  expect_s4_class(result, "idealdata")
+  expect_true("person_x" %in% names(result@simul_data))
+  expect_equal(nrow(result@simul_data$person_x), 20)
+  expect_equal(ncol(result@simul_data$person_x), 1)
+  # Continuous covariates should be in [0, 1]
+  expect_true(all(result@simul_data$person_x >= 0 & result@simul_data$person_x <= 1))
+  expect_equal(result@simul_data$person_cov_effect, 1.5)
+})
+
+test_that("id_sim_gen handles binary person covariate", {
+  skip_on_cran()
+
+  result <- id_sim_gen(
+    num_person = 20,
+    num_items = 10,
+    model_type = "binary",
+    person_cov = "binary",
+    person_cov_effect = -1.0
+  )
+
+  expect_s4_class(result, "idealdata")
+  expect_equal(nrow(result@simul_data$person_x), 20)
+  # Binary covariates should only have 0 and 1
+expect_true(all(result@simul_data$person_x %in% c(0, 1)))
+  expect_equal(result@simul_data$person_cov_effect, -1.0)
+})
+
+test_that("id_sim_gen handles user-supplied person covariate matrix", {
+  skip_on_cran()
+
+  # Create user-supplied matrix with 2 covariates
+  person_mat <- matrix(rnorm(20 * 2), nrow = 20, ncol = 2)
+
+  result <- id_sim_gen(
+    num_person = 20,
+    num_items = 10,
+    model_type = "binary",
+    person_cov = person_mat,
+    person_cov_effect = c(1.0, -0.5)
+  )
+
+  expect_s4_class(result, "idealdata")
+  expect_equal(dim(result@simul_data$person_x), c(20, 2))
+  expect_equal(result@simul_data$person_cov_effect, c(1.0, -0.5))
+})
+
+test_that("id_sim_gen validates person covariate matrix dimensions", {
+  skip_on_cran()
+
+  # Wrong number of rows
+  bad_mat <- matrix(rnorm(10), nrow = 5, ncol = 2)
+
+  expect_error(
+    id_sim_gen(
+      num_person = 20,
+      num_items = 10,
+      model_type = "binary",
+      person_cov = bad_mat,
+      person_cov_effect = c(1.0, 1.0)
+    ),
+    "person_cov matrix must have 20 rows"
+  )
+})
+
+test_that("id_sim_gen validates person covariate effect length", {
+  skip_on_cran()
+
+  expect_error(
+    id_sim_gen(
+      num_person = 20,
+      num_items = 10,
+      model_type = "binary",
+      person_cov = "continuous",
+      person_cov_effect = c(1.0, 2.0)  # Should be length 1
+    ),
+    "person_cov_effect must have length 1"
+  )
+})
+
+# Item covariate tests ----
+
+test_that("id_sim_gen handles continuous item covariate for discrimination", {
+  skip_on_cran()
+
+  result <- id_sim_gen(
+    num_person = 20,
+    num_items = 15,
+    model_type = "binary",
+    item_cov = "continuous",
+    item_discrim_cov_effect = 0.5
+  )
+
+  expect_s4_class(result, "idealdata")
+  expect_true("item_x" %in% names(result@simul_data))
+  expect_equal(nrow(result@simul_data$item_x), 15)
+  expect_equal(ncol(result@simul_data$item_x), 1)
+  expect_true(all(result@simul_data$item_x >= 0 & result@simul_data$item_x <= 1))
+  expect_equal(result@simul_data$item_discrim_cov_effect, 0.5)
+})
+
+test_that("id_sim_gen handles binary item covariate", {
+  skip_on_cran()
+
+  result <- id_sim_gen(
+    num_person = 20,
+    num_items = 15,
+    model_type = "binary",
+    item_cov = "binary",
+    item_discrim_cov_effect = 0.3
+  )
+
+  expect_s4_class(result, "idealdata")
+  expect_true(all(result@simul_data$item_x %in% c(0, 1)))
+})
+
+test_that("id_sim_gen handles item covariate for discrimination", {
+  skip_on_cran()
+
+  result <- id_sim_gen(
+    num_person = 20,
+    num_items = 15,
+    model_type = "binary",
+    item_cov = "continuous",
+    item_discrim_cov_effect = 0.5
+  )
+
+  expect_s4_class(result, "idealdata")
+  expect_equal(result@simul_data$item_discrim_cov_effect, 0.5)
+})
+
+test_that("id_sim_gen handles user-supplied item covariate matrix", {
+  skip_on_cran()
+
+  item_mat <- matrix(rnorm(15 * 3), nrow = 15, ncol = 3)
+
+  result <- id_sim_gen(
+    num_person = 20,
+    num_items = 15,
+    model_type = "binary",
+    item_cov = item_mat,
+    item_discrim_cov_effect = c(0.5, -0.2, 0.1)
+  )
+
+  expect_s4_class(result, "idealdata")
+  expect_equal(dim(result@simul_data$item_x), c(15, 3))
+  expect_equal(result@simul_data$item_discrim_cov_effect, c(0.5, -0.2, 0.1))
+})
+
+test_that("id_sim_gen validates item covariate requires effect", {
+  skip_on_cran()
+
+  expect_error(
+    id_sim_gen(
+      num_person = 20,
+      num_items = 15,
+      model_type = "binary",
+      item_cov = "continuous"
+      # Missing item_discrim_cov_effect
+    ),
+    "Must provide item_cov_effect when item_cov is specified"
+  )
+})
+
+# Item missing covariate tests ----
+
+test_that("id_sim_gen handles continuous item missing covariate", {
+  skip_on_cran()
+
+  result <- id_sim_gen(
+    num_person = 20,
+    num_items = 15,
+    model_type = "binary",
+    inflate = TRUE,
+    item_miss_cov = "continuous",
+    item_miss_discrim_cov_effect = 0.4
+  )
+
+  expect_s4_class(result, "idealdata")
+  expect_true("item_miss_x" %in% names(result@simul_data))
+  expect_equal(nrow(result@simul_data$item_miss_x), 15)
+  expect_true(all(result@simul_data$item_miss_x >= 0 & result@simul_data$item_miss_x <= 1))
+  expect_equal(result@simul_data$item_miss_discrim_cov_effect, 0.4)
+})
+
+test_that("id_sim_gen handles binary item missing covariate", {
+  skip_on_cran()
+
+  result <- id_sim_gen(
+    num_person = 20,
+    num_items = 15,
+    model_type = "binary",
+    inflate = TRUE,
+    item_miss_cov = "binary",
+    item_miss_discrim_cov_effect = 0.6
+  )
+
+  expect_s4_class(result, "idealdata")
+  expect_true(all(result@simul_data$item_miss_x %in% c(0, 1)))
+})
+
+test_that("id_sim_gen handles item missing covariate for discrimination", {
+  skip_on_cran()
+
+  result <- id_sim_gen(
+    num_person = 20,
+    num_items = 15,
+    model_type = "binary",
+    inflate = TRUE,
+    item_miss_cov = "continuous",
+    item_miss_discrim_cov_effect = 0.4
+  )
+
+  expect_s4_class(result, "idealdata")
+  expect_equal(result@simul_data$item_miss_discrim_cov_effect, 0.4)
+})
+
+# Combined covariate tests ----
+
+test_that("id_sim_gen handles all covariate types simultaneously", {
+  skip_on_cran()
+
+  result <- id_sim_gen(
+    num_person = 20,
+    num_items = 15,
+    model_type = "binary",
+    inflate = TRUE,
+    person_cov = "continuous",
+    person_cov_effect = 1.0,
+    item_cov = "binary",
+    item_discrim_cov_effect = 0.5,
+    item_miss_cov = "continuous",
+    item_miss_discrim_cov_effect = 0.3
+  )
+
+  expect_s4_class(result, "idealdata")
+  # Check all covariate data is stored
+  expect_equal(nrow(result@simul_data$person_x), 20)
+  expect_equal(nrow(result@simul_data$item_x), 15)
+  expect_equal(nrow(result@simul_data$item_miss_x), 15)
+  # Check all effects are stored
+  expect_equal(result@simul_data$person_cov_effect, 1.0)
+  expect_equal(result@simul_data$item_discrim_cov_effect, 0.5)
+  expect_equal(result@simul_data$item_miss_discrim_cov_effect, 0.3)
+})
+
+test_that("id_sim_gen covariate effects actually influence parameters", {
+  skip_on_cran()
+
+  # Create a strong covariate effect to test influence
+  set.seed(42)
+  # First half of persons have covariate = 0, second half = 1
+  person_cov_mat <- matrix(c(rep(0, 10), rep(1, 10)), ncol = 1)
+
+  result <- id_sim_gen(
+    num_person = 20,
+    num_items = 10,
+    model_type = "binary",
+    person_cov = person_cov_mat,
+    person_cov_effect = 5.0,  # Strong effect
+    ideal_pts_sd = 0.1  # Low variance to make effect more visible
+  )
+
+  expect_s4_class(result, "idealdata")
+  # Persons with covariate = 1 should have higher ideal points on average
+  # due to positive covariate effect
+  mean_group0 <- mean(result@simul_data$true_person[1:10])
+  mean_group1 <- mean(result@simul_data$true_person[11:20])
+  expect_true(mean_group1 > mean_group0)
+})
+
+test_that("id_sim_gen validates invalid covariate type string", {
+  skip_on_cran()
+
+  expect_error(
+    id_sim_gen(
+      num_person = 20,
+      num_items = 10,
+      model_type = "binary",
+      person_cov = "invalid_type",
+      person_cov_effect = 1.0
+    ),
+    "must be 'continuous', 'binary', or a numeric matrix"
+  )
+})
+
 # Parameter validation tests ----
 
 test_that("id_sim_gen validates time_process parameter", {

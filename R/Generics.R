@@ -1120,13 +1120,13 @@ setMethod('id_me',signature(object='idealstan'),
 #' To use this function, you must pass a fitted \code{idealstan} object
 #' along with the name of a parameter in the model. To determine these
 #' parameter names, use the \code{summary} function or obtain the data
-#' from a plot by passing the \code{return_data=TRUE} option to 
-#' \code{id_plog_legis} or \code{id_plot_legis_dyn} to find the 
+#' from a plot by passing the \code{return_data=TRUE} option to
+#' \code{id_plot_persons} or \code{id_plot_persons_dyn} to find the
 #' name of the parameter in the Stan model.
-#' 
-#' This function is a simple wrapper around \code{\link[bayesplot]{mcmc_trace}}. 
+#'
+#' This function is a simple wrapper around \code{\link[bayesplot]{mcmc_trace}}.
 #' Please refer to that function's documentation for further options.
-#' 
+#'
 #' @param object A fitted \code{idealstan} model
 #' @importFrom bayesplot mcmc_trace
 #' @param ... Other options passed on to \code{\link[rstan]{stan_trace}}
@@ -1136,15 +1136,15 @@ setGeneric('stan_trace',
            function(object,...) standardGeneric('stan_trace'))
 
 #' Plot the MCMC posterior draws by chain
-#' 
+#'
 #' This function allows you to produce trace plots for assessing the quality
-#' and convergence of MCMC chains. 
-#' 
+#' and convergence of MCMC chains.
+#'
 #' To use this function, you must pass a fitted \code{idealstan} object
 #' along with the name of a parameter in the model. To determine these
 #' parameter names, use the \code{summary} function or obtain the data
-#' from a plot by passing the \code{return_data=TRUE} option to 
-#' \code{id_plog_legis} or \code{id_plot_legis_dyn} to find the 
+#' from a plot by passing the \code{return_data=TRUE} option to
+#' \code{id_plot_persons} or \code{id_plot_persons_dyn} to find the
 #' name of the parameter in the Stan model.
 #' 
 #' This function is a simple wrapper around \code{\link[bayesplot]{mcmc_trace}}. 

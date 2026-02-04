@@ -39,21 +39,33 @@ is_ggplot <- function(x) {
 #   expect_true(is.data.frame(result) || is_ggplot(result))
 # })
 
-# id_plot_legis function existence tests ----
+# id_plot_persons function existence tests ----
 
-test_that("id_plot_legis function exists", {
-  expect_true(exists("id_plot_legis"))
-  expect_true(is.function(id_plot_legis))
+test_that("id_plot_persons function exists", {
+  expect_true(exists("id_plot_persons"))
+  expect_true(is.function(id_plot_persons))
 })
 
-test_that("id_plot_legis_dyn function exists", {
-  expect_true(exists("id_plot_legis_dyn"))
-  expect_true(is.function(id_plot_legis_dyn))
+test_that("id_plot_persons_dyn function exists", {
+  expect_true(exists("id_plot_persons_dyn"))
+  expect_true(is.function(id_plot_persons_dyn))
 })
 
 test_that("id_plot_legis_var function exists", {
   expect_true(exists("id_plot_legis_var"))
   expect_true(is.function(id_plot_legis_var))
+})
+
+# Deprecated function existence tests ----
+
+test_that("deprecated id_plot_legis function still exists", {
+  expect_true(exists("id_plot_legis"))
+  expect_true(is.function(id_plot_legis))
+})
+
+test_that("deprecated id_plot_legis_dyn function still exists", {
+  expect_true(exists("id_plot_legis_dyn"))
+  expect_true(is.function(id_plot_legis_dyn))
 })
 
 test_that("id_plot_compare function exists", {
@@ -85,7 +97,7 @@ test_that("id_show_trues function exists", {
 
 # Parameter validation tests for plotting functions ----
 
-test_that("id_plot_legis validates sample_persons parameter", {
+test_that("id_plot_persons validates sample_persons parameter", {
   skip_on_cran()
 
   # Create a mock idealstan object structure to test parameter validation
@@ -110,8 +122,8 @@ test_that("id_plot_legis validates sample_persons parameter", {
 
 # Tests for plotting function arguments ----
 
-test_that("id_plot_legis has expected parameters", {
-  args <- names(formals(id_plot_legis))
+test_that("id_plot_persons has expected parameters", {
+  args <- names(formals(id_plot_persons))
 
   expect_true("object" %in% args)
   expect_true("return_data" %in% args)
@@ -119,8 +131,8 @@ test_that("id_plot_legis has expected parameters", {
   expect_true("low_limit" %in% args)
 })
 
-test_that("id_plot_legis_dyn has expected parameters", {
-  args <- names(formals(id_plot_legis_dyn))
+test_that("id_plot_persons_dyn has expected parameters", {
+  args <- names(formals(id_plot_persons_dyn))
 
   expect_true("object" %in% args)
   expect_true("return_data" %in% args)

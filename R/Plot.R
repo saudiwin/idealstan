@@ -74,10 +74,10 @@
 #' # After running the model, we can plot 
 #' # the results of the person/legislator ideal points
 #' 
-#' id_plot_legis(sen_est)
+#' id_plot_persons(sen_est)
 #' }
-#' 
-id_plot_legis <- function(object,return_data=FALSE,
+#'
+id_plot_persons <- function(object,return_data=FALSE,
                           include=NULL,
                           high_limit=.95,
                           low_limit=.05,
@@ -159,12 +159,12 @@ id_plot_legis <- function(object,return_data=FALSE,
   }
   
   if(group_color && !model_wrap) {
-    groupc <- ~group_id
+    groupc <- "group_id"
   } else if(!group_color && !model_wrap) {
     groupc <- NA
   } else {
     # if multiple models, subset by models
-    groupc <- ~Model
+    groupc <- "Model"
   }
 
   # sample for plot only
@@ -249,12 +249,12 @@ id_plot_legis <- function(object,return_data=FALSE,
   if(is.null(item_plot)) {
     outplot <- person_params %>% ggplot() +
       geom_linerange(aes(x=reorder(person_id,median_pt),
-                         ymin=low_pt,ymax=high_pt,color=groupc),
+                         ymin=low_pt,ymax=high_pt,color=.data[[groupc]]),
                      alpha=person_ci_alpha,
                      show.legend = FALSE) +
       geom_text(aes(x=reorder(person_id,median_pt),
                     y=median_pt,label=reorder(group_id,median_pt),
-                    color=groupc),size=text_size_group,
+                    color=.data[[groupc]]),size=text_size_group,
                 show.legend = FALSE,
                 check_overlap = T)
 
@@ -262,10 +262,10 @@ id_plot_legis <- function(object,return_data=FALSE,
     # if an item plot is being made, use the actual outcomes as points
 
     outplot <- person_params %>% ggplot() +
-      geom_linerange(aes(x=reorder(person_id,median_pt),colour=groupc,
+      geom_linerange(aes(x=reorder(person_id,median_pt),colour=.data[[groupc]],
                          ymin=low_pt,ymax=high_pt),alpha=person_ci_alpha) +
       geom_text(aes(x=reorder(person_id,median_pt),y=median_pt,
-                    colour=groupc,
+                    colour=.data[[groupc]],
                     label=reorder(outcome_disc,median_pt)),size=text_size_group,
                 check_overlap = T)
 
@@ -572,9 +572,9 @@ id_plot_legis_var <- function(object,return_data=FALSE,
 #' # After running the model, we can plot 
 #' # the results of the person/legislator ideal points
 #' 
-#' id_plot_legis_dyn(sen_est)
+#' id_plot_persons_dyn(sen_est)
 #' }
-id_plot_legis_dyn <- function(object,return_data=FALSE,
+id_plot_persons_dyn <- function(object,return_data=FALSE,
                               include=NULL,item_plot=NULL,
                               text_size_label=2,text_size_group=2.5,
                               high_limit=0.95,
@@ -941,8 +941,8 @@ id_plot_compare <- function(model1=NULL,model2=NULL,scale_flip=FALSE,return_data
                            rescale=FALSE) {
   
 
-  data1 <- id_plot_legis(model1,return_data=TRUE)$plot_data
-  data2 <- id_plot_legis(model2,return_data=TRUE)$plot_data
+  data1 <- id_plot_persons(model1,return_data=TRUE)$plot_data
+  data2 <- id_plot_persons(model2,return_data=TRUE)$plot_data
   data1 <- mutate(data1,this_model='Model1')
   data2 <- mutate(data2,this_model='Model2')
   
@@ -1687,4 +1687,321 @@ id_plot_gbeta_prior <- function(
   shiny::runApp(shiny::shinyApp(ui = ui, server = server))
 }
 
+#' Plot Item Discrimination or Difficulty Parameters
+#'
+#' This function plots item-level parameters (discrimination or difficulty) from a
+#' fitted `idealstan` object. It can display both observed (non-inflated) and
+#' missing (inflated) item parameters.
+#'
+#' @param object A fitted `idealstan` object
+#' @param param_type Which parameter to plot: `"discrimination"` (default) or `"difficulty"`
+#' @param item_type Which item parameters to show: `"both"` (default), `"observed"`, or `"missing"`.
+#'   `"observed"` shows the non-inflated parameters (gamma/beta), `"missing"` shows the
+
+#'   inflated/absence parameters (nu/omega).
+#' @param include A character vector of item IDs to include in the plot (all others excluded).
+#'   If NULL (default), all items are shown.
+#' @param high_limit The quantile (number between 0 and 1) for the high end of posterior
+#'   uncertainty to show in plot. Default is 0.95.
+#' @param low_limit The quantile (number between 0 and 1) for the low end of posterior
+#'   uncertainty to show in plot. Default is 0.05.
+#' @param text_size_label The size of text labels for item names. Default is 2.
+#' @param point_size The size of points in the plot. Default is 1.
+#' @param item_labels If `TRUE` (default), show item name labels on the plot.
+#' @param order_by How to order items: `"median"` (default) orders by posterior median,
+#'   `"name"` orders alphabetically by item name, `"uncertainty"` orders by width of
+#'   posterior interval.
+#' @param return_data If `TRUE`, return the data used for plotting along with the plot
+#'   as a list. Default is `FALSE`.
+#' @param show_true If the model was fitted on simulated data, show the true parameter values.
+#'   Default is `FALSE`.
+#' @param use_chain Which MCMC chains to use. Default is NULL (use all chains).
+#' @param ... Other arguments (currently ignored)
+#'
+#' @return A `ggplot2` object, or if `return_data=TRUE`, a list with elements `plot` and `data`.
+#'
+#' @examples
+#' \dontrun{
+#' # After fitting a model:
+#' # Plot discrimination parameters for all items
+#' id_plot_items(fitted_model)
+#'
+#' # Plot only difficulty parameters
+#' id_plot_items(fitted_model, param_type = "difficulty")
+#'
+#' # Plot only observed (non-inflated) discrimination
+#' id_plot_items(fitted_model, item_type = "observed")
+#'
+#' # Plot specific items only
+#' id_plot_items(fitted_model, include = c("item1", "item2", "item3"))
+#' }
+#'
+#' @import ggplot2
+#' @export
+id_plot_items <- function(object,
+                          param_type = "discrimination",
+                          item_type = "both",
+                          include = NULL,
+                          high_limit = 0.95,
+                          low_limit = 0.05,
+                          text_size_label = 2,
+                          point_size = 1,
+                          item_labels = TRUE,
+                          order_by = "median",
+                          return_data = FALSE,
+                          show_true = FALSE,
+                          use_chain = NULL,
+                          ...) {
+
+  # Validate inputs
+  if (!inherits(object, "idealstan")) {
+    stop("object must be a fitted idealstan object")
+  }
+
+  param_type <- match.arg(param_type, c("discrimination", "difficulty"))
+  item_type <- match.arg(item_type, c("both", "observed", "missing"))
+  order_by <- match.arg(order_by, c("median", "name", "uncertainty"))
+
+  # Get item names
+  item_names <- levels(object@score_data@score_matrix$item_id)
+
+  # Filter items if include is specified
+  if (!is.null(include)) {
+    item_names <- item_names[item_names %in% include]
+    if (length(item_names) == 0) {
+      stop("No items match the 'include' specification")
+    }
+  }
+
+  # Set up chain selection
+  if (is.null(use_chain)) {
+    use_chain <- 1:dim(as_draws_array(object@stan_samples$draws("L_full")))[2]
+  }
+
+  # Determine parameter names based on type
+  if (param_type == "discrimination") {
+    obs_param <- "sigma_reg_free"
+    miss_param <- "sigma_abs_free"
+    obs_label <- "Observed Discrimination"
+    miss_label <- "Missing Discrimination"
+    y_label <- "Discrimination"
+  } else {
+    obs_param <- "B_int_free"
+    miss_param <- "A_int_free"
+    obs_label <- "Observed Difficulty"
+    miss_label <- "Missing Difficulty"
+    y_label <- "Difficulty"
+  }
+
+  # Extract parameters for each item
+  item_data <- lapply(item_names, function(item_name) {
+    param_num <- which(levels(object@score_data@score_matrix$item_id) == item_name)
+
+    result_list <- list()
+
+    if (item_type %in% c("both", "observed")) {
+      obs_draws <- as_draws_array(object@stan_samples$draws(paste0(obs_param, '[', param_num, ']')))[, use_chain, ] %>%
+        as_draws_matrix() %>%
+        as.numeric()
+
+      result_list$observed <- tibble(
+        item_name = item_name,
+        param_type = obs_label,
+        median_pt = quantile(obs_draws, 0.5),
+        high_pt = quantile(obs_draws, high_limit),
+        low_pt = quantile(obs_draws, low_limit)
+      )
+    }
+
+    if (item_type %in% c("both", "missing")) {
+      miss_draws <- as_draws_array(object@stan_samples$draws(paste0(miss_param, '[', param_num, ']')))[, use_chain, ] %>%
+        as_draws_matrix() %>%
+        as.numeric()
+
+      result_list$missing <- tibble(
+        item_name = item_name,
+        param_type = miss_label,
+        median_pt = quantile(miss_draws, 0.5),
+        high_pt = quantile(miss_draws, high_limit),
+        low_pt = quantile(miss_draws, low_limit)
+      )
+    }
+
+    bind_rows(result_list)
+  }) %>% bind_rows()
+
+  # Add true values if available and requested
+  if (show_true && !is.null(object@score_data@simul_data)) {
+    if (param_type == "discrimination") {
+      true_obs <- object@score_data@simul_data$true_reg_discrim
+      true_miss <- object@score_data@simul_data$true_abs_discrim
+    } else {
+      true_obs <- object@score_data@simul_data$reg_diff
+      true_miss <- object@score_data@simul_data$absence_diff
+    }
+
+    # Create true value mapping
+    all_items <- levels(object@score_data@score_matrix$item_id)
+    true_df <- tibble(
+      item_name = rep(item_names, each = if(item_type == "both") 2 else 1),
+      param_type = if(item_type == "both") {
+        rep(c(obs_label, miss_label), length(item_names))
+      } else if(item_type == "observed") {
+        rep(obs_label, length(item_names))
+      } else {
+        rep(miss_label, length(item_names))
+      }
+    )
+
+    true_df$true_value <- sapply(1:nrow(true_df), function(i) {
+      idx <- which(all_items == true_df$item_name[i])
+      if (true_df$param_type[i] == obs_label) {
+        true_obs[idx]
+      } else {
+        true_miss[idx]
+      }
+    })
+
+    item_data <- left_join(item_data, true_df, by = c("item_name", "param_type"))
+  }
+
+  # Order items
+  if (order_by == "median") {
+    # Order by median of observed parameters first, then missing
+    order_df <- item_data %>%
+      filter(param_type == obs_label | (item_type == "missing" & param_type == miss_label)) %>%
+      group_by(item_name) %>%
+      summarize(order_val = median(median_pt), .groups = "drop") %>%
+      arrange(order_val)
+    item_data$item_name <- factor(item_data$item_name, levels = order_df$item_name)
+  } else if (order_by == "name") {
+    item_data$item_name <- factor(item_data$item_name, levels = sort(unique(item_data$item_name)))
+  } else if (order_by == "uncertainty") {
+    order_df <- item_data %>%
+      group_by(item_name) %>%
+      summarize(order_val = mean(high_pt - low_pt), .groups = "drop") %>%
+      arrange(desc(order_val))
+    item_data$item_name <- factor(item_data$item_name, levels = order_df$item_name)
+  }
+
+  # Create plot
+  outplot <- ggplot(item_data, aes(x = item_name, y = median_pt, color = param_type)) +
+    geom_pointrange(aes(ymin = low_pt, ymax = high_pt),
+                    position = position_dodge(width = 0.5),
+                    size = point_size) +
+    coord_flip() +
+    labs(x = "Item",
+         y = y_label,
+         color = "Parameter Type") +
+    theme_minimal() +
+    theme(legend.position = "bottom")
+
+  # Add true values if available
+  if (show_true && "true_value" %in% names(item_data)) {
+    outplot <- outplot +
+      geom_point(aes(y = true_value),
+                 shape = 4, size = point_size * 2,
+                 position = position_dodge(width = 0.5))
+  }
+
+  # Add reference line at zero for discrimination
+  if (param_type == "discrimination") {
+    outplot <- outplot +
+      geom_hline(yintercept = 0, linetype = "dashed", alpha = 0.5)
+  }
+
+  # Remove item labels if not wanted
+  if (!item_labels && length(item_names) > 30) {
+    outplot <- outplot +
+      theme(axis.text.y = element_blank(),
+            axis.ticks.y = element_blank())
+  }
+
+  if (return_data) {
+    return(list(plot = outplot, data = item_data))
+  } else {
+    return(outplot)
+  }
+}
+
+#' Plot Person Ideal Points (Deprecated)
+#'
+#' @description
+#' `r lifecycle::badge("deprecated")`
+#'
+#' `id_plot_legis()` was renamed to [id_plot_persons()] for clarity and consistency.
+#'
+#' @inheritParams id_plot_persons
+#' @export
+#' @keywords internal
+id_plot_legis <- function(object, return_data = FALSE,
+                          include = NULL,
+                          high_limit = 0.95,
+                          low_limit = 0.05,
+                          item_plot = NULL,
+                          item_plot_type = 'non-inflated',
+                          text_size_label = 2, text_size_group = 2.5,
+                          point_size = 1,
+                          hjust_length = -0.7,
+                          person_labels = TRUE,
+                          group_labels = FALSE,
+                          person_ci_alpha = 0.2,
+                          show_true = FALSE, group_color = TRUE,
+                          hpd_limit = NULL,
+                          sample_persons = NULL, ...) {
+  .Deprecated("id_plot_persons", msg = "id_plot_legis() is deprecated. Please use id_plot_persons() instead.")
+  id_plot_persons(object = object, return_data = return_data,
+                  include = include, high_limit = high_limit,
+                  low_limit = low_limit, item_plot = item_plot,
+                  item_plot_type = item_plot_type,
+                  text_size_label = text_size_label, text_size_group = text_size_group,
+                  point_size = point_size, hjust_length = hjust_length,
+                  person_labels = person_labels, group_labels = group_labels,
+                  person_ci_alpha = person_ci_alpha, show_true = show_true,
+                  group_color = group_color, hpd_limit = hpd_limit,
+                  sample_persons = sample_persons, ...)
+}
+
+#' Plot Dynamic Person Ideal Points (Deprecated)
+#'
+#' @description
+#' `r lifecycle::badge("deprecated")`
+#'
+#' `id_plot_legis_dyn()` was renamed to [id_plot_persons_dyn()] for clarity and consistency.
+#'
+#' @inheritParams id_plot_persons_dyn
+#' @export
+#' @keywords internal
+id_plot_legis_dyn <- function(object, return_data = FALSE,
+                              include = NULL, item_plot = NULL,
+                              text_size_label = 2, text_size_group = 2.5,
+                              high_limit = 0.95,
+                              low_limit = 0.05,
+                              line_size = 1,
+                              highlight = NULL,
+                              plot_text = TRUE,
+                              use_ci = TRUE,
+                              plot_lines = 0,
+                              draw_line_alpha = 0.5,
+                              person_line_alpha = 0.3,
+                              person_ci_alpha = 0.8,
+                              item_plot_type = 'non-inflated', show_true = FALSE, group_color = TRUE,
+                              hpd_limit = 10,
+                              sample_persons = NULL,
+                              use_chain = NULL,
+                              add_cov = TRUE, ...) {
+  .Deprecated("id_plot_persons_dyn", msg = "id_plot_legis_dyn() is deprecated. Please use id_plot_persons_dyn() instead.")
+  id_plot_persons_dyn(object = object, return_data = return_data,
+                      include = include, item_plot = item_plot,
+                      text_size_label = text_size_label, text_size_group = text_size_group,
+                      high_limit = high_limit, low_limit = low_limit,
+                      line_size = line_size, highlight = highlight,
+                      plot_text = plot_text, use_ci = use_ci,
+                      plot_lines = plot_lines, draw_line_alpha = draw_line_alpha,
+                      person_line_alpha = person_line_alpha, person_ci_alpha = person_ci_alpha,
+                      item_plot_type = item_plot_type, show_true = show_true,
+                      group_color = group_color, hpd_limit = hpd_limit,
+                      sample_persons = sample_persons, use_chain = use_chain,
+                      add_cov = add_cov, ...)
+}
 

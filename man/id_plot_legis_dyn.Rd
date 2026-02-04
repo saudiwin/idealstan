@@ -2,7 +2,7 @@
 % Please edit documentation in R/Plot.R
 \name{id_plot_legis_dyn}
 \alias{id_plot_legis_dyn}
-\title{Function to plot dynamic ideal point models}
+\title{Plot Dynamic Person Ideal Points (Deprecated)}
 \usage{
 id_plot_legis_dyn(
   object,
@@ -96,47 +96,8 @@ time trends (defaults to TRUE).}
 \item{...}{Other options passed on to plotting function, currently ignored}
 }
 \description{
-This function can be used on a fitted \code{idealstan} object to plot the relative positions and
-uncertainties of legislator/persons and bills/items when the legislator/person ideal points
-are allowed to vary over time.
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
+
+\code{id_plot_legis_dyn()} was renamed to \code{\link[=id_plot_persons_dyn]{id_plot_persons_dyn()}} for clarity and consistency.
 }
-\details{
-This plot shows the distribution of ideal points for the legislators/persons in the model,
-and also traces the path of these ideal points over time. It will plot them as a vertical
-line with associated high-density posterior interval (10\\% to 90\\%). In addition, if the column index for a
-bill/item from the response matrix is passed to the \code{item_plot} option, then an item/bill midpoint will be overlain
-on the ideal point plot, showing the point at which legislators/persons are indifferent to voting/answering on the
-bill/item. Note that because this is an ideal point model, it is not possible to tell from the midpoint itself
-which side will be voting which way. For that reason, the legislators/persons are colored by their votes/scores to
-make it clear.
-}
-\examples{
-
-\dontrun{
-
-# First create data and run a model
-
-to_idealstan <-   id_make(score_data = senate114,
-outcome = 'cast_code',
-person_id = 'bioname',
-item_id = 'rollnumber',
-group_id= 'party_code',
-time_id='date',
-high_val='Yes',
-low_val='No',
-miss_val='Absent')
-
-sen_est <- id_estimate(senate_data,
-model_type = 2,
-use_method = "pathfinder",
-vary_ideal_pts='random_walk',
-fixtype='vb_partial',
-restrict_ind_high = "BARRASSO, John A.",
-restrict_ind_low = "WARREN, Elizabeth")
-
-# After running the model, we can plot 
-# the results of the person/legislator ideal points
-
-id_plot_legis_dyn(sen_est)
-}
-}
+\keyword{internal}

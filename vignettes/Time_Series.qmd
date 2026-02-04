@@ -109,7 +109,7 @@ It is important to note that the warnings about importance resampling and the ap
 Given the fitted model, we can now plot the ideal points. We will turn off the option for showing the uncertainty interval as there are a lot of lines, one for each legislator:
 
 ```{r plo_rw1, fig.height=8}
-id_plot_legis_dyn(del_est,use_ci = T) +
+id_plot_persons_dyn(del_est,use_ci = T) +
   # scale_color_manual(values=c(R='red',
   #                             D='blue',
   #                             X='green'),
@@ -154,7 +154,7 @@ del_est_spline <- id_estimate(delaware_data,
                  restrict_ind_low=276,
             seed=84520)
 
-id_plot_legis_dyn(del_est_spline,use_ci = F)
+id_plot_persons_dyn(del_est_spline,use_ci = F)
   # scale_color_manual(values=c(R='red',
   #                             D='blue',
   #                             X='green'))
@@ -183,7 +183,7 @@ del_est_rw3 <- id_estimate(delaware_data,
                  restrict_ind_low=276,
                 vary_ideal_pts='random_walk',
             seed=84520)
-id_plot_legis_dyn(del_est_rw3,
+id_plot_persons_dyn(del_est_rw3,
                   include=c('D','R')) + scale_colour_manual(values=c(R='red',
                                                           D='blue',
                                                           I='green'),
@@ -196,7 +196,7 @@ id_plot_legis_dyn(del_est_rw3,
 We can also overlay a bill/item midpoint to see where the line of indifference in voting is relative to party positions. In a dynamic ideal point model, the bill/item midpoint will be a straight line as the bill-item midpoint was only voted on in one time point, and hence has only one parameter:
 
 ```{r party_mid}
-id_plot_legis_dyn(del_est_rw3,item_plot='342',
+id_plot_persons_dyn(del_est_rw3,item_plot='342',
                   text_size_label = 5,
                   include=c('D','R')) + scale_colour_manual(values=c(R='red',
                                                           D='blue',
@@ -229,8 +229,8 @@ del_est_gp1 <- id_estimate(delaware_data,
 We can then examine the distributions for both models as plots:
 
 ```{r compare_mods}
-id_plot_legis_dyn(del_est_rw3,include=c('D','R'))
-id_plot_legis_dyn(del_est_gp1,include=c('D','R'))
+id_plot_persons_dyn(del_est_rw3,include=c('D','R'))
+id_plot_persons_dyn(del_est_gp1,include=c('D','R'))
 ```
 
 This plot shows that are substantial divergences between the different models (each plot is faceted by `group_id`). The GP model shows a lot more bounce over time relative to the random walk model, which is implausible given the latent trait we are trying to estimate is legislator ideology. In this case, we should prefer simpler models, such as random walks or splines, to estimate a more slowly-changing latent variable. Estimation with HMC rather than the variational approximation could also help.

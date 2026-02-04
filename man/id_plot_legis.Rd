@@ -2,7 +2,7 @@
 % Please edit documentation in R/Plot.R
 \name{id_plot_legis}
 \alias{id_plot_legis}
-\title{Plot Legislator/Person and Bill/Item Ideal Points}
+\title{Plot Person Ideal Points (Deprecated)}
 \usage{
 id_plot_legis(
   object,
@@ -17,7 +17,7 @@ id_plot_legis(
   point_size = 1,
   hjust_length = -0.7,
   person_labels = TRUE,
-  group_labels = F,
+  group_labels = FALSE,
   person_ci_alpha = 0.2,
   show_true = FALSE,
   group_color = TRUE,
@@ -71,52 +71,8 @@ only a fraction of the persons/legislators.}
 \item{...}{Other options passed on to plotting function, currently ignored}
 }
 \description{
-This function can be used on a fitted \code{idealstan} object to plot the relative positions and
-uncertainties of legislator/persons and bills/items.
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
+
+\code{id_plot_legis()} was renamed to \code{\link[=id_plot_persons]{id_plot_persons()}} for clarity and consistency.
 }
-\details{
-This plot shows the distribution of ideal points for the legislators/persons in the model. It will plot them as a vertical
-dot plot with associated high-density posterior interval (can be changed
-with \code{high_limit} and \code{low_limit} options). In addition, if item/bill IDs
-as a character vector is passed to the \code{item_plot} option, then an item/bill midpoint will be overlain
-on the ideal point plot, showing the point at which legislators/persons are indifferent to voting/answering on the
-bill/item. Note that because this is an ideal point model, it is not possible to tell from the midpoint itself
-which side will be voting which way. For that reason, the legislators/persons are colored by their votes/scores to
-make it clear.
-
-To compare across multiple \code{idealstan} models, pass a named list
-\code{list(model1=model1,model2=model2,etc)} to the \code{object} option.
-Note that these comparisons will done by individual persons/groups, so if there are a lot of
-persons/groups, consider using the \code{include} option to only compare a specific set
-of persons/groups.
-}
-\examples{
-
-\dontrun{
-
-# First create data and run a model
-
-to_idealstan <-   id_make(score_data = senate114,
-outcome = 'cast_code',
-person_id = 'bioname',
-item_id = 'rollnumber',
-group_id= 'party_code',
-time_id='date',
-high_val='Yes',
-low_val='No',
-miss_val='Absent')
-
-sen_est <- id_estimate(senate_data,
-model_type = 2,
-use_method = "pathfinder",
-fixtype='vb_partial',
-restrict_ind_high = "BARRASSO, John A.",
-restrict_ind_low = "WARREN, Elizabeth")
-
-# After running the model, we can plot 
-# the results of the person/legislator ideal points
-
-id_plot_legis(sen_est)
-}
-
-}
+\keyword{internal}

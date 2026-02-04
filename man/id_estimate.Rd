@@ -564,7 +564,7 @@ restrict_ind_low = "WARREN, Elizabeth")
 # After running the model, we can plot 
 # the results of the person/legislator ideal points
 
-id_plot_legis(sen_est)
+id_plot_persons(sen_est)
 }
 
 }
@@ -578,7 +578,7 @@ id_plot_legis(sen_est)
 }
 \seealso{
 \code{\link[=id_make]{id_make()}} for pre-processing data,
-\code{\link[=id_plot_legis]{id_plot_legis()}} for plotting results,
+\code{\link[=id_plot_persons]{id_plot_persons()}} for plotting results,
 \code{\link[=summary]{summary()}} for obtaining posterior quantiles,
 \code{\link[=id_post_pred]{id_post_pred()}} for producing predictive replications.
 }

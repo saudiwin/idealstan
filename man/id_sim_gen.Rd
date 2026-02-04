@@ -8,6 +8,12 @@ id_sim_gen(
   num_person = 20,
   num_items = 50,
   cov_effect = NULL,
+  person_cov = NULL,
+  person_cov_effect = NULL,
+  item_cov = NULL,
+  item_discrim_cov_effect = NULL,
+  item_miss_cov = NULL,
+  item_miss_discrim_cov_effect = NULL,
   model_type = "binary",
   latent_space = FALSE,
   absence_discrim_sd = 3,
@@ -47,7 +53,34 @@ id_sim_gen(
 \item{cov_effect}{The effect of a hierarchical/external covariate on the person
 ideal points. The covariate will be a uniformly-distributed random variable on the
 [0,1] scale, so covariate effects in the [-2,2] approximate range would result in
-noticeable effects on the ideal point scale.}
+noticeable effects on the ideal point scale. This is a legacy parameter; prefer using
+\code{person_cov} and \code{person_cov_effect} for more control.}
+
+\item{person_cov}{Either \code{NULL} (no covariate), \code{"continuous"} to generate a uniform
+random covariate, \code{"binary"} to generate a binary (0/1) covariate, or a numeric
+matrix with \code{num_person} rows where each column is a covariate. If \code{cov_effect} is
+provided and \code{person_cov} is \code{NULL}, defaults to \code{"continuous"} for backward compatibility.}
+
+\item{person_cov_effect}{A numeric vector of regression coefficients for person
+covariates. Length must match the number of columns in \code{person_cov} matrix. If
+\code{person_cov} is \code{"continuous"} or \code{"binary"}, a single value should be provided.}
+
+\item{item_cov}{Either \code{NULL} (no covariate), \code{"continuous"} to generate a uniform
+random covariate, \code{"binary"} to generate a binary (0/1) covariate, or a numeric
+matrix with \code{num_items} rows where each column is a covariate.}
+
+\item{item_discrim_cov_effect}{A numeric vector of regression coefficients for the
+effect of item covariates on item discrimination parameters (gamma). Length must
+match the number of columns in \code{item_cov} matrix.}
+
+\item{item_miss_cov}{Either \code{NULL} (no covariate), \code{"continuous"} to generate a uniform
+random covariate, \code{"binary"} to generate a binary (0/1) covariate, or a numeric
+matrix with \code{num_items} rows where each column is a covariate. Used for missingness
+model parameters.}
+
+\item{item_miss_discrim_cov_effect}{A numeric vector of regression coefficients for
+the effect of item missing covariates on absence discrimination parameters (nu).
+Length must match the number of columns in \code{item_miss_cov} matrix.}
 
 \item{model_type}{One of \code{'binary'}, \code{'ordinal_rating'}, \code{'ordinal_grm'}, \code{'poisson'}
 \code{'normal'}, or \code{'lognormal'}}

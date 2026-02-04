@@ -16,6 +16,11 @@
                     latent_space=NULL,
                     cov_effect=NULL,
                     person_x=NULL,
+                    person_cov_effect=NULL,
+                    item_x=NULL,
+                    item_discrim_cov_effect=NULL,
+                    item_miss_x=NULL,
+                    item_miss_discrim_cov_effect=NULL,
                     ...) {
 
   
@@ -71,24 +76,41 @@
                            time_id=time_points,
                            item_id=item_points,
                            group_id='G')
-    
-        if(!is.null(cov_effect) && cov_effect!=0) {
-      
-      cov_data <- distinct(out_data,person_id,time_id) %>% 
-        arrange(person_id, time_id) %>% 
-        mutate(person_x=person_x)
-      
-      out_data <- left_join(out_data,
-                            cov_data,by=c("person_id","time_id"))
-      
-      out_data <- id_make(score_data=out_data,person_cov = ~ person_x)
-      
-    } else {
-      
-      out_data <- id_make(score_data=out_data)
-      
+
+    # Handle person covariates (matrix multiplication for covariate contribution)
+    has_person_cov <- !is.null(person_x) && is.matrix(person_x) && ncol(person_x) >= 1 &&
+                      !is.null(person_cov_effect) && any(person_cov_effect != 0)
+
+    # Handle item covariates
+    has_item_cov <- !is.null(item_x) && is.matrix(item_x) && ncol(item_x) >= 1 &&
+                    !is.null(item_discrim_cov_effect) && any(item_discrim_cov_effect != 0)
+
+    # Build covariate formulas and data
+    person_cov_formula <- NULL
+    item_cov_formula <- NULL
+
+    if (has_person_cov) {
+      # Create person covariate data - compute linear combination X %*% beta
+      person_cov_value <- as.vector(person_x %*% person_cov_effect)
+      cov_data <- distinct(out_data, person_id, time_id) %>%
+        arrange(person_id, time_id) %>%
+        mutate(person_cov = person_cov_value[person_id])
+      out_data <- left_join(out_data, cov_data, by = c("person_id", "time_id"))
+      person_cov_formula <- ~ person_cov
     }
-    
+
+    if (has_item_cov) {
+      # Create item covariate data - compute linear combination X %*% beta
+      item_cov_value <- as.vector(item_x %*% item_discrim_cov_effect)
+      item_cov_data <- tibble(item_id = 1:nrow(item_x), item_cov = item_cov_value)
+      out_data <- left_join(out_data, item_cov_data, by = "item_id")
+      item_cov_formula <- ~ item_cov
+    }
+
+    out_data <- id_make(score_data = out_data,
+                        person_cov = person_cov_formula,
+                        item_cov = item_cov_formula)
+
     return(out_data) 
   } else if(type=='predict') {
     combined <- sapply(1:nrow(pr_absence), function(c) ifelse(pr_absence[c,]<(runif(N)+pr_boost),votes[c,],2))
@@ -138,6 +160,11 @@
                                  outcome=NULL,
                                  cov_effect=NULL,
                                  person_x=NULL,
+                                 person_cov_effect=NULL,
+                                 item_x=NULL,
+                                 item_discrim_cov_effect=NULL,
+                                 item_miss_x=NULL,
+                                 item_miss_discrim_cov_effect=NULL,
                                  miss_val=NULL,
                                  ...)
 {
@@ -202,26 +229,41 @@
                            time_id=time_points,
                            item_id=item_points,
                            group_id='G')
-    
-    if(!is.null(cov_effect) && cov_effect!=0) {
-      
-      cov_data <- distinct(out_data,person_id,time_id) %>% 
-        arrange(person_id, time_id) %>% 
-        mutate(person_x=person_x)
-      
-      out_data <- left_join(out_data,
-                            cov_data,by=c("person_id","time_id"))
-      
-      out_data <- id_make(score_data=out_data,person_cov = ~ person_x)
-      
-    } else {
-      
-      out_data <- id_make(score_data=out_data)
-      
+
+    # Handle person covariates (matrix multiplication for covariate contribution)
+    has_person_cov <- !is.null(person_x) && is.matrix(person_x) && ncol(person_x) >= 1 &&
+                      !is.null(person_cov_effect) && any(person_cov_effect != 0)
+
+    # Handle item covariates
+    has_item_cov <- !is.null(item_x) && is.matrix(item_x) && ncol(item_x) >= 1 &&
+                    !is.null(item_discrim_cov_effect) && any(item_discrim_cov_effect != 0)
+
+    # Build covariate formulas and data
+    person_cov_formula <- NULL
+    item_cov_formula <- NULL
+
+    if (has_person_cov) {
+      person_cov_value <- as.vector(person_x %*% person_cov_effect)
+      cov_data <- distinct(out_data, person_id, time_id) %>%
+        arrange(person_id, time_id) %>%
+        mutate(person_cov = person_cov_value[person_id])
+      out_data <- left_join(out_data, cov_data, by = c("person_id", "time_id"))
+      person_cov_formula <- ~ person_cov
     }
-    
-    return(out_data) 
-    
+
+    if (has_item_cov) {
+      item_cov_value <- as.vector(item_x %*% item_discrim_cov_effect)
+      item_cov_data <- tibble(item_id = 1:nrow(item_x), item_cov = item_cov_value)
+      out_data <- left_join(out_data, item_cov_data, by = "item_id")
+      item_cov_formula <- ~ item_cov
+    }
+
+    out_data <- id_make(score_data = out_data,
+                        person_cov = person_cov_formula,
+                        item_cov = item_cov_formula)
+
+    return(out_data)
+
   } else if(type=='predict') {
     
     if(output=='observed') {
@@ -294,6 +336,11 @@
                     outcome=NULL,
                     cov_effect=NULL,
                     person_x=NULL,
+                    person_cov_effect=NULL,
+                    item_x=NULL,
+                    item_discrim_cov_effect=NULL,
+                    item_miss_x=NULL,
+                    item_miss_discrim_cov_effect=NULL,
                     miss_val=NULL,
                     ...)
 {
@@ -368,25 +415,40 @@
                            item_id=item_points,
                            ordered_id=ordinal_outcomes,
                            group_id='G')
-    
-    if(!is.null(cov_effect) && cov_effect!=0) {
-      
-      cov_data <- distinct(out_data,person_id,time_id) %>% 
-        arrange(person_id, time_id) %>% 
-        mutate(person_x=person_x)
-      
-      out_data <- left_join(out_data,
-                            cov_data,by=c("person_id","time_id"))
-      
-      out_data <- id_make(score_data=out_data,person_cov = ~ person_x)
-      
-    } else {
-      
-      out_data <- id_make(score_data=out_data)
-      
+
+    # Handle person covariates (matrix multiplication for covariate contribution)
+    has_person_cov <- !is.null(person_x) && is.matrix(person_x) && ncol(person_x) >= 1 &&
+                      !is.null(person_cov_effect) && any(person_cov_effect != 0)
+
+    # Handle item covariates
+    has_item_cov <- !is.null(item_x) && is.matrix(item_x) && ncol(item_x) >= 1 &&
+                    !is.null(item_discrim_cov_effect) && any(item_discrim_cov_effect != 0)
+
+    # Build covariate formulas and data
+    person_cov_formula <- NULL
+    item_cov_formula <- NULL
+
+    if (has_person_cov) {
+      person_cov_value <- as.vector(person_x %*% person_cov_effect)
+      cov_data <- distinct(out_data, person_id, time_id) %>%
+        arrange(person_id, time_id) %>%
+        mutate(person_cov = person_cov_value[person_id])
+      out_data <- left_join(out_data, cov_data, by = c("person_id", "time_id"))
+      person_cov_formula <- ~ person_cov
     }
-    
-    return(out_data) 
+
+    if (has_item_cov) {
+      item_cov_value <- as.vector(item_x %*% item_discrim_cov_effect)
+      item_cov_data <- tibble(item_id = 1:nrow(item_x), item_cov = item_cov_value)
+      out_data <- left_join(out_data, item_cov_data, by = "item_id")
+      item_cov_formula <- ~ item_cov
+    }
+
+    out_data <- id_make(score_data = out_data,
+                        person_cov = person_cov_formula,
+                        item_cov = item_cov_formula)
+
+    return(out_data)
   } else if(type=='predict') {
 
     over_iters <- sapply(1:nrow(pr_vote), function(d) {
@@ -464,6 +526,11 @@
                          outcome=NULL,
                          cov_effect=NULL,
                          person_x=NULL,
+                         person_cov_effect=NULL,
+                         item_x=NULL,
+                         item_discrim_cov_effect=NULL,
+                         item_miss_x=NULL,
+                         item_miss_discrim_cov_effect=NULL,
                          miss_val=NULL,
                                  ...)
 {
@@ -535,25 +602,40 @@
                            time_id=time_points,
                            item_id=item_points,
                            group_id='G')
-    
-    if(!is.null(cov_effect) && cov_effect!=0) {
-      
-      cov_data <- distinct(out_data,person_id,time_id) %>% 
-        arrange(person_id, time_id) %>% 
-        mutate(person_x=person_x)
-      
-      out_data <- left_join(out_data,
-                            cov_data,by=c("person_id","time_id"))
-      
-      out_data <- id_make(score_data=out_data,person_cov = ~ person_x)
-      
-    } else {
-      
-      out_data <- id_make(score_data=out_data)
-      
+
+    # Handle person covariates (matrix multiplication for covariate contribution)
+    has_person_cov <- !is.null(person_x) && is.matrix(person_x) && ncol(person_x) >= 1 &&
+                      !is.null(person_cov_effect) && any(person_cov_effect != 0)
+
+    # Handle item covariates
+    has_item_cov <- !is.null(item_x) && is.matrix(item_x) && ncol(item_x) >= 1 &&
+                    !is.null(item_discrim_cov_effect) && any(item_discrim_cov_effect != 0)
+
+    # Build covariate formulas and data
+    person_cov_formula <- NULL
+    item_cov_formula <- NULL
+
+    if (has_person_cov) {
+      person_cov_value <- as.vector(person_x %*% person_cov_effect)
+      cov_data <- distinct(out_data, person_id, time_id) %>%
+        arrange(person_id, time_id) %>%
+        mutate(person_cov = person_cov_value[person_id])
+      out_data <- left_join(out_data, cov_data, by = c("person_id", "time_id"))
+      person_cov_formula <- ~ person_cov
     }
-    
-    return(out_data)                      
+
+    if (has_item_cov) {
+      item_cov_value <- as.vector(item_x %*% item_discrim_cov_effect)
+      item_cov_data <- tibble(item_id = 1:nrow(item_x), item_cov = item_cov_value)
+      out_data <- left_join(out_data, item_cov_data, by = "item_id")
+      item_cov_formula <- ~ item_cov
+    }
+
+    out_data <- id_make(score_data = out_data,
+                        person_cov = person_cov_formula,
+                        item_cov = item_cov_formula)
+
+    return(out_data)
   } else if(type=='predict') {
     over_iters <- sapply(1:nrow(pr_vote), function(d) {
       votes <- sapply(1:dim(cuts_iters)[1], function(i) {
@@ -630,6 +712,11 @@
                     outcome=NULL,
                     cov_effect=NULL,
                     person_x=NULL,
+                    person_cov_effect=NULL,
+                    item_x=NULL,
+                    item_discrim_cov_effect=NULL,
+                    item_miss_x=NULL,
+                    item_miss_discrim_cov_effect=NULL,
                     ...)
 {
 
@@ -673,29 +760,41 @@
                            time_id=time_points,
                            item_id=item_points,
                            group_id='G')
-    
-    if(!is.null(cov_effect) && cov_effect!=0) {
-      
-      cov_data <- distinct(out_data,person_id,time_id) %>% 
-        arrange(person_id, time_id) %>% 
-        mutate(person_x=person_x)
-      
-      out_data <- left_join(out_data,
-                            cov_data,by=c("person_id","time_id"))
-      
-      out_data <- id_make(score_data=out_data,person_cov = ~ person_x,
-                          unbounded=T)
-      
-    } else {
-      
-      out_data <- id_make(score_data=out_data,
-                          unbounded=T)
-      
+
+    # Handle person covariates (matrix multiplication for covariate contribution)
+    has_person_cov <- !is.null(person_x) && is.matrix(person_x) && ncol(person_x) >= 1 &&
+                      !is.null(person_cov_effect) && any(person_cov_effect != 0)
+
+    # Handle item covariates
+    has_item_cov <- !is.null(item_x) && is.matrix(item_x) && ncol(item_x) >= 1 &&
+                    !is.null(item_discrim_cov_effect) && any(item_discrim_cov_effect != 0)
+
+    # Build covariate formulas and data
+    person_cov_formula <- NULL
+    item_cov_formula <- NULL
+
+    if (has_person_cov) {
+      person_cov_value <- as.vector(person_x %*% person_cov_effect)
+      cov_data <- distinct(out_data, person_id, time_id) %>%
+        arrange(person_id, time_id) %>%
+        mutate(person_cov = person_cov_value[person_id])
+      out_data <- left_join(out_data, cov_data, by = c("person_id", "time_id"))
+      person_cov_formula <- ~ person_cov
     }
-    
-    
-    
-    return(out_data) 
+
+    if (has_item_cov) {
+      item_cov_value <- as.vector(item_x %*% item_discrim_cov_effect)
+      item_cov_data <- tibble(item_id = 1:nrow(item_x), item_cov = item_cov_value)
+      out_data <- left_join(out_data, item_cov_data, by = "item_id")
+      item_cov_formula <- ~ item_cov
+    }
+
+    out_data <- id_make(score_data = out_data,
+                        person_cov = person_cov_formula,
+                        item_cov = item_cov_formula,
+                        unbounded = TRUE)
+
+    return(out_data)
   } else if(type=='predict') {
     if(output=='observed') {
       combined <- votes
@@ -727,6 +826,11 @@
                     outcome=NULL,
                     cov_effect=NULL,
                     person_x=NULL,
+                    person_cov_effect=NULL,
+                    item_x=NULL,
+                    item_discrim_cov_effect=NULL,
+                    item_miss_x=NULL,
+                    item_miss_discrim_cov_effect=NULL,
                      ...)
 {
 
@@ -772,25 +876,40 @@
                            time_id=time_points,
                            item_id=item_points,
                            group_id='G')
-    
-    if(!is.null(cov_effect) && cov_effect!=0) {
-      
-      cov_data <- distinct(out_data,person_id,time_id) %>% 
-        arrange(person_id, time_id) %>% 
-        mutate(person_x=person_x)
-      
-      out_data <- left_join(out_data,
-                            cov_data,by=c("person_id","time_id"))
-      
-      out_data <- id_make(score_data=out_data,person_cov = ~ person_x)
-      
-    } else {
-      
-      out_data <- id_make(score_data=out_data)
-      
+
+    # Handle person covariates (matrix multiplication for covariate contribution)
+    has_person_cov <- !is.null(person_x) && is.matrix(person_x) && ncol(person_x) >= 1 &&
+                      !is.null(person_cov_effect) && any(person_cov_effect != 0)
+
+    # Handle item covariates
+    has_item_cov <- !is.null(item_x) && is.matrix(item_x) && ncol(item_x) >= 1 &&
+                    !is.null(item_discrim_cov_effect) && any(item_discrim_cov_effect != 0)
+
+    # Build covariate formulas and data
+    person_cov_formula <- NULL
+    item_cov_formula <- NULL
+
+    if (has_person_cov) {
+      person_cov_value <- as.vector(person_x %*% person_cov_effect)
+      cov_data <- distinct(out_data, person_id, time_id) %>%
+        arrange(person_id, time_id) %>%
+        mutate(person_cov = person_cov_value[person_id])
+      out_data <- left_join(out_data, cov_data, by = c("person_id", "time_id"))
+      person_cov_formula <- ~ person_cov
     }
-    
-    return(out_data) 
+
+    if (has_item_cov) {
+      item_cov_value <- as.vector(item_x %*% item_discrim_cov_effect)
+      item_cov_data <- tibble(item_id = 1:nrow(item_x), item_cov = item_cov_value)
+      out_data <- left_join(out_data, item_cov_data, by = "item_id")
+      item_cov_formula <- ~ item_cov
+    }
+
+    out_data <- id_make(score_data = out_data,
+                        person_cov = person_cov_formula,
+                        item_cov = item_cov_formula)
+
+    return(out_data)
   } else if(type=='predict') {
     if(output=='observed') {
       combined <- votes
@@ -822,6 +941,11 @@
                     outcome=NULL,
                     cov_effect=NULL,
                     person_x=NULL,
+                    person_cov_effect=NULL,
+                    item_x=NULL,
+                    item_discrim_cov_effect=NULL,
+                    item_miss_x=NULL,
+                    item_miss_discrim_cov_effect=NULL,
                     ...)
 {
   
@@ -865,27 +989,41 @@
                            time_id=time_points,
                            item_id=item_points,
                            group_id='G')
-    
-    if(!is.null(cov_effect) && cov_effect!=0) {
-      
-      cov_data <- distinct(out_data,person_id,time_id) %>% 
-        arrange(person_id, time_id) %>% 
-        mutate(person_x=person_x)
-      
-      out_data <- left_join(out_data,
-                            cov_data,by=c("person_id","time_id"))
-      
-      out_data <- id_make(score_data=out_data,person_cov = ~ person_x,
-                          unbounded=T)
-      
-    } else {
-      
-      out_data <- id_make(score_data=out_data,
-                          unbounded=T)
-      
+
+    # Handle person covariates (matrix multiplication for covariate contribution)
+    has_person_cov <- !is.null(person_x) && is.matrix(person_x) && ncol(person_x) >= 1 &&
+                      !is.null(person_cov_effect) && any(person_cov_effect != 0)
+
+    # Handle item covariates
+    has_item_cov <- !is.null(item_x) && is.matrix(item_x) && ncol(item_x) >= 1 &&
+                    !is.null(item_discrim_cov_effect) && any(item_discrim_cov_effect != 0)
+
+    # Build covariate formulas and data
+    person_cov_formula <- NULL
+    item_cov_formula <- NULL
+
+    if (has_person_cov) {
+      person_cov_value <- as.vector(person_x %*% person_cov_effect)
+      cov_data <- distinct(out_data, person_id, time_id) %>%
+        arrange(person_id, time_id) %>%
+        mutate(person_cov = person_cov_value[person_id])
+      out_data <- left_join(out_data, cov_data, by = c("person_id", "time_id"))
+      person_cov_formula <- ~ person_cov
     }
-    
-    return(out_data) 
+
+    if (has_item_cov) {
+      item_cov_value <- as.vector(item_x %*% item_discrim_cov_effect)
+      item_cov_data <- tibble(item_id = 1:nrow(item_x), item_cov = item_cov_value)
+      out_data <- left_join(out_data, item_cov_data, by = "item_id")
+      item_cov_formula <- ~ item_cov
+    }
+
+    out_data <- id_make(score_data = out_data,
+                        person_cov = person_cov_formula,
+                        item_cov = item_cov_formula,
+                        unbounded = TRUE)
+
+    return(out_data)
   } else if(type=='predict') {
     if(output=='observed') {
       combined <- votes
@@ -898,7 +1036,7 @@
     }
     # transpose to make S x N matrix
     return(combined)
-  }               
+  }
 }
 
 #' Function to generate random-walk or AR(1) person parameters

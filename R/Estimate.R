@@ -832,7 +832,7 @@ id_make <- function(score_data=NULL,
 #' @return A fitted [idealstan()] object that contains posterior samples of all parameters either via full Bayesian inference
 #' or a variational approximation if `use_method` is set to `"pathfinder"` or `"laplace"`. This object can then be passed to the plotting functions for further analysis.
 #' @seealso [id_make()] for pre-processing data,
-#' [id_plot_legis()] for plotting results,
+#' [id_plot_persons()] for plotting results,
 #' [summary()] for obtaining posterior quantiles,
 #' [id_post_pred()] for producing predictive replications.
 #' @examples
@@ -911,9 +911,9 @@ id_make <- function(score_data=NULL,
 #' # After running the model, we can plot 
 #' # the results of the person/legislator ideal points
 #' 
-#' id_plot_legis(sen_est)
+#' id_plot_persons(sen_est)
 #' }
-#' 
+#'
 #' @references \enumerate{
 #'    \item Clinton, J., Jackman, S., & Rivers, D. (2004). The Statistical Analysis of Roll Call Data. *The American Political Science Review*, 98(2), 355-370. doi:10.1017/S0003055404001194
 #'    \item Bafumi, J., Gelman, A., Park, D., & Kaplan, N. (2005). Practical Issues in Implementing and Understanding Bayesian Ideal Point Estimation. *Political Analysis*, 13(2), 171-187. doi:10.1093/pan/mpi010

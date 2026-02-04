@@ -1,17 +1,38 @@
 #' Simulate IRT ideal point data
-#' 
+#'
 #' A function designed to simulate IRT ideal point data.
-#' 
+#'
 #' This function produces simulated data that matches (as closely as possible) the models
 #' used in the underlying Stan code. Currently the simulation can produce inflated and non-inflated
 #' models with binary, ordinal (GRM and rating-scale), Poisson, Normal and Log-Normal responses.
-#' 
+#'
 #' @param num_person The number of persons/persons
 #' @param num_items The number of items (bills in the canonical ideal point model)
 #' @param cov_effect The effect of a hierarchical/external covariate on the person
 #' ideal points. The covariate will be a uniformly-distributed random variable on the
-#' \[0,1\] scale, so covariate effects in the \[-2,2\] approximate range would result in 
-#' noticeable effects on the ideal point scale.
+#' \[0,1\] scale, so covariate effects in the \[-2,2\] approximate range would result in
+#' noticeable effects on the ideal point scale. This is a legacy parameter; prefer using
+#' `person_cov` and `person_cov_effect` for more control.
+#' @param person_cov Either `NULL` (no covariate), `"continuous"` to generate a uniform
+#' random covariate, `"binary"` to generate a binary (0/1) covariate, or a numeric
+#' matrix with `num_person` rows where each column is a covariate. If `cov_effect` is
+#' provided and `person_cov` is `NULL`, defaults to `"continuous"` for backward compatibility.
+#' @param person_cov_effect A numeric vector of regression coefficients for person
+#' covariates. Length must match the number of columns in `person_cov` matrix. If
+#' `person_cov` is `"continuous"` or `"binary"`, a single value should be provided.
+#' @param item_cov Either `NULL` (no covariate), `"continuous"` to generate a uniform
+#' random covariate, `"binary"` to generate a binary (0/1) covariate, or a numeric
+#' matrix with `num_items` rows where each column is a covariate.
+#' @param item_discrim_cov_effect A numeric vector of regression coefficients for the
+#' effect of item covariates on item discrimination parameters (gamma). Length must
+#' match the number of columns in `item_cov` matrix.
+#' @param item_miss_cov Either `NULL` (no covariate), `"continuous"` to generate a uniform
+#' random covariate, `"binary"` to generate a binary (0/1) covariate, or a numeric
+#' matrix with `num_items` rows where each column is a covariate. Used for missingness
+#' model parameters.
+#' @param item_miss_discrim_cov_effect A numeric vector of regression coefficients for
+#' the effect of item missing covariates on absence discrimination parameters (nu).
+#' Length must match the number of columns in `item_miss_cov` matrix.
 #' @param model_type One of `'binary'`, `'ordinal_rating'`, `'ordinal_grm'`, `'poisson'`
 #' `'normal'`, or `'lognormal'`
 #' @param latent_space Whether to use the latent space formulation of the ideal point model 
@@ -81,6 +102,12 @@
 
 id_sim_gen <- function(num_person=20,num_items=50,
                        cov_effect=NULL,
+                       person_cov=NULL,
+                       person_cov_effect=NULL,
+                       item_cov=NULL,
+                       item_discrim_cov_effect=NULL,
+                       item_miss_cov=NULL,
+                       item_miss_discrim_cov_effect=NULL,
                        model_type='binary',
                        latent_space=FALSE,
                        absence_discrim_sd=3,absence_diff_mean=0,
@@ -141,41 +168,112 @@ id_sim_gen <- function(num_person=20,num_items=50,
     }
   }
   
-  if(!is.null(cov_effect)) {
-    
-    if(!is.numeric(cov_effect)) {
-      
-      stop("The cov_effect parameter should be a number like -2 or 1.5. Think regression coefficient.")
-      
+  # Helper function to generate or validate covariate matrix
+  .process_cov <- function(cov_spec, n_units, cov_effect, cov_name) {
+    if (is.null(cov_spec) && is.null(cov_effect)) {
+      # No covariate
+      return(list(matrix = matrix(0, nrow = n_units, ncol = 1),
+                  effect = 0,
+                  n_cov = 0))
     }
-    
-    # generate covariate
-    # equal to number of persons X number of time points
-    
-    person_x <- runif(n=num_person * time_points)
-    
-  } else {
-    
-    # make person_x a simple vector of 0s
-    
-    person_x <- rep(0L, num_person * time_points)
-    
-    cov_effect <- 0L
-    
+
+    if (is.character(cov_spec)) {
+      # Generate covariate based on type
+      if (cov_spec == "continuous") {
+        cov_matrix <- matrix(runif(n_units), ncol = 1)
+      } else if (cov_spec == "binary") {
+        cov_matrix <- matrix(rbinom(n_units, 1, 0.5), ncol = 1)
+      } else {
+        stop(paste0(cov_name, " must be 'continuous', 'binary', or a numeric matrix."))
+      }
+      n_cov <- 1
+    } else if (is.matrix(cov_spec) || is.data.frame(cov_spec)) {
+      cov_matrix <- as.matrix(cov_spec)
+      if (nrow(cov_matrix) != n_units) {
+        stop(paste0(cov_name, " matrix must have ", n_units, " rows (one per unit)."))
+      }
+      n_cov <- ncol(cov_matrix)
+    } else if (is.null(cov_spec) && !is.null(cov_effect)) {
+      # Legacy behavior: if effect is provided but no cov_spec, generate continuous
+      cov_matrix <- matrix(runif(n_units), ncol = 1)
+      n_cov <- 1
+    } else {
+      stop(paste0(cov_name, " must be NULL, 'continuous', 'binary', or a numeric matrix."))
+    }
+
+    # Validate effect vector
+    if (is.null(cov_effect)) {
+      stop(paste0("Must provide ", cov_name, "_effect when ", cov_name, " is specified."))
+    }
+    if (length(cov_effect) != n_cov) {
+      stop(paste0(cov_name, "_effect must have length ", n_cov, " to match covariate columns."))
+    }
+
+    return(list(matrix = cov_matrix, effect = cov_effect, n_cov = n_cov))
   }
-  
-  cov_value <- person_x * cov_effect
+
+  # Handle backward compatibility with cov_effect
+  if (!is.null(cov_effect) && is.null(person_cov) && is.null(person_cov_effect)) {
+    if (!is.numeric(cov_effect)) {
+      stop("The cov_effect parameter should be a number like -2 or 1.5. Think regression coefficient.")
+    }
+    person_cov <- "continuous"
+    person_cov_effect <- cov_effect
+  }
+
+  # Process person covariates
+  person_cov_data <- .process_cov(person_cov, num_person, person_cov_effect, "person_cov")
+  person_x <- person_cov_data$matrix
+  person_cov_effect_final <- person_cov_data$effect
+
+  # Compute covariate contribution (matrix multiplication for multiple covariates)
+  if (person_cov_data$n_cov > 0) {
+    cov_value <- as.vector(person_x %*% person_cov_effect_final)
+  } else {
+    cov_value <- rep(0, num_person)
+  }
+
+  # Replicate for time points (each person's covariate effect is constant over time)
+  cov_value <- rep(cov_value, times = time_points)
+
+  # Process item covariates (for regular discrimination)
+  item_cov_data <- .process_cov(item_cov, num_items, item_discrim_cov_effect, "item_cov")
+  item_x <- item_cov_data$matrix
+  item_discrim_cov_effect_final <- item_cov_data$effect
+
+  # Compute item discrimination covariate contribution
+  if (item_cov_data$n_cov > 0) {
+    item_discrim_cov_value <- as.vector(item_x %*% item_discrim_cov_effect_final)
+  } else {
+    item_discrim_cov_value <- rep(0, num_items)
+  }
+
+  # Process item missing covariates (for absence discrimination)
+  item_miss_cov_data <- .process_cov(item_miss_cov, num_items, item_miss_discrim_cov_effect, "item_miss_cov")
+  item_miss_x <- item_miss_cov_data$matrix
+  item_miss_discrim_cov_effect_final <- item_miss_cov_data$effect
+
+  # Compute item missing discrimination covariate contribution
+  if (item_miss_cov_data$n_cov > 0) {
+    item_miss_discrim_cov_value <- as.vector(item_miss_x %*% item_miss_discrim_cov_effect_final)
+  } else {
+    item_miss_discrim_cov_value <- rep(0, num_items)
+  }
+
+  # For backward compatibility, keep cov_effect as a scalar
+  cov_effect <- if (person_cov_data$n_cov > 0) person_cov_effect_final[1] else 0
   
   # First simulate ideal points for person/legislators/bills
   # Bill difficulty parameters are fixed because they are not entirely interesting (they represent intercepts)
-  
-  absence_diff <- prior_func(params=list(N=num_items,mean=absence_diff_mean,sd=diff_sd)) 
+
+  absence_diff <- prior_func(params=list(N=num_items,mean=absence_diff_mean,sd=diff_sd))
   #Discrimination parameters more important because they reflect how much information a bill contributes
   # need to make some of them negative to reflect the switching nature of policies
   #absence_discrim <- prior_func(params=list(N=num_items,mean=1,sd=absence_discrim_sd)) * if_else(runif(num_items-1)>0.5,1,-1)
   absence_discrim <- .genbeta_sample(n=num_items,alpha=discrim_miss_shape,
                                      beta=discrim_miss_scale,lb=discrim_miss_lb,
-                                     lb_offset=discrim_miss_upb - discrim_miss_lb)
+                                     lb_offset=discrim_miss_upb - discrim_miss_lb) +
+    item_miss_discrim_cov_value
 
   # person ideal points common to both types of models (absence and regular)
   
@@ -354,7 +452,8 @@ id_sim_gen <- function(num_person=20,num_items=50,
   reg_diff <- prior_func(params=list(N=num_items,mean=0,sd=diff_sd))
   reg_discrim <- .genbeta_sample(n=num_items,alpha=discrim_reg_shape,
                                  beta=discrim_reg_scale,lb=discrim_reg_lb,
-                                 lb_offset=discrim_reg_upb - discrim_reg_lb)
+                                 lb_offset=discrim_reg_upb - discrim_reg_lb) +
+    item_discrim_cov_value
   
   # this is the same for all DGPs
   if(latent_space) {
@@ -404,26 +503,31 @@ id_sim_gen <- function(num_person=20,num_items=50,
            sigma_sd=sigma_sd,
            cov_effect=cov_effect,
            person_x=person_x,
+           person_cov_effect=person_cov_effect_final,
+           item_x=item_x,
+           item_discrim_cov_effect=item_discrim_cov_effect_final,
+           item_miss_x=item_miss_x,
+           item_miss_discrim_cov_effect=item_miss_discrim_cov_effect_final,
            phi=phi)
-  
+
   outobj@simul_data <- list(num_person=num_person,
-                                       num_items=num_items,
-                                       absence_diff_mean=absence_diff_mean,
-                                       absence_diff=absence_diff,
-                                      discrim_reg_shape=discrim_reg_shape,
+                            num_items=num_items,
+                            absence_diff_mean=absence_diff_mean,
+                            absence_diff=absence_diff,
+                            discrim_reg_shape=discrim_reg_shape,
                             discrim_reg_scale=discrim_reg_scale,
                             discrim_reg_lb=discrim_reg_lb,
                             discrim_miss_shape=discrim_miss_shape,
                             discrim_miss_scale=discrim_miss_scale,
                             discrim_miss_lb=discrim_miss_lb,
-                                       reg_diff=reg_diff,
-                                       ideal_pts_sd=ideal_pts_sd,
-                                       prior_func=prior_func,
-                                       ordinal_outcomes=ordinal_outcomes,
-                                       true_person=ideal_pts,
-                                       true_reg_discrim=reg_discrim,
-                                       true_abs_discrim=absence_discrim,
-                                  true_person_mean=ideal_pts_mean,
+                            reg_diff=reg_diff,
+                            ideal_pts_sd=ideal_pts_sd,
+                            prior_func=prior_func,
+                            ordinal_outcomes=ordinal_outcomes,
+                            true_person=ideal_pts,
+                            true_reg_discrim=reg_discrim,
+                            true_abs_discrim=absence_discrim,
+                            true_person_mean=ideal_pts_mean,
                             time_sd=time_sd,
                             time_sd_all=time_sd_all,
                             drift=drift,
@@ -432,6 +536,11 @@ id_sim_gen <- function(num_person=20,num_items=50,
                             gp_alpha=gp_alpha_gen,
                             cov_effect=cov_effect,
                             person_x=person_x,
+                            person_cov_effect=person_cov_effect_final,
+                            item_x=item_x,
+                            item_discrim_cov_effect=item_discrim_cov_effect_final,
+                            item_miss_x=item_miss_x,
+                            item_miss_discrim_cov_effect=item_miss_discrim_cov_effect_final,
                             ls_int=ls_int,
                             ls_int_abs=ls_int_abs,
                             phi=1,

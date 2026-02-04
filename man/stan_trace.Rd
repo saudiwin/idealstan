@@ -20,7 +20,7 @@ To use this function, you must pass a fitted \code{idealstan} object
 along with the name of a parameter in the model. To determine these
 parameter names, use the \code{summary} function or obtain the data
 from a plot by passing the \code{return_data=TRUE} option to
-\code{id_plog_legis} or \code{id_plot_legis_dyn} to find the
+\code{id_plot_persons} or \code{id_plot_persons_dyn} to find the
 name of the parameter in the Stan model.
 
 This function is a simple wrapper around \code{\link[bayesplot]{mcmc_trace}}.
