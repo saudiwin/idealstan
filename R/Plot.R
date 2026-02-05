@@ -222,13 +222,35 @@ id_plot_persons <- function(object,return_data=FALSE,
     }
     
     # collect outcomes
-    
-    item_points <- left_join(item_points,object@score_data@score_matrix,by=c('item_name'='item_id')) %>% 
-      gather(key='ci_type',value='ci_value',item_high,item_low) %>% 
+
+    item_points <- left_join(item_points,object@score_data@score_matrix,by=c('item_name'='item_id')) %>%
+      gather(key='ci_type',value='ci_value',item_high,item_low) %>%
       mutate(ci_type=factor(ci_type,levels=c('item_low',
                                      'item_high'),
                             labels=c(paste0(low_limit*100,'%'),
                                      paste0(high_limit*100,'%'))))
+
+    # Map numeric group_id back to original labels if available
+    func_args <- object@score_data@func_args
+    if(!is.null(func_args$score_data) && !is.null(func_args$group_id)) {
+      orig_group_col <- func_args$group_id
+      if(orig_group_col %in% names(func_args$score_data)) {
+        orig_groups <- func_args$score_data[[orig_group_col]]
+        if(is.factor(orig_groups) || is.character(orig_groups)) {
+          group_mapping <- tibble(
+            group_id = as.integer(factor(orig_groups)),
+            group_label = as.character(orig_groups)
+          ) %>% distinct()
+          item_points <- item_points %>%
+            left_join(group_mapping, by = "group_id") %>%
+            mutate(group_id = if_else(!is.na(group_label), group_label, as.character(group_id))) %>%
+            select(-group_label)
+        }
+      }
+    } else {
+      item_points <- mutate(item_points, group_id = as.character(group_id))
+    }
+    
     person_params <- left_join(person_params,item_points,by=c('person_id'='person_id',
                                                               'group_id'='group_id'))
     # Choose a plot based on the user's options
@@ -702,13 +724,35 @@ id_plot_persons_dyn <- function(object,return_data=FALSE,
     }
     
     # collect outcomes
-    
-    item_points <- left_join(item_points,object@score_data@score_matrix,by=c('item_name'='item_id')) %>% 
-      gather(key='ci_type',value='ci_value',item_high,item_low) %>% 
+
+    item_points <- left_join(item_points,object@score_data@score_matrix,by=c('item_name'='item_id')) %>%
+      gather(key='ci_type',value='ci_value',item_high,item_low) %>%
       mutate(ci_type=factor(ci_type,levels=c('item_low',
                                              'item_high'),
                             labels=c(paste0(low_limit*100,'%'),
                                      paste0(high_limit*100,'%'))))
+
+    # Map numeric group_id back to original labels if available
+    func_args <- object@score_data@func_args
+    if(!is.null(func_args$score_data) && !is.null(func_args$group_id)) {
+      orig_group_col <- func_args$group_id
+      if(orig_group_col %in% names(func_args$score_data)) {
+        orig_groups <- func_args$score_data[[orig_group_col]]
+        if(is.factor(orig_groups) || is.character(orig_groups)) {
+          group_mapping <- tibble(
+            group_id = as.integer(factor(orig_groups)),
+            group_label = as.character(orig_groups)
+          ) %>% distinct()
+          item_points <- item_points %>%
+            left_join(group_mapping, by = "group_id") %>%
+            mutate(group_id = if_else(!is.na(group_label), group_label, as.character(group_id))) %>%
+            select(-group_label)
+        }
+      }
+    } else {
+      item_points <- mutate(item_points, group_id = as.character(group_id))
+    }
+
     person_params <- left_join(person_params,item_points,by=c('person_id'='person_id',
                                                               'group_id'='group_id'))
     person_params$time_id <- person_params$time_id.x
