@@ -93,32 +93,66 @@ id_plot_persons <- function(object,return_data=FALSE,
                        hpd_limit=NULL,
                        sample_persons=NULL,...) {
   
-  if(!is.null(include)) {
-    if(use_groups) {
-      include <- which(unique(object@score_data@score_matrix$group_id) %in% include)
-    } else {
-      include <- include <- which(unique(object@score_data@score_matrix$person_id) %in% include)
-    }
-    
+  # Determine use_groups early for include/sample_persons logic
+  if(inherits(object,'idealstan')) {
+    use_groups_early <- object@use_groups
+  } else {
+    # For list of models, check first one
+    use_groups_early <- object[[1]]@use_groups
   }
-  
+
+  if(!is.null(include)) {
+    if(use_groups_early) {
+      # Map original group labels to integer group_id for matching
+      obj_for_args <- if(inherits(object,'idealstan')) object else object[[1]]
+      func_args <- obj_for_args@score_data@func_args
+      if(!is.null(func_args$score_data) && !is.null(func_args$group_id)) {
+        orig_group_col <- func_args$group_id
+        if(orig_group_col %in% names(func_args$score_data)) {
+          orig_groups <- func_args$score_data[[orig_group_col]]
+          if(is.factor(orig_groups) || is.character(orig_groups)) {
+            group_mapping <- tibble(
+              group_id = as.integer(factor(orig_groups)),
+              group_label = as.character(orig_groups)
+            ) %>% distinct()
+            # Convert user-provided labels to integer group_ids
+            include_int <- group_mapping$group_id[group_mapping$group_label %in% include]
+            include <- which(unique(obj_for_args@score_data@score_matrix$group_id) %in% include_int)
+          } else {
+            include <- which(unique(obj_for_args@score_data@score_matrix$group_id) %in% include)
+          }
+        } else {
+          include <- which(unique(obj_for_args@score_data@score_matrix$group_id) %in% include)
+        }
+      } else {
+        obj_for_args <- if(inherits(object,'idealstan')) object else object[[1]]
+        include <- which(unique(obj_for_args@score_data@score_matrix$group_id) %in% include)
+      }
+    } else {
+      obj_for_args <- if(inherits(object,'idealstan')) object else object[[1]]
+      include <- which(unique(obj_for_args@score_data@score_matrix$person_id) %in% include)
+    }
+
+  }
+
   if(!is.null(sample_persons)) {
     if(!is.numeric(sample_persons) && !(sample_persons>0 && sample_persons<1)) {
       stop('Please enter a fraction to sample from between 0 and 1 as a numeric value.')
     }
-    
-    if(use_groups) {
-      
-      to_sample <- sample(unique(object@score_data@score_matrix$group_id),
-                          round(sample_persons*length(unique(object@score_data@score_matrix$group_id))))
-      include <-  which(object@score_data@score_matrix$group_id %in% to_sample)
-      
+
+    obj_for_sample <- if(inherits(object,'idealstan')) object else object[[1]]
+    if(use_groups_early) {
+
+      to_sample <- sample(unique(obj_for_sample@score_data@score_matrix$group_id),
+                          round(sample_persons*length(unique(obj_for_sample@score_data@score_matrix$group_id))))
+      include <-  which(obj_for_sample@score_data@score_matrix$group_id %in% to_sample)
+
     } else {
-      
-      to_sample <- sample(unique(object@score_data@score_matrix$person_id),
-                          round(sample_persons*length(unique(object@score_data@score_matrix$person_id))))
-      include <-  which(object@score_data@score_matrix$person_id %in% to_sample)
-      
+
+      to_sample <- sample(unique(obj_for_sample@score_data@score_matrix$person_id),
+                          round(sample_persons*length(unique(obj_for_sample@score_data@score_matrix$person_id))))
+      include <-  which(obj_for_sample@score_data@score_matrix$person_id %in% to_sample)
+
     }
     
   }
@@ -624,13 +658,35 @@ id_plot_persons_dyn <- function(object,return_data=FALSE,
   
   if(!is.null(include)) {
     if(object@use_groups) {
-      include <- which(unique(object@score_data@score_matrix$group_id) %in% include)
+      # Map original group labels to integer group_id for matching
+      func_args <- object@score_data@func_args
+      if(!is.null(func_args$score_data) && !is.null(func_args$group_id)) {
+        orig_group_col <- func_args$group_id
+        if(orig_group_col %in% names(func_args$score_data)) {
+          orig_groups <- func_args$score_data[[orig_group_col]]
+          if(is.factor(orig_groups) || is.character(orig_groups)) {
+            group_mapping <- tibble(
+              group_id = as.integer(factor(orig_groups)),
+              group_label = as.character(orig_groups)
+            ) %>% distinct()
+            # Convert user-provided labels to integer group_ids
+            include_int <- group_mapping$group_id[group_mapping$group_label %in% include]
+            include <- which(unique(object@score_data@score_matrix$group_id) %in% include_int)
+          } else {
+            include <- which(unique(object@score_data@score_matrix$group_id) %in% include)
+          }
+        } else {
+          include <- which(unique(object@score_data@score_matrix$group_id) %in% include)
+        }
+      } else {
+        include <- which(unique(object@score_data@score_matrix$group_id) %in% include)
+      }
     } else {
       include <- which(unique(object@score_data@score_matrix$person_id) %in% include)
     }
-    
+
     if(length(include)==0)
-      stop("You specified persons or groups that were not in the data. Please the labels as you passed them to the id_make function.")
+      stop("You specified persons or groups that were not in the data. Please use the labels as you passed them to the id_make function.")
     
   }
   
