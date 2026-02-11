@@ -57,3 +57,5 @@ vignettes/Time_Series_cache
 model-.*\.stan$
 .*\.RData$
 .*\.rds$
+inst/stan_files/irt_standard_map
+inst/stan_files/sim_gp
