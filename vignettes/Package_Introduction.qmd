@@ -3,7 +3,8 @@ title: "Introduction to Idealstan"
 author: "Robert Kubinec"
 date: last-modified
 format: html
-cache: false
+execute: 
+  cache: false
 vignette: >
   %\VignetteIndexEntry{Time-Varying Ideal Points}
   %\VignetteEngine{R.rsp::asis}

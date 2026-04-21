@@ -59,3 +59,4 @@ model-.*\.stan$
 .*\.rds$
 inst/stan_files/irt_standard_map
 inst/stan_files/sim_gp
+issue26.csv

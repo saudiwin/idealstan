@@ -21,6 +21,7 @@ altdoc/freeze.rds
 /Meta/
 /doc/
 idealstan.Rcheck/
+.claude/
 *.js
 *.css
 *.png

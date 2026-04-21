@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Robert Kubinec">
-<meta name="dcterms.date" content="2026-02-09">
+<meta name="dcterms.date" content="2026-04-17">
 
 <title>Time-Varying Ideal Points</title>
 <style>
@@ -98,7 +98,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">February 9, 2026</p>
+      <p class="date">April 17, 2026</p>
     </div>
   </div>
   
@@ -257,8 +257,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <pre><code>[1] "Running pathfinder to find starting values"
 Finished in  11.4 seconds.
 [1] "Estimating model with Pathfinder for inference (approximation of true posterior)."
-Pareto k value (24) is greater than 0.7. Importance resampling was not able to improve the approximation, which may indicate that the approximation itself is poor. 
-Finished in  15.3 seconds.</code></pre>
+Pareto k value (39) is greater than 0.7. Importance resampling was not able to improve the approximation, which may indicate that the approximation itself is poor. 
+Finished in  14.8 seconds.</code></pre>
 </div>
 </div>
 <p>It is important to note that the warnings about importance resampling and the approximation do matter and a run with the Hamiltonian Markov Chain sampler should be used before final inferences by setting <code>use_method="pathfinder"</code>. The approximation is only useful for exploratory model development.</p>
@@ -303,10 +303,10 @@ Finished in  15.3 seconds.</code></pre>
 <colgroup>
 <col style="width: 21%">
 <col style="width: 11%">
-<col style="width: 11%">
+<col style="width: 10%">
 <col style="width: 11%">
 <col style="width: 7%">
-<col style="width: 27%">
+<col style="width: 28%">
 <col style="width: 10%">
 </colgroup>
 <thead>
@@ -323,54 +323,54 @@ Finished in  15.3 seconds.</code></pre>
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">time_var_free[100]</td>
-<td style="text-align: right;">0.1993320</td>
-<td style="text-align: right;">0.1993320</td>
-<td style="text-align: right;">0.1993320</td>
+<td style="text-align: right;">0.0898634</td>
+<td style="text-align: right;">0.113083</td>
+<td style="text-align: right;">0.1130830</td>
 <td style="text-align: right;">100</td>
 <td style="text-align: left;">Pettyjohn, Brian Guy 137</td>
 <td style="text-align: left;">R</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">time_var_free[101]</td>
-<td style="text-align: right;">0.1572050</td>
-<td style="text-align: right;">0.1572050</td>
-<td style="text-align: right;">0.1572050</td>
+<td style="text-align: right;">0.0685760</td>
+<td style="text-align: right;">0.121545</td>
+<td style="text-align: right;">0.0685760</td>
 <td style="text-align: right;">101</td>
 <td style="text-align: left;">Plant, Al Sr.&nbsp;76</td>
 <td style="text-align: left;">D</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">time_var_free[102]</td>
-<td style="text-align: right;">0.0817629</td>
-<td style="text-align: right;">0.0817629</td>
-<td style="text-align: right;">0.0817629</td>
+<td style="text-align: right;">0.0711887</td>
+<td style="text-align: right;">0.184583</td>
+<td style="text-align: right;">0.0711887</td>
 <td style="text-align: right;">102</td>
 <td style="text-align: left;">Plant, Hazel 77</td>
 <td style="text-align: left;">D</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">time_var_free[103]</td>
-<td style="text-align: right;">0.0894393</td>
-<td style="text-align: right;">0.0894393</td>
-<td style="text-align: right;">0.0894393</td>
+<td style="text-align: right;">0.0972887</td>
+<td style="text-align: right;">0.110378</td>
+<td style="text-align: right;">0.1103780</td>
 <td style="text-align: right;">103</td>
 <td style="text-align: left;">Poore, Nicole 138</td>
 <td style="text-align: left;">D</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">time_var_free[104]</td>
-<td style="text-align: right;">0.2616550</td>
-<td style="text-align: right;">0.2616550</td>
-<td style="text-align: right;">0.2616550</td>
+<td style="text-align: right;">0.0701580</td>
+<td style="text-align: right;">0.130135</td>
+<td style="text-align: right;">0.0701580</td>
 <td style="text-align: right;">104</td>
 <td style="text-align: left;">Postles, Charles S. 78</td>
 <td style="text-align: left;">R</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">time_var_free[105]</td>
-<td style="text-align: right;">0.1440130</td>
-<td style="text-align: right;">0.1440130</td>
-<td style="text-align: right;">0.1440130</td>
+<td style="text-align: right;">0.0565119</td>
+<td style="text-align: right;">0.298822</td>
+<td style="text-align: right;">0.2988220</td>
 <td style="text-align: right;">105</td>
 <td style="text-align: left;">Potter, Charles Jr.&nbsp;79</td>
 <td style="text-align: left;">D</td>
@@ -395,12 +395,12 @@ Finished in  15.3 seconds.</code></pre>
 <span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>            <span class="at">seed=</span><span class="dv">84520</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] "Running pathfinder to find starting values"
-Finished in  8.8 seconds.
-Initial log joint probability = -19149.6 
+Finished in  7.2 seconds.
+Initial log joint probability = -19553.3 
 Optimization terminated normally:  
   Convergence detected: relative gradient magnitude is below tolerance 
-Finished in  0.4 seconds.
-Finished in  86.6 seconds.</code></pre>
+Finished in  0.6 seconds.
+Finished in  83.5 seconds.</code></pre>
 </div>
 <div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">id_plot_persons_dyn</span>(del_est_spline,<span class="at">use_ci =</span> F)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
@@ -447,54 +447,54 @@ Finished in  86.6 seconds.</code></pre>
 <td style="text-align: left;">NA</td>
 <td style="text-align: left;">NA</td>
 <td style="text-align: left;">NA</td>
-<td style="text-align: right;">-4.589144</td>
-<td style="text-align: right;">0.4017855</td>
-<td style="text-align: right;">5.507941</td>
+<td style="text-align: right;">-4.588254</td>
+<td style="text-align: right;">0.4026690</td>
+<td style="text-align: right;">5.508821</td>
 <td style="text-align: left;">L_tp1[1,100]</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Plant, Al Sr.&nbsp;76</td>
 <td style="text-align: left;">D</td>
 <td style="text-align: left;">1995-01-01</td>
-<td style="text-align: right;">-8.290385</td>
-<td style="text-align: right;">-6.0594900</td>
-<td style="text-align: right;">-3.846023</td>
+<td style="text-align: right;">-8.289815</td>
+<td style="text-align: right;">-6.0591700</td>
+<td style="text-align: right;">-3.845960</td>
 <td style="text-align: left;">L_tp1[1,101]</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">NA</td>
 <td style="text-align: left;">NA</td>
 <td style="text-align: left;">NA</td>
-<td style="text-align: right;">-9.754677</td>
-<td style="text-align: right;">-5.4755050</td>
-<td style="text-align: right;">-1.207696</td>
+<td style="text-align: right;">-9.754335</td>
+<td style="text-align: right;">-5.4751250</td>
+<td style="text-align: right;">-1.207367</td>
 <td style="text-align: left;">L_tp1[1,102]</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">NA</td>
 <td style="text-align: left;">NA</td>
 <td style="text-align: left;">NA</td>
-<td style="text-align: right;">-5.324903</td>
-<td style="text-align: right;">-0.3087075</td>
-<td style="text-align: right;">4.612495</td>
+<td style="text-align: right;">-5.324484</td>
+<td style="text-align: right;">-0.3082060</td>
+<td style="text-align: right;">4.613015</td>
 <td style="text-align: left;">L_tp1[1,103]</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">NA</td>
 <td style="text-align: left;">NA</td>
 <td style="text-align: left;">NA</td>
-<td style="text-align: right;">-4.782561</td>
-<td style="text-align: right;">0.0619210</td>
-<td style="text-align: right;">5.169174</td>
+<td style="text-align: right;">-4.781991</td>
+<td style="text-align: right;">0.0624892</td>
+<td style="text-align: right;">5.169744</td>
 <td style="text-align: left;">L_tp1[1,104]</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">NA</td>
 <td style="text-align: left;">NA</td>
 <td style="text-align: left;">NA</td>
-<td style="text-align: right;">-4.881152</td>
-<td style="text-align: right;">-0.1911970</td>
-<td style="text-align: right;">4.804094</td>
+<td style="text-align: right;">-4.882512</td>
+<td style="text-align: right;">-0.1925530</td>
+<td style="text-align: right;">4.802734</td>
 <td style="text-align: left;">L_tp1[1,105]</td>
 </tr>
 </tbody>
@@ -516,10 +516,10 @@ Finished in  86.6 seconds.</code></pre>
 <span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>            <span class="at">seed=</span><span class="dv">84520</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] "Running pathfinder to find starting values"
-Finished in  238.8 seconds.
+Finished in  200.9 seconds.
 [1] "Estimating model with Pathfinder for inference (approximation of true posterior)."
-Pareto k value (25) is greater than 0.7. Importance resampling was not able to improve the approximation, which may indicate that the approximation itself is poor. 
-Finished in  285.5 seconds.</code></pre>
+Pareto k value (17) is greater than 0.7. Importance resampling was not able to improve the approximation, which may indicate that the approximation itself is poor. 
+Finished in  204.5 seconds.</code></pre>
 </div>
 <div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">id_plot_persons_dyn</span>(del_est_rw3,</span>
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>                  <span class="at">include=</span><span class="fu">c</span>(<span class="st">'D'</span>,<span class="st">'R'</span>)) <span class="sc">+</span> <span class="fu">scale_colour_manual</span>(<span class="at">values=</span><span class="fu">c</span>(<span class="at">R=</span><span class="st">'red'</span>,</span>
@@ -570,10 +570,10 @@ Finished in  285.5 seconds.</code></pre>
 <span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>            <span class="at">seed=</span><span class="dv">84520</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] "Running pathfinder to find starting values"
-Finished in  475.3 seconds.
+Finished in  411.6 seconds.
 [1] "Estimating model with Pathfinder for inference (approximation of true posterior)."
-Pareto k value (15) is greater than 0.7. Importance resampling was not able to improve the approximation, which may indicate that the approximation itself is poor. 
-Finished in  506.2 seconds.</code></pre>
+Pareto k value (23) is greater than 0.7. Importance resampling was not able to improve the approximation, which may indicate that the approximation itself is poor. 
+Finished in  2776.5 seconds.</code></pre>
 </div>
 </div>
 <p>We can then examine the distributions for both models as plots:</p>
