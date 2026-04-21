@@ -53,7 +53,8 @@
     "legis_x", "sigma_reg_x", "sigma_abs_x", "n", "wrap_id", "base_id",
     "already_facet", "person_lines", "sampled_data", "highlight",
     "draw_line_alpha", "person_line_alpha", "line_size", "plot_text",
-    "text_size_label", "use_ci", "plot_lines")
+    "text_size_label", "use_ci", "plot_lines",
+    "group_label", "item_name", "order_val", "true_value")
   
   utils::globalVariables(variable_list)
   

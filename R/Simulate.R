@@ -98,6 +98,7 @@
 #' plotting functions.
 #' @seealso [id_show_trues()] for plotting fitted models versus true values.
 #' @importFrom posterior as_draws_df as_draws_matrix as_draws_array summarise_draws summarize_draws rhat
+#' @importFrom stats rbinom
 #' @export
 
 id_sim_gen <- function(num_person=20,num_items=50,
