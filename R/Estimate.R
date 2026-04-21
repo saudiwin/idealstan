@@ -113,24 +113,74 @@
 #' @import methods
 #' @importFrom stats dbinom median plogis quantile reorder rexp rlnorm runif sd step rnorm
 #' @importFrom utils person
-#' @examples 
-#' # You can either use a pscl rollcall object or a vote/score matrix 
-#' # where persons/legislators are in the rows
-#' # and items/bills are in the columns
-#' 
+#' @examples
 #' library(dplyr)
-#' 
-#' # First, using a rollcall object with the 114th Senate's rollcall votes:
-#' 
+#'
+#' # Basic usage: 114th Senate rollcall votes as a discrete binary outcome.
+#' # cast_code is recoded to 0/1 (No/Yes) with absences as NA.
+#'
 #' data('senate114')
-#' 
-#' to_idealstan <-   id_make(score_data = senate114,
-#'                outcome_disc = 'cast_code',
-#'                person_id = 'bioname',
-#'                item_id = 'rollnumber',
-#'                group_id= 'party_code',
-#'                time_id='date')
-#' 
+#' senate114$cast_code <- ifelse(senate114$cast_code == "Absent", NA,
+#'                               senate114$cast_code)
+#' senate114$cast_code <- as.integer(senate114$cast_code) - 1L
+#'
+#' senate_data <- id_make(score_data = senate114,
+#'                        outcome_disc = 'cast_code',
+#'                        person_id = 'bioname',
+#'                        item_id = 'rollnumber',
+#'                        group_id = 'party_code',
+#'                        time_id = 'date')
+#'
+#' # Mixed discrete and continuous outcomes.
+#' # When items have different response distributions, add a model_id column
+#' # with the integer model type for each row (see ?id_estimate for the full
+#' # list).  Discrete values go in outcome_disc; continuous values go in
+#' # outcome_cont.  Rows that belong to the other type should be NA.
+#' #
+#' # Here, roll calls <= 200 are kept as binary (model_id = 1) and roll calls
+#' # > 200 use the NOMINATE probability as a standardised continuous outcome
+#' # (model_id = 9, unbounded normal).
+#'
+#' binary_part <- filter(senate114, rollnumber <= 200) |>
+#'   mutate(outcome_disc = cast_code,
+#'          outcome_cont = NA_real_,
+#'          model_id     = 1L)
+#'
+#' cont_part <- filter(senate114, rollnumber > 200) |>
+#'   mutate(outcome_disc = NA_integer_,
+#'          outcome_cont = as.numeric(scale(prob)),
+#'          model_id     = 9L)
+#'
+#' mixed_data <- bind_rows(binary_part, cont_part)
+#'
+#' mixed_idealdata <- id_make(score_data  = mixed_data,
+#'                            outcome_disc = 'outcome_disc',
+#'                            outcome_cont = 'outcome_cont',
+#'                            model_id     = 'model_id',
+#'                            person_id    = 'bioname',
+#'                            item_id      = 'rollnumber',
+#'                            group_id     = 'party_code')
+#'
+#' # Person- and item-level covariates.
+#' # Pass one-sided formulas to person_cov and item_cov.  Covariates must be
+#' # columns already present in score_data.  Center continuous covariates
+#' # (here, age in units of 10 years) to improve mixing.
+#' #
+#' # person_cov hierarchically predicts each senator's ideal point.
+#' # item_cov hierarchically predicts each roll call's discrimination parameter.
+#'
+#' senate114$age <- (2018 - senate114$born)
+#' senate114$age <- (senate114$age - mean(senate114$age)) / 10
+#'
+#' senate_cov_data <- id_make(score_data = senate114,
+#'                            outcome_disc = 'cast_code',
+#'                            person_id    = 'bioname',
+#'                            item_id      = 'rollnumber',
+#'                            group_id     = 'party_code',
+#'                            time_id      = 'date',
+#'                            person_cov   = ~party_code + age,
+#'                            item_cov     = ~session)
+#'
 id_make <- function(score_data=NULL,
                     outcome_disc='outcome_disc',
                     outcome_cont='outcome_cont',
