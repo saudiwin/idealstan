@@ -29,13 +29,5 @@ Useful links:
 \author{
 \strong{Maintainer}: Robert Kubinec \email{bobkubinec@gmail.com}
 
-Other contributors:
-\itemize{
-  \item Michal Ovádek \email{m.ovadek@ucl.ac.uk} [contributor]
-  \item Jonah Gabry [contributor]
-  \item Ben Goodrich [contributor]
-  \item Trustees of Columbia University [copyright holder]
-}
-
 }
 \keyword{internal}

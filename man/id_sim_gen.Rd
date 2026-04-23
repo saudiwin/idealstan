@@ -184,6 +184,14 @@ This function produces simulated data that matches (as closely as possible) the 
 used in the underlying Stan code. Currently the simulation can produce inflated and non-inflated
 models with binary, ordinal (GRM and rating-scale), Poisson, Normal and Log-Normal responses.
 }
+\examples{
+# Simulate binary (non-inflated) data for 20 persons and 50 items
+sim <- id_sim_gen(num_person=20, num_items=50, inflate=FALSE)
+head(sim@score_matrix)
+
+# Simulate an ordinal graded-response model with missing-data inflation
+sim_ord <- id_sim_gen(model='ordinal_grm', inflate=TRUE, num_person=10, num_items=20)
+}
 \seealso{
 \code{\link[=id_show_trues]{id_show_trues()}} for plotting fitted models versus true values.
 }

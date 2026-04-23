@@ -75,3 +75,13 @@ You can then use functions such as
 in the score/vote matrix.
 Also see \code{help("posterior_predict", package = "rstanarm")}
 }
+\examples{
+\dontrun{
+sim <- id_sim_gen()
+est <- id_estimate(sim, model_type=1, fixtype='vb_full', nchains=2, ncores=2)
+# posterior predictive distribution (100 draws)
+ppc <- id_post_pred(est, draws=50)
+# log-likelihood matrix (for loo)
+ll <- id_post_pred(est, type='log_lik')
+}
+}

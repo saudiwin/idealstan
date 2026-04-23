@@ -187,12 +187,12 @@ senate_data <- id_make(score_data = senate114,
 # > 200 use the NOMINATE probability as a standardised continuous outcome
 # (model_id = 9, unbounded normal).
 
-binary_part <- filter(senate114, rollnumber <= 200) |>
+binary_part <- filter(senate114, rollnumber <= 200) \%>\%
   mutate(outcome_disc = cast_code,
          outcome_cont = NA_real_,
          model_id     = 1L)
 
-cont_part <- filter(senate114, rollnumber > 200) |>
+cont_part <- filter(senate114, rollnumber > 200) \%>\%
   mutate(outcome_disc = NA_integer_,
          outcome_cont = as.numeric(scale(prob)),
          model_id     = 9L)

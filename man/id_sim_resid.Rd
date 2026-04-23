@@ -16,3 +16,10 @@ id_sim_resid(obj, rep = 1)
 Residual function for checking estimated samples compared to true simulation scores
 Returns a data frame with residuals plus quantiles.
 }
+\examples{
+\dontrun{
+sim <- id_sim_gen()
+est <- id_estimate(sim, model_type=1, fixtype='vb_full', nchains=2, ncores=2)
+id_sim_resid(est)
+}
+}

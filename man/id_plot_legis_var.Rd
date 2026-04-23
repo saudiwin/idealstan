@@ -60,29 +60,19 @@ dot plot with associated high-density posterior interval (can be changed
 with \code{high_limit} and \code{low_limit} options).
 }
 \examples{
-
-# To demonstrate, we load the 114th Senate data and fit a time-varying model
-
-data('senate114_fit')
-
 \dontrun{
-senate_data <- id_make(senate114,outcome = 'cast_code',
-person_id = 'bioname',
-item_id = 'rollnumber',
-group_id= 'party_code',
-time_id='date',
-miss_val='Absent')
-
- senate114_time_fit <- id_estimate(senate_data,
- model_type = 2,
- use_method="pathfinder",
- fixtype='vb_partial',
- vary_ideal_pts='random_walk',
- restrict_ind_high = "WARREN, Elizabeth",
- restrict_ind_low="BARRASSO, John A.",
- seed=84520)
-# We plot the variances for all the Senators
-
-id_plot_legis_var(senate114_fit)
+data('senate114')
+senate114$cast_code <- ifelse(senate114$cast_code=="Absent", NA,
+                              as.integer(senate114$cast_code) - 1L)
+senate_data <- id_make(senate114, outcome_disc='cast_code',
+                       person_id='bioname', item_id='rollnumber',
+                       group_id='party_code', time_id='date')
+senate_time_fit <- id_estimate(senate_data,
+                               model_type=2, fixtype='vb_full',
+                               vary_ideal_pts='random_walk',
+                               restrict_ind_high="WARREN, Elizabeth",
+                               restrict_ind_low="BARRASSO, John A.",
+                               nchains=2, ncores=4)
+id_plot_legis_var(senate_time_fit)
 }
 }

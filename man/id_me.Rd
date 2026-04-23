@@ -28,3 +28,17 @@ outcome for each item. Note: if the covariate is binary (i.e., only has two valu
 then the function will calculate the difference between these two values instead of
 using numerical differentation.
 }
+\examples{
+\dontrun{
+data('senate114')
+senate114$cast_code <- ifelse(senate114$cast_code=="Absent", NA,
+                              as.integer(senate114$cast_code) - 1L)
+senate114$age <- (2018 - senate114$born - mean(2018 - senate114$born)) / 10
+sen_cov <- id_make(senate114, outcome_disc='cast_code',
+                   person_id='bioname', item_id='rollnumber',
+                   group_id='party_code', person_cov=~party_code+age)
+sen_cov_est <- id_estimate(sen_cov, model_type=1, fixtype='vb_full', nchains=2, ncores=4)
+me <- id_me(sen_cov_est, covariate='age', draws=50)
+me$sum_ideal_effects
+}
+}

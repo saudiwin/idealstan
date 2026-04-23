@@ -1,3 +1,11 @@
+#Release v1.0
+* switched to `cmdstanr` as back-end (requires additional installation)
+* added `id_me` method for calculating ideal point marginal effects for covariates
+* added ordered beta distribution for items (bounded continuous measures)
+* added splines as possible time series functions
+* updated vignettes with new features
+* changed `legis` functions to `person` functions (old functions kept as deprecated)
+
 #Release v0.7.2
 * Updated to be compatible with most recent `rstan` (version 2.19.2).
 * Added `id_plot_cov` function for marginal effects plotting of covariates.

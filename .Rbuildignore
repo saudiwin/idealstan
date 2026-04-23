@@ -38,7 +38,7 @@ psis_vb_diagnostic_fig_1.R
 README.qmd
 \.png
 ^CRAN-RELEASE$
-^Meta$
+^sim_results$
 ^\.github$
 ^docs$
 ^doc$
@@ -57,6 +57,8 @@ vignettes/Time_Series_cache
 model-.*\.stan$
 .*\.RData$
 .*\.rds$
-inst/stan_files/irt_standard_map
-inst/stan_files/sim_gp
+inst/stan_files/irt_standard_map$
+inst/stan_files/sim_gp$
+inst/stan_files/.*\.cc$
 issue26.csv
+^Meta$

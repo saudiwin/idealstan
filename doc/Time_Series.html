@@ -2,12 +2,12 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.5.57">
+<meta name="generator" content="quarto-1.6.42">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Robert Kubinec">
-<meta name="dcterms.date" content="2024-12-24">
+<meta name="dcterms.date" content="2026-04-17">
 
 <title>Time-Varying Ideal Points</title>
 <style>
@@ -65,10 +65,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="Time_Series_files/libs/quarto-html/tippy.umd.min.js"></script>
 <script src="Time_Series_files/libs/quarto-html/anchor.min.js"></script>
 <link href="Time_Series_files/libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="Time_Series_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="Time_Series_files/libs/quarto-html/quarto-syntax-highlighting-2f5df379a58b258e96c21c0638c20c03.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="Time_Series_files/libs/bootstrap/bootstrap.min.js"></script>
 <link href="Time_Series_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="Time_Series_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<link href="Time_Series_files/libs/bootstrap/bootstrap-c0367b04c37547644fece4185067e4a7.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 
 
 </head>
@@ -98,7 +98,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">December 24, 2024</p>
+      <p class="date">April 17, 2026</p>
     </div>
   </div>
   
@@ -214,7 +214,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>The main disadvantage of the Gaussian process is that the power and flexbility require <em>a lot</em> more data. It is not a useful model unless you have considerable numbers of bills/items. The model can handle additional time-varying covariates although their meaning is not as precise as the stationary model.</p>
 <p>The stationary model, by contrast, assumes that ideal points have a single long-term average. The ideal points may receive “shocks” that force them away from the long-term mean, but they will inevitably return. While this is a more specific set of assumptions than the random walk or Gaussian process, stationary models have the significant advantage of allowing us to fit covariates that have a more meaningful interpretation: the estimates of covariates represent shocks to the ideal points away from their long-term average.</p>
 <p>A simpler kind of time series model is also available in <code>idealstan</code> known as splines. Splines are combinations of polynomial functions; the more combinations, the more flexible splines become. <code>idealstan</code> includes splines primarily because it is easy to estimate relatively simple time series functions that are useful when there is only a limited amount of data per time point and when the latent trait is unlikely change very quickly. In these cases, a spline can help estimate a latent trait that varies over time but only within certain bounds defined by the complexity of the polynomial function.</p>
-<p>To show what these models look like, we will fit each model to the <code>delaware</code> data in turn. We use the <code>use_vb</code> option to produce variational estimates of the true posterior; these approximations are much faster to fit than the full model but usually have some distortions. For finished analysis we would want to use the full sampler (<code>use_vb=FALSE</code>), unless we have so much data that processing time for the full model is infeasible.</p>
+<p>To show what these models look like, we will fit each model to the <code>delaware</code> data in turn. We use the <code>use_method</code> option to produce variational estimates of the true posterior; these approximations are much faster to fit than the full model but usually have some distortions. For finished analysis we would want to use the full sampler (<code>use_method="mcmc"</code>), unless we have so much data that processing time for the full model is infeasible.</p>
 <p>The models will be fit with parallel processing over the persons in the model (i.e.&nbsp;more <code>ncores</code> than <code>nchains</code> specified in <code>id_estimate</code>). Parallel processing is only possible for persons as time series model introduce dependence between time points. As such do not change the <code>map_over_id</code> option for dynamic models or you will get incorrect results.</p>
 <section id="random-walk-model" class="level2">
 <h2 class="anchored" data-anchor-id="random-walk-model">Random-Walk Model</h2>
@@ -246,7 +246,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>del_est <span class="ot">&lt;-</span> <span class="fu">id_estimate</span>(delaware_data,</span>
 <span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>                <span class="at">model_type =</span> <span class="dv">1</span>,</span>
 <span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>                <span class="at">fixtype=</span><span class="st">'prefix'</span>,<span class="at">const_type=</span><span class="st">"items"</span>,</span>
-<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>                <span class="at">nchains =</span> <span class="dv">2</span>,<span class="at">use_vb =</span> T,</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>                <span class="at">nchains =</span> <span class="dv">2</span>,<span class="at">use_method =</span> <span class="st">"pathfinder"</span>,</span>
 <span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>                <span class="at">ncores =</span> <span class="dv">8</span>,</span>
 <span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>                <span class="at">vary_ideal_pts=</span><span class="st">'random_walk'</span>,</span>
 <span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>                 <span class="at">restrict_ind_high =</span> <span class="dv">305</span>,</span>
@@ -255,23 +255,21 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>            <span class="at">id_refresh=</span><span class="dv">0</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] "Running pathfinder to find starting values"
-Finished in  7.3 seconds.
-[1] "Estimating model with Pathfinder for inference (approximation of true posterior)."</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Pareto k value (32) is greater than 0.7. Importance resampling was not able to improve the approximation, which may indicate that the approximation itself is poor. 
-Finished in  7.6 seconds.</code></pre>
+Finished in  11.4 seconds.
+[1] "Estimating model with Pathfinder for inference (approximation of true posterior)."
+Pareto k value (39) is greater than 0.7. Importance resampling was not able to improve the approximation, which may indicate that the approximation itself is poor. 
+Finished in  14.8 seconds.</code></pre>
 </div>
 </div>
-<p>It is important to note that the warnings about importance resampling and the approximation do matter and a run with the Hamiltonian Markov Chain sampler should be used before final inferences by setting <code>use_vb=TRUE</code>. The approximation is only useful for exploratory model development.</p>
+<p>It is important to note that the warnings about importance resampling and the approximation do matter and a run with the Hamiltonian Markov Chain sampler should be used before final inferences by setting <code>use_method="pathfinder"</code>. The approximation is only useful for exploratory model development.</p>
 <p>Given the fitted model, we can now plot the ideal points. We will turn off the option for showing the uncertainty interval as there are a lot of lines, one for each legislator:</p>
 <div class="cell" data-layout-align="center">
-<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">id_plot_legis_dyn</span>(del_est,<span class="at">use_ci =</span> T) <span class="sc">+</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_manual</span>(<span class="at">values=</span><span class="fu">c</span>(<span class="at">R=</span><span class="st">'red'</span>,</span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>                              <span class="at">D=</span><span class="st">'blue'</span>,</span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>                              <span class="at">X=</span><span class="st">'green'</span>),</span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>                     <span class="at">name=</span><span class="st">"Party"</span>) <span class="sc">+</span></span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggtitle</span>(<span class="st">"Yearly Ideal Point Scores for Delaware Legislature"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">id_plot_persons_dyn</span>(del_est,<span class="at">use_ci =</span> T) <span class="sc">+</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="co"># scale_color_manual(values=c(R='red',</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="co">#                             D='blue',</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  <span class="co">#                             X='green'),</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>  <span class="co">#                    name="Party") +</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggtitle</span>(<span class="st">"Yearly Ideal Point Scores for Delaware Legislature"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
@@ -284,10 +282,7 @@ Finished in  7.6 seconds.</code></pre>
 <!-- It is important to note that not all the parameters in this model converged per their Rhat values. Many of the non-converged parameters are discrimination parameters for bills, implying that there are bills that have unanimous votes (or few dissenters). It is not wrong per se to leave these bills in, and it does not hurt convergence for legislators, but the model can only converge if there is sufficient data and/or priors to estimate only one mode per parameter. An alternative would be to use items (bills) as identification restrictions rather than legislators/persons. -->
 <p>We can also look at the variance of the ideal points to see which of the legislators had the highest variance in their ideal points:</p>
 <div class="cell" data-layout-align="center">
-<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">id_plot_legis_var</span>(del_est) <span class="sc">+</span> <span class="fu">ggtitle</span>(<span class="st">'Variances of Time-Varying Ideal Points in Delaware State Legislature'</span>,<span class="at">subtitle=</span><span class="st">'Higher Variances Indicate Less Stable Ideal Points'</span>) <span class="sc">+</span></span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_manual</span>(<span class="at">values=</span><span class="fu">c</span>(<span class="at">R=</span><span class="st">'red'</span>,</span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>                              <span class="at">D=</span><span class="st">'blue'</span>,</span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>                              <span class="at">X=</span><span class="st">'green'</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">id_plot_legis_var</span>(del_est) <span class="sc">+</span> <span class="fu">ggtitle</span>(<span class="st">'Variances of Time-Varying Ideal Points in Delaware State Legislature'</span>,<span class="at">subtitle=</span><span class="st">'Higher Variances Indicate Less Stable Ideal Points'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
@@ -295,6 +290,9 @@ Finished in  7.6 seconds.</code></pre>
 </figure>
 </div>
 </div>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>  <span class="co"># scale_color_manual(values=c(R='red',</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  <span class="co">#                             D='blue',</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  <span class="co">#                             X='green'))</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>We can access the actual estimates of the variances by passing the <code>return_data=TRUE</code> option to the plot function:</p>
 <div class="cell" data-layout-align="center">
@@ -305,10 +303,10 @@ Finished in  7.6 seconds.</code></pre>
 <colgroup>
 <col style="width: 21%">
 <col style="width: 11%">
-<col style="width: 11%">
+<col style="width: 10%">
 <col style="width: 11%">
 <col style="width: 7%">
-<col style="width: 27%">
+<col style="width: 28%">
 <col style="width: 10%">
 </colgroup>
 <thead>
@@ -325,54 +323,54 @@ Finished in  7.6 seconds.</code></pre>
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">time_var_free[100]</td>
-<td style="text-align: right;">0.6513000</td>
-<td style="text-align: right;">0.6513000</td>
-<td style="text-align: right;">0.6513000</td>
+<td style="text-align: right;">0.0898634</td>
+<td style="text-align: right;">0.113083</td>
+<td style="text-align: right;">0.1130830</td>
 <td style="text-align: right;">100</td>
 <td style="text-align: left;">Pettyjohn, Brian Guy 137</td>
 <td style="text-align: left;">R</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">time_var_free[101]</td>
-<td style="text-align: right;">0.0599461</td>
-<td style="text-align: right;">0.0599461</td>
-<td style="text-align: right;">0.0599461</td>
+<td style="text-align: right;">0.0685760</td>
+<td style="text-align: right;">0.121545</td>
+<td style="text-align: right;">0.0685760</td>
 <td style="text-align: right;">101</td>
 <td style="text-align: left;">Plant, Al Sr.&nbsp;76</td>
 <td style="text-align: left;">D</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">time_var_free[102]</td>
-<td style="text-align: right;">0.2136160</td>
-<td style="text-align: right;">0.2136160</td>
-<td style="text-align: right;">0.2136160</td>
+<td style="text-align: right;">0.0711887</td>
+<td style="text-align: right;">0.184583</td>
+<td style="text-align: right;">0.0711887</td>
 <td style="text-align: right;">102</td>
 <td style="text-align: left;">Plant, Hazel 77</td>
 <td style="text-align: left;">D</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">time_var_free[103]</td>
-<td style="text-align: right;">0.1915250</td>
-<td style="text-align: right;">0.1915250</td>
-<td style="text-align: right;">0.1915250</td>
+<td style="text-align: right;">0.0972887</td>
+<td style="text-align: right;">0.110378</td>
+<td style="text-align: right;">0.1103780</td>
 <td style="text-align: right;">103</td>
 <td style="text-align: left;">Poore, Nicole 138</td>
 <td style="text-align: left;">D</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">time_var_free[104]</td>
-<td style="text-align: right;">0.3784480</td>
-<td style="text-align: right;">0.3784480</td>
-<td style="text-align: right;">0.3784480</td>
+<td style="text-align: right;">0.0701580</td>
+<td style="text-align: right;">0.130135</td>
+<td style="text-align: right;">0.0701580</td>
 <td style="text-align: right;">104</td>
 <td style="text-align: left;">Postles, Charles S. 78</td>
 <td style="text-align: left;">R</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">time_var_free[105]</td>
-<td style="text-align: right;">0.2945830</td>
-<td style="text-align: right;">0.2945830</td>
-<td style="text-align: right;">0.2945830</td>
+<td style="text-align: right;">0.0565119</td>
+<td style="text-align: right;">0.298822</td>
+<td style="text-align: right;">0.2988220</td>
 <td style="text-align: right;">105</td>
 <td style="text-align: left;">Potter, Charles Jr.&nbsp;79</td>
 <td style="text-align: left;">D</td>
@@ -391,23 +389,20 @@ Finished in  7.6 seconds.</code></pre>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>                <span class="at">fixtype=</span><span class="st">'prefix'</span>,<span class="at">const_type=</span><span class="st">"items"</span>,</span>
 <span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>                <span class="at">nchains=</span><span class="dv">2</span>,</span>
 <span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>                <span class="at">ncores=</span><span class="dv">8</span>,<span class="at">spline_knots =</span> <span class="cn">NULL</span>,<span class="at">spline_degree =</span> <span class="dv">2</span>,</span>
-<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>                <span class="at">vary_ideal_pts=</span><span class="st">'splines'</span>,<span class="at">use_vb=</span><span class="cn">TRUE</span>,</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>                <span class="at">vary_ideal_pts=</span><span class="st">'splines'</span>,<span class="at">use_method=</span><span class="st">"laplace"</span>,</span>
 <span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>                 <span class="at">restrict_ind_high =</span> <span class="dv">305</span>,</span>
 <span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>                 <span class="at">restrict_ind_low=</span><span class="dv">276</span>,</span>
 <span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>            <span class="at">seed=</span><span class="dv">84520</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] "Running pathfinder to find starting values"
-Finished in  5.3 seconds.
-[1] "Estimating model with Pathfinder for inference (approximation of true posterior)."</code></pre>
+Finished in  7.2 seconds.
+Initial log joint probability = -19553.3 
+Optimization terminated normally:  
+  Convergence detected: relative gradient magnitude is below tolerance 
+Finished in  0.6 seconds.
+Finished in  83.5 seconds.</code></pre>
 </div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Pareto k value (31) is greater than 0.7. Importance resampling was not able to improve the approximation, which may indicate that the approximation itself is poor. 
-Finished in  6.1 seconds.</code></pre>
-</div>
-<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">id_plot_legis_dyn</span>(del_est_spline,<span class="at">use_ci =</span> F) <span class="sc">+</span></span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_manual</span>(<span class="at">values=</span><span class="fu">c</span>(<span class="at">R=</span><span class="st">'red'</span>,</span>
-<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>                              <span class="at">D=</span><span class="st">'blue'</span>,</span>
-<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>                              <span class="at">X=</span><span class="st">'green'</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">id_plot_persons_dyn</span>(del_est_spline,<span class="at">use_ci =</span> F)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
@@ -415,6 +410,9 @@ Finished in  6.1 seconds.</code></pre>
 </figure>
 </div>
 </div>
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>  <span class="co"># scale_color_manual(values=c(R='red',</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>  <span class="co">#                             D='blue',</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>  <span class="co">#                             X='green'))</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>These ideal points are similar to the random walk estimates and show the limited variation possible in a 2-degree polynomial function (essentially a quadratic function). For one session, this model would appear adequate at capturing monthly changes in legislator trajectories.</p>
 <p>Finally, we can also examine the individual ideal points by each time point using the summary function:</p>
@@ -449,54 +447,54 @@ Finished in  6.1 seconds.</code></pre>
 <td style="text-align: left;">NA</td>
 <td style="text-align: left;">NA</td>
 <td style="text-align: left;">NA</td>
-<td style="text-align: right;">0.431234</td>
-<td style="text-align: right;">0.431234</td>
-<td style="text-align: right;">0.431234</td>
+<td style="text-align: right;">-4.588254</td>
+<td style="text-align: right;">0.4026690</td>
+<td style="text-align: right;">5.508821</td>
 <td style="text-align: left;">L_tp1[1,100]</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Plant, Al Sr.&nbsp;76</td>
 <td style="text-align: left;">D</td>
 <td style="text-align: left;">1995-01-01</td>
-<td style="text-align: right;">-6.286210</td>
-<td style="text-align: right;">-6.286210</td>
-<td style="text-align: right;">-6.286210</td>
+<td style="text-align: right;">-8.289815</td>
+<td style="text-align: right;">-6.0591700</td>
+<td style="text-align: right;">-3.845960</td>
 <td style="text-align: left;">L_tp1[1,101]</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">NA</td>
 <td style="text-align: left;">NA</td>
 <td style="text-align: left;">NA</td>
-<td style="text-align: right;">-5.599550</td>
-<td style="text-align: right;">-5.599550</td>
-<td style="text-align: right;">-5.599550</td>
+<td style="text-align: right;">-9.754335</td>
+<td style="text-align: right;">-5.4751250</td>
+<td style="text-align: right;">-1.207367</td>
 <td style="text-align: left;">L_tp1[1,102]</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">NA</td>
 <td style="text-align: left;">NA</td>
 <td style="text-align: left;">NA</td>
-<td style="text-align: right;">-0.112670</td>
-<td style="text-align: right;">-0.112670</td>
-<td style="text-align: right;">-0.112670</td>
+<td style="text-align: right;">-5.324484</td>
+<td style="text-align: right;">-0.3082060</td>
+<td style="text-align: right;">4.613015</td>
 <td style="text-align: left;">L_tp1[1,103]</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">NA</td>
 <td style="text-align: left;">NA</td>
 <td style="text-align: left;">NA</td>
-<td style="text-align: right;">-0.429423</td>
-<td style="text-align: right;">-0.429423</td>
-<td style="text-align: right;">-0.429423</td>
+<td style="text-align: right;">-4.781991</td>
+<td style="text-align: right;">0.0624892</td>
+<td style="text-align: right;">5.169744</td>
 <td style="text-align: left;">L_tp1[1,104]</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">NA</td>
 <td style="text-align: left;">NA</td>
 <td style="text-align: left;">NA</td>
-<td style="text-align: right;">-0.530044</td>
-<td style="text-align: right;">-0.530044</td>
-<td style="text-align: right;">-0.530044</td>
+<td style="text-align: right;">-4.882512</td>
+<td style="text-align: right;">-0.1925530</td>
+<td style="text-align: right;">4.802734</td>
 <td style="text-align: left;">L_tp1[1,105]</td>
 </tr>
 </tbody>
@@ -511,25 +509,23 @@ Finished in  6.1 seconds.</code></pre>
 <div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>del_est_rw3 <span class="ot">&lt;-</span> <span class="fu">id_estimate</span>(delaware_data,</span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>                <span class="at">fixtype=</span><span class="st">'prefix'</span>,<span class="at">const_type=</span><span class="st">"items"</span>,</span>
 <span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>                <span class="at">nchains=</span><span class="dv">2</span>,<span class="at">use_groups =</span> T,</span>
-<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>                <span class="at">ncores=</span><span class="dv">8</span>,<span class="at">use_vb=</span><span class="cn">TRUE</span>,</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>                <span class="at">ncores=</span><span class="dv">8</span>,<span class="at">use_method=</span><span class="st">"pathfinder"</span>,</span>
 <span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>                 <span class="at">restrict_ind_high =</span> <span class="dv">305</span>,</span>
 <span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>                 <span class="at">restrict_ind_low=</span><span class="dv">276</span>,</span>
 <span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>                <span class="at">vary_ideal_pts=</span><span class="st">'random_walk'</span>,</span>
 <span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>            <span class="at">seed=</span><span class="dv">84520</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] "Running pathfinder to find starting values"
-Finished in  102.7 seconds.
-[1] "Estimating model with Pathfinder for inference (approximation of true posterior)."</code></pre>
+Finished in  200.9 seconds.
+[1] "Estimating model with Pathfinder for inference (approximation of true posterior)."
+Pareto k value (17) is greater than 0.7. Importance resampling was not able to improve the approximation, which may indicate that the approximation itself is poor. 
+Finished in  204.5 seconds.</code></pre>
 </div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Pareto k value (22) is greater than 0.7. Importance resampling was not able to improve the approximation, which may indicate that the approximation itself is poor. 
-Finished in  98.8 seconds.</code></pre>
-</div>
-<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="fu">id_plot_legis_dyn</span>(del_est_rw3,</span>
-<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>                  <span class="at">include=</span><span class="fu">c</span>(<span class="st">'D'</span>,<span class="st">'R'</span>)) <span class="sc">+</span> <span class="fu">scale_colour_manual</span>(<span class="at">values=</span><span class="fu">c</span>(<span class="at">R=</span><span class="st">'red'</span>,</span>
-<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>                                                          <span class="at">D=</span><span class="st">'blue'</span>,</span>
-<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>                                                          <span class="at">I=</span><span class="st">'green'</span>),</span>
-<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>                                                 <span class="at">name=</span><span class="st">"Parties"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">id_plot_persons_dyn</span>(del_est_rw3,</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>                  <span class="at">include=</span><span class="fu">c</span>(<span class="st">'D'</span>,<span class="st">'R'</span>)) <span class="sc">+</span> <span class="fu">scale_colour_manual</span>(<span class="at">values=</span><span class="fu">c</span>(<span class="at">R=</span><span class="st">'red'</span>,</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>                                                          <span class="at">D=</span><span class="st">'blue'</span>,</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>                                                          <span class="at">I=</span><span class="st">'green'</span>),</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>                                                 <span class="at">name=</span><span class="st">"Parties"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
@@ -540,19 +536,19 @@ Finished in  98.8 seconds.</code></pre>
 </div>
 <p>We can also overlay a bill/item midpoint to see where the line of indifference in voting is relative to party positions. In a dynamic ideal point model, the bill/item midpoint will be a straight line as the bill-item midpoint was only voted on in one time point, and hence has only one parameter:</p>
 <div class="cell" data-layout-align="center">
-<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="fu">id_plot_legis_dyn</span>(del_est_rw3,<span class="at">item_plot=</span><span class="st">'342'</span>,</span>
-<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>                  <span class="at">text_size_label =</span> <span class="dv">5</span>,</span>
-<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>                  <span class="at">include=</span><span class="fu">c</span>(<span class="st">'D'</span>,<span class="st">'R'</span>)) <span class="sc">+</span> <span class="fu">scale_colour_manual</span>(<span class="at">values=</span><span class="fu">c</span>(<span class="at">R=</span><span class="st">'red'</span>,</span>
-<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>                                                          <span class="at">D=</span><span class="st">'blue'</span>,</span>
-<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>                                                          <span class="at">I=</span><span class="st">'green'</span>),</span>
-<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>                                                 <span class="at">name=</span><span class="st">"Parties"</span>) <span class="sc">+</span></span>
-<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggtitle</span>(<span class="st">'Time-Varying Party-level Ideal Points for the Delaware State Legislature'</span>,</span>
-<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>          <span class="at">subtitle =</span> <span class="st">'Midpoint (Line of Indifference to Voting) for 342nd Roll-call Vote as Dotted Line'</span>) <span class="sc">+</span></span>
-<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">guides</span>(<span class="at">color=</span><span class="st">'none'</span>) <span class="sc">+</span></span>
-<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">annotate</span>(<span class="at">geom=</span><span class="st">'text'</span>,</span>
-<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a>           <span class="at">x =</span> <span class="fu">ymd</span>(<span class="st">'2016-01-01'</span>),</span>
-<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a>           <span class="at">y=</span><span class="sc">-</span><span class="dv">1</span>,</span>
-<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a>           <span class="at">label=</span><span class="st">'Confirmation Vote for Wilhelmina Wright as U.S. District Judge'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="fu">id_plot_persons_dyn</span>(del_est_rw3,<span class="at">item_plot=</span><span class="st">'342'</span>,</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>                  <span class="at">text_size_label =</span> <span class="dv">5</span>,</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>                  <span class="at">include=</span><span class="fu">c</span>(<span class="st">'D'</span>,<span class="st">'R'</span>)) <span class="sc">+</span> <span class="fu">scale_colour_manual</span>(<span class="at">values=</span><span class="fu">c</span>(<span class="at">R=</span><span class="st">'red'</span>,</span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>                                                          <span class="at">D=</span><span class="st">'blue'</span>,</span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>                                                          <span class="at">I=</span><span class="st">'green'</span>),</span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>                                                 <span class="at">name=</span><span class="st">"Parties"</span>) <span class="sc">+</span></span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggtitle</span>(<span class="st">'Time-Varying Party-level Ideal Points for the Delaware State Legislature'</span>,</span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>          <span class="at">subtitle =</span> <span class="st">'Midpoint (Line of Indifference to Voting) for 342nd Roll-call Vote as Dotted Line'</span>) <span class="sc">+</span></span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">guides</span>(<span class="at">color=</span><span class="st">'none'</span>) <span class="sc">+</span></span>
+<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">annotate</span>(<span class="at">geom=</span><span class="st">'text'</span>,</span>
+<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a>           <span class="at">x =</span> <span class="fu">ymd</span>(<span class="st">'2016-01-01'</span>),</span>
+<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a>           <span class="at">y=</span><span class="sc">-</span><span class="dv">1</span>,</span>
+<span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a>           <span class="at">label=</span><span class="st">'Confirmation Vote for Wilhelmina Wright as U.S. District Judge'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
@@ -564,27 +560,25 @@ Finished in  98.8 seconds.</code></pre>
 <p>As this plot shows, the line of indifference is very close to the Republican party, implying that the vote split the Republican party while Democrats voted as a bloc. Empirically that is very close to the observed votes; all 27 Democrats voted to confirm the judge while 7 out of 6 Republicans did so.</p>
 <p>I will now estimate an additional Gaussian process model to use as comparison points to the random-walk model for parties:</p>
 <div class="cell" data-layout-align="center">
-<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>del_est_gp1 <span class="ot">&lt;-</span> <span class="fu">id_estimate</span>(delaware_data,</span>
-<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>                <span class="at">fixtype=</span><span class="st">'prefix'</span>,<span class="at">const_type=</span><span class="st">"items"</span>,</span>
-<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>                <span class="at">nchains=</span><span class="dv">2</span>,<span class="at">use_groups=</span>T,</span>
-<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>                <span class="at">ncores=</span><span class="dv">8</span>,<span class="at">use_vb=</span><span class="cn">TRUE</span>,</span>
-<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>                 <span class="at">restrict_ind_high =</span> <span class="dv">305</span>,</span>
-<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>                 <span class="at">restrict_ind_low=</span><span class="dv">276</span>,</span>
-<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>                <span class="at">vary_ideal_pts=</span><span class="st">'GP'</span>,</span>
-<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>            <span class="at">seed=</span><span class="dv">84520</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>del_est_gp1 <span class="ot">&lt;-</span> <span class="fu">id_estimate</span>(delaware_data,</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>                <span class="at">fixtype=</span><span class="st">'prefix'</span>,<span class="at">const_type=</span><span class="st">"items"</span>,</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>                <span class="at">nchains=</span><span class="dv">2</span>,<span class="at">use_groups=</span>T,</span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>                <span class="at">ncores=</span><span class="dv">8</span>,<span class="at">use_method=</span><span class="st">"pathfinder"</span>,</span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>                 <span class="at">restrict_ind_high =</span> <span class="dv">305</span>,</span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>                 <span class="at">restrict_ind_low=</span><span class="dv">276</span>,</span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>                <span class="at">vary_ideal_pts=</span><span class="st">'GP'</span>,</span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>            <span class="at">seed=</span><span class="dv">84520</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] "Running pathfinder to find starting values"
-Finished in  71.1 seconds.
-[1] "Estimating model with Pathfinder for inference (approximation of true posterior)."</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Pareto k value (12) is greater than 0.7. Importance resampling was not able to improve the approximation, which may indicate that the approximation itself is poor. 
-Finished in  68.4 seconds.</code></pre>
+Finished in  411.6 seconds.
+[1] "Estimating model with Pathfinder for inference (approximation of true posterior)."
+Pareto k value (23) is greater than 0.7. Importance resampling was not able to improve the approximation, which may indicate that the approximation itself is poor. 
+Finished in  2776.5 seconds.</code></pre>
 </div>
 </div>
 <p>We can then examine the distributions for both models as plots:</p>
 <div class="cell" data-layout-align="center">
-<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="fu">id_plot_legis_dyn</span>(del_est_rw3,<span class="at">include=</span><span class="fu">c</span>(<span class="st">'D'</span>,<span class="st">'R'</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="fu">id_plot_persons_dyn</span>(del_est_rw3,<span class="at">include=</span><span class="fu">c</span>(<span class="st">'D'</span>,<span class="st">'R'</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
@@ -592,7 +586,7 @@ Finished in  68.4 seconds.</code></pre>
 </figure>
 </div>
 </div>
-<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="fu">id_plot_legis_dyn</span>(del_est_gp1,<span class="at">include=</span><span class="fu">c</span>(<span class="st">'D'</span>,<span class="st">'R'</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fu">id_plot_persons_dyn</span>(del_est_gp1,<span class="at">include=</span><span class="fu">c</span>(<span class="st">'D'</span>,<span class="st">'R'</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
@@ -716,8 +710,6 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
   });
   clipboard.on('success', onCopySuccess);
   if (window.document.getElementById('quarto-embedded-source-code-modal')) {
-    // For code content inside modals, clipBoardJS needs to be initialized with a container option
-    // TODO: Check when it could be a function (https://github.com/zenorocha/clipboard.js/issues/860)
     const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
       text: getTextToCopy,
       container: window.document.getElementById('quarto-embedded-source-code-modal')
@@ -828,7 +820,6 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
       if (window.Quarto?.typesetMath) {
         window.Quarto.typesetMath(note);
       }
-      // TODO in 1.5, we should make sure this works without a callout special case
       if (note.classList.contains("callout")) {
         return note.outerHTML;
       } else {

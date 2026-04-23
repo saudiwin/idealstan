@@ -659,7 +659,18 @@ setMethod('id_model',signature(object='idealdata'),
 #' parallelization only works on Unix-like systems (Linux, macOS); on Windows,
 #' this parameter is ignored and single-core processing is used.
 #' @return A \code{\link[dplyr]{tibble}} data frame with parameters as rows and descriptive statistics as columns
-#'
+#' @examples
+#' \dontrun{
+#' data('senate114')
+#' senate114$cast_code <- ifelse(senate114$cast_code=="Absent", NA,
+#'                               as.integer(senate114$cast_code) - 1L)
+#' sen_data <- id_make(senate114, outcome_disc='cast_code',
+#'                     person_id='bioname', item_id='rollnumber',
+#'                     group_id='party_code')
+#' sen_est <- id_estimate(sen_data, model_type=1, fixtype='vb_full', nchains=2, ncores=4)
+#' summary(sen_est, pars='ideal_pts')
+#' summary(sen_est, pars='items')
+#' }
 #' @export
 setMethod('summary',signature(object='idealstan'),
           function(object,pars='ideal_pts',
@@ -800,6 +811,17 @@ setMethod('summary',signature(object='idealstan'),
 #' 
 #' @param object A fitted \code{idealstan} object
 #' @param ... Other arguments passed on to underlying functions
+#' @examples
+#' \dontrun{
+#' data('senate114')
+#' senate114$cast_code <- ifelse(senate114$cast_code=="Absent", NA,
+#'                               as.integer(senate114$cast_code) - 1L)
+#' sen_data <- id_make(senate114, outcome_disc='cast_code',
+#'                     person_id='bioname', item_id='rollnumber',
+#'                     group_id='party_code')
+#' sen_est <- id_estimate(sen_data, model_type=1, fixtype='vb_full', nchains=2, ncores=4)
+#' id_extract(sen_est, extract_type='persons')
+#' }
 #' @export
 setGeneric('id_extract',signature='object',
            function(object,...) standardGeneric('id_extract'))
@@ -825,7 +847,17 @@ setGeneric('id_extract',signature='object',
 #' \code{'miss_discrim'} for inflated item (bill) discrimination scores,
 #' and \code{'miss_diff'} for inflated item (bill) difficulty scores.
 #' @param ... Any additional arguments passed on to the \code{\link[rstan]{extract}} function.
-#' 
+#' @examples
+#' \dontrun{
+#' data('senate114')
+#' senate114$cast_code <- ifelse(senate114$cast_code=="Absent", NA,
+#'                               as.integer(senate114$cast_code) - 1L)
+#' sen_data <- id_make(senate114, outcome_disc='cast_code',
+#'                     person_id='bioname', item_id='rollnumber',
+#'                     group_id='party_code')
+#' sen_est <- id_estimate(sen_data, model_type=1, fixtype='vb_full', nchains=2, ncores=4)
+#' id_extract(sen_est, extract_type='persons')
+#' }
 #' @export
 setMethod(id_extract,signature(object='idealstan'),
           function(object,extract_type='persons',...) {
@@ -853,6 +885,17 @@ setGeneric('launch_shinystan',signature='object',
 #' @param object A fitted \code{idealstan} object
 #' @param pars A character vector of parameters to select from the underlying \code{rstan} model object
 #' @param ... Other parameters passed on to \code{\link[shinystan]{shinystan}}
+#' @examples
+#' \dontrun{
+#' data('senate114')
+#' senate114$cast_code <- ifelse(senate114$cast_code=="Absent", NA,
+#'                               as.integer(senate114$cast_code) - 1L)
+#' sen_data <- id_make(senate114, outcome_disc='cast_code',
+#'                     person_id='bioname', item_id='rollnumber',
+#'                     group_id='party_code')
+#' sen_est <- id_estimate(sen_data, model_type=1, fixtype='vb_full', nchains=2, ncores=4)
+#' launch_shinystan(sen_est)
+#' }
 #' @export
 setMethod(launch_shinystan,signature(object='idealstan'),
           function(object,pars=c('L_full',
@@ -887,6 +930,19 @@ setMethod(launch_shinystan,signature(object='idealstan'),
 #' marginal effect in the scale of the outcome.
 #' @param object A fitted \code{idealstan} model
 #' @param ... Other values passed on to methods.
+#' @examples
+#' \dontrun{
+#' data('senate114')
+#' senate114$cast_code <- ifelse(senate114$cast_code=="Absent", NA,
+#'                               as.integer(senate114$cast_code) - 1L)
+#' senate114$age <- (2018 - senate114$born - mean(2018 - senate114$born)) / 10
+#' sen_cov <- id_make(senate114, outcome_disc='cast_code',
+#'                    person_id='bioname', item_id='rollnumber',
+#'                    group_id='party_code', person_cov=~party_code+age)
+#' sen_cov_est <- id_estimate(sen_cov, model_type=1, fixtype='vb_full', nchains=2, ncores=4)
+#' me <- id_me(sen_cov_est, covariate='age', draws=50)
+#' me$sum_ideal_effects
+#' }
 #' @export
 setGeneric('id_me',
            signature='object',
@@ -930,6 +986,19 @@ setGeneric('id_me',
 #' @param eps Parameter for numerical differentiation (usually does not need to be changed)
 #' passed on to [id_post_pred]
 #' @param ... Additional arguments passed on to [id_post_pred]
+#' @examples
+#' \dontrun{
+#' data('senate114')
+#' senate114$cast_code <- ifelse(senate114$cast_code=="Absent", NA,
+#'                               as.integer(senate114$cast_code) - 1L)
+#' senate114$age <- (2018 - senate114$born - mean(2018 - senate114$born)) / 10
+#' sen_cov <- id_make(senate114, outcome_disc='cast_code',
+#'                    person_id='bioname', item_id='rollnumber',
+#'                    group_id='party_code', person_cov=~party_code+age)
+#' sen_cov_est <- id_estimate(sen_cov, model_type=1, fixtype='vb_full', nchains=2, ncores=4)
+#' me <- id_me(sen_cov_est, covariate='age', draws=50)
+#' me$sum_ideal_effects
+#' }
 #' @export
 setMethod('id_me',signature(object='idealstan'),
           function(object,
@@ -1130,6 +1199,17 @@ setMethod('id_me',signature(object='idealstan'),
 #' @param object A fitted \code{idealstan} model
 #' @importFrom bayesplot mcmc_trace
 #' @param ... Other options passed on to \code{\link[rstan]{stan_trace}}
+#' @examples
+#' \dontrun{
+#' data('senate114')
+#' senate114$cast_code <- ifelse(senate114$cast_code=="Absent", NA,
+#'                               as.integer(senate114$cast_code) - 1L)
+#' sen_data <- id_make(senate114, outcome_disc='cast_code',
+#'                     person_id='bioname', item_id='rollnumber',
+#'                     group_id='party_code')
+#' sen_est <- id_estimate(sen_data, model_type=1, fixtype='vb_full', nchains=2, ncores=4)
+#' stan_trace(sen_est, par='L_full[1]')
+#' }
 #' @export
 setGeneric('stan_trace',
            signature='object',
@@ -1151,8 +1231,19 @@ setGeneric('stan_trace',
 #' Please refer to that function's documentation for further options.
 #' 
 #' @param object A fitted \code{idealstan} model
-#' @param par The character string  name of a parameter in the model 
+#' @param par The character string  name of a parameter in the model
 #' @param ... Other options passed on to \code{\link[bayesplot]{mcmc_trace}}
+#' @examples
+#' \dontrun{
+#' data('senate114')
+#' senate114$cast_code <- ifelse(senate114$cast_code=="Absent", NA,
+#'                               as.integer(senate114$cast_code) - 1L)
+#' sen_data <- id_make(senate114, outcome_disc='cast_code',
+#'                     person_id='bioname', item_id='rollnumber',
+#'                     group_id='party_code')
+#' sen_est <- id_estimate(sen_data, model_type=1, fixtype='vb_full', nchains=2, ncores=4)
+#' stan_trace(sen_est, par='L_full[1]')
+#' }
 #' @export
 setMethod('stan_trace',signature(object='idealstan'),
           function(object,par='L_full[1]',...) {

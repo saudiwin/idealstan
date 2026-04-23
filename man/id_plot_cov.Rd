@@ -79,3 +79,22 @@ labels for item discrimination.
 Note that the function produces a \code{ggplot2} object, which can
 be further modified with \code{ggplot2} functions.
 }
+\examples{
+\dontrun{
+# Fit a model with a person-level covariate
+data('senate114')
+senate114$cast_code <- ifelse(senate114$cast_code=="Absent", NA,
+                              as.integer(senate114$cast_code) - 1L)
+senate114$age <- (2018 - senate114$born - mean(2018 - senate114$born)) / 10
+sen_cov <- id_make(senate114, outcome_disc='cast_code',
+                   person_id='bioname', item_id='rollnumber',
+                   group_id='party_code', person_cov=~party_code+age)
+sen_cov_est <- id_estimate(sen_cov, model_type=1, fixtype='vb_full', nchains=2, ncores=4)
+
+# Plot marginal effects of age on ideal points
+id_plot_cov(sen_cov_est, calc_param='age')
+
+# Plot the raw person-level covariate coefficients
+id_plot_cov(sen_cov_est)
+}
+}

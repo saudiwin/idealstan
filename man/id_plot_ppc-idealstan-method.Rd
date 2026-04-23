@@ -76,3 +76,13 @@ posterior distributions for those specific persons. Similarly, if an item ID is 
 to \code{item}, you can see how well the model predictions compare to the true values
 for that specific item.
 }
+\examples{
+\dontrun{
+sim <- id_sim_gen()
+est <- id_estimate(sim, model_type=1, fixtype='vb_full', nchains=2, ncores=2)
+ppc <- id_post_pred(est, draws=50)
+id_plot_ppc(est, ppc_pred=ppc)
+# per-item plots
+id_plot_ppc(est, ppc_pred=ppc, combine_item=FALSE, prompt_plot=FALSE)
+}
+}

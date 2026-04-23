@@ -141,12 +141,12 @@
 #' # > 200 use the NOMINATE probability as a standardised continuous outcome
 #' # (model_id = 9, unbounded normal).
 #'
-#' binary_part <- filter(senate114, rollnumber <= 200) |>
+#' binary_part <- filter(senate114, rollnumber <= 200) %>%
 #'   mutate(outcome_disc = cast_code,
 #'          outcome_cont = NA_real_,
 #'          model_id     = 1L)
 #'
-#' cont_part <- filter(senate114, rollnumber > 200) |>
+#' cont_part <- filter(senate114, rollnumber > 200) %>%
 #'   mutate(outcome_disc = NA_integer_,
 #'          outcome_cont = as.numeric(scale(prob)),
 #'          model_id     = 9L)
@@ -210,6 +210,11 @@ id_make <- function(score_data=NULL,
   func_args_list[[1]] <- NULL
 
   func_args_list$score_data <- score_data
+  # Force formula args to their actual values so do.call() in id_post_pred
+  # does not try to re-evaluate the caller's local variable names.
+  func_args_list$person_cov <- person_cov
+  func_args_list$item_cov <- item_cov
+  func_args_list$item_cov_miss <- item_cov_miss
   
   # only allow  missing values as NA
   

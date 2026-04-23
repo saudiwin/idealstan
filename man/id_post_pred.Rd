@@ -21,3 +21,11 @@ draw.
 This function is a generic that is used to match the functions used with \code{\link[bayesplot:PPC-discrete]{bayesplot::ppc_bars()}} to calculate
 the posterior predictive distribution of the data given the model.
 }
+\examples{
+\dontrun{
+sim <- id_sim_gen()
+est <- id_estimate(sim, model_type=1, fixtype='vb_full', nchains=2, ncores=2)
+ppc <- id_post_pred(est, draws=50)
+ll  <- id_post_pred(est, type='log_lik')
+}
+}

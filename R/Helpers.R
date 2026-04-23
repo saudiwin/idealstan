@@ -1643,8 +1643,16 @@ process_init_pathfinder <- function(init, num_procs, model_variables = NULL,
 .calc_true_pts <- function(obj) {
 
 
-  over_time <- rstan::extract(obj@stan_samples,'L_tp1')$L_tp1
-  drift <- rstan::extract(obj@stan_samples,'L_full')$L_full
+  # Reconstruct [draws, time, persons] array from flat draws matrix
+  over_time_mat <- posterior::as_draws_matrix(obj@stan_samples$draws('L_tp1'))
+  cn <- colnames(over_time_mat)
+  t_idx <- as.integer(sub("L_tp1\\[([0-9]+),.*", "\\1", cn))
+  p_idx <- as.integer(sub(".*,([0-9]+)\\]", "\\1", cn))
+  n_draws <- nrow(over_time_mat)
+  over_time <- array(NA_real_, dim = c(n_draws, max(t_idx), max(p_idx)))
+  for(j in seq_along(cn)) over_time[, t_idx[j], p_idx[j]] <- over_time_mat[, j]
+
+  drift <- posterior::as_draws_matrix(obj@stan_samples$draws('L_full'))
   
   save_array <- environment()
   save_array$array_slot <- array(data=NA,dim=dim(over_time))
@@ -3241,32 +3249,33 @@ return(as.vector(idx))
                           these_items=NULL) {
   
   
+  .draws_col <- function(par) {
+    as.matrix(posterior::as_draws_matrix(obj@stan_samples$draws(par)))
+  }
+
   if(m %in% c(3,4)) {
-    
-    # easy peesy, just get the right intercept for k
-    
+
     if(k==1) {
-      cutp <- as.matrix(rstan::extract(obj@stan_samples,paste0("steps_votes",K,"[",k,"]"))[[1]])
+      cutp <- .draws_col(paste0("steps_votes",K,"[",k,"]"))
     } else if(k>1 && k<K) {
-      cutp <- cbind(as.matrix(rstan::extract(obj@stan_samples,paste0("steps_votes",K,"[",k-1,"]"))[[1]]),
-                    as.matrix(rstan::extract(obj@stan_samples,paste0("steps_votes",K,"[",k,"]"))[[1]]))
+      cutp <- cbind(.draws_col(paste0("steps_votes",K,"[",k-1,"]")),
+                    .draws_col(paste0("steps_votes",K,"[",k,"]")))
     } else {
-      cutp <- as.matrix(rstan::extract(obj@stan_samples,paste0("steps_votes",K,"[",k-1,"]"))[[1]])
+      cutp <- .draws_col(paste0("steps_votes",K,"[",k-1,"]"))
     }
-    
+
     return(cutp)
-    
+
   } else {
-    
-    # need to determine the right graded response intercept based on sigma_all then return the cutpoint
+
     item_num <- these_items[i]
     if(k==1) {
-      cutp <- as.matrix(rstan::extract(obj@stan_samples,paste0("grm_steps_votes",K,"[",item_num,",",k,"]"))[[1]])
+      cutp <- .draws_col(paste0("grm_steps_votes",K,"[",item_num,",",k,"]"))
     } else if(k>1 && k<K) {
-      cutp <- cbind(as.matrix(rstan::extract(obj@stan_samples,paste0("steps_votes",K,"[",item_num,",",k-1,"]"))[[1]]),
-                    as.matrix(rstan::extract(obj@stan_samples,paste0("steps_votes",K,"[",item_num,",",k,"]"))[[1]]))
+      cutp <- cbind(.draws_col(paste0("steps_votes",K,"[",item_num,",",k-1,"]")),
+                    .draws_col(paste0("steps_votes",K,"[",item_num,",",k,"]")))
     } else {
-      cutp <- as.matrix(rstan::extract(obj@stan_samples,paste0("steps_votes",K,"[",item_num,",",k-1,"]"))[[1]])
+      cutp <- .draws_col(paste0("steps_votes",K,"[",item_num,",",k-1,"]"))
     }
   }
   

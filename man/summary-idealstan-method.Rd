@@ -45,3 +45,16 @@ A \code{\link[dplyr]{tibble}} data frame with parameters as rows and descriptive
 \description{
 This function produces quantiles and standard deviations for the posterior samples of \code{idealstan} objects.
 }
+\examples{
+\dontrun{
+data('senate114')
+senate114$cast_code <- ifelse(senate114$cast_code=="Absent", NA,
+                              as.integer(senate114$cast_code) - 1L)
+sen_data <- id_make(senate114, outcome_disc='cast_code',
+                    person_id='bioname', item_id='rollnumber',
+                    group_id='party_code')
+sen_est <- id_estimate(sen_data, model_type=1, fixtype='vb_full', nchains=2, ncores=4)
+summary(sen_est, pars='ideal_pts')
+summary(sen_est, pars='items')
+}
+}

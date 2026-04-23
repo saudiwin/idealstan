@@ -15,6 +15,51 @@ require(tidyr)
 library(bayesplot)
 
 knitr::opts_chunk$set(fig.align = 'center',warning = F,message = F)
+
+sim_results_list <- list()
+
+collect_sim_results <- function(est, model_label, model_id) {
+  person_draws <- posterior::as_draws_matrix(est@stan_samples$draws("L_full"))
+  true_person  <- est@score_data@simul_data$true_person
+  if (is.matrix(true_person)) {
+    true_person <- as.vector(true_person)
+  } else {
+    true_person <- true_person[as.numeric(levels(est@score_data@score_matrix$person_id))]
+  }
+  n    <- min(length(true_person), ncol(person_draws))
+  p_med <- apply(person_draws[, 1:n, drop = FALSE], 2, median)
+  p_low <- apply(person_draws[, 1:n, drop = FALSE], 2, quantile, 0.05)
+  p_hi  <- apply(person_draws[, 1:n, drop = FALSE], 2, quantile, 0.95)
+
+  person_df <- tibble(
+    model_label = model_label, model_id = model_id, param_type = "person",
+    true_value  = true_person[1:n], estimated = p_med,
+    lower_90 = p_low, upper_90 = p_hi,
+    covered  = as.integer((true_person[1:n] >= p_low) & (true_person[1:n] <= p_hi)),
+    rmse     = abs(p_med - true_person[1:n])
+  )
+
+  true_discrim  <- est@score_data@simul_data$true_reg_discrim
+  discrim_draws <- posterior::as_draws_matrix(est@stan_samples$draws("sigma_reg_free"))
+  n2    <- min(length(true_discrim), ncol(discrim_draws))
+  d_med <- apply(discrim_draws[, 1:n2, drop = FALSE], 2, median)
+  d_low <- apply(discrim_draws[, 1:n2, drop = FALSE], 2, quantile, 0.05)
+  d_hi  <- apply(discrim_draws[, 1:n2, drop = FALSE], 2, quantile, 0.95)
+
+  discrim_df <- tibble(
+    model_label = model_label, model_id = model_id, param_type = "item_discrim",
+    true_value  = true_discrim[1:n2], estimated = d_med,
+    lower_90 = d_low, upper_90 = d_hi,
+    covered  = as.integer((true_discrim[1:n2] >= d_low) & (true_discrim[1:n2] <= d_hi)),
+    rmse     = abs(d_med - true_discrim[1:n2])
+  )
+
+  max_rhat    <- max(est@summary$rhat, na.rm = TRUE)
+  pct_rhat_ok <- mean(est@summary$rhat < 1.1, na.rm = TRUE)
+
+  bind_rows(person_df, discrim_df) |>
+    mutate(max_rhat = max_rhat, pct_rhat_ok = pct_rhat_ok)
+}
 ```
 
 
@@ -80,6 +125,7 @@ bin_irt_2pl_est <- id_estimate(idealdata=bin_irt_2pl_sim,
                            person_sd = 3,
                            nchains=2,ncores=4,niters = 500,warmup=500)
 id_plot_rhats(bin_irt_2pl_est)
+sim_results_list[[length(sim_results_list) + 1]] <- collect_sim_results(bin_irt_2pl_est, "Binary IRT 2-PL", 1)
 ```
 
 ```{r cov_plot_irt_2pl}
@@ -148,6 +194,7 @@ bin_vb_fix <- id_estimate(idealdata=bin_vb_sim,
                            nchains=2,ncores=4,niters = 500,warmup=500)
 
 id_plot_rhats(bin_vb_fix)
+sim_results_list[[length(sim_results_list) + 1]] <- collect_sim_results(bin_vb_fix, "Binary IRT 2-PL VB Auto-ID", 1)
 
 ```
 
@@ -188,6 +235,7 @@ bin_irt_2pl_cov_est <- id_estimate(idealdata=bin_irt_2pl_cov_sim,
                            person_sd = 3,
                            nchains=2,ncores=4,niters = 500,warmup=500)
 id_plot_rhats(bin_irt_2pl_cov_est)
+sim_results_list[[length(sim_results_list) + 1]] <- collect_sim_results(bin_irt_2pl_cov_est, "Binary IRT 2-PL + Covariate", 1)
 ```
 
 ```{r cov_plot_irt_cov_2pl}
@@ -242,108 +290,7 @@ mcmc_recover_hist(bin_irt_2pl_cov_est@stan_samples$draws("legis_x"),
 
 ```{r coveffect}
 
-eps <- 1e-4
-  
-  new_data1 <- mutate(bin_irt_2pl_cov_sim@score_matrix,
-                      person_x = person_x - eps / 2)
-  
-  new_data2 <- mutate(bin_irt_2pl_cov_sim@score_matrix,
-                      person_x = person_x + eps / 2)
-  
-  # now predict new outcome distributions given these slightly different datasets
-  
-  cov_mod_pred1 <- id_post_pred(bin_irt_2pl_cov_est,newdata=new_data1,
-                                 use_cores=4,draws="all",
-                                item_subset=levels(new_data1$item),
-                                 type="epred")
-    
-  cov_mod_pred2 <- id_post_pred(bin_irt_2pl_cov_est,newdata=new_data2,
-                                 use_cores=4,draws="all",
-                                item_subset=levels(new_data2$item),
-                                 type="epred")
-  
-  # now we need to difference the datasets at the item level to calculate the effects
-  # this will create some lists that will then be appended together to a big data frame
-  # with one observation per posterior draw
-  
-    print("Looping over items")
-    
-    # difference the predictions
-  
-  c1 <- purrr::map2(cov_mod_pred1[[1]],
-                    cov_mod_pred2[[1]],
-                    function(small,big) {
-                      
-                      # difference the effects
-                      
-                      (big - small) / eps
-                      
-                    })
-  
-  # combine into datasets for each item with item id + person (senator) id
-  
-  c2 <- lapply(c1, function(mat) {
-    
-    out_data <- attr(mat, "data")
-    colnames(mat) <- out_data$person_id
-    
-    as_tibble(mat) %>% 
-      mutate(draws=1:n(),
-             item_id=unique(out_data$item_id)) %>% 
-      gather(key="person_id",value="estimate",-draws,-item_id) %>% 
-      mutate(person_id=as.numeric(person_id),
-             estimate=as.numeric(estimate))
-    
-  }) %>% bind_rows
-  
-  # merge in some original data
-  to_merge <- mutate(bin_irt_2pl_cov_est@score_data@score_matrix, 
-                     item_orig=item_id,
-                     person_orig=person_id,
-                     person_id=as.numeric(person_id),
-                     item_id=as.numeric(item_id)) %>% 
-    select(person_id, item_id, group_id,item_orig, person_orig) %>% 
-    distinct
-  
-  # add in party data so we can calculate party-specific effects
-  
-  c2 <- left_join(c2, to_merge, 
-                  by=c("item_id","person_id"))
-  
-  # get effect separately by democrats/republicans
-  
-   by_party <- group_by(c2, draws, group_id, item_id, item_orig) %>% 
-    summarize(mean_est1=mean(estimate)) %>% 
-    group_by(group_id, item_id, item_orig) %>% 
-    summarize(mean_est=mean(mean_est1),
-              low_est=quantile(mean_est1, .05),
-              high_est=quantile(mean_est1, .95))
-   
-   # merge in item discrimination to add some color / show high-discrim votes
-   
-   item_discrim <- filter(bin_irt_2pl_cov_est@summary,
-                         grepl(x=variable, pattern="sigma\\_reg\\_free")) %>% 
-    mutate(item_id=as.numeric(stringr::str_extract(variable, "[0-9]+")))
-   
-   by_party <- left_join(by_party,
-                        select(item_discrim, median, item_id))
-   
-   # plot the result
-   
-   by_party %>% 
-    ggplot(aes(y=mean_est,
-               x=reorder(item_id,mean_est))) +
-    geom_linerange(aes(ymin=low_est,
-                       ymax=high_est,
-                       colour=`median`)) +
-    ggthemes::theme_tufte() + 
-    scale_colour_viridis_c(name="Discrimination") +
-    coord_flip() +
-    geom_hline(yintercept=0,linetype=2) +
-    ggthemes::theme_clean() +
-    theme(axis.text.y=element_blank(),
-          axis.ticks.y=element_blank()) +
-  theme(legend.position = "bottom")
+id_plot_cov(bin_irt_2pl_cov_est, calc_param='person_cov', cores=4)
 
 ```
 
@@ -369,6 +316,7 @@ bin_irt_2pl_abs_est <- id_estimate(idealdata=bin_irt_2pl_abs_sim,
                                                                      decreasing=F)[1],
                                fixtype='prefix')
 id_plot_rhats(bin_irt_2pl_abs_est)
+sim_results_list[[length(sim_results_list) + 1]] <- collect_sim_results(bin_irt_2pl_abs_est, "Inflated Binary IRT 2-PL", 2)
 ```
 
 Plot true versus observed values:
@@ -421,6 +369,7 @@ ord_irt_est <- id_estimate(idealdata=ord_irt_sim,
                            fix_low=sort(ord_irt_sim@simul_data$true_person,decreasing=F)[1],
                                fixtype='prefix')
 id_plot_rhats(ord_irt_est)
+sim_results_list[[length(sim_results_list) + 1]] <- collect_sim_results(ord_irt_est, "Ordinal Rating Scale", 3)
 ```
 
 Plot true versus observed values:
@@ -473,9 +422,10 @@ ord_irt_abs_est <- id_estimate(idealdata=ord_irt_abs_sim,
                               fix_high = sort(ord_irt_abs_sim@simul_data$true_person,
                                                                      decreasing=T)[1],
                               fix_low = sort(ord_irt_abs_sim@simul_data$true_person,
-                                                                     decreasing=F)[1],chains=2,ncores=4,
+                                                                     decreasing=F)[1],nchains=2,ncores=4,
                                fixtype='prefix')
 id_plot_rhats(ord_irt_abs_est)
+sim_results_list[[length(sim_results_list) + 1]] <- collect_sim_results(ord_irt_abs_est, "Inflated Ordinal Rating Scale", 4)
 ```
 
 ```{r irt_ord_abs_plot}
@@ -526,6 +476,7 @@ ord_irt_grm_est <- id_estimate(idealdata=ord_irt_grm_sim,
                                                         index=T)$ix[1]),
                                fixtype='prefix')
 id_plot_rhats(ord_irt_grm_est)
+sim_results_list[[length(sim_results_list) + 1]] <- collect_sim_results(ord_irt_grm_est, "Ordinal GRM", 5)
 ```
 
 ```{r ord_irt_grm_cov_plot}
@@ -575,6 +526,7 @@ ord_irt_grm_abs_est <- id_estimate(idealdata=ord_irt_grm_abs_sim,
                                                         index=T)$ix[1]),
                                fixtype='prefix')
 id_plot_rhats(ord_irt_grm_abs_est)
+sim_results_list[[length(sim_results_list) + 1]] <- collect_sim_results(ord_irt_grm_abs_est, "Inflated Ordinal GRM", 6)
 ```
 
 ```{r irt_ord_grm_abs_plot}
@@ -629,6 +581,7 @@ ord_irt_poisson_est <- id_estimate(idealdata=ord_irt_poisson_sim,
                                                                    decreasing=F)[1],
                                fixtype='prefix',nchains=2,ncores=8)
 id_plot_rhats(ord_irt_poisson_est)
+sim_results_list[[length(sim_results_list) + 1]] <- collect_sim_results(ord_irt_poisson_est, "Poisson", 7)
 ```
 
 ```{r irt_poisson_plot}
@@ -684,6 +637,7 @@ ord_irt_poisson_abs_est <- id_estimate(idealdata=ord_irt_poisson_abs_sim,
                                                                      decreasing=F)[1],
                                fixtype='prefix')
 id_plot_rhats(ord_irt_poisson_abs_est)
+sim_results_list[[length(sim_results_list) + 1]] <- collect_sim_results(ord_irt_poisson_abs_est, "Inflated Poisson", 8)
 ```
 
 ```{r irt_poisson_abs_plot}
@@ -746,6 +700,7 @@ ord_irt_normal_est <- id_estimate(idealdata=ord_irt_normal_sim,
                                                                      decreasing=F)[1],
                                fixtype='prefix',compile_optim=F)
 id_plot_rhats(ord_irt_normal_est)
+sim_results_list[[length(sim_results_list) + 1]] <- collect_sim_results(ord_irt_normal_est, "Normal", 9)
 ```
 
 ```{r irt_normal_plot}
@@ -799,6 +754,7 @@ ord_irt_normal_abs_est <- id_estimate(idealdata=ord_irt_normal_abs_sim,
                                                                      decreasing=F)[1],nchains = 2,ncores=4,
                                fixtype='prefix')
 id_plot_rhats(ord_irt_normal_abs_est)
+sim_results_list[[length(sim_results_list) + 1]] <- collect_sim_results(ord_irt_normal_abs_est, "Inflated Normal", 10)
 ```
 
 ```{r irt_normal_abs_plot}
@@ -859,6 +815,7 @@ ord_irt_lognormal_est <- id_estimate(idealdata=ord_irt_lognormal_sim,
                                                                      decreasing=F)[1],nchains = 2,ncores=4,
                                fixtype='prefix')
 id_plot_rhats(ord_irt_lognormal_est)
+sim_results_list[[length(sim_results_list) + 1]] <- collect_sim_results(ord_irt_lognormal_est, "Log-Normal", 11)
 ```
 
 ```{r irt_lognormal_plot}
@@ -914,6 +871,7 @@ ord_irt_lognormal_abs_est <- id_estimate(idealdata=ord_irt_lognormal_abs_sim,
                               
                                fixtype='prefix')
 id_plot_rhats(ord_irt_lognormal_abs_est)
+sim_results_list[[length(sim_results_list) + 1]] <- collect_sim_results(ord_irt_lognormal_abs_est, "Inflated Log-Normal", 12)
 ```
 
 ```{r irt_lognormal_abs_plot}
@@ -977,6 +935,7 @@ ordbeta_est <- id_estimate(idealdata=ordbeta_sim,
                                                                      decreasing=F)[1],nchains = 2,ncores=8,
                                fixtype='prefix')
 id_plot_rhats(ordbeta_est)
+sim_results_list[[length(sim_results_list) + 1]] <- collect_sim_results(ordbeta_est, "Ordered Beta", 15)
 ```
 
 ```{r ordbeta_plot}
@@ -1030,6 +989,7 @@ ordbeta_abs_est <- id_estimate(idealdata=ordbeta_abs_sim,
                               
                                fixtype='prefix')
 id_plot_rhats(ordbeta_abs_est)
+sim_results_list[[length(sim_results_list) + 1]] <- collect_sim_results(ordbeta_abs_est, "Inflated Ordered Beta", 16)
 ```
 
 ```{r ordbeta_abs_plot}
@@ -1127,6 +1087,7 @@ bin_time_irt_2pl_abs_est <- id_estimate(idealdata=bin_time_irt_2pl_abs_sim,
                                fixtype='prefix')
 
 id_plot_rhats(bin_time_irt_2pl_abs_est) + theme(text=element_text(family=""))
+sim_results_list[[length(sim_results_list) + 1]] <- collect_sim_results(bin_time_irt_2pl_abs_est, "Binary Random Walk", 1)
 ```
 
 ```{r irt_2pl_abs_time_cov_plot}
@@ -1213,6 +1174,7 @@ bin_time_spline_irt_2pl_abs_est <- id_estimate(idealdata=bin_time_spline_irt_2pl
                               restrict_ind_low =as.character(low_restrict),
                                fixtype='prefix',adapt_delta=0.95)
 id_plot_rhats(bin_time_spline_irt_2pl_abs_est)
+sim_results_list[[length(sim_results_list) + 1]] <- collect_sim_results(bin_time_spline_irt_2pl_abs_est, "Binary Splines", 1)
 ```
 
 ```{r irt_2pl_abs_time_spline_cov_plot}
@@ -1270,6 +1232,7 @@ bin_time_ar_irt_2pl_abs_est <- id_estimate(idealdata=bin_time_ar_irt_2pl_abs_sim
                                                         index=T)$ix[1]),
                                fixtype='prefix')
 id_plot_rhats(bin_time_ar_irt_2pl_abs_est)
+sim_results_list[[length(sim_results_list) + 1]] <- collect_sim_results(bin_time_ar_irt_2pl_abs_est, "Inflated Binary AR(1)", 2)
 ```
 
 ```{r time_ar1_cov_plot}
@@ -1353,6 +1316,7 @@ time_gp_est <- id_estimate(idealdata=time_gp_sim,
                                vary_ideal_pts = 'GP',
                                fixtype='prefix')
 id_plot_rhats(time_gp_est)
+sim_results_list[[length(sim_results_list) + 1]] <- collect_sim_results(time_gp_est, "Inflated Binary GP", 2)
 ```
 
 ```{r time_gp_cov_plot}
@@ -1407,6 +1371,7 @@ latent_noninfl_est <- id_estimate(idealdata=latent_noninfl_sim,
                                                                      decreasing=F)[1:2],
                                fixtype='prefix',id_refresh=100,warmup=500,niters=500,nchains=2,ncores=8)
 id_plot_rhats(latent_noninfl_est)
+sim_results_list[[length(sim_results_list) + 1]] <- collect_sim_results(latent_noninfl_est, "Latent Space Non-Inflated", 13)
 ```
 
 ```{r latent_noninfl_plot}
@@ -1452,6 +1417,7 @@ latent_infl_est <- id_estimate(idealdata=latent_infl_sim,
                               diff_reg_sd = 2,
                              diff_miss_sd=2)
 id_plot_rhats(latent_infl_est)
+sim_results_list[[length(sim_results_list) + 1]] <- collect_sim_results(latent_infl_est, "Latent Space Inflated", 14)
 ```
 
 ```{r latent_infl_plot}
@@ -1467,8 +1433,88 @@ id_sim_coverage(latent_infl_est) %>%
 ```
 ```{r latent_abs_pred}
 
-latent_infl_est %>% 
-  id_post_pred %>% 
+latent_infl_est %>%
+  id_post_pred %>%
   id_plot_ppc(latent_infl_est,ppc_pred=.)
 
+```
+
+# Simulation Recovery Summary
+
+```{r sim_summary}
+all_results <- bind_rows(sim_results_list)
+
+ts <- format(Sys.time(), "%Y%m%d_%H%M%S")
+csv_path <- paste0("sim_results_", ts, ".csv")
+write.csv(all_results, csv_path, row.names = FALSE)
+cat("Results saved to:", csv_path, "\n")
+
+model_summary <- all_results |>
+  group_by(model_label, model_id, param_type) |>
+  summarize(
+    coverage    = mean(covered, na.rm = TRUE),
+    mean_rmse   = mean(rmse, na.rm = TRUE),
+    max_rhat    = first(max_rhat),
+    pct_rhat_ok = first(pct_rhat_ok),
+    .groups = "drop"
+  )
+```
+
+## True vs Estimated Ideal Points
+
+```{r sim_recovery_plot, fig.height=10}
+ggplot(filter(all_results, param_type == "person"),
+       aes(x = true_value, y = estimated)) +
+  geom_point(alpha = 0.3, size = 0.5) +
+  geom_abline(slope = 1, intercept = 0, linetype = 2, colour = "red") +
+  facet_wrap(~model_label, scales = "free", ncol = 4) +
+  theme_minimal(base_size = 8) +
+  labs(title = "Ideal Point Recovery: True vs Estimated",
+       x = "True value", y = "Posterior median")
+```
+
+## Coverage and RMSE by Model
+
+```{r sim_coverage_plot, fig.height=7}
+ggplot(model_summary,
+       aes(x = reorder(model_label, coverage), y = coverage, fill = param_type)) +
+  geom_col(position = "dodge") +
+  geom_hline(yintercept = 0.8, linetype = 2, colour = "red") +
+  coord_flip() +
+  scale_y_continuous(labels = scales::percent_format()) +
+  theme_minimal() +
+  labs(title = "90% CI Coverage by Model and Parameter Type",
+       x = NULL, y = "Coverage rate", fill = "Parameter type")
+```
+
+```{r sim_rmse_plot, fig.height=7}
+ggplot(model_summary,
+       aes(x = reorder(model_label, mean_rmse), y = mean_rmse, fill = param_type)) +
+  geom_col(position = "dodge") +
+  coord_flip() +
+  theme_minimal() +
+  labs(title = "Mean Absolute Error by Model and Parameter Type",
+       x = NULL, y = "Mean |estimated - true|", fill = "Parameter type")
+```
+
+## Convergence Diagnostics
+
+```{r convergence_check}
+failed <- model_summary |>
+  group_by(model_label, model_id) |>
+  summarize(
+    min_coverage = min(coverage),
+    max_rhat     = first(max_rhat),
+    pct_rhat_ok  = first(pct_rhat_ok),
+    .groups = "drop"
+  ) |>
+  filter(min_coverage < 0.8 | max_rhat > 1.1)
+
+if (nrow(failed) == 0) {
+  cat("All models passed convergence diagnostics",
+      "(coverage >= 80% and max Rhat < 1.1).\n")
+} else {
+  cat("Models with potential convergence issues:\n\n")
+  print(as.data.frame(failed))
+}
 ```

@@ -44,3 +44,12 @@ ideal points}
 Function to compare two fitted idealstan models by plotting ideal points. Assumes that underlying data
 is the same for both models.
 }
+\examples{
+\dontrun{
+# Fit the same data under two different model types and compare ideal points
+sim <- id_sim_gen()
+est1 <- id_estimate(sim, model_type=1, fixtype='vb_full', nchains=2, ncores=2)
+est2 <- id_estimate(sim, model_type=2, fixtype='vb_full', nchains=2, ncores=2)
+id_plot_compare(est1, est2)
+}
+}

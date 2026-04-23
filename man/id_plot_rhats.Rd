@@ -12,3 +12,10 @@ id_plot_rhats(obj)
 \description{
 This plotting function displays a histogram of the Rhat values of all parameters in an \code{idealstan} model.
 }
+\examples{
+\dontrun{
+sim <- id_sim_gen()
+est <- id_estimate(sim, model_type=1, fixtype='vb_full', nchains=2, ncores=2)
+id_plot_rhats(est)
+}
+}

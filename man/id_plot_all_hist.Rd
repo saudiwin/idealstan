@@ -40,3 +40,13 @@ plotting.}
 This function produces density plots of the different types of parameters in an \code{idealstan} model: item (bill) difficulty and discrimination
 parameters, and person (legislator) ideal points.
 }
+\examples{
+\dontrun{
+sim <- id_sim_gen()
+est <- id_estimate(sim, model_type=1, fixtype='vb_full', nchains=2, ncores=2)
+# plot posterior distribution of person ideal points
+id_plot_all_hist(est, params='person')
+# plot item discrimination parameters
+id_plot_all_hist(est, params='obs_discrim')
+}
+}

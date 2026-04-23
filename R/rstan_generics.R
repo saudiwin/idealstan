@@ -8,11 +8,17 @@
 #' 
 #' @param object A fitted `idealstan` object
 #' @param ... All other parameters passed on to the underlying function.
-#' @export
 #' @return `posterior_predict` methods should return a \eqn{D} by \eqn{N}
 #'   matrix, where \eqn{D} is the number of draws from the posterior predictive
 #'   distribution and \eqn{N} is the number of data points being predicted per
 #'   draw.
+#' @examples
+#' \dontrun{
+#' sim <- id_sim_gen()
+#' est <- id_estimate(sim, model_type=1, fixtype='vb_full', nchains=2, ncores=2)
+#' ppc <- id_post_pred(est, draws=50)
+#' ll  <- id_post_pred(est, type='log_lik')
+#' }
 #' @export
 setGeneric('id_post_pred',signature='object',
            function(object,...) standardGeneric('id_post_pred'))
@@ -60,7 +66,15 @@ setGeneric('id_post_pred',signature='object',
 #' @param use_chain ID of MCMC chain to use rather than all chains (the default). 
 #' @param skip_cov Whether to skip adding in hierarchical person-level covariates. Defaults to FALSE.
 #' @param ... Any other arguments passed on to posterior_predict (currently none available)
-#' 
+#' @examples
+#' \dontrun{
+#' sim <- id_sim_gen()
+#' est <- id_estimate(sim, model_type=1, fixtype='vb_full', nchains=2, ncores=2)
+#' # posterior predictive distribution (100 draws)
+#' ppc <- id_post_pred(est, draws=50)
+#' # log-likelihood matrix (for loo)
+#' ll <- id_post_pred(est, type='log_lik')
+#' }
 #' @export
 setMethod('id_post_pred',signature(object='idealstan'),function(object,
                                                                 newdata=NULL,
@@ -90,8 +104,11 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,
     
     eval_data_args <- object@eval_data_args
     
-    eval_data_args$idealdata <- do.call(id_make, func_args)
-    
+    new_idealdata <- do.call(id_make, func_args)
+    # Carry the compiled Stan model forward so id_model / .vb_fix can use it
+    new_idealdata@stanmodel_map <- object@score_data@stanmodel_map
+    eval_data_args$idealdata <- new_idealdata
+
     new_stan_data <- do.call(.make_stan_data,eval_data_args)
     
   } else {
@@ -614,6 +631,14 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,
 #' 
 #' @param object A fitted `idealstan` object
 #' @param ... Other arguments passed on to [bayesplot::ppc_bars()]
+#' @examples
+#' \dontrun{
+#' sim <- id_sim_gen()
+#' est <- id_estimate(sim, model_type=1, fixtype='vb_full', nchains=2, ncores=2)
+#' ppc <- id_post_pred(est, draws=50)
+#' id_plot_ppc(est, ppc_pred=ppc)
+#' id_plot_ppc(est, ppc_pred=ppc, combine_item=FALSE, prompt_plot=FALSE)
+#' }
 #' @export
 setGeneric('id_plot_ppc',signature='object',
            function(object,...) standardGeneric('id_plot_ppc'))
@@ -666,6 +691,15 @@ setGeneric('id_plot_ppc',signature='object',
 #' set to TRUE to only see the observed responses in the plot or FALSE to see all of the
 #' responses (missing data category will be the largest).
 #' @param ... Other arguments passed on to [bayesplot::ppc_bars()]
+#' @examples
+#' \dontrun{
+#' sim <- id_sim_gen()
+#' est <- id_estimate(sim, model_type=1, fixtype='vb_full', nchains=2, ncores=2)
+#' ppc <- id_post_pred(est, draws=50)
+#' id_plot_ppc(est, ppc_pred=ppc)
+#' # per-item plots
+#' id_plot_ppc(est, ppc_pred=ppc, combine_item=FALSE, prompt_plot=FALSE)
+#' }
 #' @export
 setMethod('id_plot_ppc',signature(object='idealstan'),function(object,
                                                                   ppc_pred=NULL,
@@ -1004,6 +1038,15 @@ setMethod('id_plot_ppc',signature(object='idealstan'),function(object,
 #' 
 #' @param ll_matrix A log-likelihood matrix as produced by the [id_post_pred()]
 #' function
+#' @examples
+#' \dontrun{
+#' sim <- id_sim_gen()
+#' est <- id_estimate(sim, model_type=1, fixtype='vb_full', nchains=2, ncores=2)
+#' ll <- id_post_pred(est, type='log_lik')
+#' chain_ids <- derive_chain(ll)
+#' # use with loo
+#' loo::loo(exp(ll), r_eff=loo::relative_eff(exp(ll), chain_id=chain_ids))
+#' }
 #' @export
 derive_chain <- function(ll_matrix=NULL) {
   attr(ll_matrix,'chain_order')

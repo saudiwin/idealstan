@@ -18,3 +18,12 @@ id_sim_coverage(obj, rep = 1, quantiles = c(0.95, 0.05))
 Function that computes how often the true value of the parameter is included within the
 95/5 high posterior density interval
 }
+\examples{
+\dontrun{
+sim <- id_sim_gen()
+est <- id_estimate(sim, model_type=1, fixtype='vb_full', nchains=2, ncores=2)
+cov <- id_sim_coverage(est)
+# average coverage across all person ideal points
+mean(cov[['Person Ideal Points']]$avg)
+}
+}

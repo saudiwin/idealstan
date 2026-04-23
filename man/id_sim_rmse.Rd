@@ -16,3 +16,10 @@ id_sim_rmse(obj, rep = 1)
 RMSE function for calculating individual RMSE values compared to true simulation scores
 Returns a data frame with RMSE plus quantiles.
 }
+\examples{
+\dontrun{
+sim <- id_sim_gen()
+est <- id_estimate(sim, model_type=1, fixtype='vb_full', nchains=2, ncores=2)
+id_sim_rmse(est)
+}
+}

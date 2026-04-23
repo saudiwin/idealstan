@@ -1,6 +1,6 @@
 ## Test environments
 * ubuntu 14.04 (on travis-ci), R devel and release
-* mac os x sierra (on travis-ci), R release
+* mac os x sequoia, R 4.4.3
 * win-builder, R devel and release
 
 ## R CMD check results

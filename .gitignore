@@ -19,7 +19,6 @@ src-x64
 altdoc/freeze.rds
 ^_quarto$
 /Meta/
-/doc/
 idealstan.Rcheck/
 .claude/
 *.js
