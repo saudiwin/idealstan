@@ -46,8 +46,7 @@ README.qmd
 ^_quarto$
 convergence_behavior.R
 README.qmd
-Time_Series.qmd
-Package_Introduction.qmd
+\.qmd\.orig$
 ^LICENSE\.md$
 vignettes/Package_Introduction_cache
 vignettes/Package_Introduction_files
@@ -56,9 +55,14 @@ vignettes/Time_Series_cache
 ^\.claude$
 model-.*\.stan$
 .*\.RData$
-.*\.rds$
+.*\.csv$
 inst/stan_files/irt_standard_map$
 inst/stan_files/sim_gp$
 inst/stan_files/.*\.cc$
 issue26.csv
-^Meta$
+Package_Introduction.qmd
+Time_Series.qmd
+Meta
+rw_sim.rds
+spline_sim.rds
+^CRAN-SUBMISSION$

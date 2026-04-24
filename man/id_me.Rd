@@ -37,7 +37,7 @@ senate114$age <- (2018 - senate114$born - mean(2018 - senate114$born)) / 10
 sen_cov <- id_make(senate114, outcome_disc='cast_code',
                    person_id='bioname', item_id='rollnumber',
                    group_id='party_code', person_cov=~party_code+age)
-sen_cov_est <- id_estimate(sen_cov, model_type=1, fixtype='vb_full', nchains=2, ncores=4)
+sen_cov_est <- id_estimate(sen_cov, model_type=1, fixtype='vb_full', method="pathfinder",  ncores=4)
 me <- id_me(sen_cov_est, covariate='age', draws=50)
 me$sum_ideal_effects
 }

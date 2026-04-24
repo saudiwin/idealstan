@@ -32,7 +32,9 @@ Imports:
     tibble
 Suggests:
     cmdstanr,
-    R.rsp,
+    quarto,
+    knitr,
+    rmarkdown,
     loo,
     lubridate,
     rstan,
@@ -43,9 +45,9 @@ Suggests:
 Config/testthat/edition: 3
 Encoding: UTF-8
 LazyData: true
-NeedsCompilation: yes
+NeedsCompilation: no
 SystemRequirements: GNU make
 Additional_repositories: https://stan-dev.r-universe.dev
-VignetteBuilder: R.rsp
+VignetteBuilder: quarto
 RoxygenNote: 7.3.2
 Roxygen: list(markdown = TRUE)

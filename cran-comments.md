@@ -1,26 +1,25 @@
 ## Test environments
-* ubuntu 14.04 (on travis-ci), R devel and release
 * mac os x sequoia, R 4.4.3
 * win-builder, R devel and release
 
 ## R CMD check results
-There were no ERRORs or WARNINGs. 2 NOTEs:
-
-* checking for GNU extensions in Makefiles ... NOTE
-  GNU make is a SystemRequirements.
-  
-GNU Make is a requirement because of the C++ back-end used to compile and fit models using package `rstan`.
+There were no ERRORs or WARNINGs. 1 NOTE:
 
 * checking CRAN incoming feasibility ... NOTE
-Maintainer: 'Robert Kubinec <rmk7@nyu.edu>'
+Maintainer: 'Robert Kubinec <bobkubinec@gmail.com>'
 
 New submission
 
 Package was archived on CRAN
 
 CRAN repository db overrides:
-  X-CRAN-Comment: Archived on 2019-07-01 as check problems were not
-    corrected in time.
+  X-CRAN-Comment: Archived on 2020-03-07 as check problems were not
+    corrected despite reminders.
+
+Suggests or Enhances not in mainstream repositories:
+  cmdstanr
+Availability using Additional_repositories specification:
+  cmdstanr   yes   https://stan-dev.r-universe.dev
 
 
 ## Downstream dependencies
