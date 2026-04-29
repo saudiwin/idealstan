@@ -1,3 +1,8 @@
+## Fixes Made
+* changed print/cat calls to warning/message (except for interactive plotting)
+* added Value section to function documentation
+* removed T/F in favor of TRUE/FALSE
+
 ## Test environments
 * mac os x sequoia, R 4.4.3
 * win-builder, R devel and release

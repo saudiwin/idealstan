@@ -16,13 +16,17 @@ id_post_pred(object, ...)
 matrix, where \eqn{D} is the number of draws from the posterior predictive
 distribution and \eqn{N} is the number of data points being predicted per
 draw.
+
+An object of class \code{id_pred_obj} (a list of matrices of posterior-predicted draws, one
+per model type). If \code{type="log_lik"}, a draws-by-observations \code{matrix} of class
+\code{log_lik} with a \code{chain_order} attribute for use with \code{\link{derive_chain}}.
 }
 \description{
 This function is a generic that is used to match the functions used with \code{\link[bayesplot:PPC-discrete]{bayesplot::ppc_bars()}} to calculate
 the posterior predictive distribution of the data given the model.
 }
 \examples{
-\dontrun{
+\donttest{
 sim <- id_sim_gen()
 est <- id_estimate(sim, model_type=1, fixtype='vb_full', nchains=2, ncores=2)
 ppc <- id_post_pred(est, draws=50)

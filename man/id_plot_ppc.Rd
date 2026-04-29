@@ -11,6 +11,10 @@ id_plot_ppc(object, ...)
 
 \item{...}{Other arguments passed on to \code{\link[bayesplot:PPC-discrete]{bayesplot::ppc_bars()}}}
 }
+\value{
+A \code{ggplot2} object (from the \code{bayesplot} package) comparing observed and
+posterior-predicted outcome distributions.
+}
 \description{
 This function is the generic method for generating posterior distributions
 from a fitted \code{idealstan} model. Functions are documented in the
@@ -34,7 +38,7 @@ to \code{item}, you can see how well the model predictions compare to the true v
 for that specific item.
 }
 \examples{
-\dontrun{
+\donttest{
 sim <- id_sim_gen()
 est <- id_estimate(sim, model_type=1, fixtype='vb_full', nchains=2, ncores=2)
 ppc <- id_post_pred(est, draws=50)

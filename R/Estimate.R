@@ -316,10 +316,10 @@ id_make <- function(score_data=NULL,
   
   # see what the max time point is
   
-  max_t <- max(as.numeric(factor(pull(score_rename,!!time_id))),na.rm=T)
-  num_person <- max(as.numeric(factor(pull(score_rename,!!person_id))),na.rm=T)
+  max_t <- max(as.numeric(factor(pull(score_rename,!!time_id))),na.rm=TRUE)
+  num_person <- max(as.numeric(factor(pull(score_rename,!!person_id))),na.rm=TRUE)
   num_group <- try(max(as.numeric(factor(pull(score_rename,!!group_id)))))
-  num_item <- max(as.numeric(factor(pull(score_rename,!!item_id))),na.rm=T)
+  num_item <- max(as.numeric(factor(pull(score_rename,!!item_id))),na.rm=TRUE)
   
   # create data frames for all hierachical parameters
   
@@ -344,7 +344,7 @@ id_make <- function(score_data=NULL,
       check_all_colon <- grepl(x=colnames(personm),
                                pattern=paste0(as.character(pers),":","|",":",as.character(pers)))
       matrix(check_all & !check_all_colon,nrow=length(check_all))
-    },simplify = F) %>% 
+    },simplify = FALSE) %>% 
       do.call(rbind, .) %>% 
       apply(2,any)
     
@@ -386,7 +386,7 @@ id_make <- function(score_data=NULL,
       check_all_colon <- grepl(x=colnames(itemm),
                                pattern=paste0(c,":","|",":",c))
       matrix(check_all & !check_all_colon,nrow=length(check_all))
-    },simplify = F) %>% 
+    },simplify = FALSE) %>% 
       do.call(rbind, .) %>% 
       apply(2,any)
     
@@ -428,7 +428,7 @@ id_make <- function(score_data=NULL,
       check_all_colon <- grepl(x=colnames(itemmissm),
                                pattern=paste0(c,":","|",":",c))
       matrix(check_all & !check_all_colon,nrow=length(check_all))
-    },simplify = F) %>% 
+    },simplify = FALSE) %>% 
       do.call(rbind, .) %>% 
       apply(2,any)
     
@@ -497,9 +497,9 @@ id_make <- function(score_data=NULL,
   if("outcome_cont" %in% names(score_rename)) {
     
     if("outcome_disc" %in% names(score_rename)) {
-      max_val <- max(pull(score_rename,!!outcome_cont)[score_rename$outcome_disc=="Joint Posterior"],na.rm=T)
+      max_val <- max(pull(score_rename,!!outcome_cont)[score_rename$outcome_disc=="Joint Posterior"],na.rm=TRUE)
     } else {
-      max_val <- max(pull(score_rename,!!outcome_cont),na.rm=T)
+      max_val <- max(pull(score_rename,!!outcome_cont),na.rm=TRUE)
     }
     
     # make missing data the highest observed value
@@ -897,8 +897,8 @@ id_make <- function(score_data=NULL,
 #' library(dplyr)
 #' 
 #' # This code will take at least a few minutes to run 
-#' \dontrun{
-#' bin_irt_2pl_abs_sim <- id_sim_gen(model_type='binary',inflate=T)
+#' \donttest{
+#' bin_irt_2pl_abs_sim <- id_sim_gen(model_type='binary',inflate=TRUE)
 #' 
 #' # Now we can put that directly into the id_estimate function 
 #' # to get full Bayesian posterior estimates
@@ -933,7 +933,7 @@ id_make <- function(score_data=NULL,
 #' # We will use the full rollcall voting data 
 #' # from the 114th Senate as a rollcall object
 #' 
-#' \dontrun{
+#' \donttest{
 #' 
 #' data('senate114')
 #' 
@@ -1097,7 +1097,7 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   # check to make sure cmdstanr is working
   
   if(is.null(cmdstanr::cmdstan_version())) {
-    print("You need to install cmdstan with cmdstanr to compile models. Use the function install_cmdstan() in the cmdstanr package.")
+    message("You need to install cmdstan with cmdstanr to compile models. Use the function install_cmdstan() in the cmdstanr package.")
   }
   
   # set path if user specifies
@@ -1106,9 +1106,9 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   
   if(!file.exists(system.file("stan_files","irt_standard_map",
                               package="idealstan"))) {
-    print("Compiling model. Will take some time as this is the first time the package has been used.")
-    print("Have you thought about donating to relief for victims of Yemen's famine?")
-    print("Check out https://www.unicef.org/emergencies/yemen-crisis for more info.")
+    message("Compiling model. Will take some time as this is the first time the package has been used.")
+    message("Have you thought about donating to relief for victims of Yemen's famine?")
+    message("Check out https://www.unicef.org/emergencies/yemen-crisis for more info.")
   }
   
   stan_code_map <- system.file("stan_files","irt_standard_map.stan",

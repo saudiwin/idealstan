@@ -46,7 +46,7 @@ A \code{\link[dplyr]{tibble}} data frame with parameters as rows and descriptive
 This function produces quantiles and standard deviations for the posterior samples of \code{idealstan} objects.
 }
 \examples{
-\dontrun{
+\donttest{
 data('senate114')
 senate114$cast_code <- ifelse(senate114$cast_code=="Absent", NA,
                               as.integer(senate114$cast_code) - 1L)

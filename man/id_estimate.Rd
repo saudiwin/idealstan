@@ -495,8 +495,8 @@ library(ggplot2)
 library(dplyr)
 
 # This code will take at least a few minutes to run 
-\dontrun{
-bin_irt_2pl_abs_sim <- id_sim_gen(model_type='binary',inflate=T)
+\donttest{
+bin_irt_2pl_abs_sim <- id_sim_gen(model_type='binary',inflate=TRUE)
 
 # Now we can put that directly into the id_estimate function 
 # to get full Bayesian posterior estimates
@@ -531,7 +531,7 @@ id_sim_coverage(bin_irt_2pl_abs_est) \%>\%
 # We will use the full rollcall voting data 
 # from the 114th Senate as a rollcall object
 
-\dontrun{
+\donttest{
 
 data('senate114')
 

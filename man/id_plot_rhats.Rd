@@ -9,11 +9,15 @@ id_plot_rhats(obj)
 \arguments{
 \item{obj}{A fitted \code{idealstan} object.}
 }
+\value{
+A \code{ggplot2} histogram showing the distribution of Rhat convergence statistics for all
+parameters in the model.
+}
 \description{
 This plotting function displays a histogram of the Rhat values of all parameters in an \code{idealstan} model.
 }
 \examples{
-\dontrun{
+\donttest{
 sim <- id_sim_gen()
 est <- id_estimate(sim, model_type=1, fixtype='vb_full', nchains=2, ncores=2)
 id_plot_rhats(est)

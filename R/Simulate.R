@@ -319,7 +319,7 @@ id_sim_gen <- function(num_person=20,num_items=50,
         cmdstanr::cmdstan_model(include_paths=dirname(stan_code))
       
       simu_fit <- simu_mod$sample(data=simu_data, iter_sampling=1,
-                                  chains=1, fixed_param=T)
+                                  chains=1, fixed_param=TRUE)
       
       ideal_pts <- simu_fit$draws("Y") %>% as_draws_df %>% 
         as.data.frame %>%
@@ -334,7 +334,7 @@ id_sim_gen <- function(num_person=20,num_items=50,
       
       # add in external covariates
       
-      ideal_pts <- ideal_pts + matrix(cov_value,nrow=num_person,ncol=time_points,byrow = T)
+      ideal_pts <- ideal_pts + matrix(cov_value,nrow=num_person,ncol=time_points,byrow = TRUE)
       
       time_sd_all <- time_sd
       
@@ -418,7 +418,7 @@ id_sim_gen <- function(num_person=20,num_items=50,
       
     }
     
-    ideal_pts <- ideal_pts + matrix(cov_value,nrow=num_person,ncol=time_points,byrow = T)
+    ideal_pts <- ideal_pts + matrix(cov_value,nrow=num_person,ncol=time_points,byrow = TRUE)
     
   }
   
@@ -670,11 +670,15 @@ id_sim_gen <- function(num_person=20,num_items=50,
 #' @param obj A fitted `idealstan` object with true data from [id_sim_gen()]
 #' @param rep Over how many replicates to calculate RMSE? Currently can only be 1
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' sim <- id_sim_gen()
 #' est <- id_estimate(sim, model_type=1, fixtype='vb_full', nchains=2, ncores=2)
 #' id_sim_rmse(est)
 #' }
+#' @return A named list of \code{\link[tibble]{tibble}} objects, one per parameter type
+#'   (\code{Ideal Points}, \code{Absence Discriminations}, \code{Item Discrimations}), each with
+#'   columns \code{avg}, \code{high}, \code{low}, \code{Params}, \code{est_type}, and \code{iter}
+#'   summarising RMSE relative to true parameter values.
 #' @export
 id_sim_rmse <- function(obj,rep=1) {
   
@@ -747,13 +751,17 @@ id_sim_rmse <- function(obj,rep=1) {
 #' @param rep How many times the models were fitted on new data, currently can only be 1
 #' @param quantiles What the quantile coverage of the high posterior density interval should be
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' sim <- id_sim_gen()
 #' est <- id_estimate(sim, model_type=1, fixtype='vb_full', nchains=2, ncores=2)
 #' cov <- id_sim_coverage(est)
 #' # average coverage across all person ideal points
 #' mean(cov[['Person Ideal Points']]$avg)
 #' }
+#' @return A named list of \code{\link[tibble]{tibble}} objects, one per parameter type
+#'   (\code{Person Ideal Points}, \code{Absence Discriminations}, \code{Item Discrimations}), each with
+#'   columns \code{avg}, \code{high}, \code{low}, \code{Params}, \code{est_type}, and \code{iter}
+#'   summarising posterior coverage of the true parameter values.
 #' @export
 id_sim_coverage <- function(obj,rep=1,quantiles=c(.95,.05)) {
   
@@ -832,11 +840,15 @@ id_sim_coverage <- function(obj,rep=1,quantiles=c(.95,.05)) {
 #' @param obj A fitted `idealstan` object with true data from [id_sim_gen()]
 #' @param rep Over how many replicates to calculate residuals? Currently can only be 1
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' sim <- id_sim_gen()
 #' est <- id_estimate(sim, model_type=1, fixtype='vb_full', nchains=2, ncores=2)
 #' id_sim_resid(est)
 #' }
+#' @return A named list of \code{\link[tibble]{tibble}} objects, one per parameter type
+#'   (\code{Ideal Points}, \code{Absence Discrimination}, \code{Item Discrimination}), each with
+#'   columns \code{avg}, \code{high}, \code{low}, \code{Params}, \code{est_type}, and \code{iter}
+#'   summarising posterior residuals relative to true parameter values.
 #' @export
 id_sim_resid <- function(obj,rep=1) {
   

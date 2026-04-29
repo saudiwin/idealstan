@@ -29,7 +29,7 @@ then the function will calculate the difference between these two values instead
 using numerical differentation.
 }
 \examples{
-\dontrun{
+\donttest{
 data('senate114')
 senate114$cast_code <- ifelse(senate114$cast_code=="Absent", NA,
                               as.integer(senate114$cast_code) - 1L)

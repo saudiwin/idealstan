@@ -15,7 +15,7 @@ id_plot_legis_var(
   point_size = 1,
   hjust_length = -0.7,
   person_labels = TRUE,
-  group_labels = F,
+  group_labels = FALSE,
   person_ci_alpha = 0.1,
   group_color = TRUE,
   ...
@@ -50,6 +50,10 @@ id_plot_legis_var(
 
 \item{...}{Other options passed on to plotting function, currently ignored}
 }
+\value{
+A \code{ggplot2} object showing person/legislator over-time variance in ideal points as a dot
+plot with posterior intervals. If \code{return_data=TRUE}, a list with elements \code{plot} and \code{data}.
+}
 \description{
 This function can be used on a fitted \code{idealstan} object to plot the over-time variances
 (average rates of change in ideal points) for all the persons/legislators in the model.
@@ -60,7 +64,7 @@ dot plot with associated high-density posterior interval (can be changed
 with \code{high_limit} and \code{low_limit} options).
 }
 \examples{
-\dontrun{
+\donttest{
 data('senate114')
 senate114$cast_code <- ifelse(senate114$cast_code=="Absent", NA,
                               as.integer(senate114$cast_code) - 1L)

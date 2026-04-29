@@ -18,7 +18,7 @@
   
   . <- NULL
   
-  print("(First Step): Estimating model with Pathfinder (variational inference) to identify modes to constrain.")
+  message("(First Step): Estimating model with Pathfinder (variational inference) to identify modes to constrain.")
   
   post_modes <- object@stanmodel_map$pathfinder(data =this_data,num_threads=ncores,
                                                 num_paths=1,psis_resample=FALSE)
@@ -31,15 +31,15 @@
     
     person <- apply(this_params,2,mean)
     
-    restrict_ind_high <- sort(person,index=T,decreasing=T)$ix[1:num_restrict_high]
-    restrict_ind_low <- sort(person,index=T,decreasing=F)$ix[1:num_restrict_low]
+    restrict_ind_high <- sort(person,index=TRUE,decreasing=TRUE)$ix[1:num_restrict_high]
+    restrict_ind_low <- sort(person,index=TRUE,decreasing=FALSE)$ix[1:num_restrict_low]
     val_high <- person[restrict_ind_high]
     val_low <- person[restrict_ind_low]
     
     # also save values to restrict
     
-    fix_high <- sort(person,decreasing=T)[1:num_restrict_high]
-    fix_low <- sort(person,decreasing=F)[1:num_restrict_high]
+    fix_high <- sort(person,decreasing=TRUE)[1:num_restrict_high]
+    fix_low <- sort(person,decreasing=FALSE)[1:num_restrict_high]
     
   } else if(const_type=="items") {
     
@@ -47,13 +47,13 @@
     
     items <- apply(this_params,2,mean)
     
-    restrict_ind_high <- sort(items,index=T,decreasing=T)$ix[1:num_restrict_high]
-    restrict_ind_low <- restrict_ind_low <- sort(items,index=T,decreasing=F)$ix[1:num_restrict_low]
+    restrict_ind_high <- sort(items,index=TRUE,decreasing=TRUE)$ix[1:num_restrict_high]
+    restrict_ind_low <- restrict_ind_low <- sort(items,index=TRUE,decreasing=FALSE)$ix[1:num_restrict_low]
     val_high <- items[restrict_ind_high]
     val_low <- items[restrict_ind_low]
     
-    fix_high <- sort(items,decreasing=T)[1:num_restrict_high]
-    fix_low <- sort(items,decreasing=F)[1:num_restrict_high]
+    fix_high <- sort(items,decreasing=TRUE)[1:num_restrict_high]
+    fix_low <- sort(items,decreasing=FALSE)[1:num_restrict_high]
     
   }
   
@@ -242,8 +242,8 @@
 #' @noRd
 .time_constrain_ar <- function(vbfit,object,const_type=NULL,restrict_ind_high=NULL,restrict_ind_low=NULL) {
   # this is just additional for these models
-  col_high <- which(ideal_pts_mean==max(ideal_pts_mean),arr.ind=T)
-  col_low <- which(ideal_pts_mean==min(ideal_pts_mean),arr.ind=T)
+  col_high <- which(ideal_pts_mean==max(ideal_pts_mean),arr.ind=TRUE)
+  col_low <- which(ideal_pts_mean==min(ideal_pts_mean),arr.ind=TRUE)
   restrict_mean_ind_high_max <- col_high
   restrict_mean_ind_high_min <- c(which(ideal_pts_mean[,col_high[,2]]==min(ideal_pts_mean[,col_high[,2]])),
                                   col_high[,2])
@@ -256,8 +256,8 @@
 #' @noRd
 .time_constrain_gp <- function(vbfit,object,const_type=NULL,restrict_ind_high=NULL,restrict_ind_low=NULL) {
   if(fixtype=='vb_full') {
-    col_high <- which(ideal_pts_mean==max(ideal_pts_mean),arr.ind=T)
-    col_low <- which(ideal_pts_mean==min(ideal_pts_mean),arr.ind=T)
+    col_high <- which(ideal_pts_mean==max(ideal_pts_mean),arr.ind=TRUE)
+    col_low <- which(ideal_pts_mean==min(ideal_pts_mean),arr.ind=TRUE)
     restrict_mean_ind_high_max <- col_high
     restrict_mean_ind_high_min <- c(which(ideal_pts_mean[,col_high[,2]]==min(ideal_pts_mean[,col_high[,2]])),
                                     col_high[,2])
@@ -282,7 +282,7 @@
 #' @noRd
 .select_const <- function(object=NULL,
                           const_type='item',
-                          multiple=T,
+                          multiple=TRUE,
                           title="Select one or more items to constrain high from the following list of items in your data.") {
   
   # given inputs, create a selection window

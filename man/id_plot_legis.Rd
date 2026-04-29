@@ -70,6 +70,10 @@ only a fraction of the persons/legislators.}
 
 \item{...}{Other options passed on to plotting function, currently ignored}
 }
+\value{
+A \code{ggplot2} object showing legislator/person ideal points. Deprecated; use
+\code{\link{id_plot_persons}} instead.
+}
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
 

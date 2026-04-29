@@ -14,12 +14,18 @@ id_sim_coverage(obj, rep = 1, quantiles = c(0.95, 0.05))
 
 \item{quantiles}{What the quantile coverage of the high posterior density interval should be}
 }
+\value{
+A named list of \code{\link[tibble]{tibble}} objects, one per parameter type
+(\code{Person Ideal Points}, \code{Absence Discriminations}, \code{Item Discrimations}), each with
+columns \code{avg}, \code{high}, \code{low}, \code{Params}, \code{est_type}, and \code{iter}
+summarising posterior coverage of the true parameter values.
+}
 \description{
 Function that computes how often the true value of the parameter is included within the
 95/5 high posterior density interval
 }
 \examples{
-\dontrun{
+\donttest{
 sim <- id_sim_gen()
 est <- id_estimate(sim, model_type=1, fixtype='vb_full', nchains=2, ncores=2)
 cov <- id_sim_coverage(est)

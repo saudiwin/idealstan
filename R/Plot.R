@@ -47,11 +47,13 @@
 #' @importFrom rlang parse_quo as_quosure
 #' @import ggrepel
 #' @import ggthemes
+#' @return A \code{ggplot2} object showing person/legislator ideal points as a dot plot with posterior
+#'   intervals. If \code{return_data=TRUE}, a list with elements \code{plot} and \code{data}.
 #' @export
-#' @examples 
-#' 
-#' \dontrun{
-#' 
+#' @examples
+#'
+#' \donttest{
+#'
 #' # First create data and run a model
 #' 
 #' to_idealstan <-   id_make(score_data = senate114,
@@ -87,7 +89,7 @@ id_plot_persons <- function(object,return_data=FALSE,
                        point_size=1,
                        hjust_length=-0.7,
                        person_labels=TRUE,
-                       group_labels=F,
+                       group_labels=FALSE,
                        person_ci_alpha=0.2,
                        show_true=FALSE,group_color=TRUE,
                        hpd_limit=NULL,
@@ -176,9 +178,9 @@ id_plot_persons <- function(object,return_data=FALSE,
     
     check_groups <- sapply(object,function(x) x@use_groups)
     if(all(check_groups)) {
-      use_groups <- T
+      use_groups <- TRUE
     } else {
-      use_groups <- F
+      use_groups <- FALSE
     }
     # now we can facet by persons/groups
     model_wrap <- TRUE
@@ -312,7 +314,7 @@ id_plot_persons <- function(object,return_data=FALSE,
                     y=median_pt,label=reorder(group_id,median_pt),
                     color=.data[[groupc]]),size=text_size_group,
                 show.legend = FALSE,
-                check_overlap = T)
+                check_overlap = TRUE)
 
   } else {
     # if an item plot is being made, use the actual outcomes as points
@@ -323,7 +325,7 @@ id_plot_persons <- function(object,return_data=FALSE,
       geom_text(aes(x=reorder(person_id,median_pt),y=median_pt,
                     colour=.data[[groupc]],
                     label=reorder(outcome_disc,median_pt)),size=text_size_group,
-                check_overlap = T)
+                check_overlap = TRUE)
 
   }
     
@@ -426,12 +428,14 @@ id_plot_persons <- function(object,return_data=FALSE,
 #' @param person_ci_alpha The transparency level of the dot plot and confidence bars for the person ideal points
 #' @param group_color If `TRUE`, give each group/bloc a different color
 #' @param ... Other options passed on to plotting function, currently ignored
+#' @return A \code{ggplot2} object showing person/legislator over-time variance in ideal points as a dot
+#'   plot with posterior intervals. If \code{return_data=TRUE}, a list with elements \code{plot} and \code{data}.
 #' @import ggplot2
 #' @import lazyeval
 #' @importFrom rlang parse_quo as_quosure
 #' @export
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' data('senate114')
 #' senate114$cast_code <- ifelse(senate114$cast_code=="Absent", NA,
 #'                               as.integer(senate114$cast_code) - 1L)
@@ -454,7 +458,7 @@ id_plot_legis_var <- function(object,return_data=FALSE,
                           point_size=1,
                           hjust_length=-0.7,
                           person_labels=TRUE,
-                          group_labels=F,
+                          group_labels=FALSE,
                           person_ci_alpha=0.1,group_color=TRUE,
                           ...) {
   
@@ -589,11 +593,13 @@ id_plot_legis_var <- function(object,return_data=FALSE,
 #' @param use_chain ID of MCMC chain to use rather than combining all chains. 
 #' Default is NULL which will use all chains and is recommended.
 #' @param ... Other options passed on to plotting function, currently ignored
+#' @return A \code{ggplot2} object showing dynamic person/legislator ideal points over time as a line
+#'   plot with posterior intervals. If \code{return_data=TRUE}, a list with elements \code{plot} and \code{data}.
 #' @importFrom gghighlight gghighlight
 #' @export
-#' @examples 
+#' @examples
 #' 
-#' \dontrun{
+#' \donttest{
 #' 
 #' # First create data and run a model
 #' 
@@ -722,9 +728,9 @@ id_plot_persons_dyn <- function(object,return_data=FALSE,
     
     check_groups <- sapply(object,function(x) x@use_groups)
     if(all(check_groups)) {
-      use_groups <- T
+      use_groups <- TRUE
     } else {
-      use_groups <- F
+      use_groups <- FALSE
     }
     # now we can facet by persons/groups
     model_wrap <- TRUE
@@ -970,7 +976,7 @@ id_plot_persons_dyn <- function(object,return_data=FALSE,
     # give some of the persons a special color and make bigger
     
     outplot <- outplot + 
-      gghighlight(.data[[base_id]] %in% highlight,use_group_by = F)
+      gghighlight(.data[[base_id]] %in% highlight,use_group_by = FALSE)
   }
   
   # only use a legend if groups are used or highlights
@@ -1025,13 +1031,15 @@ id_plot_persons_dyn <- function(object,return_data=FALSE,
 #' @param rescale Whether to rescale the estimates from two models so they will match regardless of arbitrary scale shifts in the
 #' ideal points
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' # Fit the same data under two different model types and compare ideal points
 #' sim <- id_sim_gen()
 #' est1 <- id_estimate(sim, model_type=1, fixtype='vb_full', nchains=2, ncores=2)
 #' est2 <- id_estimate(sim, model_type=2, fixtype='vb_full', nchains=2, ncores=2)
 #' id_plot_compare(est1, est2)
 #' }
+#' @return A \code{ggplot2} object comparing ideal points across two \code{idealstan} models. If
+#'   \code{return_data=TRUE}, a list with elements \code{plot} and \code{data}.
 #' @export
 id_plot_compare <- function(model1=NULL,model2=NULL,scale_flip=FALSE,return_data=FALSE,
                            labels=NULL,hjust=-.1,palette='Set1',color_direction=1,
@@ -1064,7 +1072,7 @@ id_plot_compare <- function(model1=NULL,model2=NULL,scale_flip=FALSE,return_data
     geom_pointrange(aes(xmin=low_pt,xmax=high_pt),
   position=position_dodge(width=1)) + 
     geom_text(aes(label=reorder(person_id,median_pt)),size=text_size_label,fontface="bold",
-                             hjust=hjust,check_overlap = T,colour="black") +
+                             hjust=hjust,check_overlap = TRUE,colour="black") +
     theme_minimal() + ylab("") + xlab("Ideal Point Score") +
     theme(axis.text.y=element_blank(),panel.grid.major.y = element_blank()) + 
     scale_colour_brewer(palette=palette,labels=labels,direction=color_direction,
@@ -1098,7 +1106,7 @@ id_plot_compare <- function(model1=NULL,model2=NULL,scale_flip=FALSE,return_data
 #' @param func The function to use if `'dens_type'` is set to `'function'`.
 #' @param ... Other options passed on to the plotting function, currently ignored.
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' sim <- id_sim_gen()
 #' est <- id_estimate(sim, model_type=1, fixtype='vb_full', nchains=2, ncores=2)
 #' # plot posterior distribution of person ideal points
@@ -1106,6 +1114,8 @@ id_plot_compare <- function(model1=NULL,model2=NULL,scale_flip=FALSE,return_data
 #' # plot item discrimination parameters
 #' id_plot_all_hist(est, params='obs_discrim')
 #' }
+#' @return A \code{ggplot2} object showing density or histogram plots of the selected model parameters.
+#'   If \code{return_data=TRUE}, a list with elements \code{plot} and \code{data}.
 #' @export
 id_plot_all_hist <- function(object,params='person',param_labels=NULL,dens_type='all',
                           return_data=FALSE,func=median,...) {
@@ -1171,13 +1181,15 @@ id_plot_all_hist <- function(object,params='person',param_labels=NULL,dens_type=
 #' @param sims A fitted `idealstan` object that has true data generated by [id_sim_gen()]
 #' @param type Type of analysis of true versus fitted values, can be `'RMSE'`, `'Residuals'` or `'Coverage'`
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' sim <- id_sim_gen()
 #' est <- id_estimate(sim, model_type=1, fixtype='vb_full', nchains=2, ncores=2)
 #' id_plot_sims(est)               # RMSE (default)
 #' id_plot_sims(est, type='Residuals')
 #' id_plot_sims(est, type='Coverage')
 #' }
+#' @return A \code{ggplot2} object showing RMSE, residuals, or coverage for simulated parameters
+#'   compared to their true values.
 #' @export
 id_plot_sims <- function(sims,type='RMSE') id_show_trues(sims,type)
 
@@ -1213,11 +1225,13 @@ id_show_trues <- function(sims,type='RMSE') {
 #' @param obj A fitted `idealstan` object.
 #' @importFrom ggthemes theme_tufte
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' sim <- id_sim_gen()
 #' est <- id_estimate(sim, model_type=1, fixtype='vb_full', nchains=2, ncores=2)
 #' id_plot_rhats(est)
 #' }
+#' @return A \code{ggplot2} histogram showing the distribution of Rhat convergence statistics for all
+#'   parameters in the model.
 #' @export
 id_plot_rhats <- function(obj) {
   # first get all summaries
@@ -1278,7 +1292,7 @@ id_plot_rhats <- function(obj) {
 #' @import svDialogs
 #' @importFrom stats as.formula
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' # Fit a model with a person-level covariate
 #' data('senate114')
 #' senate114$cast_code <- ifelse(senate114$cast_code=="Absent", NA,
@@ -1511,7 +1525,7 @@ id_plot_irf <- function(object,
                         label_high="Liberal",
                         label_low="Conservative",
                         pred_outcome=NULL,
-                        recalc_vals=F,
+                        recalc_vals=FALSE,
                         include=NULL,
                         time_calc=10,
                         time_label="Time Points",
@@ -1524,7 +1538,7 @@ id_plot_irf <- function(object,
                         use_ci=TRUE,
                         high_quantile=0.95,
                         low_quantile=0.05,
-                        calc_varying=T) {
+                        calc_varying=TRUE) {
   
   # figure out which covariate to iterate over
   
@@ -1568,7 +1582,7 @@ id_plot_irf <- function(object,
   new_names <- object@score_data@person_cov
   
   if(is.null(cov_name)) {
-    cov_name <- svDialogs::dlg_list(new_names,multiple=T,
+    cov_name <- svDialogs::dlg_list(new_names,multiple=TRUE,
                                     title="Select at least one variable to compute IRFs. If you want to combine two variables, select two variables (but not more than two).")$res
   }
   
@@ -1717,10 +1731,12 @@ id_plot_irf <- function(object,
 #' @param prior_sample_size     Relative level of precision/tightness around `y` (default: 200). Can be thought of as the relative sample size used to estimate `y`.
 #' @param limits                Limits of prior. Default is `[-1,1]`. Set to `[0,1]` for a conventional IRT with all positive discrimination parameters (i.e. as in a test-taking scenario).
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' # Launch interactive Shiny app to explore the generalized Beta prior
 #' id_plot_gbeta_prior(initial_y=0.5, prior_sample_size=200)
 #' }
+#' @return A \code{ggplot2} object showing the generalized Beta prior distribution for the selected
+#'   parameter values, or an interactive Shiny application if run interactively.
 #' @export
 id_plot_gbeta_prior <- function(
     initial_y = 0,
@@ -1785,7 +1801,7 @@ id_plot_gbeta_prior <- function(
       } else {
         
         
-        cat("WARNING: Prior is undefined because the prior mean is equal to the prior scale limit (high or low).")
+        warning("Prior is undefined because the prior mean is equal to the prior scale limit (high or low).")
         
       }
       
@@ -1864,7 +1880,7 @@ id_plot_gbeta_prior <- function(
 #' @return A `ggplot2` object, or if `return_data=TRUE`, a list with elements `plot` and `data`.
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' # After fitting a model:
 #' # Plot discrimination parameters for all items
 #' id_plot_items(fitted_model)
@@ -2075,6 +2091,8 @@ id_plot_items <- function(object,
 #' `id_plot_legis()` was renamed to [id_plot_persons()] for clarity and consistency.
 #'
 #' @inheritParams id_plot_persons
+#' @return A \code{ggplot2} object showing legislator/person ideal points. Deprecated; use
+#'   \code{\link{id_plot_persons}} instead.
 #' @export
 #' @keywords internal
 id_plot_legis <- function(object, return_data = FALSE,
@@ -2113,6 +2131,8 @@ id_plot_legis <- function(object, return_data = FALSE,
 #' `id_plot_legis_dyn()` was renamed to [id_plot_persons_dyn()] for clarity and consistency.
 #'
 #' @inheritParams id_plot_persons_dyn
+#' @return A \code{ggplot2} object showing dynamic legislator/person ideal points over time. Deprecated;
+#'   use \code{\link{id_plot_persons_dyn}} instead.
 #' @export
 #' @keywords internal
 id_plot_legis_dyn <- function(object, return_data = FALSE,

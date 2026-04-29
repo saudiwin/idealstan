@@ -13,12 +13,15 @@
 #'   distribution and \eqn{N} is the number of data points being predicted per
 #'   draw.
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' sim <- id_sim_gen()
 #' est <- id_estimate(sim, model_type=1, fixtype='vb_full', nchains=2, ncores=2)
 #' ppc <- id_post_pred(est, draws=50)
 #' ll  <- id_post_pred(est, type='log_lik')
 #' }
+#' @return An object of class \code{id_pred_obj} (a list of matrices of posterior-predicted draws, one
+#'   per model type). If \code{type="log_lik"}, a draws-by-observations \code{matrix} of class
+#'   \code{log_lik} with a \code{chain_order} attribute for use with \code{\link{derive_chain}}.
 #' @export
 setGeneric('id_post_pred',signature='object',
            function(object,...) standardGeneric('id_post_pred'))
@@ -67,7 +70,7 @@ setGeneric('id_post_pred',signature='object',
 #' @param skip_cov Whether to skip adding in hierarchical person-level covariates. Defaults to FALSE.
 #' @param ... Any other arguments passed on to posterior_predict (currently none available)
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' sim <- id_sim_gen()
 #' est <- id_estimate(sim, model_type=1, fixtype='vb_full', nchains=2, ncores=2)
 #' # posterior predictive distribution (100 draws)
@@ -75,6 +78,9 @@ setGeneric('id_post_pred',signature='object',
 #' # log-likelihood matrix (for loo)
 #' ll <- id_post_pred(est, type='log_lik')
 #' }
+#' @return An object of class \code{id_pred_obj} (a list of matrices of posterior-predicted draws, one
+#'   per model type). If \code{type="log_lik"}, a draws-by-observations \code{matrix} of class
+#'   \code{log_lik} with a \code{chain_order} attribute for use with \code{\link{derive_chain}}.
 #' @export
 setMethod('id_post_pred',signature(object='idealstan'),function(object,
                                                                 newdata=NULL,
@@ -599,12 +605,24 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,
     })
     
     
+    # for log_lik, return a single combined matrix (draws x observations) with
+    # chain_order attribute, matching what derive_chain and loo::loo expect
+    if(type == 'log_lik') {
+      all_item_mats <- unlist(out_mods, recursive = FALSE)
+      ll_mat <- do.call(cbind, all_item_mats)
+      n_chains <- length(use_chain)
+      iters_per_chain <- nrow(ll_mat) / n_chains
+      attr(ll_mat, 'chain_order') <- rep(use_chain, each = iters_per_chain)
+      class(ll_mat) <- c('matrix', 'log_lik')
+      return(ll_mat)
+    }
+
     # this is now a list of lists with model ID at the top
-    
+
     class(out_mods) <- c(class(out_mods), "id_pred_obj")
-    
+
     return(out_mods)
-    
+
 })
 
 #' Plot Posterior Predictive Distribution for `idealstan` Objects
@@ -632,13 +650,15 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,
 #' @param object A fitted `idealstan` object
 #' @param ... Other arguments passed on to [bayesplot::ppc_bars()]
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' sim <- id_sim_gen()
 #' est <- id_estimate(sim, model_type=1, fixtype='vb_full', nchains=2, ncores=2)
 #' ppc <- id_post_pred(est, draws=50)
 #' id_plot_ppc(est, ppc_pred=ppc)
 #' id_plot_ppc(est, ppc_pred=ppc, combine_item=FALSE, prompt_plot=FALSE)
 #' }
+#' @return A \code{ggplot2} object (from the \code{bayesplot} package) comparing observed and
+#'   posterior-predicted outcome distributions.
 #' @export
 setGeneric('id_plot_ppc',signature='object',
            function(object,...) standardGeneric('id_plot_ppc'))
@@ -692,7 +712,7 @@ setGeneric('id_plot_ppc',signature='object',
 #' responses (missing data category will be the largest).
 #' @param ... Other arguments passed on to [bayesplot::ppc_bars()]
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' sim <- id_sim_gen()
 #' est <- id_estimate(sim, model_type=1, fixtype='vb_full', nchains=2, ncores=2)
 #' ppc <- id_post_pred(est, draws=50)
@@ -700,6 +720,8 @@ setGeneric('id_plot_ppc',signature='object',
 #' # per-item plots
 #' id_plot_ppc(est, ppc_pred=ppc, combine_item=FALSE, prompt_plot=FALSE)
 #' }
+#' @return A \code{ggplot2} object (from the \code{bayesplot} package) comparing observed and
+#'   posterior-predicted outcome distributions.
 #' @export
 setMethod('id_plot_ppc',signature(object='idealstan'),function(object,
                                                                   ppc_pred=NULL,
@@ -808,9 +830,9 @@ setMethod('id_plot_ppc',signature(object='idealstan'),function(object,
           } else {
             group_var <- person_points
           }
-          grouped <- T
+          grouped <- TRUE
         } else {
-          grouped <- F
+          grouped <- FALSE
         }
         
         if(outputs=='all' && !observed_only) {
@@ -877,7 +899,7 @@ setMethod('id_plot_ppc',signature(object='idealstan'),function(object,
             
             # subtract away the minimum as the prediction is always at 0
             
-            y <- y - min(y, na.rm=T)
+            y <- y - min(y, na.rm=TRUE)
           
           if(grouped) {
             
@@ -938,9 +960,9 @@ setMethod('id_plot_ppc',signature(object='idealstan'),function(object,
               } else {
                 group_var <- person_points
               }
-              grouped <- T
+              grouped <- TRUE
             } else {
-              grouped <- F
+              grouped <- FALSE
             }
             
             if(attr(psub,'output')=='all') {
@@ -1039,7 +1061,7 @@ setMethod('id_plot_ppc',signature(object='idealstan'),function(object,
 #' @param ll_matrix A log-likelihood matrix as produced by the [id_post_pred()]
 #' function
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' sim <- id_sim_gen()
 #' est <- id_estimate(sim, model_type=1, fixtype='vb_full', nchains=2, ncores=2)
 #' ll <- id_post_pred(est, type='log_lik')
@@ -1047,6 +1069,8 @@ setMethod('id_plot_ppc',signature(object='idealstan'),function(object,
 #' # use with loo
 #' loo::loo(exp(ll), r_eff=loo::relative_eff(exp(ll), chain_id=chain_ids))
 #' }
+#' @return An integer vector of MCMC chain IDs extracted from the log-likelihood matrix, for use as the
+#'   \code{chain_id} argument to \code{\link[loo]{relative_eff}}.
 #' @export
 derive_chain <- function(ll_matrix=NULL) {
   attr(ll_matrix,'chain_order')

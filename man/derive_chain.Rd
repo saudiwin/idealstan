@@ -10,6 +10,10 @@ derive_chain(ll_matrix = NULL)
 \item{ll_matrix}{A log-likelihood matrix as produced by the \code{\link[=id_post_pred]{id_post_pred()}}
 function}
 }
+\value{
+An integer vector of MCMC chain IDs extracted from the log-likelihood matrix, for use as the
+\code{chain_id} argument to \code{\link[loo]{relative_eff}}.
+}
 \description{
 This function accepts a log-likelihood matrix produced by \code{id_post_pred} and
 extracts the IDs of the MCMC chains. It is necessary to use this function
@@ -18,7 +22,7 @@ log-likelihood matrix. See the package vignette How to Evaluate Models
 for more details.
 }
 \examples{
-\dontrun{
+\donttest{
 sim <- id_sim_gen()
 est <- id_estimate(sim, model_type=1, fixtype='vb_full', nchains=2, ncores=2)
 ll <- id_post_pred(est, type='log_lik')

@@ -11,6 +11,10 @@ stan_trace(object, ...)
 
 \item{...}{Other options passed on to \code{\link[rstan]{stan_trace}}}
 }
+\value{
+A \code{ggplot2} object (from \code{\link[bayesplot]{mcmc_trace}}) showing MCMC trace plots
+for the selected parameter.
+}
 \description{
 This function allows you to produce trace plots for assessing the quality
 and convergence of MCMC chains.
@@ -27,7 +31,7 @@ This function is a simple wrapper around \code{\link[bayesplot]{mcmc_trace}}.
 Please refer to that function's documentation for further options.
 }
 \examples{
-\dontrun{
+\donttest{
 data('senate114')
 senate114$cast_code <- ifelse(senate114$cast_code=="Absent", NA,
                               as.integer(senate114$cast_code) - 1L)

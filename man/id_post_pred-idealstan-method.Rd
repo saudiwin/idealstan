@@ -61,6 +61,11 @@ the base R \code{parallel} package}
 
 \item{...}{Any other arguments passed on to posterior_predict (currently none available)}
 }
+\value{
+An object of class \code{id_pred_obj} (a list of matrices of posterior-predicted draws, one
+per model type). If \code{type="log_lik"}, a draws-by-observations \code{matrix} of class
+\code{log_lik} with a \code{chain_order} attribute for use with \code{\link{derive_chain}}.
+}
 \description{
 This function will draw from the posterior distribution, whether in terms of the outcome (prediction)
 or to produce the log-likelihood values.
@@ -76,7 +81,7 @@ in the score/vote matrix.
 Also see \code{help("posterior_predict", package = "rstanarm")}
 }
 \examples{
-\dontrun{
+\donttest{
 sim <- id_sim_gen()
 est <- id_estimate(sim, model_type=1, fixtype='vb_full', nchains=2, ncores=2)
 # posterior predictive distribution (100 draws)

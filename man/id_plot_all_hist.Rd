@@ -36,12 +36,16 @@ plotting.}
 
 \item{...}{Other options passed on to the plotting function, currently ignored.}
 }
+\value{
+A \code{ggplot2} object showing density or histogram plots of the selected model parameters.
+If \code{return_data=TRUE}, a list with elements \code{plot} and \code{data}.
+}
 \description{
 This function produces density plots of the different types of parameters in an \code{idealstan} model: item (bill) difficulty and discrimination
 parameters, and person (legislator) ideal points.
 }
 \examples{
-\dontrun{
+\donttest{
 sim <- id_sim_gen()
 est <- id_estimate(sim, model_type=1, fixtype='vb_full', nchains=2, ncores=2)
 # plot posterior distribution of person ideal points

@@ -95,6 +95,10 @@ time trends (defaults to TRUE).}
 
 \item{...}{Other options passed on to plotting function, currently ignored}
 }
+\value{
+A \code{ggplot2} object showing dynamic legislator/person ideal points over time. Deprecated;
+use \code{\link{id_plot_persons_dyn}} instead.
+}
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
 

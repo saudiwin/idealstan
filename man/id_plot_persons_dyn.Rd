@@ -95,6 +95,10 @@ time trends (defaults to TRUE).}
 
 \item{...}{Other options passed on to plotting function, currently ignored}
 }
+\value{
+A \code{ggplot2} object showing dynamic person/legislator ideal points over time as a line
+plot with posterior intervals. If \code{return_data=TRUE}, a list with elements \code{plot} and \code{data}.
+}
 \description{
 This function can be used on a fitted \code{idealstan} object to plot the relative positions and
 uncertainties of legislator/persons and bills/items when the legislator/person ideal points
@@ -112,7 +116,7 @@ make it clear.
 }
 \examples{
 
-\dontrun{
+\donttest{
 
 # First create data and run a model
 

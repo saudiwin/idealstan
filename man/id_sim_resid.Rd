@@ -12,12 +12,18 @@ id_sim_resid(obj, rep = 1)
 
 \item{rep}{Over how many replicates to calculate residuals? Currently can only be 1}
 }
+\value{
+A named list of \code{\link[tibble]{tibble}} objects, one per parameter type
+(\code{Ideal Points}, \code{Absence Discrimination}, \code{Item Discrimination}), each with
+columns \code{avg}, \code{high}, \code{low}, \code{Params}, \code{est_type}, and \code{iter}
+summarising posterior residuals relative to true parameter values.
+}
 \description{
 Residual function for checking estimated samples compared to true simulation scores
 Returns a data frame with residuals plus quantiles.
 }
 \examples{
-\dontrun{
+\donttest{
 sim <- id_sim_gen()
 est <- id_estimate(sim, model_type=1, fixtype='vb_full', nchains=2, ncores=2)
 id_sim_resid(est)

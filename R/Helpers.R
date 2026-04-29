@@ -215,7 +215,7 @@
       
     }
     
-    old_bounds <- c(min(time_ind,na.rm=T),max(time_ind, na.rm=T))
+    old_bounds <- c(min(time_ind,na.rm=TRUE),max(time_ind, na.rm=TRUE))
     time_ind <- 2 * ((time_ind - min(time_ind))/(max(time_ind) - min(time_ind))) - 1
     
     if(!is.null(spline_knots) && length(spline_knots)>1) {
@@ -542,7 +542,7 @@
   phi_mean=rep(ordbeta_phi_mean, times=num_ordbeta),
   ordbeta_cut_phi=rep(ordbeta_cut_phi,times=num_ordbeta),
   ordbeta_cut_alpha=matrix(rep(ordbeta_cut_alpha,times=num_ordbeta),nrow=num_ordbeta,
-                           ncol=3,byrow=T))
+                           ncol=3,byrow=TRUE))
   
   idealdata <- id_model(object=idealdata,fixtype=fixtype,this_data=this_data,
                         restrict_ind_high=restrict_ind_high,
@@ -795,7 +795,7 @@
                     phi_mean=rep(ordbeta_phi_mean, times=num_ordbeta),
                     ordbeta_cut_phi=rep(ordbeta_cut_phi,times=num_ordbeta),
                     ordbeta_cut_alpha=matrix(rep(ordbeta_cut_alpha,times=num_ordbeta),nrow=num_ordbeta,
-                                             ncol=3,byrow=T))
+                                             ncol=3,byrow=TRUE))
   
   
   return(list(stan_data=this_data,
@@ -975,7 +975,7 @@ process_init_draws <- function(init, num_procs, model_variables = NULL,
   
   init$weight <- NULL
   
-  variable_names <- variables(init, with_indices = F)
+  variable_names <- variables(init, with_indices = FALSE)
   
   draws <- as_draws_df(init)
   
@@ -1107,7 +1107,7 @@ process_init_pathfinder <- function(init, num_procs, model_variables = NULL,
     
   }
   
-  if(is.na(min(outcome, na.rm=T)) || is.infinite(min(outcome, na.rm=T))) {
+  if(is.na(min(outcome, na.rm=TRUE)) || is.infinite(min(outcome, na.rm=TRUE))) {
     
     stop("The vector does not have enough non-missing data.")
     
@@ -1119,8 +1119,8 @@ process_init_pathfinder <- function(init, num_procs, model_variables = NULL,
     max_out <- true_bounds[2]
   } else {
     
-    min_out <- min(outcome, na.rm=T)
-    max_out <- max(outcome, na.rm=T)
+    min_out <- min(outcome, na.rm=TRUE)
+    max_out <- max(outcome, na.rm=TRUE)
     
     message(paste0("Normalizing using the observed bounds of ",min_out, " - ",
                    max_out,". If these are incorrect, please pass the bounds to use to the true_bounds parameter."))
@@ -1364,7 +1364,7 @@ process_init_pathfinder <- function(init, num_procs, model_variables = NULL,
     
     person_ids <- tibble(long_name=person_params$legis) %>% 
       distinct
-    legis_nums <- stringr::str_extract_all(person_ids$long_name,'[0-9]+',simplify=T)
+    legis_nums <- stringr::str_extract_all(person_ids$long_name,'[0-9]+',simplify=TRUE)
     person_ids <-   mutate(person_ids,id_num=as.numeric(legis_nums))
     
     person_data <- distinct(select(object@score_data@score_matrix,
@@ -1463,8 +1463,8 @@ process_init_pathfinder <- function(init, num_procs, model_variables = NULL,
       # spread and stuff into a list
       spread_it <- try(spread(this_data,key=!!col_var_name,value=!!col_var_value))
       if('try-error' %in% class(spread_it)) {
-        print('Failed to find unique covariate values for dataset:')
-        print(this_data)
+        message('Failed to find unique covariate values for dataset:')
+        message(paste(utils::capture.output(this_data), collapse = "\n"))
         stop()
       }
       spread_it <- spread_it %>% 
@@ -1557,7 +1557,7 @@ process_init_pathfinder <- function(init, num_procs, model_variables = NULL,
       time_var_gp_free = runif(gp_N, 0.25, .75),
       time_var_free = if (T > 1 && time_proc != 4 && restrict_var == 1) runif(num_legis - 1, 0.5, 1) else if (T > 1 && time_proc != 4) runif(num_legis, 0.5, 1) else numeric(0),
       a_raw = if (num_basis > 1) array(rep(0L, num_legis * num_basis), dim = c(num_legis, num_basis)) else array(numeric(0), dim = c(num_legis, 0L)),
-      ordbeta_cut = if(num_ordbeta>0) matrix(rep(c(-1,1),times=num_ordbeta),ncol=2,nrow=num_ordbeta,byrow=T) else array(numeric(0),dim=c(1,0)),
+      ordbeta_cut = if(num_ordbeta>0) matrix(rep(c(-1,1),times=num_ordbeta),ncol=2,nrow=num_ordbeta,byrow=TRUE) else array(numeric(0),dim=c(1,0)),
       phi = if(num_ordbeta>0) rep(0.25, num_ordbeta) else numeric(0)
     )
    
@@ -2259,7 +2259,7 @@ process_init_pathfinder <- function(init, num_procs, model_variables = NULL,
 .item_plot_ls <- function(param_name,object,
                               high_limit=NULL,
                               low_limit=NULL,
-                          aggregated=F,
+                          aggregated=FALSE,
                           use_chain=NULL) {
   
   if(is.null(use_chain))
@@ -2400,13 +2400,13 @@ process_init_pathfinder <- function(init, num_procs, model_variables = NULL,
             #   (# of iter (with or w.o. warmup), # of chains, # of flat parameters). 
             
             if (object@mode == 1L) {
-              cat("Stan model '", object@model_name, "' is of mode 'test_grad';\n",
-                  "sampling is not conducted.\n", sep = '')
-              return(invisible(NULL)) 
+              message("Stan model '", object@model_name, "' is of mode 'test_grad'; ",
+                  "sampling is not conducted.")
+              return(invisible(NULL))
             } else if (object@mode == 2L) {
-              cat("Stan model '", object@model_name, "' does not contain samples.\n", sep = '') 
-              return(invisible(NULL)) 
-            } 
+              message("Stan model '", object@model_name, "' does not contain samples.")
+              return(invisible(NULL))
+            }
             
             if(!include) pars <- setdiff(object@sim$pars_oi, pars)
             pars <- if (missing(pars)) object@sim$pars_oi else .check_pars_second(object@sim, pars) 
@@ -3781,7 +3781,7 @@ return(as.vector(idx))
   if(!is.null(legis_x) && sum(c(legis_x))!=0) {
     
     # need to do an adjustment by re-calculating ideal point scores and including hierarchical covariates
-    print("Adding in hierarchical covariates values to the time-varying person scores.")
+    message("Adding in hierarchical covariates values to the time-varying person scores.")
     
     if(is.numeric(legis_x) & !is.matrix(legis_x)) {
       
@@ -3795,7 +3795,7 @@ return(as.vector(idx))
     
     # loop over draws d for memory efficiency
     
-    print("Collapsing covariates to person and time IDs.")
+    message("Collapsing covariates to person and time IDs.")
     
     legis_x <- apply(legis_x, 2, function(c) {
       
@@ -3858,7 +3858,7 @@ return(as.vector(idx))
         all_time <- as_draws_array(all_time)
       }
     
-    print("Done!")
+    message("Done!")
     
   }
   

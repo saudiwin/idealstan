@@ -68,7 +68,7 @@ fitted \code{idealstan} object. It can display both observed (non-inflated) and
 missing (inflated) item parameters.
 }
 \examples{
-\dontrun{
+\donttest{
 # After fitting a model:
 # Plot discrimination parameters for all items
 id_plot_items(fitted_model)

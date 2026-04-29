@@ -40,12 +40,16 @@ id_plot_compare(
 \item{rescale}{Whether to rescale the estimates from two models so they will match regardless of arbitrary scale shifts in the
 ideal points}
 }
+\value{
+A \code{ggplot2} object comparing ideal points across two \code{idealstan} models. If
+\code{return_data=TRUE}, a list with elements \code{plot} and \code{data}.
+}
 \description{
 Function to compare two fitted idealstan models by plotting ideal points. Assumes that underlying data
 is the same for both models.
 }
 \examples{
-\dontrun{
+\donttest{
 # Fit the same data under two different model types and compare ideal points
 sim <- id_sim_gen()
 est1 <- id_estimate(sim, model_type=1, fixtype='vb_full', nchains=2, ncores=2)

@@ -11,6 +11,9 @@ launch_shinystan(object, ...)
 
 \item{...}{Other arguments passed on to underlying function}
 }
+\value{
+No return value; called for side effects (launches the Shinystan interactive diagnostics application).
+}
 \description{
 A generic function for launching \code{\link[shinystan]{launch_shinystan}}.
 }

@@ -17,6 +17,9 @@ and \code{'miss_diff'} for inflated item (bill) difficulty scores.}
 
 \item{...}{Any additional arguments passed on to the \code{\link[rstan]{extract}} function.}
 }
+\value{
+A \code{\link[tibble]{tibble}} of posterior draws, with rows as draws and columns as parameters.
+}
 \description{
 This convenience function allows you to extract the underlying \code{\link[rstan]{rstan}} posterior estimates for the full parameters
 estimates of the \code{idealstan} model object. See \code{\link[rstan]{extract}} for the underlying function and more options.
@@ -30,7 +33,7 @@ informative names.
 All parameters are returned in the order in which they were input into the \code{\link{id_make}} function.
 }
 \examples{
-\dontrun{
+\donttest{
 data('senate114')
 senate114$cast_code <- ifelse(senate114$cast_code=="Absent", NA,
                               as.integer(senate114$cast_code) - 1L)

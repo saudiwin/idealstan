@@ -181,7 +181,7 @@ setMethod('sample_model',signature(object='idealdata'),
               # try pathfinder first, if that fails try laplace
               # turn off debug mode
               
-              print("Running pathfinder to find starting values")
+              message("Running pathfinder to find starting values")
               
               debug_orig <- this_data$debug_mode
               
@@ -208,7 +208,7 @@ setMethod('sample_model',signature(object='idealdata'),
               
               if(is.null(c1) || sd(init_vals$draws()[,1])==0) {
                 
-                print("Pathfinder failed; attempting without PSIS resampling.")
+                message("Pathfinder failed; attempting without PSIS resampling.")
                 
                 init_vals <- try(object@stanmodel_map$laplace(data=this_data,
                                                           refresh=0,threads=ncores,
@@ -275,7 +275,7 @@ setMethod('sample_model',signature(object='idealdata'),
               
               if(is.null(c1) || 'try-error' %in% class(c1) || sd(init_vals$draws()[,1])==0) {
                 
-                print("Both pathfinder and laplace algorithms failed to find starting values. Doing random inits.")
+                message("Both pathfinder and laplace algorithms failed to find starting values. Doing random inits.")
                 
                 init_vals <- lapply(1:nchains,.init_stan,
                                     this_data=this_data)
@@ -411,7 +411,7 @@ setMethod('sample_model',signature(object='idealdata'),
               ncores <- 1
             }
             if(use_method=="mcmc") {
-              print("Estimating model with full Stan MCMC sampler.")
+              message("Estimating model with full Stan MCMC sampler.")
 
                 # if(gpu) {
                 #   out_model <- object@stanmodel_gpu$sample(data=this_data,chains=nchains,iter_sampling=niters,
@@ -438,7 +438,7 @@ setMethod('sample_model',signature(object='idealdata'),
                                                            ...))
                   if('try-error' %in% class(out_model)) {
                     
-                    print("Finding initialization with pathfinder/laplace failed, using random inits on (-2,2).")
+                    message("Finding initialization with pathfinder/laplace failed, using random inits on (-2,2).")
                     
                     out_model <- try(object@stanmodel_map$sample(data=this_data,chains=nchains,iter_sampling=niters,
                                                                  parallel_chains=nchains,
@@ -454,7 +454,7 @@ setMethod('sample_model',signature(object='idealdata'),
 
               } else if (use_method=="pathfinder") {
                 
-              print("Estimating model with Pathfinder for inference (approximation of true posterior).")
+              message("Estimating model with Pathfinder for inference (approximation of true posterior).")
               out_model <- object@stanmodel_map$pathfinder(data=this_data,
                               draws=niters,
                               init=init_vals,
@@ -492,8 +492,8 @@ setMethod('sample_model',signature(object='idealdata'),
             }
             
             to_sum <- out_model$summary(variables=keep_vars,
-                                                  ~quantile(.x, probs = c(0.05, 0.95),na.rm=T),
-                                                  rhat=rhat,~mean(.x,na.rm=T),
+                                                  ~quantile(.x, probs = c(0.05, 0.95),na.rm=TRUE),
+                                                  rhat=rhat,~mean(.x,na.rm=TRUE),
                                                   median=median,ess_bulk,ess_tail) 
             
             names(to_sum) <- c("variable","upper","lower","rhat",
@@ -532,25 +532,25 @@ setMethod('id_model',signature(object='idealdata'),
             
             if(fixtype %in% c("prefix") && is.null(restrict_ind_high)) {
               
-              print("Interactively selecting which items or persons to constrain as they were not pre-specified.")
+              message("Interactively selecting which items or persons to constrain as they were not pre-specified.")
               
               if(const_type=="persons") {
                 restrict_ind_high <- .select_const(object,
                                                    const_type=const_type,
-                                                   multiple=F,
+                                                   multiple=FALSE,
                                                    title="Select one person in your data to constrain their ideal point to high values of the latent scale.")$res
                 restrict_ind_low <- .select_const(object,
                                                    const_type=const_type,
-                                                   multiple=F,
+                                                   multiple=FALSE,
                                                    title="Select one person in your data to constrain their ideal point to low values of the latent scale.")$res
               } else {
                 restrict_ind_high <- .select_const(object,
                                                    const_type=const_type,
-                                                   multiple=F,
+                                                   multiple=FALSE,
                                                    title="Select one item in your data to constrain its discrimination to high values of the latent scale.")$res
                 restrict_ind_low <- .select_const(object,
                                                    const_type=const_type,
-                                                   multiple=F,
+                                                   multiple=FALSE,
                                                    title="Select one item in your data to constrain its discrimination to low values of the latent scale.")$res
                 
               }
@@ -660,7 +660,7 @@ setMethod('id_model',signature(object='idealdata'),
 #' this parameter is ignored and single-core processing is used.
 #' @return A \code{\link[dplyr]{tibble}} data frame with parameters as rows and descriptive statistics as columns
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' data('senate114')
 #' senate114$cast_code <- ifelse(senate114$cast_code=="Absent", NA,
 #'                               as.integer(senate114$cast_code) - 1L)
@@ -734,7 +734,7 @@ setMethod('summary',signature(object='idealstan'),
                 item_points <- apply_func(item_plot,.item_plot_binary,object=object,
                                       low_limit=low_limit,
                                       high_limit=high_limit,
-                                      all=T,
+                                      all=TRUE,
                                       aggregated=aggregated,
                                       use_chain=use_chain) %>% bind_rows()
               } else if(object@model_type %in% c(3,4)) {
@@ -742,7 +742,7 @@ setMethod('summary',signature(object='idealstan'),
                 item_points <- apply_func(item_plot,.item_plot_ord_rs,object=object,
                                       low_limit=low_limit,
                                       high_limit=high_limit,
-                                      all=T,
+                                      all=TRUE,
                                       aggregated=aggregated,
                                       use_chain=use_chain) %>% bind_rows()
               } else if(object@model_type %in% c(5,6)) {
@@ -750,7 +750,7 @@ setMethod('summary',signature(object='idealstan'),
                 item_points <- apply_func(item_plot,.item_plot_ord_grm,object=object,
                                       low_limit=low_limit,
                                       high_limit=high_limit,
-                                      all=T,
+                                      all=TRUE,
                                       aggregated=aggregated,
                                       use_chain=use_chain) %>% bind_rows()
               } else if(object@model_type %in% c(13,14)) {
@@ -758,7 +758,7 @@ setMethod('summary',signature(object='idealstan'),
                 item_points <- apply_func(item_plot,.item_plot_ls,object=object,
                                       low_limit=low_limit,
                                       high_limit=high_limit,
-                                      all=T,
+                                      all=TRUE,
                                       aggregated=aggregated,
                                       use_chain=use_chain) %>% bind_rows()
               }
@@ -812,7 +812,7 @@ setMethod('summary',signature(object='idealstan'),
 #' @param object A fitted \code{idealstan} object
 #' @param ... Other arguments passed on to underlying functions
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' data('senate114')
 #' senate114$cast_code <- ifelse(senate114$cast_code=="Absent", NA,
 #'                               as.integer(senate114$cast_code) - 1L)
@@ -822,6 +822,7 @@ setMethod('summary',signature(object='idealstan'),
 #' sen_est <- id_estimate(sen_data, model_type=1, fixtype='vb_full', method="pathfinder", ncores=4)
 #' id_extract(sen_est, extract_type='persons')
 #' }
+#' @return A \code{\link[tibble]{tibble}} of posterior draws, with rows as draws and columns as parameters.
 #' @export
 setGeneric('id_extract',signature='object',
            function(object,...) standardGeneric('id_extract'))
@@ -848,7 +849,7 @@ setGeneric('id_extract',signature='object',
 #' and \code{'miss_diff'} for inflated item (bill) difficulty scores.
 #' @param ... Any additional arguments passed on to the \code{\link[rstan]{extract}} function.
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' data('senate114')
 #' senate114$cast_code <- ifelse(senate114$cast_code=="Absent", NA,
 #'                               as.integer(senate114$cast_code) - 1L)
@@ -858,6 +859,7 @@ setGeneric('id_extract',signature='object',
 #' sen_est <- id_estimate(sen_data, model_type=1, method="pathfinder", fixtype='vb_full', ncores=4)
 #' id_extract(sen_est, extract_type='persons')
 #' }
+#' @return A \code{\link[tibble]{tibble}} of posterior draws, with rows as draws and columns as parameters.
 #' @export
 setMethod(id_extract,signature(object='idealstan'),
           function(object,extract_type='persons',...) {
@@ -870,7 +872,8 @@ setMethod(id_extract,signature(object='idealstan'),
 #' A generic function for launching \code{\link[shinystan]{launch_shinystan}}.
 #' 
 #' @param object A fitted \code{idealstan} object.
-#' @param ... Other arguments passed on to underlying function 
+#' @param ... Other arguments passed on to underlying function
+#' @return No return value; called for side effects (launches the Shinystan interactive diagnostics application).
 #' @export
 setGeneric('launch_shinystan',signature='object',
            function(object,...) standardGeneric('launch_shinystan')) 
@@ -886,7 +889,7 @@ setGeneric('launch_shinystan',signature='object',
 #' @param pars A character vector of parameters to select from the underlying \code{rstan} model object
 #' @param ... Other parameters passed on to \code{\link[shinystan]{shinystan}}
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' data('senate114')
 #' senate114$cast_code <- ifelse(senate114$cast_code=="Absent", NA,
 #'                               as.integer(senate114$cast_code) - 1L)
@@ -896,6 +899,7 @@ setGeneric('launch_shinystan',signature='object',
 #' sen_est <- id_estimate(sen_data, model_type=1, method="pathfinder", fixtype='vb_full', ncores=4)
 #' launch_shinystan(sen_est)
 #' }
+#' @return No return value; called for side effects (launches the Shinystan interactive diagnostics application).
 #' @export
 setMethod(launch_shinystan,signature(object='idealstan'),
           function(object,pars=c('L_full',
@@ -931,7 +935,7 @@ setMethod(launch_shinystan,signature(object='idealstan'),
 #' @param object A fitted \code{idealstan} model
 #' @param ... Other values passed on to methods.
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' data('senate114')
 #' senate114$cast_code <- ifelse(senate114$cast_code=="Absent", NA,
 #'                               as.integer(senate114$cast_code) - 1L)
@@ -987,7 +991,7 @@ setGeneric('id_me',
 #' passed on to [id_post_pred]
 #' @param ... Additional arguments passed on to [id_post_pred]
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' data('senate114')
 #' senate114$cast_code <- ifelse(senate114$cast_code=="Absent", NA,
 #'                               as.integer(senate114$cast_code) - 1L)
@@ -1200,7 +1204,7 @@ setMethod('id_me',signature(object='idealstan'),
 #' @importFrom bayesplot mcmc_trace
 #' @param ... Other options passed on to \code{\link[rstan]{stan_trace}}
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' data('senate114')
 #' senate114$cast_code <- ifelse(senate114$cast_code=="Absent", NA,
 #'                               as.integer(senate114$cast_code) - 1L)
@@ -1211,6 +1215,8 @@ setMethod('id_me',signature(object='idealstan'),
 #'            fixtype='vb_full', method="pathfinder", ncores=4)
 #' stan_trace(sen_est, par='L_full[1]')
 #' }
+#' @return A \code{ggplot2} object (from \code{\link[bayesplot]{mcmc_trace}}) showing MCMC trace plots
+#'   for the selected parameter.
 #' @export
 setGeneric('stan_trace',
            signature='object',
@@ -1235,7 +1241,7 @@ setGeneric('stan_trace',
 #' @param par The character string  name of a parameter in the model
 #' @param ... Other options passed on to \code{\link[bayesplot]{mcmc_trace}}
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' data('senate114')
 #' senate114$cast_code <- ifelse(senate114$cast_code=="Absent", NA,
 #'                               as.integer(senate114$cast_code) - 1L)
@@ -1246,6 +1252,8 @@ setGeneric('stan_trace',
 #'             fixtype='vb_full', method="pathfinder", ncores=4)
 #' stan_trace(sen_est, par='L_full[1]')
 #' }
+#' @return A \code{ggplot2} object (from \code{\link[bayesplot]{mcmc_trace}}) showing MCMC trace plots
+#'   for the selected parameter.
 #' @export
 setMethod('stan_trace',signature(object='idealstan'),
           function(object,par='L_full[1]',...) {

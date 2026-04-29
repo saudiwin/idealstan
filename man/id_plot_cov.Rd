@@ -80,7 +80,7 @@ Note that the function produces a \code{ggplot2} object, which can
 be further modified with \code{ggplot2} functions.
 }
 \examples{
-\dontrun{
+\donttest{
 # Fit a model with a person-level covariate
 data('senate114')
 senate114$cast_code <- ifelse(senate114$cast_code=="Absent", NA,

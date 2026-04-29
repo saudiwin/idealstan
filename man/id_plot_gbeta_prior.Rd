@@ -13,6 +13,10 @@ id_plot_gbeta_prior(initial_y = 0, prior_sample_size = 200, limits = c(-1, 1))
 
 \item{limits}{Limits of prior. Default is \verb{[-1,1]}. Set to \verb{[0,1]} for a conventional IRT with all positive discrimination parameters (i.e. as in a test-taking scenario).}
 }
+\value{
+A \code{ggplot2} object showing the generalized Beta prior distribution for the selected
+parameter values, or an interactive Shiny application if run interactively.
+}
 \description{
 This function starts an interactive Shiny application to visualize a generalized Beta distribution
 on a symmetrical interval from -scale to +scale in order to calculate the distribution paramters alpha (the \code{restrict_sd_high}/\code{restrict_N_low} parameter to \code{id_estimate}) and beta (the \code{restrict_N_high}/\code{restrict_sd_low} parameter to \code{id_estimate}). This function is useful for understanding what values to use to pin item discrimination parameters in \code{id_estimate} given a specific prior mean \code{initial_y} and a relative level of precision \code{prior_sample_size} (also known as \code{phi}). Higher values of \code{prior_sample_size} will imply a tighter prior around the pinned discrimination parameter.
@@ -21,7 +25,7 @@ on a symmetrical interval from -scale to +scale in order to calculate the distri
 The function is also useful for calculating the prior for all non-constrained discrimination parameters as well (\code{discrim_reg_shape} and \code{discrim_reg_scale}). These parameters are denoted in the Shiny app output for easy cut and paste to the \code{id_estimate} function call.
 }
 \examples{
-\dontrun{
+\donttest{
 # Launch interactive Shiny app to explore the generalized Beta prior
 id_plot_gbeta_prior(initial_y=0.5, prior_sample_size=200)
 }

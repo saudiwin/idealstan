@@ -18,13 +18,16 @@
 
 \item{...}{Other parameters passed on to \code{\link[shinystan]{shinystan}}}
 }
+\value{
+No return value; called for side effects (launches the Shinystan interactive diagnostics application).
+}
 \description{
 This wrapper will pull the \code{rstan} samples out of a fitted \code{idealstan} model and then launch
 \code{\link[shinystan]{launch_shinystan}}. This function is useful for examining convergence statistics of the
 underlying MCMC sampling.
 }
 \examples{
-\dontrun{
+\donttest{
 data('senate114')
 senate114$cast_code <- ifelse(senate114$cast_code=="Absent", NA,
                               as.integer(senate114$cast_code) - 1L)

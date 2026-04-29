@@ -17,7 +17,7 @@ id_plot_persons(
   point_size = 1,
   hjust_length = -0.7,
   person_labels = TRUE,
-  group_labels = F,
+  group_labels = FALSE,
   person_ci_alpha = 0.2,
   show_true = FALSE,
   group_color = TRUE,
@@ -70,6 +70,10 @@ only a fraction of the persons/legislators.}
 
 \item{...}{Other options passed on to plotting function, currently ignored}
 }
+\value{
+A \code{ggplot2} object showing person/legislator ideal points as a dot plot with posterior
+intervals. If \code{return_data=TRUE}, a list with elements \code{plot} and \code{data}.
+}
 \description{
 This function can be used on a fitted \code{idealstan} object to plot the relative positions and
 uncertainties of legislator/persons and bills/items.
@@ -92,7 +96,7 @@ of persons/groups.
 }
 \examples{
 
-\dontrun{
+\donttest{
 
 # First create data and run a model
 
