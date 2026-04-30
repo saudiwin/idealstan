@@ -1,0 +1,24 @@
+---
+title: "Time-Varying Ideal Points"
+output:
+  rmarkdown::html_vignette:
+    toc: true
+vignette: >
+  %\VignetteIndexEntry{Time-Varying Ideal Points}
+  %\VignetteEngine{quarto::html}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r echo=FALSE, results='asis'}
+# Serve the precompiled Quarto HTML.
+# To update: re-render Time_Series.qmd.orig with Quarto, copy the
+# output to inst/html_vignettes/Time_Series.html, and commit.
+html <- paste(
+  readLines(system.file("html_vignettes", "Time_Series.html",
+                        package = "idealstan")),
+  collapse = "\n"
+)
+body <- sub("(?s).*<body[^>]*>", "", html, perl = TRUE)
+body <- sub("(?s)</body>.*",     "", body, perl = TRUE)
+cat(body)
+```

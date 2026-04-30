@@ -1252,8 +1252,9 @@ setGeneric('stan_trace',
 #' sen_data <- id_make(senate114, outcome_disc='cast_code',
 #'                     person_id='bioname', item_id='rollnumber',
 #'                     group_id='party_code')
-#' sen_est <- id_estimate(sen_data, model_type=1, use_method="pathfinder", 
-#'             fixtype='vb_full', use_method="pathfinder", ncores=4)
+#' sen_est <- id_estimate(sen_data, model_type=1,
+#'             fixtype='vb_full', use_method="pathfinder", 
+#'             ncores=4)
 #' stan_trace(sen_est, par='L_full[1]')
 #' }
 #' @return A \code{ggplot2} object (from \code{\link[bayesplot]{mcmc_trace}}) showing MCMC trace plots
