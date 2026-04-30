@@ -897,7 +897,8 @@ setGeneric('launch_shinystan',signature='object',
 #'                     person_id='bioname', item_id='rollnumber',
 #'                     group_id='party_code')
 #' sen_est <- id_estimate(sen_data, model_type=1, use_method="pathfinder", fixtype='vb_full', ncores=4)
-#' launch_shinystan(sen_est)
+#' # will launch interactive browser
+#' # launch_shinystan(sen_est)
 #' }
 #' @return No return value; called for side effects (launches the Shinystan interactive diagnostics application).
 #' @export
@@ -943,7 +944,8 @@ setMethod(launch_shinystan,signature(object='idealstan'),
 #' sen_cov <- id_make(senate114, outcome_disc='cast_code',
 #'                    person_id='bioname', item_id='rollnumber',
 #'                    group_id='party_code', person_cov=~party_code+age)
-#' sen_cov_est <- id_estimate(sen_cov, model_type=1, fixtype='vb_full', use_method="pathfinder",  ncores=4)
+#' sen_cov_est <- id_estimate(sen_cov, model_type=1, fixtype='vb_full', 
+#'                 use_method="pathfinder",  ncores=4)
 #' me <- id_me(sen_cov_est, covariate='age', draws=50)
 #' me$sum_ideal_effects
 #' }
@@ -995,7 +997,8 @@ setGeneric('id_me',
 #' data('senate114')
 #' senate114$cast_code <- ifelse(senate114$cast_code=="Absent", NA,
 #'                               as.integer(senate114$cast_code) - 1L)
-#' senate114$age <- (2018 - senate114$born - mean(2018 - senate114$born)) / 10
+#' senate114$age <- (2018 - senate114$born - 
+#'                  mean(2018 - senate114$born)) / 10
 #' sen_cov <- id_make(senate114, outcome_disc='cast_code',
 #'                    person_id='bioname', item_id='rollnumber',
 #'                    group_id='party_code', person_cov=~party_code+age)

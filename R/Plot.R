@@ -57,16 +57,13 @@
 #' # First create data and run a model
 #' 
 #' to_idealstan <-   id_make(score_data = senate114,
-#' outcome = 'cast_code',
+#' outcome_disc = 'cast_code',
 #' person_id = 'bioname',
 #' item_id = 'rollnumber',
 #' group_id= 'party_code',
-#' time_id='date',
-#' high_val='Yes',
-#' low_val='No',
-#' miss_val='Absent')
+#' time_id='date')
 #' 
-#' sen_est <- id_estimate(senate_data,
+#' sen_est <- id_estimate(to_idealstan,
 #' model_type = 2,
 #' use_method = "pathfinder",
 #' fixtype='vb_partial',
@@ -605,16 +602,13 @@ id_plot_legis_var <- function(object,return_data=FALSE,
 #' # First create data and run a model
 #' 
 #' to_idealstan <-   id_make(score_data = senate114,
-#' outcome = 'cast_code',
+#' outcome_disc = 'cast_code',
 #' person_id = 'bioname',
 #' item_id = 'rollnumber',
 #' group_id= 'party_code',
-#' time_id='date',
-#' high_val='Yes',
-#' low_val='No',
-#' miss_val='Absent')
+#' time_id='date')
 #' 
-#' sen_est <- id_estimate(senate_data,
+#' sen_est <- id_estimate(to_idealstan,
 #' model_type = 2,
 #' use_method = "pathfinder",
 #' vary_ideal_pts='random_walk',
@@ -1740,7 +1734,7 @@ id_plot_irf <- function(object,
 #' @examples
 #' \donttest{
 #' # Launch interactive Shiny app to explore the generalized Beta prior
-#' id_plot_gbeta_prior(initial_y=0.5, prior_sample_size=200)
+#' # id_plot_gbeta_prior(initial_y=0.5, prior_sample_size=200)
 #' }
 #' @return A \code{ggplot2} object showing the generalized Beta prior distribution for the selected
 #'   parameter values, or an interactive Shiny application if run interactively.
@@ -1888,6 +1882,20 @@ id_plot_gbeta_prior <- function(
 #'
 #' @examples
 #' \donttest{
+#' 
+#' to_idealstan <-   id_make(score_data = senate114,
+#' outcome_disc = 'cast_code',
+#' person_id = 'bioname',
+#' item_id = 'rollnumber',
+#' time_id='date')
+#' 
+#' fitted_model <- id_estimate(to_idealstan,
+#' model_type = 2,
+#' use_method = "pathfinder",
+#' fixtype='vb_partial',
+#' restrict_ind_high = "BARRASSO, John A.",
+#' restrict_ind_low = "WARREN, Elizabeth")
+#' 
 #' # After fitting a model:
 #' # Plot discrimination parameters for all items
 #' id_plot_items(fitted_model)
@@ -1899,7 +1907,7 @@ id_plot_gbeta_prior <- function(
 #' id_plot_items(fitted_model, item_type = "observed")
 #'
 #' # Plot specific items only
-#' id_plot_items(fitted_model, include = c("item1", "item2", "item3"))
+#' id_plot_items(fitted_model, include = c("224", "368", "391"))
 #' }
 #'
 #' @import ggplot2
