@@ -15,7 +15,8 @@
 #' @examples
 #' \donttest{
 #' sim <- id_sim_gen()
-#' est <- id_estimate(sim, model_type=1, fixtype='vb_full', nchains=2, ncores=2)
+#' est <- id_estimate(sim, model_type=1, fixtype='vb_full',
+#'                    use_method="pathfinder", nchains=2, ncores=2)
 #' ppc <- id_post_pred(est, draws=50)
 #' ll  <- id_post_pred(est, type='log_lik')
 #' }
@@ -72,7 +73,8 @@ setGeneric('id_post_pred',signature='object',
 #' @examples
 #' \donttest{
 #' sim <- id_sim_gen()
-#' est <- id_estimate(sim, model_type=1, fixtype='vb_full', nchains=2, ncores=2)
+#' est <- id_estimate(sim, model_type=1, fixtype='vb_full',
+#'                    use_method="pathfinder", nchains=2, ncores=2)
 #' # posterior predictive distribution (100 draws)
 #' ppc <- id_post_pred(est, draws=50)
 #' # log-likelihood matrix (for loo)
@@ -129,13 +131,13 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,
 
   n_votes <- new_stan_data$stan_data$N
   
+  if(object@use_method %in% c("laplace", "pathfinder")) use_chain <- 1
+
   if(is.null(use_chain)) {
-    
-    use_chain <- 1:dim(object@stan_samples$draws("L_full"))[2]
-    
-  } 
-  
-    n_iters <- nrow(as_draws_matrix(object@stan_samples$draws("L_full")[,use_chain,]))
+    use_chain <- 1:dim(as_draws_array(object@stan_samples$draws("L_full")))[2]
+  }
+
+  n_iters <- nrow(as_draws_matrix(as_draws_array(object@stan_samples$draws("L_full"))[,use_chain,]))
   
   
   if(!is.null(sample_scores) && type!='log_lik') {
@@ -256,11 +258,11 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,
     
   }
 
-  L_full <- object@stan_samples$draws('L_full')[,use_chain,] %>% as_draws_matrix()
-  A_int_free <- object@stan_samples$draws('A_int_free')[,use_chain,] %>% as_draws_matrix()
-  B_int_free <- object@stan_samples$draws('B_int_free')[,use_chain,] %>% as_draws_matrix()
-  sigma_abs_free <- object@stan_samples$draws('sigma_abs_free')[,use_chain,] %>% as_draws_matrix()
-  sigma_reg_free <- object@stan_samples$draws('sigma_reg_free')[,use_chain,] %>% as_draws_matrix()
+  L_full <- as_draws_array(object@stan_samples$draws('L_full'))[,use_chain,] %>% as_draws_matrix()
+  A_int_free <- as_draws_array(object@stan_samples$draws('A_int_free'))[,use_chain,] %>% as_draws_matrix()
+  B_int_free <- as_draws_array(object@stan_samples$draws('B_int_free'))[,use_chain,] %>% as_draws_matrix()
+  sigma_abs_free <- as_draws_array(object@stan_samples$draws('sigma_abs_free'))[,use_chain,] %>% as_draws_matrix()
+  sigma_reg_free <- as_draws_array(object@stan_samples$draws('sigma_reg_free'))[,use_chain,] %>% as_draws_matrix()
   
   # check if we need to update covariates
   
@@ -434,12 +436,12 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,
              
 
            if(item$model_id %in% c(3,4)) {
-             cutpoints <- object@stan_samples$draws(paste0('steps_votes',cuts))[,use_chain,] %>% as_draws_matrix()
+             cutpoints <- as_draws_array(object@stan_samples$draws(paste0('steps_votes',cuts)))[,use_chain,] %>% as_draws_matrix()
              cutpoints <- cutpoints[these_draws,]
            } else if(item$model_id %in% c(5,6)) {
-             cutpoints <- object@stan_samples$draws(paste0('steps_votes_grm',cuts,
+             cutpoints <- as_draws_array(object@stan_samples$draws(paste0('steps_votes_grm',cuts,
                                                            '[',item$item_point,
-                                                           ",",1:(cuts-1),"]"))[,use_chain,] %>% as_draws_matrix()
+                                                           ",",1:(cuts-1),"]")))[,use_chain,] %>% as_draws_matrix()
              cutpoints <- cutpoints[these_draws,]
            } 
              
@@ -508,7 +510,7 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,
             filter(.chain %in% use_chain,
                    .draw %in% these_draws)
           
-          phi <- object@stan_samples$draws("phi")[,use_chain,] %>% as_draws_matrix()
+          phi <- as_draws_array(object@stan_samples$draws("phi"))[,use_chain,] %>% as_draws_matrix()
           phi <- phi[these_draws,]
           
         } else {
@@ -652,7 +654,8 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,
 #' @examples
 #' \donttest{
 #' sim <- id_sim_gen()
-#' est <- id_estimate(sim, model_type=1, fixtype='vb_full', nchains=2, ncores=2)
+#' est <- id_estimate(sim, model_type=1, fixtype='vb_full',
+#'                    use_method="pathfinder", nchains=2, ncores=2)
 #' ppc <- id_post_pred(est, draws=50)
 #' id_plot_ppc(est, ppc_pred=ppc)
 #' id_plot_ppc(est, ppc_pred=ppc, combine_item=FALSE, prompt_plot=FALSE)
@@ -714,7 +717,8 @@ setGeneric('id_plot_ppc',signature='object',
 #' @examples
 #' \donttest{
 #' sim <- id_sim_gen()
-#' est <- id_estimate(sim, model_type=1, fixtype='vb_full', nchains=2, ncores=2)
+#' est <- id_estimate(sim, model_type=1, fixtype='vb_full',
+#'                    use_method="pathfinder", nchains=2, ncores=2)
 #' ppc <- id_post_pred(est, draws=50)
 #' id_plot_ppc(est, ppc_pred=ppc)
 #' # per-item plots
@@ -1063,7 +1067,8 @@ setMethod('id_plot_ppc',signature(object='idealstan'),function(object,
 #' @examples
 #' \donttest{
 #' sim <- id_sim_gen()
-#' est <- id_estimate(sim, model_type=1, fixtype='vb_full', nchains=2, ncores=2)
+#' est <- id_estimate(sim, model_type=1, fixtype='vb_full',
+#'                    use_method="pathfinder", nchains=2, ncores=2)
 #' ll <- id_post_pred(est, type='log_lik')
 #' chain_ids <- derive_chain(ll)
 #' # use with loo

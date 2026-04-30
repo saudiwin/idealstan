@@ -667,7 +667,7 @@ setMethod('id_model',signature(object='idealdata'),
 #' sen_data <- id_make(senate114, outcome_disc='cast_code',
 #'                     person_id='bioname', item_id='rollnumber',
 #'                     group_id='party_code')
-#' sen_est <- id_estimate(sen_data, model_type=1, fixtype='vb_full', method="pathfinder", ncores=4)
+#' sen_est <- id_estimate(sen_data, model_type=1, fixtype='vb_full', use_method="pathfinder", ncores=4)
 #' summary(sen_est, pars='ideal_pts')
 #' summary(sen_est, pars='items')
 #' }
@@ -819,7 +819,7 @@ setMethod('summary',signature(object='idealstan'),
 #' sen_data <- id_make(senate114, outcome_disc='cast_code',
 #'                     person_id='bioname', item_id='rollnumber',
 #'                     group_id='party_code')
-#' sen_est <- id_estimate(sen_data, model_type=1, fixtype='vb_full', method="pathfinder", ncores=4)
+#' sen_est <- id_estimate(sen_data, model_type=1, fixtype='vb_full', use_method="pathfinder", ncores=4)
 #' id_extract(sen_est, extract_type='persons')
 #' }
 #' @return A \code{\link[tibble]{tibble}} of posterior draws, with rows as draws and columns as parameters.
@@ -856,7 +856,7 @@ setGeneric('id_extract',signature='object',
 #' sen_data <- id_make(senate114, outcome_disc='cast_code',
 #'                     person_id='bioname', item_id='rollnumber',
 #'                     group_id='party_code')
-#' sen_est <- id_estimate(sen_data, model_type=1, method="pathfinder", fixtype='vb_full', ncores=4)
+#' sen_est <- id_estimate(sen_data, model_type=1, use_method="pathfinder", fixtype='vb_full', ncores=4)
 #' id_extract(sen_est, extract_type='persons')
 #' }
 #' @return A \code{\link[tibble]{tibble}} of posterior draws, with rows as draws and columns as parameters.
@@ -896,7 +896,7 @@ setGeneric('launch_shinystan',signature='object',
 #' sen_data <- id_make(senate114, outcome_disc='cast_code',
 #'                     person_id='bioname', item_id='rollnumber',
 #'                     group_id='party_code')
-#' sen_est <- id_estimate(sen_data, model_type=1, method="pathfinder", fixtype='vb_full', ncores=4)
+#' sen_est <- id_estimate(sen_data, model_type=1, use_method="pathfinder", fixtype='vb_full', ncores=4)
 #' launch_shinystan(sen_est)
 #' }
 #' @return No return value; called for side effects (launches the Shinystan interactive diagnostics application).
@@ -943,7 +943,7 @@ setMethod(launch_shinystan,signature(object='idealstan'),
 #' sen_cov <- id_make(senate114, outcome_disc='cast_code',
 #'                    person_id='bioname', item_id='rollnumber',
 #'                    group_id='party_code', person_cov=~party_code+age)
-#' sen_cov_est <- id_estimate(sen_cov, model_type=1, fixtype='vb_full', method="pathfinder",  ncores=4)
+#' sen_cov_est <- id_estimate(sen_cov, model_type=1, fixtype='vb_full', use_method="pathfinder",  ncores=4)
 #' me <- id_me(sen_cov_est, covariate='age', draws=50)
 #' me$sum_ideal_effects
 #' }
@@ -999,7 +999,8 @@ setGeneric('id_me',
 #' sen_cov <- id_make(senate114, outcome_disc='cast_code',
 #'                    person_id='bioname', item_id='rollnumber',
 #'                    group_id='party_code', person_cov=~party_code+age)
-#' sen_cov_est <- id_estimate(sen_cov, model_type=1, fixtype='vb_full', method="pathfinder", ncores=4)
+#' sen_cov_est <- id_estimate(sen_cov, model_type=1, fixtype='vb_full',
+#'                            use_method="pathfinder", ncores=4)
 #' me <- id_me(sen_cov_est, covariate='age', draws=50)
 #' me$sum_ideal_effects
 #' }
@@ -1212,7 +1213,7 @@ setMethod('id_me',signature(object='idealstan'),
 #'                     person_id='bioname', item_id='rollnumber',
 #'                     group_id='party_code')
 #' sen_est <- id_estimate(sen_data, model_type=1, 
-#'            fixtype='vb_full', method="pathfinder", ncores=4)
+#'            fixtype='vb_full', use_method="pathfinder", ncores=4)
 #' stan_trace(sen_est, par='L_full[1]')
 #' }
 #' @return A \code{ggplot2} object (from \code{\link[bayesplot]{mcmc_trace}}) showing MCMC trace plots
@@ -1248,8 +1249,8 @@ setGeneric('stan_trace',
 #' sen_data <- id_make(senate114, outcome_disc='cast_code',
 #'                     person_id='bioname', item_id='rollnumber',
 #'                     group_id='party_code')
-#' sen_est <- id_estimate(sen_data, model_type=1, method="pathfinder", 
-#'             fixtype='vb_full', method="pathfinder", ncores=4)
+#' sen_est <- id_estimate(sen_data, model_type=1, use_method="pathfinder", 
+#'             fixtype='vb_full', use_method="pathfinder", ncores=4)
 #' stan_trace(sen_est, par='L_full[1]')
 #' }
 #' @return A \code{ggplot2} object (from \code{\link[bayesplot]{mcmc_trace}}) showing MCMC trace plots

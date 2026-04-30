@@ -445,6 +445,7 @@ id_plot_persons <- function(object,return_data=FALSE,
 #' senate_time_fit <- id_estimate(senate_data,
 #'                                model_type=2, fixtype='vb_full',
 #'                                vary_ideal_pts='random_walk',
+#'                                use_method="pathfinder",
 #'                                restrict_ind_high="WARREN, Elizabeth",
 #'                                restrict_ind_low="BARRASSO, John A.",
 #'                                nchains=2, ncores=4)
@@ -1034,8 +1035,10 @@ id_plot_persons_dyn <- function(object,return_data=FALSE,
 #' \donttest{
 #' # Fit the same data under two different model types and compare ideal points
 #' sim <- id_sim_gen()
-#' est1 <- id_estimate(sim, model_type=1, fixtype='vb_full', nchains=2, ncores=2)
-#' est2 <- id_estimate(sim, model_type=2, fixtype='vb_full', nchains=2, ncores=2)
+#' est1 <- id_estimate(sim, model_type=1, fixtype='vb_full',
+#'                     use_method="pathfinder", nchains=2, ncores=2)
+#' est2 <- id_estimate(sim, model_type=2, fixtype='vb_full',
+#'                     use_method="pathfinder", nchains=2, ncores=2)
 #' id_plot_compare(est1, est2)
 #' }
 #' @return A \code{ggplot2} object comparing ideal points across two \code{idealstan} models. If
@@ -1108,7 +1111,8 @@ id_plot_compare <- function(model1=NULL,model2=NULL,scale_flip=FALSE,return_data
 #' @examples
 #' \donttest{
 #' sim <- id_sim_gen()
-#' est <- id_estimate(sim, model_type=1, fixtype='vb_full', nchains=2, ncores=2)
+#' est <- id_estimate(sim, model_type=1, fixtype='vb_full',
+#'                    use_method="pathfinder", nchains=2, ncores=2)
 #' # plot posterior distribution of person ideal points
 #' id_plot_all_hist(est, params='person')
 #' # plot item discrimination parameters
@@ -1183,7 +1187,8 @@ id_plot_all_hist <- function(object,params='person',param_labels=NULL,dens_type=
 #' @examples
 #' \donttest{
 #' sim <- id_sim_gen()
-#' est <- id_estimate(sim, model_type=1, fixtype='vb_full', nchains=2, ncores=2)
+#' est <- id_estimate(sim, model_type=1, fixtype='vb_full',
+#'                    use_method="pathfinder", nchains=2, ncores=2)
 #' id_plot_sims(est)               # RMSE (default)
 #' id_plot_sims(est, type='Residuals')
 #' id_plot_sims(est, type='Coverage')
@@ -1227,7 +1232,8 @@ id_show_trues <- function(sims,type='RMSE') {
 #' @examples
 #' \donttest{
 #' sim <- id_sim_gen()
-#' est <- id_estimate(sim, model_type=1, fixtype='vb_full', nchains=2, ncores=2)
+#' est <- id_estimate(sim, model_type=1, fixtype='vb_full',
+#'                    use_method="pathfinder", nchains=2, ncores=2)
 #' id_plot_rhats(est)
 #' }
 #' @return A \code{ggplot2} histogram showing the distribution of Rhat convergence statistics for all
@@ -1301,7 +1307,8 @@ id_plot_rhats <- function(obj) {
 #' sen_cov <- id_make(senate114, outcome_disc='cast_code',
 #'                    person_id='bioname', item_id='rollnumber',
 #'                    group_id='party_code', person_cov=~party_code+age)
-#' sen_cov_est <- id_estimate(sen_cov, model_type=1, fixtype='vb_full', nchains=2, ncores=4)
+#' sen_cov_est <- id_estimate(sen_cov, model_type=1, fixtype='vb_full', 
+#'                 use_method="pathfinder", nchains=2, ncores=4)
 #'
 #' # Plot marginal effects of age on ideal points
 #' id_plot_cov(sen_cov_est, calc_param='age')

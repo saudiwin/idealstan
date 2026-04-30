@@ -672,7 +672,8 @@ id_sim_gen <- function(num_person=20,num_items=50,
 #' @examples
 #' \donttest{
 #' sim <- id_sim_gen()
-#' est <- id_estimate(sim, model_type=1, fixtype='vb_full', nchains=2, ncores=2)
+#' est <- id_estimate(sim, model_type=1, fixtype='vb_full',
+#'                    use_method="pathfinder", nchains=2, ncores=2)
 #' id_sim_rmse(est)
 #' }
 #' @return A named list of \code{\link[tibble]{tibble}} objects, one per parameter type
@@ -753,7 +754,8 @@ id_sim_rmse <- function(obj,rep=1) {
 #' @examples
 #' \donttest{
 #' sim <- id_sim_gen()
-#' est <- id_estimate(sim, model_type=1, fixtype='vb_full', nchains=2, ncores=2)
+#' est <- id_estimate(sim, model_type=1, fixtype='vb_full',
+#'                    use_method="pathfinder", nchains=2, ncores=2)
 #' cov <- id_sim_coverage(est)
 #' # average coverage across all person ideal points
 #' mean(cov[['Person Ideal Points']]$avg)
@@ -842,7 +844,8 @@ id_sim_coverage <- function(obj,rep=1,quantiles=c(.95,.05)) {
 #' @examples
 #' \donttest{
 #' sim <- id_sim_gen()
-#' est <- id_estimate(sim, model_type=1, fixtype='vb_full', nchains=2, ncores=2)
+#' est <- id_estimate(sim, model_type=1, fixtype='vb_full',
+#'                    use_method="pathfinder", nchains=2, ncores=2)
 #' id_sim_resid(est)
 #' }
 #' @return A named list of \code{\link[tibble]{tibble}} objects, one per parameter type
