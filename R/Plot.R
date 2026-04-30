@@ -1405,7 +1405,7 @@ id_plot_cov <- function(object,
                   coord_flip() +
                   labs(y=paste0("Marginal Change in Probability of ",unique(all_effs$sum_ideal_effects$model_id_label)),
                        x="Items",
-                       caption=paste0("Marginal effect of ",calc_param," on ", unique(all_effs$sum_ideal_effects$model_id_label)), " for a specific item.") +
+                       caption=paste0("Marginal effect of ",calc_param," on ", unique(all_effs$sum_ideal_effects$model_id_label), " for a specific item.")) +
                   geom_hline(yintercept=0,linetype=2) +
                   ggthemes::theme_clean() +
                   theme(axis.text.y=element_blank(),
@@ -1441,7 +1441,7 @@ id_plot_cov <- function(object,
         facet_wrap(~model_id_label,scales="free_x",ncol = facet_ncol) +
         labs(y=paste0("Marginal Change in Probability of ",unique(all_effs$sum_ideal_effects$model_id_label)),
              x="Items",
-             caption=paste0("Marginal effect of ",calc_param," on a ", tolower(unique(all_effs$sum_ideal_effects$model_id_label))), "\nfor each item/indicator in the model.") +
+             caption=paste0("Marginal effect of ",calc_param," on a ", tolower(unique(all_effs$sum_ideal_effects$model_id_label)), "\nfor each item/indicator in the model.")) +
         geom_hline(yintercept=0,linetype=2) +
         ggthemes::theme_clean() +
         theme(axis.text.y=element_blank(),
