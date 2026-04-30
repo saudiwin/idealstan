@@ -24,7 +24,8 @@ for more details.
 \examples{
 \donttest{
 sim <- id_sim_gen()
-est <- id_estimate(sim, model_type=1, fixtype='vb_full', nchains=2, ncores=2)
+est <- id_estimate(sim, model_type=1, fixtype='vb_full',
+                   use_method="pathfinder", nchains=2, ncores=2)
 ll <- id_post_pred(est, type='log_lik')
 chain_ids <- derive_chain(ll)
 # use with loo

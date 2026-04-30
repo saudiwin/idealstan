@@ -69,6 +69,20 @@ missing (inflated) item parameters.
 }
 \examples{
 \donttest{
+
+to_idealstan <-   id_make(score_data = senate114,
+outcome_disc = 'cast_code',
+person_id = 'bioname',
+item_id = 'rollnumber',
+time_id='date')
+
+fitted_model <- id_estimate(to_idealstan,
+model_type = 2,
+use_method = "pathfinder",
+fixtype='vb_partial',
+restrict_ind_high = "BARRASSO, John A.",
+restrict_ind_low = "WARREN, Elizabeth")
+
 # After fitting a model:
 # Plot discrimination parameters for all items
 id_plot_items(fitted_model)
@@ -80,7 +94,7 @@ id_plot_items(fitted_model, param_type = "difficulty")
 id_plot_items(fitted_model, item_type = "observed")
 
 # Plot specific items only
-id_plot_items(fitted_model, include = c("item1", "item2", "item3"))
+id_plot_items(fitted_model, include = c("224", "368", "391"))
 }
 
 }

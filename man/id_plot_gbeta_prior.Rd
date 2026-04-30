@@ -27,6 +27,6 @@ The function is also useful for calculating the prior for all non-constrained di
 \examples{
 \donttest{
 # Launch interactive Shiny app to explore the generalized Beta prior
-id_plot_gbeta_prior(initial_y=0.5, prior_sample_size=200)
+# id_plot_gbeta_prior(initial_y=0.5, prior_sample_size=200)
 }
 }

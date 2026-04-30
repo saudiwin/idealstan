@@ -74,6 +74,7 @@ senate_data <- id_make(senate114, outcome_disc='cast_code',
 senate_time_fit <- id_estimate(senate_data,
                                model_type=2, fixtype='vb_full',
                                vary_ideal_pts='random_walk',
+                               use_method="pathfinder",
                                restrict_ind_high="WARREN, Elizabeth",
                                restrict_ind_low="BARRASSO, John A.",
                                nchains=2, ncores=4)

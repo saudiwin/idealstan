@@ -83,7 +83,8 @@ Also see \code{help("posterior_predict", package = "rstanarm")}
 \examples{
 \donttest{
 sim <- id_sim_gen()
-est <- id_estimate(sim, model_type=1, fixtype='vb_full', nchains=2, ncores=2)
+est <- id_estimate(sim, model_type=1, fixtype='vb_full',
+                   use_method="pathfinder", nchains=2, ncores=2)
 # posterior predictive distribution (100 draws)
 ppc <- id_post_pred(est, draws=50)
 # log-likelihood matrix (for loo)

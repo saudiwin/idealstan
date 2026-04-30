@@ -40,7 +40,7 @@ senate114$cast_code <- ifelse(senate114$cast_code=="Absent", NA,
 sen_data <- id_make(senate114, outcome_disc='cast_code',
                     person_id='bioname', item_id='rollnumber',
                     group_id='party_code')
-sen_est <- id_estimate(sen_data, model_type=1, method="pathfinder", fixtype='vb_full', ncores=4)
+sen_est <- id_estimate(sen_data, model_type=1, use_method="pathfinder", fixtype='vb_full', ncores=4)
 id_extract(sen_est, extract_type='persons')
 }
 }

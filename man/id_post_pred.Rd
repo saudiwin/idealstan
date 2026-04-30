@@ -28,7 +28,8 @@ the posterior predictive distribution of the data given the model.
 \examples{
 \donttest{
 sim <- id_sim_gen()
-est <- id_estimate(sim, model_type=1, fixtype='vb_full', nchains=2, ncores=2)
+est <- id_estimate(sim, model_type=1, fixtype='vb_full',
+                   use_method="pathfinder", nchains=2, ncores=2)
 ppc <- id_post_pred(est, draws=50)
 ll  <- id_post_pred(est, type='log_lik')
 }

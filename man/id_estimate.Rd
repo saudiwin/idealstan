@@ -505,11 +505,12 @@ bin_irt_2pl_abs_sim <- id_sim_gen(model_type='binary',inflate=TRUE)
 
 bin_irt_2pl_abs_est <- id_estimate(bin_irt_2pl_abs_sim,
                        model_type=2,
-                       restrict_ind_high = 
+                       use_method="pathfinder",
+                       restrict_ind_high =
                        sort(bin_irt_2pl_abs_sim@simul_data$true_person,
                        decreasing=TRUE,
                        index=TRUE)$ix[1],
-                       restrict_ind_low = 
+                       restrict_ind_low =
                        sort(bin_irt_2pl_abs_sim@simul_data$true_person,
                        decreasing=FALSE,
                        index=TRUE)$ix[1],

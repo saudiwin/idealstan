@@ -121,16 +121,13 @@ make it clear.
 # First create data and run a model
 
 to_idealstan <-   id_make(score_data = senate114,
-outcome = 'cast_code',
+outcome_disc = 'cast_code',
 person_id = 'bioname',
 item_id = 'rollnumber',
 group_id= 'party_code',
-time_id='date',
-high_val='Yes',
-low_val='No',
-miss_val='Absent')
+time_id='date')
 
-sen_est <- id_estimate(senate_data,
+sen_est <- id_estimate(to_idealstan,
 model_type = 2,
 use_method = "pathfinder",
 vary_ideal_pts='random_walk',

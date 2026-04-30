@@ -89,7 +89,8 @@ senate114$age <- (2018 - senate114$born - mean(2018 - senate114$born)) / 10
 sen_cov <- id_make(senate114, outcome_disc='cast_code',
                    person_id='bioname', item_id='rollnumber',
                    group_id='party_code', person_cov=~party_code+age)
-sen_cov_est <- id_estimate(sen_cov, model_type=1, fixtype='vb_full', nchains=2, ncores=4)
+sen_cov_est <- id_estimate(sen_cov, model_type=1, fixtype='vb_full', 
+                use_method="pathfinder", nchains=2, ncores=4)
 
 # Plot marginal effects of age on ideal points
 id_plot_cov(sen_cov_est, calc_param='age')
