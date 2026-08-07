@@ -1732,9 +1732,11 @@ id_plot_irf <- function(object,
 #' @param prior_sample_size     Relative level of precision/tightness around `y` (default: 200). Can be thought of as the relative sample size used to estimate `y`.
 #' @param limits                Limits of prior. Default is `[-1,1]`. Set to `[0,1]` for a conventional IRT with all positive discrimination parameters (i.e. as in a test-taking scenario).
 #' @examples
-#' \donttest{
 #' # Launch interactive Shiny app to explore the generalized Beta prior
-#' # id_plot_gbeta_prior(initial_y=0.5, prior_sample_size=200)
+#' if(interactive()) {
+#' 
+#' id_plot_gbeta_prior(initial_y=0.5, prior_sample_size=200)
+#' 
 #' }
 #' @return A \code{ggplot2} object showing the generalized Beta prior distribution for the selected
 #'   parameter values, or an interactive Shiny application if run interactively.

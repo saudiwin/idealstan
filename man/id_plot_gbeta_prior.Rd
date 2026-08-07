@@ -25,8 +25,10 @@ on a symmetrical interval from -scale to +scale in order to calculate the distri
 The function is also useful for calculating the prior for all non-constrained discrimination parameters as well (\code{discrim_reg_shape} and \code{discrim_reg_scale}). These parameters are denoted in the Shiny app output for easy cut and paste to the \code{id_estimate} function call.
 }
 \examples{
-\donttest{
 # Launch interactive Shiny app to explore the generalized Beta prior
-# id_plot_gbeta_prior(initial_y=0.5, prior_sample_size=200)
+if(interactive()) {
+
+id_plot_gbeta_prior(initial_y=0.5, prior_sample_size=200)
+
 }
 }

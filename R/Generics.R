@@ -857,7 +857,12 @@ setGeneric('id_extract',signature='object',
 #'                     person_id='bioname', item_id='rollnumber',
 #'                     group_id='party_code')
 #' sen_est <- id_estimate(sen_data, model_type=1, use_method="pathfinder", fixtype='vb_full', ncores=4)
-#' id_extract(sen_est, extract_type='persons')
+#' 
+#' # will launch interactive browser
+#' if(interactive()) {
+#'   launch_shinystan(sen_est)
+#' }
+#'
 #' }
 #' @return A \code{\link[tibble]{tibble}} of posterior draws, with rows as draws and columns as parameters.
 #' @export
@@ -897,8 +902,12 @@ setGeneric('launch_shinystan',signature='object',
 #'                     person_id='bioname', item_id='rollnumber',
 #'                     group_id='party_code')
 #' sen_est <- id_estimate(sen_data, model_type=1, use_method="pathfinder", fixtype='vb_full', ncores=4)
+#' 
 #' # will launch interactive browser
-#' # launch_shinystan(sen_est)
+#' if(interactive()) {
+#'   launch_shinystan(sen_est)
+#' }
+#'
 #' }
 #' @return No return value; called for side effects (launches the Shinystan interactive diagnostics application).
 #' @export
