@@ -1126,17 +1126,21 @@ setMethod('id_me',signature(object='idealstan'),
             # combine into datasets for each item with item id + person (senator) id
             
             c2 <- lapply(c1, function(mat) {
-              
+
               out_data <- attr(mat, "data")
-              colnames(mat) <- out_data$person_id
-              
-              as_tibble(mat, .name_repair = "minimal") %>%
-                mutate(draws=1:n(),
-                       item_id=unique(out_data$item_id)) %>% 
-                gather(key="person_id",value="estimate",-draws,-item_id) %>% 
-                mutate(person_id=as.numeric(person_id),
-                       estimate=as.numeric(estimate))
-              
+
+              # build the long-format data directly from the matrix and its
+              # attached person/time IDs rather than pivoting on column names,
+              # as person_id can repeat across columns (one column per
+              # person-time observation) for time-varying models, which would
+              # otherwise produce duplicate column names
+
+              tibble(draws=rep(1:nrow(mat), times=ncol(mat)),
+                     item_id=unique(out_data$item_id),
+                     person_id=as.numeric(rep(out_data$person_id, each=nrow(mat))),
+                     time_id=rep(out_data$time_id, each=nrow(mat)),
+                     estimate=as.numeric(mat))
+
             }) %>% bind_rows
             
             # merge in some original data
