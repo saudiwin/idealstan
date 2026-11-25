@@ -107,7 +107,7 @@
   if(is.na(idealdata@score_matrix$model_id[1]) || idealdata@score_matrix$model_id[1]=="missing") {
     
     idealdata@score_matrix$model_id <- model_type
-    idealdata@score_matrix$discrete <- as.numeric(model_type %in% c(1,2,3,4,5,6,7,8,13,14))
+    idealdata@score_matrix$discrete <- as.numeric(model_type %in% c(1,2,3,4,5,6,7,8,13,14,17,18))
     
   } else {
     if(!is.numeric(idealdata@score_matrix$model_id)) {
@@ -254,7 +254,7 @@
     
   }
   
-  if((any(c(9,10,11,12,15,16) %in% idealdata@score_matrix$model_id)) && (any(c(1,2,3,4,5,6,7,8,13,14) %in% idealdata@score_matrix$model_id))) {
+  if((any(c(9,10,11,12,15,16) %in% idealdata@score_matrix$model_id)) && (any(c(1,2,3,4,5,6,7,8,13,14,17,18) %in% idealdata@score_matrix$model_id))) {
     Y_int <- idealdata@score_matrix$outcome_disc
     Y_cont <- idealdata@score_matrix$outcome_cont
   } else if (any(c(9,10,11,12,15,16) %in% idealdata@score_matrix$model_id)) {
@@ -382,6 +382,7 @@
   if(remove_list$N_int>0) {
     
     Y_int <- remove_list$Y_int[out_list$this_data$orig_order]
+    trials <- remove_list$trials[out_list$this_data$orig_order]
     
     order_cats_rat <- remove_list$order_cats_rat[out_list$this_data$orig_order]
     order_cats_grm <- remove_list$order_cats_grm[out_list$this_data$orig_order]
@@ -389,6 +390,7 @@
   } else {
     
     Y_int <- remove_list$Y_int
+    trials <- remove_list$trials
     order_cats_rat <- remove_list$order_cats_rat
     order_cats_grm <- remove_list$order_cats_grm
     
@@ -459,6 +461,7 @@
   N_cont=remove_list$N_cont,
   N_int=remove_list$N_int,
   Y_int=Y_int,
+  trials=array(as.integer(trials)),
   Y_cont=Y_cont,
   y_int_miss=remove_list$y_int_miss,
   y_cont_miss=remove_list$y_cont_miss,
@@ -665,6 +668,7 @@
   if(remove_list$N_int>0) {
     
     Y_int <- remove_list$Y_int[out_list$this_data$orig_order]
+    trials <- remove_list$trials[out_list$this_data$orig_order]
     
     order_cats_rat <- remove_list$order_cats_rat[out_list$this_data$orig_order]
     order_cats_grm <- remove_list$order_cats_grm[out_list$this_data$orig_order]
@@ -672,6 +676,7 @@
   } else {
     
     Y_int <- remove_list$Y_int
+    trials <- remove_list$trials
     order_cats_rat <- remove_list$order_cats_rat
     order_cats_grm <- remove_list$order_cats_grm
     
@@ -711,6 +716,7 @@
                     N_cont=remove_list$N_cont,
                     N_int=remove_list$N_int,
                     Y_int=Y_int,
+                    trials=array(as.integer(trials)),
                     Y_cont=Y_cont,
                     y_int_miss=remove_list$y_int_miss,
                     y_cont_miss=remove_list$y_cont_miss,
@@ -2634,7 +2640,7 @@ return(as.vector(idx))
     as.integer(names(no_miss)[no_miss])
   }
 
-  no_miss_ids <- sort(c(check_type(c(2,4,6,8,14), remove_list$Y_int,
+  no_miss_ids <- sort(c(check_type(c(2,4,6,8,14,18), remove_list$Y_int,
                                    remove_list$y_int_miss),
                         check_type(c(10,12,16), remove_list$Y_cont,
                                    remove_list$y_cont_miss)))
@@ -2649,6 +2655,83 @@ return(as.vector(idx))
   }
 
   invisible(no_miss_ids)
+
+}
+
+#' Outcome values and trials for count models
+#'
+#' Count models (Poisson, 7 and 8, and binomial, 17 and 18) need the numeric
+#' value of the discrete outcome. `id_make()` stores it in `outcome_disc_raw`,
+#' because the codes in `outcome_disc` only keep the order of the observed
+#' values. Binomial models also need the number of trials (`outcome_trials`).
+#'
+#' @return A list with `count` (numeric outcome, `NA` for rows that are missing
+#'   or belong to continuous models) and `trials` (number of trials for observed
+#'   binomial rows, 0 otherwise).
+#' @noRd
+.count_data <- function(Y_int, modelpoints, idealdata) {
+
+  n <- length(Y_int)
+  trials <- rep(0, n)
+
+  if(n <= 1 || !any(modelpoints %in% c(7,8,17,18))) {
+    return(list(count=rep(NA_real_, n), trials=trials))
+  }
+
+  labels <- as.character(Y_int)
+  observed <- !is.na(labels) & !(labels %in% c("Missing","Joint Posterior"))
+
+  count <- idealdata@score_matrix$outcome_disc_raw
+
+  if(is.null(count) || length(count) != n) {
+    # objects made by older versions of id_make() only have the factor labels
+    count <- suppressWarnings(as.numeric(labels))
+  }
+
+  count[!observed] <- NA
+
+  count_rows <- observed & modelpoints %in% c(7,8,17,18)
+  bad_count <- count_rows & (is.na(count) | count < 0 | count != round(count))
+
+  if(any(bad_count)) {
+    stop("Poisson and binomial models (model types 7, 8, 17 and 18) need ",
+         "outcome_disc to be a count (a whole number of 0 or more), but ",
+         sum(bad_count), " observed value(s) are not.", call.=FALSE)
+  }
+
+  binom_rows <- observed & modelpoints %in% c(17,18)
+
+  if(any(binom_rows)) {
+
+    if(!("outcome_trials" %in% names(idealdata@score_matrix))) {
+      stop("Binomial models (model types 17 and 18) need the number of trials ",
+           "for each outcome. Pass the name of that column to the ",
+           "outcome_trials argument of id_make().", call.=FALSE)
+    }
+
+    all_trials <- suppressWarnings(as.numeric(idealdata@score_matrix$outcome_trials))
+
+    bad_trials <- binom_rows & (is.na(all_trials) | all_trials < 0 |
+                                  all_trials != round(all_trials))
+
+    if(any(bad_trials)) {
+      stop("The number of trials for binomial models (outcome_trials) must be ",
+           "a whole number of 0 or more for every observed outcome, but ",
+           sum(bad_trials), " value(s) are not.", call.=FALSE)
+    }
+
+    too_many <- binom_rows & count > all_trials
+
+    if(any(too_many)) {
+      stop("Binomial outcomes cannot be larger than their number of trials ",
+           "(outcome_trials), but ", sum(too_many), " value(s) are.", call.=FALSE)
+    }
+
+    trials[binom_rows] <- all_trials[binom_rows]
+
+  }
+
+  list(count=count, trials=trials)
 
 }
 
@@ -2823,8 +2906,16 @@ return(as.vector(idx))
   
   # figure out if there are any missing values
   
-  some_missing_cont <- any(modelpoints %in% c(2,4,6,8,10,12,14,16)) && any(as.numeric(idealdata@miss_val[2]) %in% Y_cont)
-  some_missing_disc <- any(modelpoints %in% c(2,4,6,8,10,12,14,16)) && any(idealdata@miss_val[1] %in% Y_int)
+  some_missing_cont <- any(modelpoints %in% c(2,4,6,8,10,12,14,16,18)) && any(as.numeric(idealdata@miss_val[2]) %in% Y_cont)
+  some_missing_disc <- any(modelpoints %in% c(2,4,6,8,10,12,14,16,18)) && any(idealdata@miss_val[1] %in% Y_int)
+
+  # count models (Poisson and binomial) need the numeric value of the outcome,
+  # not its position among the observed values
+  # (also returns the number of trials for binomial models, 0 for other rows)
+  count_mods <- c(7,8,17,18)
+  count_data <- .count_data(Y_int, modelpoints, idealdata)
+  Y_int_count <- count_data$count
+  trials <- count_data$trials
 
   # row-level missing indicators, taken before the outcomes are recoded, so
   # that we can later check whether any missing rows survive NA removal
@@ -2845,92 +2936,61 @@ return(as.vector(idx))
                                                       4,
                                                       6,
                                                       8,
-                                                      14),
+                                                      14,
+                                                      18),
                       Y_int,
                       .na_if(Y_int,idealdata@miss_val[1]))
-    
+
     # need to downward adjust Y_int
     # convert from factor back to numeric as we have dealt with missing data
     # drop unused levels
     # need to get back to zero index
-    if(!any(c(7,8) %in% modelpoints)) {
-      
+    if(!any(count_mods %in% modelpoints)) {
+
       Y_int <- as.numeric(Y_int)
-      
+
     } else {
-      
-      # need to handle Poisson, which is tricky
-      
+
+      # count models (Poisson and binomial) use the numeric value of the outcome
+
       Y_int_old <- Y_int
-      
+
       # need to do a custom conversion for mixed outcomes
-      
-      if(all(modelpoints %in% c(7,8))) {
-        
-        # easiest version, all Poisson, simply convert
-        # suppressWarnings: "Missing" converts to NA intentionally
-        Y_int <- suppressWarnings(as.numeric(as.character(Y_int)))
+
+      if(all(modelpoints %in% count_mods)) {
+
+        # easiest version, all count models
+        Y_int <- Y_int_count
         max_Y_int <- if(any(!is.na(Y_int))) max(Y_int, na.rm=TRUE) else 0
         Y_int <- ifelse(Y_int_old=="Joint Posterior", max_Y_int + 2,
                         Y_int)
         Y_int <- ifelse(Y_int_old=="Missing", max_Y_int + 1,
                         Y_int)
-        
-        rm(Y_int_old)
-        
-      } else {
-        
-        # mixed outcome, more tricky
-        # suppressWarnings: "Missing" converts to NA intentionally
-        Y_int_poisson <- suppressWarnings(as.numeric(as.character(Y_int)))
-        Y_int_disc <- as.numeric(Y_int)
-        
-        # check for which has bigger max
 
-        max_poisson <- if(any(!is.na(Y_int_poisson))) max(Y_int_poisson, na.rm=TRUE) else 0
+        rm(Y_int_old)
+
+      } else {
+
+        # mixed outcome: count rows keep their values and other discrete rows
+        # their category codes. Missing values and continuous rows are coded
+        # above both, so they cannot equal an observed count.
+        Y_int_disc <- as.numeric(Y_int)
+
+        max_count <- if(any(!is.na(Y_int_count))) max(Y_int_count, na.rm=TRUE) else 0
         max_disc <- if(any(!is.na(Y_int_disc))) max(Y_int_disc, na.rm=TRUE) else 0
-        
-        if(max_poisson>max_disc) {
-          
-          Y_int_poisson <- ifelse(Y_int_old=="Joint Posterior", max_poisson + 2,
-                                 Y_int_poisson)
-          Y_int_poisson <- ifelse(Y_int_old=="Missing" , max_poisson + 1,
-                                  Y_int_poisson)
-          
-          Y_int_disc <- ifelse(Y_int_old=="Joint Posterior", max_poisson + 2,
-                               Y_int_disc)
-          Y_int_disc <- ifelse(Y_int_old=="Missing", max_poisson + 1,
-                               Y_int_disc)
-          
-        } else {
-          
-          # revert poisson to discrete for missing values coding
-          
-          if(all(c("Joint Posterior","Missing") %in% unique(Y_int_old))) {
-            
-            Y_int_poisson <- ifelse(Y_int_old=="Joint Posterior", max_disc,
-                                Y_int_poisson)
-            Y_int_poisson<- ifelse(Y_int_old=="Missing", max_disc - 1,
-                                   Y_int_poisson)
-            
-          } else {
-            
-            Y_int_poisson <- ifelse(Y_int_old %in% c("Joint Posterior","Missing"),
-                                    max_disc, Y_int_poisson)
-            
-          }
-          
-        }
-        
-        Y_int <- ifelse(modelpoints %in% c(7,8),
-                        Y_int_poisson,
+        max_code <- max(max_count, max_disc)
+
+        Y_int <- ifelse(modelpoints %in% count_mods,
+                        Y_int_count,
                         Y_int_disc)
-        
-        rm(Y_int_old,Y_int_poisson, Y_int_disc)
-        
+        Y_int <- ifelse(Y_int_old %in% "Joint Posterior", max_code + 2, Y_int)
+        Y_int <- ifelse(Y_int_old %in% "Missing", max_code + 1, Y_int)
+
+        rm(Y_int_old, Y_int_disc)
+
       }
-      
-      
+
+
     }
 
       # need to convert binary outcomes to start at 0
@@ -2995,10 +3055,12 @@ return(as.vector(idx))
     
     if(length(Y_int)>1) {
       Y_int <- Y_int[remove_nas]
+      trials <- trials[remove_nas]
       N_int <- length(Y_int)
     } else {
       N_int <- 0
       Y_int <- array(dim=c(0)) + 0L
+      trials <- array(dim=c(0)) + 0L
     }
 
     # Missing values of non-inflated models were just removed, so only the
@@ -3214,6 +3276,7 @@ return(as.vector(idx))
   
   
     return(list(Y_int=Y_int,
+                trials=trials,
                 Y_cont=Y_cont,
                 legispoints=legispoints,
                 billpoints=billpoints,

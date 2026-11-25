@@ -56,6 +56,7 @@ data {
   int grainsize;
   int prior_only; // don't sample the likelihood (prior predictive checks)
   array[N_int] int Y_int; // integer outcome
+  array[N_int] int<lower=0> trials; // number of trials for binomial outcomes (models 17 and 18)
   array[N_cont] real Y_cont; // continuous outcome
   int ignore;
   int y_int_miss; // missing value for integers
@@ -646,6 +647,7 @@ if(S_type==1 && const_type==1) {
                      gp_N,
                      num_legis,
                      Y_int,
+                     trials,
         Y_cont,
         y_int_miss,
         y_cont_miss,

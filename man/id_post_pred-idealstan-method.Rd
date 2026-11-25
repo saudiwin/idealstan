@@ -36,7 +36,12 @@ output \code{'missing'} showing whether an observation was predicted as missing 
 
 \item{type}{Whether to produce posterior predictive values (\code{'predict'}, the default),
 the posterior expected (average) values (\code{'epred'}),
-or log-likelihood values (\code{'log_lik'}). See the How to Evaluate Models vignette for more info.}
+or log-likelihood values (\code{'log_lik'}). See the How to Evaluate Models vignette for more info.
+The expected value is the mean of the outcome: the probability of a 1 for binary
+models, the expected category (1 = lowest) for ordinal models, and the mean count,
+number of successes or value for the other models. For models with missing-data
+inflation it is multiplied by the probability that the outcome is observed, and the
+log-likelihood includes the probability of the outcome being observed or missing.}
 
 \item{covar}{What kind of covariates to include as part of the prediction -- either
 "person" (the default) or "items" if you included predictors for item discriminations.}

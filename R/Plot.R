@@ -232,7 +232,7 @@ id_plot_persons <- function(object,return_data=FALSE,
   if(!is.null(item_plot)) {
     
     # loop over the item IDs and calculate midpoints and HPDs
-    if(object@model_type %in% c(1,2) || (object@model_type>6 && object@model_type<13)) {
+    if(object@model_type %in% c(1,2,17,18) || (object@model_type>6 && object@model_type<13)) {
       # binary models and continuous
       item_points <- lapply(item_plot,.item_plot_binary,object=object,
                             low_limit=low_limit,
@@ -748,7 +748,7 @@ id_plot_persons_dyn <- function(object,return_data=FALSE,
   if(!is.null(item_plot)) {
     
     # loop over the item IDs and calculate midpoints and HPDs
-    if(object@model_type %in% c(1,2) || (object@model_type>6 && object@model_type<13)) {
+    if(object@model_type %in% c(1,2,17,18) || (object@model_type>6 && object@model_type<13)) {
       # binary models and continuous
       item_points <- lapply(item_plot,.item_plot_binary,object=object,
                             low_limit=low_limit,
@@ -1363,7 +1363,9 @@ id_plot_cov <- function(object,
                                                          `11`="Log-Normal Outcome",
                                                          `12`="Log-Normal Outcome",
                                                          `13`="Binary Outcome Latent Space",
-                                                         `14`="Binary Outcome Latent Space"))
+                                                         `14`="Binary Outcome Latent Space",
+                                                         `17`="Binomial Outcome",
+                                                         `18`="Binomial Outcome"))
     
     max_scale <- max(all_effs$sum_ideal_effects$item_discrimination)
     min_scale <- min(all_effs$sum_ideal_effects$item_discrimination)
@@ -1550,7 +1552,7 @@ id_plot_irf <- function(object,
       # ask user for predicted outcome
       pred_outcome <- svDialogs::dlg_list(levels(object@score_data@score_matrix$outcome),
                                           title="Select which level of the outcome to predict using covariates.")$res
-    } else if(m %in% c(7,8)) {
+    } else if(m %in% c(7,8,17,18)) {
       pred_outcome <- "Mean Count"
     } else if(m %in% c(9,10,11,12)) {
       pred_outcome <- "Mean"
@@ -1563,7 +1565,7 @@ id_plot_irf <- function(object,
     pred_outcome_high <- paste0("Pr(",pred_outcome,"|",label_high,")")
     pred_outcome_low <- paste0("Pr(",pred_outcome,"|",label_low,")")
     xlabel <- "Marginal Change in Probability"
-  } else if(m %in% c(7,8)) {
+  } else if(m %in% c(7,8,17,18)) {
     pred_outcome_high <- paste0("Mean Count|",label_high)
     pred_outcome_low <- paste0("Mean Count|",label_low)
     xlabel <- "Marginal Change in Mean Count"
