@@ -2615,7 +2615,41 @@ return(as.vector(idx))
     }
   
     return(x)
-  
+
+}
+
+#' Warn when an inflated model is fit to an outcome with no missing values
+#'
+#' Applies the same test as the Stan likelihood: a row counts as missing when
+#' its outcome is at or above the missing-value sentinel.
+#' @noRd
+.warn_inflated_no_missing <- function(remove_list) {
+
+  modelpoints <- remove_list$modelpoints
+
+  check_type <- function(infl_ids, Y, miss) {
+    infl_rows <- modelpoints %in% infl_ids
+    if(!any(infl_rows) || length(Y) != length(modelpoints)) return(integer(0))
+    no_miss <- tapply(Y[infl_rows] < miss, modelpoints[infl_rows], all)
+    as.integer(names(no_miss)[no_miss])
+  }
+
+  no_miss_ids <- sort(c(check_type(c(2,4,6,8,14), remove_list$Y_int,
+                                   remove_list$y_int_miss),
+                        check_type(c(10,12,16), remove_list$Y_cont,
+                                   remove_list$y_cont_miss)))
+
+  if(length(no_miss_ids) > 0) {
+    warning("Missing-data inflated model(s) ", paste(no_miss_ids, collapse=", "),
+            " were chosen, but none of their outcomes are missing, so the ",
+            "missingness parameters are informed only by their priors. ",
+            "Consider the non-inflated model(s) ",
+            paste(no_miss_ids - 1, collapse=", "), " instead.",
+            call.=FALSE)
+  }
+
+  invisible(no_miss_ids)
+
 }
 
 #' Calculate priors for Gaussian processes
@@ -2792,6 +2826,11 @@ return(as.vector(idx))
   some_missing_cont <- any(modelpoints %in% c(2,4,6,8,10,12,14,16)) && any(as.numeric(idealdata@miss_val[2]) %in% Y_cont)
   some_missing_disc <- any(modelpoints %in% c(2,4,6,8,10,12,14,16)) && any(idealdata@miss_val[1] %in% Y_int)
 
+  # row-level missing indicators, taken before the outcomes are recoded, so
+  # that we can later check whether any missing rows survive NA removal
+  miss_cont_row <- !is.na(idealdata@miss_val[2]) & Y_cont %in% as.numeric(idealdata@miss_val[2])
+  miss_disc_row <- !is.na(idealdata@miss_val[1]) & Y_int %in% idealdata@miss_val[1]
+
   if(length(Y_cont)>1 && !is.na(idealdata@miss_val[2])) {
 
       Y_cont <- ifelse(modelpoints %in% c(10,12,16),
@@ -2961,7 +3000,14 @@ return(as.vector(idx))
       N_int <- 0
       Y_int <- array(dim=c(0)) + 0L
     }
-    
+
+    # Missing values of non-inflated models were just removed, so only the
+    # missing rows that remain (those of inflated models) should move the
+    # sentinels below. Otherwise, the sentinel is set to the highest
+    # observed value and observed rows are modelled as missing.
+    some_missing_cont <- some_missing_cont && N_cont > 0 && any(miss_cont_row[remove_nas])
+    some_missing_disc <- some_missing_disc && N_int > 0 && any(miss_disc_row[remove_nas])
+
     N <- pmax(N_int, N_cont)
     
     legispoints <- legispoints[remove_nas]
@@ -3038,6 +3084,11 @@ return(as.vector(idx))
     SRX <- ncol(srx_pred)
     SAX <- ncol(sax_pred)
     
+    # The Stan likelihood for inflated models treats a row as observed only
+    # when Y_int[n] < y_int_miss (Y_cont[n] < y_cont_miss for continuous
+    # outcomes). When no outcome is missing, the sentinel must be above every
+    # observed value, otherwise observed rows are modelled as missing (#42).
+
     max_Y_int <- if(length(Y_int) > 0 && any(!is.na(Y_int))) max(Y_int, na.rm=TRUE) else -Inf
     if(!is.infinite(max_Y_int) && some_missing_disc) {
 
@@ -3054,6 +3105,10 @@ return(as.vector(idx))
       }
 
 
+
+    } else if(!is.infinite(max_Y_int)) {
+
+      y_int_miss <- max_Y_int + 1
 
     } else {
 
@@ -3074,6 +3129,10 @@ return(as.vector(idx))
 
       }
 
+
+    } else if(!is.infinite(max_Y_cont)) {
+
+      y_cont_miss <- max_Y_cont + 1
 
     } else {
 

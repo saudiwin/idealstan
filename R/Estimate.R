@@ -485,7 +485,8 @@ id_make <- function(score_data=NULL,
       levels(score_rename$outcome_disc) <- c(levels(score_rename$outcome_disc),
                                              "Joint Posterior")
       
-      score_rename$outcome_disc[score_rename$model_id>8 & score_rename$model_id<13] <- "Joint Posterior"
+      # continuous models (normal, lognormal and ordered beta) use outcome_cont
+      score_rename$outcome_disc[score_rename$model_id %in% c(9,10,11,12,15,16)] <- "Joint Posterior"
       
     }
     
@@ -501,34 +502,39 @@ id_make <- function(score_data=NULL,
     } else {
       max_val <- max(pull(score_rename,!!outcome_cont),na.rm=TRUE)
     }
-    
-    # make missing data the highest observed value
+
+    # code missing data above the highest observed value. The code is a
+    # whole number because miss_val is a character vector when a discrete
+    # outcome is present, and a fractional code does not always convert back
+    # to the same double, so missing values would go undetected
+    miss_code <- ceiling(max_val) + 1
+
     if(is.na(miss_val[2])) {
-      
+
       if("outcome_disc" %in% names(score_rename)) {
         # only truly missing if discrete outcome also missing
-        score_rename$outcome_cont[score_rename$outcome_disc=="Joint Posterior" & !is.na(score_rename$outcome_disc)] <- coalesce(score_rename$outcome_cont[score_rename$outcome_disc=="Joint Posterior" & !is.na(score_rename$outcome_disc)],max_val+1L)
-        
+        score_rename$outcome_cont[score_rename$outcome_disc=="Joint Posterior" & !is.na(score_rename$outcome_disc)] <- coalesce(score_rename$outcome_cont[score_rename$outcome_disc=="Joint Posterior" & !is.na(score_rename$outcome_disc)],miss_code)
+
         # need to set another value for not truly missing values for appended datasets
-        score_rename$outcome_cont[score_rename$outcome_disc!="Joint Posterior"] <- max_val + 2L
+        score_rename$outcome_cont[score_rename$outcome_disc!="Joint Posterior"] <- miss_code + 1
       } else {
-        
-        score_rename <- mutate(score_rename,!! quo_name(outcome_cont) := coalesce(!!outcome_cont,max_val+1L))
+
+        score_rename <- mutate(score_rename,!! quo_name(outcome_cont) := coalesce(!!outcome_cont,miss_code))
       }
     } else {
       if("outcome_disc" %in% names(score_rename)) {
         score_rename <- mutate(score_rename,!! quo_name(outcome_cont) := ifelse(!!outcome_cont==miss_val[2] & outcome_disc=="Joint Posterior" &
-                                                                                  !is.na(outcome_disc),max_val+1L,!!outcome_cont))
+                                                                                  !is.na(outcome_disc),miss_code,!!outcome_cont))
         # need to set another value for not truly missing values for appended datasets
-        score_rename$outcome_cont[score_rename$outcome_disc!="Joint Posterior"] <- max_val + 2L
+        score_rename$outcome_cont[score_rename$outcome_disc!="Joint Posterior"] <- miss_code + 1
       } else {
-        score_rename <- mutate(score_rename,!! quo_name(outcome_cont) := ifelse(!!outcome_cont==miss_val[2],max_val+1L,!!outcome_cont))
+        score_rename <- mutate(score_rename,!! quo_name(outcome_cont) := ifelse(!!outcome_cont==miss_val[2],miss_code,!!outcome_cont))
       }
-      
+
     }
-    
-    miss_val[2] <- max_val + 1L
-  } 
+
+    miss_val[2] <- miss_code
+  }
   
   
   
@@ -1254,7 +1260,9 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   remove_list <- all_data$remove_list
   idealdata <- all_data$idealdata
   out_list <- all_data$out_list
-  
+
+  .warn_inflated_no_missing(remove_list)
+
   # need to save n_cats
   
   idealdata@n_cats_rat <- remove_list$n_cats_rat
