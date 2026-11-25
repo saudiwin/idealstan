@@ -373,6 +373,8 @@ setMethod('sample_model',signature(object='idealdata'),
                 if(keep_param$item_miss) {
                   
                   keep_vars <- c(keep_vars,"sigma_abs_free","A_int_free")
+
+                  if(isTRUE(this_data$num_corr > 0)) keep_vars <- c(keep_vars,"discrim_rho")
                   
                 }
                 
@@ -644,6 +646,8 @@ setMethod('id_model',signature(object='idealdata'),
 #' @param object An \code{idealstan} object fitted by \code{\link{id_estimate}}
 #' @param pars Either \code{'ideal_pts'} for person ideal points,
 #' \code{'items'} for items/bills difficulty and discrimination parameters,
+#' \code{'discrim_corr'} for the correlation of observed and missingness
+#' discriminations (models fit with \code{discrim_corr=TRUE} in \code{\link{id_estimate}}),
 #' and \code{'all'} for all parameters in the model, including incidental parameters.
 #' @param high_limit A number between 0 and 1 reflecting the upper limit of the
 #' uncertainty interval (defaults to 0.95).
@@ -767,8 +771,31 @@ setMethod('summary',signature(object='idealstan'),
 
             
             if(pars=='all') {
-              
+
               return(object@summary)
+            }
+
+            if(pars=='discrim_corr') {
+
+              if(!isTRUE(object@this_data$num_corr > 0)) {
+                stop("This model was not fit with discrim_corr=TRUE, so it has no ",
+                     "discrimination correlation.")
+              }
+
+              to_sum <- object@stan_samples$draws('discrim_rho')
+
+              if(!is.null(use_chain)) to_sum <- to_sum[,use_chain,,drop=FALSE]
+
+              if(!aggregated) return(to_sum)
+
+              rho <- as.numeric(to_sum)
+
+              return(tibble(`Posterior Median`=median(rho),
+                            `High Posterior Interval`=quantile(rho,high_limit,names=FALSE),
+                            `Low Posterior Interval`=quantile(rho,low_limit,names=FALSE),
+                            `Number of Items`=object@this_data$num_corr,
+                            Parameter='discrim_rho'))
+
             }
             
             if(pars %in% c('person_cov','discrim_reg_cov','discrim_infl_cov')) {

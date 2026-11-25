@@ -57,6 +57,11 @@
 #' distribution for the missingness discrimination parameters (nu)
 #' @param discrim_miss_shape The shape parameter for the generalized Beta
 #' distribution for the missingness discrimination parameters (nu)
+#' @param discrim_corr The correlation between each item's observed (gamma) and
+#' missingness (nu) discriminations, between -1 and 1. The two are drawn from a
+#' Gaussian copula with this correlation, so each keeps its generalized Beta
+#' distribution. Corresponds to `discrim_corr=TRUE` in [id_estimate()]. Default is 0
+#' (independent discriminations).
 #' @param diff_sd The SD of the difficulty parameters (bill/item intercepts)
 #' for both missing and observed parameters (beta and omega)
 #' @param time_points The number of time points for time-varying legislator/person parameters
@@ -130,6 +135,7 @@ id_sim_gen <- function(num_person=20,num_items=50,
                        discrim_reg_shape=2,
                        discrim_miss_scale=2,
                        discrim_miss_shape=2,
+                       discrim_corr=0,
                        diff_sd=3,
                             time_points=1,
                             time_process='random',
@@ -155,6 +161,10 @@ id_sim_gen <- function(num_person=20,num_items=50,
   spline_int <- NULL
   
   if(! (time_process %in% c("GP","AR","splines","random"))) stop("time_process should be one of 'GP', 'AR', 'splines', or 'random'.")
+
+  if(!is.numeric(discrim_corr) || length(discrim_corr) != 1 || abs(discrim_corr) >= 1) {
+    stop("discrim_corr should be a single number between -1 and 1.")
+  }
   
   # Allow for different type of distributions for ideal points
 
@@ -282,10 +292,25 @@ id_sim_gen <- function(num_person=20,num_items=50,
   #Discrimination parameters more important because they reflect how much information a bill contributes
   # need to make some of them negative to reflect the switching nature of policies
   #absence_discrim <- prior_func(params=list(N=num_items,mean=1,sd=absence_discrim_sd)) * if_else(runif(num_items-1)>0.5,1,-1)
-  absence_discrim <- .genbeta_sample(n=num_items,alpha=discrim_miss_shape,
-                                     beta=discrim_miss_scale,lb=discrim_miss_lb,
-                                     lb_offset=discrim_miss_upb - discrim_miss_lb) +
-    item_miss_discrim_cov_value
+  if(discrim_corr != 0) {
+
+    # Gaussian copula: correlated normal scores, transformed to the same
+    # generalized beta distributions used when discrim_corr is 0
+    z_reg <- rnorm(num_items)
+    z_abs <- discrim_corr * z_reg + sqrt(1 - discrim_corr^2) * rnorm(num_items)
+
+    absence_discrim <- discrim_miss_lb + (discrim_miss_upb - discrim_miss_lb) *
+      stats::qbeta(stats::pnorm(z_abs), discrim_miss_scale, discrim_miss_shape)
+
+  } else {
+
+    absence_discrim <- .genbeta_sample(n=num_items,alpha=discrim_miss_scale,
+                                       beta=discrim_miss_shape,lb=discrim_miss_lb,
+                                       lb_offset=discrim_miss_upb - discrim_miss_lb)
+
+  }
+
+  absence_discrim <- absence_discrim + item_miss_discrim_cov_value
 
   # person ideal points common to both types of models (absence and regular)
   
@@ -462,10 +487,20 @@ id_sim_gen <- function(num_person=20,num_items=50,
   }
 
   reg_diff <- prior_func(params=list(N=num_items,mean=0,sd=diff_sd))
-  reg_discrim <- .genbeta_sample(n=num_items,alpha=discrim_reg_shape,
-                                 beta=discrim_reg_scale,lb=discrim_reg_lb,
-                                 lb_offset=discrim_reg_upb - discrim_reg_lb) +
-    item_discrim_cov_value
+  if(discrim_corr != 0) {
+
+    reg_discrim <- discrim_reg_lb + (discrim_reg_upb - discrim_reg_lb) *
+      stats::qbeta(stats::pnorm(z_reg), discrim_reg_scale, discrim_reg_shape)
+
+  } else {
+
+    reg_discrim <- .genbeta_sample(n=num_items,alpha=discrim_reg_scale,
+                                   beta=discrim_reg_shape,lb=discrim_reg_lb,
+                                   lb_offset=discrim_reg_upb - discrim_reg_lb)
+
+  }
+
+  reg_discrim <- reg_discrim + item_discrim_cov_value
   
   # this is the same for all DGPs
   if(latent_space) {
@@ -541,6 +576,7 @@ id_sim_gen <- function(num_person=20,num_items=50,
                             true_person=ideal_pts,
                             true_reg_discrim=reg_discrim,
                             true_abs_discrim=absence_discrim,
+                            true_discrim_corr=discrim_corr,
                             true_person_mean=ideal_pts_mean,
                             time_sd=time_sd,
                             time_sd_all=time_sd_all,

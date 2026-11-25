@@ -26,7 +26,11 @@
   args <- list(...)
   # Assign each argument as a variable in the current environment
   list2env(args, envir = environment())
-  
+
+  # arguments added after some fitted objects were saved
+  if(!exists("discrim_corr", inherits=FALSE)) discrim_corr <- FALSE
+  if(!exists("discrim_corr_eta", inherits=FALSE)) discrim_corr_eta <- 2
+
   # check on restriction length
   
   if((length(restrict_ind_high) > 1 || num_restrict_high > 1) && (length(fix_high)==1)) {
@@ -508,6 +512,7 @@
   discrim_reg_shape=discrim_reg_shape,
   discrim_abs_scale=discrim_miss_scale,
   discrim_abs_shape=discrim_miss_shape,
+  discrim_corr_eta=discrim_corr_eta,
   diff_reg_sd=diff_reg_sd,
   diff_abs_sd=diff_miss_sd,
   legis_sd=person_sd,
@@ -546,7 +551,9 @@
   ordbeta_cut_phi=rep(ordbeta_cut_phi,times=num_ordbeta),
   ordbeta_cut_alpha=matrix(rep(ordbeta_cut_alpha,times=num_ordbeta),nrow=num_ordbeta,
                            ncol=3,byrow=TRUE))
-  
+
+  this_data <- c(this_data, .discrim_corr_items(this_data, discrim_corr))
+
   idealdata <- id_model(object=idealdata,fixtype=fixtype,this_data=this_data,
                         restrict_ind_high=restrict_ind_high,
                         restrict_ind_low=restrict_ind_low,
@@ -762,6 +769,7 @@
                     discrim_reg_shape=discrim_reg_shape,
                     discrim_abs_scale=discrim_miss_scale,
                     discrim_abs_shape=discrim_miss_shape,
+                    discrim_corr_eta=discrim_corr_eta,
                     diff_reg_sd=diff_reg_sd,
                     diff_abs_sd=diff_miss_sd,
                     legis_sd=person_sd,
@@ -802,8 +810,9 @@
                     ordbeta_cut_phi=rep(ordbeta_cut_phi,times=num_ordbeta),
                     ordbeta_cut_alpha=matrix(rep(ordbeta_cut_alpha,times=num_ordbeta),nrow=num_ordbeta,
                                              ncol=3,byrow=TRUE))
-  
-  
+
+  this_data <- c(this_data, .discrim_corr_items(this_data, discrim_corr))
+
   return(list(stan_data=this_data,
               remove_list=remove_list,
               idealdata=idealdata,
@@ -826,20 +835,28 @@
 #' Function to generate random samples from the generalized beta distribution
 #' @noRd
 .genbeta_sample <- function(n, alpha, beta, lb, lb_offset) {
+
+  # the density is unbounded when a shape parameter is below 1, so there is no
+  # envelope for rejection sampling
+  if (alpha < 1 || beta < 1) return(lb + lb_offset * stats::rbeta(n, alpha, beta))
+
+  # envelope: the density at its mode, which is the centre when alpha equals beta
+  mode_x <- if (alpha + beta > 2) (alpha - 1) / (alpha + beta - 2) else 0.5
+  max_pdf <- .genbeta_pdf(lb + lb_offset * mode_x, alpha, beta, lb, lb_offset)
+
   # Initialize a vector to store samples
   samples <- numeric(n)
   count <- 0
-  
+
   # Set up the rejection sampling loop
   while (count < n) {
     # Propose values between lb and lb + lb_offset
     y_proposal <- runif(1, lb, lb + lb_offset)
     u <- runif(1)  # Uniformly distributed random number for acceptance
-    
+
     # Calculate acceptance probability
     pdf_val <- .genbeta_pdf(y_proposal, alpha, beta, lb, lb_offset)
-    max_pdf <- .genbeta_pdf(lb + lb_offset / 2, alpha, beta, lb, lb_offset) # peak near center
-    
+
     if (u < pdf_val / max_pdf) {
       # Accept the proposal
       count <- count + 1
@@ -1637,7 +1654,9 @@ process_init_pathfinder <- function(init, num_procs, model_variables = NULL,
                                          this_data$discrim_reg_lb,
                                          this_data$discrim_miss_upb,
                                          this_data$discrim_miss_lb)
-  
+
+  base_params$discrim_rho <- rep(0, as.integer(isTRUE(this_data$num_corr > 0)))
+
   return(base_params)
   
 }
@@ -2621,6 +2640,36 @@ return(as.vector(idx))
     }
   
     return(x)
+
+}
+
+#' Items whose observed and missingness discriminations are correlated
+#'
+#' With `discrim_corr=TRUE`, the Stan model joins the priors of each item's
+#' observed and missingness discriminations with a Gaussian copula. This applies
+#' to items with a missing-data inflated model, since only those have a
+#' missingness discrimination in the likelihood. Latent-space models (13 and 14)
+#' are left out because their item parameters are positions, not discriminations.
+#' So are items pinned for identification when discriminations are pinned
+#' (`const_type="items"`), because their priors are deliberately informative.
+#'
+#' @return A list with `num_corr` and `corr_items` for the Stan data.
+#' @noRd
+.discrim_corr_items <- function(this_data, discrim_corr) {
+
+  items <- integer(0)
+
+  if(isTRUE(discrim_corr)) {
+
+    items <- unique(this_data$bb[this_data$mm %in% c(2,4,6,8,10,12,16,18)])
+
+    if(this_data$const_type==2 && this_data$pos_discrim==0) {
+      items <- setdiff(items, c(this_data$restrict_high, this_data$restrict_low))
+    }
+
+  }
+
+  list(num_corr=length(items), corr_items=array(as.integer(sort(items))))
 
 }
 

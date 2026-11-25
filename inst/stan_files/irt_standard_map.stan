@@ -24,7 +24,35 @@ functions {
     
     return sum( (alpha - 1) .* log(x) + (beta - 1) .* log1m(x) - vec_offset - vec_lbeta);
   }
-  
+
+  // Normal scores Phi^-1(F(y)) of discriminations under their prior CDF F, used by the
+  // Gaussian copula that correlates observed and missingness discriminations.
+  // Each is computed from whichever tail is smaller, to keep precision near the bounds.
+  real genbeta_normal_score(real y, real alpha, real beta, real lb, real lb_offset) {
+    real x = (y - lb) / lb_offset;
+    if (x < 0.5) {
+      return std_normal_log_qf(beta_lcdf(x | alpha, beta));
+    } else {
+      return -std_normal_log_qf(beta_lcdf(1 - x | beta, alpha));
+    }
+  }
+
+  real exponential_normal_score(real y, real rate) {
+    if (rate * y < log2()) {
+      return std_normal_log_qf(log1m_exp(-rate * y));
+    } else {
+      return -std_normal_log_qf(-rate * y);
+    }
+  }
+
+  // log density of a bivariate Gaussian copula with correlation rho, evaluated at
+  // the normal scores z1 and z2 of each pair
+  real gaussian_copula_lpdf(vector z1, vector z2, real rho) {
+    real r2 = square(rho);
+    return -0.5 * num_elements(z1) * log1m(r2) -
+      (r2 * (dot_self(z1) + dot_self(z2)) - 2 * rho * dot_product(z1, z2)) / (2 * (1 - r2));
+  }
+
 int r_in(int pos,array[] int pos_var) {
   
   for (p in 1:(size(pos_var))) {
@@ -101,6 +129,9 @@ data {
   real discrim_reg_shape;
   real discrim_abs_scale;
   real discrim_abs_shape;
+  int<lower=0> num_corr; // number of items whose observed and missingness discriminations are correlated
+  array[num_corr] int<lower=1, upper=num_bills> corr_items; // those items
+  real<lower=0> discrim_corr_eta; // prior on their correlation: (rho + 1)/2 ~ beta(eta, eta)
   real legis_sd;
   real diff_abs_sd;
   real diff_reg_sd;
@@ -147,7 +178,14 @@ transformed data {
 	int gp_oT; // used to make L_tp1 go to model block if GPs are used
 	array[T] real time_ind; // the actual indices/values of time points, used for Gaussian processes
 	array[(ignore==1) ? num_legis : 0, 2] int ignore_mat;
-	
+
+	// bounds of the discrimination parameters: the support of their priors, pulled in
+	// slightly from the edges of the generalized beta (the defaults give -0.999 and 0.999)
+	real reg_lower = pos_discrim == 1 ? 0 : discrim_reg_lb + 0.0005 * discrim_reg_upb;
+	real reg_upper = pos_discrim == 1 ? positive_infinity() : discrim_reg_lb + 0.9995 * discrim_reg_upb;
+	real abs_lower = discrim_miss_lb + 0.0005 * discrim_miss_upb;
+	real abs_upper = discrim_miss_lb + 0.9995 * discrim_miss_upb;
+
 	for (t in 1:T) {
     time_ind[t] = t;
   }
@@ -242,15 +280,15 @@ transformed data {
 }
 
 parameters {
-  vector<lower=-0.999,upper=0.999>[num_bills] sigma_abs_free;
+  vector<lower=abs_lower,upper=abs_upper>[num_bills] sigma_abs_free;
+  vector<lower=-1,upper=1>[num_corr > 0 ? 1 : 0] discrim_rho; // correlation of observed and missingness discriminations (Gaussian copula)
   vector[num_legis] L_full; // first T=1 params to constrain
   vector<lower=0>[gp_N] m_sd_free; // marginal standard deviation of GP
   vector[num_ls] ls_int; // extra intercepts for non-inflated latent space
   vector[num_ls] ls_int_abs; // extra intercepts for non-inflated latent space
   array[T] vector[(T>1 && time_proc!=5) ? num_legis : 0] L_tp1_var; // non-centered variance, don't need for splines
   vector<lower=ar1_down,upper=ar1_up>[(T>1 && time_proc==3) ? num_legis : 0] L_AR1; // AR-1 parameters for AR-1 model
-  vector<lower=-.999,upper=.999>[pos_discrim == 0 ? num_bills : 0] sigma_reg_free;
-  //vector<lower=0>[pos_discrim == 1 ? num_bills : 0] sigma_reg_pos;
+  vector<lower=reg_lower,upper=reg_upper>[num_bills] sigma_reg_free;
   vector[LX] legis_x;
   vector[SRX] sigma_reg_x;
   vector[SAX] sigma_abs_x;
@@ -542,9 +580,12 @@ for(n in 1:num_legis) {
 if(S_type==1 && const_type==1) {
   // both ID and map for persons
   //sigma_reg_free ~ normal(0, discrim_reg_sd);
-  if(debug_mode==2) print("Adding genbeta_vec_lpdf(sigma_reg_free|discrim_reg_scale,discrim_reg_shape,discrim_reg_lb,discrim_reg_upb) to target(): ",genbeta_vec_lpdf(sigma_reg_free|discrim_reg_scale,discrim_reg_shape,discrim_reg_lb,discrim_reg_upb));
-  target += genbeta_vec_lpdf(sigma_reg_free|discrim_reg_scale,discrim_reg_shape,discrim_reg_lb,discrim_reg_upb);
-  //sigma_reg_pos ~ exponential(1/discrim_reg_scale);
+  if(pos_discrim==0) {
+    if(debug_mode==2) print("Adding genbeta_vec_lpdf(sigma_reg_free|discrim_reg_scale,discrim_reg_shape,discrim_reg_lb,discrim_reg_upb) to target(): ",genbeta_vec_lpdf(sigma_reg_free|discrim_reg_scale,discrim_reg_shape,discrim_reg_lb,discrim_reg_upb));
+    target += genbeta_vec_lpdf(sigma_reg_free|discrim_reg_scale,discrim_reg_shape,discrim_reg_lb,discrim_reg_upb);
+  } else {
+    sigma_reg_free ~ exponential(1/discrim_reg_scale);
+  }
   if(debug_mode==2) print("Adding genbeta_vec_lpdf(sigma_abs_free|discrim_abs_scale,discrim_abs_shape,discrim_miss_lb,discrim_miss_upb) to target(): ",genbeta_vec_lpdf(sigma_abs_free|discrim_abs_scale,discrim_abs_shape,discrim_miss_lb,discrim_miss_upb));
   target += genbeta_vec_lpdf(sigma_abs_free|discrim_abs_scale,discrim_abs_shape,discrim_miss_lb,discrim_miss_upb);
   B_int_free ~ normal(0,diff_reg_sd);
@@ -556,7 +597,10 @@ if(S_type==1 && const_type==1) {
   A_int_free ~ normal(0,diff_abs_sd);
   if(debug_mode==2) print("Adding genbeta_vec_lpdf(sigma_abs_free|discrim_abs_scale,discrim_abs_shape,discrim_miss_lb,discrim_miss_upb) to target(): ",genbeta_vec_lpdf(sigma_abs_free|discrim_abs_scale,discrim_abs_shape,discrim_miss_lb,discrim_miss_upb));
   target += genbeta_vec_lpdf(sigma_abs_free|discrim_abs_scale,discrim_abs_shape,discrim_miss_lb,discrim_miss_upb);
-  
+
+  if(pos_discrim==1) {
+    sigma_reg_free ~ exponential(1/discrim_reg_scale);
+  } else {
     target += id_params2(sigma_reg_free,
                         restrict_high,
                         restrict_low,
@@ -572,9 +616,8 @@ if(S_type==1 && const_type==1) {
                         restrict_N_high,
                         restrict_N_low,
                         debug_mode);
-  
-  
-  
+  }
+
 } else if(S_type==0 && const_type==1) {
   
   // map items, ID persons
@@ -633,9 +676,28 @@ if(S_type==1 && const_type==1) {
   }
   
 }
-  // temporary
-  
-  //L_full ~ normal(0,legis_sd);
+  // Gaussian copula correlating the observed and missingness discriminations of
+  // inflated items. The priors above are each discrimination's marginal
+  // distribution, so this term only adds their dependence.
+  if(num_corr > 0) {
+    vector[num_corr] z_reg;
+    vector[num_corr] z_abs;
+
+    for(k in 1:num_corr) {
+      int i = corr_items[k];
+      if(pos_discrim == 1) {
+        z_reg[k] = exponential_normal_score(sigma_reg_free[i], 1 / discrim_reg_scale);
+      } else {
+        z_reg[k] = genbeta_normal_score(sigma_reg_free[i], discrim_reg_scale, discrim_reg_shape,
+                                        discrim_reg_lb, discrim_reg_upb);
+      }
+      z_abs[k] = genbeta_normal_score(sigma_abs_free[i], discrim_abs_scale, discrim_abs_shape,
+                                      discrim_miss_lb, discrim_miss_upb);
+    }
+
+    target += beta_lpdf((discrim_rho[1] + 1) / 2 | discrim_corr_eta, discrim_corr_eta);
+    target += gaussian_copula_lpdf(z_reg | z_abs, discrim_rho[1]);
+  }
 
   //all model types
   if(debug_mode==1) print("target before reduce sum = ", target());

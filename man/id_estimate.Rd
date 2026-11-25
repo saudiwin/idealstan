@@ -43,6 +43,8 @@ id_estimate(
   discrim_reg_shape = 2,
   discrim_miss_scale = 2,
   discrim_miss_shape = 2,
+  discrim_corr = FALSE,
+  discrim_corr_eta = 2,
   person_sd = 3,
   time_fix_sd = 0.1,
   time_var = 10,
@@ -214,7 +216,10 @@ observed discrimination parameters (default is +1)}
 
 \item{discrim_reg_lb}{Lower bound of the rescaled Beta distribution for
 observed discrimination parameters (default is -1). Set to 0 for
-conventional IRT.}
+conventional IRT. If \code{discrim_reg_lb} and \code{discrim_reg_upb} are both positive,
+the observed discriminations instead get an exponential prior with mean
+\code{discrim_reg_scale} and no upper bound, and the identification constraints are
+not used (the sign of the scale is fixed by the positive discriminations).}
 
 \item{discrim_miss_upb}{Upper bound of the rescaled Beta distribution for
 missing discrimination parameters (default is +1)}
@@ -234,6 +239,22 @@ of the missingness discrimination parameters.}
 
 \item{discrim_miss_shape}{Set the shape parameter for the rescaled Beta distribution
 of the missingness discrimination parameters.}
+
+\item{discrim_corr}{Whether to let each item's observed discrimination and
+missingness discrimination be correlated. If \code{TRUE}, the priors of the two
+discriminations are joined with a Gaussian copula that has a single correlation
+parameter (\code{discrim_rho}) shared by all items. Each discrimination keeps its usual
+prior as its marginal distribution, so only their dependence is added. This applies
+to items with a missing-data inflated model (model types 2, 4, 6, 8, 10, 12, 16
+and 18), except latent-space models and, when \code{const_type="items"}, the items
+pinned for identification. The correlation is only informed by inflated items
+with missing data, so with few such items its posterior will mostly reflect its
+prior. See \code{summary(fit, pars='discrim_corr')}. Default is \code{FALSE}.}
+
+\item{discrim_corr_eta}{Prior for the correlation when \code{discrim_corr=TRUE}:
+\code{(discrim_rho + 1)/2} has a Beta(\code{discrim_corr_eta}, \code{discrim_corr_eta}) prior,
+which is the LKJ prior for a 2 x 2 correlation matrix. A value of 1 is uniform
+on (-1, 1); larger values favour correlations closer to 0. Default is 2.}
 
 \item{person_sd}{The standard deviation of the Normal distribution prior for
 persons (all non-constrained person ideal point parameters). Default is weakly informative (3)

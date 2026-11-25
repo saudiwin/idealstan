@@ -814,8 +814,11 @@ id_make <- function(score_data=NULL,
 #' @param discrim_reg_upb Upper bound of the rescaled Beta distribution for 
 #' observed discrimination parameters (default is +1)
 #' @param discrim_reg_lb Lower bound of the rescaled Beta distribution for 
-#' observed discrimination parameters (default is -1). Set to 0 for 
-#' conventional IRT.
+#' observed discrimination parameters (default is -1). Set to 0 for
+#' conventional IRT. If `discrim_reg_lb` and `discrim_reg_upb` are both positive,
+#' the observed discriminations instead get an exponential prior with mean
+#' `discrim_reg_scale` and no upper bound, and the identification constraints are
+#' not used (the sign of the scale is fixed by the positive discriminations).
 #' @param discrim_miss_upb Upper bound of the rescaled Beta distribution for 
 #' missing discrimination parameters (default is +1)
 #' @param discrim_miss_lb Lower bound of the rescaled Beta distribution for 
@@ -829,6 +832,20 @@ id_make <- function(score_data=NULL,
 #' of the missingness discrimination parameters.
 #' @param discrim_miss_shape Set the shape parameter for the rescaled Beta distribution
 #' of the missingness discrimination parameters.
+#' @param discrim_corr Whether to let each item's observed discrimination and
+#' missingness discrimination be correlated. If `TRUE`, the priors of the two
+#' discriminations are joined with a Gaussian copula that has a single correlation
+#' parameter (`discrim_rho`) shared by all items. Each discrimination keeps its usual
+#' prior as its marginal distribution, so only their dependence is added. This applies
+#' to items with a missing-data inflated model (model types 2, 4, 6, 8, 10, 12, 16
+#' and 18), except latent-space models and, when `const_type="items"`, the items
+#' pinned for identification. The correlation is only informed by inflated items
+#' with missing data, so with few such items its posterior will mostly reflect its
+#' prior. See `summary(fit, pars='discrim_corr')`. Default is `FALSE`.
+#' @param discrim_corr_eta Prior for the correlation when `discrim_corr=TRUE`:
+#' `(discrim_rho + 1)/2` has a Beta(`discrim_corr_eta`, `discrim_corr_eta`) prior,
+#' which is the LKJ prior for a 2 x 2 correlation matrix. A value of 1 is uniform
+#' on (-1, 1); larger values favour correlations closer to 0. Default is 2.
 #' @param restrict_var Whether to fix the variance parameter for the first person trajectory. Default
 #' is FALSE (usually not necessary).
 #' @param time_fix_sd The variance of the over-time component of the first person/legislator
@@ -1045,6 +1062,8 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                         discrim_reg_shape=2,
                         discrim_miss_scale=2,
                         discrim_miss_shape=2,
+                        discrim_corr=FALSE,
+                        discrim_corr_eta=2,
                         person_sd=3,
                         time_fix_sd=.1,
                         time_var=10,
@@ -1250,6 +1269,8 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                          discrim_reg_shape=discrim_reg_shape,
                          discrim_miss_scale=discrim_miss_scale,
                          discrim_miss_shape=discrim_miss_shape,
+                         discrim_corr=discrim_corr,
+                         discrim_corr_eta=discrim_corr_eta,
                          person_sd=person_sd,
                          time_fix_sd=time_fix_sd,
                          time_var=time_var,
@@ -1288,6 +1309,12 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   out_list <- all_data$out_list
 
   .warn_inflated_no_missing(remove_list)
+
+  if(isTRUE(discrim_corr) && this_data$num_corr == 0) {
+    warning("discrim_corr=TRUE has no effect because no items use a missing-data ",
+            "inflated model (model types 2, 4, 6, 8, 10, 12, 16 or 18) with an ",
+            "unpinned discrimination.", call.=FALSE)
+  }
 
   # need to save n_cats
   
