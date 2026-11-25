@@ -40,6 +40,7 @@ id_sim_gen(
   spline_intercept_sd = 0.5,
   spline_basis_sd = 0.5,
   phi = 1,
+  binom_trials = 10,
   gp_rho = 0.5,
   gp_alpha = 0.5,
   gp_nugget = 0.1
@@ -83,7 +84,7 @@ the effect of item missing covariates on absence discrimination parameters (nu).
 Length must match the number of columns in \code{item_miss_cov} matrix.}
 
 \item{model_type}{One of \code{'binary'}, \code{'ordinal_rating'}, \code{'ordinal_grm'}, \code{'poisson'}
-\code{'normal'}, or \code{'lognormal'}}
+\code{'normal'}, \code{'lognormal'}, \code{'ordbeta'} or \code{'binomial'}}
 
 \item{latent_space}{Whether to use the latent space formulation of the ideal point model
 \code{FALSE} by default. NOTE: currently, the package only has estimation for a
@@ -161,6 +162,10 @@ coefficients used to create the simulated ideal points from the spline function}
 
 \item{phi}{The phi (dispersion) parameter for the ordered beta distribution
 deviation of the outcome (i.e. the square root of the variance).}
+
+\item{binom_trials}{If \code{model_type} is \code{'binomial'}, the number of trials for each
+outcome: either a single number or a vector with one value per person-item observation.
+The simulated data has these in the column \code{outcome_trials}.}
 
 \item{gp_rho}{The rho parameter to the squared exponential kernel function
 for the GP model}

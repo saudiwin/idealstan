@@ -60,6 +60,11 @@ setGeneric('id_post_pred',signature='object',
 #' @param type Whether to produce posterior predictive values (`'predict'`, the default),
 #' the posterior expected (average) values (`'epred'`),
 #' or log-likelihood values (`'log_lik'`). See the How to Evaluate Models vignette for more info.
+#' The expected value is the mean of the outcome: the probability of a 1 for binary 
+#' models, the expected category (1 = lowest) for ordinal models, and the mean count, 
+#' number of successes or value for the other models. For models with missing-data 
+#' inflation it is multiplied by the probability that the outcome is observed, and the 
+#' log-likelihood includes the probability of the outcome being observed or missing.
 #' @param output If the model has an unbounded outcome (Poisson, continuous, etc.), then
 #' specify whether to show the `'observed'` data (the default) or the binary 
 #' output `'missing'` showing whether an observation was predicted as missing or not
@@ -192,8 +197,10 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,
   
   if(length(object@this_data$Y_int)>1) {
     Y_int <- new_stan_data$stan_data$Y_int[this_sample]
+    trials <- new_stan_data$stan_data$trials[this_sample]
   } else {
     Y_int <- new_stan_data$stan_data$Y_int
+    trials <- new_stan_data$stan_data$trials
   }
   
   modelpoints <- new_stan_data$stan_data$mm[this_sample]
@@ -419,7 +426,9 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,
              `13`=.binary,
              `14`=.binary,
              `15`=.ordbeta,
-             `16`=.ordbeta)
+             `16`=.ordbeta,
+             `17`=.binomial,
+             `18`=.binomial)
       
       over_models_obj <- lapply(m, function(item)  {
         
@@ -452,7 +461,7 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,
                                      N=length(person_points[this_obs]),
                                      ordinal_outcomes=1:unique(object@score_data@score_matrix$ordered_id[this_obs]),
                                      pred_outcome=pred_outcome,
-                                     inflate=item$model_id %in% c(2,4,6,8,10,12,14,16),
+                                     inflate=item$model_id %in% c(2,4,6,8,10,12,14,16,18),
                                      latent_space=item$model_id %in% c(13,14),
                                      time_points=time_points[this_obs],
                                      item_points=bill_points[this_obs],
@@ -495,7 +504,7 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,
          
       } else {
         
-        if(item$model_id %in% c(1,2,7,8,13,14)) {
+        if(item$model_id %in% c(1,2,7,8,13,14,17,18)) {
           outcome <- Y_int[this_obs]
           miss_val <- new_stan_data$stan_data$y_int_miss
         } else {
@@ -503,37 +512,54 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,
           miss_val <- new_stan_data$stan_data$y_cont_miss
         }
         
+        # draws of item-specific parameters, from the same chains and draws
+        # as the other parameters (draws x variables matrix)
+        item_draws <- function(vars) {
+          out <- as_draws_array(object@stan_samples$draws(vars))[,use_chain,] %>% as_draws_matrix()
+          matrix(as.numeric(out[these_draws,]), nrow=length(these_draws))
+        }
+
         if(item$model_id %in% c(15,16)) {
-          
-          cutpoints <- object@stan_samples %>% 
-            gather_draws(ordbeta_cut[item_id,cut]) %>% 
-            filter(.chain %in% use_chain,
-                   .draw %in% these_draws)
-          
-          phi <- as_draws_array(object@stan_samples$draws("phi"))[,use_chain,] %>% as_draws_matrix()
-          phi <- phi[these_draws,]
-          
+
+          # each ordered beta item has its own cutpoints and phi
+          this_ordbeta <- new_stan_data$stan_data$ordbeta_id[item$item_point]
+          cutpoints <- item_draws(paste0("ordbeta_cut[",this_ordbeta,",",1:2,"]"))
+          phi <- item_draws(paste0("phi[",this_ordbeta,"]"))[,1]
+
         } else {
-          
+
           cutpoints <- NULL
           phi <- NULL
-          
+
         }
-      
+
+        if(item$model_id %in% c(9,10,11,12)) {
+
+          # each normal/log-normal item has its own residual SD
+          this_sigma <- new_stan_data$stan_data$type_het_var[item$item_point]
+          sigma_sd <- item_draws(paste0("extra_sd[",this_sigma,"]"))[,1]
+
+        } else {
+
+          sigma_sd <- NULL
+
+        }
+
       out_predict <- rep_func(pr_absence=item$pr_absence,
                               pr_vote=item$pr_vote,
                               N=length(person_points[this_obs]),
                               ordinal_outcomes=1:unique(object@score_data@score_matrix$ordered_id[this_obs]),
                               pred_outcome=pred_outcome,
-                              inflate=item$model_id %in% c(2,4,6,8,10,12,14,16),
+                              inflate=item$model_id %in% c(2,4,6,8,10,12,14,16,18),
                               latent_space=item$model_id %in% c(13,14),
                               time_points=time_points[this_obs],
                               item_points=bill_points[this_obs],
                               max_val=max_val,
                               outcome=outcome,
                               miss_val=miss_val,
+                              trials=trials[this_obs],
                               person_points=person_points[this_obs],
-                              sigma_sd=as_draws_matrix(object@stan_samples$draws('extra_sd'))[these_draws,],
+                              sigma_sd=sigma_sd,
                               phi=phi,
                               cutpoints=cutpoints,
                               type=type,
@@ -564,7 +590,7 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,
       attr(out_predict,'item') <- item$item_point
       attr(out_predict,'this_obs') <- this_obs
       
-      if(item$model_id %in% c(1,2,3,4,5,6,7,8,13,14)) {
+      if(item$model_id %in% c(1,2,3,4,5,6,7,8,13,14,17,18)) {
         attr(out_predict,"output_type") <- "discrete"
       } else {
         attr(out_predict,"output_type") <- "continuous"
@@ -596,7 +622,7 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,
       
       attr(out_mods[[m]], "model") <- unique(modelpoints)[m]
       
-      if(unique(modelpoints)[m] %in% c(1,2,3,4,5,6,7,8,13,14)) {
+      if(unique(modelpoints)[m] %in% c(1,2,3,4,5,6,7,8,13,14,17,18)) {
         attr(out_mods[[m]],"output_type") <- "discrete"
       } else {
         attr(out_mods[[m]],"output_type") <- "continuous"

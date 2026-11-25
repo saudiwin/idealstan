@@ -404,7 +404,12 @@ the number of the model in the list to the \code{model_type} option to fit the m
 \item Latent Space (binary response) ideal point model with missing-data inflation
 \item Ordered Beta (proportion/percentage) with no missing data
 \item Ordered Beta (proportion/percentage) with missing-data inflation
+\item Binomial (successes out of a number of trials) with no missing-data inflation
+\item Binomial (successes out of a number of trials) with missing-data inflation
 }
+
+Binomial models need the number of trials for each outcome, passed to the
+\code{outcome_trials} argument of \code{\link[=id_make]{id_make()}}.
 }
 \section{Time-Varying Inference}{
 

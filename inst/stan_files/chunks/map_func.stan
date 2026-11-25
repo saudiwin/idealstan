@@ -7,6 +7,7 @@ real partial_sum(array[,] int y_slice,
                  int gp_N,
                  int num_legis,
                  array[] int Y_int,
+                 array[] int trials, // number of trials for binomial outcomes
                  array[] real Y_cont,
                  int y_int_miss,
                  real y_cont_miss,
