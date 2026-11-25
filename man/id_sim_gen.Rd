@@ -26,6 +26,7 @@ id_sim_gen(
   discrim_reg_shape = 2,
   discrim_miss_scale = 2,
   discrim_miss_shape = 2,
+  discrim_corr = 0,
   diff_sd = 3,
   time_points = 1,
   time_process = "random",
@@ -118,6 +119,12 @@ distribution for the missingness discrimination parameters (nu)}
 
 \item{discrim_miss_shape}{The shape parameter for the generalized Beta
 distribution for the missingness discrimination parameters (nu)}
+
+\item{discrim_corr}{The correlation between each item's observed (gamma) and
+missingness (nu) discriminations, between -1 and 1. The two are drawn from a
+Gaussian copula with this correlation, so each keeps its generalized Beta
+distribution. Corresponds to \code{discrim_corr=TRUE} in \code{\link[=id_estimate]{id_estimate()}}. Default is 0
+(independent discriminations).}
 
 \item{diff_sd}{The SD of the difficulty parameters (bill/item intercepts)
 for both missing and observed parameters (beta and omega)}

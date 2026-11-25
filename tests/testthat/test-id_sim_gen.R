@@ -703,3 +703,36 @@ test_that("id_sim_gen produces correct number of persons and items", {
   expect_equal(length(result@simul_data$true_person), n_person)
   expect_equal(length(result@simul_data$true_reg_discrim), n_items)
 })
+
+test_that("id_sim_gen draws discriminations from the same generalized beta as the Stan prior", {
+  skip_on_cran()
+
+  # the Stan prior is genbeta(alpha = scale, beta = shape) on (lb, upb)
+  ks_p <- function(x, a, b, lb = -1, upb = 1) {
+    suppressWarnings(ks.test((x - lb) / (upb - lb), "pbeta", a, b)$p.value)
+  }
+
+  set.seed(11)
+  for (corr in c(0, 0.5)) {
+    sim <- id_sim_gen(num_person = 2, num_items = 2000, inflate = TRUE,
+                      discrim_reg_scale = 4, discrim_reg_shape = 1.5,
+                      discrim_miss_scale = 0.5, discrim_miss_shape = 0.5,
+                      discrim_corr = corr)
+    expect_gt(ks_p(sim@simul_data$true_reg_discrim, 4, 1.5), 0.001)
+    expect_gt(ks_p(sim@simul_data$true_abs_discrim, 0.5, 0.5), 0.001)
+  }
+
+  # equal shapes keep the earlier draws for a given seed
+  set.seed(12)
+  x <- .genbeta_sample(50, 2, 2, -1, 2)
+  set.seed(12)
+  y <- numeric(50); count <- 0
+  while (count < 50) {
+    prop <- runif(1, -1, 1)
+    if (runif(1) < dbeta((prop + 1) / 2, 2, 2) / dbeta(0.5, 2, 2)) {
+      count <- count + 1
+      y[count] <- prop
+    }
+  }
+  expect_equal(x, y)
+})
