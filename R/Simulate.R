@@ -34,7 +34,7 @@
 #' the effect of item missing covariates on absence discrimination parameters (nu).
 #' Length must match the number of columns in `item_miss_cov` matrix.
 #' @param model_type One of `'binary'`, `'ordinal_rating'`, `'ordinal_grm'`, `'poisson'`
-#' `'normal'`, or `'lognormal'`
+#' `'normal'`, `'lognormal'`, `'ordbeta'` or `'binomial'`
 #' @param latent_space Whether to use the latent space formulation of the ideal point model 
 #' `FALSE` by default. NOTE: currently, the package only has estimation for a 
 #' binary response with the latent space formulation.
@@ -87,6 +87,9 @@
 #' coefficients used to create the simulated ideal points from the spline function
 #' @param phi The phi (dispersion) parameter for the ordered beta distribution
 #' deviation of the outcome (i.e. the square root of the variance).
+#' @param binom_trials If `model_type` is `'binomial'`, the number of trials for each
+#' outcome: either a single number or a vector with one value per person-item observation.
+#' The simulated data has these in the column `outcome_trials`.
 #' @param gp_rho The rho parameter to the squared exponential kernel function
 #' for the GP model
 #' @param gp_alpha The alpha parameter to the squared exponential kernel function
@@ -139,6 +142,7 @@ id_sim_gen <- function(num_person=20,num_items=50,
                        spline_intercept_sd=0.5,
                        spline_basis_sd=0.5,
                        phi=1,
+                       binom_trials=10,
                        gp_rho=0.5,
                        gp_alpha=0.5,
                        gp_nugget=.1) {
@@ -493,7 +497,8 @@ id_sim_gen <- function(num_person=20,num_items=50,
                      `poisson`=.poisson,
                      normal=.normal,
                      lognormal=.lognormal,
-                     ordbeta=.ordbeta)
+                     ordbeta=.ordbeta,
+                     binomial=.binomial)
   
   if(is.null(run_func)) {
     stop("Please select one of the available options for model_type from the help file.")
@@ -516,7 +521,8 @@ id_sim_gen <- function(num_person=20,num_items=50,
            item_discrim_cov_effect=item_discrim_cov_effect_final,
            item_miss_x=item_miss_x,
            item_miss_discrim_cov_effect=item_miss_discrim_cov_effect_final,
-           phi=phi)
+           phi=phi,
+           trials=binom_trials)
 
   outobj@simul_data <- list(num_person=num_person,
                             num_items=num_items,

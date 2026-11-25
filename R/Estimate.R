@@ -23,6 +23,13 @@
 #' 
 #' For discrete data, it is recommended to include a numeric variable that starts at 0, such 
 #' as values of 0 and 1 for binary data and 0,1,2 for ordinal/categorical data.
+#' For count data (Poisson and binomial models), `outcome_disc` must be the count itself.
+#' 
+#' For binomial outcomes (model types 17 and 18 in [id_estimate()]), `outcome_disc` is the 
+#' number of successes and a second column, passed to `outcome_trials`, gives the number 
+#' of trials for each outcome (i.e., 3 successes out of 10 trials). The number of trials 
+#' can differ across rows but cannot be smaller than the number of successes. It is not 
+#' needed for rows with a missing outcome.
 #' For continuous (unbounded) data, it is recommended to standardize the outcome to improve
 #' model convergence and fit. 
 #' 
@@ -61,6 +68,9 @@
 #' measured score or vote in the data or a `rollcall` data object from package `pscl`.
 #' @param outcome_disc Column name of the outcome with discrete values in `score_data`, default is `"outcome_disc"`
 #' @param outcome_cont Column name of the outcome with discrete values in `score_data`, default is `"outcome_disc"`
+#' @param outcome_trials Column name of the number of trials for binomial outcomes 
+#' (model types 17 and 18) in `score_data`, default is `"outcome_trials"`. Only needed
+#' for binomial models, where `outcome_disc` is the number of successes.
 #' @param ordered_id Column name of the variable showing the count of categories for 
 #' ordinal/categorical items (must be at least 3 categories)
 #' @param ignore_id Optional column for identifying observations that should not be 
@@ -184,6 +194,7 @@
 id_make <- function(score_data=NULL,
                     outcome_disc='outcome_disc',
                     outcome_cont='outcome_cont',
+                    outcome_trials='outcome_trials',
                     person_id='person_id',
                     item_id='item_id',
                     time_id='time_id',
@@ -239,6 +250,7 @@ id_make <- function(score_data=NULL,
   # test for input and quote
   outcome_disc <- .check_quoted(outcome_disc,quo(outcome_disc))
   outcome_cont <- .check_quoted(outcome_cont,quo(outcome_cont))
+  outcome_trials <- .check_quoted(outcome_trials,quo(outcome_trials))
   ordered_id <- .check_quoted(ordered_id,quo(ordered_id))
   item_id <- .check_quoted(item_id,quo(item_id))
   time_id <- .check_quoted(time_id,quo(time_id))
@@ -271,6 +283,7 @@ id_make <- function(score_data=NULL,
   test_time <- try(pull(score_data,!!time_id),silent=TRUE)
   test_out_disc <- try(factor(pull(score_data,!!outcome_disc)),silent=TRUE)
   test_out_cont <- try(pull(score_data,!!outcome_cont),silent=TRUE)
+  test_out_trials <- try(pull(score_data,!!outcome_trials),silent=TRUE)
   test_ordered <- try(pull(score_data,!!ordered_id),silent=TRUE)
   
   if(any('try-error' %in% class(test_group))) {
@@ -288,6 +301,14 @@ id_make <- function(score_data=NULL,
     
   } else {
     score_rename$outcome_disc <- as.integer(test_out_disc)
+    # outcome_disc only keeps the order of the values, so also keep the
+    # numeric values, which count models (Poisson and binomial) need
+    score_rename$outcome_disc_raw <- suppressWarnings(as.numeric(as.character(pull(score_data,!!outcome_disc))))
+  }
+
+  if(!any('try-error' %in% class(test_out_trials))) {
+    # number of trials for binomial outcomes (model types 17 and 18)
+    score_rename$outcome_trials <- suppressWarnings(as.numeric(as.character(test_out_trials)))
   }
   
   if(any('try-error' %in% class(test_out_cont))) {
@@ -539,7 +560,7 @@ id_make <- function(score_data=NULL,
   
   
   # need to sort by integer vs. continuous
-  score_rename$discrete <- as.numeric(score_rename$model_id %in% c(1,2,3,4,5,6,7,8,13,14))
+  score_rename$discrete <- as.numeric(score_rename$model_id %in% c(1,2,3,4,5,6,7,8,13,14,17,18))
   score_rename <- arrange(score_rename,desc(discrete),person_id,item_id)
   
   outobj <- new('idealdata',
@@ -595,7 +616,12 @@ id_make <- function(score_data=NULL,
 #'   \item Latent Space (binary response) ideal point model with missing-data inflation
 #'   \item Ordered Beta (proportion/percentage) with no missing data
 #'   \item Ordered Beta (proportion/percentage) with missing-data inflation
+#'   \item Binomial (successes out of a number of trials) with no missing-data inflation
+#'   \item Binomial (successes out of a number of trials) with missing-data inflation
 #' }
+#' 
+#' Binomial models need the number of trials for each outcome, passed to the 
+#' `outcome_trials` argument of [id_make()].
 #' 
 #' @section Time-Varying Inference:
 #' 

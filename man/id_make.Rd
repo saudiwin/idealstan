@@ -8,6 +8,7 @@ id_make(
   score_data = NULL,
   outcome_disc = "outcome_disc",
   outcome_cont = "outcome_cont",
+  outcome_trials = "outcome_trials",
   person_id = "person_id",
   item_id = "item_id",
   time_id = "time_id",
@@ -32,6 +33,10 @@ measured score or vote in the data or a \code{rollcall} data object from package
 \item{outcome_disc}{Column name of the outcome with discrete values in \code{score_data}, default is \code{"outcome_disc"}}
 
 \item{outcome_cont}{Column name of the outcome with discrete values in \code{score_data}, default is \code{"outcome_disc"}}
+
+\item{outcome_trials}{Column name of the number of trials for binomial outcomes
+(model types 17 and 18) in \code{score_data}, default is \code{"outcome_trials"}. Only needed
+for binomial models, where \code{outcome_disc} is the number of successes.}
 
 \item{person_id}{Column name of the person/legislator ID index in \code{score_data},
 default is \code{'person_id'}. Should be integer, character or factor.}
@@ -120,6 +125,13 @@ ordinal variable (i.e., 3 for 3 categories).
 
 For discrete data, it is recommended to include a numeric variable that starts at 0, such
 as values of 0 and 1 for binary data and 0,1,2 for ordinal/categorical data.
+For count data (Poisson and binomial models), \code{outcome_disc} must be the count itself.
+
+For binomial outcomes (model types 17 and 18 in \code{\link[=id_estimate]{id_estimate()}}), \code{outcome_disc} is the
+number of successes and a second column, passed to \code{outcome_trials}, gives the number
+of trials for each outcome (i.e., 3 successes out of 10 trials). The number of trials
+can differ across rows but cannot be smaller than the number of successes. It is not
+needed for rows with a missing outcome.
 For continuous (unbounded) data, it is recommended to standardize the outcome to improve
 model convergence and fit.
 

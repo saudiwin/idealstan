@@ -10,7 +10,7 @@ This file is specifically for mapping over items.*/
 for(n in start2:end2) {
   
   // all models with missing data
-  array[7] int miss_mods = {2,4,6,8,10,12,16};
+  array[8] int miss_mods = {2,4,6,8,10,12,16,18};
   
   // maximum number of reported debug issues
   
@@ -27,12 +27,12 @@ for(n in start2:end2) {
   
   if(S_type==1) {
     
-    if(mm[n]>14) this_ordbeta = ordbeta_id[bb[n]];
+    if(mm[n]==15 || mm[n]==16) this_ordbeta = ordbeta_id[bb[n]];
     if(mm[n]>8 && mm[n]<13) this_sigma = type_het_var[bb[n]];
     
   } else {
     
-    if(mm[n]>14) this_ordbeta = ordbeta_id[s];
+    if(mm[n]==15 || mm[n]==16) this_ordbeta = ordbeta_id[s];
     if(mm[n]>8 && mm[n]<13) this_sigma = type_het_var[s];
     
   }
@@ -1055,13 +1055,44 @@ if(T==1) {
           log_prob += bernoulli_logit_lpmf(1|lin_mod_abs); 
           
         } else {
-          log_prob += bernoulli_logit_lpmf(1|lin_mod_abs_dyn); 
-          
+          log_prob += bernoulli_logit_lpmf(1|lin_mod_abs_dyn);
+
         }
       }
-      
+
+    } else if(mm[n]==17) {
+      //binomial no inflation
+
+      if(T==1) {
+        log_prob += binomial_logit_lpmf(Y_int[n]|trials[n],lin_mod_obs);
+      } else {
+        log_prob += binomial_logit_lpmf(Y_int[n]|trials[n],lin_mod_obs_dyn);
+      }
+
+    } else if(mm[n]==18) {
+      //binomial with missing-data inflation
+
+      if(Y_int[n]<y_int_miss) {
+        // observed data
+        if(T==1) {
+          log_prob += binomial_logit_lpmf(Y_int[n]|trials[n],lin_mod_obs);
+          log_prob += bernoulli_logit_lpmf(0|lin_mod_abs);
+        } else {
+          log_prob += binomial_logit_lpmf(Y_int[n]|trials[n],lin_mod_obs_dyn);
+          log_prob += bernoulli_logit_lpmf(0|lin_mod_abs_dyn);
+        }
+
+      } else {
+        //missing data
+        if(T==1) {
+          log_prob += bernoulli_logit_lpmf(1|lin_mod_abs);
+        } else {
+          log_prob += bernoulli_logit_lpmf(1|lin_mod_abs_dyn);
+        }
+      }
+
     }
-    
+
   // if(r_in(mm[n],{9,10,11,12})==1  && het_var>1) {
   //   
   //   this_var += 1;
