@@ -37,3 +37,7 @@ irt_standard_map_modified.stan
 .gitignore
 .gitignore
 model-172a441fafb42.stan
+
+# compiled Stan models (built locally by cmdstanr)
+inst/stan_files/irt_standard_map
+inst/stan_files/sim_gp
