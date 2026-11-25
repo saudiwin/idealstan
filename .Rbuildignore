@@ -66,3 +66,5 @@ Meta
 rw_sim.rds
 spline_sim.rds
 ^CRAN-SUBMISSION$
+^inst/stan_files/irt_standard_map$
+^inst/stan_files/sim_gp$
