@@ -23,6 +23,7 @@ id_plot_persons(
   group_color = TRUE,
   hpd_limit = NULL,
   sample_persons = NULL,
+  dim = 1,
   ...
 )
 }
@@ -67,6 +68,9 @@ specified in \code{item_plot}.}
 
 \item{sample_persons}{If you don't want to use the full number of persons/legislators from the model, enter a proportion (between 0 and 1) to select
 only a fraction of the persons/legislators.}
+
+\item{dim}{For models with more than one dimension (\code{num_dim} in \code{\link[=id_estimate]{id_estimate()}}), which
+dimension to plot. Default is 1.}
 
 \item{...}{Other options passed on to plotting function, currently ignored}
 }

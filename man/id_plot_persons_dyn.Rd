@@ -28,6 +28,7 @@ id_plot_persons_dyn(
   sample_persons = NULL,
   use_chain = NULL,
   add_cov = TRUE,
+  dim = 1,
   ...
 )
 }
@@ -92,6 +93,9 @@ Default is NULL which will use all chains and is recommended.}
 
 \item{add_cov}{Whether to add values of hierarchical person-level covariates to the
 time trends (defaults to TRUE).}
+
+\item{dim}{For models with more than one dimension (\code{num_dim} in \code{\link[=id_estimate]{id_estimate()}}), which
+dimension to plot. Default is 1.}
 
 \item{...}{Other options passed on to plotting function, currently ignored}
 }

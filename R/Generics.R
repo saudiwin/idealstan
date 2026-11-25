@@ -378,6 +378,11 @@ setMethod('sample_model',signature(object='idealdata'),
                   
                 }
                 
+              }
+
+              # parameters of dimensions 2 to D that go with the ones kept
+              if(isTRUE(this_data$D > 1)) {
+                keep_vars <- c(keep_vars, .keep_extra_dims(keep_vars))
               } 
               
               if(!is.null(keep_param$extra)) {
@@ -522,6 +527,7 @@ setMethod('id_model',signature(object='idealdata'),
           function(object,fixtype='vb',model_type=NULL,this_data=NULL,
                    restrict_ind_high=NULL,
                    restrict_ind_low=NULL,
+                   restrict_ind_dim=NULL,
                    num_restrict_high=NULL,
                    num_restrict_low=NULL,
                    fix_high=NULL,
@@ -629,6 +635,13 @@ setMethod('id_model',signature(object='idealdata'),
               object@restrict_ind_high <- restrict_ind_high
               object@restrict_ind_low <- restrict_ind_low
               object@constraint_type <- const_type
+              object@restrict_data$restrict_ind_dim <- .id_dim_prefix(object, restrict_ind_dim,
+                                                                       num_dim=this_data$D,
+                                                                       const_type=const_type,
+                                                                       use_groups=use_groups,
+                                                                       restrict_ind_high=restrict_ind_high,
+                                                                       restrict_ind_low=restrict_ind_low,
+                                                                       fix_high=fix_high)
               
               
             }
@@ -645,7 +658,8 @@ setMethod('id_model',signature(object='idealdata'),
 #'
 #' @param object An \code{idealstan} object fitted by \code{\link{id_estimate}}
 #' @param pars Either \code{'ideal_pts'} for person ideal points,
-#' \code{'items'} for items/bills difficulty and discrimination parameters,
+#' \code{'items'} for items/bills difficulty and discrimination parameters
+#' (with more than one dimension, both get a \code{Dimension} column),
 #' \code{'discrim_corr'} for the correlation of observed and missingness
 #' discriminations (models fit with \code{discrim_corr=TRUE} in \code{\link{id_estimate}}),
 #' and \code{'all'} for all parameters in the model, including incidental parameters.
@@ -688,37 +702,22 @@ setMethod('summary',signature(object='idealstan'),
                     tibble.print_min=100)
 
 
+            if(pars=='ideal_pts' && .num_dim(object) > 1) {
+
+              # one block of rows per dimension
+              out <- lapply(seq_len(.num_dim(object)), function(d) {
+                ideal_pts <- .summary_ideal_pts(object, high_limit=high_limit, low_limit=low_limit,
+                                                aggregated=aggregated, use_chain=use_chain, dim=d)
+                mutate(ideal_pts, Dimension=d, .after=Time_Point)
+              })
+
+              return(bind_rows(out))
+
+            }
+
             if(pars=='ideal_pts') {
-              ideal_pts <- .prepare_legis_data(object,
-                                               high_limit=high_limit,
-                                               low_limit=low_limit,
-                                               aggregated=aggregated,
-                                               use_chain=use_chain)
-              if(!("time_id" %in% names(ideal_pts))) {
-                ideal_pts$time_id=1
-              }
-              if(aggregated) {
-                ideal_pts <- select(ideal_pts,
-                                    Person=person_id,
-                                    Group=group_id,
-                                    Time_Point=time_id,
-                                    `Low Posterior Interval`=low_pt,
-                                    `Posterior Median`=median_pt,
-                                    `High Posterior Interval`=high_pt,
-                                    `Parameter Name`=legis)
-              } else {
-                # add in iteration numbers
-                ideal_pts <- group_by(ideal_pts,person_id,time_id) %>% 
-                  mutate(Iteration=1:n())
-                ideal_pts <- select(ideal_pts,
-                                    Person=person_id,
-                                    Group=group_id,
-                                    Time_Point=time_id,
-                                    Ideal_Points=ideal_pts,
-                                    Iteration,
-                                    `Parameter Name`=legis)
-              }
-              return(ideal_pts)
+              return(.summary_ideal_pts(object, high_limit=high_limit, low_limit=low_limit,
+                                        aggregated=aggregated, use_chain=use_chain))
             }
             
             if(pars=='items') {
@@ -766,6 +765,13 @@ setMethod('summary',signature(object='idealstan'),
                                       aggregated=aggregated,
                                       use_chain=use_chain) %>% bind_rows()
               }
+
+              if(.num_dim(object) > 1) {
+                item_points <- .item_extra_dims(object, item_points, high_limit=high_limit,
+                                                low_limit=low_limit, aggregated=aggregated,
+                                                use_chain=use_chain)
+              }
+
               return(item_points)
             }
 
@@ -804,25 +810,31 @@ setMethod('summary',signature(object='idealstan'),
                                    discrim_reg_cov='sigma_reg_x',
                                    discrim_infl_cov='sigma_abs_x')
               
-              to_sum <- object@stan_samples$draws(param_name)
-              
               # reset names of parameters
               new_names <- switch(pars,person_cov=object@score_data@person_cov,
-                                  discrim_reg=object@score_data@item_cov,
-                                  discrim_abs=object@score_data@item_cov_miss)
-              
-              attributes(to_sum)$dimnames$variable <- new_names
-              
+                                  discrim_reg_cov=object@score_data@item_cov,
+                                  discrim_infl_cov=object@score_data@item_cov_miss)
+
               if(!aggregated) {
+                to_sum <- object@stan_samples$draws(param_name)
+                attributes(to_sum)$dimnames$variable <- new_names
                 return(to_sum)
-              } else {
-                out_d <- tibble(Covariate=new_names,
-                                    `Posterior Median`=apply(to_sum,3,median),
-                                    `Posterior High Interval`=apply(to_sum,3,quantile,high_limit),
-                                    `Posterior Low Interval`=apply(to_sum,3,quantile,low_limit),
-                                    Parameter=param_name)
-                return(out_d)
               }
+
+              # one row per covariate (and per dimension with more than one)
+              out_d <- lapply(seq_len(.num_dim(object)), function(d) {
+                to_sum <- unclass(as_draws_matrix(.dim_draws(object, param_name, d)))
+                tibble(Covariate=new_names,
+                       Dimension=d,
+                       `Posterior Median`=apply(to_sum,2,median),
+                       `Posterior High Interval`=apply(to_sum,2,quantile,high_limit),
+                       `Posterior Low Interval`=apply(to_sum,2,quantile,low_limit),
+                       Parameter=if(d == 1) param_name else paste0(param_name, "_d"))
+              }) %>% bind_rows()
+
+              if(.num_dim(object) == 1) out_d$Dimension <- NULL
+
+              return(out_d)
               
             }
             
@@ -874,6 +886,9 @@ setGeneric('id_extract',signature='object',
 #' \code{'obs_diff'} for non-inflated item (bill) difficulty scores,
 #' \code{'miss_discrim'} for inflated item (bill) discrimination scores,
 #' and \code{'miss_diff'} for inflated item (bill) difficulty scores.
+#' With more than one dimension, \code{'persons'}, \code{'obs_discrim'} and
+#' \code{'miss_discrim'} also return the parameters of dimensions 2 to D
+#' (\code{L_full_d}, \code{sigma_reg_d} and \code{sigma_abs_d}).
 #' @param ... Any additional arguments passed on to the \code{\link[rstan]{extract}} function.
 #' @examples
 #' \donttest{

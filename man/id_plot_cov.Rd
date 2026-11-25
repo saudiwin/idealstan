@@ -16,6 +16,7 @@ id_plot_cov(
   upb = 0.95,
   facet_ncol = 2,
   cov_type = "person_cov",
+  dim = 1,
   ...
 )
 }
@@ -59,6 +60,9 @@ number of columns in the multiple plots}
 \item{cov_type}{Either \code{'person_cov'} for person or group-level hierarchical parameters,
 \code{'discrim_reg_cov'} for bill/item discrimination parameters from regular (non-inflated) model, and
 \code{'discrim_infl_cov'} for bill/item discrimination parameters from inflated model.}
+
+\item{dim}{For models with more than one dimension, the dimension whose covariate
+effects to plot. Default is 1.}
 
 \item{...}{Additional argument passed on to \code{id_me}}
 }

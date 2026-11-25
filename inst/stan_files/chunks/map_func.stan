@@ -105,7 +105,16 @@ real partial_sum(array[,] int y_slice,
                  real gp_rho,
                  real gp_alpha,
                  real ar1_down,
-                 real ar1_up) {
+                 real ar1_up,
+                 int D, // number of dimensions
+                 array[] int restrict_dim, // persons or items identifying dimensions 2 to D
+                 matrix L_full_d, // ideal points on dimensions 2 to D
+                 array[] matrix L_tp1_d, // time-varying ideal points on dimensions 2 to D
+                 matrix sigma_reg_d, // discriminations on dimensions 2 to D
+                 matrix sigma_abs_d, // missingness discriminations on dimensions 2 to D
+                 matrix legis_x_d,
+                 matrix sigma_reg_x_d,
+                 matrix sigma_abs_x_d) {
   
   // big loop over states
   real log_prob = 0;
@@ -121,6 +130,10 @@ real partial_sum(array[,] int y_slice,
     vector[y_slice[r,3] - y_slice[r,2] + 1] legis_calc; // store calculations for hierarchical covariates
     vector[y_slice[r,3] - y_slice[r,2] + 1] sigma_reg_calc;
     vector[y_slice[r,3] - y_slice[r,2] + 1] sigma_abs_calc;
+    // covariate effects on dimensions 2 to D
+    matrix[y_slice[r,3] - y_slice[r,2] + 1, D - 1] legis_calc_d;
+    matrix[y_slice[r,3] - y_slice[r,2] + 1, D - 1] sigma_reg_calc_d;
+    matrix[y_slice[r,3] - y_slice[r,2] + 1, D - 1] sigma_abs_calc_d;
     row_vector[num_basis] a;
     
     s = y_slice[r,1];
@@ -135,11 +148,14 @@ real partial_sum(array[,] int y_slice,
     
     int to_fix_high = r_in(s, restrict_high);
     int to_fix_low = r_in(s, restrict_low);
+    // with D > 1, the persons identifying dimensions 2 to D are pinned at 0 on dimension 1
+    int to_fix_dim = D > 1 ? r_in(s, restrict_dim) : 0;
     
 
     if(const_type == 1 && S_type == 1) {
-      
-        if(pos_discrim == 0) {
+
+        // positive discriminations don't fix the rotation, so with D > 1 persons are still pinned
+        if(pos_discrim == 0 || D > 1) {
           
             if(to_fix_high>0) {
                 if(time_proc == 2 || time_proc==3) {
@@ -168,6 +184,13 @@ real partial_sum(array[,] int y_slice,
                     real term = normal_lpdf(L_full[s] | fix_low[to_fix_low], restrict_sd_low);
                     log_prob += term;
                     if(debug_mode==2) print("Added normal_lpdf(L_full[s] | fix_low, restrict_sd_low) to log_prob: ", term);
+                }
+            } else if(to_fix_dim>0) {
+                if(time_proc == 2 || time_proc==3) {
+                    log_prob += normal_lpdf(L_tp1_var[1, s] | 0, restrict_sd_high[1]);
+                    log_prob += normal_lpdf(L_full[s] | 0, legis_sd);
+                } else {
+                    log_prob += normal_lpdf(L_full[s] | 0, restrict_sd_high[1]);
                 }
             } else {
                 if(time_proc == 2) {
@@ -409,6 +432,24 @@ real partial_sum(array[,] int y_slice,
       sigma_abs_calc = sax_pred[start2:end2,]*sigma_abs_x;
     } else {
       sigma_abs_calc = rep_vector(0.0,end2 - start2 + 1);
+    }
+
+    if(D > 1) {
+      if(cols(legis_pred)>0) {
+        legis_calc_d = legis_pred[start2:end2,]*legis_x_d;
+      } else {
+        legis_calc_d = rep_matrix(0.0, end2 - start2 + 1, D - 1);
+      }
+      if(cols(srx_pred)>0) {
+        sigma_reg_calc_d = srx_pred[start2:end2,]*sigma_reg_x_d;
+      } else {
+        sigma_reg_calc_d = rep_matrix(0.0, end2 - start2 + 1, D - 1);
+      }
+      if(cols(sax_pred)>0) {
+        sigma_abs_calc_d = sax_pred[start2:end2,]*sigma_abs_x_d;
+      } else {
+        sigma_abs_calc_d = rep_matrix(0.0, end2 - start2 + 1, D - 1);
+      }
     }
 
 if(prior_only==0) {

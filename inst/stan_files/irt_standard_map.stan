@@ -53,6 +53,50 @@ functions {
       (r2 * (dot_self(z1) + dot_self(z2)) - 2 * rho * dot_product(z1, z2)) / (2 * (1 - r2));
   }
 
+  // Time paths of persons' ideal points on dimensions 2 to D (one column per
+  // dimension), built the same way as dimension 1 when persons are mapped over:
+  // random walk (time_proc 2) and AR(1) (3) from non-centered innovations, or
+  // the raw parameters themselves when the series is centered (T >= center_cutoff)
+  // or a Gaussian process (4); splines (5) from the basis coefficients.
+  array[] matrix extra_dim_paths(int T, int time_proc, int center_cutoff,
+                                 array[] matrix raw, matrix ar1, matrix time_sd_d,
+                                 array[,] row_vector a_raw_d, matrix B,
+                                 int ignore, array[,] int ignore_mat,
+                                 int N, int Dm) {
+    array[T] matrix[N, Dm] path;
+
+    if (time_proc == 5) {
+      for (n in 1:N) {
+        for (d in 1:Dm) {
+          row_vector[T] x = a_raw_d[n, d] * B;
+          for (t in 1:T) path[t][n, d] = x[t];
+        }
+      }
+    } else if (time_proc == 4 || T >= center_cutoff) {
+      path = raw;
+    } else {
+      for (n in 1:N) {
+        int start_time = 1;
+        int end_time = T + 1;
+        if (ignore == 1) {
+          start_time = ignore_mat[n, 1];
+          end_time = ignore_mat[n, 2];
+        }
+        for (t in 1:T) {
+          if (t == 1 || t <= start_time || t >= end_time) {
+            path[t][n] = raw[t][n];
+          } else if (time_proc == 2) {
+            path[t][n] = path[t - 1][n] + time_sd_d[n] .* raw[t][n];
+          } else {
+            path[t][n] = raw[1][n] + ar1[n] .* path[t - 1][n] + time_sd_d[n] .* raw[t][n];
+          }
+        }
+      }
+    }
+
+    return path;
+  }
+
 int r_in(int pos,array[] int pos_var) {
   
   for (p in 1:(size(pos_var))) {
@@ -121,6 +165,9 @@ data {
   array[num_restrict_low] int restrict_low; // position of low valued fixed parameter
   array[num_restrict_high] real fix_high; // value to fix high parameter to
   array[num_restrict_low] real fix_low; // value to fix low parameter to
+  int<lower=1> D; // number of dimensions of the ideal points
+  array[D - 1] int<lower=1> restrict_dim; // person or item that identifies each of dimensions 2 to D
+  array[D - 1] real fix_dim; // value the identifying person is pinned to on its dimension (const_type 1)
   real discrim_reg_upb;
   real discrim_reg_lb;
   real discrim_miss_upb;
@@ -185,6 +232,82 @@ transformed data {
 	real reg_upper = pos_discrim == 1 ? positive_infinity() : discrim_reg_lb + 0.9995 * discrim_reg_upb;
 	real abs_lower = discrim_miss_lb + 0.0005 * discrim_miss_upb;
 	real abs_upper = discrim_miss_lb + 0.9995 * discrim_miss_upb;
+
+	// Dimensions 2 to D. When items are pinned (const_type 2), the rotation is
+	// identified with a lower-triangular discrimination matrix: the item pinned
+	// high on dimension 1 has discriminations of 0 on dimensions 2 to D, and the
+	// item identifying dimension d has 0 on the dimensions after d and the pinned
+	// prior on dimension d (unless discriminations are positive).
+	int Dm = D - 1;
+	array[num_bills, Dm] int zero_d = rep_array(0, num_bills, Dm);
+	array[num_bills, Dm] int anchor_d = rep_array(0, num_bills, Dm);
+	int num_reg_d = 0; // free discriminations on dimensions 2 to D
+	int num_reg_d_anchor = 0;
+
+	if(Dm > 0 && const_type == 2) {
+	  for(d in 1:Dm) zero_d[restrict_high[1], d] = 1;
+	  for(k in 1:Dm) {
+	    if(pos_discrim == 0) anchor_d[restrict_dim[k], k] = 1;
+	    for(d in (k + 1):Dm) zero_d[restrict_dim[k], d] = 1;
+	  }
+	}
+
+	for(i in 1:num_bills) {
+	  for(d in 1:Dm) {
+	    num_reg_d += 1 - zero_d[i, d];
+	    num_reg_d_anchor += anchor_d[i, d];
+	  }
+	}
+
+	array[num_reg_d] int reg_d_item;
+	array[num_reg_d] int reg_d_dim;
+	array[num_reg_d - num_reg_d_anchor] int reg_d_std; // free discriminations with the standard prior
+	array[num_reg_d_anchor] int reg_d_anchor; // free discriminations with the pinned prior
+
+	{
+	  int k = 0;
+	  int k_std = 0;
+	  int k_anchor = 0;
+	  for(i in 1:num_bills) {
+	    for(d in 1:Dm) {
+	      if(zero_d[i, d] == 0) {
+	        k += 1;
+	        reg_d_item[k] = i;
+	        reg_d_dim[k] = d;
+	        if(anchor_d[i, d] == 1) {
+	          k_anchor += 1;
+	          reg_d_anchor[k_anchor] = k;
+	        } else {
+	          k_std += 1;
+	          reg_d_std[k_std] = k;
+	        }
+	      }
+	    }
+	  }
+	}
+
+	// copula pairs on dimensions 2 to D: the free, unpinned discriminations of the
+	// items in corr_items
+	int num_corr_d = 0;
+	for(k in 1:num_corr) {
+	  for(d in 1:Dm) {
+	    num_corr_d += (zero_d[corr_items[k], d] == 0 && anchor_d[corr_items[k], d] == 0);
+	  }
+	}
+	array[num_corr_d] int corr_d_item;
+	array[num_corr_d] int corr_d_dim;
+	{
+	  int j = 0;
+	  for(k in 1:num_corr) {
+	    for(d in 1:Dm) {
+	      if(zero_d[corr_items[k], d] == 0 && anchor_d[corr_items[k], d] == 0) {
+	        j += 1;
+	        corr_d_item[j] = corr_items[k];
+	        corr_d_dim[j] = d;
+	      }
+	    }
+	  }
+	}
 
 	for (t in 1:T) {
     time_ind[t] = t;
@@ -316,6 +439,19 @@ parameters {
   vector<lower=0>[gp_N] time_var_gp_free;
   vector<lower=0>[(T>1 && time_proc!=4 && restrict_var==1) ? num_legis-1 : (T>1 && time_proc!=4 ? num_legis : 0)] time_var_free;
   array[num_legis] row_vector[num_basis > 1 ? num_basis : 0] a_raw;
+  // dimensions 2 to D (all zero-length when D = 1)
+  matrix[num_legis, Dm] L_full_d; // ideal points
+  vector<lower=reg_lower,upper=reg_upper>[num_reg_d] sigma_reg_d_free; // free discriminations
+  matrix<lower=abs_lower,upper=abs_upper>[num_bills, Dm] sigma_abs_d; // missingness discriminations
+  matrix[LX, Dm] legis_x_d; // person covariates
+  matrix[SRX, Dm] sigma_reg_x_d; // item covariates of discriminations
+  matrix[SAX, Dm] sigma_abs_x_d; // item covariates of missingness discriminations
+  array[T] matrix[(T>1 && time_proc!=5) ? num_legis : 0, Dm] L_tp1_var_d; // time-series parameters
+  matrix<lower=ar1_down,upper=ar1_up>[(T>1 && time_proc==3) ? num_legis : 0, Dm] L_AR1_d;
+  matrix<lower=0>[(T>1 && (time_proc==2 || time_proc==3)) ? (restrict_var==1 ? num_legis - 1 : num_legis) : 0, Dm] time_var_free_d;
+  matrix<lower=0>[gp_N, Dm] m_sd_free_d;
+  matrix<lower=0>[gp_N, Dm] time_var_gp_free_d;
+  array[num_legis, Dm] row_vector[num_basis > 1 ? num_basis : 0] a_raw_d;
 }
 
 transformed parameters {
@@ -327,7 +463,29 @@ transformed parameters {
   //vector[S_type==0 ? gp_N : 0] time_var_gp_full;
   vector[S_type==0 ? gp_N : 0] m_sd_full;
   //vector[S_type==0 ? gp_N : 0] gp_sd_full;
-  
+  matrix[num_bills, Dm] sigma_reg_d; // discriminations on dimensions 2 to D (0 where fixed for identification)
+  array[T] matrix[T>1 ? num_legis : 0, Dm] L_tp1_d; // time-varying ideal points on dimensions 2 to D
+
+  if(Dm > 0) {
+
+    sigma_reg_d = rep_matrix(0, num_bills, Dm);
+    for(k in 1:num_reg_d) sigma_reg_d[reg_d_item[k], reg_d_dim[k]] = sigma_reg_d_free[k];
+
+    if(T > 1) {
+      matrix[num_legis, Dm] time_sd_d = rep_matrix(0, num_legis, Dm);
+      if(time_proc==2 || time_proc==3) {
+        if(restrict_var==1) {
+          time_sd_d = append_row(rep_row_vector(time_sd, Dm), time_var_free_d);
+        } else {
+          time_sd_d = time_var_free_d;
+        }
+      }
+      L_tp1_d = extra_dim_paths(T, time_proc, center_cutoff, L_tp1_var_d, L_AR1_d, time_sd_d,
+                                a_raw_d, B, ignore, ignore_mat, num_legis, Dm);
+    }
+
+  }
+
   if(T>1 && time_proc!=4 && restrict_var==1) {
     time_var_full = append_row([time_sd]',time_var_free);
   }
@@ -621,10 +779,11 @@ if(S_type==1 && const_type==1) {
 } else if(S_type==0 && const_type==1) {
   
   // map items, ID persons
-  if(pos_discrim==0) {
-    
+  // (positive discriminations don't fix the rotation, so with D > 1 persons are still pinned)
+  if(pos_discrim==0 || D > 1) {
+
     if(time_proc==2) {
-      
+
       target += id_params(to_vector(L_tp1_var[1,1:num_legis]),
                         restrict_high,
                         restrict_low,
@@ -633,12 +792,12 @@ if(S_type==1 && const_type==1) {
                         restrict_sd_high,
                         restrict_sd_low,
                         0,
-                        legis_sd); 
-      
+                        legis_sd);
+
       L_full ~ normal(0,legis_sd);
-      
+
     } else {
-      
+
       target += id_params(L_full,
                         restrict_high,
                         restrict_low,
@@ -647,11 +806,18 @@ if(S_type==1 && const_type==1) {
                         restrict_sd_high,
                         restrict_sd_low,
                         0,
-                        legis_sd); 
-      
-      
+                        legis_sd);
+
+
     }
-    
+
+    // the persons identifying dimensions 2 to D are pinned at 0 on dimension 1,
+    // replacing the standard prior id_params gave them
+    for(k in 1:Dm) {
+      real v = time_proc==2 ? L_tp1_var[1, restrict_dim[k]] : L_full[restrict_dim[k]];
+      target += normal_lpdf(v | 0, restrict_sd_high[1]) - normal_lpdf(v | 0, legis_sd);
+    }
+
   } else {
     
     L_full ~ normal(0,legis_sd);
@@ -680,23 +846,162 @@ if(S_type==1 && const_type==1) {
   // inflated items. The priors above are each discrimination's marginal
   // distribution, so this term only adds their dependence.
   if(num_corr > 0) {
-    vector[num_corr] z_reg;
-    vector[num_corr] z_abs;
+    vector[num_corr + num_corr_d] z_reg;
+    vector[num_corr + num_corr_d] z_abs;
 
-    for(k in 1:num_corr) {
-      int i = corr_items[k];
-      if(pos_discrim == 1) {
-        z_reg[k] = exponential_normal_score(sigma_reg_free[i], 1 / discrim_reg_scale);
+    for(k in 1:(num_corr + num_corr_d)) {
+      // dimension 1 first, then the free pairs on dimensions 2 to D
+      real reg;
+      real abs_k;
+      if(k <= num_corr) {
+        reg = sigma_reg_free[corr_items[k]];
+        abs_k = sigma_abs_free[corr_items[k]];
       } else {
-        z_reg[k] = genbeta_normal_score(sigma_reg_free[i], discrim_reg_scale, discrim_reg_shape,
+        reg = sigma_reg_d[corr_d_item[k - num_corr], corr_d_dim[k - num_corr]];
+        abs_k = sigma_abs_d[corr_d_item[k - num_corr], corr_d_dim[k - num_corr]];
+      }
+      if(pos_discrim == 1) {
+        z_reg[k] = exponential_normal_score(reg, 1 / discrim_reg_scale);
+      } else {
+        z_reg[k] = genbeta_normal_score(reg, discrim_reg_scale, discrim_reg_shape,
                                         discrim_reg_lb, discrim_reg_upb);
       }
-      z_abs[k] = genbeta_normal_score(sigma_abs_free[i], discrim_abs_scale, discrim_abs_shape,
+      z_abs[k] = genbeta_normal_score(abs_k, discrim_abs_scale, discrim_abs_shape,
                                       discrim_miss_lb, discrim_miss_upb);
     }
 
     target += beta_lpdf((discrim_rho[1] + 1) / 2 | discrim_corr_eta, discrim_corr_eta);
     target += gaussian_copula_lpdf(z_reg | z_abs, discrim_rho[1]);
+  }
+
+  // priors for dimensions 2 to D
+  if(Dm > 0) {
+
+    to_vector(legis_x_d) ~ normal(0,5);
+    to_vector(sigma_reg_x_d) ~ normal(0,5);
+    to_vector(sigma_abs_x_d) ~ normal(0,5);
+
+    // discriminations
+    target += genbeta_vec_lpdf(to_vector(sigma_abs_d) | discrim_abs_scale, discrim_abs_shape,
+                               discrim_miss_lb, discrim_miss_upb);
+    if(pos_discrim == 1) {
+      sigma_reg_d_free ~ exponential(1/discrim_reg_scale);
+    } else {
+      target += genbeta_vec_lpdf(sigma_reg_d_free[reg_d_std] | discrim_reg_scale, discrim_reg_shape,
+                                 discrim_reg_lb, discrim_reg_upb);
+      for(k in 1:num_reg_d_anchor) {
+        target += genbeta_lpdf(sigma_reg_d_free[reg_d_anchor[k]] | restrict_N_high[1], restrict_sd_high[1],
+                               discrim_reg_lb, discrim_reg_upb);
+      }
+    }
+
+    // ideal points. When persons are pinned (const_type 1), the person identifying
+    // dimension d is pinned at fix_dim[d] on it, and the other pinned persons at 0.
+    // The pins are on the first time point of random-walk and AR(1) models and on
+    // the static ideal points otherwise, as for dimension 1.
+    {
+      int pin_first = T > 1 && (time_proc == 2 || time_proc == 3);
+
+      for(d in 1:Dm) {
+        vector[num_legis] pin_mu = rep_vector(0, num_legis);
+        vector[num_legis] pin_sd = rep_vector(legis_sd, num_legis);
+
+        if(const_type == 1) {
+          pin_sd[restrict_high[1]] = restrict_sd_high[1];
+          pin_sd[restrict_low[1]] = restrict_sd_high[1];
+          for(k in 1:Dm) pin_sd[restrict_dim[k]] = restrict_sd_high[1];
+          pin_mu[restrict_dim[d]] = fix_dim[d];
+        }
+
+        if(pin_first) {
+          L_tp1_var_d[1][, d] ~ normal(pin_mu, pin_sd);
+          L_full_d[, d] ~ normal(0, legis_sd);
+        } else {
+          L_full_d[, d] ~ normal(pin_mu, pin_sd);
+        }
+      }
+    }
+
+    if(T > 1) {
+
+      if(time_proc == 2 || time_proc == 3) {
+
+        if(T < center_cutoff) {
+
+          for(t in 2:T) to_vector(L_tp1_var_d[t]) ~ std_normal();
+
+        } else {
+
+          // centered: the parameters are the path
+          for(n in 1:num_legis) {
+
+            int start_time = 1;
+            int end_time = T;
+
+            if(ignore == 1) {
+              start_time = ignore_mat[n, 1];
+              end_time = ignore_mat[n, 2];
+              if(end_time > T) end_time = T;
+              if(start_time < 1) start_time = 1;
+              if(start_time == T) start_time = T - 1;
+            }
+
+            for(d in 1:Dm) {
+              vector[T] x;
+              real sd_nd;
+              for(t in 1:T) x[t] = L_tp1_var_d[t][n, d];
+              if(restrict_var == 1) {
+                sd_nd = n == 1 ? time_sd : time_var_free_d[n - 1, d];
+              } else {
+                sd_nd = time_var_free_d[n, d];
+              }
+              if(time_proc == 2) {
+                x[(start_time + 1):end_time] ~ normal(x[start_time:(end_time - 1)], sd_nd);
+              } else {
+                x[(start_time + 1):end_time] ~ normal(x[start_time] + L_AR1_d[n, d] * x[start_time:(end_time - 1)], sd_nd);
+              }
+              if(start_time > 1) x[2:start_time] ~ normal(0, legis_sd);
+              if(end_time < T) x[(end_time + 1):T] ~ normal(0, legis_sd);
+            }
+          }
+
+        }
+
+        if(inv_gamma_beta > 0) {
+          to_vector(time_var_free_d) ~ inv_gamma(2, inv_gamma_beta);
+        } else {
+          to_vector(time_var_free_d) ~ exponential(time_var_sd);
+        }
+
+        if(time_proc == 3) {
+          target += genbeta_vec_lpdf(to_vector(L_AR1_d) | ar_prior[1], ar_prior[2], ar1_down, ar1_up - ar1_down);
+        }
+
+      } else if(time_proc == 4) {
+
+        to_vector(time_var_gp_free_d) ~ exponential(gp_rho);
+        to_vector(m_sd_free_d) ~ exponential(gp_alpha);
+
+        for(n in 1:num_legis) {
+          for(d in 1:Dm) {
+            vector[T] x;
+            matrix[T, T] L_cov = cholesky_decompose(gp_exp_quad_cov(time_ind, m_sd_free_d[n, d], time_var_gp_free_d[n, d]) +
+                                                    diag_matrix(rep_vector(gp_nugget, T)));
+            for(t in 1:T) x[t] = L_tp1_var_d[t][n, d];
+            x ~ multi_normal_cholesky(rep_vector(L_full_d[n, d], T), L_cov);
+          }
+        }
+
+      } else if(time_proc == 5) {
+
+        for(n in 1:num_legis) {
+          for(d in 1:Dm) a_raw_d[n, d] ~ normal(0, legis_sd);
+        }
+
+      }
+
+    }
+
   }
 
   //all model types
@@ -807,7 +1112,16 @@ if(S_type==1 && const_type==1) {
         gp_rho,
         gp_alpha,
         ar1_down,
-        ar1_up);
+        ar1_up,
+        D,
+        restrict_dim,
+        L_full_d,
+        L_tp1_d,
+        sigma_reg_d,
+        sigma_abs_d,
+        legis_x_d,
+        sigma_reg_x_d,
+        sigma_abs_x_d);
         
       if(debug_mode==1) print("target after reduce sum = ", target());
 

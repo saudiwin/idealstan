@@ -59,6 +59,30 @@
   
   names(restrict_ind_high) <- val_high
   names(restrict_ind_low) <- val_low
+
+  # with more than one dimension, pick the person or item identifying each of
+  # dimensions 2 to D: the one with the highest value on that dimension that
+  # isn't already pinned
+  num_dim <- this_data$D
+
+  if(!is.null(num_dim) && num_dim > 1) {
+
+    dim_vals <- .draws_by_index(post_modes$draws(if(const_type=="persons") "L_full_d" else "sigma_reg_d"))
+
+    chosen <- c(restrict_ind_high, restrict_ind_low)
+    restrict_ind_dim <- integer(num_dim - 1)
+
+    for(d in 1:(num_dim - 1)) {
+      v <- dim_vals[, d]
+      v[chosen] <- -Inf
+      restrict_ind_dim[d] <- which.max(v)
+      chosen <- c(chosen, restrict_ind_dim[d])
+    }
+
+    names(restrict_ind_dim) <- dim_vals[cbind(restrict_ind_dim, seq_len(num_dim - 1))]
+    object@restrict_data$restrict_ind_dim <- restrict_ind_dim
+
+  }
   
   object@restrict_num_high <- val_high
   object@restrict_num_low <- val_low
@@ -299,4 +323,74 @@
   
   return(out_int)
   
+}
+#' Posterior means of a matrix parameter, arranged by its indices
+#'
+#' @param draws Draws of a Stan matrix parameter such as `L_full_d`.
+#' @return A matrix of posterior means with the parameter's dimensions.
+#' @noRd
+.draws_by_index <- function(draws) {
+
+  draws <- posterior::as_draws_matrix(draws)
+  idx <- do.call(rbind, lapply(strsplit(gsub(".*\\[|\\]", "", colnames(draws)), ","), as.integer))
+  out <- matrix(NA_real_, max(idx[, 1]), max(idx[, 2]))
+  out[idx] <- colMeans(draws)
+  out
+
+}
+
+#' Persons or items identifying dimensions 2 to D, from `restrict_ind_dim`
+#'
+#' Converts names in the data to indices, checks them, and names them by the value
+#' a pinned person takes on its dimension (`fix_high`).
+#' @noRd
+.id_dim_prefix <- function(object, restrict_ind_dim, num_dim, const_type, use_groups,
+                           restrict_ind_high, restrict_ind_low, fix_high) {
+
+  if(is.null(num_dim) || num_dim == 1) return(NULL)
+
+  unit <- if(const_type=="items") "items" else "persons"
+
+  if(is.null(restrict_ind_dim)) {
+    stop("With num_dim greater than 1 and fixtype='prefix', pass the ", unit,
+         " identifying dimensions 2 to num_dim to restrict_ind_dim, or use ",
+         "fixtype='vb_full' to choose them automatically.", call.=FALSE)
+  }
+
+  if(length(restrict_ind_dim) != num_dim - 1) {
+    stop("restrict_ind_dim should have ", num_dim - 1, " value(s), one for each of ",
+         "dimensions 2 to num_dim.", call.=FALSE)
+  }
+
+  if(is.character(restrict_ind_dim) || is.factor(restrict_ind_dim)) {
+
+    ids <- if(const_type=="items") {
+      object@score_matrix$item_id
+    } else if(use_groups) {
+      object@score_matrix$group_id
+    } else {
+      object@score_matrix$person_id
+    }
+
+    idx <- as.numeric(factor(as.character(restrict_ind_dim), levels=levels(factor(ids))))
+
+    if(anyNA(idx)) {
+      stop("These values of restrict_ind_dim aren't ", unit, " in the data: ",
+           paste(restrict_ind_dim[is.na(idx)], collapse=", "), call.=FALSE)
+    }
+
+    restrict_ind_dim <- idx
+
+  }
+
+  if(anyDuplicated(restrict_ind_dim) ||
+     any(restrict_ind_dim %in% c(restrict_ind_high, restrict_ind_low))) {
+    stop("restrict_ind_dim should not repeat a value or include restrict_ind_high or ",
+         "restrict_ind_low.", call.=FALSE)
+  }
+
+  restrict_ind_dim <- as.integer(restrict_ind_dim)
+  names(restrict_ind_dim) <- rep(fix_high[1], num_dim - 1)
+  restrict_ind_dim
+
 }

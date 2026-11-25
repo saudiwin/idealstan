@@ -41,6 +41,8 @@
 #' @param hpd_limit The greatest absolute difference in high-posterior density interval shown for any point. Useful for excluding imprecisely estimated persons/legislators from the plot. Default is NULL if you don't want to exclude any.
 #' @param sample_persons If you don't want to use the full number of persons/legislators from the model, enter a proportion (between 0 and 1) to select
 #'  only a fraction of the persons/legislators.
+#' @param dim For models with more than one dimension (`num_dim` in [id_estimate()]), which
+#' dimension to plot. Default is 1.
 #' @param ... Other options passed on to plotting function, currently ignored
 #' @import ggplot2
 #' @import lazyeval
@@ -90,8 +92,13 @@ id_plot_persons <- function(object,return_data=FALSE,
                        person_ci_alpha=0.2,
                        show_true=FALSE,group_color=TRUE,
                        hpd_limit=NULL,
-                       sample_persons=NULL,...) {
-  
+                       sample_persons=NULL,
+                       dim=1,...) {
+
+  if(!is.null(item_plot) && dim > 1) {
+    stop("item_plot shows item midpoints, which are only defined for dimension 1.", call.=FALSE)
+  }
+
   # Determine use_groups early for include/sample_persons logic
   if(inherits(object,'idealstan')) {
     use_groups_early <- object@use_groups
@@ -161,7 +168,8 @@ id_plot_persons <- function(object,return_data=FALSE,
     person_params <- .prepare_legis_data(object,
                                          high_limit=high_limit,
                                          low_limit=low_limit,include=include,
-                                         aggregated=TRUE)
+                                         aggregated=TRUE,
+                                         dim=dim)
     model_wrap <- FALSE
     use_groups <- object@use_groups
   } else {
@@ -170,7 +178,8 @@ id_plot_persons <- function(object,return_data=FALSE,
                             high_limit=high_limit,
                             low_limit=low_limit,
                             include=include,
-                            aggregated=TRUE) %>% 
+                            aggregated=TRUE,
+                            dim=dim) %>% 
       bind_rows(.id='Model')
     
     check_groups <- sapply(object,function(x) x@use_groups)
@@ -215,7 +224,7 @@ id_plot_persons <- function(object,return_data=FALSE,
 
   if(show_true) {
 
-    true_vals <- tibble(true_vals=object@score_data@simul_data$true_person[,1]) %>% 
+    true_vals <- tibble(true_vals=.true_person(object@score_data@simul_data, dim)[,1]) %>% 
       slice(as.numeric(levels(person_params$person_id))) %>% 
       mutate(id_num=1:n())
     
@@ -427,6 +436,8 @@ id_plot_persons <- function(object,return_data=FALSE,
 #' @param ... Other options passed on to plotting function, currently ignored
 #' @return A \code{ggplot2} object showing person/legislator over-time variance in ideal points as a dot
 #'   plot with posterior intervals. If \code{return_data=TRUE}, a list with elements \code{plot} and \code{data}.
+#' @param dim For models with more than one dimension (`num_dim` in [id_estimate()]), which
+#' dimension to plot. Default is 1.
 #' @import ggplot2
 #' @import lazyeval
 #' @importFrom rlang parse_quo as_quosure
@@ -458,13 +469,15 @@ id_plot_legis_var <- function(object,return_data=FALSE,
                           person_labels=TRUE,
                           group_labels=FALSE,
                           person_ci_alpha=0.1,group_color=TRUE,
+                          dim=1,
                           ...) {
   
   person_params <- .prepare_legis_data(object,
                                        high_limit=high_limit,
                                        low_limit=low_limit,
                                        type='variance',
-                                       aggregated=TRUE)
+                                       aggregated=TRUE,
+                                       dim=dim)
   
   if(object@use_groups) {
     person_params$person_id <- person_params$group_id 
@@ -591,6 +604,8 @@ id_plot_legis_var <- function(object,return_data=FALSE,
 #' @param use_chain ID of MCMC chain to use rather than combining all chains. 
 #' Default is NULL which will use all chains and is recommended.
 #' @param ... Other options passed on to plotting function, currently ignored
+#' @param dim For models with more than one dimension (`num_dim` in [id_estimate()]), which
+#' dimension to plot. Default is 1.
 #' @return A \code{ggplot2} object showing dynamic person/legislator ideal points over time as a line
 #'   plot with posterior intervals. If \code{return_data=TRUE}, a list with elements \code{plot} and \code{data}.
 #' @importFrom gghighlight gghighlight
@@ -638,7 +653,13 @@ id_plot_persons_dyn <- function(object,return_data=FALSE,
                               hpd_limit=10,
                               sample_persons=NULL,
                               use_chain=NULL,
-                              add_cov=TRUE,...) {
+                              add_cov=TRUE,
+                              dim=1,...) {
+
+  if(!is.null(item_plot) && dim > 1) {
+    stop("item_plot shows item midpoints, which are only defined for dimension 1.", call.=FALSE)
+  }
+
   
   
   # prepare data
@@ -709,7 +730,8 @@ id_plot_persons_dyn <- function(object,return_data=FALSE,
                                          sample_draws=plot_lines,
                                          include=include,
                                          add_cov=add_cov,
-                                         use_chain=use_chain,aggregated=TRUE)
+                                         use_chain=use_chain,aggregated=TRUE,
+                                         dim=dim)
     model_wrap <- FALSE
     use_groups <- object@use_groups
   } else {
@@ -718,7 +740,8 @@ id_plot_persons_dyn <- function(object,return_data=FALSE,
                             high_limit=high_limit,
                             low_limit=low_limit,
                             sample_draws=plot_lines,
-                            include=include,aggregated=TRUE) %>% 
+                            include=include,aggregated=TRUE,
+                            dim=dim) %>% 
       bind_rows(.id='Model')
     
     check_groups <- sapply(object,function(x) x@use_groups)
@@ -836,7 +859,7 @@ id_plot_persons_dyn <- function(object,return_data=FALSE,
   # allow the option of plotting "true" ideal points instead of estimated ones as lines
   if(!is.null(object@score_data@simul_data) && show_true) {
 
-    true_pts <- object@score_data@simul_data$true_person
+    true_pts <- .true_person(object@score_data@simul_data, dim)
     colnames(true_pts) <- c(as.character(1:ncol(true_pts)))
     true_pts <- as_tibble(true_pts, .name_repair = "minimal") %>% mutate(person_id=1:n()) %>% 
       gather(key = time_id,value=true_pt,-person_id) %>% 
@@ -1289,6 +1312,8 @@ id_plot_rhats <- function(obj) {
 #' `'discrim_infl_cov'` for bill/item discrimination parameters from inflated model.
 #' @return A `ggplot2` plot that can be further customized with `ggplot2` functions if need be.
 #' @param ... Additional argument passed on to `id_me`
+#' @param dim For models with more than one dimension, the dimension whose covariate
+#' effects to plot. Default is 1.
 #' @import svDialogs
 #' @importFrom stats as.formula
 #' @examples
@@ -1322,6 +1347,7 @@ id_plot_cov <- function(object,
                         upb=0.95,
                         facet_ncol=2,
                         cov_type='person_cov',
+                        dim=1,
                         ...) {
   
   # helper function for scale labels
@@ -1466,7 +1492,7 @@ id_plot_cov <- function(object,
                          discrim_reg_cov='sigma_reg_x',
                          discrim_infl_cov='sigma_abs_x')
     
-    to_plot <- object@stan_samples$draws(variables = param_name)
+    to_plot <- .dim_draws(object, param_name, dim)
     
     attr(to_plot,"dimnames")$variable <- switch(cov_type,
                                                 person_cov=object@score_data@person_cov,
@@ -1498,6 +1524,8 @@ id_plot_cov <- function(object,
 #' @param label_high The character label for the upper end of the latent scale
 #' @param label_low The character label for the lower end of the latent scale
 #' @param pred_outcome For discrete models with more than 2 categories, 
+#' @param dim For models with more than one dimension, the dimension whose covariate
+#' effects, AR(1) parameters and discriminations are used. Default is 1.
 #' or binary models with missing data, which outcome to predict. This should 
 #' be a character value that matches what the outcome was coded as in the data
 #' passed to [id_make()].
@@ -1541,12 +1569,15 @@ id_plot_irf <- function(object,
                         use_ci=TRUE,
                         high_quantile=0.95,
                         low_quantile=0.05,
-                        calc_varying=TRUE) {
+                        calc_varying=TRUE,
+                        dim=1) {
   
   # figure out which covariate to iterate over
   
   # determine which outcome to predict
   
+  m <- object@model_type
+
   if(is.null(pred_outcome)) {
     if(m %in% c(1,2,3,4,5,6,13,14)) {
       # ask user for predicted outcome
@@ -1589,7 +1620,7 @@ id_plot_irf <- function(object,
                                     title="Select at least one variable to compute IRFs. If you want to combine two variables, select two variables (but not more than two).")$res
   }
   
-  to_plot <- object@stan_samples$draws(variables=param_name)
+  to_plot <- .dim_draws(object, param_name, dim)
   
   attributes(to_plot)$dimnames$variable <- new_names
   
@@ -1603,7 +1634,7 @@ id_plot_irf <- function(object,
     all_ids <- unique(object@score_data@score_matrix$person_id)
   }
   
-  ar1 <- object@stan_samples$draws(variables="L_AR1") %>% as_draws_matrix
+  ar1 <- .dim_draws(object, "L_AR1", dim) %>% as_draws_matrix
   
   # keep some if user specifies
   if(!is.null(include)) {
@@ -1640,7 +1671,7 @@ id_plot_irf <- function(object,
     
     # pull sigmas if we want to calculate marginal changes
     
-    sigma_all <- object@stan_samples$draws(variables="sigma_reg_free") %>% 
+    sigma_all <- .dim_draws(object, "sigma_reg_free", dim) %>% 
                     as_draws_matrix
     
     # iterate over persons and time points

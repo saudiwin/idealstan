@@ -696,7 +696,38 @@ id_make <- function(score_data=NULL,
 #' necessary in difficult cases. For time-series models, one of the 
 #' person ideal point over-time variances is also fixed to .1, a value that
 #' can be changed using the option `time_fix_sd`.
-#' @param idealdata An object produced by the [id_make()] 
+#' @section Multidimensional Models:
+#' With `num_dim` greater than 1, the ideal points can be rotated as well as reflected
+#' without changing the likelihood, so one more person or item is needed for each
+#' extra dimension (`restrict_ind_dim`, or chosen automatically with
+#' `fixtype="vb_full"`).
+#'
+#' With `const_type="persons"`, `num_dim + 1` persons are pinned. The persons in
+#' `restrict_ind_high` and `restrict_ind_low` are pinned to `fix_high` and `fix_low`
+#' on dimension 1 and to 0 on the other dimensions. The person identifying dimension
+#' d is pinned to `fix_high` on dimension d and to 0 on the other dimensions.
+#'
+#' With `const_type="items"`, the discriminations are constrained to be lower
+#' triangular. The item in `restrict_ind_high` has a discrimination of 0 on
+#' dimensions 2 to `num_dim`, and the item identifying dimension d has a
+#' discrimination of 0 on the dimensions after d and the same strongly positive prior
+#' on dimension d that `restrict_ind_high` has on dimension 1. With positive
+#' discriminations (both `discrim_reg_lb` and `discrim_reg_upb` positive), the
+#' identifying items and persons are still used, because positive discriminations
+#' alone don't fix the rotation.
+#'
+#' The dimensions share the same priors, and each has its own time series in
+#' time-varying models. Person covariates have a separate effect on each dimension,
+#' and item covariates on each dimension's discriminations. Missingness
+#' discriminations aren't constrained, since the observed discriminations already
+#' fix the rotation. With `discrim_corr=TRUE`, the same correlation applies to the
+#' observed and missingness discriminations of every dimension.
+#'
+#' The parameters for dimension 1 keep their usual names (for example `L_full`,
+#' `sigma_reg_free` and `L_tp1`), and those for dimensions 2 to `num_dim` end in `_d`
+#' (for example `L_full_d[person, d - 1]`). Summaries and plots have a `Dimension`
+#' column or a `dim` argument.
+#' @param idealdata An object produced by the [id_make()]
 #' containing a score/vote matrix for use for estimation & plotting
 #' @param model_type An integer reflecting the kind of model to be estimated. 
 #' See below.
@@ -800,6 +831,16 @@ id_make <- function(score_data=NULL,
 #' how many parameters to constraint to positive values? Default is 1.
 #' @param num_restrict_low If using variational inference for identification (`ixtype="vb_full"`),
 #' how many parameters to constraint to positive negative values? Default is 1.
+#' @param num_dim The number of dimensions of the ideal points. Default is 1. With more
+#' than one dimension, every person has an ideal point on each dimension, and every item
+#' has an observed and a missingness discrimination on each dimension (or, for
+#' latent-space models, a position on each dimension). See the section on
+#' multidimensional models below for how these models are identified.
+#' @param restrict_ind_dim If `num_dim` is more than 1 and `fixtype="prefix"`, a vector of
+#' `num_dim - 1` character values or integer indices: the persons (`const_type="persons"`)
+#' or items (`const_type="items"`) that identify dimensions 2 to `num_dim`, in order. They
+#' must differ from `restrict_ind_high`, `restrict_ind_low` and each other. With
+#' `fixtype="vb_full"` they are chosen automatically.
 #' @param fix_high A vector of length `restrict_ind_high` with values 
 #' that the high fixed person ideal point(s) should be
 #' fixed to. Default is +2. Does not apply when `const_type="items"`; in that case,
@@ -1048,6 +1089,8 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                         restrict_ind_low=NULL,
                         num_restrict_high=1,
                         num_restrict_low=1,
+                        num_dim=1,
+                        restrict_ind_dim=NULL,
                         fixtype='prefix',
                         const_type="persons",
                         id_refresh=0,
@@ -1097,6 +1140,10 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                         ...) {
   
   # check for correct use_method option
+
+  if(!is.numeric(num_dim) || length(num_dim) != 1 || num_dim < 1 || num_dim %% 1 != 0) {
+    stop("num_dim should be a whole number of 1 or more.")
+  }
 
   if(!(use_method) %in% c("mcmc","pathfinder","laplace")) stop("You have entered a value for use_method that is not supported. At present the estimation routines are 'mcmc', 'pathfinder', or 'laplace'. Please see the associated working paper for more details at https://osf.io/preprints/osf/8j2bt_v3")
 
@@ -1297,6 +1344,8 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                          debug_mode=debug_mode,
                          num_restrict_high=num_restrict_high,
                          num_restrict_low=num_restrict_low,
+                         num_dim=num_dim,
+                         restrict_ind_dim=restrict_ind_dim,
                          ordbeta_phi_mean=ordbeta_phi_mean,
                          ordbeta_cut_alpha=ordbeta_cut_alpha,
                          ordbeta_cut_phi=ordbeta_cut_phi)

@@ -18,7 +18,8 @@
 \item{object}{An \code{idealstan} object fitted by \code{\link{id_estimate}}}
 
 \item{pars}{Either \code{'ideal_pts'} for person ideal points,
-\code{'items'} for items/bills difficulty and discrimination parameters,
+\code{'items'} for items/bills difficulty and discrimination parameters
+(with more than one dimension, both get a \code{Dimension} column),
 \code{'discrim_corr'} for the correlation of observed and missingness
 discriminations (models fit with \code{discrim_corr=TRUE} in \code{\link{id_estimate}}),
 and \code{'all'} for all parameters in the model, including incidental parameters.}

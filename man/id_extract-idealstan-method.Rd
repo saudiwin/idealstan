@@ -13,7 +13,10 @@
 \code{'obs_discrim'} for non-inflated item (bill) discrimination scores,
 \code{'obs_diff'} for non-inflated item (bill) difficulty scores,
 \code{'miss_discrim'} for inflated item (bill) discrimination scores,
-and \code{'miss_diff'} for inflated item (bill) difficulty scores.}
+and \code{'miss_diff'} for inflated item (bill) difficulty scores.
+With more than one dimension, \code{'persons'}, \code{'obs_discrim'} and
+\code{'miss_discrim'} also return the parameters of dimensions 2 to D
+(\code{L_full_d}, \code{sigma_reg_d} and \code{sigma_abs_d}).}
 
 \item{...}{Any additional arguments passed on to the \code{\link[rstan]{extract}} function.}
 }

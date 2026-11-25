@@ -68,18 +68,12 @@
                     ...) {
 
 
-  # need a factor to multiply the probability for latent-space models
-  if(latent_space && inflate) {
-    mul_fac <- 2
-  } else {
-    mul_fac <- 1
-  }
-
-  #standard IRT 2-PL model
+  #standard IRT 2-PL model (the latent-space models use the same probabilities,
+  #computed from the distance between persons and items)
   if(type=='simulate') {
-    votes <- as.numeric((mul_fac*pr_vote)>runif(N))
+    votes <- as.numeric(pr_vote>runif(N))
   } else if(type=='predict') {
-    votes <- t(apply(pr_vote,1,function(c) as.numeric((c*mul_fac)>runif(N))))
+    votes <- t(apply(pr_vote,1,function(c) as.numeric(c>runif(N))))
   } else if(type=="epred") {
 
     votes <- pr_vote
@@ -88,7 +82,7 @@
     # outcome is 0/1
     is_miss <- .miss_rows(outcome, miss_val, inflate)
     y <- .by_obs(ifelse(is_miss, 0, outcome), nrow(pr_vote))
-    obs_ll <- dbinom(y, size=1, prob=pmin(pr_vote*mul_fac, 1), log=TRUE)
+    obs_ll <- dbinom(y, size=1, prob=pr_vote, log=TRUE)
     return(.inflate_log_lik(obs_ll, pr_absence, is_miss, inflate))
   }
   
@@ -102,7 +96,7 @@
   }
   
   if(type=='simulate') {
-    combined <- ifelse((pr_absence*mul_fac)<(runif(N)+pr_boost),votes,NA)
+    combined <- ifelse(pr_absence<(runif(N)+pr_boost),votes,NA)
     
     combined <- combined - min(combined,na.rm=TRUE)
     
@@ -316,16 +310,17 @@
 
   } else if(type=='log_lik') {
 
-    # same density as ordbeta_lpdf in the Stan model
+    # same density as ordbeta_lpdf in the Stan model. Stan gets the data
+    # rounded to 15 significant digits (cmdstanr's JSON), which turns
+    # continuous values within about 1e-15 of 1 into exactly 1, so do the same
     is_miss <- .miss_rows(outcome, miss_val, inflate)
-    y <- .by_obs(ifelse(is_miss, 0.5, outcome), n_draws)
+    y <- .by_obs(ifelse(is_miss, 0.5, signif(outcome, 15)), n_draws)
     phi_mat <- matrix(phi, nrow=n_draws, ncol=ncol(pr_vote))
 
     obs_ll <- ifelse(y==0, log1p(-pr_above_low),
                      ifelse(y==1, log(pr_one),
                             log(pr_above_low - pr_one) +
-                              dbeta(pmin(pmax(y, 1e-12), 1 - 1e-12),
-                                    pr_vote*phi_mat, (1-pr_vote)*phi_mat, log=TRUE)))
+                              dbeta(y, pr_vote*phi_mat, (1-pr_vote)*phi_mat, log=TRUE)))
 
     return(.inflate_log_lik(obs_ll, pr_absence, is_miss, inflate))
   }

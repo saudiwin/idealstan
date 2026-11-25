@@ -18,6 +18,7 @@ id_plot_legis_var(
   group_labels = FALSE,
   person_ci_alpha = 0.1,
   group_color = TRUE,
+  dim = 1,
   ...
 )
 }
@@ -47,6 +48,9 @@ id_plot_legis_var(
 \item{person_ci_alpha}{The transparency level of the dot plot and confidence bars for the person ideal points}
 
 \item{group_color}{If \code{TRUE}, give each group/bloc a different color}
+
+\item{dim}{For models with more than one dimension (\code{num_dim} in \code{\link[=id_estimate]{id_estimate()}}), which
+dimension to plot. Default is 1.}
 
 \item{...}{Other options passed on to plotting function, currently ignored}
 }

@@ -28,6 +28,8 @@ id_estimate(
   restrict_ind_low = NULL,
   num_restrict_high = 1,
   num_restrict_low = 1,
+  num_dim = 1,
+  restrict_ind_dim = NULL,
   fixtype = "prefix",
   const_type = "persons",
   id_refresh = 0,
@@ -181,6 +183,18 @@ how many parameters to constraint to positive values? Default is 1.}
 
 \item{num_restrict_low}{If using variational inference for identification (\code{ixtype="vb_full"}),
 how many parameters to constraint to positive negative values? Default is 1.}
+
+\item{num_dim}{The number of dimensions of the ideal points. Default is 1. With more
+than one dimension, every person has an ideal point on each dimension, and every item
+has an observed and a missingness discrimination on each dimension (or, for
+latent-space models, a position on each dimension). See the section on
+multidimensional models below for how these models are identified.}
+
+\item{restrict_ind_dim}{If \code{num_dim} is more than 1 and \code{fixtype="prefix"}, a vector of
+\code{num_dim - 1} character values or integer indices: the persons (\code{const_type="persons"})
+or items (\code{const_type="items"}) that identify dimensions 2 to \code{num_dim}, in order. They
+must differ from \code{restrict_ind_high}, \code{restrict_ind_low} and each other. With
+\code{fixtype="vb_full"} they are chosen automatically.}
 
 \item{fixtype}{Sets the particular kind of identification used on the model, could be either 'vb_full'
 (identification provided exclusively by running a variational identification model with no prior info), or
@@ -512,6 +526,40 @@ implemented in idealstan, though fiddling with some parameters may be
 necessary in difficult cases. For time-series models, one of the
 person ideal point over-time variances is also fixed to .1, a value that
 can be changed using the option \code{time_fix_sd}.
+}
+
+\section{Multidimensional Models}{
+
+With \code{num_dim} greater than 1, the ideal points can be rotated as well as reflected
+without changing the likelihood, so one more person or item is needed for each
+extra dimension (\code{restrict_ind_dim}, or chosen automatically with
+\code{fixtype="vb_full"}).
+
+With \code{const_type="persons"}, \code{num_dim + 1} persons are pinned. The persons in
+\code{restrict_ind_high} and \code{restrict_ind_low} are pinned to \code{fix_high} and \code{fix_low}
+on dimension 1 and to 0 on the other dimensions. The person identifying dimension
+d is pinned to \code{fix_high} on dimension d and to 0 on the other dimensions.
+
+With \code{const_type="items"}, the discriminations are constrained to be lower
+triangular. The item in \code{restrict_ind_high} has a discrimination of 0 on
+dimensions 2 to \code{num_dim}, and the item identifying dimension d has a
+discrimination of 0 on the dimensions after d and the same strongly positive prior
+on dimension d that \code{restrict_ind_high} has on dimension 1. With positive
+discriminations (both \code{discrim_reg_lb} and \code{discrim_reg_upb} positive), the
+identifying items and persons are still used, because positive discriminations
+alone don't fix the rotation.
+
+The dimensions share the same priors, and each has its own time series in
+time-varying models. Person covariates have a separate effect on each dimension,
+and item covariates on each dimension's discriminations. Missingness
+discriminations aren't constrained, since the observed discriminations already
+fix the rotation. With \code{discrim_corr=TRUE}, the same correlation applies to the
+observed and missingness discriminations of every dimension.
+
+The parameters for dimension 1 keep their usual names (for example \code{L_full},
+\code{sigma_reg_free} and \code{L_tp1}), and those for dimensions 2 to \code{num_dim} end in \verb{_d}
+(for example \code{L_full_d[person, d - 1]}). Summaries and plots have a \code{Dimension}
+column or a \code{dim} argument.
 }
 
 \examples{
