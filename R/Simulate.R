@@ -62,6 +62,14 @@
 #' Gaussian copula with this correlation, so each keeps its generalized Beta
 #' distribution. Corresponds to `discrim_corr=TRUE` in [id_estimate()]. Default is 0
 #' (independent discriminations).
+#' @param num_dim The number of dimensions of the ideal points. Default is 1. Each
+#' extra dimension has its own person ideal points (from the same `time_process`) and
+#' its own observed and missingness discriminations (from the same generalized Beta
+#' distributions, correlated by `discrim_corr`). Person covariates only shift dimension
+#' 1. The values for dimensions 2 to `num_dim` are stored in `true_person_d` (persons x
+#' time points x `num_dim - 1`), `true_reg_discrim_d` and `true_abs_discrim_d` (items x
+#' `num_dim - 1`) in the `simul_data` slot of the result. Corresponds to `num_dim` in
+#' [id_estimate()].
 #' @param diff_sd The SD of the difficulty parameters (bill/item intercepts)
 #' for both missing and observed parameters (beta and omega)
 #' @param time_points The number of time points for time-varying legislator/person parameters
@@ -136,6 +144,7 @@ id_sim_gen <- function(num_person=20,num_items=50,
                        discrim_miss_scale=2,
                        discrim_miss_shape=2,
                        discrim_corr=0,
+                       num_dim=1,
                        diff_sd=3,
                             time_points=1,
                             time_process='random',
@@ -161,6 +170,10 @@ id_sim_gen <- function(num_person=20,num_items=50,
   spline_int <- NULL
   
   if(! (time_process %in% c("GP","AR","splines","random"))) stop("time_process should be one of 'GP', 'AR', 'splines', or 'random'.")
+
+  if(!is.numeric(num_dim) || length(num_dim) != 1 || num_dim < 1 || num_dim %% 1 != 0) {
+    stop("num_dim should be a whole number of 1 or more.")
+  }
 
   if(!is.numeric(discrim_corr) || length(discrim_corr) != 1 || abs(discrim_corr) >= 1) {
     stop("discrim_corr should be a single number between -1 and 1.")
@@ -314,143 +327,205 @@ id_sim_gen <- function(num_person=20,num_items=50,
 
   # person ideal points common to both types of models (absence and regular)
   
-  ideal_pts_mean <- NULL
+  # ideal points of persons on one dimension (persons x time points), with the
+  # parameters of their time process. cov_value is the effect of the person
+  # covariates, which only shift dimension 1.
+  gen_ideal <- function(cov_value) {
 
-  if(time_points==1) {
-    ideal_pts <- as.matrix(prior_func(params=list(N=num_person,mean=0,sd=ideal_pts_sd)) + cov_value)
-    drift <- 0
-    ar_adj <- 0
-    time_sd_all <- NULL
-  } else if(time_points>1) {
-    # if more than 1 time point, generate via an AR, random-walk or GP process
-    if(time_process=='GP') {
-      
+    gp_rho_gen <- NULL
+    gp_alpha_gen <- NULL
+    spline_basis <- NULL
+    spline_int <- NULL
+
+    ideal_pts_mean <- NULL
+
+    if(time_points==1) {
+      ideal_pts <- as.matrix(prior_func(params=list(N=num_person,mean=0,sd=ideal_pts_sd)) + cov_value)
       drift <- 0
       ar_adj <- 0
-      
-      ideal_pts_mean <- prior_func(params=list(N=num_person,mean=0,sd=ideal_pts_sd))
-      gp_rho_gen <- rexp(n=num_person,gp_rho) # rho parameter in GPs
-      gp_alpha_gen <- rexp(n=num_person,gp_alpha)
-      
-      simu_data <- list(N=num_person,
-                        T=time_points,
-                        x=1:time_points,
-                        ideal_pts=ideal_pts_mean,
-                        rho=gp_rho_gen,
-                        alpha=gp_alpha_gen,
-                        sigma=gp_nugget)
-      # loop over persons and construct GP with stan code
-      
-      stan_code <- system.file("stan_files","sim_gp.stan",
-                            package="idealstan")
-      
-      simu_mod <- stan_code %>%
-        cmdstanr::cmdstan_model(include_paths=dirname(stan_code))
-      
-      simu_fit <- simu_mod$sample(data=simu_data, iter_sampling=1,
-                                  chains=1, fixed_param=TRUE)
-      
-      ideal_pts <- simu_fit$draws("Y") %>% as_draws_df %>% 
-        as.data.frame %>%
-        select(-`.iteration`,-`.draw`,-`.chain`) %>% 
-        gather(key="variable",value="value") %>% 
-        mutate(person=as.numeric(stringr::str_extract(variable,"(?<=\\[)[0-9]+")),
-               time=as.numeric(stringr::str_extract(variable,"(?<=,)[0-9]+"))) %>% 
-        select(-variable) %>% 
-        spread("time","value") %>% 
-        select(-person) %>% 
-        as.matrix
-      
-      # add in external covariates
-      
-      ideal_pts <- ideal_pts + matrix(cov_value,nrow=num_person,ncol=time_points,byrow = TRUE)
-      
-      time_sd_all <- time_sd
-      
-      spline_basis <- NULL
-      spline_int <- NULL
-      
-    } else if(time_process=='splines') {
-      
-      # generate knots
-      
-      if(!is.null(spline_knots)) {
-        
-        spline_knots <- quantile(1:time_points, 
-                                 probs=seq(0,1,length.out=spline_knots+2))
-        
-        # remove first and last knot, these should be internal
-        
-        spline_knots <- spline_knots[2:(length(spline_knots)-1)]
-        
-      }
-      
-      # generate basis
-      
-      B <- t(splines::bs(1:time_points, knots=spline_knots,
-                degree=spline_degree,
-                intercept=TRUE))
-      
-      num_basis <- nrow(B)
-      
-      spline_int <- rnorm(num_person, 0, spline_intercept_sd)
-      spline_basis <- sapply(1:num_person, function(i) {
-        rnorm(num_basis , 0, spline_basis_sd)
-              })
-      
-      ideal_pts <- sapply(1:num_person, function(i) {
-        
-        #as.vector(spline_int[i] * (1:time_points) + spline_basis[,i] %*% B)
-        as.vector(spline_basis[,i] %*% B)
-        
-        })
-      
-      ideal_pts <- t(ideal_pts)
-      
       time_sd_all <- NULL
-      drift <- NULL
-      ar_adj <- NULL
+    } else if(time_points>1) {
+      # if more than 1 time point, generate via an AR, random-walk or GP process
+      if(time_process=='GP') {
       
-    } else {
-      ideal_t1 <- prior_func(params=list(N=num_person,mean=0,sd=ideal_pts_sd))
-      if(time_process=='AR') {
-        # random AR parameters
-
-        ar_adj <- .genbeta_sample(n=num_person,alpha=2,
-                        beta=2,lb=-1,
-                        lb_offset=2)
+        drift <- 0
+        ar_adj <- 0
+      
+        ideal_pts_mean <- prior_func(params=list(N=num_person,mean=0,sd=ideal_pts_sd))
+        gp_rho_gen <- rexp(n=num_person,gp_rho) # rho parameter in GPs
+        gp_alpha_gen <- rexp(n=num_person,gp_alpha)
+      
+        simu_data <- list(N=num_person,
+                          T=time_points,
+                          x=1:time_points,
+                          ideal_pts=ideal_pts_mean,
+                          rho=gp_rho_gen,
+                          alpha=gp_alpha_gen,
+                          sigma=gp_nugget)
+        # loop over persons and construct GP with stan code
+      
+        stan_code <- system.file("stan_files","sim_gp.stan",
+                              package="idealstan")
+      
+        simu_mod <- stan_code %>%
+          cmdstanr::cmdstan_model(include_paths=dirname(stan_code))
+      
+        simu_fit <- simu_mod$sample(data=simu_data, iter_sampling=1,
+                                    chains=1, fixed_param=TRUE)
+      
+        ideal_pts <- simu_fit$draws("Y") %>% as_draws_df %>% 
+          as.data.frame %>%
+          select(-`.iteration`,-`.draw`,-`.chain`) %>% 
+          gather(key="variable",value="value") %>% 
+          mutate(person=as.numeric(stringr::str_extract(variable,"(?<=\\[)[0-9]+")),
+                 time=as.numeric(stringr::str_extract(variable,"(?<=,)[0-9]+"))) %>% 
+          select(-variable) %>% 
+          spread("time","value") %>% 
+          select(-person) %>% 
+          as.matrix
+      
+        # add in external covariates
+      
+        ideal_pts <- ideal_pts + matrix(cov_value,nrow=num_person,ncol=time_points,byrow = TRUE)
+      
+        time_sd_all <- time_sd
+      
+        spline_basis <- NULL
+        spline_int <- NULL
+      
+      } else if(time_process=='splines') {
+      
+        # generate knots
+      
+        if(!is.null(spline_knots)) {
         
-      } else if(time_process=='random') {
-        ar_adj <- rep(1,num_person)
+          spline_knots <- quantile(1:time_points, 
+                                   probs=seq(0,1,length.out=spline_knots+2))
+        
+          # remove first and last knot, these should be internal
+        
+          spline_knots <- spline_knots[2:(length(spline_knots)-1)]
+        
+        }
+      
+        # generate basis
+      
+        B <- t(splines::bs(1:time_points, knots=spline_knots,
+                  degree=spline_degree,
+                  intercept=TRUE))
+      
+        num_basis <- nrow(B)
+      
+        spline_int <- rnorm(num_person, 0, spline_intercept_sd)
+        spline_basis <- sapply(1:num_person, function(i) {
+          rnorm(num_basis , 0, spline_basis_sd)
+                })
+      
+        ideal_pts <- sapply(1:num_person, function(i) {
+        
+          #as.vector(spline_int[i] * (1:time_points) + spline_basis[,i] %*% B)
+          as.vector(spline_basis[,i] %*% B)
+        
+          })
+      
+        ideal_pts <- t(ideal_pts)
+      
+        time_sd_all <- NULL
+        drift <- NULL
+        ar_adj <- NULL
+      
+      } else {
+        ideal_t1 <- prior_func(params=list(N=num_person,mean=0,sd=ideal_pts_sd))
+        if(time_process=='AR') {
+          # random AR parameters
+
+          ar_adj <- .genbeta_sample(n=num_person,alpha=2,
+                          beta=2,lb=-1,
+                          lb_offset=2)
+        
+        } else if(time_process=='random') {
+          ar_adj <- rep(1,num_person)
+        }
+        # drift parameters
+        drift <- prior_func(params=list(N=num_person,mean=0,sd=ideal_pts_sd))
+      
+        time_sd_all <- rexp(num_person, 1/time_sd)
+      
+        ideal_pts <- lapply(1:num_person, function(i) {
+          this_person <- .gen_ts_data(t=time_points,
+                                      adj_in=ar_adj[i],
+                                      alpha_int=drift[i],
+                                      sigma=time_sd_all[i],
+                                      init_sides=ideal_t1[i])
+          return(this_person)
+        }) %>% bind_cols(.name_repair = "minimal")
+        # Set matrix-friendly column names before conversion
+        names(ideal_pts) <- paste0("V", seq_len(ncol(ideal_pts)))
+        ideal_pts <- as.matrix(ideal_pts)
+      
+        ideal_pts <- t(ideal_pts)
+      
+        spline_basis <- NULL
+        spline_int <- NULL
+      
       }
-      # drift parameters
-      drift <- prior_func(params=list(N=num_person,mean=0,sd=ideal_pts_sd))
-      
-      time_sd_all <- rexp(num_person, 1/time_sd)
-      
-      ideal_pts <- lapply(1:num_person, function(i) {
-        this_person <- .gen_ts_data(t=time_points,
-                                    adj_in=ar_adj[i],
-                                    alpha_int=drift[i],
-                                    sigma=time_sd_all[i],
-                                    init_sides=ideal_t1[i])
-        return(this_person)
-      }) %>% bind_cols(.name_repair = "minimal")
-      # Set matrix-friendly column names before conversion
-      names(ideal_pts) <- paste0("V", seq_len(ncol(ideal_pts)))
-      ideal_pts <- as.matrix(ideal_pts)
-      
-      ideal_pts <- t(ideal_pts)
-      
-      spline_basis <- NULL
-      spline_int <- NULL
-      
+    
+      ideal_pts <- ideal_pts + matrix(cov_value,nrow=num_person,ncol=time_points,byrow = TRUE)
+    
     }
-    
-    ideal_pts <- ideal_pts + matrix(cov_value,nrow=num_person,ncol=time_points,byrow = TRUE)
-    
-  }
   
+
+    list(ideal_pts=ideal_pts, ideal_pts_mean=ideal_pts_mean, drift=drift, ar_adj=ar_adj,
+         time_sd_all=time_sd_all, gp_rho_gen=gp_rho_gen, gp_alpha_gen=gp_alpha_gen,
+         spline_basis=spline_basis, spline_int=spline_int)
+
+  }
+
+  gen <- gen_ideal(cov_value)
+  ideal_pts <- gen$ideal_pts
+  ideal_pts_mean <- gen$ideal_pts_mean
+  drift <- gen$drift
+  ar_adj <- gen$ar_adj
+  time_sd_all <- gen$time_sd_all
+  gp_rho_gen <- gen$gp_rho_gen
+  gp_alpha_gen <- gen$gp_alpha_gen
+  spline_basis <- gen$spline_basis
+  spline_int <- gen$spline_int
+
+  # dimensions 2 to D: ideal points from the same process (without covariates)
+  # and discriminations from the same priors
+  Dm <- num_dim - 1
+  true_person_d <- true_reg_discrim_d <- true_abs_discrim_d <- NULL
+
+  if(Dm > 0) {
+
+    true_person_d <- array(NA_real_, dim=c(num_person, ncol(ideal_pts), Dm))
+    true_reg_discrim_d <- true_abs_discrim_d <- matrix(NA_real_, num_items, Dm)
+
+    for(d in 1:Dm) {
+
+      true_person_d[, , d] <- gen_ideal(0)$ideal_pts
+
+      if(discrim_corr != 0) {
+        z_reg_d <- rnorm(num_items)
+        z_abs_d <- discrim_corr * z_reg_d + sqrt(1 - discrim_corr^2) * rnorm(num_items)
+        true_reg_discrim_d[, d] <- discrim_reg_lb + (discrim_reg_upb - discrim_reg_lb) *
+          stats::qbeta(stats::pnorm(z_reg_d), discrim_reg_scale, discrim_reg_shape)
+        true_abs_discrim_d[, d] <- discrim_miss_lb + (discrim_miss_upb - discrim_miss_lb) *
+          stats::qbeta(stats::pnorm(z_abs_d), discrim_miss_scale, discrim_miss_shape)
+      } else {
+        true_reg_discrim_d[, d] <- .genbeta_sample(n=num_items, alpha=discrim_reg_scale,
+                                                   beta=discrim_reg_shape, lb=discrim_reg_lb,
+                                                   lb_offset=discrim_reg_upb - discrim_reg_lb)
+        true_abs_discrim_d[, d] <- .genbeta_sample(n=num_items, alpha=discrim_miss_scale,
+                                                   beta=discrim_miss_shape, lb=discrim_miss_lb,
+                                                   lb_offset=discrim_miss_upb - discrim_miss_lb)
+      }
+
+    }
+
+  }
+
   # First generate prob of absences
 
   person_points <- rep(1:num_person,times=num_items)
@@ -461,6 +536,19 @@ id_sim_gen <- function(num_person=20,num_items=50,
   if((num_items %% time_points)!=0) stop('Total number of time points must be a multiple of the number of bills/items.')
   time_points <- rep(1:time_points,each=num_items/time_points)
   time_points <- time_points[item_points]
+
+  # contributions of dimensions 2 to D to each observation: the dot product of
+  # discriminations and ideal points, or the squared distance for latent space
+  extra_dims <- function(discrim_d) {
+    if(Dm == 0) return(rep(0, length(person_points)))
+    vapply(seq_along(person_points), function(n) {
+      x <- true_person_d[person_points[n], time_points[n], ]
+      a <- discrim_d[item_points[n], ]
+      if(latent_space) sum((x - a)^2) else sum(x * a)
+    }, numeric(1))
+  }
+
+  extra_abs <- extra_dims(true_abs_discrim_d)
   
   if(latent_space) {
     
@@ -473,7 +561,7 @@ id_sim_gen <- function(num_person=20,num_items=50,
 
     pr_absence <- sapply(1:length(person_points),function(n) {
       ls_int_abs[person_points[n]] + absence_diff[item_points[n]] -
-      sqrt((ideal_pts[person_points[n],time_points[n]] - absence_discrim[item_points[n]])^2)
+      sqrt((ideal_pts[person_points[n],time_points[n]] - absence_discrim[item_points[n]])^2 + extra_abs[n])
     }) %>% plogis()
   } else {
     
@@ -481,7 +569,8 @@ id_sim_gen <- function(num_person=20,num_items=50,
     
     # use IRT formulation for likelihood
     pr_absence <- sapply(1:length(person_points),function(n) {
-      ideal_pts[person_points[n],time_points[n]]*absence_discrim[item_points[n]] - absence_diff[item_points[n]]
+      ideal_pts[person_points[n],time_points[n]]*absence_discrim[item_points[n]] - absence_diff[item_points[n]] +
+        extra_abs[n]
     }) %>% plogis()
     
   }
@@ -501,6 +590,8 @@ id_sim_gen <- function(num_person=20,num_items=50,
   }
 
   reg_discrim <- reg_discrim + item_discrim_cov_value
+
+  extra_reg <- extra_dims(true_reg_discrim_d)
   
   # this is the same for all DGPs
   if(latent_space) {
@@ -512,14 +603,15 @@ id_sim_gen <- function(num_person=20,num_items=50,
     
       pr_vote <- sapply(1:length(person_points),function(n) {
         ls_int[person_points[n]] + reg_diff[item_points[n]] -
-          sqrt((ideal_pts[person_points[n],time_points[n]] - reg_discrim[item_points[n]])^2)
+          sqrt((ideal_pts[person_points[n],time_points[n]] - reg_discrim[item_points[n]])^2 + extra_reg[n])
       }) %>% plogis()
   } else {
     
     ls_int <- NULL
     
     pr_vote <- sapply(1:length(person_points),function(n) {
-      ideal_pts[person_points[n],time_points[n]]*reg_discrim[item_points[n]] - reg_diff[item_points[n]]
+      ideal_pts[person_points[n],time_points[n]]*reg_discrim[item_points[n]] - reg_diff[item_points[n]] +
+        extra_reg[n]
     }) %>% plogis()
   }
 
@@ -577,6 +669,10 @@ id_sim_gen <- function(num_person=20,num_items=50,
                             true_reg_discrim=reg_discrim,
                             true_abs_discrim=absence_discrim,
                             true_discrim_corr=discrim_corr,
+                            num_dim=num_dim,
+                            true_person_d=true_person_d,
+                            true_reg_discrim_d=true_reg_discrim_d,
+                            true_abs_discrim_d=true_abs_discrim_d,
                             true_person_mean=ideal_pts_mean,
                             time_sd=time_sd,
                             time_sd_all=time_sd_all,

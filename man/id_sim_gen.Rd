@@ -27,6 +27,7 @@ id_sim_gen(
   discrim_miss_scale = 2,
   discrim_miss_shape = 2,
   discrim_corr = 0,
+  num_dim = 1,
   diff_sd = 3,
   time_points = 1,
   time_process = "random",
@@ -125,6 +126,17 @@ missingness (nu) discriminations, between -1 and 1. The two are drawn from a
 Gaussian copula with this correlation, so each keeps its generalized Beta
 distribution. Corresponds to \code{discrim_corr=TRUE} in \code{\link[=id_estimate]{id_estimate()}}. Default is 0
 (independent discriminations).}
+
+\item{num_dim}{The number of dimensions of the ideal points. Default is 1. Each
+extra dimension has its own person ideal points (from the same \code{time_process}) and
+its own observed and missingness discriminations (from the same generalized Beta
+distributions, correlated by \code{discrim_corr}). Person covariates only shift dimension
+\enumerate{
+\item The values for dimensions 2 to \code{num_dim} are stored in \code{true_person_d} (persons x
+time points x \code{num_dim - 1}), \code{true_reg_discrim_d} and \code{true_abs_discrim_d} (items x
+\code{num_dim - 1}) in the \code{simul_data} slot of the result. Corresponds to \code{num_dim} in
+\code{\link[=id_estimate]{id_estimate()}}.
+}}
 
 \item{diff_sd}{The SD of the difficulty parameters (bill/item intercepts)
 for both missing and observed parameters (beta and omega)}

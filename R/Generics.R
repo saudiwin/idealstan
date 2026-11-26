@@ -378,6 +378,11 @@ setMethod('sample_model',signature(object='idealdata'),
                   
                 }
                 
+              }
+
+              # parameters of dimensions 2 to D that go with the ones kept
+              if(isTRUE(this_data$D > 1)) {
+                keep_vars <- c(keep_vars, .keep_extra_dims(keep_vars))
               } 
               
               if(!is.null(keep_param$extra)) {
@@ -522,6 +527,7 @@ setMethod('id_model',signature(object='idealdata'),
           function(object,fixtype='vb',model_type=NULL,this_data=NULL,
                    restrict_ind_high=NULL,
                    restrict_ind_low=NULL,
+                   restrict_ind_dim=NULL,
                    num_restrict_high=NULL,
                    num_restrict_low=NULL,
                    fix_high=NULL,
@@ -629,6 +635,13 @@ setMethod('id_model',signature(object='idealdata'),
               object@restrict_ind_high <- restrict_ind_high
               object@restrict_ind_low <- restrict_ind_low
               object@constraint_type <- const_type
+              object@restrict_data$restrict_ind_dim <- .id_dim_prefix(object, restrict_ind_dim,
+                                                                       num_dim=this_data$D,
+                                                                       const_type=const_type,
+                                                                       use_groups=use_groups,
+                                                                       restrict_ind_high=restrict_ind_high,
+                                                                       restrict_ind_low=restrict_ind_low,
+                                                                       fix_high=fix_high)
               
               
             }
@@ -645,7 +658,8 @@ setMethod('id_model',signature(object='idealdata'),
 #'
 #' @param object An \code{idealstan} object fitted by \code{\link{id_estimate}}
 #' @param pars Either \code{'ideal_pts'} for person ideal points,
-#' \code{'items'} for items/bills difficulty and discrimination parameters,
+#' \code{'items'} for items/bills difficulty and discrimination parameters
+#' (with more than one dimension, both get a \code{Dimension} column),
 #' \code{'discrim_corr'} for the correlation of observed and missingness
 #' discriminations (models fit with \code{discrim_corr=TRUE} in \code{\link{id_estimate}}),
 #' and \code{'all'} for all parameters in the model, including incidental parameters.
@@ -658,10 +672,14 @@ setMethod('id_model',signature(object='idealdata'),
 #' @param use_chain ID of a specific MCMC chain to use. Default (NULL) is all the chains
 #' and is recommended.
 #' @param cores Number of cores to use for parallel processing when summarizing
-#' item parameters. Defaults to 1 (no parallelization). Values greater than 1 use
-#' \code{parallel::mclapply} for faster computation with many items. Note that
-#' parallelization only works on Unix-like systems (Linux, macOS); on Windows,
-#' this parameter is ignored and single-core processing is used.
+#' item parameters, which can help with many items. Defaults to 1 (no parallelization).
+#' The work runs in parallel through the \pkg{future} package: with more than one
+#' core and no plan set, a \code{future::multisession} plan with that many
+#' workers (separate R sessions, which work everywhere, including Windows,
+#' RStudio and Positron). To use another backend, set it with
+#' \code{future::plan()} before calling, for example
+#' \code{future::plan(future::multicore, workers = 4)}; that plan is then used
+#' whatever the number of cores.
 #' @return A \code{\link[dplyr]{tibble}} data frame with parameters as rows and descriptive statistics as columns
 #' @examples
 #' \donttest{
@@ -688,37 +706,22 @@ setMethod('summary',signature(object='idealstan'),
                     tibble.print_min=100)
 
 
+            if(pars=='ideal_pts' && .num_dim(object) > 1) {
+
+              # one block of rows per dimension
+              out <- lapply(seq_len(.num_dim(object)), function(d) {
+                ideal_pts <- .summary_ideal_pts(object, high_limit=high_limit, low_limit=low_limit,
+                                                aggregated=aggregated, use_chain=use_chain, dim=d)
+                mutate(ideal_pts, Dimension=d, .after=Time_Point)
+              })
+
+              return(bind_rows(out))
+
+            }
+
             if(pars=='ideal_pts') {
-              ideal_pts <- .prepare_legis_data(object,
-                                               high_limit=high_limit,
-                                               low_limit=low_limit,
-                                               aggregated=aggregated,
-                                               use_chain=use_chain)
-              if(!("time_id" %in% names(ideal_pts))) {
-                ideal_pts$time_id=1
-              }
-              if(aggregated) {
-                ideal_pts <- select(ideal_pts,
-                                    Person=person_id,
-                                    Group=group_id,
-                                    Time_Point=time_id,
-                                    `Low Posterior Interval`=low_pt,
-                                    `Posterior Median`=median_pt,
-                                    `High Posterior Interval`=high_pt,
-                                    `Parameter Name`=legis)
-              } else {
-                # add in iteration numbers
-                ideal_pts <- group_by(ideal_pts,person_id,time_id) %>% 
-                  mutate(Iteration=1:n())
-                ideal_pts <- select(ideal_pts,
-                                    Person=person_id,
-                                    Group=group_id,
-                                    Time_Point=time_id,
-                                    Ideal_Points=ideal_pts,
-                                    Iteration,
-                                    `Parameter Name`=legis)
-              }
-              return(ideal_pts)
+              return(.summary_ideal_pts(object, high_limit=high_limit, low_limit=low_limit,
+                                        aggregated=aggregated, use_chain=use_chain))
             }
             
             if(pars=='items') {
@@ -726,16 +729,15 @@ setMethod('summary',signature(object='idealstan'),
               # a bit trickier with item points
               item_plot <- levels(object@score_data@score_matrix$item_id)
 
-              # Use parallel processing if cores > 1 and on Unix-like system
-              if(cores > 1 && .Platform$OS.type == "unix") {
-                apply_func <- function(...) parallel::mclapply(..., mc.cores = cores)
-              } else {
-                apply_func <- lapply
-              }
+              # in parallel through future if asked (see .id_lapply); the workers
+              # get a copy of the fit with only the item parameters' draws
+              in_parallel <- cores > 1 || !inherits(future::plan(), "sequential")
+              item_object <- if(in_parallel) .light_item_object(object) else object
+              apply_func <- function(...) .id_lapply(..., cores=cores)
 
               if(object@model_type %in% c(1,2,7,8,9,10,11,12,15,16,17,18) || (object@model_type>6 && object@model_type<13)) {
                 # binary models and continuous
-                item_points <- apply_func(item_plot,.item_plot_binary,object=object,
+                item_points <- apply_func(item_plot,.item_plot_binary,object=item_object,
                                       low_limit=low_limit,
                                       high_limit=high_limit,
                                       all=TRUE,
@@ -743,7 +745,7 @@ setMethod('summary',signature(object='idealstan'),
                                       use_chain=use_chain) %>% bind_rows()
               } else if(object@model_type %in% c(3,4)) {
                 # rating scale
-                item_points <- apply_func(item_plot,.item_plot_ord_rs,object=object,
+                item_points <- apply_func(item_plot,.item_plot_ord_rs,object=item_object,
                                       low_limit=low_limit,
                                       high_limit=high_limit,
                                       all=TRUE,
@@ -751,7 +753,7 @@ setMethod('summary',signature(object='idealstan'),
                                       use_chain=use_chain) %>% bind_rows()
               } else if(object@model_type %in% c(5,6)) {
                 # grm
-                item_points <- apply_func(item_plot,.item_plot_ord_grm,object=object,
+                item_points <- apply_func(item_plot,.item_plot_ord_grm,object=item_object,
                                       low_limit=low_limit,
                                       high_limit=high_limit,
                                       all=TRUE,
@@ -759,13 +761,20 @@ setMethod('summary',signature(object='idealstan'),
                                       use_chain=use_chain) %>% bind_rows()
               } else if(object@model_type %in% c(13,14)) {
                 # latent space
-                item_points <- apply_func(item_plot,.item_plot_ls,object=object,
+                item_points <- apply_func(item_plot,.item_plot_ls,object=item_object,
                                       low_limit=low_limit,
                                       high_limit=high_limit,
                                       all=TRUE,
                                       aggregated=aggregated,
                                       use_chain=use_chain) %>% bind_rows()
               }
+
+              if(.num_dim(object) > 1) {
+                item_points <- .item_extra_dims(object, item_points, high_limit=high_limit,
+                                                low_limit=low_limit, aggregated=aggregated,
+                                                use_chain=use_chain)
+              }
+
               return(item_points)
             }
 
@@ -804,25 +813,31 @@ setMethod('summary',signature(object='idealstan'),
                                    discrim_reg_cov='sigma_reg_x',
                                    discrim_infl_cov='sigma_abs_x')
               
-              to_sum <- object@stan_samples$draws(param_name)
-              
               # reset names of parameters
               new_names <- switch(pars,person_cov=object@score_data@person_cov,
-                                  discrim_reg=object@score_data@item_cov,
-                                  discrim_abs=object@score_data@item_cov_miss)
-              
-              attributes(to_sum)$dimnames$variable <- new_names
-              
+                                  discrim_reg_cov=object@score_data@item_cov,
+                                  discrim_infl_cov=object@score_data@item_cov_miss)
+
               if(!aggregated) {
+                to_sum <- object@stan_samples$draws(param_name)
+                attributes(to_sum)$dimnames$variable <- new_names
                 return(to_sum)
-              } else {
-                out_d <- tibble(Covariate=new_names,
-                                    `Posterior Median`=apply(to_sum,3,median),
-                                    `Posterior High Interval`=apply(to_sum,3,quantile,high_limit),
-                                    `Posterior Low Interval`=apply(to_sum,3,quantile,low_limit),
-                                    Parameter=param_name)
-                return(out_d)
               }
+
+              # one row per covariate (and per dimension with more than one)
+              out_d <- lapply(seq_len(.num_dim(object)), function(d) {
+                to_sum <- unclass(as_draws_matrix(.dim_draws(object, param_name, d)))
+                tibble(Covariate=new_names,
+                       Dimension=d,
+                       `Posterior Median`=apply(to_sum,2,median),
+                       `Posterior High Interval`=apply(to_sum,2,quantile,high_limit),
+                       `Posterior Low Interval`=apply(to_sum,2,quantile,low_limit),
+                       Parameter=if(d == 1) param_name else paste0(param_name, "_d"))
+              }) %>% bind_rows()
+
+              if(.num_dim(object) == 1) out_d$Dimension <- NULL
+
+              return(out_d)
               
             }
             
@@ -874,6 +889,9 @@ setGeneric('id_extract',signature='object',
 #' \code{'obs_diff'} for non-inflated item (bill) difficulty scores,
 #' \code{'miss_discrim'} for inflated item (bill) discrimination scores,
 #' and \code{'miss_diff'} for inflated item (bill) difficulty scores.
+#' With more than one dimension, \code{'persons'}, \code{'obs_discrim'} and
+#' \code{'miss_discrim'} also return the parameters of dimensions 2 to D
+#' (\code{L_full_d}, \code{sigma_reg_d} and \code{sigma_abs_d}).
 #' @param ... Any additional arguments passed on to the \code{\link[rstan]{extract}} function.
 #' @examples
 #' \donttest{
@@ -1023,6 +1041,13 @@ setGeneric('id_me',
 #' Defaults to 100. Use option "all" to use all available MCMC draws.
 #' @param cores The total number of cores to use when calculating the marginal effects.
 #' Defaults to 1.
+#' The work runs in parallel through the \pkg{future} package: with more than one
+#' core and no plan set, a \code{future::multisession} plan with that many
+#' workers (separate R sessions, which work everywhere, including Windows,
+#' RStudio and Positron). To use another backend, set it with
+#' \code{future::plan()} before calling, for example
+#' \code{future::plan(future::multicore, workers = 4)}; that plan is then used
+#' whatever the number of cores.
 #' @param lb The quantile for the lower bound of the aggregated effects (default is 0.025 for a 95% interval)
 #' @param upb The quantile for the upper bound of the aggregated effects (default is 0.975 for a 95% interval)
 #' @param eps Parameter for numerical differentiation (usually does not need to be changed)

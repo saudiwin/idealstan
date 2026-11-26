@@ -30,6 +30,8 @@
   # arguments added after some fitted objects were saved
   if(!exists("discrim_corr", inherits=FALSE)) discrim_corr <- FALSE
   if(!exists("discrim_corr_eta", inherits=FALSE)) discrim_corr_eta <- 2
+  if(!exists("num_dim", inherits=FALSE)) num_dim <- 1
+  if(!exists("restrict_ind_dim", inherits=FALSE)) restrict_ind_dim <- NULL
 
   # check on restriction length
   
@@ -520,13 +522,11 @@
   restrict_sd_low=discrim_reg_shape,
   restrict_N_high=discrim_reg_scale,
   restrict_N_low=discrim_reg_shape,
-  time_sd=time_fix_sd,
   time_var_sd=time_var,
   ar1_up=ar1_up,
   ar1_down=ar1_down,
   inv_gamma_beta=inv_gamma_beta,
   center_cutoff=as.integer(time_center_cutoff),
-  restrict_var=restrict_var,
   ar_prior=ar_prior,
   zeroes=as.numeric(inflate_zero),
   time_ind=as.array(time_ind),
@@ -554,9 +554,22 @@
 
   this_data <- c(this_data, .discrim_corr_items(this_data, discrim_corr))
 
+  if(num_dim > 1) {
+    n_units <- if(const_type=="persons") remove_list$num_legis else remove_list$num_bills
+    if(n_units < num_dim + 1) {
+      stop("A model with ", num_dim, " dimensions needs at least ", num_dim + 1, " ",
+           if(const_type=="persons") "persons" else "items", " to identify it.", call.=FALSE)
+    }
+  }
+
+  # placeholders for the persons or items identifying dimensions 2 to D until
+  # the model is identified
+  this_data <- c(this_data, .dim_data(num_dim))
+
   idealdata <- id_model(object=idealdata,fixtype=fixtype,this_data=this_data,
                         restrict_ind_high=restrict_ind_high,
                         restrict_ind_low=restrict_ind_low,
+                        restrict_ind_dim=restrict_ind_dim,
                         ncores=ncores,
                         use_groups=use_groups,
                         fix_high=fix_high,
@@ -777,13 +790,11 @@
                     restrict_sd_low=restrict_sd_low,
                     restrict_N_high=restrict_N_high,
                     restrict_N_low=restrict_N_low,
-                    time_sd=time_fix_sd,
                     time_var_sd=time_var,
                     ar1_up=ar1_up,
                     ar1_down=ar1_down,
                     inv_gamma_beta=inv_gamma_beta,
                     center_cutoff=as.integer(time_center_cutoff),
-                    restrict_var=restrict_var,
                     ar_prior=ar_prior,
                     zeroes=as.numeric(inflate_zero),
                     time_ind=as.array(time_ind),
@@ -812,6 +823,8 @@
                                              ncol=3,byrow=TRUE))
 
   this_data <- c(this_data, .discrim_corr_items(this_data, discrim_corr))
+
+  this_data <- c(this_data, .dim_data(num_dim, idealdata@restrict_data$restrict_ind_dim))
 
   return(list(stan_data=this_data,
               remove_list=remove_list,
@@ -1103,6 +1116,11 @@ process_init_pathfinder <- function(init, num_procs, model_variables = NULL,
                       miss_discrim='sigma_abs_free',
                       obs_diff='B_int_free',
                       miss_diff='A_int_free')
+      # with more than one dimension, also the parameters of dimensions 2 to D
+      if(.num_dim(obj) > 1) {
+        param <- c(param, switch(extract_type, persons='L_full_d', obs_discrim='sigma_reg_d',
+                                 miss_discrim='sigma_abs_d', NULL))
+      }
     }
     as_tibble(obj@stan_samples$draws(c(param,...)), .name_repair = "minimal")
   } else {
@@ -1174,7 +1192,8 @@ process_init_pathfinder <- function(init, num_procs, model_variables = NULL,
                                 include=NULL,
                                 add_cov=TRUE,
                                 use_chain=NULL,
-                                aggregated=NULL) {
+                                aggregated=NULL,
+                                dim=1) {
   
   if(object@use_method %in% c("laplace","pathfinder")) use_chain <- 1
   
@@ -1183,7 +1202,11 @@ process_init_pathfinder <- function(init, num_procs, model_variables = NULL,
   
   if(length(unique(object@score_data@score_matrix$time_id))>1 && type!='variance') {
     
-    if(length(use_chain)<dim(as_draws_array(object@stan_samples$draws("L_full")))[2]) {
+    if(dim > 1) {
+
+      person_params <- .get_varying(object, use_chain=use_chain, dim=dim)
+
+    } else if(length(use_chain)<dim(as_draws_array(object@stan_samples$draws("L_full")))[2]) {
       
       print(paste0("Using only one chain: chain ",use_chain))
       
@@ -1202,7 +1225,8 @@ process_init_pathfinder <- function(init, num_procs, model_variables = NULL,
       person_params <- .add_person_cov(person_params,object,object@this_data$legis_pred,
                                        object@this_data$ll,
                                        object@this_data$time,
-                                       use_chain)
+                                       use_chain,
+                                       dim=dim)
       
     }
     
@@ -1332,14 +1356,15 @@ process_init_pathfinder <- function(init, num_procs, model_variables = NULL,
     # need to match estimated parameters to original IDs
     if(type=='ideal_pts') {
 
-        person_params <- as_draws_array(object@stan_samples$draws('L_full'))
+        person_params <- .dim_draws(object, 'L_full', dim)
         
         if(add_cov) {
           
           person_params <- .add_person_cov(person_params,object,object@this_data$legis_pred,
                                            object@this_data$ll,
                                            object@this_data$time,
-                                           use_chain)
+                                           use_chain,
+                                           dim=dim)
           
         }
         
@@ -1373,7 +1398,7 @@ process_init_pathfinder <- function(init, num_procs, model_variables = NULL,
 
         # load time-varying person variances
         # Suppress warning about dropping draws_df class - we intentionally remove metadata columns
-        person_params <- object@stan_samples$draws('time_var_free') %>% as_draws_df
+        person_params <- .dim_draws(object, 'time_var_free', dim) %>% as_draws_df
         person_params <- suppressWarnings(
           person_params %>%
             dplyr::select(-`.chain`,-`.iteration`,-`.draw`)
@@ -1535,7 +1560,7 @@ process_init_pathfinder <- function(init, num_procs, model_variables = NULL,
                                       gp_N_fix, time_proc, num_ls, T, 
                                       ar1_down, ar1_up, pos_discrim, 
                                       LX, SRX, SAX, num_bills_grm, n_cats_rat, 
-                                      n_cats_grm, num_var, gp_N, restrict_var, 
+                                      n_cats_grm, num_var, gp_N, 
                                       num_basis,restrict_ind_high,
                                       restrict_ind_low,
                                       const_type,
@@ -1578,7 +1603,7 @@ process_init_pathfinder <- function(init, num_procs, model_variables = NULL,
       steps_votes_grm10 = if (n_cats_grm[8]>1) t(apply(array(rnorm((n_cats_grm[8] - 1) * num_bills,sd=0.25), dim = c(num_bills, n_cats_grm[8] - 1)), 1, sort)) else array(dim = c(num_bills, n_cats_grm[8] - 1)),
       extra_sd = runif(num_var, 0.5, 1),
       time_var_gp_free = runif(gp_N, 0.25, .75),
-      time_var_free = if (T > 1 && time_proc != 4 && restrict_var == 1) runif(num_legis - 1, 0.5, 1) else if (T > 1 && time_proc != 4) runif(num_legis, 0.5, 1) else numeric(0),
+      time_var_free = if (T > 1 && time_proc != 4) runif(num_legis, 0.5, 1) else numeric(0),
       a_raw = if (num_basis > 1) array(rep(0L, num_legis * num_basis), dim = c(num_legis, num_basis)) else array(numeric(0), dim = c(num_legis, 0L)),
       ordbeta_cut = if(num_ordbeta>0) matrix(rep(c(-1,1),times=num_ordbeta),ncol=2,nrow=num_ordbeta,byrow=TRUE) else array(numeric(0),dim=c(1,0)),
       phi = if(num_ordbeta>0) rep(0.25, num_ordbeta) else numeric(0)
@@ -1644,7 +1669,6 @@ process_init_pathfinder <- function(init, num_procs, model_variables = NULL,
                                          this_data$n_cats_grm, 
                                          this_data$num_var, 
                                          gp_N, 
-                                         this_data$restrict_var, 
                                          this_data$num_basis,
                                          this_data$restrict_high,
                                          this_data$restrict_low,
@@ -1656,6 +1680,8 @@ process_init_pathfinder <- function(init, num_procs, model_variables = NULL,
                                          this_data$discrim_miss_lb)
 
   base_params$discrim_rho <- rep(0, as.integer(isTRUE(this_data$num_corr > 0)))
+
+  base_params <- c(base_params, .init_extra_dims(this_data))
 
   return(base_params)
   
@@ -2643,6 +2669,105 @@ return(as.vector(idx))
 
 }
 
+#' Stan data identifying dimensions 2 to D
+#'
+#' `restrict_ind_dim` holds the person or item identifying each of dimensions 2
+#' to D, named by the value a pinned person takes on its dimension. Before the
+#' model is identified, placeholders after the dimension-1 pins (1 and 2) are used.
+#' @noRd
+.dim_data <- function(num_dim, restrict_ind_dim=NULL) {
+
+  if(num_dim == 1) {
+    return(list(D=1L, restrict_dim=array(integer(0)), fix_dim=array(numeric(0))))
+  }
+
+  if(is.null(restrict_ind_dim)) {
+    restrict_ind_dim <- 3:(num_dim + 1)
+    fix_dim <- rep(0, num_dim - 1)
+  } else {
+    fix_dim <- as.numeric(names(restrict_ind_dim))
+  }
+
+  list(D=as.integer(num_dim), restrict_dim=array(as.integer(restrict_ind_dim)),
+       fix_dim=array(fix_dim))
+
+}
+
+#' Which discriminations on dimensions 2 to D are fixed at 0 or have the pinned prior
+#'
+#' Mirrors the Stan transformed data: with items pinned (`const_type=2`), the item
+#' pinned high on dimension 1 has discriminations of 0 on dimensions 2 to D, and
+#' the item identifying dimension d has 0 on the dimensions after d and the pinned
+#' prior on dimension d (unless discriminations are positive).
+#'
+#' @return A list of `num_bills` x `D - 1` logical matrices `zero` and `anchor`.
+#' @noRd
+.dim_masks <- function(this_data) {
+
+  Dm <- max(c(this_data$D, 1)) - 1
+  zero <- anchor <- matrix(FALSE, this_data$num_bills, Dm)
+
+  if(Dm > 0 && this_data$const_type == 2) {
+    zero[this_data$restrict_high[1], ] <- TRUE
+    for(k in 1:Dm) {
+      if(this_data$pos_discrim == 0) anchor[this_data$restrict_dim[k], k] <- TRUE
+      if(k < Dm) zero[this_data$restrict_dim[k], (k + 1):Dm] <- TRUE
+    }
+  }
+
+  list(zero=zero, anchor=anchor)
+
+}
+
+#' Initial values for the parameters of dimensions 2 to D
+#'
+#' Parameters with no elements are left out: CmdStan can't read a matrix with no
+#' rows from JSON, and initializes missing zero-size parameters itself. With
+#' D = 1 this returns an empty list.
+#' @noRd
+.init_extra_dims <- function(this_data) {
+
+  Dm <- max(c(this_data$D, 1)) - 1
+  N <- this_data$num_legis
+  T_n <- this_data$`T`
+  tp <- this_data$time_proc
+  gp_N <- if(tp == 4) N else 0
+  n_tv <- if(T_n > 1 && tp != 5) N else 0
+  n_ar <- if(T_n > 1 && tp == 3) N else 0
+  n_var <- if(T_n > 1 && tp %in% c(2, 3)) N else 0
+  n_basis <- if(this_data$num_basis > 1) this_data$num_basis else 0
+
+  masks <- .dim_masks(this_data)
+  num_reg_d <- sum(!masks$zero)
+
+  # discriminations start at the middle of their prior's range, and the items
+  # identifying dimensions 2 to D at the mean of the pinned prior
+  reg_lb <- this_data$discrim_reg_lb
+  reg_mid <- if(this_data$pos_discrim == 1) this_data$discrim_reg_scale else reg_lb + this_data$discrim_reg_upb / 2
+  reg_d <- matrix(reg_mid, this_data$num_bills, Dm)
+  if(any(masks$anchor)) {
+    reg_d[masks$anchor] <- .mean_gbeta(this_data$restrict_N_high[1], this_data$restrict_sd_high[1],
+                                       a=reg_lb, b=this_data$discrim_reg_upb + reg_lb)
+  }
+
+  out <- list(L_full_d=matrix(rnorm(N * Dm), N, Dm),
+       sigma_reg_d_free=array(t(reg_d)[!t(masks$zero)]),
+       sigma_abs_d=matrix(this_data$discrim_miss_lb + this_data$discrim_miss_upb / 2,
+                          this_data$num_bills, Dm),
+       legis_x_d=matrix(rnorm(this_data$LX * Dm, sd=0.25), this_data$LX, Dm),
+       sigma_reg_x_d=matrix(rnorm(this_data$SRX * Dm, sd=0.25), this_data$SRX, Dm),
+       sigma_abs_x_d=matrix(rnorm(this_data$SAX * Dm, sd=0.25), this_data$SAX, Dm),
+       L_tp1_var_d=array(0, dim=c(T_n, n_tv, Dm)),
+       L_AR1_d=matrix(0.1, n_ar, Dm),
+       time_var_free_d=matrix(runif(n_var * Dm, 0.5, 1), n_var, Dm),
+       m_sd_free_d=matrix(runif(gp_N * Dm, 0.25, 0.75), gp_N, Dm),
+       time_var_gp_free_d=matrix(runif(gp_N * Dm, 0.25, 0.75), gp_N, Dm),
+       a_raw_d=array(0, dim=c(N, Dm, n_basis)))
+
+  out[lengths(out) > 0]
+
+}
+
 #' Items whose observed and missingness discriminations are correlated
 #'
 #' With `discrim_corr=TRUE`, the Stan model joins the priors of each item's
@@ -3526,7 +3651,8 @@ return(as.vector(idx))
 .get_varying <- function(obj,
                          time_id=NULL,
                          person_id=NULL,
-                         use_chain=NULL) {
+                         use_chain=NULL,
+                         dim=1) {
   
   if(obj@use_method %in% c("pathfinder","laplace")) use_chain <- 1
   
@@ -3536,6 +3662,11 @@ return(as.vector(idx))
     
     use_chain <- 1:num_chains
     
+  }
+
+  # the Stan model saves the time paths of dimensions 2 to D
+  if(dim > 1) {
+    return(as_draws_matrix(.dim_draws(obj, "L_tp1", dim, use_chain=use_chain)))
   }
   
   if(obj@use_groups) {
@@ -3561,15 +3692,7 @@ return(as.vector(idx))
         
         L_full <- as_draws_array(obj@stan_samples$draws("L_full"))[,use_chain,] %>% as_draws_matrix()
         
-        if(obj@restrict_var) {
-          
-          time_var_free <- as_draws_array(obj@stan_samples$draws("time_var_full"))[,use_chain,] %>% as_draws_matrix()
-          
-        } else {
-          
-          time_var_free <- as_draws_array(obj@stan_samples$draws("time_var_free"))[,use_chain,] %>% as_draws_matrix()
-          
-        }
+        time_var_free <- as_draws_array(obj@stan_samples$draws("time_var_free"))[,use_chain,] %>% as_draws_matrix()
       
       #make a grid, time varying fastest
       
@@ -3585,17 +3708,8 @@ return(as.vector(idx))
                             p=NULL,
                             L_tp1_var=NULL) {
         
-        if(obj@restrict_var) {
-          
-          time_fix_sd <- obj@time_fix_sd
-          p_time <- p - 1
-          
-        } else {
-          
-          time_fix_sd <- time_var_free[,p]
-          p_time <- p
-          
-        }
+        time_fix_sd <- time_var_free[,p]
+        p_time <- p
         
         if(p>1) {
           
@@ -3742,17 +3856,8 @@ return(as.vector(idx))
                             L_tp1_var=NULL) {
         
           
-        if(obj@restrict_var) {
-          
-          time_fix_sd <- obj@time_fix_sd
-          p_time <- p - 1
-          
-        } else {
-          
-          time_fix_sd <- time_var_free[,p]
-          p_time <- p
-          
-        }
+        time_fix_sd <- time_var_free[,p]
+        p_time <- p
         
 
           if(p>1) {
@@ -3947,7 +4052,8 @@ return(as.vector(idx))
                             legis_x,
                             person_id,
                             time_id,
-                            use_chain) {
+                            use_chain,
+                            dim=1) {
   
   if(!is.null(legis_x) && sum(c(legis_x))!=0) {
     
@@ -3962,7 +4068,7 @@ return(as.vector(idx))
       
     }
     
-    b <- as_draws_array(obj@stan_samples$draws("legis_x"))[,use_chain,] %>% as_draws_matrix()
+    b <- .dim_draws(obj, "legis_x", dim)[,use_chain,] %>% as_draws_matrix()
     
     # loop over draws d for memory efficiency
     
@@ -4068,4 +4174,316 @@ return(as.vector(idx))
   }
   
   
+}
+#' Parameters of dimensions 2 to D that go with the dimension-1 parameters kept
+#' @noRd
+.keep_extra_dims <- function(keep_vars) {
+
+  extra <- list(L_full="L_full_d",
+                L_tp1="L_tp1_d",
+                L_tp1_var=c("L_tp1_var_d", "L_tp1_d"),
+                L_AR1="L_AR1_d",
+                time_var_free="time_var_free_d",
+                m_sd_free="m_sd_free_d",
+                time_var_gp_free="time_var_gp_free_d",
+                legis_x="legis_x_d",
+                sigma_reg_full=c("sigma_reg_d", "sigma_reg_d_free"),
+                sigma_abs_free="sigma_abs_d")
+
+  unique(unlist(extra[names(extra) %in% keep_vars], use.names=FALSE))
+
+}
+
+#' Number of dimensions of a fitted model
+#' @noRd
+.num_dim <- function(obj) {
+  D <- obj@this_data$D
+  if(is.null(D)) 1L else as.integer(D)
+}
+
+#' Draws of one dimension's parameters, named like dimension 1
+#'
+#' Dimension 1 uses the usual parameters. For dimensions 2 to D, the parameter
+#' ending in `_d` is subset to that dimension (its last index) and renamed, so
+#' that `L_full_d[i,d-1]` becomes `L_full[i]` and `L_tp1_d[t,i,d-1]` becomes
+#' `L_tp1[t,i]`. Code written for dimension 1 then works for any dimension.
+#'
+#' @return A `draws_array`.
+#' @noRd
+.dim_draws <- function(obj, variable, dim=1, use_chain=NULL) {
+
+  if(dim == 1) {
+
+    draws <- as_draws_array(obj@stan_samples$draws(variable))
+
+  } else {
+
+    if(dim > .num_dim(obj)) stop("This model has only ", .num_dim(obj), " dimension(s).", call.=FALSE)
+
+    dvar <- switch(variable,
+                   L_full="L_full_d",
+                   L_tp1="L_tp1_d",
+                   sigma_reg_free="sigma_reg_d",
+                   sigma_reg_full="sigma_reg_d",
+                   sigma_abs_free="sigma_abs_d",
+                   legis_x="legis_x_d",
+                   sigma_reg_x="sigma_reg_x_d",
+                   sigma_abs_x="sigma_abs_x_d",
+                   time_var_free="time_var_free_d",
+                   L_AR1="L_AR1_d",
+                   stop("No parameter for dimensions 2 to D corresponds to ", variable, call.=FALSE))
+
+    draws <- as_draws_array(obj@stan_samples$draws(dvar))
+    vars <- posterior::variables(draws)
+    idx <- strsplit(sub(".*\\[(.*)\\]", "\\1", vars), ",")
+    keep <- vapply(idx, function(x) as.integer(x[length(x)]) == dim - 1, logical(1))
+    draws <- posterior::subset_draws(draws, variable=vars[keep])
+    posterior::variables(draws) <- paste0(variable, "[",
+                                          vapply(idx[keep], function(x) paste(x[-length(x)], collapse=","),
+                                                 character(1)),
+                                          "]")
+
+  }
+
+  if(!is.null(use_chain)) draws <- posterior::subset_draws(draws, chain=use_chain)
+
+  draws
+
+}
+
+#' Summary of the ideal points on one dimension
+#' @noRd
+.summary_ideal_pts <- function(object, high_limit, low_limit, aggregated, use_chain, dim=1) {
+
+  ideal_pts <- .prepare_legis_data(object,
+                                   high_limit=high_limit,
+                                   low_limit=low_limit,
+                                   aggregated=aggregated,
+                                   use_chain=use_chain,
+                                   dim=dim)
+
+  if(!("time_id" %in% names(ideal_pts))) {
+    ideal_pts$time_id=1
+  }
+
+  # dimensions 2 to D are processed under the names of dimension 1
+  if(dim > 1) {
+    ideal_pts$legis <- sub("^L_full\\[(.*)\\]$", paste0("L_full_d[\\1,", dim - 1, "]"), ideal_pts$legis)
+    ideal_pts$legis <- sub("^L_tp1\\[(.*)\\]$", paste0("L_tp1_d[\\1,", dim - 1, "]"), ideal_pts$legis)
+  }
+
+  if(aggregated) {
+    ideal_pts <- select(ideal_pts,
+                        Person=person_id,
+                        Group=group_id,
+                        Time_Point=time_id,
+                        `Low Posterior Interval`=low_pt,
+                        `Posterior Median`=median_pt,
+                        `High Posterior Interval`=high_pt,
+                        `Parameter Name`=legis)
+  } else {
+    # add in iteration numbers
+    ideal_pts <- group_by(ideal_pts,person_id,time_id) %>%
+      mutate(Iteration=1:n())
+    ideal_pts <- select(ideal_pts,
+                        Person=person_id,
+                        Group=group_id,
+                        Time_Point=time_id,
+                        Ideal_Points=ideal_pts,
+                        Iteration,
+                        `Parameter Name`=legis)
+  }
+
+  ideal_pts
+
+}
+
+#' Add the item parameters of dimensions 2 to D to an item summary
+#'
+#' The rows for dimension 1 (discriminations, or item positions in latent-space
+#' models, and the item midpoints) get `Dimension` 1, difficulties and cutpoints
+#' `NA`, and rows are added for the observed and missingness discriminations (or
+#' positions) on dimensions 2 to D.
+#' @noRd
+.item_extra_dims <- function(object, item_points, high_limit, low_limit, aggregated, use_chain) {
+
+  if(object@use_method %in% c("laplace","pathfinder")) use_chain <- 1
+
+  per_dim <- grepl("Discrimination|Midpoint|Ideal Point", item_points$`Item Type`)
+  item_points$Dimension <- ifelse(per_dim, 1L, NA_integer_)
+
+  ls <- object@model_type %in% c(13, 14)
+  item_names <- levels(object@score_data@score_matrix$item_id)
+
+  extra <- lapply(2:.num_dim(object), function(d) {
+
+    lapply(c(reg="sigma_reg_free", abs="sigma_abs_free"), function(v) {
+
+      draws <- unclass(as_draws_matrix(.dim_draws(object, v, d, use_chain=use_chain)))
+      idx <- as.integer(sub(".*\\[(.*)\\]", "\\1", colnames(draws)))
+      type <- if(v == "sigma_reg_free") "Non-Inflated" else "Inflated"
+      type <- paste(type, if(ls) "Item Position" else "Discrimination")
+      par <- paste0(if(v == "sigma_reg_free") "sigma_reg_d[" else "sigma_abs_d[", idx, ",", d - 1, "]")
+
+      if(aggregated) {
+        tibble(`Posterior Median`=apply(draws, 2, median),
+               `High Posterior Interval`=apply(draws, 2, quantile, high_limit),
+               `Low Posterior Interval`=apply(draws, 2, quantile, low_limit),
+               `Item Type`=type,
+               `Predicted Outcome`=if(v == "sigma_abs_free") "Missing" else NA_character_,
+               `Item Name`=item_names[idx],
+               Parameter=par,
+               Dimension=d)
+      } else {
+        tibble(Posterior_Sample=as.numeric(draws),
+               `Item Name`=rep(item_names[idx], each=nrow(draws)),
+               `Item Type`=type,
+               `Predicted Outcome`=if(v == "sigma_abs_free") "Missing" else NA_character_,
+               Parameter=rep(par, each=nrow(draws)),
+               Iteration=rep(seq_len(nrow(draws)), times=ncol(draws)),
+               Dimension=d)
+      }
+
+    }) %>% bind_rows()
+
+  }) %>% bind_rows()
+
+  bind_rows(item_points, extra)
+
+}
+
+#' True person ideal points of a simulation on one dimension
+#'
+#' `id_sim_gen()` stores dimension 1 in `true_person` (persons x time points) and,
+#' with more than one dimension, dimensions 2 to D in `true_person_d` (persons x
+#' time points x D - 1).
+#' @noRd
+.true_person <- function(simul_data, dim=1) {
+  if(dim == 1) return(simul_data$true_person)
+  if(is.null(simul_data$true_person_d) || dim(simul_data$true_person_d)[3] < dim - 1) {
+    stop("The simulation has no true values for dimension ", dim, ".", call.=FALSE)
+  }
+  as.matrix(simul_data$true_person_d[, , dim - 1, drop=TRUE])
+}
+
+#' Apply a function over a list, in parallel through the future framework
+#'
+#' If a future plan has been set with `future::plan()` (anything other than the
+#' default sequential plan), that plan is used, so any backend can be chosen
+#' (multicore, multisession, a cluster, mirai through future.mirai, ...). If not,
+#' and `cores` is more than 1, a multisession plan with `cores` workers is used
+#' for this call. Otherwise this is `lapply()`.
+#'
+#' Workers get a copy of `X` and of the arguments in `...`, so `FUN` should be a
+#' function of the package (not a closure holding a fitted model) and the
+#' arguments should be no larger than needed.
+#' @noRd
+.id_lapply <- function(X, FUN, ..., cores=1) {
+
+  user_plan <- !inherits(future::plan(), "sequential")
+
+  if(!user_plan && cores <= 1) return(lapply(X, FUN, ...))
+
+  if(!user_plan) {
+    old_plan <- future::plan(future::multisession, workers=cores)
+    on.exit(future::plan(old_plan), add=TRUE)
+  }
+
+  future.apply::future_lapply(X, FUN, ..., future.seed=TRUE)
+
+}
+
+#' A `$draws()` method for a set of draws, standing in for a CmdStan fit
+#' @noRd
+.draws_stub <- function(draws) {
+  force(draws)
+  function(variables=NULL, ...) {
+    if(is.null(variables)) draws else posterior::subset_draws(draws, variable=variables)
+  }
+}
+
+#' A copy of a fitted model with only what the item summaries use
+#'
+#' For parallel workers, which get a copy of every argument: the draws of the item
+#' parameters (and of one ideal point, used to count chains) behind the same
+#' `$draws()` interface as the CmdStan fit, with the large slots emptied.
+#' @noRd
+.light_item_object <- function(object) {
+
+  vars <- posterior::variables(object@stan_samples$draws())
+  keep <- grepl("^(B_int_free|A_int_free|sigma_reg_free|sigma_abs_free|ls_int|steps_votes[0-9]+|steps_votes_grm[0-9]+)\\[",
+                vars) | vars == "L_full[1]"
+
+  light <- object
+  light@stan_samples <- list(draws=.draws_stub(posterior::as_draws_array(object@stan_samples$draws(vars[keep]))))
+  light@summary <- NULL
+  light@time_varying <- NULL
+  light@this_data <- list()
+  light@eval_data_args <- list()
+  light@score_data@func_args <- list()
+  light@score_data@stanmodel <- NULL
+  light@score_data@stanmodel_map <- NULL
+  light
+
+}
+
+#' The function simulating, predicting or computing log-likelihoods for a model type
+#' @noRd
+.rep_func <- function(model_id) {
+  switch(as.character(model_id),
+         `1`=.binary, `2`=.binary,
+         `3`=.ordinal_ratingscale, `4`=.ordinal_ratingscale,
+         `5`=.ordinal_ratingscale, `6`=.ordinal_ratingscale,
+         `7`=.poisson, `8`=.poisson,
+         `9`=.normal, `10`=.normal,
+         `11`=.lognormal, `12`=.lognormal,
+         `13`=.binary, `14`=.binary,
+         `15`=.ordbeta, `16`=.ordbeta,
+         `17`=.binomial, `18`=.binomial)
+}
+
+#' Posterior predictions, expected values or log-likelihoods for one item
+#'
+#' `item` holds everything about the item (see `id_post_pred`), so this can run on
+#' a parallel worker without the fitted model.
+#' @noRd
+.predict_item <- function(item, pred_outcome, type, output, this_sample) {
+
+  out_predict <- .rep_func(item$model_id)(pr_absence=item$pr_absence,
+                                          pr_vote=item$pr_vote,
+                                          N=length(item$person_points),
+                                          ordinal_outcomes=item$ordinal_outcomes,
+                                          pred_outcome=pred_outcome,
+                                          inflate=item$model_id %in% c(2,4,6,8,10,12,14,16,18),
+                                          latent_space=item$model_id %in% c(13,14),
+                                          time_points=item$time_points,
+                                          item_points=item$bill_points,
+                                          outcome=item$outcome,
+                                          miss_val=item$miss_val,
+                                          trials=item$trials,
+                                          person_points=item$person_points,
+                                          sigma_sd=item$sigma_sd,
+                                          phi=item$phi,
+                                          cutpoints=item$cutpoints,
+                                          type=type,
+                                          output=output)
+
+  # pass along sample info
+  attr(out_predict,'this_sample') <- this_sample
+  attr(out_predict,"data") <- list(person_id=item$person_points,
+                                   group_id=item$person_points,
+                                   item_id=item$bill_points,
+                                   time_id=item$time_points,
+                                   miss_val=item$miss_val,
+                                   outcome=item$outcome)
+  attr(out_predict,'model') <- item$model_id
+  attr(out_predict,"order_id") <- item$cuts
+  attr(out_predict,'item') <- item$item_point
+  attr(out_predict,'this_obs') <- item$this_obs
+  attr(out_predict,"output_type") <- if(item$discrete) "discrete" else "continuous"
+
+  class(out_predict) <- c('matrix', if(type=='log_lik') 'log_lik' else 'ppd')
+
+  out_predict
+
 }

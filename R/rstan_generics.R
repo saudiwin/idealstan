@@ -70,8 +70,15 @@ setGeneric('id_post_pred',signature='object',
 #' output `'missing'` showing whether an observation was predicted as missing or not
 #' @param covar What kind of covariates to include as part of the prediction -- either
 #' "person" (the default) or "items" if you included predictors for item discriminations.
-#' @param use_cores Number of cores to use for multicore parallel processing with
-#' the base R `parallel` package
+#' @param use_cores Number of cores to use for computing the predictions of the
+#' items in parallel. Defaults to 1 (no parallelization).
+#' The work runs in parallel through the \pkg{future} package: with more than one
+#' core and no plan set, a \code{future::multisession} plan with that many
+#' workers (separate R sessions, which work everywhere, including Windows,
+#' RStudio and Positron). To use another backend, set it with
+#' \code{future::plan()} before calling, for example
+#' \code{future::plan(future::multicore, workers = 4)}; that plan is then used
+#' whatever the number of cores.
 #' @param use_chain ID of MCMC chain to use rather than all chains (the default). 
 #' @param skip_cov Whether to skip adding in hierarchical person-level covariates. Defaults to FALSE.
 #' @param ... Any other arguments passed on to posterior_predict (currently none available)
@@ -235,387 +242,110 @@ setMethod('id_post_pred',signature(object='idealstan'),function(object,
     
   }
   
-  # we can do the initial processing here
-  
-  # loop over posterior iterations
-  if(new_stan_data$stan_data$`T`>1) {
-    
-    if(is.null(use_chain)) {
-      
-      L_tp1 <- object@time_varying
-      
-    } else {
-      
-      L_tp1 <- .get_varying(object, time_id=new_stan_data$stan_data$time,
-                            person_id=new_stan_data$stan_data$ll,
-                            use_chain=use_chain)
-      
-    }
-    
-    
-    
-    # add in person covariates if present
-    
-    if(cov_type=="persons" && !skip_cov) {
-      
-      L_tp1 <- .add_person_cov(L_tp1, object, legis_x, person_points, time_points,
-                               use_chain)
-      
-    }
-    
-  }
+  # linear predictors of the outcome and of missingness for each draw and
+  # observation, summed over the dimensions as in the Stan likelihood
 
-  L_full <- as_draws_array(object@stan_samples$draws('L_full'))[,use_chain,] %>% as_draws_matrix()
-  A_int_free <- as_draws_array(object@stan_samples$draws('A_int_free'))[,use_chain,] %>% as_draws_matrix()
-  B_int_free <- as_draws_array(object@stan_samples$draws('B_int_free'))[,use_chain,] %>% as_draws_matrix()
-  sigma_abs_free <- as_draws_array(object@stan_samples$draws('sigma_abs_free'))[,use_chain,] %>% as_draws_matrix()
-  sigma_reg_free <- as_draws_array(object@stan_samples$draws('sigma_reg_free'))[,use_chain,] %>% as_draws_matrix()
-  
-  # check if we need to update covariates
-  
-  if(cov_type!="none" && object@this_data$`T`==1 && !skip_cov) {
-    
-    L_full <- .add_person_cov(as_draws_array(L_full), object, legis_x, person_points, time_points,
-                              use_chain)
-    
-    L_full <- as_draws_matrix(L_full)
-    
-  }
+  lin <- .post_linear(object, new_stan_data$stan_data, obs=this_sample,
+                      these_draws=these_draws, use_chain=use_chain, skip_cov=skip_cov)
 
   # loop over model IDs
-  
+
   out_prs <- lapply(unique(modelpoints), function(m) {
-    
-    latent_space <- m %in% c(13,14)
-    
-    inflate <- m %in% c(2,4,6,8,10,12,14)
-    
+
     print(paste0("Now on model ",m))
-    
-    # loop over itempoints
-    
-    these_bills <- unique(bill_points)
-    
-    these_bills <- these_bills[these_bills %in% unique(bill_points[modelpoints==m])]
-    
+
+    these_bills <- unique(bill_points[modelpoints==m])
+
     # check if any are in the item subset
-    
+
     if(!is.null(item_subset)) {
-      
-      these_bills <- these_bills[these_bills %in% unique(bill_points[bill_points %in% item_subset])]
-      
+
+      these_bills <- these_bills[these_bills %in% item_subset]
+
     }
-    
+
     if(length(these_bills)>0) {
-      
-      out_items <- parallel::mclapply(these_bills, function(i) {
-        
+
+      lapply(these_bills, function(i) {
+
         this_obs <- which(bill_points==i)
-        
-        if(length(unique(new_stan_data$idealdata@score_matrix$time_id))>1) {
-          
-            if(latent_space) {
-              # use latent-space formulation for likelihood
-              pr_absence_iter <- sapply(this_obs,function(n) {
 
-                this_time <- paste0("L_tp1[",time_points[n],",",person_points[n],"]")
-                
-                t(-sqrt((L_tp1[these_draws,this_time] - A_int_free[these_draws,bill_points[n]])^2))
-              }) %>% plogis()
-            } else {
-              # use IRT formulation for likelihood
-              pr_absence_iter <- sapply(this_obs,function(n) {
-                this_time <- paste0("L_tp1[",time_points[n],",",person_points[n],"]")
-                t(L_tp1[these_draws,this_time]*sigma_abs_free[these_draws,bill_points[n]] - A_int_free[these_draws,bill_points[n]])
-              }) %>% plogis()
-              
-            }
- 
-            if(latent_space) {
-              if(inflate) {
-                pr_vote <- sapply(this_obs,function(n) {
-                  this_time <- paste0("L_tp1[",time_points[n],",",person_points[n],"]")
-                  t(-sqrt((L_tp1[these_draws,this_time] - B_int_free[these_draws,bill_points[n]])^2))
-                }) %>% plogis()
-              } else {
-                # latent space non-inflated formulation is different
-                pr_vote <- sapply(this_obs,function(n) {
-                  this_time <- paste0("L_tp1[",time_points[n],",",person_points[n],"]")
-                  t(sigma_reg_free[these_draws,bill_points[n]] + sigma_abs_free[these_draws,bill_points[n]] -
-                    sqrt((L_tp1[these_draws,this_time] - B_int_free[these_draws,bill_points[n]])^2))
-                }) %>% plogis()
-              }
-              
-            } else {
-              pr_vote <- sapply(this_obs,function(n) {
-                this_time <- paste0("L_tp1[",time_points[n],",",person_points[n],"]")
-                t(L_tp1[these_draws,this_time]*sigma_reg_free[these_draws,bill_points[n]] - B_int_free[these_draws,bill_points[n]])
-              }) %>% plogis()
-            }
-            
-        } else {
-          
-          # non-time varying
-          
-            if(latent_space) {
-              # use latent-space formulation for likelihood
-              pr_absence_iter <- sapply(this_obs,function(n) {
-                t(-sqrt((L_full[these_draws,person_points[n]] - A_int_free[these_draws,bill_points[n]])^2))
-              }) %>% plogis()
-            } else {
-              # use IRT formulation for likelihood
-              pr_absence_iter <- sapply(this_obs,function(n) {
-                t(L_full[these_draws,person_points[n]]*sigma_abs_free[these_draws,bill_points[n]] - A_int_free[these_draws,bill_points[n]])
-              }) %>% plogis()
-              
-            }
+        list(pr_vote=plogis(lin$obs[, this_obs, drop=FALSE]),
+             pr_absence=plogis(lin$abs[, this_obs, drop=FALSE]),
+             model_id=m,
+             item_point=i,
+             this_obs=this_obs)
 
-            if(latent_space) {
-              if(inflate) {
-                pr_vote <- sapply(this_obs,function(n) {
-                  t(-sqrt((L_full[these_draws,person_points[n]] - B_int_free[these_draws,bill_points[n]])^2))
-                }) %>% plogis()
-              } else {
-                # latent space non-inflated formulation is different
-                pr_vote <- sapply(this_obs,function(n) {
-                  t(sigma_reg_free[these_draws,bill_points[n]] + sigma_abs_free[these_draws,bill_points[n]] -
-                    sqrt((L_full[these_draws,person_points[n]] - B_int_free[these_draws,bill_points[n]])^2))
-                }) %>% plogis()
-              }
-              
-            } else {
-              pr_vote <- sapply(this_obs,function(n) {
-                t(L_full[these_draws,person_points[n]]*sigma_reg_free[these_draws,bill_points[n]] - B_int_free[these_draws,bill_points[n]])
-              }) %>% plogis()
-            }
-          
-        }
-        
-        return(list(pr_vote=pr_vote,pr_absence=pr_absence_iter,model_id=m,
-                    item_point=i,
-                    this_obs=this_obs))
-      },mc.cores=use_cores)
-      
-      return(out_items)
-      
-    } 
-      
-    })
-    
+      })
+
+    }
+
+  })
+
    # need to flatten the list one level so it is at the item level, not the model level
 
-    out_mods <- lapply(out_prs, function(m) {
-      
-      this_mid <- m[[1]]$model_id
-      
-      rep_func <- switch(as.character(this_mid),
-             `1`=.binary,
-             `2`=.binary,
-             `3`=.ordinal_ratingscale,
-             `4`=.ordinal_ratingscale,
-             `5`=.ordinal_ratingscale,
-             `6`=.ordinal_ratingscale,
-             #`5`=.ordinal_grm,
-             #`6`=.ordinal_grm,
-             `7`=.poisson,
-             `8`=.poisson,
-             `9`=.normal,
-             `10`=.normal,
-             `11`=.lognormal,
-             `12`=.lognormal,
-             `13`=.binary,
-             `14`=.binary,
-             `15`=.ordbeta,
-             `16`=.ordbeta,
-             `17`=.binomial,
-             `18`=.binomial)
-      
-      over_models_obj <- lapply(m, function(item)  {
-        
+    # gather the inputs of each item here, so that a parallel worker only gets
+    # its own item (see .id_lapply and .predict_item)
+
+    # draws of item-specific parameters, from the same chains and draws as the
+    # other parameters (draws x variables matrix)
+    item_draws <- function(vars) {
+      out <- as_draws_array(object@stan_samples$draws(vars))[,use_chain,] %>% as_draws_matrix()
+      matrix(as.numeric(out[these_draws,]), nrow=length(these_draws))
+    }
+
+    score_ordered_id <- object@score_data@score_matrix$ordered_id
+
+    item_inputs <- lapply(out_prs, function(m) {
+
+      lapply(m, function(item) {
+
         this_obs <- item$this_obs
+        mid <- item$model_id
 
-        if(item$model_id %in% c(3,4,5,6)) {
+        item$discrete <- mid %in% c(1,2,3,4,5,6,7,8,13,14,17,18)
+        item$outcome <- if(item$discrete) Y_int[this_obs] else Y_cont[this_obs]
+        item$miss_val <- if(item$discrete) new_stan_data$stan_data$y_int_miss else new_stan_data$stan_data$y_cont_miss
+        item$ordinal_outcomes <- 1:unique(score_ordered_id[this_obs])
+        item$person_points <- person_points[this_obs]
+        item$time_points <- time_points[this_obs]
+        item$bill_points <- bill_points[this_obs]
+        item$trials <- if(mid %in% c(3,4,5,6)) NULL else trials[this_obs]
+        item$cuts <- if(mid %in% c(3,4,5,6)) unique(ordered_id[this_obs]) else NA
 
-             cuts <- unique(ordered_id[this_obs])
-
-             outcome <- Y_int[this_obs]
-
-             miss_val <- new_stan_data$stan_data$y_int_miss
-             
-             
-
-           if(item$model_id %in% c(3,4)) {
-             cutpoints <- as_draws_array(object@stan_samples$draws(paste0('steps_votes',cuts)))[,use_chain,] %>% as_draws_matrix()
-             cutpoints <- cutpoints[these_draws,]
-           } else if(item$model_id %in% c(5,6)) {
-             cutpoints <- as_draws_array(object@stan_samples$draws(paste0('steps_votes_grm',cuts,
-                                                           '[',item$item_point,
-                                                           ",",1:(cuts-1),"]")))[,use_chain,] %>% as_draws_matrix()
-             cutpoints <- cutpoints[these_draws,]
-           } 
-             
-             item_points <- bill_points[this_obs]
-             
-             out_predict <- rep_func(pr_absence=item$pr_absence,
-                                     pr_vote=item$pr_vote,
-                                     N=length(person_points[this_obs]),
-                                     ordinal_outcomes=1:unique(object@score_data@score_matrix$ordered_id[this_obs]),
-                                     pred_outcome=pred_outcome,
-                                     inflate=item$model_id %in% c(2,4,6,8,10,12,14,16,18),
-                                     latent_space=item$model_id %in% c(13,14),
-                                     time_points=time_points[this_obs],
-                                     item_points=bill_points[this_obs],
-                                     max_val=max_val,
-                                     outcome=outcome,
-                                     miss_val=miss_val,
-                                     person_points=person_points[this_obs],
-                                     sigma_sd=as_draws_matrix(object@stan_samples$draws('extra_sd'))[these_draws,],
-                                     cutpoints=cutpoints,
-                                     type=type,
-                                     output=output)
-             
-             # set attributes to pass along sample info
-             #attr(out_predict,'chain_order') <- attr(L_tp1,'chain_order')[these_draws]
-             attr(out_predict,'this_sample') <- this_sample
-              
-             attr(out_predict,"data") <- list(person_id=person_points[this_obs],
-                                                group_id=person_points[this_obs],
-                                                item_id=bill_points[this_obs],
-                                                time_id=time_points[this_obs],
-                                                outcome=Y_int[this_obs],
-                                              miss_val=miss_val)
-
-             attr(out_predict,'model') <- item$model_id
-             attr(out_predict,'item') <- item$item_point
-             attr(out_predict,"order_id") <- cuts
-             attr(out_predict,'this_obs') <- this_obs
-             attr(out_predict,"output_type") <- "discrete"
-             
-             
-             if(type=='predict') {
-               class(out_predict) <- c('matrix','ppd')
-             } else if(type=='log_lik') {
-               class(out_predict) <- c('matrix','log_lik')
-             } else if(type=="epred") {
-               
-               class(out_predict) <- c('matrix','ppd')
-               
-             }
-         
-      } else {
-        
-        if(item$model_id %in% c(1,2,7,8,13,14,17,18)) {
-          outcome <- Y_int[this_obs]
-          miss_val <- new_stan_data$stan_data$y_int_miss
-        } else {
-          outcome <- Y_cont[this_obs]
-          miss_val <- new_stan_data$stan_data$y_cont_miss
-        }
-        
-        # draws of item-specific parameters, from the same chains and draws
-        # as the other parameters (draws x variables matrix)
-        item_draws <- function(vars) {
-          out <- as_draws_array(object@stan_samples$draws(vars))[,use_chain,] %>% as_draws_matrix()
-          matrix(as.numeric(out[these_draws,]), nrow=length(these_draws))
-        }
-
-        if(item$model_id %in% c(15,16)) {
-
+        if(mid %in% c(3,4)) {
+          cutpoints <- as_draws_array(object@stan_samples$draws(paste0('steps_votes',item$cuts)))[,use_chain,] %>% as_draws_matrix()
+          item$cutpoints <- cutpoints[these_draws,]
+        } else if(mid %in% c(5,6)) {
+          cutpoints <- as_draws_array(object@stan_samples$draws(paste0('steps_votes_grm',item$cuts,
+                                                                       '[',item$item_point,
+                                                                       ",",1:(item$cuts-1),"]")))[,use_chain,] %>% as_draws_matrix()
+          item$cutpoints <- cutpoints[these_draws,]
+        } else if(mid %in% c(15,16)) {
           # each ordered beta item has its own cutpoints and phi
           this_ordbeta <- new_stan_data$stan_data$ordbeta_id[item$item_point]
-          cutpoints <- item_draws(paste0("ordbeta_cut[",this_ordbeta,",",1:2,"]"))
-          phi <- item_draws(paste0("phi[",this_ordbeta,"]"))[,1]
-
-        } else {
-
-          cutpoints <- NULL
-          phi <- NULL
-
-        }
-
-        if(item$model_id %in% c(9,10,11,12)) {
-
+          item$cutpoints <- item_draws(paste0("ordbeta_cut[",this_ordbeta,",",1:2,"]"))
+          item$phi <- item_draws(paste0("phi[",this_ordbeta,"]"))[,1]
+        } else if(mid %in% c(9,10,11,12)) {
           # each normal/log-normal item has its own residual SD
           this_sigma <- new_stan_data$stan_data$type_het_var[item$item_point]
-          sigma_sd <- item_draws(paste0("extra_sd[",this_sigma,"]"))[,1]
-
-        } else {
-
-          sigma_sd <- NULL
-
+          item$sigma_sd <- item_draws(paste0("extra_sd[",this_sigma,"]"))[,1]
         }
 
-      out_predict <- rep_func(pr_absence=item$pr_absence,
-                              pr_vote=item$pr_vote,
-                              N=length(person_points[this_obs]),
-                              ordinal_outcomes=1:unique(object@score_data@score_matrix$ordered_id[this_obs]),
-                              pred_outcome=pred_outcome,
-                              inflate=item$model_id %in% c(2,4,6,8,10,12,14,16,18),
-                              latent_space=item$model_id %in% c(13,14),
-                              time_points=time_points[this_obs],
-                              item_points=bill_points[this_obs],
-                              max_val=max_val,
-                              outcome=outcome,
-                              miss_val=miss_val,
-                              trials=trials[this_obs],
-                              person_points=person_points[this_obs],
-                              sigma_sd=sigma_sd,
-                              phi=phi,
-                              cutpoints=cutpoints,
-                              type=type,
-                              output=output)
-      
-      # set attributes to pass along sample info
-      #attr(out_predict,'chain_order') <- attr(L_tp1,'chain_order')[these_draws]
-      attr(out_predict,'this_sample') <- this_sample
-      
-      if(length(Y_int)>1) {
-        attr(out_predict,"data") <- list(person_id=person_points[this_obs],
-                                         group_id=person_points[this_obs],
-                                         item_id=bill_points[this_obs],
-                                         time_id=time_points[this_obs],
-                                         miss_val=miss_val,
-                                         outcome=outcome)
-      } else {
-        attr(out_predict,"data") <- list(person_id=person_points[this_obs],
-                                         group_id=person_points[this_obs],
-                                         item_id=bill_points[this_obs],
-                                         time_id=time_points[this_obs],
-                                         miss_val=miss_val,
-                                         outcome=outcome)
-      }
-      
-      attr(out_predict,'model') <- item$model_id
-      attr(out_predict,"order_id") <- NA
-      attr(out_predict,'item') <- item$item_point
-      attr(out_predict,'this_obs') <- this_obs
-      
-      if(item$model_id %in% c(1,2,3,4,5,6,7,8,13,14,17,18)) {
-        attr(out_predict,"output_type") <- "discrete"
-      } else {
-        attr(out_predict,"output_type") <- "continuous"
-      }
-      
-      if(type %in% c('predict',"epred")) {
-        class(out_predict) <- c('matrix','ppd')
-      } else if(type=='log_lik') {
-        class(out_predict) <- c('matrix','log_lik')
-      }
-      
-      }
-      
-        # end item loop
-      
-      return(out_predict)
-        
+        item
+
       })
-      
-      # end items for this model type
-      
-      return(over_models_obj)
-      
-  })
-    
+
+    })
+
+    preds <- .id_lapply(unlist(item_inputs, recursive=FALSE), .predict_item,
+                        pred_outcome=pred_outcome, type=type,
+                        output=output, this_sample=this_sample, cores=use_cores)
+
+    # back into a list of models, each a list of items
+    out_mods <- unname(split(preds, factor(rep(seq_along(item_inputs), lengths(item_inputs)),
+                                           levels=seq_along(item_inputs))))
+
     # add model ID
     
     out_mods <- lapply(1:length(out_mods), function(m) {
@@ -1105,4 +835,83 @@ setMethod('id_plot_ppc',signature(object='idealstan'),function(object,
 #' @export
 derive_chain <- function(ll_matrix=NULL) {
   attr(ll_matrix,'chain_order')
+}
+
+#' Linear predictors of the outcome and of missingness for posterior draws
+#'
+#' Matches the Stan likelihood: for IRT models the sum over dimensions of
+#' (discrimination + item covariate effect) x (ideal point + person covariate
+#' effect), minus the item intercept; for latent-space models (13 and 14) the
+#' person intercept plus the item intercept minus the distance between the person
+#' and the item across the dimensions.
+#'
+#' @param stan_data Stan data for the observations to predict.
+#' @param obs Indices of the observations in `stan_data`.
+#' @param these_draws Rows of the (chain-subset) draws to use.
+#' @param skip_cov Whether to leave out the person covariates.
+#' @return A list with draws x observations matrices `obs` (outcome) and `abs`
+#'   (missingness), on the logit scale.
+#' @noRd
+.post_linear <- function(object, stan_data, obs, these_draws, use_chain, skip_cov=FALSE) {
+
+  p <- stan_data$ll[obs]
+  b <- stan_data$bb[obs]
+  tt <- stan_data$time[obs]
+  ls <- stan_data$mm[obs] %in% c(13, 14)
+  n_obs <- length(obs)
+
+  # draws x columns matrix of one dimension's parameter, columns named as in dimension 1
+  get <- function(v, d=1) {
+    unclass(as_draws_matrix(.dim_draws(object, v, d, use_chain=use_chain)))[these_draws, , drop=FALSE]
+  }
+
+  # covariate effects on the observations: draws x observations
+  cov_effect <- function(X, v, d) {
+    if(is.null(X) || NCOL(X) == 0) return(0)
+    t(as.matrix(X)[obs, , drop=FALSE] %*% t(get(v, d)))
+  }
+
+  B_int <- get("B_int_free")[, paste0("B_int_free[", b, "]"), drop=FALSE]
+  A_int <- get("A_int_free")[, paste0("A_int_free[", b, "]"), drop=FALSE]
+
+  lin_obs <- -B_int
+  lin_abs <- -A_int
+  dist_obs <- dist_abs <- matrix(0, length(these_draws), n_obs)
+
+  for(d in seq_len(.num_dim(object))) {
+
+    if(stan_data$`T` > 1) {
+      L <- if(d == 1) {
+        .get_varying(object, time_id=stan_data$time, person_id=stan_data$ll, use_chain=use_chain)
+      } else {
+        .get_varying(object, use_chain=use_chain, dim=d)
+      }
+      ideal <- unclass(L)[these_draws, paste0("L_tp1[", tt, ",", p, "]"), drop=FALSE]
+    } else {
+      ideal <- get("L_full", d)[, paste0("L_full[", p, "]"), drop=FALSE]
+    }
+
+    if(!skip_cov) ideal <- ideal + cov_effect(stan_data$legis_pred, "legis_x", d)
+
+    reg <- get("sigma_reg_free", d)[, paste0("sigma_reg_free[", b, "]"), drop=FALSE] +
+      cov_effect(stan_data$srx_pred, "sigma_reg_x", d)
+    abs_d <- get("sigma_abs_free", d)[, paste0("sigma_abs_free[", b, "]"), drop=FALSE] +
+      cov_effect(stan_data$sax_pred, "sigma_abs_x", d)
+
+    lin_obs[, !ls] <- lin_obs[, !ls] + reg[, !ls] * ideal[, !ls]
+    lin_abs[, !ls] <- lin_abs[, !ls] + abs_d[, !ls] * ideal[, !ls]
+    dist_obs[, ls] <- dist_obs[, ls] + (ideal[, ls] - reg[, ls])^2
+    dist_abs[, ls] <- dist_abs[, ls] + (ideal[, ls] - abs_d[, ls])^2
+
+  }
+
+  if(any(ls)) {
+    ls_int <- get("ls_int")[, paste0("ls_int[", p[ls], "]"), drop=FALSE]
+    ls_int_abs <- get("ls_int_abs")[, paste0("ls_int_abs[", p[ls], "]"), drop=FALSE]
+    lin_obs[, ls] <- ls_int + B_int[, ls] - sqrt(dist_obs[, ls])
+    lin_abs[, ls] <- ls_int_abs + A_int[, ls] - sqrt(dist_abs[, ls])
+  }
+
+  list(obs=lin_obs, abs=lin_abs)
+
 }

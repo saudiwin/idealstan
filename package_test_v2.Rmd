@@ -8,7 +8,13 @@ output:
 
 ```{r setup, include=FALSE}
 
-require(idealstan)
+# test the source tree this file sits in rather than whichever version of
+# idealstan is installed (rendering runs from the package's root folder)
+if (file.exists("DESCRIPTION") && requireNamespace("pkgload", quietly = TRUE)) {
+  pkgload::load_all(".", quiet = TRUE)
+} else {
+  require(idealstan)
+}
 require(ggplot2)
 require(dplyr)
 require(tidyr)
@@ -59,6 +65,60 @@ collect_sim_results <- function(est, model_label, model_id) {
 
   bind_rows(person_df, discrim_df) |>
     mutate(max_rhat = max_rhat, pct_rhat_ok = pct_rhat_ok)
+}
+
+# Recovery of multidimensional ideal points. The identification constraints
+# don't match the true positions exactly, so the fitted space is a rotated,
+# rescaled and shifted version of the true one: regress each true dimension on
+# all the estimated dimensions and report the R^2, and keep the fitted values
+# (the estimates aligned to the true space) for plotting.
+md_results_list <- list()
+
+collect_md_results <- function(est, model_label) {
+  sim_data <- est@score_data@simul_data
+  s <- summary(est)
+  D <- max(s$Dimension)
+  ref <- filter(s, Dimension == 1)
+  key <- function(x) paste(as.character(x$Person), x$Time_Point)
+  ids <- cbind(as.integer(as.character(ref$Person)), ref$Time_Point)
+  estimates <- sapply(1:D, function(d) {
+    x <- filter(s, Dimension == d)
+    x$`Posterior Median`[match(key(ref), key(x))]
+  })
+  truth <- sapply(1:D, function(d) {
+    if (d == 1) sim_data$true_person[ids] else sim_data$true_person_d[cbind(ids, d - 1)]
+  })
+  aligned <- lapply(1:D, function(d) {
+    reg <- lm(truth[, d] ~ estimates)
+    tibble(model_label = model_label, dimension = d, true_value = truth[, d],
+           aligned = fitted(reg), r_squared = summary(reg)$r.squared)
+  }) |> bind_rows()
+  mutate(aligned, max_rhat = max(est@summary$rhat, na.rm = TRUE))
+}
+
+# persons whose true positions are closest to the pins (2, 0), (-2, 0) and (0, 2)
+md_pins <- function(sim) {
+  tp <- cbind(sim@simul_data$true_person[, 1], sim@simul_data$true_person_d[, 1, 1])
+  list(high = which.max(tp[, 1] - abs(tp[, 2])),
+       low = which.min(tp[, 1] + abs(tp[, 2])),
+       dim = which.max(tp[, 2] - abs(tp[, 1])))
+}
+
+# items whose true discriminations best fit the lower-triangular constraint
+md_item_pins <- function(sim) {
+  rd <- cbind(sim@simul_data$true_reg_discrim, sim@simul_data$true_reg_discrim_d[, 1])
+  list(high = which.max(rd[, 1] - abs(rd[, 2])),
+       low = which.min(rd[, 1]),
+       dim = which.max(rd[, 2]))
+}
+
+plot_md_recovery <- function(md) {
+  ggplot(md, aes(x = true_value, y = aligned)) +
+    geom_point(alpha = 0.4, size = 0.8) +
+    geom_abline(slope = 1, intercept = 0, linetype = 2, colour = "red") +
+    facet_wrap(~dimension, labeller = label_both, scales = "free") +
+    theme_minimal() +
+    labs(x = "True value", y = "Estimate aligned to the true space")
 }
 ```
 
@@ -290,7 +350,10 @@ mcmc_recover_hist(bin_irt_2pl_cov_est@stan_samples$draws("legis_x"),
 
 ```{r coveffect}
 
-id_plot_cov(bin_irt_2pl_cov_est, calc_param='person_cov', cores=4)
+# cores > 1 runs in parallel through future (a multisession plan unless one is
+# set with future::plan()). Multisession workers load the installed idealstan,
+# not this source tree, so install it first to use more than one core here.
+id_plot_cov(bin_irt_2pl_cov_est, calc_param='person_cov')
 
 ```
 
@@ -1077,7 +1140,6 @@ bin_time_irt_2pl_abs_est <- id_estimate(idealdata=bin_time_irt_2pl_abs_sim,
                           restrict_sd_high=10,
                           restrict_sd_low=10,
                                vary_ideal_pts = 'random_walk',
-                          restrict_var = F,
                           restrict_ind_high = as.character(sort(bin_time_irt_2pl_abs_sim@simul_data$true_reg_discrim,
                                                                      decreasing=TRUE,
                                                         index=TRUE)$ix[1]),
@@ -1169,7 +1231,7 @@ bin_time_spline_irt_2pl_abs_est <- id_estimate(idealdata=bin_time_spline_irt_2pl
                                const_type = "items",person_sd = 5,
                                diff_reg_sd = 5,
                                discrim_reg_scale = 2,discrim_reg_shape = 2,
-                               time_var = .1,restrict_var = F,
+                               time_var = .1,
                                restrict_ind_high = as.character(high_restrict),
                               restrict_ind_low =as.character(low_restrict),
                                fixtype='prefix',adapt_delta=0.95)
@@ -1439,6 +1501,225 @@ latent_infl_est %>%
 
 ```
 
+# Additional Models and Options Since V1.0
+
+## Binomial Outcomes
+
+Binomial outcomes count successes out of a number of trials (`outcome_trials` in `id_make`), first without and then with missing-data inflation:
+
+```{r binomial}
+binom_sim <- id_sim_gen(num_person=50,num_items=50,inflate=F,
+                        model_type='binomial',binom_trials=10)
+binom_est <- id_estimate(idealdata=binom_sim,
+                         model_type=17,
+                         restrict_ind_high = as.character(which.max(binom_sim@simul_data$true_person)),
+                         restrict_ind_low = as.character(which.min(binom_sim@simul_data$true_person)),
+                         fix_high = max(binom_sim@simul_data$true_person),
+                         fix_low = min(binom_sim@simul_data$true_person),
+                         fixtype='prefix',nchains=2,ncores=4,niters=500,warmup=500)
+id_plot_rhats(binom_est)
+sim_results_list[[length(sim_results_list) + 1]] <- collect_sim_results(binom_est, "Binomial", 17)
+```
+
+```{r binomial_plot}
+id_plot_legis(binom_est,show_true = T)
+```
+
+```{r binomial_pred}
+binom_est %>% 
+  id_post_pred %>% 
+  id_plot_ppc(binom_est,ppc_pred=.)
+```
+
+```{r binomial_abs}
+binom_abs_sim <- id_sim_gen(num_person=50,num_items=50,inflate=T,
+                            model_type='binomial',binom_trials=10)
+binom_abs_est <- id_estimate(idealdata=binom_abs_sim,
+                             model_type=18,
+                             restrict_ind_high = as.character(which.max(binom_abs_sim@simul_data$true_person)),
+                             restrict_ind_low = as.character(which.min(binom_abs_sim@simul_data$true_person)),
+                             fix_high = max(binom_abs_sim@simul_data$true_person),
+                             fix_low = min(binom_abs_sim@simul_data$true_person),
+                             fixtype='prefix',nchains=2,ncores=4,niters=500,warmup=500)
+id_plot_rhats(binom_abs_est)
+sim_results_list[[length(sim_results_list) + 1]] <- collect_sim_results(binom_abs_est, "Inflated Binomial", 18)
+```
+
+```{r binomial_abs_plot}
+id_plot_legis(binom_abs_est,show_true = T)
+```
+
+## Correlated Discriminations
+
+With `discrim_corr=TRUE`, each item's observed and missingness discriminations are joined by a Gaussian copula with one correlation, `discrim_rho`. The simulated correlation is 0.7:
+
+```{r discrim_corr}
+corr_sim <- id_sim_gen(num_person=100,num_items=60,inflate=T,discrim_corr=0.7)
+corr_est <- id_estimate(idealdata=corr_sim,
+                        model_type=2,
+                        discrim_corr=TRUE,
+                        const_type="items",
+                        restrict_ind_high = as.character(which.max(corr_sim@simul_data$true_reg_discrim)),
+                        restrict_ind_low = as.character(which.min(corr_sim@simul_data$true_reg_discrim)),
+                        fixtype='prefix',nchains=2,ncores=4,niters=500,warmup=500)
+id_plot_rhats(corr_est)
+sim_results_list[[length(sim_results_list) + 1]] <- collect_sim_results(corr_est, "Correlated Discriminations", 2)
+summary(corr_est, pars="discrim_corr")
+```
+
+```{r discrim_corr_recover}
+mcmc_recover_hist(corr_est@stan_samples$draws("discrim_rho"),
+                  true = corr_sim@simul_data$true_discrim_corr)
+```
+
+## Positive Discriminations
+
+Setting `discrim_reg_lb=0` gives the discriminations a generalized beta prior on (0, 1), as in conventional IRT:
+
+```{r pos_discrim}
+pos_sim <- id_sim_gen(num_person=100,num_items=50,discrim_reg_lb=0)
+pos_est <- id_estimate(idealdata=pos_sim,
+                       model_type=1,
+                       discrim_reg_lb=0,
+                       restrict_ind_high = as.character(which.max(pos_sim@simul_data$true_person)),
+                       restrict_ind_low = as.character(which.min(pos_sim@simul_data$true_person)),
+                       fix_high = max(pos_sim@simul_data$true_person),
+                       fix_low = min(pos_sim@simul_data$true_person),
+                       fixtype='prefix',nchains=2,ncores=4,niters=500,warmup=500)
+id_plot_rhats(pos_est)
+sim_results_list[[length(sim_results_list) + 1]] <- collect_sim_results(pos_est, "Positive Discriminations", 1)
+```
+
+```{r pos_discrim_params}
+mcmc_recover_intervals(pos_est@stan_samples$draws("sigma_reg_free"),
+                       true = pos_sim@simul_data$true_reg_discrim)
+```
+
+With both bounds positive, the discriminations instead get an exponential prior with mean `discrim_reg_scale` and no upper bound, and the identification constraints aren't used:
+
+```{r pos_discrim_exp}
+pos_exp_est <- id_estimate(idealdata=pos_sim,
+                           model_type=1,
+                           discrim_reg_lb=0.01,
+                           restrict_ind_high = as.character(which.max(pos_sim@simul_data$true_person)),
+                           restrict_ind_low = as.character(which.min(pos_sim@simul_data$true_person)),
+                           fixtype='prefix',nchains=2,ncores=4,niters=500,warmup=500)
+id_plot_rhats(pos_exp_est)
+cor(summary(pos_exp_est)$`Posterior Median`[order(as.integer(as.character(summary(pos_exp_est)$Person)))],
+    pos_sim@simul_data$true_person[,1])
+```
+
+## Multidimensional Ideal Points
+
+With `num_dim` greater than 1, every person has an ideal point on each dimension. The identification constraints fix the rotation of the space but don't match the true positions exactly, so recovery is measured by regressing each true dimension on all the estimated dimensions (`collect_md_results`).
+
+### Two dimensions, persons pinned
+
+The persons closest to (2, 0), (-2, 0) and (0, 2) in the true space are pinned at those points:
+
+```{r md_persons}
+md_sim <- id_sim_gen(num_person=100,num_items=60,num_dim=2)
+md_pin <- md_pins(md_sim)
+md_est <- id_estimate(idealdata=md_sim,
+                      model_type=1,
+                      num_dim=2,
+                      restrict_ind_high = as.character(md_pin$high),
+                      restrict_ind_low = as.character(md_pin$low),
+                      restrict_ind_dim = as.character(md_pin$dim),
+                      fixtype='prefix',nchains=2,ncores=4,niters=500,warmup=500)
+id_plot_rhats(md_est)
+md_results_list[[length(md_results_list) + 1]] <- collect_md_results(md_est, "2D Binary, Persons Pinned")
+```
+
+```{r md_persons_plot}
+id_plot_persons(md_est, dim=1)
+id_plot_persons(md_est, dim=2)
+plot_md_recovery(md_results_list[[length(md_results_list)]])
+```
+
+```{r md_persons_summary}
+head(summary(md_est))
+filter(summary(md_est, pars="items"), Dimension == 2) %>% head
+```
+
+```{r md_persons_pred}
+md_est %>% 
+  id_post_pred %>% 
+  id_plot_ppc(md_est,ppc_pred=.)
+```
+
+### Two dimensions, items pinned
+
+The discriminations are lower triangular: the dimension 1 anchor has a discrimination of 0 on dimension 2, and the dimension 2 anchor a strongly positive one:
+
+```{r md_items}
+md_item_pin <- md_item_pins(md_sim)
+md_items_est <- id_estimate(idealdata=md_sim,
+                            model_type=1,
+                            num_dim=2,
+                            const_type="items",
+                            restrict_ind_high = as.character(md_item_pin$high),
+                            restrict_ind_low = as.character(md_item_pin$low),
+                            restrict_ind_dim = as.character(md_item_pin$dim),
+                            fixtype='prefix',nchains=2,ncores=4,niters=500,warmup=500)
+id_plot_rhats(md_items_est)
+md_results_list[[length(md_results_list) + 1]] <- collect_md_results(md_items_est, "2D Binary, Items Pinned")
+plot_md_recovery(md_results_list[[length(md_results_list)]])
+```
+
+### Two dimensions, automatic identification
+
+```{r md_vb}
+md_vb_est <- id_estimate(idealdata=md_sim,
+                         model_type=1,
+                         num_dim=2,
+                         fixtype='vb_full',nchains=2,ncores=4,niters=500,warmup=500)
+id_plot_rhats(md_vb_est)
+md_results_list[[length(md_results_list) + 1]] <- collect_md_results(md_vb_est, "2D Binary, VB Auto-ID")
+plot_md_recovery(md_results_list[[length(md_results_list)]])
+```
+
+### Two dimensions, missing-data inflation
+
+```{r md_inflate}
+md_abs_sim <- id_sim_gen(num_person=100,num_items=60,num_dim=2,inflate=T)
+md_abs_pin <- md_pins(md_abs_sim)
+md_abs_est <- id_estimate(idealdata=md_abs_sim,
+                          model_type=2,
+                          num_dim=2,
+                          restrict_ind_high = as.character(md_abs_pin$high),
+                          restrict_ind_low = as.character(md_abs_pin$low),
+                          restrict_ind_dim = as.character(md_abs_pin$dim),
+                          fixtype='prefix',nchains=2,ncores=4,niters=500,warmup=500)
+id_plot_rhats(md_abs_est)
+md_results_list[[length(md_results_list) + 1]] <- collect_md_results(md_abs_est, "2D Inflated Binary")
+plot_md_recovery(md_results_list[[length(md_results_list)]])
+```
+
+### Two dimensions, random walk
+
+Each dimension has its own random walk:
+
+```{r md_rw}
+md_rw_sim <- id_sim_gen(num_person=60,num_items=60,num_dim=2,time_points=6,time_sd=0.5)
+md_rw_pin <- md_pins(md_rw_sim)
+md_rw_est <- id_estimate(idealdata=md_rw_sim,
+                         model_type=1,
+                         num_dim=2,
+                         vary_ideal_pts='random_walk',
+                         restrict_ind_high = as.character(md_rw_pin$high),
+                         restrict_ind_low = as.character(md_rw_pin$low),
+                         restrict_ind_dim = as.character(md_rw_pin$dim),
+                         fixtype='prefix',nchains=2,ncores=4,niters=500,warmup=500)
+id_plot_rhats(md_rw_est)
+md_results_list[[length(md_results_list) + 1]] <- collect_md_results(md_rw_est, "2D Binary Random Walk")
+plot_md_recovery(md_results_list[[length(md_results_list)]])
+```
+
+```{r md_rw_plot}
+id_plot_persons_dyn(md_rw_est, dim=2, use_ci=FALSE) + guides(colour="none")
+```
+
 # Simulation Recovery Summary
 
 ```{r sim_summary}
@@ -1495,6 +1776,18 @@ ggplot(model_summary,
   theme_minimal() +
   labs(title = "Mean Absolute Error by Model and Parameter Type",
        x = NULL, y = "Mean |estimated - true|", fill = "Parameter type")
+```
+
+## Multidimensional Recovery
+
+R^2 of each true dimension regressed on all the estimated dimensions:
+
+```{r md_summary}
+md_all <- bind_rows(md_results_list)
+md_all |>
+  distinct(model_label, dimension, r_squared, max_rhat) |>
+  tidyr::pivot_wider(names_from = dimension, values_from = r_squared,
+                     names_prefix = "R^2, dimension ")
 ```
 
 ## Convergence Diagnostics

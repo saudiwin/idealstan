@@ -41,3 +41,6 @@ model-172a441fafb42.stan
 # compiled Stan models (built locally by cmdstanr)
 inst/stan_files/irt_standard_map
 inst/stan_files/sim_gp
+
+/.quarto/
+**/*.quarto_ipynb
