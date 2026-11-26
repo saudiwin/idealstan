@@ -57,8 +57,15 @@ function.}
 \item{pred_outcome}{In the case of ordinal responses, the number of the category to
 predict. Defaults to top category.}
 
-\item{use_cores}{Number of cores to use for multicore parallel processing with
-the base R \code{parallel} package}
+\item{use_cores}{Number of cores to use for computing the predictions of the
+items in parallel. Defaults to 1 (no parallelization).
+The work runs in parallel through the \pkg{future} package: with more than one
+core and no plan set, a \code{future::multisession} plan with that many
+workers (separate R sessions, which work everywhere, including Windows,
+RStudio and Positron). To use another backend, set it with
+\code{future::plan()} before calling, for example
+\code{future::plan(future::multicore, workers = 4)}; that plan is then used
+whatever the number of cores.}
 
 \item{use_chain}{ID of MCMC chain to use rather than all chains (the default).}
 

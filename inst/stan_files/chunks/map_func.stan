@@ -48,7 +48,6 @@ real partial_sum(array[,] int y_slice,
                  real diff_abs_sd,
                  real diff_reg_sd,
                  vector ar_prior,
-                 real time_sd,
                  real time_var_sd,
                  int time_proc,
                  int zeroes, // whether to use traditional zero-inflation for bernoulli and poisson models
@@ -89,7 +88,6 @@ real partial_sum(array[,] int y_slice,
                  real inv_gamma_beta,
                  int het_var,
                  array[] int type_het_var,
-                 int restrict_var,
                  int ignore,
                  array[,] int ignore_mat,
                  int num_basis,
@@ -306,19 +304,7 @@ real partial_sum(array[,] int y_slice,
             if(debug_mode==2) print("Added std_normal_lpdf(to_vector(L_tp1_var[2:T, s])) to log_prob: ", term);
         }
 
-        if(restrict_var == 1 && time_proc != 4) {
-            if(s > 1) {
-                if(inv_gamma_beta > 0) {
-                    real term = inv_gamma_lpdf(time_var_free[s - 1] | 2, inv_gamma_beta);
-                    log_prob += term;
-                    if(debug_mode==2) print("Added inv_gamma_lpdf(time_var_free[s - 1] | 2, inv_gamma_beta) to log_prob: ", term);
-                } else {
-                    real term = exponential_lpdf(time_var_free[s - 1] | time_var_sd);
-                    log_prob += term;
-                    if(debug_mode==2) print("Added exponential_lpdf(time_var_free[s - 1] | time_var_sd) to log_prob: ", term);
-                }
-            }
-        } else if(time_proc != 4) {
+        if(time_proc != 4) {
             if(inv_gamma_beta > 0) {
                 real term = inv_gamma_lpdf(time_var_free[s] | 2, inv_gamma_beta);
                 log_prob += term;
@@ -334,13 +320,7 @@ real partial_sum(array[,] int y_slice,
             real term = normal_lpdf(a_raw[s] | 0, legis_sd);
             log_prob += term;
             if(debug_mode==2) print("Added normal_lpdf(a_raw[s] | 0, legis_sd) to log_prob: ", term);
-            if(restrict_var == 1) {
-                if(s == 1) {
-                    a = a_raw[s] * time_sd;
-                } else {
-                    a = a_raw[s] * time_var_free[s - 1];
-                }
-            } else {
+            {
                 a = a_raw[s] * time_var_free[s];
             }
         }

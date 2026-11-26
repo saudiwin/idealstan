@@ -39,7 +39,14 @@ passed on to \link{id_post_pred}}
 Defaults to 100. Use option "all" to use all available MCMC draws.}
 
 \item{cores}{The total number of cores to use when calculating the marginal effects.
-Defaults to 1.}
+Defaults to 1.
+The work runs in parallel through the \pkg{future} package: with more than one
+core and no plan set, a \code{future::multisession} plan with that many
+workers (separate R sessions, which work everywhere, including Windows,
+RStudio and Positron). To use another backend, set it with
+\code{future::plan()} before calling, for example
+\code{future::plan(future::multicore, workers = 4)}; that plan is then used
+whatever the number of cores.}
 
 \item{lb}{The quantile for the lower bound of the aggregated effects (default is 0.025 for a 95\% interval)}
 

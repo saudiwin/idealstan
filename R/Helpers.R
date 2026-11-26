@@ -522,13 +522,11 @@
   restrict_sd_low=discrim_reg_shape,
   restrict_N_high=discrim_reg_scale,
   restrict_N_low=discrim_reg_shape,
-  time_sd=time_fix_sd,
   time_var_sd=time_var,
   ar1_up=ar1_up,
   ar1_down=ar1_down,
   inv_gamma_beta=inv_gamma_beta,
   center_cutoff=as.integer(time_center_cutoff),
-  restrict_var=restrict_var,
   ar_prior=ar_prior,
   zeroes=as.numeric(inflate_zero),
   time_ind=as.array(time_ind),
@@ -792,13 +790,11 @@
                     restrict_sd_low=restrict_sd_low,
                     restrict_N_high=restrict_N_high,
                     restrict_N_low=restrict_N_low,
-                    time_sd=time_fix_sd,
                     time_var_sd=time_var,
                     ar1_up=ar1_up,
                     ar1_down=ar1_down,
                     inv_gamma_beta=inv_gamma_beta,
                     center_cutoff=as.integer(time_center_cutoff),
-                    restrict_var=restrict_var,
                     ar_prior=ar_prior,
                     zeroes=as.numeric(inflate_zero),
                     time_ind=as.array(time_ind),
@@ -1564,7 +1560,7 @@ process_init_pathfinder <- function(init, num_procs, model_variables = NULL,
                                       gp_N_fix, time_proc, num_ls, T, 
                                       ar1_down, ar1_up, pos_discrim, 
                                       LX, SRX, SAX, num_bills_grm, n_cats_rat, 
-                                      n_cats_grm, num_var, gp_N, restrict_var, 
+                                      n_cats_grm, num_var, gp_N, 
                                       num_basis,restrict_ind_high,
                                       restrict_ind_low,
                                       const_type,
@@ -1607,7 +1603,7 @@ process_init_pathfinder <- function(init, num_procs, model_variables = NULL,
       steps_votes_grm10 = if (n_cats_grm[8]>1) t(apply(array(rnorm((n_cats_grm[8] - 1) * num_bills,sd=0.25), dim = c(num_bills, n_cats_grm[8] - 1)), 1, sort)) else array(dim = c(num_bills, n_cats_grm[8] - 1)),
       extra_sd = runif(num_var, 0.5, 1),
       time_var_gp_free = runif(gp_N, 0.25, .75),
-      time_var_free = if (T > 1 && time_proc != 4 && restrict_var == 1) runif(num_legis - 1, 0.5, 1) else if (T > 1 && time_proc != 4) runif(num_legis, 0.5, 1) else numeric(0),
+      time_var_free = if (T > 1 && time_proc != 4) runif(num_legis, 0.5, 1) else numeric(0),
       a_raw = if (num_basis > 1) array(rep(0L, num_legis * num_basis), dim = c(num_legis, num_basis)) else array(numeric(0), dim = c(num_legis, 0L)),
       ordbeta_cut = if(num_ordbeta>0) matrix(rep(c(-1,1),times=num_ordbeta),ncol=2,nrow=num_ordbeta,byrow=TRUE) else array(numeric(0),dim=c(1,0)),
       phi = if(num_ordbeta>0) rep(0.25, num_ordbeta) else numeric(0)
@@ -1673,7 +1669,6 @@ process_init_pathfinder <- function(init, num_procs, model_variables = NULL,
                                          this_data$n_cats_grm, 
                                          this_data$num_var, 
                                          gp_N, 
-                                         this_data$restrict_var, 
                                          this_data$num_basis,
                                          this_data$restrict_high,
                                          this_data$restrict_low,
@@ -2739,7 +2734,7 @@ return(as.vector(idx))
   gp_N <- if(tp == 4) N else 0
   n_tv <- if(T_n > 1 && tp != 5) N else 0
   n_ar <- if(T_n > 1 && tp == 3) N else 0
-  n_var <- if(T_n > 1 && tp %in% c(2, 3)) N - as.integer(this_data$restrict_var == 1) else 0
+  n_var <- if(T_n > 1 && tp %in% c(2, 3)) N else 0
   n_basis <- if(this_data$num_basis > 1) this_data$num_basis else 0
 
   masks <- .dim_masks(this_data)
@@ -3697,15 +3692,7 @@ return(as.vector(idx))
         
         L_full <- as_draws_array(obj@stan_samples$draws("L_full"))[,use_chain,] %>% as_draws_matrix()
         
-        if(obj@restrict_var) {
-          
-          time_var_free <- as_draws_array(obj@stan_samples$draws("time_var_full"))[,use_chain,] %>% as_draws_matrix()
-          
-        } else {
-          
-          time_var_free <- as_draws_array(obj@stan_samples$draws("time_var_free"))[,use_chain,] %>% as_draws_matrix()
-          
-        }
+        time_var_free <- as_draws_array(obj@stan_samples$draws("time_var_free"))[,use_chain,] %>% as_draws_matrix()
       
       #make a grid, time varying fastest
       
@@ -3721,17 +3708,8 @@ return(as.vector(idx))
                             p=NULL,
                             L_tp1_var=NULL) {
         
-        if(obj@restrict_var) {
-          
-          time_fix_sd <- obj@time_fix_sd
-          p_time <- p - 1
-          
-        } else {
-          
-          time_fix_sd <- time_var_free[,p]
-          p_time <- p
-          
-        }
+        time_fix_sd <- time_var_free[,p]
+        p_time <- p
         
         if(p>1) {
           
@@ -3878,17 +3856,8 @@ return(as.vector(idx))
                             L_tp1_var=NULL) {
         
           
-        if(obj@restrict_var) {
-          
-          time_fix_sd <- obj@time_fix_sd
-          p_time <- p - 1
-          
-        } else {
-          
-          time_fix_sd <- time_var_free[,p]
-          p_time <- p
-          
-        }
+        time_fix_sd <- time_var_free[,p]
+        p_time <- p
         
 
           if(p>1) {
@@ -4395,4 +4364,126 @@ return(as.vector(idx))
     stop("The simulation has no true values for dimension ", dim, ".", call.=FALSE)
   }
   as.matrix(simul_data$true_person_d[, , dim - 1, drop=TRUE])
+}
+
+#' Apply a function over a list, in parallel through the future framework
+#'
+#' If a future plan has been set with `future::plan()` (anything other than the
+#' default sequential plan), that plan is used, so any backend can be chosen
+#' (multicore, multisession, a cluster, mirai through future.mirai, ...). If not,
+#' and `cores` is more than 1, a multisession plan with `cores` workers is used
+#' for this call. Otherwise this is `lapply()`.
+#'
+#' Workers get a copy of `X` and of the arguments in `...`, so `FUN` should be a
+#' function of the package (not a closure holding a fitted model) and the
+#' arguments should be no larger than needed.
+#' @noRd
+.id_lapply <- function(X, FUN, ..., cores=1) {
+
+  user_plan <- !inherits(future::plan(), "sequential")
+
+  if(!user_plan && cores <= 1) return(lapply(X, FUN, ...))
+
+  if(!user_plan) {
+    old_plan <- future::plan(future::multisession, workers=cores)
+    on.exit(future::plan(old_plan), add=TRUE)
+  }
+
+  future.apply::future_lapply(X, FUN, ..., future.seed=TRUE)
+
+}
+
+#' A `$draws()` method for a set of draws, standing in for a CmdStan fit
+#' @noRd
+.draws_stub <- function(draws) {
+  force(draws)
+  function(variables=NULL, ...) {
+    if(is.null(variables)) draws else posterior::subset_draws(draws, variable=variables)
+  }
+}
+
+#' A copy of a fitted model with only what the item summaries use
+#'
+#' For parallel workers, which get a copy of every argument: the draws of the item
+#' parameters (and of one ideal point, used to count chains) behind the same
+#' `$draws()` interface as the CmdStan fit, with the large slots emptied.
+#' @noRd
+.light_item_object <- function(object) {
+
+  vars <- posterior::variables(object@stan_samples$draws())
+  keep <- grepl("^(B_int_free|A_int_free|sigma_reg_free|sigma_abs_free|ls_int|steps_votes[0-9]+|steps_votes_grm[0-9]+)\\[",
+                vars) | vars == "L_full[1]"
+
+  light <- object
+  light@stan_samples <- list(draws=.draws_stub(posterior::as_draws_array(object@stan_samples$draws(vars[keep]))))
+  light@summary <- NULL
+  light@time_varying <- NULL
+  light@this_data <- list()
+  light@eval_data_args <- list()
+  light@score_data@func_args <- list()
+  light@score_data@stanmodel <- NULL
+  light@score_data@stanmodel_map <- NULL
+  light
+
+}
+
+#' The function simulating, predicting or computing log-likelihoods for a model type
+#' @noRd
+.rep_func <- function(model_id) {
+  switch(as.character(model_id),
+         `1`=.binary, `2`=.binary,
+         `3`=.ordinal_ratingscale, `4`=.ordinal_ratingscale,
+         `5`=.ordinal_ratingscale, `6`=.ordinal_ratingscale,
+         `7`=.poisson, `8`=.poisson,
+         `9`=.normal, `10`=.normal,
+         `11`=.lognormal, `12`=.lognormal,
+         `13`=.binary, `14`=.binary,
+         `15`=.ordbeta, `16`=.ordbeta,
+         `17`=.binomial, `18`=.binomial)
+}
+
+#' Posterior predictions, expected values or log-likelihoods for one item
+#'
+#' `item` holds everything about the item (see `id_post_pred`), so this can run on
+#' a parallel worker without the fitted model.
+#' @noRd
+.predict_item <- function(item, pred_outcome, type, output, this_sample) {
+
+  out_predict <- .rep_func(item$model_id)(pr_absence=item$pr_absence,
+                                          pr_vote=item$pr_vote,
+                                          N=length(item$person_points),
+                                          ordinal_outcomes=item$ordinal_outcomes,
+                                          pred_outcome=pred_outcome,
+                                          inflate=item$model_id %in% c(2,4,6,8,10,12,14,16,18),
+                                          latent_space=item$model_id %in% c(13,14),
+                                          time_points=item$time_points,
+                                          item_points=item$bill_points,
+                                          outcome=item$outcome,
+                                          miss_val=item$miss_val,
+                                          trials=item$trials,
+                                          person_points=item$person_points,
+                                          sigma_sd=item$sigma_sd,
+                                          phi=item$phi,
+                                          cutpoints=item$cutpoints,
+                                          type=type,
+                                          output=output)
+
+  # pass along sample info
+  attr(out_predict,'this_sample') <- this_sample
+  attr(out_predict,"data") <- list(person_id=item$person_points,
+                                   group_id=item$person_points,
+                                   item_id=item$bill_points,
+                                   time_id=item$time_points,
+                                   miss_val=item$miss_val,
+                                   outcome=item$outcome)
+  attr(out_predict,'model') <- item$model_id
+  attr(out_predict,"order_id") <- item$cuts
+  attr(out_predict,'item') <- item$item_point
+  attr(out_predict,'this_obs') <- item$this_obs
+  attr(out_predict,"output_type") <- if(item$discrete) "discrete" else "continuous"
+
+  class(out_predict) <- c('matrix', if(type=='log_lik') 'log_lik' else 'ppd')
+
+  out_predict
+
 }

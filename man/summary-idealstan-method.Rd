@@ -37,10 +37,14 @@ full posterior samples. Defaults to \code{TRUE}.}
 and is recommended.}
 
 \item{cores}{Number of cores to use for parallel processing when summarizing
-item parameters. Defaults to 1 (no parallelization). Values greater than 1 use
-\code{parallel::mclapply} for faster computation with many items. Note that
-parallelization only works on Unix-like systems (Linux, macOS); on Windows,
-this parameter is ignored and single-core processing is used.}
+item parameters, which can help with many items. Defaults to 1 (no parallelization).
+The work runs in parallel through the \pkg{future} package: with more than one
+core and no plan set, a \code{future::multisession} plan with that many
+workers (separate R sessions, which work everywhere, including Windows,
+RStudio and Positron). To use another backend, set it with
+\code{future::plan()} before calling, for example
+\code{future::plan(future::multicore, workers = 4)}; that plan is then used
+whatever the number of cores.}
 }
 \value{
 A \code{\link[dplyr]{tibble}} data frame with parameters as rows and descriptive statistics as columns

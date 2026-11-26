@@ -187,13 +187,11 @@ data {
   array[num_restrict_high] real<lower=0> restrict_N_high;
   array[num_restrict_low] real<lower=0> restrict_N_low;
   vector[2] ar_prior;
-  real time_sd;
   real time_var_sd; // over-time variance of persons
   real ar1_up;  // upper ar1 limit
   real ar1_down; // lower ar1 limit
   real inv_gamma_beta;
   int<lower=2> center_cutoff;
-  int restrict_var; // whether to fix the over-time variance of the first person to a value
   array[S,3] int sum_vals; // what to loop over for reduce sum
   int time_proc;
   int zeroes; // whether to use traditional zero-inflation for bernoulli and poisson models
@@ -437,7 +435,7 @@ parameters {
   vector<lower=0>[num_ordbeta] phi;
   vector<lower=0>[num_var] extra_sd;
   vector<lower=0>[gp_N] time_var_gp_free;
-  vector<lower=0>[(T>1 && time_proc!=4 && restrict_var==1) ? num_legis-1 : (T>1 && time_proc!=4 ? num_legis : 0)] time_var_free;
+  vector<lower=0>[(T>1 && time_proc!=4) ? num_legis : 0] time_var_free;
   array[num_legis] row_vector[num_basis > 1 ? num_basis : 0] a_raw;
   // dimensions 2 to D (all zero-length when D = 1)
   matrix[num_legis, Dm] L_full_d; // ideal points
@@ -448,7 +446,7 @@ parameters {
   matrix[SAX, Dm] sigma_abs_x_d; // item covariates of missingness discriminations
   array[T] matrix[(T>1 && time_proc!=5) ? num_legis : 0, Dm] L_tp1_var_d; // time-series parameters
   matrix<lower=ar1_down,upper=ar1_up>[(T>1 && time_proc==3) ? num_legis : 0, Dm] L_AR1_d;
-  matrix<lower=0>[(T>1 && (time_proc==2 || time_proc==3)) ? (restrict_var==1 ? num_legis - 1 : num_legis) : 0, Dm] time_var_free_d;
+  matrix<lower=0>[(T>1 && (time_proc==2 || time_proc==3)) ? num_legis : 0, Dm] time_var_free_d;
   matrix<lower=0>[gp_N, Dm] m_sd_free_d;
   matrix<lower=0>[gp_N, Dm] time_var_gp_free_d;
   array[num_legis, Dm] row_vector[num_basis > 1 ? num_basis : 0] a_raw_d;
@@ -474,9 +472,7 @@ transformed parameters {
     if(T > 1) {
       matrix[num_legis, Dm] time_sd_d = rep_matrix(0, num_legis, Dm);
       if(time_proc==2 || time_proc==3) {
-        if(restrict_var==1) {
-          time_sd_d = append_row(rep_row_vector(time_sd, Dm), time_var_free_d);
-        } else {
+        {
           time_sd_d = time_var_free_d;
         }
       }
@@ -486,16 +482,11 @@ transformed parameters {
 
   }
 
-  if(T>1 && time_proc!=4 && restrict_var==1) {
-    time_var_full = append_row([time_sd]',time_var_free);
+  if(T>1 && S_type==0 && time_proc!=4) {
+    time_var_full = time_var_free;
   }
-  
-  if(T>1 && num_basis>1 && S_type==0 && restrict_var==1) {
-    
-    for(n in 1:num_legis)
-              a[n] = a_raw[n] * time_var_full[n];
-    
-  } else if(T>1 && num_basis>1 && S_type==0) {
+
+  if(T>1 && num_basis>1 && S_type==0) {
     
     for(n in 1:num_legis)
               a[n] = a_raw[n] * time_var_free[n];
@@ -592,31 +583,7 @@ for(n in 1:num_legis) {
       
       if(time_proc==2) {
         
-        if(restrict_var==1) {
-          
-          for(n in 1:num_legis) {
-            if(ignore==1) {
-    
-              start = ignore_mat[n,1];
-               end = ignore_mat[n,2];
-               
-                   if(end>T) {
-                      end = T;
-                    }
-                    if(start < 1) {
-                      
-                      start = 1;
-                      
-                  }
-    
-              }
-              
-              L_tp1_var[(start+1):end,n] ~ normal(L_tp1_var[start:(end-1),n],time_var_full[n]);
-              
-          }
-
-            
-          } else {
+        {
           
           for(n in 1:num_legis) {
             
@@ -644,33 +611,7 @@ for(n in 1:num_legis) {
         
       } else if(time_proc==3) {
         
-        if(restrict_var==1) {
-          
-          for(n in 1:num_legis) {
-            
-            if(ignore==1) {
-    
-              start = ignore_mat[n,1];
-               end = ignore_mat[n,2];
-               
-               if(end>T) {
-                      end = T;
-                    }
-                    if(start < 1) {
-                      
-                      start = 1;
-                      
-                  }
-    
-              }
-              
-              L_tp1_var[(start+1):end,n] ~ normal(L_tp1_var[start,n] + L_AR1[n]*to_vector(L_tp1_var[start:(end-1),n]),time_var_full[n]);
-            
-          }
-              
-                
-          
-        } else {
+        {
           
           for(n in 1:num_legis) {
             if(ignore==1) {
@@ -950,9 +891,7 @@ if(S_type==1 && const_type==1) {
               vector[T] x;
               real sd_nd;
               for(t in 1:T) x[t] = L_tp1_var_d[t][n, d];
-              if(restrict_var == 1) {
-                sd_nd = n == 1 ? time_sd : time_var_free_d[n - 1, d];
-              } else {
+              {
                 sd_nd = time_var_free_d[n, d];
               }
               if(time_proc == 2) {
@@ -1055,7 +994,6 @@ if(S_type==1 && const_type==1) {
         diff_abs_sd,
         diff_reg_sd,
         ar_prior,
-        time_sd,
         time_var_sd,
         time_proc,
         zeroes, // whether to use traditional zero-inflation for bernoulli and poisson models
@@ -1096,7 +1034,6 @@ if(S_type==1 && const_type==1) {
         inv_gamma_beta,
         num_var,
         type_het_var,
-        restrict_var,
         ignore,
         ignore_mat,
         num_basis,

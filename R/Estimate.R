@@ -693,9 +693,7 @@ id_make <- function(score_data=NULL,
 #' `fix_low` options. This pinned range is sufficient to identify 
 #' all of the models
 #' implemented in idealstan, though fiddling with some parameters may be 
-#' necessary in difficult cases. For time-series models, one of the 
-#' person ideal point over-time variances is also fixed to .1, a value that
-#' can be changed using the option `time_fix_sd`.
+#' necessary in difficult cases.
 #' @section Multidimensional Models:
 #' With `num_dim` greater than 1, the ideal points can be rotated as well as reflected
 #' without changing the likelihood, so one more person or item is needed for each
@@ -887,11 +885,6 @@ id_make <- function(score_data=NULL,
 #' `(discrim_rho + 1)/2` has a Beta(`discrim_corr_eta`, `discrim_corr_eta`) prior,
 #' which is the LKJ prior for a 2 x 2 correlation matrix. A value of 1 is uniform
 #' on (-1, 1); larger values favour correlations closer to 0. Default is 2.
-#' @param restrict_var Whether to fix the variance parameter for the first person trajectory. Default
-#' is FALSE (usually not necessary).
-#' @param time_fix_sd The variance of the over-time component of the first person/legislator
-#' is fixed to this value as a reference. 
-#' Default is 0.1.
 #' @param time_var The mean of the exponential distribution for over-time variances for
 #' ideal point parameters. Default (10) is weakly informative on the logit scale.
 #' @param ar1_up The upper bound of the AR(1) parameter, default is +1.
@@ -1108,7 +1101,6 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                         discrim_corr=FALSE,
                         discrim_corr_eta=2,
                         person_sd=3,
-                        time_fix_sd=.1,
                         time_var=10,
                         spline_knots=NULL,
                         spline_degree=2,
@@ -1116,7 +1108,6 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                         ar1_down=-1,
                         boundary_prior=NULL,
                         time_center_cutoff=50,
-                        restrict_var=FALSE,
                         ar_prior=c(2,2),
                         diff_reg_sd=3,
                         diff_miss_sd=3,
@@ -1140,6 +1131,15 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                         ...) {
   
   # check for correct use_method option
+
+  # options that have been removed: fixing the over-time variance of the first person
+  dots <- list(...)
+  removed <- intersect(names(dots), c("restrict_var", "time_fix_sd"))
+  if(length(removed) > 0) {
+    warning("The option(s) ", paste(removed, collapse=" and "), " are no longer available ",
+            "and are ignored.", call.=FALSE)
+    dots <- dots[setdiff(names(dots), removed)]
+  }
 
   if(!is.numeric(num_dim) || length(num_dim) != 1 || num_dim < 1 || num_dim %% 1 != 0) {
     stop("num_dim should be a whole number of 1 or more.")
@@ -1319,7 +1319,6 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                          discrim_corr=discrim_corr,
                          discrim_corr_eta=discrim_corr_eta,
                          person_sd=person_sd,
-                         time_fix_sd=time_fix_sd,
                          time_var=time_var,
                          spline_knots=spline_knots,
                          spline_degree=spline_degree,
@@ -1328,7 +1327,6 @@ id_estimate <- function(idealdata=NULL,model_type=2,
                          ar1_down=ar1_down,
                          boundary_prior=boundary_prior,
                          time_center_cutoff=time_center_cutoff,
-                         restrict_var=restrict_var,
                          ar_prior=ar_prior,
                          diff_reg_sd=diff_reg_sd,
                          diff_miss_sd=diff_miss_sd,
@@ -1372,21 +1370,19 @@ id_estimate <- function(idealdata=NULL,model_type=2,
   idealdata@order_cats_rat <- remove_list$order_cats_rat
   idealdata@order_cats_grm <- remove_list$order_cats_grm
   
-  outobj <- sample_model(object=idealdata,nchains=nchains,niters=niters,warmup=warmup,ncores=ncores,
-                         this_data=this_data,use_method=use_method,
-                         save_files=save_files,
-                         keep_param=keep_param,
-                         within_chain=within_chain,
-                         init_pathfinder=init_pathfinder,
-                         seed=seed,
-                         ...)
+  outobj <- do.call(sample_model, c(list(object=idealdata,nchains=nchains,niters=niters,warmup=warmup,ncores=ncores,
+                                         this_data=this_data,use_method=use_method,
+                                         save_files=save_files,
+                                         keep_param=keep_param,
+                                         init_pathfinder=init_pathfinder,
+                                         seed=seed),
+                                    dots))
   
   outobj@model_type <- model_type
   outobj@time_proc <- this_data$time_proc
   outobj@use_groups <- use_groups
   outobj@map_over_id <- map_over_id
-  outobj@time_fix_sd <- time_fix_sd
-  outobj@restrict_var <- restrict_var
+  outobj@restrict_var <- FALSE
   outobj@time_center_cutoff <- time_center_cutoff
   outobj@orig_order <- out_list$this_data$orig_order
   outobj@this_data <- this_data

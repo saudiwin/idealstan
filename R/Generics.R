@@ -672,10 +672,14 @@ setMethod('id_model',signature(object='idealdata'),
 #' @param use_chain ID of a specific MCMC chain to use. Default (NULL) is all the chains
 #' and is recommended.
 #' @param cores Number of cores to use for parallel processing when summarizing
-#' item parameters. Defaults to 1 (no parallelization). Values greater than 1 use
-#' \code{parallel::mclapply} for faster computation with many items. Note that
-#' parallelization only works on Unix-like systems (Linux, macOS); on Windows,
-#' this parameter is ignored and single-core processing is used.
+#' item parameters, which can help with many items. Defaults to 1 (no parallelization).
+#' The work runs in parallel through the \pkg{future} package: with more than one
+#' core and no plan set, a \code{future::multisession} plan with that many
+#' workers (separate R sessions, which work everywhere, including Windows,
+#' RStudio and Positron). To use another backend, set it with
+#' \code{future::plan()} before calling, for example
+#' \code{future::plan(future::multicore, workers = 4)}; that plan is then used
+#' whatever the number of cores.
 #' @return A \code{\link[dplyr]{tibble}} data frame with parameters as rows and descriptive statistics as columns
 #' @examples
 #' \donttest{
@@ -725,16 +729,15 @@ setMethod('summary',signature(object='idealstan'),
               # a bit trickier with item points
               item_plot <- levels(object@score_data@score_matrix$item_id)
 
-              # Use parallel processing if cores > 1 and on Unix-like system
-              if(cores > 1 && .Platform$OS.type == "unix") {
-                apply_func <- function(...) parallel::mclapply(..., mc.cores = cores)
-              } else {
-                apply_func <- lapply
-              }
+              # in parallel through future if asked (see .id_lapply); the workers
+              # get a copy of the fit with only the item parameters' draws
+              in_parallel <- cores > 1 || !inherits(future::plan(), "sequential")
+              item_object <- if(in_parallel) .light_item_object(object) else object
+              apply_func <- function(...) .id_lapply(..., cores=cores)
 
               if(object@model_type %in% c(1,2,7,8,9,10,11,12,15,16,17,18) || (object@model_type>6 && object@model_type<13)) {
                 # binary models and continuous
-                item_points <- apply_func(item_plot,.item_plot_binary,object=object,
+                item_points <- apply_func(item_plot,.item_plot_binary,object=item_object,
                                       low_limit=low_limit,
                                       high_limit=high_limit,
                                       all=TRUE,
@@ -742,7 +745,7 @@ setMethod('summary',signature(object='idealstan'),
                                       use_chain=use_chain) %>% bind_rows()
               } else if(object@model_type %in% c(3,4)) {
                 # rating scale
-                item_points <- apply_func(item_plot,.item_plot_ord_rs,object=object,
+                item_points <- apply_func(item_plot,.item_plot_ord_rs,object=item_object,
                                       low_limit=low_limit,
                                       high_limit=high_limit,
                                       all=TRUE,
@@ -750,7 +753,7 @@ setMethod('summary',signature(object='idealstan'),
                                       use_chain=use_chain) %>% bind_rows()
               } else if(object@model_type %in% c(5,6)) {
                 # grm
-                item_points <- apply_func(item_plot,.item_plot_ord_grm,object=object,
+                item_points <- apply_func(item_plot,.item_plot_ord_grm,object=item_object,
                                       low_limit=low_limit,
                                       high_limit=high_limit,
                                       all=TRUE,
@@ -758,7 +761,7 @@ setMethod('summary',signature(object='idealstan'),
                                       use_chain=use_chain) %>% bind_rows()
               } else if(object@model_type %in% c(13,14)) {
                 # latent space
-                item_points <- apply_func(item_plot,.item_plot_ls,object=object,
+                item_points <- apply_func(item_plot,.item_plot_ls,object=item_object,
                                       low_limit=low_limit,
                                       high_limit=high_limit,
                                       all=TRUE,
@@ -1038,6 +1041,13 @@ setGeneric('id_me',
 #' Defaults to 100. Use option "all" to use all available MCMC draws.
 #' @param cores The total number of cores to use when calculating the marginal effects.
 #' Defaults to 1.
+#' The work runs in parallel through the \pkg{future} package: with more than one
+#' core and no plan set, a \code{future::multisession} plan with that many
+#' workers (separate R sessions, which work everywhere, including Windows,
+#' RStudio and Positron). To use another backend, set it with
+#' \code{future::plan()} before calling, for example
+#' \code{future::plan(future::multicore, workers = 4)}; that plan is then used
+#' whatever the number of cores.
 #' @param lb The quantile for the lower bound of the aggregated effects (default is 0.025 for a 95% interval)
 #' @param upb The quantile for the upper bound of the aggregated effects (default is 0.975 for a 95% interval)
 #' @param eps Parameter for numerical differentiation (usually does not need to be changed)

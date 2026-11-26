@@ -48,7 +48,6 @@ id_estimate(
   discrim_corr = FALSE,
   discrim_corr_eta = 2,
   person_sd = 3,
-  time_fix_sd = 0.1,
   time_var = 10,
   spline_knots = NULL,
   spline_degree = 2,
@@ -56,7 +55,6 @@ id_estimate(
   ar1_down = -1,
   boundary_prior = NULL,
   time_center_cutoff = 50,
-  restrict_var = FALSE,
   ar_prior = c(2, 2),
   diff_reg_sd = 3,
   diff_miss_sd = 3,
@@ -274,10 +272,6 @@ on (-1, 1); larger values favour correlations closer to 0. Default is 2.}
 persons (all non-constrained person ideal point parameters). Default is weakly informative (3)
 on the logit scale.}
 
-\item{time_fix_sd}{The variance of the over-time component of the first person/legislator
-is fixed to this value as a reference.
-Default is 0.1.}
-
 \item{time_var}{The mean of the exponential distribution for over-time variances for
 ideal point parameters. Default (10) is weakly informative on the logit scale.}
 
@@ -316,9 +310,6 @@ and random walk models. Below this number the model will employ a
 non-centered approach. The default is 50 time points, which is
 relatively arbitrary and higher values may be better if sampling
 quality is poor above the threshold.}
-
-\item{restrict_var}{Whether to fix the variance parameter for the first person trajectory. Default
-is FALSE (usually not necessary).}
 
 \item{ar_prior}{If an AR(1) model is used, this 2-length vector sets the
 shape (alpha) and scale (beta) of the Beta prior on the AR-1 adjustment
@@ -523,9 +514,7 @@ this can be changed using the \code{fix_high} and
 \code{fix_low} options. This pinned range is sufficient to identify
 all of the models
 implemented in idealstan, though fiddling with some parameters may be
-necessary in difficult cases. For time-series models, one of the
-person ideal point over-time variances is also fixed to .1, a value that
-can be changed using the option \code{time_fix_sd}.
+necessary in difficult cases.
 }
 
 \section{Multidimensional Models}{

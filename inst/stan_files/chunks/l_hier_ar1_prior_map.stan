@@ -24,19 +24,7 @@ if(T<center_cutoff) {
     
   } else {
     
-    if(restrict_var==1) {
-      
-      if(s==1) {
-        
-        lt[t] = L_tp1_var[1,s] + L_AR1[s]*lt[t-1] + time_sd * L_tp1_var[t-1,s];
-        
-      } else {
-        
-        lt[t] = L_tp1_var[1,s] + L_AR1[s]*lt[t-1] + time_var_free[s-1] * L_tp1_var[t,s];
-        
-      }
-      
-    } else {
+    {
         
         lt[t] = L_tp1_var[1,s] + L_AR1[s]*lt[t-1] + time_var_free[s] * L_tp1_var[t,s];
       
@@ -82,20 +70,7 @@ if(T<center_cutoff) {
     
   }
   
-  if(restrict_var==1) {
-    
-    if(s==1) {
-      
-      log_prob += normal_lpdf(lt[(start_time+1):end_time]|lt[start_time] + L_AR1[s]*lt[start_time:(end_time-1)],time_sd);
-      
-      
-    } else {
-      
-      log_prob += normal_lpdf(lt[(start_time+1):end_time]|lt[start_time] + L_AR1[s]*lt[start_time:(end_time-1)],time_var_free[s-1]);
-      
-    }
-    
-  } else {
+  {
     
     log_prob += normal_lpdf(lt[(start_time+1):end_time]|lt[start_time] + L_AR1[s]*lt[start_time:(end_time-1)],time_var_free[s]);
     
